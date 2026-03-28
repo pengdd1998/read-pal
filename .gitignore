@@ -138,3 +138,8 @@ user-files/
 # Backup files
 *.bak
 *.backup
+
+# Claude Code - configuration and agents
+.claude/
+CLAUDE.local.md
+setup-github.sh
