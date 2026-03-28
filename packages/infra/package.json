@@ -1,0 +1,14 @@
+{
+  "name": "@read-pal/infra",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "validate": "terraform validate -chdir=terraform",
+    "plan": "terraform plan -chdir=terraform",
+    "apply": "terraform apply -chdir=terraform",
+    "destroy": "terraform destroy -chdir=terraform"
+  },
+  "devDependencies": {
+    "terraform": "^1.0.0"
+  }
+}

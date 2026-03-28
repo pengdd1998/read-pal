@@ -1,0 +1,1 @@
+export { CompanionAgent } from './CompanionAgent';

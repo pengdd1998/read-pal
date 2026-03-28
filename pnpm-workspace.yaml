@@ -1,0 +1,8 @@
+packages:
+  - 'packages/*'
+  - 'packages/api'
+  - 'packages/web'
+  - 'packages/mobile'
+  - 'packages/extension'
+  - 'packages/shared'
+  - 'packages/infra'
