@@ -143,3 +143,6 @@ user-files/
 .claude/
 CLAUDE.local.md
 setup-github.sh
+# Claude Code - project instructions
+CLAUDE.md
+CLAUDE.local.md
