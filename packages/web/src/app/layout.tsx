@@ -37,6 +37,12 @@ export default function RootLayout({
                   <a href="/knowledge" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
                     Knowledge
                   </a>
+                  <a href="/search" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
+                    Search
+                  </a>
+                  <a href="/settings" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
+                    Settings
+                  </a>
                 </nav>
               </div>
               <div className="flex items-center space-x-4">

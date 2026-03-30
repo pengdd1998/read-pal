@@ -20,6 +20,10 @@ import friendRoutes from './routes/friend.routes';
 import statsRoutes from './routes/stats.routes';
 import knowledgeRoutes from './routes/knowledge.routes';
 import memoryBooksRoutes from './routes/memory-books.routes';
+import discoveryRoutes from './routes/discovery.routes';
+import interventionsRoutes from './routes/interventions.routes';
+import settingsRoutes from './routes/settings.routes';
+import readingSessionsRoutes from './routes/reading-sessions.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -305,6 +309,10 @@ app.use('/api/friend', friendRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/memory-books', memoryBooksRoutes);
+app.use('/api/discovery', discoveryRoutes);
+app.use('/api/interventions', interventionsRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/reading-sessions', readingSessionsRoutes);
 
 // ============================================================================
 // Error Handling
@@ -351,6 +359,7 @@ if (require.main === module) {
 ║   • Friend:        /api/friend                    ║
 ║   • Stats:         /api/stats                     ║
 ║   • Knowledge:     /api/knowledge                 ║
+║   • Discovery:     /api/discovery                 ║
 ║                                                   ║
 ╚═══════════════════════════════════════════════════════╝
       `);
