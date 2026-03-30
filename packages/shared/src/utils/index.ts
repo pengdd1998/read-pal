@@ -2,6 +2,8 @@
 // Utility Functions
 // ============================================================================
 
+declare const process: { env: { NODE_ENV?: string } } | undefined;
+
 /**
  * Format a date relative to now (e.g., "2 hours ago")
  */
@@ -70,7 +72,7 @@ export function debounce<T extends (...args: any[]) => any>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
@@ -95,12 +97,20 @@ export function generateId(): string {
  * Check if code is running in development mode
  */
 export function isDevelopment(): boolean {
-  return process.env.NODE_ENV === 'development';
+  try {
+    return (process as { env: { NODE_ENV?: string } }).env.NODE_ENV === 'development';
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Check if code is running in production mode
  */
 export function isProduction(): boolean {
-  return process.env.NODE_ENV === 'production';
+  try {
+    return (process as { env: { NODE_ENV?: string } }).env.NODE_ENV === 'production';
+  } catch {
+    return false;
+  }
 }

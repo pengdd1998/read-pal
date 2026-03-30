@@ -2,6 +2,22 @@
 // Types
 // ============================================================================
 
+import crypto from 'crypto';
+
+import type {
+  IAgent,
+  BookReference,
+  BookLocation,
+  ConversationMessage,
+  UserPreferences,
+  SharedMemory,
+  AgentError,
+  AgentResponse,
+  Logger,
+  AgentRequest,
+  AgentContext,
+} from '../../types';
+
 export interface OrchestratorConfig {
   agents: Map<string, IAgent>;
   defaultAgent: string;
@@ -311,7 +327,7 @@ export class AgentOrchestrator {
     const agentContext: AgentContext = {
       readingLocation: request.context?.readingLocation,
       currentBook: request.context?.currentBook,
-      userUnderstandingLevel: request.context?.userPreferences?.readingFriend?.personality,
+      userUnderstandingLevel: undefined,
       conversationHistory: request.context?.conversationHistory,
       userPreferences: request.context?.userPreferences,
       sharedMemories: request.context?.sharedMemories

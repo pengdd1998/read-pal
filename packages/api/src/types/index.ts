@@ -96,6 +96,7 @@ export interface AgentResponseMetadata {
   duration: number;
   toolsUsed?: string[];
   reasoning?: string;
+  agentName?: string;
 }
 
 /**
@@ -612,7 +613,7 @@ export interface PineconeClient {
 }
 
 export interface Neo4jClient {
-  run(query: string, params?: Record<string, unknown>): Promise<Result>;
+  run(query: string, params?: Record<string, unknown>): Promise<Neo4jQueryResult>;
   close(): Promise<void>;
 }
 
@@ -628,8 +629,8 @@ export interface Match {
   metadata?: Record<string, unknown>;
 }
 
-export interface Result {
-  records: Record[];
+export interface Neo4jQueryResult {
+  records: Record<string, unknown>[];
 }
 
 // ============================================================================
@@ -640,7 +641,7 @@ export interface Result {
  * Environment configuration
  */
 export interface EnvironmentConfig {
-  nodeEnv: 'development' | 'staging' | 'production';
+  nodeEnv: 'development' | 'staging' | 'production' | 'test';
   api: {
     port: number;
     url: string;
@@ -680,6 +681,9 @@ export interface EnvironmentConfig {
     domain?: string;
     clientId?: string;
     clientSecret?: string;
+  };
+  cors?: {
+    origins: string[];
   };
   aws?: {
     region: string;

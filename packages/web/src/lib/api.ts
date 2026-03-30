@@ -73,6 +73,21 @@ class ApiClient {
     const response = await this.client.delete<ApiResponse<T>>(url);
     return response.data;
   }
+
+  /** Upload a file (FormData) to a given endpoint */
+  async upload<T>(url: string, formData: FormData): Promise<ApiResponse<T>> {
+    const token = localStorage.getItem('auth_token');
+    const response = await this.client.post<ApiResponse<T>>(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    return response.data;
+  }
 }
+
+/** Base URL of the backend API (useful for raw fetch calls) */
+export const API_BASE_URL = API_URL;
 
 export const api = new ApiClient();

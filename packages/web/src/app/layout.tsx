@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -24,6 +25,9 @@ export default function RootLayout({
               <div className="flex items-center space-x-4">
                 <h1 className="text-2xl font-bold text-primary-600">read-pal</h1>
                 <nav className="hidden md:flex space-x-6">
+                  <a href="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
+                    Dashboard
+                  </a>
                   <a href="/library" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
                     Library
                   </a>
@@ -43,7 +47,7 @@ export default function RootLayout({
 
           {/* Main Content */}
           <main className="flex-1">
-            {children}
+            <ErrorBoundary>{children}</ErrorBoundary>
           </main>
 
           {/* Footer */}

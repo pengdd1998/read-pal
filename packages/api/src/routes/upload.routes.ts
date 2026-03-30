@@ -10,7 +10,7 @@ import { Book, Document } from '../models';
 import { BookProcessor } from '../services/BookProcessor';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
-const router = Router();
+const router: Router = Router();
 const processor = new BookProcessor();
 
 // Configure multer for file uploads
@@ -96,6 +96,9 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
       fileType,
       fileSize: file.size,
       totalPages,
+      currentPage: 0,
+      progress: 0,
+      addedAt: new Date(),
       status: 'unread',
     });
 

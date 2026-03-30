@@ -1,18 +1,34 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth';
+import { body } from 'express-validator';
+import { AuthRequest, authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
 
 // ============================================================================
 // Agent Routes
 // ============================================================================
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * @route   POST /api/agents/chat
  * @desc    Send a message to an agent
  * @access  Private
  */
-router.post('/chat', authenticate, async (req, res) => {
+router.post(
+  '/chat',
+  rateLimiter({
+    windowMs: 60000,
+    max: 20,
+    keyGenerator: (req) => (req as AuthRequest).userId || req.ip || 'unknown',
+  }),
+  authenticate,
+  agentRateLimiter,
+  validate([
+    body('message').isLength({ max: 5000 }).withMessage('message is required and must be at most 5000 characters'),
+    body('context').optional().isObject().withMessage('context must be an object'),
+  ]),
+  async (req: AuthRequest, res) => {
   try {
     const { agent, message, context } = req.body;
 
@@ -204,7 +220,7 @@ router.get('/', authenticate, async (req, res) => {
     return res.json({
       success: true,
       data: {
-        agents: agents.map(agent => ({
+        agents: agents.map((agent: any) => ({
           name: agent.name,
           displayName: agent.displayName,
           purpose: agent.purpose,

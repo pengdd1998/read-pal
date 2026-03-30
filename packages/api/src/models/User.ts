@@ -9,18 +9,20 @@ interface UserAttributes {
   id: string;
   email: string;
   name: string;
+  passwordHash?: string;
   avatar?: string;
   settings: any;
   createdAt: Date;
   updatedAt: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'avatar' | 'createdAt' | 'updatedAt'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'passwordHash' | 'avatar' | 'createdAt' | 'updatedAt'> {}
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: string;
   public email!: string;
   public name!: string;
+  public passwordHash?: string;
   public avatar?: string;
   public settings!: any;
   public readonly createdAt!: Date;
@@ -45,6 +47,11 @@ User.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    passwordHash: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'password_hash',
     },
     avatar: {
       type: DataTypes.STRING,

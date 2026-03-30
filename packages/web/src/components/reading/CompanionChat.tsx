@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { api } from '@/lib/api';
+import { wsClient } from '@/lib/websocket';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -27,6 +29,24 @@ export function CompanionChat({ bookId, currentPage }: CompanionChatProps) {
     scrollToBottom();
   }, [messages]);
 
+  // WebSocket connection for real-time agent streaming
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token) wsClient.connect(token);
+
+    const handler = (msg: any) => {
+      if (msg.type === 'token' && msg.content) {
+        setMessages(prev => [...prev, { role: 'assistant', content: msg.content }]);
+      }
+    };
+
+    wsClient.onMessage(handler);
+
+    return () => {
+      wsClient.offMessage(handler);
+    };
+  }, []);
+
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
@@ -38,29 +58,30 @@ export function CompanionChat({ bookId, currentPage }: CompanionChatProps) {
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      const token = localStorage.getItem('auth_token') || '';
-
-      const response = await fetch('/api/agents/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const result = await api.post<{ content: string; agentsUsed: string[] }>(
+        '/api/agents/chat',
+        {
           message: userMessage,
           context: {
             bookId,
             currentPage,
           },
-        }),
-      });
+        },
+      );
 
-      const result = await response.json();
+      // The agent chat endpoint returns { success, content, agentsUsed }
+      // at the top level rather than wrapped in { data }.
+      const raw = result as unknown as {
+        success: boolean;
+        content?: string;
+        agentsUsed?: string[];
+      };
+      const assistantContent = raw.content ?? result.data?.content;
 
-      if (result.success) {
+      if (raw.success && assistantContent) {
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: result.content },
+          { role: 'assistant', content: assistantContent },
         ]);
       } else {
         setMessages((prev) => [

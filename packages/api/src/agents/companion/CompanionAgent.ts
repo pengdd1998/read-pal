@@ -9,6 +9,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
 import { WebSearchTool } from '../tools/WebSearchTool';
@@ -163,11 +164,12 @@ Remember: You are an AI assistant helping someone read and learn. Be helpful, co
               query: message,
               userId,
               filters: { excludeBookId: context.bookId },
-            });
+            }, {} as ToolContext);
 
             if (result.success) {
               toolsUsed.push('library_search');
-              toolResults = `\n\n[Related content from your library]\n${result.data.summary}`;
+              const data = result.data as Record<string, unknown> | undefined;
+              toolResults = `\n\n[Related content from your library]\n${(data?.summary as string) || ''}`;
             }
           } catch (error) {
             console.error('Library search failed:', error);

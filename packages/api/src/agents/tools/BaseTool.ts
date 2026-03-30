@@ -2,13 +2,21 @@
 // Base Tool Class
 // ============================================================================
 
+import type {
+  ITool,
+  ToolCategory,
+  JSONSchema,
+  ToolContext,
+  ToolResult,
+} from '../../types';
+
 /**
  * Abstract base class for all tools
  *
  * Tools are the building blocks that AI agents use to interact with
  * external systems (databases, APIs, file systems, etc.)
  */
-export abstract class BaseTool implements ITool {
+export abstract class BaseTool {
   abstract readonly name: string;
   abstract readonly description: string;
   abstract readonly category: ToolCategory;
@@ -43,7 +51,7 @@ export abstract class BaseTool implements ITool {
 
     // Check required fields
     const required = this.inputSchema.required || [];
-    const missing = required.filter(field => !(field in input));
+    const missing = required.filter((field: string) => !(field in (input as Record<string, unknown>)));
 
     if (missing.length > 0) {
       return {

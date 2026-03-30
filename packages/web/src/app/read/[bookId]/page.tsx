@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { ReaderView } from '@/components/reading/ReaderView';
 import { AnnotationPanel } from '@/components/reading/AnnotationPanel';
 import { CompanionChat } from '@/components/reading/CompanionChat';
+import { api } from '@/lib/api';
 
 interface Chapter {
   id: string;
@@ -33,17 +34,14 @@ export default function ReadPage() {
   const loadBookContent = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('auth_token') || '';
 
-      const response = await fetch(`/api/upload/books/${bookId}/content`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const result = await api.get<{
+        book: any;
+        chapters: Chapter[];
+        content: string;
+      }>(`/api/upload/books/${bookId}/content`);
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (result.success && result.data) {
         setBook(result.data.book);
         setChapters(result.data.chapters);
         setCurrentChapter(result.data.book.currentPage || 0);
@@ -62,16 +60,9 @@ export default function ReadPage() {
 
   const loadAnnotations = async () => {
     try {
-      const token = localStorage.getItem('auth_token') || '';
-      const response = await fetch(`/api/annotations?bookId=${bookId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const result = await response.json();
+      const result = await api.get('/api/annotations', { bookId });
       if (result.success) {
-        setAnnotations(result.data || []);
+        setAnnotations((result.data as any[]) || []);
       }
     } catch (err) {
       console.error('Failed to load annotations:', err);
@@ -83,15 +74,7 @@ export default function ReadPage() {
 
     // Update progress
     try {
-      const token = localStorage.getItem('auth_token') || '';
-      await fetch(`/api/books/${bookId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ currentPage: chapterIndex }),
-      });
+      await api.patch(`/api/books/${bookId}`, { currentPage: chapterIndex });
     } catch (err) {
       console.error('Failed to update progress:', err);
     }
@@ -99,31 +82,22 @@ export default function ReadPage() {
 
   const handleAddHighlight = async (text: string, color: string) => {
     try {
-      const token = localStorage.getItem('auth_token') || '';
       const chapter = chapters[currentChapter];
 
-      const response = await fetch('/api/annotations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const result = await api.post('/api/annotations', {
+        bookId,
+        type: 'highlight',
+        content: text,
+        color,
+        location: {
+          chapterId: chapter.id,
+          pageIndex: currentChapter,
+          position: 0,
+          selection: { start: 0, end: text.length },
         },
-        body: JSON.stringify({
-          bookId,
-          type: 'highlight',
-          content: text,
-          color,
-          location: {
-            chapterId: chapter.id,
-            pageIndex: currentChapter,
-            position: 0,
-            selection: { start: 0, end: text.length },
-          },
-        }),
       });
 
-      const result = await response.json();
-      if (result.success) {
+      if (result.success && result.data) {
         setAnnotations([...annotations, result.data]);
       }
     } catch (err) {
@@ -133,31 +107,22 @@ export default function ReadPage() {
 
   const handleAddNote = async (text: string, note: string) => {
     try {
-      const token = localStorage.getItem('auth_token') || '';
       const chapter = chapters[currentChapter];
 
-      const response = await fetch('/api/annotations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const result = await api.post('/api/annotations', {
+        bookId,
+        type: 'note',
+        content: text,
+        note,
+        location: {
+          chapterId: chapter.id,
+          pageIndex: currentChapter,
+          position: 0,
+          selection: { start: 0, end: text.length },
         },
-        body: JSON.stringify({
-          bookId,
-          type: 'note',
-          content: text,
-          note,
-          location: {
-            chapterId: chapter.id,
-            pageIndex: currentChapter,
-            position: 0,
-            selection: { start: 0, end: text.length },
-          },
-        }),
       });
 
-      const result = await response.json();
-      if (result.success) {
+      if (result.success && result.data) {
         setAnnotations([...annotations, result.data]);
       }
     } catch (err) {
@@ -167,30 +132,21 @@ export default function ReadPage() {
 
   const handleAddBookmark = async () => {
     try {
-      const token = localStorage.getItem('auth_token') || '';
       const chapter = chapters[currentChapter];
 
-      const response = await fetch('/api/annotations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const result = await api.post('/api/annotations', {
+        bookId,
+        type: 'bookmark',
+        content: `Bookmark: ${chapter.title}`,
+        location: {
+          chapterId: chapter.id,
+          pageIndex: currentChapter,
+          position: 0,
+          selection: { start: 0, end: 0 },
         },
-        body: JSON.stringify({
-          bookId,
-          type: 'bookmark',
-          content: `Bookmark: ${chapter.title}`,
-          location: {
-            chapterId: chapter.id,
-            pageIndex: currentChapter,
-            position: 0,
-            selection: { start: 0, end: 0 },
-          },
-        }),
       });
 
-      const result = await response.json();
-      if (result.success) {
+      if (result.success && result.data) {
         setAnnotations([...annotations, result.data]);
       }
     } catch (err) {
@@ -200,13 +156,7 @@ export default function ReadPage() {
 
   const handleDeleteAnnotation = async (id: string) => {
     try {
-      const token = localStorage.getItem('auth_token') || '';
-      await fetch(`/api/annotations/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await api.delete(`/api/annotations/${id}`);
       setAnnotations(annotations.filter((a) => a.id !== id));
     } catch (err) {
       console.error('Failed to delete annotation:', err);
