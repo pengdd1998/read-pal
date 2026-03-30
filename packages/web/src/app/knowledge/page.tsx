@@ -55,8 +55,8 @@ export default function KnowledgePage() {
 
   useEffect(() => {
     Promise.all([
-      api.get<{ nodes: GraphNode[]; edges: GraphEdge[] }>('/knowledge/graph'),
-      api.get<CrossBookTheme[]>('/knowledge/themes'),
+      api.get<{ nodes: GraphNode[]; edges: GraphEdge[] }>('/api/knowledge/graph'),
+      api.get<{ themes: CrossBookTheme[] }>('/api/knowledge/themes'),
     ])
       .then(([graphRes, themesRes]) => {
         const gd = graphRes.data;
@@ -68,7 +68,7 @@ export default function KnowledgePage() {
           setNodes(positioned);
           setEdges(gd.edges ?? []);
         }
-        if (themesRes.data) setThemes(themesRes.data);
+        if (themesRes.data) setThemes((themesRes.data as any).themes || themesRes.data as any);
       })
       .catch(() => setError('Failed to load knowledge graph. Please try again later.'))
       .finally(() => setLoading(false));

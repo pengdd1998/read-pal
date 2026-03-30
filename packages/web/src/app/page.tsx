@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function HomePage() {
   return (
     <div className="min-h-[80vh]">
@@ -19,12 +21,12 @@ export default function HomePage() {
             and become your reading friend. Transform passive reading into an active, social learning journey.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/register" className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-lg transition-colors shadow-lg shadow-primary-600/25">
+            <Link href="/register" className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-lg transition-colors shadow-lg shadow-primary-600/25">
               Start Reading Free
-            </a>
-            <a href="/login" className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-lg transition-colors border border-gray-200 dark:border-gray-700">
+            </Link>
+            <Link href="/login" className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-lg transition-colors border border-gray-200 dark:border-gray-700">
               Sign In
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -196,9 +198,9 @@ export default function HomePage() {
         <p className="text-gray-600 dark:text-gray-400 mb-8">
           Join thousands of readers who are building knowledge, not just checking off books.
         </p>
-        <a href="/register" className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-lg transition-colors shadow-lg shadow-primary-600/25">
+        <Link href="/register" className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-lg transition-colors shadow-lg shadow-primary-600/25">
           Get Started Free
-        </a>
+        </Link>
         <p className="text-sm text-gray-400 mt-4">No credit card required. Free forever plan available.</p>
       </div>
     </div>
