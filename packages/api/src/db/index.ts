@@ -3,9 +3,9 @@
  */
 
 import { Sequelize } from 'sequelize';
-import { Client as Neo4jClient } from 'neo4j-driver';
-import { PineconeClient } from '@pinecone-database/pinecone';
-import { createClient } from 'redis';
+import neo4j from 'neo4j-driver';
+import { Pinecone } from '@pinecone-database/pinecone';
+import Redis from 'ioredis';
 
 // PostgreSQL
 export const sequelize = new Sequelize({
@@ -24,9 +24,9 @@ export const sequelize = new Sequelize({
 
 // Neo4j
 export const neo4jDriver = process.env.NEO4J_URI
-  ? Neo4jClient.driver(
+  ? neo4j.driver(
       process.env.NEO4J_URI,
-      Neo4jClient.auth.basic(
+      neo4j.auth.basic(
         process.env.NEO4J_USER || 'neo4j',
         process.env.NEO4J_PASSWORD || 'password'
       )
@@ -34,14 +34,12 @@ export const neo4jDriver = process.env.NEO4J_URI
   : null;
 
 // Pinecone
-let pineconeClient: PineconeClient | null = null;
+let pineconeClient: Pinecone | null = null;
 
 export async function initPinecone() {
-  if (process.env.PINECONE_API_KEY && process.env.PINECONE_ENVIRONMENT) {
-    pineconeClient = new PineconeClient();
-    await pineconeClient.init({
+  if (process.env.PINECONE_API_KEY) {
+    pineconeClient = new Pinecone({
       apiKey: process.env.PINECONE_API_KEY,
-      environment: process.env.PINECONE_ENVIRONMENT,
     });
   }
   return pineconeClient;
@@ -49,19 +47,28 @@ export async function initPinecone() {
 
 export const getPinecone = () => pineconeClient;
 
-// Redis
-export const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-  password: process.env.REDIS_PASSWORD,
-  database: parseInt(process.env.REDIS_DB || '0', 10),
-});
+// Redis (using ioredis)
+export const redisClient = new Redis(
+  process.env.REDIS_URL || 'redis://localhost:6379',
+  {
+    password: process.env.REDIS_PASSWORD || undefined,
+    db: parseInt(process.env.REDIS_DB || '0', 10),
+    retryStrategy: (times) => {
+      if (times > 3) return null;
+      return Math.min(times * 100, 3000);
+    },
+  }
+);
 
 redisClient.on('error', (err) => console.error('Redis Client Error:', err));
 redisClient.on('connect', () => console.log('Redis Client Connected'));
 
 export async function initRedis() {
-  if (!redisClient.isOpen) {
-    await redisClient.connect();
+  // ioredis connects automatically, but we can ping to verify
+  try {
+    await redisClient.ping();
+  } catch {
+    // Will retry automatically
   }
 }
 
@@ -98,8 +105,8 @@ export async function checkConnections() {
   }
 
   try {
-    await initRedis();
-    status.redis = redisClient.isOpen;
+    await redisClient.ping();
+    status.redis = true;
   } catch (error) {
     console.error('Redis connection failed:', error);
   }
@@ -111,5 +118,5 @@ export async function checkConnections() {
 export async function closeConnections() {
   await sequelize.close();
   if (neo4jDriver) await neo4jDriver.close();
-  if (redisClient.isOpen) await redisClient.quit();
+  redisClient.disconnect();
 }

@@ -3,11 +3,14 @@
  */
 
 import { Router } from 'express';
+import { body } from 'express-validator';
 import { Annotation } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { Op } from 'sequelize';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * GET /api/annotations
@@ -16,6 +19,9 @@ const router = Router();
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
     const { bookId, type, tags } = req.query;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const offset = (page - 1) * limit;
 
     const where: any = { userId: req.userId };
 
@@ -36,11 +42,20 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     const annotations = await Annotation.findAll({
       where,
       order: [['createdAt', 'DESC']],
+      limit,
+      offset,
     });
+    const total = await Annotation.count({ where });
 
     res.json({
       success: true,
       data: annotations,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Error fetching annotations:', error);
@@ -97,7 +112,17 @@ router.get('/:id', authenticate, async (req: AuthRequest, res) => {
  * POST /api/annotations
  * Create a new annotation
  */
-router.post('/', authenticate, async (req: AuthRequest, res) => {
+router.post(
+  '/',
+  rateLimiter({ windowMs: 60000, max: 30 }),
+  authenticate,
+  validate([
+    body('bookId').isString().withMessage('bookId is required and must be a string'),
+    body('type').isIn(['highlight', 'note', 'bookmark']).withMessage('type must be highlight, note, or bookmark'),
+    body('content').isLength({ max: 10000 }).withMessage('content is required and must be at most 10000 characters'),
+    body('location').optional().isObject().withMessage('location must be an object'),
+  ]),
+  async (req: AuthRequest, res) => {
   try {
     const { bookId, type, content, location, color, note, tags } = req.body;
 

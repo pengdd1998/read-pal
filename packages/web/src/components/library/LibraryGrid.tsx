@@ -16,7 +16,7 @@ export function LibraryGrid() {
       const response = await api.get('/api/books');
 
       if (response.success) {
-        setBooks(response.data || []);
+        setBooks((response.data as any[]) || []);
       } else {
         setError('Failed to load library');
       }

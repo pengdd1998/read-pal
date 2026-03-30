@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,15 +17,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await api.post<{ token: string; user: any }>(
+        '/api/auth/login',
+        { email, password },
+      );
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (result.success && result.data) {
         localStorage.setItem('auth_token', result.data.token);
         localStorage.setItem('user', JSON.stringify(result.data.user));
         router.push('/library');

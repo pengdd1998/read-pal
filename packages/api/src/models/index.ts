@@ -8,6 +8,7 @@ import { Book } from './Book';
 import { Annotation } from './Annotation';
 import { ReadingSession } from './ReadingSession';
 import { Document } from './Document';
+import { MemoryBook } from './MemoryBook';
 
 // Define associations
 User.hasMany(Book, { foreignKey: 'userId', as: 'books' });
@@ -25,7 +26,15 @@ ReadingSession.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Book.hasMany(ReadingSession, { foreignKey: 'bookId', as: 'readingSessions' });
 ReadingSession.belongsTo(Book, { foreignKey: 'bookId', as: 'book' });
 
-export { User, Book, Annotation, ReadingSession, Document };
+User.hasMany(MemoryBook, { foreignKey: 'userId', as: 'memoryBooks' });
+MemoryBook.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+Book.hasOne(MemoryBook, { foreignKey: 'bookId', as: 'memoryBook' });
+MemoryBook.belongsTo(Book, { foreignKey: 'bookId', as: 'book' });
+
+export { User, Book, Annotation, ReadingSession, Document, MemoryBook };
+export type { Chapter } from './Document';
+export type { MemoryBookMoment, MemoryBookInsight, MemoryBookStats } from './MemoryBook';
 export { sequelize };
 
 // Sync function for development

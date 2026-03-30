@@ -21,14 +21,14 @@ export class BookProcessor {
       epub.on('error', reject);
 
       epub.on('end', () => {
-        const spine = epub.spine;
+        const spine = epub.spine || [];
         const chapters: Chapter[] = [];
         let fullContent = '';
         let chapterOrder = 0;
 
         // Process each chapter
         const processChapter = (index: number) => {
-          if (index >= spine.contents.length) {
+          if (index >= spine.length) {
             resolve({
               content: fullContent,
               chapters,
@@ -36,8 +36,8 @@ export class BookProcessor {
             return;
           }
 
-          const item = spine.contents[index];
-          epub.getChapter(item.id, (error, text) => {
+          const item = spine[index];
+          epub.getChapter(item.id || '', (error, text) => {
             if (error) {
               processChapter(index + 1);
               return;
@@ -171,7 +171,7 @@ export class BookProcessor {
         resolve({
           title: epub.metadata.title,
           author: epub.metadata.creator,
-          totalPages: epub.spine.contents.length,
+          totalPages: (epub.spine || []).length,
         });
       });
 

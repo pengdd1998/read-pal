@@ -5,39 +5,50 @@
 export const API_ROUTES = {
   // Auth
   AUTH_LOGIN: '/api/auth/login',
+  AUTH_REGISTER: '/api/auth/register',
   AUTH_LOGOUT: '/api/auth/logout',
- _AUTH_CALLBACK: '/api/auth/callback',
   AUTH_ME: '/api/auth/me',
 
   // Books
   BOOKS: '/api/books',
   BOOK_DETAIL: (id: string) => `/api/books/${id}`,
-  BOOK_UPLOAD: '/api/books/upload',
-  BOOK_CONTENT: (id: string) => `/api/books/${id}/content`,
+  BOOK_UPDATE: (id: string) => `/api/books/${id}`,
+  BOOK_DELETE: (id: string) => `/api/books/${id}`,
+  BOOK_UPLOAD: '/api/upload',
+  BOOK_CONTENT: (id: string) => `/api/upload/books/${id}/content`,
 
   // Annotations
   ANNOTATIONS: '/api/annotations',
   ANNOTATION_DETAIL: (id: string) => `/api/annotations/${id}`,
-  ANNOTATIONS_BY_BOOK: (bookId: string) => `/api/books/${bookId}/annotations`,
+  ANNOTATIONS_BY_BOOK: (bookId: string) => `/api/annotations?bookId=${bookId}`,
 
   // Agents
   AGENTS: '/api/agents',
-  AGENT_CHAT: (agent: string) => `/api/agents/${agent}/chat`,
-  AGENT_HISTORY: (agent: string) => `/api/agents/${agent}/history`,
+  AGENT_CHAT: '/api/agents/chat', // agent type passed in request body
+  AGENT_HISTORY: '/api/agents/history', // agent type passed in query params
 
   // Library
   LIBRARY_SEARCH: '/api/library/search',
-  LIBRARY_STATS: '/api/library/stats',
+  LIBRARY_STATS: '/api/stats/dashboard',
+
+  // Stats
+  STATS_DASHBOARD: '/api/stats/dashboard',
 
   // Knowledge
-  KNOWLEDGE_NODES: '/api/knowledge/nodes',
-  KNOWLEDGE_CONNECTIONS: '/api/knowledge/connections',
+  KNOWLEDGE_NODES: '/api/knowledge/concepts',
+  KNOWLEDGE_CONNECTIONS: '/api/knowledge/graph', // returns graph with connections
   KNOWLEDGE_GRAPH: '/api/knowledge/graph',
 
   // Reading Friend
-  FRIEND_CONFIG: '/api/friend/config',
+  FRIEND_CONFIG: '/api/friend',
   FRIEND_CHAT: '/api/friend/chat',
   FRIEND_MEMORIES: '/api/friend/memories',
+  FRIEND_REACT: '/api/friend/react',
+
+  // Memory Books
+  MEMORY_BOOKS: '/api/memory-books',
+  MEMORY_BOOK_DETAIL: (id: string) => `/api/memory-books/${id}`,
+  MEMORY_BOOK_GENERATE: (id: string) => `/api/memory-books/${id}/generate`,
 } as const;
 
 export const READING_FRIENDS = {

@@ -1,22 +1,28 @@
 /**
  * Authentication Routes
  *
- * Handles user authentication using Auth0
+ * Handles user authentication with bcrypt password hashing
  */
 
 import { Router } from 'express';
+import { body } from 'express-validator';
+import bcrypt from 'bcryptjs';
 import { User } from '../models';
 import { generateToken } from '../utils/auth';
+import { validate } from '../middleware/validate';
+import { rateLimiter } from '../middleware/rateLimiter';
 
-const router = Router();
+const router: Router = Router();
+
+const BCRYPT_ROUNDS = 12;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 72; // bcrypt limit
 
 /**
  * POST /api/auth/login
- * Login with email and password (for development/testing)
- *
- * In production, this would use Auth0/Clerk OAuth flow
+ * Login with email and password
  */
-router.post('/login', async (req, res) => {
+router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -31,15 +37,28 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // TODO: In production, use Auth0/Clerk for authentication
-    // For development, we'll create or get the user
-    let user = await User.findOne({ where: { email } });
+    // Find user by email
+    const user = await User.findOne({ where: { email } });
 
-    if (!user) {
-      // Create new user
-      user = await User.create({
-        email,
-        name: email.split('@')[0], // Use email prefix as default name
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password',
+        },
+      });
+    }
+
+    // Verify password against stored hash
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordMatch) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password',
+        },
       });
     }
 
@@ -73,9 +92,17 @@ router.post('/login', async (req, res) => {
 
 /**
  * POST /api/auth/register
- * Register a new user
+ * Register a new user with hashed password
  */
-router.post('/register', async (req, res) => {
+router.post(
+  '/register',
+  rateLimiter({ windowMs: 60000, max: 5 }),
+  validate([
+    body('email').isEmail().withMessage('A valid email is required'),
+    body('password').isLength({ min: 8, max: 128 }).withMessage('Password must be between 8 and 128 characters'),
+    body('name').trim().isLength({ min: 1, max: 100 }).withMessage('Name is required and must be at most 100 characters'),
+  ]),
+  async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
@@ -86,6 +113,27 @@ router.post('/register', async (req, res) => {
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Email, password, and name are required',
+        },
+      });
+    }
+
+    // Validate password length
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
+        },
+      });
+    }
+
+    if (password.length > MAX_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: `Password must be at most ${MAX_PASSWORD_LENGTH} characters long`,
         },
       });
     }
@@ -102,10 +150,14 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Create new user
+    // Hash password with bcrypt
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+    // Create new user with hashed password
     const user = await User.create({
       email,
       name,
+      passwordHash,
     });
 
     // Generate JWT token
@@ -254,7 +306,7 @@ router.patch('/me', async (req, res) => {
  * POST /api/auth/logout
  * Logout user (invalidate token)
  */
-router.post('/logout', async (req, res) => {
+router.post('/logout', async (_req, res) => {
   // With JWT, logout is handled client-side by removing the token
   // For additional security, we could add the token to a blacklist in Redis
   res.json({

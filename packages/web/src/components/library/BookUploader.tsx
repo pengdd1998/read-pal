@@ -46,17 +46,9 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
       formData.append('author', 'Unknown Author');
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`,
-        },
-        body: formData,
-      });
+      const result = await api.upload<{ book: any }>('/api/upload', formData);
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (result.success && result.data) {
         onUploadComplete(result.data.book);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';

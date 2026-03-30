@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,15 +18,12 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      });
+      const result = await api.post<{ token: string; user: any }>(
+        '/api/auth/register',
+        { name, email, password },
+      );
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (result.success && result.data) {
         localStorage.setItem('auth_token', result.data.token);
         localStorage.setItem('user', JSON.stringify(result.data.user));
         router.push('/library');

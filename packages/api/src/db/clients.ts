@@ -5,7 +5,8 @@
 import { Pool } from 'pg';
 import Redis from 'ioredis';
 import neo4j from 'neo4j-driver';
-import { PineconeClient } from '@pinecone-database/pinecone';
+import { Pinecone } from '@pinecone-database/pinecone';
+import type { EnvironmentConfig } from '../types';
 
 // ============================================================================
 // Clients Factory
@@ -14,7 +15,22 @@ import { PineconeClient } from '@pinecone-database/pinecone';
 /**
  * Create database clients
  */
-export async function createDatabaseClients(config: EnvironmentConfig): Promise<DatabaseClients> {
+export async function createDatabaseClients(config: EnvironmentConfig): Promise<{
+  postgres: {
+    query<T>(text: string, params?: unknown[]): Promise<T[]>;
+    transaction<T>(callback: (client: { query<T>(text: string, params?: unknown[]): Promise<T[]> }) => Promise<T>): Promise<T>;
+  };
+  redis: Redis;
+  neo4j: {
+    run(query: string, params?: Record<string, unknown>): Promise<{ records: Record<string, unknown>[] }>;
+    close(): Promise<void>;
+  };
+  pinecone: {
+    upsert(index: string, vectors: unknown[]): Promise<void>;
+    query(index: string, vector: number[], topK: number): Promise<unknown>;
+    delete(index: string, ids: string[]): Promise<void>;
+  };
+}> {
   // PostgreSQL
   const postgres = new Pool({
     connectionString: config.database.url,
@@ -42,9 +58,8 @@ export async function createDatabaseClients(config: EnvironmentConfig): Promise<
   );
 
   // Pinecone
-  const pinecone = new PineconeClient({
+  const pinecone = new Pinecone({
     apiKey: config.pinecone.apiKey,
-    environment: config.pinecone.environment
   });
 
   return {
@@ -91,35 +106,35 @@ export async function createDatabaseClients(config: EnvironmentConfig): Promise<
       }
     },
     pinecone: {
-      upsert: async (index, vectors) => {
+      upsert: async (index: string, vectors: any[]) => {
         const indexClient = pinecone.index(index);
         await indexClient.upsert(vectors);
       },
-      query: async (index, vector, topK) => {
+      query: async (index: string, vector: number[], topK: number) => {
         const indexClient = pinecone.index(index);
         const queryResponse = await indexClient.query({
           vector,
           topK,
           includeMetadata: true
         });
-        return queryResponse.matches.map(match => ({
+        return queryResponse.matches?.map((match: any) => ({
           id: match.id,
           score: match.score,
           metadata: match.metadata
         }));
       },
-      delete: async (index, ids) => {
+      delete: async (index: string, ids: string[]) => {
         const indexClient = pinecone.index(index);
         await indexClient.deleteMany(ids);
       }
-    } as any
+    }
   };
 }
 
 /**
  * Close all database connections
  */
-export async function closeDatabaseClients(clients: DatabaseClients): Promise<void> {
+export async function closeDatabaseClients(clients: any): Promise<void> {
   await clients.postgres.query?.('END'); // Close pool
   await clients.redis.disconnect();
   await clients.neo4j.close?.();

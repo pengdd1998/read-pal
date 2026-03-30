@@ -2,6 +2,16 @@
 // Library Search Tool
 // ============================================================================
 
+import type {
+  ToolCategory,
+  ToolContext,
+  ToolResult,
+  Match,
+  BookMetadata,
+  Document,
+} from '../../types';
+import { BaseTool } from './BaseTool';
+
 /**
  * Library Search Tool
  *
@@ -81,23 +91,57 @@ export class LibrarySearchTool extends BaseTool {
     });
 
     try {
-      // Generate embedding for the query
-      const queryEmbedding = await this.generateEmbedding(params.query);
+      // --- Strategy 1: Semantic search via Pinecone ---
+      let userMatches: LibrarySearchResult[];
 
-      // Search in Pinecone for similar documents
-      const matches = await context.db.pinecone.query(
-        'readpal-library',
-        queryEmbedding,
-        limit
-      );
+      try {
+        const queryEmbedding = await this.generateEmbedding(params.query);
+        const matches = await context.db.pinecone.query(
+          'readpal-library',
+          queryEmbedding,
+          limit
+        );
 
-      // Filter by user ID and apply additional filters
-      const userMatches = await this.filterAndEnhanceMatches(
-        matches,
-        params.userId,
-        params.filters,
-        context
-      );
+        // Filter by user ID and apply additional filters
+        userMatches = await this.filterAndEnhanceMatches(
+          matches,
+          params.userId,
+          context,
+          params.filters
+        );
+      } catch (pineconeError) {
+        // Pinecone unavailable or embedding failed – fall back to keyword search
+        context.logger.warn('Pinecone search unavailable, falling back to keyword search', {
+          error: pineconeError instanceof Error ? pineconeError.message : String(pineconeError),
+        });
+
+        userMatches = await this.keywordSearch(
+          params.query,
+          params.userId,
+          context,
+          limit,
+          params.filters
+        );
+      }
+
+      // If semantic search returned nothing, supplement with keyword results
+      if (userMatches.length === 0) {
+        const keywordResults = await this.keywordSearch(
+          params.query,
+          params.userId,
+          context,
+          limit,
+          params.filters
+        );
+
+        // Merge, avoiding duplicates by document id
+        const existingIds = new Set(userMatches.map((r) => r.document.id));
+        for (const kr of keywordResults) {
+          if (!existingIds.has(kr.document.id)) {
+            userMatches.push(kr);
+          }
+        }
+      }
 
       context.logger.info('Library search completed', {
         userId: params.userId,
@@ -132,15 +176,19 @@ export class LibrarySearchTool extends BaseTool {
   }
 
   /**
-   * Generate embedding for search query
+   * Generate embedding for search query.
+   *
+   * TODO: Replace with a real embedding model (OpenAI text-embedding-3-small,
+   * Voyage AI voyage-3, etc.) for production-quality semantic search.
+   *
+   * The current hash-based approach produces deterministic but semantically
+   * meaningless vectors. It allows the pipeline to function end-to-end during
+   * development but will not return meaningful similarity results.
    */
   private async generateEmbedding(query: string): Promise<number[]> {
-    // In production, this would use an embedding model
-    // For now, return a simple hash-based embedding
     const words = query.toLowerCase().split(/\s+/);
     const embedding = new Array(1536).fill(0);
 
-    // Simple word-based embedding (placeholder)
     words.forEach((word, i) => {
       const hash = this.simpleHash(word);
       embedding[i % embedding.length] = (hash % 1000) / 1000;
@@ -163,13 +211,160 @@ export class LibrarySearchTool extends BaseTool {
   }
 
   /**
+   * Perform a keyword-based text search against the PostgreSQL database.
+   *
+   * Uses PostgreSQL full-text search operators (`plainto_tsquery` / `tsvectors`)
+   * when available, with a plain ILIKE fallback for simple setups.  This is used
+   * as a fallback when Pinecone is unavailable or when the embedding model is
+   * not configured.
+   */
+  private async keywordSearch(
+    query: string,
+    userId: string,
+    context: ToolContext,
+    limit: number,
+    filters?: LibrarySearchFilters,
+  ): Promise<LibrarySearchResult[]> {
+    const conditions: string[] = ['"userId" = $1'];
+    const params: unknown[] = [userId];
+    let paramIdx = 2;
+
+    // Full-text search against title and content
+    const tsQuery = query
+      .split(/\s+/)
+      .filter((w) => w.length > 0)
+      .map((w) => `${w}:*`)
+      .join(' & ');
+
+    conditions.push(
+      `(to_tsvector('english', coalesce(title, '')) @@ to_tsquery($${paramIdx}) OR ` +
+      `to_tsvector('english', coalesce(content, '')) @@ to_tsquery($${paramIdx}) OR ` +
+      `title ILIKE $${paramIdx + 1})`,
+    );
+    params.push(tsQuery, `%${query}%`);
+    paramIdx += 2;
+
+    // Apply optional filters
+    if (filters?.documentType) {
+      conditions.push(`type = $${paramIdx}`);
+      params.push(filters.documentType);
+      paramIdx++;
+    }
+
+    if (filters?.dateRange?.start) {
+      conditions.push(`"createdAt" >= $${paramIdx}`);
+      params.push(filters.dateRange.start);
+      paramIdx++;
+    }
+
+    if (filters?.dateRange?.end) {
+      conditions.push(`"createdAt" <= $${paramIdx}`);
+      params.push(filters.dateRange.end);
+      paramIdx++;
+    }
+
+    if (filters?.tags && filters.tags.length > 0) {
+      conditions.push(`metadata->'tags' ?| $${paramIdx}`);
+      params.push(filters.tags);
+      paramIdx++;
+    }
+
+    params.push(limit);
+
+    const sql = `
+      SELECT id, title, author, type, metadata, "createdAt",
+             ts_rank(
+               to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, '')),
+               to_tsquery($2)
+             ) AS rank
+      FROM documents
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY rank DESC, "createdAt" DESC
+      LIMIT $${paramIdx}
+    `;
+
+    try {
+      const rows = await context.db.postgres.query<Document & { rank: number }>(sql, params);
+
+      return rows.map((row, idx) => ({
+        document: {
+          id: row.id,
+          title: row.title,
+          author: row.author,
+          type: row.type,
+          metadata: row.metadata,
+        },
+        score: row.rank ?? (1 - idx * 0.05),
+        relevance: Math.min((row.rank ?? 0.5) * 2, 1),
+      }));
+    } catch (error) {
+      // If full-text search operators are unavailable (e.g. missing tsvector
+      // column), fall back to a simple ILIKE query.
+      context.logger.warn('Full-text search failed, falling back to ILIKE', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      return this.keywordSearchIlike(query, userId, context, limit, filters);
+    }
+  }
+
+  /**
+   * Simple ILIKE-based keyword search fallback.
+   */
+  private async keywordSearchIlike(
+    query: string,
+    userId: string,
+    context: ToolContext,
+    limit: number,
+    filters?: LibrarySearchFilters,
+  ): Promise<LibrarySearchResult[]> {
+    const conditions: string[] = ['"userId" = $1'];
+    const params: unknown[] = [userId];
+    let paramIdx = 2;
+
+    conditions.push(`(title ILIKE $${paramIdx} OR content ILIKE $${paramIdx})`);
+    params.push(`%${query}%`);
+    paramIdx++;
+
+    if (filters?.documentType) {
+      conditions.push(`type = $${paramIdx}`);
+      params.push(filters.documentType);
+      paramIdx++;
+    }
+
+    params.push(limit);
+
+    const sql = `
+      SELECT id, title, author, type, metadata, "createdAt"
+      FROM documents
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY "createdAt" DESC
+      LIMIT $${paramIdx}
+    `;
+
+    const rows = await context.db.postgres.query<Document>(sql, params);
+
+    return rows.map((row, idx) => ({
+      document: {
+        id: row.id,
+        title: row.title,
+        author: row.author,
+        type: row.type,
+        metadata: row.metadata,
+      },
+      score: 1 - idx * 0.05,
+      relevance: 1 - idx * 0.05,
+    }));
+  }
+
+  /**
    * Filter matches by user and enhance with document metadata
    */
   private async filterAndEnhanceMatches(
     matches: Match[],
     userId: string,
-    filters?: LibrarySearchFilters,
-    context: ToolContext
+    context: ToolContext,
+    filters?: LibrarySearchFilters
   ): Promise<LibrarySearchResult[]> {
     // Get document IDs from matches
     const documentIds = matches.map(m => m.id);
@@ -199,7 +394,7 @@ export class LibrarySearchTool extends BaseTool {
       }
 
       if (filters?.tags) {
-        const docTags = document.metadata?.tags || [];
+        const docTags = (document.metadata as Record<string, unknown> | undefined)?.tags as string[] || [];
         if (!filters.tags.some(tag => docTags.includes(tag))) {
           continue;
         }
