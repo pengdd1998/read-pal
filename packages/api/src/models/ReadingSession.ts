@@ -15,11 +15,12 @@ interface ReadingSessionAttributes {
   pagesRead: number;
   highlights: number;
   notes: number;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-interface ReadingSessionCreationAttributes extends Optional<ReadingSessionAttributes, 'id' | 'endedAt' | 'createdAt' | 'updatedAt'> {}
+interface ReadingSessionCreationAttributes extends Optional<ReadingSessionAttributes, 'id' | 'endedAt' | 'isActive' | 'createdAt' | 'updatedAt'> {}
 
 export class ReadingSession extends Model<ReadingSessionAttributes, ReadingSessionCreationAttributes> implements ReadingSessionAttributes {
   public id!: string;
@@ -31,6 +32,7 @@ export class ReadingSession extends Model<ReadingSessionAttributes, ReadingSessi
   public pagesRead!: number;
   public highlights!: number;
   public notes!: number;
+  public isActive!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -86,6 +88,11 @@ ReadingSession.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     createdAt: {
       type: DataTypes.DATE,
