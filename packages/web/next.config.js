@@ -2,11 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@read-pal/shared'],
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
-  },
   async rewrites() {
-    const apiTarget = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiTarget = process.env.API_URL || 'http://localhost:3001';
     return [
       {
         source: '/api/:path*',

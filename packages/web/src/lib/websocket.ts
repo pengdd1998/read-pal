@@ -22,8 +22,12 @@ class WebSocketClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    this.url = apiUrl.replace('http', 'ws').replace('https', 'wss') + '/ws/agents';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    // Use current host for WebSocket if no explicit API URL
+    const wsBase = apiUrl
+      ? apiUrl.replace('http', 'ws').replace('https', 'wss')
+      : `${typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws'}://${typeof window !== 'undefined' ? window.location.host : 'localhost:3000'}`;
+    this.url = wsBase + '/ws/agents';
   }
 
   connect(token: string): void {
