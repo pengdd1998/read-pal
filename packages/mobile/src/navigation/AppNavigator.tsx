@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import type { NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Colors, Typography } from '../lib/theme';
@@ -17,19 +18,21 @@ type AuthStackParamList = {
 
 type MainTabParamList = {
   Library: undefined;
-  Reader: { bookId: string; title: string };
   Chat: undefined;
   Profile: { setAuth: (token: string | null) => void };
+};
+
+type ReaderStackParamList = {
+  Reader: { bookId: string; title: string };
 };
 
 export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   Main: NavigatorScreenParams<MainTabParamList>;
+  Reader: NavigatorScreenParams<ReaderStackParamList>;
 };
 
-import type { NavigatorScreenParams } from '@react-navigation/native';
-
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -64,13 +67,10 @@ function MainNavigator({ setAuth }: MainNavigatorProps) {
     >
       <Tab.Screen
         name="Library"
-        component={LibraryScreen}
+        children={({ navigation }) => (
+          <LibraryScreen navigation={navigation} />
+        )}
         options={{ title: 'Library', tabBarLabel: 'Library' }}
-      />
-      <Tab.Screen
-        name="Reader"
-        component={ReaderScreen}
-        options={{ title: 'Reader', tabBarLabel: 'Reader' }}
       />
       <Tab.Screen
         name="Chat"
@@ -98,9 +98,17 @@ export function AppNavigator({ isAuthenticated, setAuth }: AppNavigatorProps) {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
-          <Stack.Screen name="Main">
-            {() => <MainNavigator setAuth={setAuth} />}
-          </Stack.Screen>
+          <>
+            <Stack.Screen name="Main">
+              {() => <MainNavigator setAuth={setAuth} />}
+            </Stack.Screen>
+            <Stack.Screen
+              name="Reader"
+              options={{ headerShown: true, headerTintColor: Colors.text, headerTitleStyle: { ...Typography.h3, color: Colors.text } }}
+            >
+              {({ route, navigation }) => <ReaderScreen route={route as any} navigation={navigation} />}
+            </Stack.Screen>
+          </>
         ) : (
           <Stack.Screen name="Auth">
             {() => <AuthNavigator setAuth={setAuth} />}

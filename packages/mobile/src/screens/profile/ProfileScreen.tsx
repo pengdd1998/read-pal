@@ -9,8 +9,16 @@ import {
 } from 'react-native';
 import { api } from '../../lib/api';
 import { Colors, Spacing, Typography, BorderRadius, defaultStyles } from '../../lib/theme';
-import type { User } from '@read-pal/shared';
 import { API_ROUTES } from '@read-pal/shared';
+
+/** Subset of User fields we actually display – avoids relying on strict shared types
+ *  that require Date objects (JSON returns strings). */
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+}
 
 interface DashboardStats {
   booksRead: number;
@@ -45,8 +53,8 @@ interface ProfileProps {
   setAuth: (token: string | null) => void;
 }
 
-export function ProfileScreen({ navigation, setAuth }: ProfileProps) {
-  const [user, setUser] = useState<User | null>(null);
+export function ProfileScreen({ setAuth }: ProfileProps) {
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     booksRead: 0,
     totalPages: 0,
@@ -62,10 +70,10 @@ export function ProfileScreen({ navigation, setAuth }: ProfileProps) {
     async function loadProfile() {
       try {
         const [userRes, statsRes] = await Promise.all([
-          api.get<User>(API_ROUTES.AUTH_ME),
+          api.get<UserProfile>(API_ROUTES.AUTH_ME),
           api.get<DashboardResponse>(API_ROUTES.STATS_DASHBOARD),
         ]);
-        if (userRes.success && userRes.data) setUser(userRes.data as unknown as User);
+        if (userRes.success && userRes.data) setUser(userRes.data as unknown as UserProfile);
         if (statsRes.success && statsRes.data) {
           const dashboard = statsRes.data as unknown as DashboardResponse;
           setStats(dashboard.stats);

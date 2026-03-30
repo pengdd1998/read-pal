@@ -12,20 +12,33 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { api } from '../../lib/api';
 import { Colors, Spacing, Typography, BorderRadius } from '../../lib/theme';
-import type { Book } from '@read-pal/shared';
 import { API_ROUTES } from '@read-pal/shared';
 
+/** Subset of Book fields used in the library list. Avoids importing the strict
+ *  shared `Book` type which requires Date objects that don't survive JSON. */
+interface BookItem {
+  id: string;
+  title: string;
+  author: string;
+  coverUrl?: string;
+  fileType: string;
+  totalPages: number;
+  currentPage: number;
+  progress: number;
+  status: 'unread' | 'reading' | 'completed';
+}
+
 export function LibraryScreen({ navigation }: any) {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const fetchBooks = useCallback(async () => {
     try {
-      const res = await api.get<Book[]>(API_ROUTES.BOOKS);
+      const res = await api.get<BookItem[]>(API_ROUTES.BOOKS);
       if (res.success && res.data) {
-        setBooks(res.data as unknown as Book[]);
+        setBooks(res.data as unknown as BookItem[]);
       }
     } catch {
       // silently fail - shows empty state
@@ -66,7 +79,7 @@ export function LibraryScreen({ navigation }: any) {
         type: file.mimeType || 'application/octet-stream',
       } as any);
 
-      const res = await api.upload<{ book: Book }>(API_ROUTES.BOOK_UPLOAD, formData);
+      const res = await api.upload<{ book: BookItem }>(API_ROUTES.BOOK_UPLOAD, formData);
       if (res.success) {
         fetchBooks();
       } else {
@@ -79,8 +92,15 @@ export function LibraryScreen({ navigation }: any) {
     }
   }
 
-  function openBook(item: Book) {
-    navigation.navigate('Reader', { bookId: item.id, title: item.title });
+  function openBook(item: BookItem) {
+    // Navigate to the Reader screen in the root stack (not tab)
+    navigation.getParent()?.navigate('Reader', { bookId: item.id, title: item.title });
+  }
+
+  /** Normalise progress to 0-1 range for display. */
+  function displayProgress(value: number): number {
+    if (value > 1) return value / 100;
+    return value;
   }
 
   if (loading) {
@@ -118,7 +138,7 @@ export function LibraryScreen({ navigation }: any) {
             {item.status === 'reading' && (
               <View style={styles.progressBadge}>
                 <Text style={styles.progressText}>
-                  {Math.round(item.progress * 100)}%
+                  {Math.round(displayProgress(item.progress) * 100)}%
                 </Text>
               </View>
             )}

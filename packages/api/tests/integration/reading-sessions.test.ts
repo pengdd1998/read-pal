@@ -154,7 +154,11 @@ describe('Reading Sessions API', () => {
         startedAt: new Date(Date.now() - 120000), // 2 minutes ago
         isActive: true,
         pagesRead: 5,
-        update: jest.fn().mockResolvedValue(undefined),
+        update: jest.fn().mockImplementation(function (this: any, data: any) {
+          // Simulate Sequelize update applying changes to the instance
+          Object.assign(this, data);
+          return Promise.resolve(undefined);
+        }),
       };
       (ReadingSession.findOne as jest.Mock).mockResolvedValue(mockSession);
 
@@ -166,7 +170,10 @@ describe('Reading Sessions API', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.pagesRead).toBe(8);
-      expect(mockSession.update).toHaveBeenCalled();
+      expect(response.body.data.duration).toBeGreaterThan(0);
+      expect(mockSession.update).toHaveBeenCalledWith(
+        expect.objectContaining({ pagesRead: 8 })
+      );
     });
   });
 
