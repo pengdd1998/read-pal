@@ -21,10 +21,17 @@ interface DisplayMessage {
   createdAt: string;
 }
 
-interface ChatResponse {
-  content: string;
-  agentsUsed: string[];
+/**
+ * The server agent-chat endpoint returns the response in a flat shape:
+ *   { success, content, agentsUsed, metadata, error }
+ * NOT nested under `data`. We need to access `content` directly from the
+ * response object rather than from `res.data`.
+ */
+interface AgentChatRawResponse {
   success: boolean;
+  content?: string;
+  agentsUsed?: string[];
+  error?: { code: string; message: string };
 }
 
 export function ChatScreen() {
@@ -48,18 +55,26 @@ export function ChatScreen() {
     setSending(true);
 
     try {
-      const res = await api.post<ChatResponse>(API_ROUTES.AGENT_CHAT, {
+      const res = await api.post<AgentChatRawResponse>(API_ROUTES.AGENT_CHAT, {
         message: text,
         agent: 'companion',
       });
 
-      if (res.success && res.data?.content) {
+      // The server returns content at the top level, not under `data`.
+      // Our api client returns the parsed JSON body directly, so we check
+      // both the top-level `content` and `res.data?.content` for safety.
+      const responseContent =
+        (res as any).content ||
+        res.data?.content ||
+        '';
+
+      if (res.success && responseContent) {
         setMessages((prev) => [
           ...prev,
           {
             id: `agent-${Date.now()}`,
             role: 'assistant',
-            content: res.data!.content,
+            content: responseContent,
             createdAt: new Date().toISOString(),
           },
         ]);
@@ -69,7 +84,7 @@ export function ChatScreen() {
           {
             id: `err-${Date.now()}`,
             role: 'assistant',
-            content: res.error?.message || 'Sorry, I could not generate a response.',
+            content: res.error?.message || (res as any).error?.message || 'Sorry, I could not generate a response.',
             createdAt: new Date().toISOString(),
           },
         ]);

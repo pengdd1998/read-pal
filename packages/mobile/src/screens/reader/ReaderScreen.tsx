@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { api } from '../../lib/api';
 import { Colors, Spacing, Typography, BorderRadius } from '../../lib/theme';
-import type { Book } from '@read-pal/shared';
 import { API_ROUTES } from '@read-pal/shared';
 
 interface ContentResponse {
@@ -27,6 +26,17 @@ interface ContentResponse {
     order: number;
   }>;
   content: string;
+}
+
+/** Subset of Book fields needed by the reader screen. */
+interface BookInfo {
+  id: string;
+  title: string;
+  author: string;
+  totalPages: number;
+  currentPage: number;
+  progress: number;
+  status: string;
 }
 
 interface ReaderProps {
@@ -54,10 +64,19 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+/**
+ * Normalise progress to a 0-1 range. The API may store progress as
+ * a percentage (0-100) or as a fraction (0-1).
+ */
+function normalizeProgress(value: number): number {
+  if (value > 1) return value / 100;
+  return value;
+}
+
 export function ReaderScreen({ route }: ReaderProps) {
   const { bookId, title } = route.params;
   const [displayText, setDisplayText] = useState('');
-  const [book, setBook] = useState<Book | null>(null);
+  const [book, setBook] = useState<BookInfo | null>(null);
   const [fontSize, setFontSize] = useState(16);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -68,7 +87,7 @@ export function ReaderScreen({ route }: ReaderProps) {
       try {
         const [contentRes, bookRes] = await Promise.all([
           api.get<ContentResponse>(API_ROUTES.BOOK_CONTENT(bookId)),
-          api.get<Book>(API_ROUTES.BOOK_DETAIL(bookId)),
+          api.get<BookInfo>(API_ROUTES.BOOK_DETAIL(bookId)),
         ]);
 
         if (contentRes.success && contentRes.data) {
@@ -82,9 +101,9 @@ export function ReaderScreen({ route }: ReaderProps) {
         }
 
         if (bookRes.success && bookRes.data) {
-          const b = bookRes.data as unknown as Book;
+          const b = bookRes.data as unknown as BookInfo;
           setBook(b);
-          setProgress(b.progress);
+          setProgress(normalizeProgress(b.progress));
           setFontSize(16);
         }
       } catch {

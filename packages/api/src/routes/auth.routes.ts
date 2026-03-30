@@ -194,8 +194,21 @@ router.post(
  */
 router.get('/me', async (req, res) => {
   try {
-    // User ID is extracted from token by auth middleware
-    const userId = (req as any).userId;
+    // Extract user ID from token or request
+    const authHeader = req.headers.authorization;
+    let userId: string | undefined;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = authHeader.substring(7);
+        const secret = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+        const decoded = jwt.verify(token, secret);
+        userId = (decoded as any).userId || (decoded as any).sub;
+      } catch {
+        // Token verification failed
+      }
+    }
 
     if (!userId) {
       return res.status(401).json({
