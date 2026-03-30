@@ -1,5 +1,7 @@
 /**
  * API Client Configuration
+ *
+ * SSR-safe: all browser APIs (localStorage, window) are guarded.
  */
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
@@ -19,33 +21,36 @@ class ApiClient {
       withCredentials: true,
     });
 
-    // Request interceptor
+    // Request interceptor - attach auth token (browser only)
     this.client.interceptors.request.use(
       (config) => {
-        // Add auth token if available
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('auth_token');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
         return config;
       },
-      (error) => {
-        return Promise.reject(error);
-      }
+      (error) => Promise.reject(error),
     );
 
-    // Response interceptor
+    // Response interceptor - handle 401 (browser only)
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError<ApiResponse>) => {
-        // Handle common errors
-        if (error.response?.status === 401) {
-          // Unauthorized - clear token and redirect to login
+        if (
+          typeof window !== 'undefined' &&
+          error.response?.status === 401 &&
+          !window.location.pathname.startsWith('/login') &&
+          !window.location.pathname.startsWith('/register')
+        ) {
           localStorage.removeItem('auth_token');
+          localStorage.removeItem('user');
           window.location.href = '/login';
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -76,11 +81,9 @@ class ApiClient {
 
   /** Upload a file (FormData) to a given endpoint */
   async upload<T>(url: string, formData: FormData): Promise<ApiResponse<T>> {
-    const token = localStorage.getItem('auth_token');
     const response = await this.client.post<ApiResponse<T>>(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
     return response.data;

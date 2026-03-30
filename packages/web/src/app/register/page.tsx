@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,46 +20,27 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const result = await api.post<{ token: string; user: any }>(
-        '/api/auth/register',
-        { name, email, password },
-      );
-
-      if (result.success && result.data) {
-        localStorage.setItem('auth_token', result.data.token);
-        localStorage.setItem('user', JSON.stringify(result.data.user));
-        router.push('/library');
-      } else {
-        setError(result.error?.message || 'Registration failed');
-      }
-    } catch (err) {
-      setError('Failed to connect to server');
+      await register(name, email, password);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err?.response?.data?.error?.message || err?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="card">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary-600 mb-2">
-              read-pal
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Join thousands of readers
-            </p>
+            <h1 className="text-3xl font-bold text-primary-600 mb-2">read-pal</h1>
+            <p className="text-gray-600 dark:text-gray-400">Create your account</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-6">
             <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium mb-2"
-              >
-                Name
-              </label>
+              <label htmlFor="name" className="block text-sm font-medium mb-2">Name</label>
               <input
                 id="name"
                 type="text"
@@ -70,12 +53,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium mb-2"
-              >
-                Email
-              </label>
+              <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
               <input
                 id="email"
                 type="email"
@@ -88,12 +66,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium mb-2"
-              >
-                Password
-              </label>
+              <label htmlFor="password" className="block text-sm font-medium mb-2">Password</label>
               <input
                 id="password"
                 type="password"
@@ -107,25 +80,19 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded">
+              <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded text-sm">
                 {error}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary w-full"
-            >
+            <button type="submit" disabled={loading} className="btn btn-primary w-full">
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
-            <a href="/login" className="text-primary-600 hover:underline">
-              Sign in
-            </a>
+            <Link href="/login" className="text-primary-600 hover:underline">Sign in</Link>
           </div>
         </div>
       </div>
