@@ -8,10 +8,14 @@ import path from 'path';
 import fs from 'fs/promises';
 import { Book, Document } from '../models';
 import { BookProcessor } from '../services/BookProcessor';
+import { ContentProcessor } from '../services/ContentProcessor';
+import { SemanticSearch } from '../services/SemanticSearch';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 const router: Router = Router();
 const processor = new BookProcessor();
+const contentProcessor = new ContentProcessor();
+const semanticSearch = new SemanticSearch();
 
 // Configure multer for file uploads
 const upload = multer({
@@ -103,16 +107,52 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
     });
 
     // Process content
-    let content, chapters;
+    let content = '';
+    let chapters: any[] = [];
 
-    if (fileType === 'epub') {
-      ({ content, chapters } = await processor.processEPUB(tempPath, book.id));
-    } else {
-      ({ content, chapters } = await processor.processPDF(file.buffer, book.id));
+    try {
+      if (fileType === 'epub') {
+        ({ content, chapters } = await processor.processEPUB(tempPath, book.id));
+      } else {
+        ({ content, chapters } = await processor.processPDF(file.buffer, book.id));
+      }
+    } catch (processError) {
+      console.error('Content processing failed:', processError);
+      // Clean up - delete the book record since content failed
+      await book.destroy();
+      try { await fs.unlink(tempPath); } catch {}
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'PROCESSING_ERROR',
+          message: 'Failed to process book content. The file may be corrupted.',
+        },
+      });
     }
 
     // Save content
     await processor.saveContent(book.id, userId, content, chapters);
+
+    // Background: advanced content processing + semantic indexing
+    // Fire-and-forget so upload response isn't delayed
+    setImmediate(async () => {
+      try {
+        const processed = contentProcessor.processPlainText(content, book.id, bookTitle, bookAuthor);
+
+        const searchChunks = processed.chunks.map((chunk) => ({
+          id: chunk.id,
+          content: chunk.content,
+          chapterTitle: chunk.chapterTitle,
+          startIndex: chunk.startOffset,
+          endIndex: chunk.endOffset,
+          order: chunk.chunkIndex,
+        }));
+        await semanticSearch.indexChunks(userId, book.id, searchChunks);
+        console.log(`[ContentPipeline] Indexed ${searchChunks.length} chunks for book ${book.id}`);
+      } catch (pipelineError) {
+        console.warn('[ContentPipeline] Background processing skipped:', (pipelineError as Error).message);
+      }
+    });
 
     // Update book with chapter count
     book.totalPages = chapters.length;

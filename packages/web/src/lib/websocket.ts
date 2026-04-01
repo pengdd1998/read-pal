@@ -38,7 +38,8 @@ class WebSocketClient {
 
     try {
       const protocol = this.url.startsWith('wss') ? 'wss' : 'ws';
-      this.ws = new WebSocket(`${protocol}://${this.url.replace(/^(wss?):\/\//, '')}`, ['Bearer', token]);
+      const host = this.url.replace(/^(wss?):\/\//, '');
+      this.ws = new WebSocket(`${protocol}://${host}?token=${encodeURIComponent(token)}`);
 
       this.ws.onopen = () => {
         this.reconnectAttempts = 0;

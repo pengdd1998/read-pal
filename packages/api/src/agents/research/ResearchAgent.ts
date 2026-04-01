@@ -8,7 +8,7 @@
  * - Fact checking and verification of claims in the text
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
@@ -19,7 +19,6 @@ import { WebSearchTool } from '../tools/WebSearchTool';
 // ============================================================================
 
 interface ResearchAgentConfig {
-  apiKey: string;
   model?: string;
   maxTokens?: number;
   temperature?: number;
@@ -72,22 +71,16 @@ interface ResearchedTopic {
 // ============================================================================
 
 export class ResearchAgent {
-  private anthropic: Anthropic;
   private config: Required<ResearchAgentConfig>;
   private tools: Map<string, BaseTool>;
   private conversationHistory: Map<string, ResearchMessage[]>;
 
-  constructor(config: ResearchAgentConfig) {
+  constructor(config: ResearchAgentConfig = {}) {
     this.config = {
-      apiKey: config.apiKey,
-      model: config.model || 'claude-3-5-sonnet-20241022',
+      model: config.model || DEFAULT_MODEL,
       maxTokens: config.maxTokens || 4096,
       temperature: config.temperature || 0.5,
     };
-
-    this.anthropic = new Anthropic({
-      apiKey: this.config.apiKey,
-    });
 
     this.tools = new Map();
     this.conversationHistory = new Map();
@@ -267,29 +260,25 @@ Remember: You are a research specialist helping someone learn deeply about what 
         toolResults
       );
 
-      // Phase 3: Generate the research response via Claude
-      const messages: Anthropic.MessageParam[] = [
+      // Phase 3: Generate the research response via GLM
+      const messages: { role: 'user' | 'assistant'; content: string }[] = [
         ...history.map((msg) => ({
           role: msg.role,
           content: msg.content,
         })),
         {
-          role: 'user',
+          role: 'user' as const,
           content: enrichedMessage,
         },
       ];
 
-      const response = await this.anthropic.messages.create({
+      const responseText = await chatCompletion({
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
+        maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
         system: this.getSystemPrompt(context),
         messages,
       });
-
-      // Extract response text
-      const responseText =
-        response.content[0].type === 'text' ? response.content[0].text : '';
 
       // Update conversation history
       history.push({ role: 'user', content: message });

@@ -24,6 +24,7 @@ import discoveryRoutes from './routes/discovery.routes';
 import interventionsRoutes from './routes/interventions.routes';
 import settingsRoutes from './routes/settings.routes';
 import readingSessionsRoutes from './routes/reading-sessions.routes';
+import moodRoutes from './routes/mood.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -34,7 +35,8 @@ import { FriendAgent } from './agents/friend/FriendAgent';
 import { AgentOrchestrator, OrchestratorConfig } from './agents/orchestrator/AgentOrchestrator';
 
 // Database
-import { sequelize } from './db';
+import { sequelize, initPinecone } from './db';
+import { DEFAULT_MODEL } from './services/llmClient';
 
 // WebSocket
 import { wsManager } from './services/WebSocketManager';
@@ -69,14 +71,13 @@ const config: any = {
     user: process.env.NEO4J_USER || 'neo4j',
     password: process.env.NEO4J_PASSWORD || 'password'
   },
-  anthropic: {
-    apiKey: process.env.ANTHROPIC_API_KEY || '',
-    modelHaiku: (process.env.CLAUDE_MODEL_HAIKU || 'claude-3-5-haiku-20241022') as any,
-    modelSonnet: (process.env.CLAUDE_MODEL_SONNET || 'claude-3-5-sonnet-20241022') as any,
-    modelOpus: (process.env.CLAUDE_MODEL_OPUS || 'claude-3-opus-20240229') as any,
-    maxTokens: parseInt(process.env.CLAUDE_MAX_TOKENS || '4096', 10),
-    temperature: parseFloat(process.env.CLAUDE_TEMPERATURE || '0.7'),
-    timeout: parseInt(process.env.CLAUDE_TIMEOUT || '30000', 10)
+  glm: {
+    apiKey: process.env.GLM_API_KEY || '',
+    baseUrl: process.env.GLM_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4/',
+    model: process.env.GLM_MODEL || DEFAULT_MODEL,
+    maxTokens: parseInt(process.env.GLM_MAX_TOKENS || '4096', 10),
+    temperature: parseFloat(process.env.GLM_TEMPERATURE || '0.7'),
+    timeout: parseInt(process.env.GLM_TIMEOUT || '30000', 10),
   },
   auth: {
     provider: process.env.AUTH_PROVIDER || 'auth0',
@@ -130,7 +131,7 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
     version: '1.0.0',
     purpose: displayName,
     responsibilities: [],
-    model: 'claude-3-5-sonnet-20241022' as any,
+    model: DEFAULT_MODEL as any,
     systemPrompt: '',
     tools: [],
     memoryType: 'session' as any,
@@ -146,17 +147,16 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
         // Each agent has a different method signature - adapt accordingly
         switch (name) {
           case 'companion':
-            // CompanionAgent.chat(userId, message, context)
-            result = await agentInstance.chat(request.userId, query, request.context);
-            break;
           case 'coach':
-            // CoachAgent.chat(userId, message, context)
+            // CompanionAgent/CoachAgent.chat(userId, message, context)
             result = await agentInstance.chat(request.userId, query, request.context);
             break;
-          case 'research':
+          case 'research': {
             // ResearchAgent.execute(userId, message, action, context)
-            result = await agentInstance.execute(request.userId, query, 'deep_dive', request.context);
+            const action = (request.action === 'chat' ? 'deep_dive' : request.action) as string;
+            result = await agentInstance.execute(request.userId, query, action, request.context);
             break;
+          }
           case 'synthesis':
             // SynthesisAgent.execute(request) - already uses AgentRequest
             result = await agentInstance.execute(request);
@@ -176,7 +176,10 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
             }
         }
 
-        // Extract response content - agents return { response } not { content }
+        // Extract response content - agents return different shapes:
+        // Companion/Coach/Research: { response: string }
+        // Friend: { response: string, persona, emotion }
+        // Synthesis: { content: string, success: boolean }
         const content = result?.response || result?.content || result?.message || '';
 
         return {
@@ -187,7 +190,7 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
             tokensUsed: result?.metadata?.tokensUsed || result?.tokensUsed || 0,
             cost: result?.metadata?.cost || result?.cost || 0,
             duration: Date.now() - startTime,
-            modelUsed: result?.metadata?.modelUsed || result?.modelUsed || 'claude-3-5-sonnet-20241022' as any,
+            modelUsed: result?.metadata?.modelUsed || result?.modelUsed || DEFAULT_MODEL as any,
           },
         };
       } catch (error: any) {
@@ -200,7 +203,7 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
             tokensUsed: 0,
             cost: 0,
             duration: Date.now() - startTime,
-            modelUsed: 'claude-3-5-sonnet-20241022' as any,
+            modelUsed: DEFAULT_MODEL as any,
           },
           error: {
             code: 'AGENT_ERROR',
@@ -216,20 +219,20 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
 let orchestrator: AgentOrchestrator | null = null;
 
 async function initializeAgents(): Promise<void> {
-  const apiKey = config.anthropic?.apiKey || process.env.ANTHROPIC_API_KEY || '';
+  const apiKey = config.glm?.apiKey || process.env.GLM_API_KEY || '';
 
   if (!apiKey) {
-    logger.warn('No ANTHROPIC_API_KEY configured - agents will not be available');
+    logger.warn('No GLM_API_KEY configured - agents will not be available');
     return;
   }
 
   try {
-    // Create agent instances
-    const companionAgent = new CompanionAgent({ apiKey });
-    const researchAgent = new ResearchAgent({ apiKey });
-    const coachAgent = new CoachAgent({ apiKey });
-    const synthesisAgent = new SynthesisAgent({ apiKey });
-    const friendAgent = new FriendAgent({ apiKey });
+    // Create agent instances (GLM client reads env vars directly)
+    const companionAgent = new CompanionAgent();
+    const researchAgent = new ResearchAgent();
+    const coachAgent = new CoachAgent();
+    const synthesisAgent = new SynthesisAgent();
+    const friendAgent = new FriendAgent();
 
     // Wrap agents to conform to IAgent interface
     const agents = new Map<string, IAgent>();
@@ -313,6 +316,7 @@ app.use('/api/discovery', discoveryRoutes);
 app.use('/api/interventions', interventionsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/reading-sessions', readingSessionsRoutes);
+app.use('/api/agents/mood', moodRoutes);
 
 // ============================================================================
 // Error Handling
@@ -330,6 +334,9 @@ if (require.main === module) {
     // Sync database
     await syncDatabase();
 
+    // Initialize Pinecone (optional — logs warning if not configured)
+    try { await initPinecone(); } catch (e) { console.warn('Pinecone init skipped:', (e as Error).message); }
+
     // Initialize agents
     await initializeAgents();
 
@@ -338,6 +345,7 @@ if (require.main === module) {
 
       // Initialize WebSocket on the HTTP server
       wsManager.initialize(server);
+      app.set('wsManager', wsManager);
 
       console.log(`
 ╔═══════════════════════════════════════════════════════╗

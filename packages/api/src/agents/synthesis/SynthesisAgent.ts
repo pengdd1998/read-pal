@@ -13,7 +13,6 @@
  * - Summary reports: generate comprehensive synthesis across library
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import type {
   AgentContext,
   AgentError,
@@ -21,10 +20,10 @@ import type {
   AgentResponse,
   AgentResponseMetadata,
   BookReference,
-  ClaudeModel,
   ITool,
   ToolContext,
 } from '../../types';
+import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
 
@@ -33,8 +32,7 @@ import { LibrarySearchTool } from '../tools/LibrarySearchTool';
 // ============================================================================
 
 interface SynthesisAgentConfig {
-  apiKey: string;
-  model?: ClaudeModel;
+  model?: string;
   maxTokens?: number;
   temperature?: number;
 }
@@ -188,7 +186,6 @@ interface Contradiction {
 // ============================================================================
 
 export class SynthesisAgent {
-  private anthropic: Anthropic;
   private config: Required<SynthesisAgentConfig>;
   private tools: Map<string, BaseTool>;
   private conversationHistory: Map<string, SynthesisMessage[]>;
@@ -201,17 +198,12 @@ export class SynthesisAgent {
     'summary_report',
   ];
 
-  constructor(config: SynthesisAgentConfig) {
+  constructor(config: SynthesisAgentConfig = {}) {
     this.config = {
-      apiKey: config.apiKey,
-      model: config.model || 'claude-3-opus-20240229',
+      model: config.model || DEFAULT_MODEL,
       maxTokens: config.maxTokens || 4096,
       temperature: config.temperature || 0.6,
     };
-
-    this.anthropic = new Anthropic({
-      apiKey: this.config.apiKey,
-    });
 
     this.tools = new Map();
     this.conversationHistory = new Map();
@@ -381,7 +373,7 @@ Please provide:
 2. Specific connections between the works
 3. A synthesized understanding that weaves these insights together`;
 
-    const response = await this.callClaude(prompt, userId);
+    const response = await this.callLLM(prompt, userId);
     const themes = this.extractThemes(response);
     const connections = this.extractConnections(response, searchResults);
 
@@ -467,7 +459,7 @@ Please analyze:
 2. Where do they agree, disagree, or extend each other?
 3. What unique perspective does each work bring?`;
 
-    const analysis = await this.callClaude(prompt, userId);
+    const analysis = await this.callLLM(prompt, userId);
 
     return {
       result: {
@@ -528,7 +520,7 @@ NODES:
 EDGES:
 [{"source": "...", "target": "...", "label": "...", "strength": 0.7}, ...]`;
 
-    const response = await this.callClaude(prompt, userId);
+    const response = await this.callLLM(prompt, userId);
     const { nodes, edges, summary } = this.parseConceptMapResponse(response, maxNodes);
 
     return {
@@ -589,7 +581,7 @@ For each contradiction found, provide:
 Be thorough but fair. Not all differences are contradictions - sometimes different contexts
 or definitions lead to surface-level disagreements that resolve on deeper analysis.`;
 
-    const response = await this.callClaude(prompt, userId);
+    const response = await this.callLLM(prompt, userId);
     const contradictions = this.parseContradictions(response, searchResults, minSeverity);
 
     return {
@@ -651,7 +643,7 @@ Please create a report that includes:
 The report should feel like a brilliant academic helping the reader see the big picture
 of their intellectual journey.`;
 
-    const response = await this.callClaude(prompt, userId);
+    const response = await this.callLLM(prompt, userId);
     const themes = this.extractThemesFromReport(response);
     const insights = this.extractInsightsFromReport(response);
     const booksCovered = searchResults?.results?.length || 0;
@@ -793,9 +785,9 @@ Remember: You are an AI assistant helping someone understand how ideas connect a
   // ==========================================================================
 
   /**
-   * Call Claude with the synthesis-optimized prompt
+   * Call LLM with the synthesis-optimized prompt
    */
-  private async callClaude(prompt: string, userId: string): Promise<string> {
+  private async callLLM(prompt: string, userId: string): Promise<string> {
     // Get or create conversation history
     let history = this.conversationHistory.get(userId);
     if (!history) {
@@ -803,7 +795,7 @@ Remember: You are an AI assistant helping someone understand how ideas connect a
       this.conversationHistory.set(userId, history);
     }
 
-    const messages: Anthropic.MessageParam[] = [
+    const messages = [
       ...history.map((msg) => ({
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
@@ -811,16 +803,13 @@ Remember: You are an AI assistant helping someone understand how ideas connect a
       { role: 'user' as const, content: prompt },
     ];
 
-    const response = await this.anthropic.messages.create({
+    const responseText = await chatCompletion({
       model: this.config.model,
-      max_tokens: this.config.maxTokens,
+      maxTokens: this.config.maxTokens,
       temperature: this.config.temperature,
       system: this.getSystemPrompt(),
       messages,
     });
-
-    const responseText =
-      response.content[0].type === 'text' ? response.content[0].text : '';
 
     // Update conversation history
     history.push({ role: 'user', content: prompt });

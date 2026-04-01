@@ -11,6 +11,7 @@ import type {
   Document,
 } from '../../types';
 import { BaseTool } from './BaseTool';
+import { SemanticSearch } from '../../services/SemanticSearch';
 
 /**
  * Library Search Tool
@@ -20,6 +21,12 @@ import { BaseTool } from './BaseTool';
  */
 export class LibrarySearchTool extends BaseTool {
   readonly name = 'library_search';
+  private semanticSearch: SemanticSearch;
+
+  constructor() {
+    super();
+    this.semanticSearch = new SemanticSearch();
+  }
   readonly description = 'Search across the user\'s reading library using semantic search to find relevant documents, passages, and concepts.';
   readonly category = 'database' as ToolCategory;
   readonly inputSchema = {
@@ -176,38 +183,11 @@ export class LibrarySearchTool extends BaseTool {
   }
 
   /**
-   * Generate embedding for search query.
-   *
-   * TODO: Replace with a real embedding model (OpenAI text-embedding-3-small,
-   * Voyage AI voyage-3, etc.) for production-quality semantic search.
-   *
-   * The current hash-based approach produces deterministic but semantically
-   * meaningless vectors. It allows the pipeline to function end-to-end during
-   * development but will not return meaningful similarity results.
+   * Generate embedding via SemanticSearch (OpenAI text-embedding-3-small
+   * with hash-based fallback when API key is unavailable).
    */
   private async generateEmbedding(query: string): Promise<number[]> {
-    const words = query.toLowerCase().split(/\s+/);
-    const embedding = new Array(1536).fill(0);
-
-    words.forEach((word, i) => {
-      const hash = this.simpleHash(word);
-      embedding[i % embedding.length] = (hash % 1000) / 1000;
-    });
-
-    return embedding;
-  }
-
-  /**
-   * Simple hash function for placeholder embeddings
-   */
-  private simpleHash(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash);
+    return this.semanticSearch.generateEmbedding(query);
   }
 
   /**

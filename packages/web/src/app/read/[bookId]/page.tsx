@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { ReaderView } from '@/components/reading/ReaderView';
 import { AnnotationPanel } from '@/components/reading/AnnotationPanel';
 import { CompanionChat } from '@/components/reading/CompanionChat';
+import { ReadingBackground } from '@/components/reading/ReadingBackground';
 import { api } from '@/lib/api';
 
 interface Chapter {
@@ -26,6 +27,7 @@ export default function ReadPage() {
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [bgEnabled, setBgEnabled] = useState(true);
 
   useEffect(() => {
     loadBookContent();
@@ -193,6 +195,21 @@ export default function ReadPage() {
 
   return (
     <div className="relative">
+      {/* Dynamic AI-generated reading background */}
+      <ReadingBackground
+        content={chapter.content}
+        enabled={bgEnabled}
+      />
+
+      {/* Background toggle */}
+      <button
+        onClick={() => setBgEnabled(!bgEnabled)}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-800 transition-colors"
+        title={bgEnabled ? 'Disable dynamic background' : 'Enable dynamic background'}
+      >
+        {bgEnabled ? '🎨 BG On' : '🎨 BG Off'}
+      </button>
+
       <ReaderView
         bookId={bookId}
         content={chapter.content}
@@ -203,6 +220,7 @@ export default function ReadPage() {
       />
       <AnnotationPanel
         annotations={annotations}
+        currentPageIndex={currentChapter}
         onAddHighlight={handleAddHighlight}
         onAddNote={handleAddNote}
         onAddBookmark={handleAddBookmark}

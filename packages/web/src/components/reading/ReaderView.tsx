@@ -60,19 +60,19 @@ export function ReaderView({
     >
       {/* Header */}
       <header
-        className={`flex items-center justify-between px-6 py-4 border-b transition-opacity duration-200 ${
+        className={`flex flex-col md:flex-row md:items-center md:justify-between px-4 md:px-6 py-3 md:py-4 border-b transition-opacity duration-200 gap-2 ${
           showControls ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <div>
-          <h1 className="text-xl font-semibold">{title}</h1>
+        <div className="min-w-0">
+          <h1 className="text-base md:text-xl font-semibold truncate">{title}</h1>
           <p className="text-sm opacity-70">
             Page {currentPage + 1} of {totalPages}
           </p>
         </div>
 
         {/* Reading Controls */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
           {/* Font Size */}
           <div className="flex items-center gap-2">
             <button
@@ -146,35 +146,35 @@ export function ReaderView({
 
       {/* Footer Navigation */}
       <footer
-        className={`flex items-center justify-between px-6 py-4 border-t transition-opacity duration-200 ${
+        className={`flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-t transition-opacity duration-200 ${
           showControls ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <button
           onClick={handlePrevious}
           disabled={currentPage === 0}
-          className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
         >
-          ← Previous
+          ← Prev
         </button>
 
         {/* Progress Bar */}
-        <div className="flex-1 mx-8">
+        <div className="flex-1 mx-2 md:mx-8">
           <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2">
             <div
               className="bg-primary-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentPage + 1) / totalPages) * 100}%` }}
             />
           </div>
-          <p className="text-center text-sm mt-2 opacity-70">
-            {Math.round(((currentPage + 1) / totalPages) * 100)}% complete
+          <p className="text-center text-xs md:text-sm mt-1 opacity-70">
+            {Math.round(((currentPage + 1) / totalPages) * 100)}%
           </p>
         </div>
 
         <button
           onClick={handleNext}
           disabled={currentPage >= totalPages - 1}
-          className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
         >
           Next →
         </button>

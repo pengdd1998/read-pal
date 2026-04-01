@@ -34,16 +34,11 @@ export function CompanionChat({ bookId, currentPage }: CompanionChatProps) {
     const token = localStorage.getItem('auth_token');
     if (token) wsClient.connect(token);
 
-    const handler = (msg: any) => {
-      if (msg.type === 'token' && msg.content) {
-        setMessages(prev => [...prev, { role: 'assistant', content: msg.content }]);
-      }
-    };
-
-    wsClient.onMessage(handler);
-
+    // Keep WS connection alive for status/heartbeat.
+    // HTTP response is the source of truth for assistant messages.
     return () => {
-      wsClient.offMessage(handler);
+      // Don't disconnect the singleton — other components may use it.
+      // The singleton manages its own lifecycle.
     };
   }, []);
 
@@ -114,10 +109,10 @@ export function CompanionChat({ bookId, currentPage }: CompanionChatProps) {
 
   return (
     <>
-      {/* Chat Toggle Button */}
+      {/* Chat Toggle Button — left side to avoid annotate button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-40 bg-primary-600 text-white p-4 rounded-full shadow-lg hover:bg-primary-700 transition-colors"
+        className="fixed bottom-6 left-6 md:left-auto md:bottom-6 md:right-6 z-40 bg-primary-600 text-white p-4 rounded-full shadow-lg hover:bg-primary-700 transition-colors"
         title="Chat with AI Companion"
       >
         {isOpen ? '✕' : '💬'}
@@ -125,7 +120,7 @@ export function CompanionChat({ bookId, currentPage }: CompanionChatProps) {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed right-0 top-16 h-[calc(100vh-4rem)] w-96 bg-white dark:bg-gray-800 shadow-xl z-50 flex flex-col">
+        <div className="fixed right-0 top-0 h-full w-full md:w-96 md:top-16 md:h-[calc(100vh-4rem)] bg-white dark:bg-gray-800 shadow-xl z-50 flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
@@ -223,7 +218,7 @@ export function CompanionChat({ bookId, currentPage }: CompanionChatProps) {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask about what you're reading..."
-                className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 rows={2}
                 disabled={loading}
               />

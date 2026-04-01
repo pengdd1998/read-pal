@@ -19,16 +19,19 @@ describe('Agent Wrapper Unit Tests', () => {
 
         switch (name) {
           case 'companion':
-            result = await agentInstance.chat(request.userId, query, request.context);
-            break;
           case 'coach':
             result = await agentInstance.chat(request.userId, query, request.context);
             break;
-          case 'research':
-            result = await agentInstance.execute(request.userId, query, 'deep_dive', request.context);
+          case 'research': {
+            const action = (request.action === 'chat' ? 'deep_dive' : request.action) as string;
+            result = await agentInstance.execute(request.userId, query, action, request.context);
             break;
+          }
           case 'synthesis':
             result = await agentInstance.execute(request);
+            break;
+          case 'friend':
+            result = await agentInstance.chat(request.userId, query, request.context);
             break;
           default:
             if (typeof agentInstance.execute === 'function') {
@@ -217,6 +220,80 @@ describe('Agent Wrapper Unit Tests', () => {
         userId: 'u1', sessionId: 's1', action: 'chat', input: { query: 'test' },
       });
       expect(result.content).toBe('');
+    });
+  });
+
+  describe('FriendAgent wrapper', () => {
+    it('should call chat(userId, message, context)', async () => {
+      const mockAgent = {
+        chat: jest.fn().mockResolvedValue({
+          response: 'Hey there! Great to read with you!',
+          persona: 'penny',
+          emotion: 'enthusiastic',
+        }),
+      };
+
+      const wrapper = createMockWrapper('friend', mockAgent);
+      const result = await wrapper.execute({
+        userId: 'user-f1',
+        sessionId: 'session-f1',
+        action: 'chat',
+        input: { query: 'What do you think of this chapter?' },
+      });
+
+      expect(mockAgent.chat).toHaveBeenCalledWith('user-f1', 'What do you think of this chapter?', undefined);
+      expect(result.content).toBe('Hey there! Great to read with you!');
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('ResearchAgent action forwarding', () => {
+    it('should default to deep_dive when action is chat', async () => {
+      const mockAgent = {
+        execute: jest.fn().mockResolvedValue({ response: 'research result' }),
+      };
+
+      const wrapper = createMockWrapper('research', mockAgent);
+      await wrapper.execute({
+        userId: 'user-r1',
+        sessionId: 'session-r1',
+        action: 'chat',
+        input: { query: 'Research this' },
+      });
+
+      expect(mockAgent.execute).toHaveBeenCalledWith('user-r1', 'Research this', 'deep_dive', undefined);
+    });
+
+    it('should forward non-chat actions as-is', async () => {
+      const mockAgent = {
+        execute: jest.fn().mockResolvedValue({ response: 'fact check result' }),
+      };
+
+      const wrapper = createMockWrapper('research', mockAgent);
+      await wrapper.execute({
+        userId: 'user-r2',
+        sessionId: 'session-r2',
+        action: 'fact_check',
+        input: { query: 'Is this claim true?' },
+      });
+
+      expect(mockAgent.execute).toHaveBeenCalledWith('user-r2', 'Is this claim true?', 'fact_check', undefined);
+    });
+
+    it('should forward cross_reference action', async () => {
+      const mockAgent = {
+        execute: jest.fn().mockResolvedValue({ response: 'cross-ref result' }),
+      };
+
+      const wrapper = createMockWrapper('research', mockAgent);
+      await wrapper.execute({
+        userId: 'user-r3',
+        sessionId: 'session-r3',
+        action: 'cross_reference',
+        input: { query: 'Compare with other sources' },
+      });
+
+      expect(mockAgent.execute).toHaveBeenCalledWith('user-r3', 'Compare with other sources', 'cross_reference', undefined);
     });
   });
 });
