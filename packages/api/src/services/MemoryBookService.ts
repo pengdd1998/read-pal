@@ -5,11 +5,10 @@
  * reading journey for a specific book that capture highlights, annotations,
  * insights, agent conversations, and key moments.
  *
- * Uses the Anthropic SDK (Claude) to identify key moments and themes from raw
+ * Uses the shared GLM client to identify key moments and themes from raw
  * reading data and produce a narrative that feels like a cherished memento.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import { Op, QueryTypes } from 'sequelize';
 import { sequelize } from '../db';
 import { Annotation, Book, MemoryBook, ReadingSession } from '../models';
@@ -18,6 +17,7 @@ import type {
   MemoryBookMoment,
   MemoryBookStats,
 } from '../models/MemoryBook';
+import { chatCompletion } from './llmClient';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,11 +39,10 @@ interface AgentConversationMessage {
 // ---------------------------------------------------------------------------
 
 export class MemoryBookService {
-  private anthropic: Anthropic | null;
+  private llmAvailable: boolean;
 
   constructor() {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    this.anthropic = apiKey ? new Anthropic({ apiKey }) : null;
+    this.llmAvailable = !!process.env.GLM_API_KEY;
   }
 
   // -----------------------------------------------------------------------
@@ -239,7 +238,7 @@ export class MemoryBookService {
   }
 
   /**
-   * Call the Anthropic API to analyse reading data and produce key moments,
+   * Call the LLM API to analyse reading data and produce key moments,
    * thematic insights, and a suggested title for the memory book.
    */
   private async generateMomentsAndInsights(
@@ -253,7 +252,7 @@ export class MemoryBookService {
     title: string | null;
   }> {
     // Fallback when no API key is configured
-    if (!this.anthropic) {
+    if (!this.llmAvailable) {
       return this.generateFromLocalData(annotations, sessions, conversations);
     }
 
@@ -318,26 +317,21 @@ Respond ONLY with valid JSON in this exact format:
 }`;
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 4096,
+      const raw = await chatCompletion({
+        maxTokens: 4096,
         temperature: 0.7,
+        system: 'You are a reading companion AI that creates beautiful Memory Books for readers.',
         messages: [{ role: 'user', content: prompt }],
       });
 
-      const textBlock = response.content.find((block) => block.type === 'text');
-      if (!textBlock || textBlock.type !== 'text') {
-        throw new Error('No text content in Claude response');
-      }
-
       // Strip markdown code fences if present
-      let raw = textBlock.text.trim();
-      const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+      let cleaned = raw.trim();
+      const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (fenceMatch) {
-        raw = fenceMatch[1].trim();
+        cleaned = fenceMatch[1].trim();
       }
 
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(cleaned);
 
       return {
         title: parsed.title ?? null,
@@ -345,7 +339,7 @@ Respond ONLY with valid JSON in this exact format:
         insights: Array.isArray(parsed.insights) ? parsed.insights.slice(0, 8) : [],
       };
     } catch (error) {
-      console.error('[MemoryBookService] Claude generation failed, falling back to local data:', error);
+      console.error('[MemoryBookService] LLM generation failed, falling back to local data:', error);
       return this.generateFromLocalData(annotations, sessions, conversations);
     }
   }

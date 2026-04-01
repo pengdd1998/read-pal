@@ -3,18 +3,18 @@
 // ============================================================================
 
 /**
- * Supported Claude models
+ * Supported LLM models
  */
-export type ClaudeModel =
-  | 'claude-3-5-haiku-20241022'
-  | 'claude-3-5-sonnet-20241022'
-  | 'claude-3-opus-20240229';
+export type LLMModel = string;
+
+/** @deprecated Use LLMModel instead */
+export type ClaudeModel = LLMModel;
 
 /**
  * Model selection strategy
  */
 export interface ModelSelection {
-  model: ClaudeModel;
+  model: LLMModel;
   reason: string;
   estimatedCost: number;
 }
@@ -42,7 +42,7 @@ export interface IAgent {
   version: string;
   purpose: string;
   responsibilities: string[];
-  model: ClaudeModel;
+  model: LLMModel;
   systemPrompt: string;
   tools: ITool[];
   memoryType: MemoryType;
@@ -90,7 +90,7 @@ export interface AgentResponse {
  * Agent response metadata
  */
 export interface AgentResponseMetadata {
-  modelUsed: ClaudeModel;
+  modelUsed: LLMModel;
   tokensUsed: number;
   cost: number;
   duration: number;
@@ -666,11 +666,10 @@ export interface EnvironmentConfig {
     user: string;
     password: string;
   };
-  anthropic: {
+  glm: {
     apiKey: string;
-    modelHaiku: ClaudeModel;
-    modelSonnet: ClaudeModel;
-    modelOpus: ClaudeModel;
+    baseUrl: string;
+    model: LLMModel;
     maxTokens: number;
     temperature: number;
     timeout: number;

@@ -25,6 +25,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Link href="/library" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
                   Library
                 </Link>
+                <Link href="/chat" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
+                  AI Chat
+                </Link>
                 <Link href="/knowledge" className="text-gray-700 dark:text-gray-300 hover:text-primary-600">
                   Knowledge
                 </Link>
@@ -59,6 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="md:hidden border-t border-gray-200 dark:border-gray-800 px-4 py-2 flex gap-4 overflow-x-auto">
             <Link href="/dashboard" className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Dashboard</Link>
             <Link href="/library" className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Library</Link>
+            <Link href="/chat" className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">AI Chat</Link>
             <Link href="/knowledge" className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Knowledge</Link>
             <Link href="/search" className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Search</Link>
             <Link href="/settings" className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Settings</Link>

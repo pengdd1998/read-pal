@@ -2,6 +2,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import crypto from 'crypto';
 import { EnvironmentConfig } from '../types';
 
@@ -16,6 +17,12 @@ export function initializeMiddleware(
   app: express.Application,
   config: EnvironmentConfig
 ): void {
+  // Trust proxy (for reverse proxies / load balancers)
+  app.set('trust proxy', 1);
+
+  // Compression
+  app.use(compression());
+
   // Security headers
   app.use(helmet());
 

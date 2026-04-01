@@ -11,15 +11,14 @@
  * per user and used to maintain continuity across sessions.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import type { ReadingFriendPersona } from '../../types';
+import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface FriendAgentConfig {
-  apiKey: string;
   model?: string;
   maxTokens?: number;
   temperature?: number;
@@ -127,23 +126,17 @@ const PERSONAS: Record<ReadingFriendPersona, PersonaDefinition> = {
 // ============================================================================
 
 export class FriendAgent {
-  private anthropic: Anthropic;
   private config: Required<FriendAgentConfig>;
   private conversations: Map<string, FriendMessage[]>;
   private userPersonas: Map<string, ReadingFriendPersona>;
   private userRelationshipData: Map<string, { booksReadTogether: number; sharedMoments: string[] }>;
 
-  constructor(config: FriendAgentConfig) {
+  constructor(config: FriendAgentConfig = {}) {
     this.config = {
-      apiKey: config.apiKey,
-      model: config.model || 'claude-3-5-sonnet-20241022',
+      model: config.model || DEFAULT_MODEL,
       maxTokens: config.maxTokens || 2048,
       temperature: config.temperature || 0.7,
     };
-
-    this.anthropic = new Anthropic({
-      apiKey: this.config.apiKey,
-    });
 
     this.conversations = new Map();
     this.userPersonas = new Map();
@@ -169,7 +162,7 @@ export class FriendAgent {
 
       const systemPrompt = this.buildSystemPrompt(persona, relationship, context, 'chat');
 
-      const messages: Anthropic.MessageParam[] = [
+      const messages = [
         ...history.map((msg) => ({
           role: msg.role as 'user' | 'assistant',
           content: msg.content,
@@ -180,15 +173,13 @@ export class FriendAgent {
         },
       ];
 
-      const response = await this.anthropic.messages.create({
+      const responseText = await chatCompletion({
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
+        maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
         system: systemPrompt,
         messages,
       });
-
-      const responseText = this.extractText(response);
 
       // Update conversation history
       this.pushMessage(userId, 'user', message);
@@ -226,15 +217,13 @@ export class FriendAgent {
 
       const userMessage = `[The reader just encountered this passage while reading${context?.bookTitle ? ` "${context.bookTitle}"` : ''}${context?.currentPage ? ` (page ${context.currentPage})` : ''}]:\n\n"${text}"\n\n[Give a SHORT reaction — 1-2 sentences max. React as if you're sitting next to them, reading along. Be natural and spontaneous.]`;
 
-      const response = await this.anthropic.messages.create({
+      const responseText = await chatCompletion({
         model: this.config.model,
-        max_tokens: 256,
+        maxTokens: 256,
         temperature: this.config.temperature + 0.1, // Slightly more creative for reactions
         system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
+        messages: [{ role: 'user' as const, content: userMessage }],
       });
-
-      const responseText = this.extractText(response);
 
       return {
         response: responseText,
@@ -272,15 +261,13 @@ export class FriendAgent {
 
       const userMessage = `[Generate a brief, natural check-in message.${timeSince ? ` The reader hasn't interacted in ${timeSince} minutes.` : ''} ${relationship.booksReadTogether > 0 ? `You've read ${relationship.booksReadTogether} book(s) together.` : "This is a new reader you're getting to know."} Keep it short — 1-2 sentences. Don't be pushy. Just a friendly hello that shows you're here.]`;
 
-      const response = await this.anthropic.messages.create({
+      const responseText = await chatCompletion({
         model: this.config.model,
-        max_tokens: 256,
+        maxTokens: 256,
         temperature: this.config.temperature,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
+        messages: [{ role: 'user' as const, content: userMessage }],
       });
-
-      const responseText = this.extractText(response);
 
       return {
         response: responseText,
@@ -494,16 +481,6 @@ You're checking in with the reader. Keep it brief — 1-2 sentences. Think of it
       this.userRelationshipData.set(userId, data);
     }
     return data;
-  }
-
-  /**
-   * Extract text from a Claude API response.
-   */
-  private extractText(response: Anthropic.Message): string {
-    if (response.content.length > 0 && response.content[0].type === 'text') {
-      return response.content[0].text;
-    }
-    return '';
   }
 
   /**

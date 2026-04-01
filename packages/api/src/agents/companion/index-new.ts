@@ -1,1 +1,0 @@
-export { CompanionAgentNew } from './CompanionAgentNew';

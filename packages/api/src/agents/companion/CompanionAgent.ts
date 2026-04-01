@@ -8,14 +8,13 @@
  * - Suggesting related content from the user's library
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
 import { WebSearchTool } from '../tools/WebSearchTool';
 
 interface CompanionAgentConfig {
-  apiKey: string;
   model?: string;
   maxTokens?: number;
   temperature?: number;
@@ -34,22 +33,16 @@ interface CompanionContext {
 }
 
 export class CompanionAgent {
-  private anthropic: Anthropic;
   private config: Required<CompanionAgentConfig>;
   private tools: Map<string, BaseTool>;
   private conversationHistory: Map<string, CompanionMessage[]>;
 
-  constructor(config: CompanionAgentConfig) {
+  constructor(config: CompanionAgentConfig = {}) {
     this.config = {
-      apiKey: config.apiKey,
-      model: config.model || 'claude-3-5-sonnet-20241022',
+      model: config.model || DEFAULT_MODEL,
       maxTokens: config.maxTokens || 2048,
       temperature: config.temperature || 0.7,
     };
-
-    this.anthropic = new Anthropic({
-      apiKey: this.config.apiKey,
-    });
 
     this.tools = new Map();
     this.conversationHistory = new Map();
@@ -133,11 +126,8 @@ Remember: You are an AI assistant helping someone read and learn. Be helpful, co
       }
 
       // Build messages array
-      const messages: Anthropic.MessageParam[] = [
-        ...history.map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        })),
+      const messages: CompanionMessage[] = [
+        ...history,
         {
           role: 'user',
           content: this.buildUserMessage(message, context),
@@ -177,18 +167,14 @@ Remember: You are an AI assistant helping someone read and learn. Be helpful, co
         }
       }
 
-      // Call Claude
-      const response = await this.anthropic.messages.create({
+      // Call GLM via shared client
+      const responseText = await chatCompletion({
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
+        maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
         system: this.getSystemPrompt(),
         messages,
       });
-
-      // Extract response text
-      const responseText =
-        response.content[0].type === 'text' ? response.content[0].text : '';
 
       // Append tool results if available
       const finalResponse = toolResults

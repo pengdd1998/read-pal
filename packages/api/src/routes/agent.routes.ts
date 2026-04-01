@@ -56,6 +56,13 @@ router.post(
     }
 
     // Process request
+    // Send WS notification that agent processing has started
+    const wsManager = req.app.get('wsManager');
+    const wsClient = wsManager?.getClientByUserId(req.user!.id);
+    if (wsClient) {
+      wsManager.notifyAgentStart(wsClient.sessionId, agent || 'companion', message);
+    }
+
     const response = await orchestrator.process({
       userId: req.user!.id,
       sessionId: req.session?.id || req.id!,
@@ -63,6 +70,27 @@ router.post(
       context,
       options: agent ? { agent } : undefined
     });
+
+    // Send WS notifications for agent results
+    if (wsClient) {
+      if (response.success) {
+        for (const agentUsed of response.agentsUsed || []) {
+          wsManager.notifyAgentComplete(
+            wsClient.sessionId,
+            agentUsed.agentName,
+            agentUsed.duration || 0,
+            agentUsed.response?.metadata?.tokensUsed,
+          );
+        }
+        wsManager.notifyComplete(wsClient.sessionId, response.content, response.metadata);
+      } else {
+        wsManager.notifyError(
+          wsClient.sessionId,
+          response.error?.message || 'Agent processing failed',
+          response.error?.code,
+        );
+      }
+    }
 
     return res.status(response.success ? 200 : 500).json({
       success: response.success,

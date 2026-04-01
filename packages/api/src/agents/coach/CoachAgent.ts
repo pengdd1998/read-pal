@@ -9,7 +9,7 @@
  * - Tracking reading progress and suggesting improvements
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
@@ -19,7 +19,6 @@ import { LibrarySearchTool } from '../tools/LibrarySearchTool';
 // ============================================================================
 
 interface CoachAgentConfig {
-  apiKey: string;
   model?: string;
   maxTokens?: number;
   temperature?: number;
@@ -92,7 +91,6 @@ type CoachAction =
 // ============================================================================
 
 export class CoachAgent {
-  private anthropic: Anthropic;
   private config: Required<CoachAgentConfig>;
   private tools: Map<string, BaseTool>;
   private conversationHistory: Map<string, CoachMessage[]>;
@@ -106,17 +104,12 @@ export class CoachAgent {
   /** Per-user progress snapshots */
   private progressStore: Map<string, ProgressMetrics>;
 
-  constructor(config: CoachAgentConfig) {
+  constructor(config: CoachAgentConfig = {}) {
     this.config = {
-      apiKey: config.apiKey,
-      model: config.model || 'claude-3-5-sonnet-20241022',
+      model: config.model || DEFAULT_MODEL,
       maxTokens: config.maxTokens || 2048,
       temperature: config.temperature || 0.6,
     };
-
-    this.anthropic = new Anthropic({
-      apiKey: this.config.apiKey,
-    });
 
     this.tools = new Map();
     this.conversationHistory = new Map();
@@ -207,7 +200,7 @@ Remember: You are a coach, not a critic. Your job is to make every reader better
   ): Promise<{ response: string; toolsUsed?: string[] }> {
     try {
       const history = this.getOrCreateHistory(userId);
-      const messages: Anthropic.MessageParam[] = [
+      const messages: { role: 'user' | 'assistant'; content: string }[] = [
         ...history.map((msg) => ({
           role: msg.role as 'user' | 'assistant',
           content: msg.content,
@@ -251,16 +244,13 @@ Remember: You are a coach, not a critic. Your job is to make every reader better
         }
       }
 
-      const response = await this.anthropic.messages.create({
+      const responseText = await chatCompletion({
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
+        maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
         system: this.getSystemPrompt(context),
         messages,
       });
-
-      const responseText =
-        response.content[0].type === 'text' ? response.content[0].text : '';
 
       const finalResponse = toolResults
         ? `${responseText}${toolResults}`
@@ -331,16 +321,13 @@ Respond in this exact JSON format (no markdown, no code fences):
   }
 ]`;
 
-      const response = await this.anthropic.messages.create({
+      const raw = await chatCompletion({
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
+        maxTokens: this.config.maxTokens,
         temperature: 0.4,
         system: this.getSystemPrompt(context),
         messages: [{ role: 'user', content: prompt }],
       });
-
-      const raw =
-        response.content[0].type === 'text' ? response.content[0].text : '';
 
       const questions = this.parseJsonResponse<ComprehensionQuestion[]>(raw, []);
 
@@ -404,16 +391,13 @@ Respond in this exact JSON format (no markdown, no code fences):
   }
 ]`;
 
-      const response = await this.anthropic.messages.create({
+      const raw = await chatCompletion({
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
+        maxTokens: this.config.maxTokens,
         temperature: 0.3,
         system: this.getSystemPrompt(context),
         messages: [{ role: 'user', content: prompt }],
       });
-
-      const raw =
-        response.content[0].type === 'text' ? response.content[0].text : '';
 
       const words = this.parseJsonResponse<VocabularyWord[]>(raw, []);
 
@@ -631,16 +615,13 @@ Respond in this exact JSON format (no markdown, no code fences):
   "Recommendation 3"
 ]`;
 
-      const response = await this.anthropic.messages.create({
+      const raw = await chatCompletion({
         model: this.config.model,
-        max_tokens: 1024,
+        maxTokens: 1024,
         temperature: 0.5,
         system: this.getSystemPrompt(),
         messages: [{ role: 'user', content: prompt }],
       });
-
-      const raw =
-        response.content[0].type === 'text' ? response.content[0].text : '';
 
       const recommendations = this.parseJsonResponse<string[]>(raw, [
         'Keep up your reading streak — consistency is key.',
@@ -712,16 +693,13 @@ Respond in this exact JSON format (no markdown, no code fences):
   ]
 }`;
 
-      const response = await this.anthropic.messages.create({
+      const raw = await chatCompletion({
         model: this.config.model,
-        max_tokens: 1024,
+        maxTokens: 1024,
         temperature: 0.6,
         system: this.getSystemPrompt(context),
         messages: [{ role: 'user', content: prompt }],
       });
-
-      const raw =
-        response.content[0].type === 'text' ? response.content[0].text : '';
 
       type TipsResponse = { tips: string[]; exercises: string[] };
 

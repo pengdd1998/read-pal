@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ANNOTATION_COLORS } from '@read-pal/shared';
 
 interface Annotation {
   id: string;
@@ -16,24 +17,25 @@ interface Annotation {
 
 interface AnnotationPanelProps {
   annotations: Annotation[];
+  currentPageIndex: number;
   onAddHighlight: (content: string, color: string) => void;
   onAddNote: (content: string, note: string) => void;
   onAddBookmark: (location: { pageIndex: number; position: number }) => void;
   onDeleteAnnotation: (id: string) => void;
 }
 
-const HIGHLIGHT_COLORS = ['#FFEB3B', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0'];
-
 export function AnnotationPanel({
   annotations,
+  currentPageIndex,
   onAddHighlight,
   onAddNote,
   onAddBookmark,
   onDeleteAnnotation,
 }: AnnotationPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showAnnotations, setShowAnnotations] = useState(false);
   const [selectedText, setSelectedText] = useState('');
-  const [selectedColor, setSelectedColor] = useState(HIGHLIGHT_COLORS[0]);
+  const [selectedColor, setSelectedColor] = useState<string>(ANNOTATION_COLORS[0]);
   const [noteText, setNoteText] = useState('');
 
   const handleTextSelection = () => {
@@ -63,28 +65,37 @@ export function AnnotationPanel({
   };
 
   const handleAddBookmark = () => {
-    onAddBookmark({ pageIndex: 0, position: 0 }); // TODO: Get actual position
+    onAddBookmark({ pageIndex: currentPageIndex, position: 0 });
     setIsOpen(false);
   };
 
   return (
     <>
-      {/* Selection Hint */}
-      <div className="fixed bottom-4 right-4 z-50">
+      {/* Annotate button — right side, above chat toggle area */}
+      <div className="fixed bottom-4 right-4 z-50 flex gap-2">
+        {annotations.length > 0 && !isOpen && (
+          <button
+            onClick={() => setShowAnnotations(!showAnnotations)}
+            className="btn btn-secondary shadow-lg"
+            title="View annotations"
+          >
+            📋 {annotations.length}
+          </button>
+        )}
         {!isOpen && (
           <button
             onClick={handleTextSelection}
             className="btn btn-primary shadow-lg"
             title="Highlight selected text"
           >
-            📝 Annotate Selection
+            📝 Annotate
           </button>
         )}
       </div>
 
       {/* Annotation Panel */}
       {isOpen && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-800 shadow-xl z-50 overflow-y-auto">
+        <div className="fixed right-0 top-0 h-full w-full md:w-96 bg-white dark:bg-gray-800 shadow-xl z-50 overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">Add Annotation</h2>
@@ -111,7 +122,7 @@ export function AnnotationPanel({
             <div className="mb-6">
               <h3 className="font-medium mb-3">Highlight</h3>
               <div className="flex gap-2 mb-3">
-                {HIGHLIGHT_COLORS.map((color) => (
+                {ANNOTATION_COLORS.map((color) => (
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
@@ -166,13 +177,21 @@ export function AnnotationPanel({
         </div>
       )}
 
-      {/* Existing Annotations Sidebar */}
-      {annotations.length > 0 && (
-        <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 bg-white dark:bg-gray-800 shadow-lg overflow-y-auto border-r">
+      {/* Existing Annotations Sidebar — slide-in on demand */}
+      {showAnnotations && annotations.length > 0 && (
+        <div className="fixed left-0 top-0 h-full w-full md:top-16 md:h-[calc(100vh-4rem)] md:w-80 bg-white dark:bg-gray-800 shadow-lg overflow-y-auto z-40 md:border-r">
           <div className="p-4">
-            <h2 className="text-lg font-semibold mb-4">
-              Annotations ({annotations.length})
-            </h2>
+            <div className="flex items-center justify-between mb-4 md:justify-start md:gap-4">
+              <h2 className="text-lg font-semibold">
+                Annotations ({annotations.length})
+              </h2>
+              <button
+                onClick={() => setShowAnnotations(false)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 md:hidden"
+              >
+                ✕
+              </button>
+            </div>
 
             <div className="space-y-3">
               {annotations.map((annotation) => (

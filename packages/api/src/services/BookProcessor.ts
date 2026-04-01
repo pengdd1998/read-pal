@@ -20,52 +20,56 @@ export class BookProcessor {
 
       epub.on('error', reject);
 
-      epub.on('end', () => {
-        const spine = epub.spine || [];
-        const chapters: Chapter[] = [];
-        let fullContent = '';
-        let chapterOrder = 0;
+      epub.on('end', async () => {
+        try {
+          // epub.flow is the array of chapter items with id, href, title
+          const items: any[] = (epub as any).flow || [];
+          const chapters: Chapter[] = [];
+          let fullContent = '';
 
-        // Process each chapter
-        const processChapter = (index: number) => {
-          if (index >= spine.length) {
-            resolve({
-              content: fullContent,
-              chapters,
-            });
-            return;
-          }
+          for (const item of items) {
+            if (!item?.id) continue;
 
-          const item = spine[index];
-          epub.getChapter(item.id || '', (error, text) => {
-            if (error) {
-              processChapter(index + 1);
-              return;
+            // Get chapter content - skip on error
+            let text = '';
+            try {
+              text = await new Promise<string>((res, rej) => {
+                epub.getChapter(item.id, (err: Error | null, data: string) => {
+                  if (err) {
+                    rej(err);
+                    return;
+                  }
+                  res(data);
+                });
+              });
+            } catch {
+              // Skip chapters that fail to extract
+              continue;
             }
 
-            // Clean up HTML
             const cleanText = this.cleanHTML(text);
-
             if (cleanText.trim()) {
               const chapter: Chapter = {
-                id: `${bookId}-ch-${chapterOrder}`,
-                title: item.title || `Chapter ${chapterOrder + 1}`,
+                id: `${bookId}-ch-${chapters.length}`,
+                title: item.title || `Chapter ${chapters.length + 1}`,
                 content: cleanText,
                 startIndex: fullContent.length,
                 endIndex: fullContent.length + cleanText.length,
-                order: chapterOrder,
+                order: chapters.length,
               };
 
               chapters.push(chapter);
               fullContent += cleanText + '\n\n';
-              chapterOrder++;
             }
+          }
 
-            processChapter(index + 1);
+          resolve({
+            content: fullContent,
+            chapters,
           });
-        };
-
-        processChapter(0);
+        } catch (error) {
+          reject(error);
+        }
       });
 
       epub.parse();
@@ -168,10 +172,11 @@ export class BookProcessor {
       epub.on('error', () => resolve({}));
 
       epub.on('end', () => {
+        const contents = (epub as any).contents || [];
         resolve({
           title: epub.metadata.title,
           author: epub.metadata.creator,
-          totalPages: (epub.spine || []).length,
+          totalPages: contents.length,
         });
       });
 
