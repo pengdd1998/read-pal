@@ -3,12 +3,17 @@ import { body } from 'express-validator';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
+import { AgentOrchestrator } from '../agents/orchestrator/AgentOrchestrator';
+import { WebSocketManager } from '../services/WebSocketManager';
+import type { StreamClient } from '../services/WebSocketManager';
+import type { OrchestratorResponse } from '../agents/orchestrator/AgentOrchestrator';
+import type { IAgent } from '../types';
+
+const router: Router = Router();
 
 // ============================================================================
 // Agent Routes
 // ============================================================================
-
-const router: Router = Router();
 
 /**
  * @route   POST /api/agents/chat
@@ -25,14 +30,13 @@ router.post(
   authenticate,
   agentRateLimiter,
   validate([
-    body('message').isLength({ max: 5000 }).withMessage('message is required and must be at most 5000 characters'),
-    body('context').optional().isObject().withMessage('context must be an object'),
+    body('message').isLength({ max: 5000 }).withMessage('Message is required and must be at most 5000 characters'),
+    body('context').optional().isObject().withMessage('Context must be an object'),
   ]),
   async (req: AuthRequest, res) => {
   try {
     const { agent, message, context } = req.body;
 
-    // Validate input
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
         success: false,
@@ -43,10 +47,9 @@ router.post(
       });
     }
 
-    // Get orchestrator from app (injected via middleware)
-    const orchestrator = req.app.get('orchestrator');
+    const orchestrator: AgentOrchestrator | null = req.app.get('orchestrator');
     if (!orchestrator) {
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
         error: {
           code: 'SERVICE_UNAVAILABLE',
@@ -55,17 +58,16 @@ router.post(
       });
     }
 
-    // Process request
     // Send WS notification that agent processing has started
-    const wsManager = req.app.get('wsManager');
-    const wsClient = wsManager?.getClientByUserId(req.user!.id);
+    const wsManager: WebSocketManager | null = req.app.get('wsManager');
+    const wsClient: StreamClient | undefined = wsManager?.getClientByUserId(req.user!.id);
     if (wsClient) {
-      wsManager.notifyAgentStart(wsClient.sessionId, agent || 'companion', message);
+      wsManager!.notifyAgentStart(wsClient.sessionId, agent || 'companion', message);
     }
 
-    const response = await orchestrator.process({
+    const response: OrchestratorResponse = await orchestrator.process({
       userId: req.user!.id,
-      sessionId: req.session?.id || req.id!,
+      sessionId: (req.session as { id?: string })?.id || req.id!,
       query: message,
       context,
       options: agent ? { agent } : undefined
@@ -75,16 +77,16 @@ router.post(
     if (wsClient) {
       if (response.success) {
         for (const agentUsed of response.agentsUsed || []) {
-          wsManager.notifyAgentComplete(
+          wsManager!.notifyAgentComplete(
             wsClient.sessionId,
             agentUsed.agentName,
             agentUsed.duration || 0,
-            agentUsed.response?.metadata?.tokensUsed,
+            agentUsed.response?.metadata?.tokensUsed as number | undefined,
           );
         }
-        wsManager.notifyComplete(wsClient.sessionId, response.content, response.metadata);
+        wsManager!.notifyComplete(wsClient.sessionId, response.content, response.metadata);
       } else {
-        wsManager.notifyError(
+        wsManager!.notifyError(
           wsClient.sessionId,
           response.error?.message || 'Agent processing failed',
           response.error?.code,
@@ -118,7 +120,7 @@ router.post(
  * @desc    Get an explanation for a term or concept
  * @access  Private
  */
-router.post('/explain', authenticate, async (req, res) => {
+router.post('/explain', authenticate, agentRateLimiter, async (req: AuthRequest, res) => {
   try {
     const { term, context } = req.body;
 
@@ -132,9 +134,19 @@ router.post('/explain', authenticate, async (req, res) => {
       });
     }
 
-    const orchestrator = req.app.get('orchestrator');
+    if (term.length > 1000) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_INPUT',
+          message: 'Term must be under 1000 characters'
+        }
+      });
+    }
+
+    const orchestrator: AgentOrchestrator | null = req.app.get('orchestrator');
     if (!orchestrator) {
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
         error: {
           code: 'SERVICE_UNAVAILABLE',
@@ -143,9 +155,9 @@ router.post('/explain', authenticate, async (req, res) => {
       });
     }
 
-    const response = await orchestrator.process({
+    const response: OrchestratorResponse = await orchestrator.process({
       userId: req.user!.id,
-      sessionId: req.session?.id || req.id!,
+      sessionId: (req.session as { id?: string })?.id || req.id!,
       query: `Explain "${term}"${context ? ` in context: ${context}` : ''}`,
       options: { agent: 'companion' }
     });
@@ -156,7 +168,6 @@ router.post('/explain', authenticate, async (req, res) => {
       metadata: response.metadata,
       error: response.error
     });
-
   } catch (error) {
     console.error('Explain error:', error);
     return res.status(500).json({
@@ -174,7 +185,7 @@ router.post('/explain', authenticate, async (req, res) => {
  * @desc    Generate a summary of text
  * @access  Private
  */
-router.post('/summarize', authenticate, async (req, res) => {
+router.post('/summarize', authenticate, agentRateLimiter, async (req: AuthRequest, res) => {
   try {
     const { text, detail = 'medium' } = req.body;
 
@@ -188,9 +199,19 @@ router.post('/summarize', authenticate, async (req, res) => {
       });
     }
 
-    const orchestrator = req.app.get('orchestrator');
+    if (text.length > 50000) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_INPUT',
+          message: 'Text must be under 50000 characters'
+        }
+      });
+    }
+
+    const orchestrator: AgentOrchestrator | null = req.app.get('orchestrator');
     if (!orchestrator) {
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
         error: {
           code: 'SERVICE_UNAVAILABLE',
@@ -199,10 +220,20 @@ router.post('/summarize', authenticate, async (req, res) => {
       });
     }
 
-    const response = await orchestrator.process({
+    // For long texts, summarize in chunks
+    let inputText = text;
+    if (text.length > 5000) {
+      const chunks: string[] = [];
+      for (let i = 0; i < text.length; i += 5000) {
+        chunks.push(text.substring(i, i + 5000));
+      }
+      inputText = chunks.join('\n\n---\n\n');
+    }
+
+    const response: OrchestratorResponse = await orchestrator.process({
       userId: req.user!.id,
-      sessionId: req.session?.id || req.id!,
-      query: `Summarize this text with ${detail} detail: ${text.substring(0, 1000)}...`,
+      sessionId: (req.session as { id?: string })?.id || req.id!,
+      query: `Summarize this text with ${detail} detail: ${inputText}`,
       options: { agent: 'companion' }
     });
 
@@ -212,7 +243,6 @@ router.post('/summarize', authenticate, async (req, res) => {
       metadata: response.metadata,
       error: response.error
     });
-
   } catch (error) {
     console.error('Summarize error:', error);
     return res.status(500).json({
@@ -232,9 +262,9 @@ router.post('/summarize', authenticate, async (req, res) => {
  */
 router.get('/', authenticate, async (req, res) => {
   try {
-    const orchestrator = req.app.get('orchestrator');
+    const orchestrator: AgentOrchestrator | null = req.app.get('orchestrator');
     if (!orchestrator) {
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
         error: {
           code: 'SERVICE_UNAVAILABLE',
@@ -243,12 +273,12 @@ router.get('/', authenticate, async (req, res) => {
       });
     }
 
-    const agents = orchestrator.getAgents();
+    const agents: IAgent[] = orchestrator.getAgents();
 
     return res.json({
       success: true,
       data: {
-        agents: agents.map((agent: any) => ({
+        agents: agents.map((agent: IAgent) => ({
           name: agent.name,
           displayName: agent.displayName,
           purpose: agent.purpose,
@@ -256,7 +286,6 @@ router.get('/', authenticate, async (req, res) => {
         }))
       }
     });
-
   } catch (error) {
     console.error('Get agents error:', error);
     return res.status(500).json({

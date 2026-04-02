@@ -38,6 +38,14 @@ export function rateLimiter(options: {
       : req.ip || 'unknown';
     const now = Date.now();
 
+    // Purge expired entries to prevent unbounded memory growth
+    for (const entryKey of Object.keys(store)) {
+      const entry = store[entryKey];
+      if (now > entry.resetTime) {
+        delete store[entryKey];
+      }
+    }
+
     if (!store[key] || now > store[key].resetTime) {
       store[key] = { count: 1, resetTime: now + options.windowMs };
       return next();

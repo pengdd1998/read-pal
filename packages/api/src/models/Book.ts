@@ -21,12 +21,10 @@ interface BookAttributes {
   startedAt?: Date;
   completedAt?: Date;
   lastReadAt?: Date;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
-}
-
-interface BookCreationAttributes extends Optional<BookAttributes, 'id' | 'coverUrl' | 'startedAt' | 'completedAt' | 'lastReadAt' | 'metadata' | 'createdAt' | 'updatedAt'> {}
+}interface BookCreationAttributes extends Optional<BookAttributes, 'id' | 'coverUrl' | 'startedAt' | 'completedAt' | 'lastReadAt' | 'metadata' | 'createdAt' | 'updatedAt'> {}
 
 export class Book extends Model<BookAttributes, BookCreationAttributes> implements BookAttributes {
   public id!: string;
@@ -142,6 +140,7 @@ Book.init(
       { fields: ['userId'] },
       { fields: ['status'] },
       { fields: ['fileType'] },
+      { fields: ['userId', 'status'] },
     ],
   }
 );

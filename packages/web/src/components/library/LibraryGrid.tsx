@@ -1,38 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
+import type { Book } from '@read-pal/shared';
 import { BookCard } from './BookCard';
 import { BookUploader } from './BookUploader';
 
 export function LibraryGrid() {
-  const [books, setBooks] = useState<any[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadLibrary = async () => {
+  const loadLibrary = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/books');
+      setError('');
+      const response = await api.get<Book[]>('/api/books');
 
-      if (response.success) {
-        setBooks((response.data as any[]) || []);
+      if (response.success && response.data) {
+        const data = response.data as unknown as Book[];
+        setBooks(Array.isArray(data) ? data : []);
       } else {
-        setError('Failed to load library');
+        setError(response.error?.message || 'Failed to load library');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to connect to server');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadLibrary();
-  }, []);
+  }, [loadLibrary]);
 
-  const handleUploadComplete = (newBook: any) => {
-    setBooks([newBook, ...books]);
+  const handleUploadComplete = (newBook: Book) => {
+    setBooks((prev) => [newBook, ...prev]);
   };
 
   if (loading) {
@@ -53,7 +56,15 @@ export function LibraryGrid() {
       {/* Error */}
       {error && (
         <div className="mb-6 p-4 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 rounded">
-          {error}
+          <div className="flex items-center justify-between">
+            <p>{error}</p>
+            <button
+              onClick={loadLibrary}
+              className="ml-4 px-3 py-1 bg-red-200 dark:bg-red-800 rounded text-sm hover:bg-red-300 dark:hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       )}
 
@@ -67,7 +78,7 @@ export function LibraryGrid() {
               title={book.title}
               author={book.author}
               coverUrl={book.coverUrl}
-              progress={book.progress || 0}
+              progress={Math.round((book.progress ?? 0) * 100)}
               status={book.status}
               currentPage={book.currentPage || 0}
               totalPages={book.totalPages || 0}
@@ -77,7 +88,7 @@ export function LibraryGrid() {
         </div>
       ) : (
         <div className="card text-center py-16">
-          <div className="text-6xl mb-4">📚</div>
+          <div className="text-6xl mb-4">{'\uD83D\uDCDA'}</div>
           <h2 className="text-2xl font-semibold mb-2">Your library is empty</h2>
           <p className="text-gray-600 dark:text-gray-400">
             Upload your first EPUB or PDF to start reading with AI companions

@@ -18,10 +18,19 @@ const router: Router = Router();
 router.get('/search', authenticate, async (req: AuthRequest, res) => {
   try {
     const { q, status, sortBy = 'lastReadAt', order = 'DESC' } = req.query;
-    const whereClause: any = { userId: req.userId };
+
+    // Validate search query length to prevent abuse
+    if (q && typeof q === 'string' && q.length > 200) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_INPUT', message: 'Search query must be under 200 characters' },
+      });
+    }
+
+    const whereClause: Record<string, unknown> = { userId: req.userId };
 
     if (q) {
-      whereClause[Op.or] = [
+      whereClause[Op.or as unknown as string] = [
         { title: { [Op.iLike]: `%${q}%` } },
         { author: { [Op.iLike]: `%${q}%` } },
       ];

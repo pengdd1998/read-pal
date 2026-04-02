@@ -5,12 +5,21 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../db';
 
+export interface AnnotationLocation {
+  pageNumber?: number;
+  cfi?: string;
+  startOffset?: number;
+  endOffset?: number;
+  chapterIndex?: number;
+  [key: string]: unknown;
+}
+
 interface AnnotationAttributes {
   id: string;
   userId: string;
   bookId: string;
   type: 'highlight' | 'note' | 'bookmark';
-  location: any;
+  location: AnnotationLocation;
   content: string;
   color?: string;
   note?: string;
@@ -26,7 +35,7 @@ export class Annotation extends Model<AnnotationAttributes, AnnotationCreationAt
   public userId!: string;
   public bookId!: string;
   public type!: 'highlight' | 'note' | 'bookmark';
-  public location!: any;
+  public location!: AnnotationLocation;
   public content!: string;
   public color?: string;
   public note?: string;

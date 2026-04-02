@@ -178,10 +178,45 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
 
     const { content, note, color, tags } = req.body;
 
-    if (content !== undefined) annotation.content = content;
-    if (note !== undefined) annotation.note = note;
-    if (color !== undefined) annotation.color = color;
-    if (tags !== undefined) annotation.tags = tags;
+    if (content !== undefined) {
+      if (typeof content !== 'string' || content.length > 10000) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'content must be a string under 10000 characters',
+          },
+        });
+      }
+      annotation.content = content;
+    }
+    if (note !== undefined) {
+      if (typeof note !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'note must be a string' },
+        });
+      }
+      annotation.note = note;
+    }
+    if (color !== undefined) {
+      if (typeof color !== 'string' || !/^#[0-9a-f]{6}$/i.test(color)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'color must be a valid hex color (e.g. #ff5500)' },
+        });
+      }
+      annotation.color = color;
+    }
+    if (tags !== undefined) {
+      if (!Array.isArray(tags) || tags.some((t: unknown) => typeof t !== 'string')) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'tags must be an array of strings' },
+        });
+      }
+      annotation.tags = tags;
+    }
 
     await annotation.save();
 

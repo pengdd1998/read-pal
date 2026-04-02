@@ -5,13 +5,24 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../db';
 
+export interface UserSettings {
+  theme: string;
+  fontSize: number;
+  fontFamily: string;
+  readingGoal: number;
+  notificationsEnabled: boolean;
+  friendPersona?: string;
+  friendFrequency?: string;
+  [key: string]: unknown;
+}
+
 interface UserAttributes {
   id: string;
   email: string;
   name: string;
   passwordHash?: string;
   avatar?: string;
-  settings: any;
+  settings: UserSettings;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,7 +35,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public name!: string;
   public passwordHash?: string;
   public avatar?: string;
-  public settings!: any;
+  public settings!: UserSettings;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
