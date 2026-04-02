@@ -1,80 +1,81 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { ReaderView } from '@/components/reading/ReaderView';
 import { AnnotationPanel } from '@/components/reading/AnnotationPanel';
 import { CompanionChat } from '@/components/reading/CompanionChat';
 import { ReadingBackground } from '@/components/reading/ReadingBackground';
 import { api } from '@/lib/api';
-
-interface Chapter {
-  id: string;
-  title: string;
-  content: string;
-  startIndex: number;
-  endIndex: number;
-  order: number;
-}
+import type { Book, Chapter, Annotation } from '@read-pal/shared';
 
 export default function ReadPage() {
   const params = useParams();
   const bookId = params.bookId as string;
 
-  const [book, setBook] = useState<any>(null);
+  const [book, setBook] = useState<Book | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapter, setCurrentChapter] = useState(0);
-  const [annotations, setAnnotations] = useState<any[]>([]);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bgEnabled, setBgEnabled] = useState(true);
 
-  useEffect(() => {
-    loadBookContent();
-  }, [bookId]);
-
-  const loadBookContent = async () => {
+  const loadAnnotations = useCallback(async () => {
     try {
-      setLoading(true);
-
-      const result = await api.get<{
-        book: any;
-        chapters: Chapter[];
-        content: string;
-      }>(`/api/upload/books/${bookId}/content`);
-
+      const result = await api.get<Annotation[]>('/api/annotations', { bookId });
       if (result.success && result.data) {
-        setBook(result.data.book);
-        setChapters(result.data.chapters);
-        setCurrentChapter(result.data.book.currentPage || 0);
-
-        // Load annotations
-        loadAnnotations();
-      } else {
-        setError(result.error?.message || 'Failed to load book');
-      }
-    } catch (err) {
-      setError('Failed to connect to server');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAnnotations = async () => {
-    try {
-      const result = await api.get('/api/annotations', { bookId });
-      if (result.success) {
-        setAnnotations((result.data as any[]) || []);
+        const data = result.data as unknown as Annotation[];
+        setAnnotations(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error('Failed to load annotations:', err);
     }
-  };
+  }, [bookId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBookContent = async () => {
+      try {
+        setLoading(true);
+
+        const result = await api.get<{
+          book: Book;
+          chapters: Chapter[];
+          content: string;
+        }>(`/api/upload/books/${bookId}/content`);
+
+        if (cancelled) return;
+
+        if (result.success && result.data) {
+          const data = result.data as unknown as {
+            book: Book;
+            chapters: Chapter[];
+          };
+          setBook(data.book);
+          setChapters(data.chapters ?? []);
+          setCurrentChapter(data.book.currentPage || 0);
+
+          // Load annotations
+          loadAnnotations();
+        } else {
+          setError(result.error?.message || 'Failed to load book');
+        }
+      } catch {
+        if (!cancelled) setError('Failed to connect to server');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadBookContent();
+    return () => { cancelled = true; };
+  }, [bookId, loadAnnotations]);
 
   const handleChapterChange = async (chapterIndex: number) => {
     setCurrentChapter(chapterIndex);
 
-    // Update progress
     try {
       await api.patch(`/api/books/${bookId}`, { currentPage: chapterIndex });
     } catch (err) {
@@ -86,7 +87,7 @@ export default function ReadPage() {
     try {
       const chapter = chapters[currentChapter];
 
-      const result = await api.post('/api/annotations', {
+      const result = await api.post<Annotation>('/api/annotations', {
         bookId,
         type: 'highlight',
         content: text,
@@ -100,7 +101,7 @@ export default function ReadPage() {
       });
 
       if (result.success && result.data) {
-        setAnnotations([...annotations, result.data]);
+        setAnnotations((prev) => [...prev, result.data as unknown as Annotation]);
       }
     } catch (err) {
       console.error('Failed to add highlight:', err);
@@ -111,7 +112,7 @@ export default function ReadPage() {
     try {
       const chapter = chapters[currentChapter];
 
-      const result = await api.post('/api/annotations', {
+      const result = await api.post<Annotation>('/api/annotations', {
         bookId,
         type: 'note',
         content: text,
@@ -125,7 +126,7 @@ export default function ReadPage() {
       });
 
       if (result.success && result.data) {
-        setAnnotations([...annotations, result.data]);
+        setAnnotations((prev) => [...prev, result.data as unknown as Annotation]);
       }
     } catch (err) {
       console.error('Failed to add note:', err);
@@ -136,7 +137,7 @@ export default function ReadPage() {
     try {
       const chapter = chapters[currentChapter];
 
-      const result = await api.post('/api/annotations', {
+      const result = await api.post<Annotation>('/api/annotations', {
         bookId,
         type: 'bookmark',
         content: `Bookmark: ${chapter.title}`,
@@ -149,7 +150,7 @@ export default function ReadPage() {
       });
 
       if (result.success && result.data) {
-        setAnnotations([...annotations, result.data]);
+        setAnnotations((prev) => [...prev, result.data as unknown as Annotation]);
       }
     } catch (err) {
       console.error('Failed to add bookmark:', err);
@@ -159,7 +160,7 @@ export default function ReadPage() {
   const handleDeleteAnnotation = async (id: string) => {
     try {
       await api.delete(`/api/annotations/${id}`);
-      setAnnotations(annotations.filter((a) => a.id !== id));
+      setAnnotations((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
       console.error('Failed to delete annotation:', err);
     }
@@ -207,7 +208,7 @@ export default function ReadPage() {
         className="fixed top-4 left-1/2 -translate-x-1/2 z-30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-800 transition-colors"
         title={bgEnabled ? 'Disable dynamic background' : 'Enable dynamic background'}
       >
-        {bgEnabled ? '🎨 BG On' : '🎨 BG Off'}
+        {bgEnabled ? 'BG On' : 'BG Off'}
       </button>
 
       <ReaderView

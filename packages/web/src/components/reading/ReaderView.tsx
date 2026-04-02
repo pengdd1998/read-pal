@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 
 interface ReaderViewProps {
@@ -10,6 +10,27 @@ interface ReaderViewProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+}
+
+const STORAGE_KEY_PREFIX = 'reader-settings';
+
+function loadSettings(bookId: string) {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}-${bookId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveSettings(bookId: string, settings: { fontSize: number; theme: string }) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}-${bookId}`, JSON.stringify(settings));
+  } catch {
+    // Storage full or unavailable
+  }
 }
 
 export function ReaderView({
@@ -24,27 +45,53 @@ export function ReaderView({
   const [theme, setTheme] = useState<'light' | 'dark' | 'sepia'>('light');
   const [showControls, setShowControls] = useState(false);
 
-  const handlePrevious = () => {
+  // Load persisted settings on mount / book change
+  useEffect(() => {
+    const saved = loadSettings(bookId);
+    if (saved) {
+      if (typeof saved.fontSize === 'number') setFontSize(saved.fontSize);
+      if (saved.theme === 'light' || saved.theme === 'dark' || saved.theme === 'sepia') {
+        setTheme(saved.theme);
+      }
+    }
+  }, [bookId]);
+
+  // Persist settings whenever they change
+  useEffect(() => {
+    saveSettings(bookId, { fontSize, theme });
+  }, [bookId, fontSize, theme]);
+
+  const handlePrevious = useCallback(() => {
     if (currentPage > 0) {
       onPageChange(currentPage - 1);
     }
-  };
+  }, [currentPage, onPageChange]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentPage < totalPages - 1) {
       onPageChange(currentPage + 1);
     }
-  };
-
-  const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') handlePrevious();
-    if (e.key === 'ArrowRight') handleNext();
-  };
+  }, [currentPage, totalPages, onPageChange]);
 
   useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePrevious();
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
-  }, [currentPage, totalPages]);
+  }, [handlePrevious, handleNext]);
 
   const themeClasses = {
     light: 'bg-white text-gray-900',
@@ -103,7 +150,7 @@ export function ReaderView({
               }`}
               aria-label="Light theme"
             >
-              ☀️
+              {'☀\uFE0F'}
             </button>
             <button
               onClick={() => setTheme('sepia')}
@@ -114,7 +161,7 @@ export function ReaderView({
               }`}
               aria-label="Sepia theme"
             >
-              📖
+              {'📖'}
             </button>
             <button
               onClick={() => setTheme('dark')}
@@ -125,7 +172,7 @@ export function ReaderView({
               }`}
               aria-label="Dark theme"
             >
-              🌙
+              {'🌙'}
             </button>
           </div>
         </div>
@@ -155,7 +202,7 @@ export function ReaderView({
           disabled={currentPage === 0}
           className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
         >
-          ← Prev
+          {'\u2190'} Prev
         </button>
 
         {/* Progress Bar */}
@@ -176,7 +223,7 @@ export function ReaderView({
           disabled={currentPage >= totalPages - 1}
           className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
         >
-          Next →
+          Next {'\u2192'}
         </button>
       </footer>
     </div>

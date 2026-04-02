@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { api } from '@/lib/api';
 
 interface ReadingBackgroundProps {
-  /** The current chapter text content — used to generate the scene */
+  /** The current chapter text content -- used to generate the scene */
   content: string;
   /** Whether the dynamic background feature is enabled */
   enabled: boolean;
@@ -31,13 +31,11 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
         cached: boolean;
       }>('/api/agents/mood/scene', { text });
 
-      const raw = result as unknown as {
-        success: boolean;
-        data?: { imageUrl: string };
+      const data = result.data as {
         imageUrl?: string;
-      };
+      } | undefined;
 
-      const url = raw.data?.imageUrl || raw.imageUrl || null;
+      const url = data?.imageUrl ?? null;
 
       if (url && !abortRef.current) {
         // Pre-load the image before displaying it
@@ -72,7 +70,6 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
       return;
     }
 
-    // Debounce: wait 3 seconds after content stabilizes before generating
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
@@ -102,9 +99,7 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
       {imageUrl && (
         <div
           className="absolute inset-0 transition-opacity duration-[2000ms]"
-          style={{
-            opacity: 1,
-          }}
+          style={{ opacity: 1 }}
         >
           <img
             src={imageUrl}
@@ -112,10 +107,9 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
             className="w-full h-full object-cover"
             style={{
               filter: 'blur(20px) brightness(0.3) saturate(0.7)',
-              transform: 'scale(1.1)', // Prevent blur edge artifacts
+              transform: 'scale(1.1)',
             }}
           />
-          {/* Overlay to ensure text readability */}
           <div className="absolute inset-0 bg-black/40 dark:bg-black/60" />
         </div>
       )}
@@ -130,7 +124,7 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
         </div>
       )}
 
-      {/* Error state — subtle fallback */}
+      {/* Error state */}
       {error && !imageUrl && (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900/20 to-blue-900/20 dark:from-gray-900/40 dark:to-blue-900/40" />
       )}

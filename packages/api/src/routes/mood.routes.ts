@@ -8,6 +8,7 @@
 import { Router } from 'express';
 import { createHash } from 'crypto';
 import { chatCompletion, GLM_BASE_URL } from '../services/llmClient';
+import { AuthRequest, authenticate } from '../middleware/auth';
 
 const router: Router = Router();
 
@@ -72,7 +73,7 @@ async function generateImage(prompt: string): Promise<string> {
 // POST /api/agents/mood
 // ============================================================================
 
-router.post('/', async (req, res) => {
+router.post('/', authenticate, async (req: AuthRequest, res) => {
   try {
     const { text } = req.body as { text?: string };
 
@@ -97,7 +98,10 @@ router.post('/', async (req, res) => {
     res.json({ success: true, mood });
   } catch (error) {
     console.error('Mood detection error:', error);
-    res.json({ success: true, mood: 'neutral' });
+    res.status(500).json({
+      success: false,
+      error: { code: 'MOOD_ERROR', message: 'Failed to detect mood' },
+    });
   }
 });
 
@@ -105,7 +109,7 @@ router.post('/', async (req, res) => {
 // POST /api/agents/scene
 // ============================================================================
 
-router.post('/scene', async (req, res) => {
+router.post('/scene', authenticate, async (req: AuthRequest, res) => {
   try {
     const { text } = req.body as { text?: string };
 
@@ -155,11 +159,12 @@ router.post('/scene', async (req, res) => {
     });
   } catch (error) {
     console.error('Scene generation error:', error);
-    res.json({
+    res.status(500).json({
       success: false,
-      imageUrl: null,
-      prompt: '',
-      error: error instanceof Error ? error.message : 'Scene generation failed',
+      error: {
+        code: 'SCENE_GENERATION_ERROR',
+        message: error instanceof Error ? error.message : 'Scene generation failed',
+      },
     });
   }
 });

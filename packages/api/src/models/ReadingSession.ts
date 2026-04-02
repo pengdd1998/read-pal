@@ -111,6 +111,8 @@ ReadingSession.init(
       { fields: ['userId'] },
       { fields: ['bookId'] },
       { fields: ['startedAt'] },
+      { fields: ['userId', 'isActive'] },
+      { fields: ['userId', 'bookId'] },
     ],
   }
 );

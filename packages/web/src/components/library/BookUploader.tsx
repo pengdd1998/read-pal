@@ -2,41 +2,19 @@
 
 import { useState, useRef } from 'react';
 import { api } from '@/lib/api';
+import type { Book } from '@read-pal/shared';
 
 interface BookUploaderProps {
-  onUploadComplete: (book: any) => void;
+  onUploadComplete: (book: Book) => void;
 }
 
 export function BookUploader({ onUploadComplete }: BookUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    const validTypes = [
-      'application/epub+zip',
-      'application/pdf',
-      'application/octet-stream',
-    ];
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    const isValid =
-      validTypes.includes(file.type) || ext === 'epub' || ext === 'pdf';
-
-    if (!isValid) {
-      setError('Only EPUB and PDF files are supported');
-      return;
-    }
-
-    // Validate file size (50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      setError('File size must be less than 50MB');
-      return;
-    }
-
+  const uploadFile = async (file: File) => {
     setUploading(true);
     setError('');
 
@@ -46,25 +24,76 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
       formData.append('author', 'Unknown Author');
 
-      const result = await api.upload<{ book: any }>('/api/upload', formData);
+      const result = await api.upload<{ book: Book }>('/api/upload', formData);
 
       if (result.success && result.data) {
-        onUploadComplete(result.data.book);
+        const data = result.data as unknown as { book: Book };
+        onUploadComplete(data.book);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
       } else {
         setError(result.error?.message || 'Upload failed');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to upload file. Please try again.');
     } finally {
       setUploading(false);
     }
   };
 
+  const handleFile = (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const isValid =
+      [
+        'application/epub+zip',
+        'application/pdf',
+        'application/octet-stream',
+      ].includes(file.type) ||
+      ext === 'epub' ||
+      ext === 'pdf';
+
+    if (!isValid) {
+      setError('Only EPUB and PDF files are supported');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setError('File size must be less than 50MB');
+      return;
+    }
+    uploadFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  const handleClick = () => {
+    if (!uploading) fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFile(file);
+  };
+
   return (
-    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+    <div
+      onClick={handleClick}
+      onDrop={handleDrop}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
+        uploading
+          ? 'border-gray-300 dark:border-gray-600 opacity-50'
+          : dragOver
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+            : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500'
+      }`}
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -72,31 +101,27 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
         onChange={handleFileSelect}
         disabled={uploading}
         className="hidden"
-        id="file-upload"
       />
-      <label
-        htmlFor="file-upload"
-        className={`cursor-pointer block ${
-          uploading ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
-      >
-        <div className="text-6xl mb-4">📚</div>
-        <h3 className="text-xl font-semibold mb-2">
-          {uploading ? 'Uploading...' : 'Upload a Book'}
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          EPUB or PDF, max 50MB
-        </p>
-        <button
-          className={`btn btn-primary ${uploading ? 'opacity-50' : ''}`}
-          disabled={uploading}
-        >
-          {uploading ? 'Uploading...' : 'Choose File'}
-        </button>
-      </label>
+
+      <div className="text-5xl mb-3">{'\uD83D\uDCDA'}</div>
+      <h3 className="text-lg font-semibold mb-1">
+        {uploading ? 'Uploading...' : 'Click or drag your book here to upload'}
+      </h3>
+      <p className="text-gray-500 dark:text-gray-400 text-sm">
+        EPUB or PDF, max 50MB
+      </p>
+
+      {uploading && (
+        <div className="mt-4">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div className="bg-primary-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Processing your book...</p>
+        </div>
+      )}
 
       {error && (
-        <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded">
+        <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded text-sm">
           {error}
         </div>
       )}

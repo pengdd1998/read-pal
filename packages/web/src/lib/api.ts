@@ -32,7 +32,7 @@ class ApiClient {
         }
         return config;
       },
-      (error) => Promise.reject(error),
+      (error: unknown) => Promise.reject(error),
     );
 
     // Response interceptor - handle 401 (browser only)
@@ -54,22 +54,22 @@ class ApiClient {
     );
   }
 
-  async get<T>(url: string, params?: any): Promise<ApiResponse<T>> {
+  async get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const response = await this.client.get<ApiResponse<T>>(url, { params });
     return response.data;
   }
 
-  async post<T>(url: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const response = await this.client.post<ApiResponse<T>>(url, data);
     return response.data;
   }
 
-  async put<T>(url: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const response = await this.client.put<ApiResponse<T>>(url, data);
     return response.data;
   }
 
-  async patch<T>(url: string, data?: any): Promise<ApiResponse<T>> {
+  async patch<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const response = await this.client.patch<ApiResponse<T>>(url, data);
     return response.data;
   }

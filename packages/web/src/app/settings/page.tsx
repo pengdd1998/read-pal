@@ -14,11 +14,11 @@ interface UserSettings {
 }
 
 const PERSONAS = [
-  { id: 'sage', name: 'Sage', description: 'Wise and thoughtful', emoji: '\u{1F9D9}' },
+  { id: 'sage', name: 'Sage', description: 'Wise and thoughtful', emoji: '\uD83E\uDDD9' },
   { id: 'penny', name: 'Penny', description: 'Enthusiastic and curious', emoji: '\u2728' },
-  { id: 'alex', name: 'Alex', description: 'Challenging and direct', emoji: '\u{1F3AF}' },
-  { id: 'quinn', name: 'Quinn', description: 'Calm and minimalist', emoji: '\u{1F343}' },
-  { id: 'sam', name: 'Sam', description: 'Practical and focused', emoji: '\u{1F4DA}' },
+  { id: 'alex', name: 'Alex', description: 'Challenging and direct', emoji: '\uD83C\uDFAF' },
+  { id: 'quinn', name: 'Quinn', description: 'Calm and minimalist', emoji: '\uD83C\uDF43' },
+  { id: 'sam', name: 'Sam', description: 'Practical and focused', emoji: '\uD83D\uDCDA' },
 ];
 
 export default function SettingsPage() {
@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -33,10 +34,14 @@ export default function SettingsPage() {
 
   async function loadSettings() {
     try {
-      const res = await api.get('/api/settings');
-      if (res.success && res.data) setSettings(res.data as UserSettings);
+      const res = await api.get<UserSettings>('/api/settings');
+      if (res.success && res.data) {
+        setSettings(res.data as unknown as UserSettings);
+      } else {
+        setError('Failed to load settings');
+      }
     } catch {
-      /* empty */
+      setError('Failed to load settings. Please try again.');
     }
     setLoading(false);
   }
@@ -45,13 +50,18 @@ export default function SettingsPage() {
     if (!settings) return;
     setSaving(true);
     setSaved(false);
+    setError(null);
     try {
-      const res = await api.patch('/api/settings', updates);
-      if (res.success && res.data) setSettings(res.data as UserSettings);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      const res = await api.patch<UserSettings>('/api/settings', updates as Record<string, unknown>);
+      if (res.success && res.data) {
+        setSettings(res.data as unknown as UserSettings);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        setError(res.error?.message || 'Failed to save settings');
+      }
     } catch {
-      /* empty */
+      setError('Failed to save settings. Please try again.');
     }
     setSaving(false);
   }
@@ -59,7 +69,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p>Loading...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
       </div>
     );
   }
@@ -67,7 +77,11 @@ export default function SettingsPage() {
   if (!settings) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p>Failed to load settings</p>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Failed to load settings</p>
+          {error && <p className="text-sm text-gray-500 mb-4">{error}</p>}
+          <button onClick={loadSettings} className="btn btn-primary">Retry</button>
+        </div>
       </div>
     );
   }
@@ -76,6 +90,12 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Settings</h1>
+
+        {error && (
+          <div className="mb-6 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded text-sm">
+            {error}
+          </div>
+        )}
 
         {/* Appearance */}
         <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
@@ -87,6 +107,7 @@ export default function SettingsPage() {
                 value={settings.theme}
                 onChange={(e) => saveSettings({ theme: e.target.value })}
                 className="input"
+                disabled={saving}
               >
                 <option value="system">System</option>
                 <option value="light">Light</option>
@@ -104,6 +125,7 @@ export default function SettingsPage() {
                 value={settings.fontSize}
                 onChange={(e) => saveSettings({ fontSize: parseInt(e.target.value) })}
                 className="w-full"
+                disabled={saving}
               />
             </div>
             <div>
@@ -112,6 +134,7 @@ export default function SettingsPage() {
                 value={settings.fontFamily}
                 onChange={(e) => saveSettings({ fontFamily: e.target.value })}
                 className="input"
+                disabled={saving}
               >
                 <option value="Inter">Inter</option>
                 <option value="Georgia">Georgia</option>
@@ -134,6 +157,7 @@ export default function SettingsPage() {
               value={settings.readingGoal}
               onChange={(e) => saveSettings({ readingGoal: parseInt(e.target.value) || 1 })}
               className="w-24 input"
+              disabled={saving}
             />
           </div>
         </section>
@@ -146,6 +170,7 @@ export default function SettingsPage() {
               <button
                 key={p.id}
                 onClick={() => saveSettings({ friendPersona: p.id })}
+                disabled={saving}
                 className={`flex items-center gap-3 p-3 rounded-lg border-2 transition ${
                   settings.friendPersona === p.id
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
@@ -168,6 +193,7 @@ export default function SettingsPage() {
               value={settings.friendFrequency}
               onChange={(e) => saveSettings({ friendFrequency: e.target.value })}
               className="input"
+              disabled={saving}
             >
               <option value="minimal">Minimal - Only when asked</option>
               <option value="normal">Normal - Helpful nudges</option>

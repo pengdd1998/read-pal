@@ -163,13 +163,17 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
 
     const { currentPage, status } = req.body;
 
-    if (currentPage !== undefined) {
-      book.currentPage = currentPage;
-      book.progress = (currentPage / book.totalPages) * 100;
-      book.lastReadAt = new Date();
-    }
-
+    const validStatuses = ['unread', 'reading', 'completed'];
     if (status !== undefined) {
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: `Status must be one of: ${validStatuses.join(', ')}`,
+          },
+        });
+      }
       book.status = status;
       if (status === 'reading' && !book.startedAt) {
         book.startedAt = new Date();
@@ -177,6 +181,23 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
       if (status === 'completed' && !book.completedAt) {
         book.completedAt = new Date();
       }
+    }
+
+    if (currentPage !== undefined) {
+      if (typeof currentPage !== 'number' || currentPage < 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'currentPage must be a non-negative number',
+          },
+        });
+      }
+      book.currentPage = currentPage;
+      if (book.totalPages > 0) {
+        book.progress = Math.min((currentPage / book.totalPages) * 100, 100);
+      }
+      book.lastReadAt = new Date();
     }
 
     await book.save();

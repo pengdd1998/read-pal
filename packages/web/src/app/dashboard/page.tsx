@@ -39,10 +39,10 @@ interface AgentInsight {
 }
 
 const DEFAULT_INSIGHTS: AgentInsight[] = [
-  { agent: 'Companion', icon: '\u{1F4D6}', message: 'Start reading to unlock personalized insights from your AI companions.' },
-  { agent: 'Research', icon: '\u{1F52C}', message: 'As you read, I\'ll find connections across your library.' },
-  { agent: 'Coach', icon: '\u{1F3AF}', message: 'Begin your reading journey and I\'ll help track your progress.' },
-  { agent: 'Synthesis', icon: '\u{1F9E0}', message: 'I\'ll discover patterns and build your knowledge graph as you read.' },
+  { agent: 'Companion', icon: '\uD83D\uDCD6', message: 'Start reading to unlock personalized insights from your AI companions.' },
+  { agent: 'Research', icon: '\uD83D\uDD2C', message: 'As you read, I\'ll find connections across your library.' },
+  { agent: 'Coach', icon: '\uD83C\uDFAF', message: 'Begin your reading journey and I\'ll help track your progress.' },
+  { agent: 'Synthesis', icon: '\uD83E\uDDE0', message: 'I\'ll discover patterns and build your knowledge graph as you read.' },
 ];
 
 function SkeletonCard() {
@@ -70,21 +70,27 @@ export default function DashboardPage() {
   const [agentInsights] = useState<AgentInsight[]>(DEFAULT_INSIGHTS);
 
   useEffect(() => {
+    let cancelled = false;
+
     api.get<DashboardData>('/api/stats/dashboard')
       .then((res) => {
-        setDashboardData(res.data ?? null);
+        if (!cancelled) setDashboardData((res.data as unknown as DashboardData) ?? null);
       })
       .catch(() => {
-        setError('Failed to load dashboard data. Please try again later.');
+        if (!cancelled) setError('Failed to load dashboard data. Please try again later.');
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
   }, []);
 
   const stats = dashboardData?.stats ?? null;
   const recentBooks = dashboardData?.recentBooks ?? [];
   const weeklyActivity = dashboardData?.weeklyActivity ?? [];
   const booksByStatus = dashboardData?.booksByStatus;
-  const isEmpty = !loading && stats && stats.booksRead === 0;
+  const isEmpty = !loading && stats !== null && stats.booksRead === 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -171,7 +177,7 @@ export default function DashboardPage() {
             </div>
           ) : isEmpty || recentBooks.length === 0 ? (
             <div className="card text-center py-12">
-              <div className="text-4xl mb-3">📚</div>
+              <div className="text-4xl mb-3">{'\uD83D\uDCDA'}</div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-1">No books yet</h3>
               <p className="text-sm text-gray-500 mb-4">Add a book to your library to get started.</p>
               <Link href="/library" className="btn btn-primary">
@@ -245,7 +251,7 @@ export default function DashboardPage() {
           <div className="mt-6">
             <Link href="/knowledge" className="block card bg-gradient-to-br from-purple-50 to-primary-50 dark:from-purple-900/20 dark:to-primary-900/20 hover:border-purple-300 transition-colors">
               <div className="text-center">
-                <div className="text-3xl mb-2">🕸️</div>
+                <div className="text-3xl mb-2">{'\uD83D\uDD78'}</div>
                 <h3 className="font-semibold text-gray-900 dark:text-white">Knowledge Graph</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   {loading ? 'Loading...' : `${stats?.conceptsLearned ?? 0} concepts discovered`}

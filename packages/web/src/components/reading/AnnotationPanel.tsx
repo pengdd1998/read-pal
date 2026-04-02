@@ -2,18 +2,7 @@
 
 import { useState } from 'react';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
-
-interface Annotation {
-  id: string;
-  type: 'highlight' | 'note' | 'bookmark';
-  content: string;
-  color?: string;
-  note?: string;
-  location: {
-    pageIndex: number;
-    position: number;
-  };
-}
+import type { Annotation } from '@read-pal/shared';
 
 interface AnnotationPanelProps {
   annotations: Annotation[];
@@ -69,9 +58,20 @@ export function AnnotationPanel({
     setIsOpen(false);
   };
 
+  /** Derive border color from annotation, falling back to type-based defaults. */
+  function getAnnotationBorderColor(annotation: Annotation): string {
+    if (annotation.color) return annotation.color;
+    switch (annotation.type) {
+      case 'highlight': return ANNOTATION_COLORS[0]; // yellow
+      case 'note': return ANNOTATION_COLORS[3]; // blue
+      case 'bookmark': return ANNOTATION_COLORS[4]; // purple
+      default: return 'transparent';
+    }
+  }
+
   return (
     <>
-      {/* Annotate button — right side, above chat toggle area */}
+      {/* Annotate button */}
       <div className="fixed bottom-4 right-4 z-50 flex gap-2">
         {annotations.length > 0 && !isOpen && (
           <button
@@ -79,7 +79,7 @@ export function AnnotationPanel({
             className="btn btn-secondary shadow-lg"
             title="View annotations"
           >
-            📋 {annotations.length}
+            {'\uD83D\uDCCB'} {annotations.length}
           </button>
         )}
         {!isOpen && (
@@ -88,7 +88,7 @@ export function AnnotationPanel({
             className="btn btn-primary shadow-lg"
             title="Highlight selected text"
           >
-            📝 Annotate
+            {'\uD83D\uDCDD'} Annotate
           </button>
         )}
       </div>
@@ -103,7 +103,7 @@ export function AnnotationPanel({
                 onClick={() => setIsOpen(false)}
                 className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               >
-                ✕
+                {'\u2715'}
               </button>
             </div>
 
@@ -126,19 +126,20 @@ export function AnnotationPanel({
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
-                    className={`w-8 h-8 rounded border-2 ${
+                    className={`w-8 h-8 rounded border-2 transition-colors ${
                       selectedColor === color
-                        ? 'border-gray-900 dark:border-white'
-                        : 'border-transparent'
+                        ? 'border-gray-900 dark:border-white ring-2 ring-primary-300'
+                        : 'border-transparent hover:border-gray-400'
                     }`}
                     style={{ backgroundColor: color }}
-                    aria-label={`Select ${color} color`}
+                    aria-label={`Select color ${color}`}
                   />
                 ))}
               </div>
               <button
                 onClick={handleAddHighlight}
-                className="btn btn-primary w-full"
+                disabled={!selectedText}
+                className="btn btn-primary w-full disabled:opacity-50"
               >
                 Add Highlight
               </button>
@@ -156,7 +157,7 @@ export function AnnotationPanel({
               />
               <button
                 onClick={handleAddNote}
-                disabled={!noteText.trim()}
+                disabled={!selectedText || !noteText.trim()}
                 className="btn btn-primary w-full disabled:opacity-50"
               >
                 Add Note
@@ -170,14 +171,14 @@ export function AnnotationPanel({
                 onClick={handleAddBookmark}
                 className="btn btn-secondary w-full"
               >
-                🔖 Add Bookmark
+                {'\uD83D\uDD16'} Add Bookmark
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Existing Annotations Sidebar — slide-in on demand */}
+      {/* Existing Annotations Sidebar */}
       {showAnnotations && annotations.length > 0 && (
         <div className="fixed left-0 top-0 h-full w-full md:top-16 md:h-[calc(100vh-4rem)] md:w-80 bg-white dark:bg-gray-800 shadow-lg overflow-y-auto z-40 md:border-r">
           <div className="p-4">
@@ -189,7 +190,7 @@ export function AnnotationPanel({
                 onClick={() => setShowAnnotations(false)}
                 className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 md:hidden"
               >
-                ✕
+                {'\u2715'}
               </button>
             </div>
 
@@ -198,12 +199,7 @@ export function AnnotationPanel({
                 <div
                   key={annotation.id}
                   className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border-l-4"
-                  style={{
-                    borderColor:
-                      annotation.color || annotation.type === 'highlight'
-                        ? '#FFEB3B'
-                        : 'transparent',
-                  }}
+                  style={{ borderColor: getAnnotationBorderColor(annotation) }}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <span className="text-xs font-medium uppercase text-gray-500">
@@ -227,9 +223,11 @@ export function AnnotationPanel({
                     </div>
                   )}
 
-                  <p className="text-xs text-gray-500">
-                    Page {annotation.location.pageIndex + 1}
-                  </p>
+                  {annotation.location?.pageIndex != null && (
+                    <p className="text-xs text-gray-500">
+                      Page {annotation.location.pageIndex + 1}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

@@ -111,7 +111,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
       });
     }
 
-    if (updates.fontSize && (updates.fontSize < 12 || updates.fontSize > 32)) {
+    if (updates.fontSize && (typeof updates.fontSize !== 'number' || updates.fontSize < 12 || updates.fontSize > 32)) {
       return res.status(400).json({
         success: false,
         error: { code: 'INVALID_FONT_SIZE', message: 'Font size must be between 12 and 32' },
@@ -141,7 +141,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
     // --- Persist -----------------------------------------------------------
 
     const newSettings = { ...currentSettings, ...updates };
-    await user.update({ settings: newSettings });
+    await user.update({ settings: newSettings as import('../models/User').UserSettings });
 
     res.json({ success: true, data: newSettings });
   } catch (error) {

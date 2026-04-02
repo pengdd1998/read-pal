@@ -26,6 +26,11 @@ interface CrossBookTheme {
   strength: number;
 }
 
+interface GraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
 function getNodePosition(index: number, total: number) {
   const angle = (2 * Math.PI * index) / total - Math.PI / 2;
   return {
@@ -54,24 +59,41 @@ export default function KnowledgePage() {
   const [viewMode, setViewMode] = useState<'graph' | 'list' | 'themes'>('graph');
 
   useEffect(() => {
+    let cancelled = false;
+
     Promise.all([
-      api.get<{ nodes: GraphNode[]; edges: GraphEdge[] }>('/api/knowledge/graph'),
+      api.get<GraphData>('/api/knowledge/graph'),
       api.get<{ themes: CrossBookTheme[] }>('/api/knowledge/themes'),
     ])
       .then(([graphRes, themesRes]) => {
-        const gd = graphRes.data;
+        if (cancelled) return;
+
+        const gd = graphRes.data as unknown as GraphData | undefined;
         if (gd) {
           const positioned = gd.nodes.map((node, i) => {
-            const pos = 'x' in node ? { x: (node as any).x, y: (node as any).y } : getNodePosition(i, gd.nodes.length);
+            const pos = 'x' in node && typeof node.x === 'number'
+              ? { x: node.x, y: node.y }
+              : getNodePosition(i, gd.nodes.length);
             return { ...node, ...pos };
           });
           setNodes(positioned);
           setEdges(gd.edges ?? []);
         }
-        if (themesRes.data) setThemes((themesRes.data as any).themes || themesRes.data as any);
+
+        const td = themesRes.data as unknown as { themes: CrossBookTheme[] } | CrossBookTheme[] | undefined;
+        if (td) {
+          const themeArray = Array.isArray(td) ? td : (td as { themes: CrossBookTheme[] }).themes ?? [];
+          setThemes(themeArray);
+        }
       })
-      .catch(() => setError('Failed to load knowledge graph. Please try again later.'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) setError('Failed to load knowledge graph. Please try again later.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
   }, []);
 
   const statValues = [
@@ -134,7 +156,7 @@ export default function KnowledgePage() {
       {/* Empty State */}
       {isEmpty && !error && (
         <div className="card text-center py-16">
-          <div className="text-5xl mb-4">🕸️</div>
+          <div className="text-5xl mb-4">{'\uD83D\uDD78'}</div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No knowledge graph yet</h2>
           <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
             Your knowledge graph grows as you read. Concepts, themes, and connections will appear here automatically.
@@ -197,7 +219,10 @@ export default function KnowledgePage() {
             : nodes.map((node) => (
                 <div key={node.id} className="card flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full bg-${node.type === 'book' ? 'purple-600' : node.type === 'theme' ? 'blue-600' : 'cyan-500'}`} />
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: getNodeColor(node.type) }}
+                    />
                     <span className="font-medium text-gray-900 dark:text-white">{node.label}</span>
                   </div>
                   <div className="flex items-center gap-4">

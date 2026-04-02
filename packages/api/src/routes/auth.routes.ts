@@ -9,6 +9,7 @@ import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import { User } from '../models';
 import { generateToken } from '../utils/auth';
+import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
 
@@ -106,29 +107,9 @@ router.post(
   try {
     const { email, password, name } = req.body;
 
-    // Validate input
-    if (!email || !password || !name) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Email, password, and name are required',
-        },
-      });
-    }
-
-    // Validate password length
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
-        },
-      });
-    }
-
-    if (password.length > MAX_PASSWORD_LENGTH) {
+    // express-validator handles basic validation;
+    // additional bcrypt-aware password length check
+    if (password && password.length > MAX_PASSWORD_LENGTH) {
       return res.status(400).json({
         success: false,
         error: {
@@ -158,6 +139,13 @@ router.post(
       email,
       name,
       passwordHash,
+      settings: {
+        theme: 'system',
+        fontSize: 16,
+        fontFamily: 'Inter',
+        readingGoal: 2,
+        notificationsEnabled: true,
+      },
     });
 
     // Generate JWT token
@@ -192,35 +180,9 @@ router.post(
  * GET /api/auth/me
  * Get current user profile
  */
-router.get('/me', async (req, res) => {
+router.get('/me', authenticate, async (req: AuthRequest, res) => {
   try {
-    // Extract user ID from token or request
-    const authHeader = req.headers.authorization;
-    let userId: string | undefined;
-
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const jwt = require('jsonwebtoken');
-        const token = authHeader.substring(7);
-        const secret = process.env.JWT_SECRET || 'dev-secret-change-in-production';
-        const decoded = jwt.verify(token, secret);
-        userId = (decoded as any).userId || (decoded as any).sub;
-      } catch {
-        // Token verification failed
-      }
-    }
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required',
-        },
-      });
-    }
-
-    const user = await User.findByPk(userId);
+    const user = await User.findByPk(req.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -259,21 +221,9 @@ router.get('/me', async (req, res) => {
  * PATCH /api/auth/me
  * Update current user profile
  */
-router.patch('/me', async (req, res) => {
+router.patch('/me', authenticate, async (req: AuthRequest, res) => {
   try {
-    const userId = (req as any).userId;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required',
-        },
-      });
-    }
-
-    const user = await User.findByPk(userId);
+    const user = await User.findByPk(req.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -332,22 +282,10 @@ router.post('/logout', async (_req, res) => {
  * POST /api/auth/refresh
  * Refresh authentication token
  */
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', authenticate, async (req: AuthRequest, res) => {
   try {
-    const userId = (req as any).userId;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required',
-        },
-      });
-    }
-
     // Generate new token
-    const token = generateToken(userId);
+    const token = generateToken(req.userId!);
 
     res.json({
       success: true,

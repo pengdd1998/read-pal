@@ -11,7 +11,7 @@ interface BookCardProps {
   status: 'unread' | 'reading' | 'completed';
   currentPage: number;
   totalPages: number;
-  lastReadAt?: Date;
+  lastReadAt?: Date | string;
 }
 
 export function BookCard({
@@ -37,11 +37,15 @@ export function BookCard({
     completed: 'Completed',
   };
 
+  const formattedDate = lastReadAt
+    ? new Date(lastReadAt).toLocaleDateString()
+    : null;
+
   return (
     <Link href={`/read/${id}`}>
       <div className="card hover:shadow-lg transition-shadow cursor-pointer h-full">
         {/* Cover or Placeholder */}
-        <div className="aspect-[3/4] bg-gradient-to-br from-primary-400 to-purple-500 rounded-lg mb-4 flex items-center justify-center text-white text-6xl">
+        <div className="aspect-[3/4] bg-gradient-to-br from-primary-400 to-purple-500 rounded-lg mb-4 flex items-center justify-center text-white text-6xl overflow-hidden">
           {coverUrl ? (
             <img
               src={coverUrl}
@@ -49,7 +53,7 @@ export function BookCard({
               className="w-full h-full object-cover rounded-lg"
             />
           ) : (
-            <span>📖</span>
+            <span aria-hidden="true">{'\uD83D\uDCD6'}</span>
           )}
         </div>
 
@@ -80,9 +84,9 @@ export function BookCard({
         )}
 
         {/* Last Read */}
-        {lastReadAt && (
+        {formattedDate && (
           <p className="text-xs text-gray-500">
-            Last read: {new Date(lastReadAt).toLocaleDateString()}
+            Last read: {formattedDate}
           </p>
         )}
       </div>
