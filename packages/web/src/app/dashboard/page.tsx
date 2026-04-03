@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 
-/** Shape of the stats object inside the API response */
 interface DashboardStats {
   booksRead: number;
   totalPages: number;
@@ -15,7 +14,6 @@ interface DashboardStats {
   connections: number;
 }
 
-/** Shape of the full API response data for /stats/dashboard */
 interface DashboardData {
   stats: DashboardStats;
   recentBooks: RecentBook[];
@@ -36,29 +34,30 @@ interface AgentInsight {
   agent: string;
   icon: string;
   message: string;
+  color: string;
 }
 
 const DEFAULT_INSIGHTS: AgentInsight[] = [
-  { agent: 'Companion', icon: '\uD83D\uDCD6', message: 'Start reading to unlock personalized insights from your AI companions.' },
-  { agent: 'Research', icon: '\uD83D\uDD2C', message: 'As you read, I\'ll find connections across your library.' },
-  { agent: 'Coach', icon: '\uD83C\uDFAF', message: 'Begin your reading journey and I\'ll help track your progress.' },
-  { agent: 'Synthesis', icon: '\uD83E\uDDE0', message: 'I\'ll discover patterns and build your knowledge graph as you read.' },
+  { agent: 'Companion', icon: '\uD83D\uDCD6', message: 'Start reading to unlock personalized insights from your AI companions.', color: 'text-teal-500' },
+  { agent: 'Research', icon: '\uD83D\uDD2C', message: 'As you read, I\'ll find connections across your library.', color: 'text-violet-500' },
+  { agent: 'Coach', icon: '\uD83C\uDFAF', message: 'Begin your reading journey and I\'ll help track your progress.', color: 'text-emerald-500' },
+  { agent: 'Synthesis', icon: '\uD83E\uDDE0', message: 'I\'ll discover patterns and build your knowledge graph as you read.', color: 'text-amber-500' },
 ];
 
-function SkeletonCard() {
-  return (
-    <div className="card animate-pulse">
-      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-12 mx-auto" />
-      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 mx-auto mt-2" />
-    </div>
-  );
+function SkeletonPulse({ className = '' }: { className?: string }) {
+  return <div className={`bg-gray-100 dark:bg-gray-800 rounded animate-pulse ${className}`} />;
 }
 
-function SkeletonBar() {
+function StatCard({ value, label, accent = 'text-primary-600', delay }: {
+  value: number | string;
+  label: string;
+  accent?: string;
+  delay: number;
+}) {
   return (
-    <div className="flex flex-col items-center gap-2 flex-1">
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t animate-pulse" style={{ height: '60%' }} />
-      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-6 animate-pulse" />
+    <div className={`card text-center animate-slide-up stagger-${delay}`}>
+      <div className={`text-2xl font-bold ${accent} tabular-nums`}>{value}</div>
+      <div className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">{label}</div>
     </div>
   );
 }
@@ -93,122 +92,124 @@ export default function DashboardPage() {
   const isEmpty = !loading && stats !== null && stats.booksRead === 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Welcome Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      {/* Welcome */}
+      <div className="mb-10 animate-fade-in">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
           Welcome back, Reader
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-gray-500 mt-2 text-base">
           {loading ? (
-            <span className="inline-block w-48 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <SkeletonPulse className="w-64 h-5 inline-block" />
           ) : stats && stats.readingStreak > 0 ? (
-            <>You&apos;re on a {stats.readingStreak}-day reading streak. Keep it up!</>
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+              You&apos;re on a <strong className="text-amber-600 dark:text-amber-400">{stats.readingStreak}-day</strong> reading streak. Keep it up!
+            </span>
           ) : (
-            <>Start your reading journey today.</>
+            'Start your reading journey today.'
           )}
         </p>
       </div>
 
-      {/* Error State */}
+      {/* Error */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+        <div className="mb-8 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up">
           {error}
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
         {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card text-center">
+              <SkeletonPulse className="h-8 w-16 mx-auto" />
+              <SkeletonPulse className="h-3 w-12 mx-auto mt-2" />
+            </div>
+          ))
         ) : (
           <>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-primary-600">{stats?.totalPages ?? 0}</div>
-              <div className="text-sm text-gray-500">Books Read</div>
-            </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-primary-600">{(stats?.pagesRead ?? 0).toLocaleString()}</div>
-              <div className="text-sm text-gray-500">Pages</div>
-            </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-primary-600">{stats?.readingStreak ?? 0}</div>
-              <div className="text-sm text-gray-500">Day Streak</div>
-            </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-primary-600">{booksByStatus?.reading ?? 0}</div>
-              <div className="text-sm text-gray-500">In Progress</div>
-            </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-purple-600">{stats?.conceptsLearned ?? 0}</div>
-              <div className="text-sm text-gray-500">Concepts</div>
-            </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-purple-600">{booksByStatus?.completed ?? 0}</div>
-              <div className="text-sm text-gray-500">Completed</div>
-            </div>
+            <StatCard value={stats?.totalPages ?? 0} label="Books Read" delay={1} />
+            <StatCard value={(stats?.pagesRead ?? 0).toLocaleString()} label="Pages" delay={2} />
+            <StatCard value={stats?.readingStreak ?? 0} label="Day Streak" accent="text-amber-600" delay={3} />
+            <StatCard value={booksByStatus?.reading ?? 0} label="In Progress" delay={4} />
+            <StatCard value={stats?.conceptsLearned ?? 0} label="Concepts" accent="text-violet-600" delay={5} />
+            <StatCard value={booksByStatus?.completed ?? 0} label="Completed" accent="text-emerald-600" delay={6} />
           </>
         )}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-10">
         {/* Continue Reading */}
         <div className="lg:col-span-2">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Continue Reading</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Continue Reading</h2>
+            {recentBooks.length > 0 && (
+              <Link href="/library" className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
+                View all
+              </Link>
+            )}
+          </div>
+
           {loading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="card animate-pulse">
-                  <div className="flex items-center justify-between">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="card">
+                  <div className="flex items-center gap-4">
+                    <SkeletonPulse className="w-10 h-14 rounded-lg flex-shrink-0" />
                     <div className="flex-1">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-48" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32 mt-2" />
+                      <SkeletonPulse className="h-4 w-48 mb-2" />
+                      <SkeletonPulse className="h-3 w-32" />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : isEmpty || recentBooks.length === 0 ? (
-            <div className="card text-center py-12">
-              <div className="text-4xl mb-3">{'\uD83D\uDCDA'}</div>
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">No books yet</h3>
-              <p className="text-sm text-gray-500 mb-4">Add a book to your library to get started.</p>
+            <div className="card text-center py-16 animate-scale-in">
+              <div className="text-5xl mb-4 opacity-40">{'\uD83D\uDCDA'}</div>
+              <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">No books yet</h3>
+              <p className="text-sm text-gray-500 mb-6">Add a book to your library to get started.</p>
               <Link href="/library" className="btn btn-primary">
                 Browse Library
               </Link>
             </div>
           ) : (
             <div className="space-y-3">
-              {recentBooks.map((book) => (
+              {recentBooks.map((book, i) => (
                 <Link
                   key={book.id}
                   href={`/read/${book.id}`}
-                  className="block card hover:border-primary-300 transition-colors"
+                  className={`block card group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 ease-out stagger-${i + 1} animate-slide-up`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    {/* Mini cover */}
+                    <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {book.coverUrl ? (
+                        <img src={book.coverUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                      ) : (
+                        <span className="text-white text-lg">{'\uD83D\uDCD6'}</span>
+                      )}
+                    </div>
+
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                      <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                         {book.title}
                       </h3>
-                      <p className="text-sm text-gray-500">{book.author}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>
                     </div>
-                    <div className="ml-4 flex items-center gap-4">
-                      <span className="text-sm text-gray-400">{book.lastRead}</span>
-                      <div className="w-24">
-                        <div className="flex justify-between text-xs mb-1">
+
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <span className="text-xs text-gray-400 hidden sm:inline">{book.lastRead}</span>
+                      <div className="w-20 hidden sm:block">
+                        <div className="flex justify-between text-[10px] text-gray-400 mb-1 tabular-nums">
                           <span>{book.progress}%</span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
                           <div
-                            className="bg-primary-600 rounded-full h-2 transition-all"
-                            style={{ width: `${book.progress}%` }}
+                            className="bg-primary-500 rounded-full h-1.5 transition-all duration-500 ease-out"
+                            style={{ width: `${Math.min(100, book.progress)}%` }}
                           />
                         </div>
                       </div>
@@ -218,27 +219,21 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-
-          <div className="mt-6">
-            <Link href="/library" className="btn btn-secondary">
-              View Full Library
-            </Link>
-          </div>
         </div>
 
         {/* Agent Insights */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Agent Insights</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Agent Insights</h2>
           <div className="space-y-3">
             {agentInsights.map((insight, i) => (
-              <div key={i} className="card">
+              <div key={i} className={`card stagger-${i + 1} animate-slide-up`}>
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">{insight.icon}</span>
+                  <span className="text-2xl leading-none mt-0.5">{insight.icon}</span>
                   <div>
-                    <div className="text-xs font-semibold text-primary-600 uppercase tracking-wide">
+                    <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
                       {insight.agent} Agent
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
                       {insight.message}
                     </p>
                   </div>
@@ -247,55 +242,54 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Knowledge Graph Preview */}
-          <div className="mt-6">
-            <Link href="/knowledge" className="block card bg-gradient-to-br from-purple-50 to-primary-50 dark:from-purple-900/20 dark:to-primary-900/20 hover:border-purple-300 transition-colors">
-              <div className="text-center">
-                <div className="text-3xl mb-2">{'\uD83D\uDD78'}</div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Knowledge Graph</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {loading ? 'Loading...' : `${stats?.conceptsLearned ?? 0} concepts discovered`}
-                </p>
-              </div>
-            </Link>
-          </div>
+          {/* Knowledge Graph Card */}
+          <Link
+            href="/knowledge"
+            className="block card mt-4 bg-gradient-to-br from-violet-50/50 to-primary-50/50 dark:from-violet-950/20 dark:to-primary-950/20 hover:border-violet-200 dark:hover:border-violet-800 transition-all duration-200 ease-out group animate-slide-up stagger-5"
+          >
+            <div className="text-center">
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform duration-300 ease-out">{'\uD83D\uDD78'}</div>
+              <h3 className="font-bold text-gray-900 dark:text-white">Knowledge Graph</h3>
+              <p className="text-sm text-gray-500 mt-1 tabular-nums">
+                {loading ? 'Loading...' : `${stats?.conceptsLearned ?? 0} concepts discovered`}
+              </p>
+            </div>
+          </Link>
         </div>
       </div>
 
-      {/* Reading Activity Chart */}
-      <div className="mt-8 card">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Reading Activity</h2>
+      {/* Reading Activity */}
+      <div className="mt-12 card animate-slide-up">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Reading Activity</h2>
         {loading ? (
-          <div className="h-48 flex items-end justify-around gap-2 px-4">
+          <div className="h-48 flex items-end justify-around gap-3 px-4">
             {Array.from({ length: 7 }).map((_, i) => (
-              <SkeletonBar key={i} />
+              <SkeletonPulse key={i} className="w-full rounded-t" style={{ height: `${30 + Math.random() * 60}%` }} />
             ))}
           </div>
         ) : weeklyActivity.length === 0 ? (
           <div className="h-48 flex items-center justify-center">
-            <p className="text-sm text-gray-500">No activity this week. Start reading to see your progress!</p>
+            <p className="text-sm text-gray-400">No activity this week. Start reading to see your progress!</p>
           </div>
         ) : (
-          <div className="h-48 flex items-end justify-around gap-2 px-4">
-            {weeklyActivity.map((entry) => {
+          <div className="h-48 flex items-end gap-2 px-4">
+            {weeklyActivity.map((entry, i) => {
               const maxPages = Math.max(...weeklyActivity.map((e) => e.pages), 1);
-              const heightPct = Math.max((entry.pages / maxPages) * 100, 4);
+              const heightPct = Math.max((entry.pages / maxPages) * 100, 6);
               return (
-                <div key={entry.day} className="flex flex-col items-center gap-2 flex-1">
-                  <span className="text-xs text-gray-500">{entry.pages}</span>
+                <div key={entry.day} className={`flex flex-col items-center gap-2 flex-1 stagger-${i + 1} animate-slide-up`}>
+                  <span className="text-[10px] text-gray-400 tabular-nums font-medium">{entry.pages}</span>
                   <div
-                    className="w-full bg-primary-500 rounded-t transition-all hover:bg-primary-600"
+                    className="w-full bg-primary-400/80 dark:bg-primary-600/60 rounded-t-md transition-all duration-500 ease-out hover:bg-primary-500 dark:hover:bg-primary-500 cursor-default"
                     style={{ height: `${heightPct}%` }}
                   />
-                  <span className="text-xs text-gray-500">{entry.day}</span>
+                  <span className="text-[10px] text-gray-400 font-medium">{entry.day}</span>
                 </div>
               );
             })}
           </div>
         )}
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Pages read per day this week
-        </div>
+        <p className="mt-4 text-center text-xs text-gray-400">Pages read per day this week</p>
       </div>
     </div>
   );

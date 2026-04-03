@@ -14,6 +14,12 @@ interface BookCardProps {
   lastReadAt?: Date | string;
 }
 
+const STATUS_CONFIG = {
+  unread: { label: 'Unread', dot: 'bg-gray-300', ring: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
+  reading: { label: 'Reading', dot: 'bg-primary-400', ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
+  completed: { label: 'Completed', dot: 'bg-emerald-400', ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
+} as const;
+
 export function BookCard({
   id,
   title,
@@ -25,68 +31,64 @@ export function BookCard({
   totalPages,
   lastReadAt,
 }: BookCardProps) {
-  const statusColors = {
-    unread: 'bg-gray-200 text-gray-700',
-    reading: 'bg-blue-100 text-blue-700',
-    completed: 'bg-green-100 text-green-700',
-  };
-
-  const statusLabels = {
-    unread: 'Unread',
-    reading: 'Reading',
-    completed: 'Completed',
-  };
-
+  const cfg = STATUS_CONFIG[status];
   const formattedDate = lastReadAt
-    ? new Date(lastReadAt).toLocaleDateString()
+    ? new Date(lastReadAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     : null;
 
   return (
-    <Link href={`/read/${id}`}>
-      <div className="card hover:shadow-lg transition-shadow cursor-pointer h-full">
-        {/* Cover or Placeholder */}
-        <div className="aspect-[3/4] bg-gradient-to-br from-primary-400 to-purple-500 rounded-lg mb-4 flex items-center justify-center text-white text-6xl overflow-hidden">
+    <Link href={`/read/${id}`} className="group">
+      <div className="card-hover h-full flex flex-col">
+        {/* Cover */}
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-primary-400/80 to-primary-700/80">
           {coverUrl ? (
             <img
               src={coverUrl}
-              alt={title}
-              className="w-full h-full object-cover rounded-lg"
+              alt={`Cover of ${title}`}
+              className="w-full h-full object-cover"
             />
           ) : (
-            <span aria-hidden="true">{'\uD83D\uDCD6'}</span>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-5xl opacity-60" aria-hidden="true">{'\uD83D\uDCD6'}</span>
+            </div>
           )}
+
+          {/* Status dot */}
+          <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900" style={{ backgroundColor: cfg.dot }} />
         </div>
 
         {/* Title & Author */}
-        <h3 className="font-semibold text-lg mb-1 line-clamp-2">{title}</h3>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{author}</p>
+        <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2 leading-snug mb-1 group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">
+          {title}
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">{author}</p>
 
         {/* Status Badge */}
-        <span
-          className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-3 ${statusColors[status]}`}
-        >
-          {statusLabels[status]}
+        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase ${cfg.ring}`}>
+          {cfg.label}
         </span>
 
-        {/* Progress Bar */}
+        {/* Progress */}
         {status !== 'unread' && (
-          <div className="mb-3">
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="mt-auto pt-4">
+            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                className={`h-full rounded-full transition-all duration-500 ease-out ${
+                  status === 'completed' ? 'bg-emerald-500' : 'bg-primary-500'
+                }`}
                 style={{ width: `${Math.min(100, progress)}%` }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-[10px] text-gray-400 mt-1.5 tabular-nums">
               {currentPage} / {totalPages} pages
             </p>
           </div>
         )}
 
-        {/* Last Read */}
+        {/* Last read */}
         {formattedDate && (
-          <p className="text-xs text-gray-500">
-            Last read: {formattedDate}
+          <p className="text-[10px] text-gray-400 mt-2">
+            {formattedDate}
           </p>
         )}
       </div>

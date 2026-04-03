@@ -2,33 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   Design Tokens
+   ============================================================================ */
+
 @layer base {
   :root {
-    --foreground-rgb: 0, 0, 0;
-    --background-start-rgb: 255, 255, 255;
-    --background-end-rgb: 255, 255, 255;
+    /* Surfaces */
+    --surface-0: #ffffff;
+    --surface-1: #f8fafb;
+    --surface-2: #f1f4f6;
+    --surface-3: #e8ecef;
+
+    /* Tinted neutrals — subtle teal warmth */
+    --gray-50: #f7f9fa;
+    --gray-100: #eef1f3;
+    --gray-200: #dce1e5;
+    --gray-300: #c1c9cf;
+    --gray-400: #9aa5ad;
+    --gray-500: #6e7a83;
+    --gray-600: #556069;
+    --gray-700: #3f4a52;
+    --gray-800: #2d363d;
+    --gray-900: #1a2228;
+    --gray-950: #0f1519;
+
+    --foreground-rgb: 26, 34, 40;
+    --background-rgb: 255, 255, 255;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --foreground-rgb: 255, 255, 255;
-      --background-start-rgb: 0, 0, 0;
-      --background-end-rgb: 0, 0, 0;
-    }
+  .dark {
+    --surface-0: #111819;
+    --surface-1: #1a2228;
+    --surface-2: #222c33;
+    --surface-3: #2d363d;
+
+    --gray-50: #1a2228;
+    --gray-100: #222c33;
+    --gray-200: #2d363d;
+    --gray-300: #3f4a52;
+    --gray-400: #556069;
+    --gray-500: #6e7a83;
+    --gray-600: #9aa5ad;
+    --gray-700: #c1c9cf;
+    --gray-800: #dce1e5;
+    --gray-900: #eef1f3;
+    --gray-950: #f7f9fa;
+
+    --foreground-rgb: 238, 241, 243;
+    --background-rgb: 17, 24, 25;
   }
 
   body {
     color: rgb(var(--foreground-rgb));
-    background: linear-gradient(
-        to bottom,
-        transparent,
-        rgb(var(--background-end-rgb))
-      )
-      rgb(var(--background-start-rgb));
+    background-color: var(--surface-0);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Focus ring — visible only on keyboard nav */
+  *:focus-visible {
+    outline: 2px solid #0d9488;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: #99f6e4;
+    color: #042f2e;
+  }
+
+  .dark ::selection {
+    background-color: #134e4a;
+    color: #ccfbf1;
+  }
+
+  /* Reading mode */
   .reading-mode {
-    @apply max-w-3xl mx-auto px-6 py-8;
+    max-width: 65ch;
+    margin-inline: auto;
+    padding: 2rem 1.5rem;
     font-family: 'Merriweather', Georgia, serif;
     line-height: 1.8;
     font-size: 1.125rem;
@@ -41,40 +95,98 @@
   .reading-mode h1,
   .reading-mode h2,
   .reading-mode h3 {
-    @apply font-sans font-bold mt-8 mb-4;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-weight: 700;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
   }
 
-  .reading-mode h1 {
-    @apply text-3xl;
-  }
-
-  .reading-mode h2 {
-    @apply text-2xl;
-  }
-
-  .reading-mode h3 {
-    @apply text-xl;
-  }
+  .reading-mode h1 { font-size: 1.875rem; }
+  .reading-mode h2 { font-size: 1.5rem; }
+  .reading-mode h3 { font-size: 1.25rem; }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold text-sm
+           transition-all duration-200 ease-out
+           focus-visible:outline-2 focus-visible:outline-offset-2
+           disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-primary-600 text-white hover:bg-primary-700
+           active:bg-primary-800 active:scale-[0.98]
+           focus-visible:outline-primary-600
+           shadow-soft hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600;
+    @apply bg-surface-2 text-gray-700 dark:text-gray-300
+           hover:bg-surface-3 active:scale-[0.98]
+           focus-visible:outline-gray-400
+           border border-gray-200 dark:border-gray-700;
+  }
+
+  .btn-ghost {
+    @apply text-gray-600 dark:text-gray-400
+           hover:bg-surface-2 active:bg-surface-3
+           focus-visible:outline-gray-400;
   }
 
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-6;
+    @apply bg-surface-0 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-800
+           p-6 transition-all duration-200 ease-out;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-soft hover:-translate-y-0.5
+           hover:border-primary-200 dark:hover:border-primary-800;
   }
 
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 text-gray-900 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white;
+    @apply w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700
+           bg-surface-0 text-gray-900 dark:text-gray-100
+           placeholder:text-gray-400 dark:placeholder:text-gray-500
+           text-sm transition-all duration-150 ease-out
+           focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500
+           focus-visible:outline-none;
+  }
+}
+
+/* ============================================================================
+   Utility Animations
+   ============================================================================ */
+
+@layer utilities {
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+  .stagger-5 { animation-delay: 250ms; }
+  .stagger-6 { animation-delay: 300ms; }
+
+  /* Gradient text helper */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #0d9488, #0f766e, #115e59);
+  }
+
+  .text-gradient-warm {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #0d9488, #d97706);
+  }
+}
+
+/* ============================================================================
+   Reduced Motion
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
