@@ -30,16 +30,22 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="card">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary-600 mb-2">read-pal</h1>
-            <p className="text-gray-600 dark:text-gray-400">Welcome back</p>
+      <div className="max-w-sm w-full animate-fade-in">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex w-12 h-12 rounded-xl bg-primary-600 items-center justify-center text-white text-xl font-bold mb-4 shadow-soft">
+            r
           </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome back</h1>
+          <p className="text-sm text-gray-500 mt-1">Sign in to continue reading</p>
+        </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
+        <div className="card shadow-soft">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Email
+              </label>
               <input
                 id="email"
                 type="email"
@@ -48,11 +54,14 @@ export default function LoginPage() {
                 required
                 className="input"
                 placeholder="you@example.com"
+                autoComplete="email"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-2">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Password
+              </label>
               <input
                 id="password"
                 type="password"
@@ -61,25 +70,42 @@ export default function LoginPage() {
                 required
                 className="input"
                 placeholder="••••••••"
+                autoComplete="current-password"
               />
             </div>
 
             {error && (
-              <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded text-sm">
+              <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm animate-scale-in">
                 {error}
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="btn btn-primary w-full">
-              {loading ? 'Signing in...' : 'Sign In'}
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary w-full py-2.5 rounded-xl"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                'Sign In'
+              )}
             </button>
           </form>
-
-          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-primary-600 hover:underline">Sign up</Link>
-          </div>
         </div>
+
+        <p className="mt-6 text-center text-sm text-gray-500">
+          Don&apos;t have an account?{' '}
+          <Link href="/register" className="text-primary-600 dark:text-primary-400 font-medium hover:underline">
+            Sign up free
+          </Link>
+        </p>
       </div>
     </div>
   );
