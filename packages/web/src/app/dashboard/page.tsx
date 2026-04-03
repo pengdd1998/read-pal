@@ -44,7 +44,7 @@ const DEFAULT_INSIGHTS: AgentInsight[] = [
   { agent: 'Synthesis', icon: '\uD83E\uDDE0', message: 'I\'ll discover patterns and build your knowledge graph as you read.', color: 'text-amber-500' },
 ];
 
-function SkeletonPulse({ className = '' }: { className?: string }) {
+function SkeletonPulse({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
   return <div className={`bg-gray-100 dark:bg-gray-800 rounded animate-pulse ${className}`} />;
 }
 
