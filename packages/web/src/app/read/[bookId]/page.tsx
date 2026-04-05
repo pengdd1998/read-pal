@@ -80,6 +80,7 @@ export default function ReadPage() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'sepia'>('light');
   const [fontSize, setFontSize] = useState(18);
   const [hasMadeSelection, setHasMadeSelection] = useState(false);
+  const [showControls, setShowControls] = useState(true);
 
   const contentRef = useRef<HTMLElement | null>(null);
   const sessionIdRef = useRef<string | null>(null);
@@ -420,8 +421,13 @@ export default function ReadPage() {
         enabled={bgEnabled}
       />
 
-      {/* Top bar - compact, only back + controls */}
-      <div className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${headerBgClasses[theme]} transition-colors duration-200`}>
+      {/* Top bar — slides in/out with controls */}
+      <div
+        className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${headerBgClasses[theme]} transition-all duration-300 ease-out ${
+          showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+        }`}
+        style={{ height: showControls ? undefined : 0, overflow: 'hidden' }}
+      >
         <div className="flex items-center gap-2 min-w-0">
           {/* Back arrow - only navigation button */}
           <a
@@ -534,6 +540,8 @@ export default function ReadPage() {
             theme={theme}
             onThemeChange={setTheme}
             onFontSizeChange={setFontSize}
+            showControls={showControls}
+            onToggleControls={() => setShowControls((v) => !v)}
           />
         </div>
       </div>
