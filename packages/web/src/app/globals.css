@@ -78,18 +78,26 @@
     color: #ccfbf1;
   }
 
-  /* Reading mode */
+  /* Reading mode — comfortable book-like typography */
   .reading-mode {
     max-width: 65ch;
     margin-inline: auto;
-    padding: 2rem 1.5rem;
-    font-family: 'Merriweather', Georgia, serif;
-    line-height: 1.8;
+    padding: 2.5rem 2rem;
+    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+    line-height: 1.85;
     font-size: 1.125rem;
+    color: inherit;
+    user-select: text;
+    -webkit-user-select: text;
+    orphans: 3;
+    widows: 3;
   }
 
   .reading-mode p {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
   }
 
   .reading-mode h1,
@@ -99,11 +107,108 @@
     font-weight: 700;
     margin-top: 2.5rem;
     margin-bottom: 1rem;
+    text-align: left;
   }
 
   .reading-mode h1 { font-size: 1.875rem; }
   .reading-mode h2 { font-size: 1.5rem; }
   .reading-mode h3 { font-size: 1.25rem; }
+
+  /* Drop cap for first paragraph of a chapter */
+  .reading-mode .prose > p:first-of-type::first-letter {
+    float: left;
+    font-size: 2.8em;
+    line-height: 0.85;
+    margin-right: 0.08em;
+    margin-top: 0.02em;
+    font-weight: 700;
+    color: inherit;
+    opacity: 0.8;
+  }
+
+  /* Blockquotes */
+  .reading-mode blockquote {
+    border-left: 3px solid currentColor;
+    opacity: 0.7;
+    padding-left: 1.5rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+  }
+
+  /* Horizontal rules — decorative section breaks */
+  .reading-mode hr {
+    border: none;
+    text-align: center;
+    margin: 2.5rem auto;
+    opacity: 0.3;
+  }
+
+  .reading-mode hr::after {
+    content: '* * *';
+    font-size: 1rem;
+    letter-spacing: 0.5em;
+  }
+
+  /* Chapter header */
+  .chapter-header {
+    text-align: center;
+    padding: 1rem 0 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .chapter-number {
+    display: block;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    opacity: 0.4;
+    margin-bottom: 0.5rem;
+  }
+
+  .chapter-title {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 1rem;
+    opacity: 0.7;
+  }
+
+  .chapter-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.75rem;
+  }
+
+  .chapter-ornament {
+    opacity: 0.25;
+    font-size: 1rem;
+  }
+
+  /* Chapter end marker */
+  .chapter-end {
+    text-align: center;
+    padding: 3rem 0 2rem;
+    opacity: 0.2;
+  }
+
+  .chapter-end-line {
+    display: inline-block;
+    width: 3rem;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+
+  /* Highlight marks */
+  mark.highlight-mark {
+    border-radius: 2px;
+    padding: 1px 0;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+  }
 }
 
 @layer components {
@@ -177,6 +282,70 @@
     background-image: linear-gradient(135deg, #0d9488, #d97706);
   }
 }
+
+/* Keyframes */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounce-in {
+  0% { opacity: 0; transform: scale(0.9) translateY(8px); }
+  60% { opacity: 1; transform: scale(1.02); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes page-enter-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes page-enter-left {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes chapter-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes highlight-pulse {
+  0% { background-color: oklch(85% 0.12 80 / 0); }
+  50% { background-color: oklch(85% 0.12 80 / 0.4); }
+  100% { background-color: oklch(85% 0.12 80 / 0.15); }
+}
+
+@keyframes streak-glow {
+  0%, 100% { box-shadow: 0 0 8px oklch(75% 0.18 45 / 0.3); }
+  50% { box-shadow: 0 0 16px oklch(75% 0.18 45 / 0.6); }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.animate-fade-in { animation: fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-bounce-in { animation: bounce-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-scale-in { animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-page-right { animation: page-enter-right 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-page-left { animation: page-enter-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-chapter-fade { animation: chapter-fade 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-highlight-pulse { animation: highlight-pulse 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-streak-glow { animation: streak-glow 2s ease-in-out infinite; }
+.animate-count-up { animation: count-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-gradient-shift { animation: gradient-shift 3s ease infinite; background-size: 200% 100%; }
 
 /* ============================================================================
    Reduced Motion
