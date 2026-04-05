@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
 import type { Annotation } from '@read-pal/shared';
 
@@ -26,12 +26,36 @@ export function AnnotationPanel({
   const [selectedText, setSelectedText] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(ANNOTATION_COLORS[0]);
   const [noteText, setNoteText] = useState('');
+  const [hasSelection, setHasSelection] = useState(false);
 
-  const handleTextSelection = () => {
+  // Capture text selection in real-time via mouseup on the reading content
+  useEffect(() => {
+    const handleMouseUp = () => {
+      // Small delay to let the browser finalize selection
+      setTimeout(() => {
+        const selection = window.getSelection();
+        const text = selection?.toString().trim();
+        if (text && text.length > 0) {
+          setSelectedText(text);
+          setHasSelection(true);
+        } else {
+          setHasSelection(false);
+        }
+      }, 10);
+    };
+
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => document.removeEventListener('mouseup', handleMouseUp);
+  }, []);
+
+  const openAnnotationPanel = () => {
+    // Re-read selection in case it was captured by the listener
     const selection = window.getSelection();
     const text = selection?.toString().trim();
     if (text) {
       setSelectedText(text);
+    }
+    if (selectedText || text) {
       setIsOpen(true);
     }
   };
@@ -40,6 +64,7 @@ export function AnnotationPanel({
     if (selectedText) {
       onAddHighlight(selectedText, selectedColor);
       setSelectedText('');
+      setHasSelection(false);
       setIsOpen(false);
     }
   };
@@ -49,6 +74,7 @@ export function AnnotationPanel({
       onAddNote(selectedText, noteText.trim());
       setSelectedText('');
       setNoteText('');
+      setHasSelection(false);
       setIsOpen(false);
     }
   };
@@ -84,11 +110,15 @@ export function AnnotationPanel({
         )}
         {!isOpen && (
           <button
-            onClick={handleTextSelection}
-            className="btn btn-primary shadow-lg"
-            title="Highlight selected text"
+            onClick={openAnnotationPanel}
+            className={`btn shadow-lg transition-all duration-200 ${
+              hasSelection
+                ? 'btn-primary ring-2 ring-primary-300 ring-offset-2'
+                : 'btn-secondary opacity-70'
+            }`}
+            title={hasSelection ? 'Annotate selected text' : 'Select text first, then click here'}
           >
-            {'\uD83D\uDCDD'} Annotate
+            {'\uD83D\uDCDD'} {hasSelection ? 'Annotate' : 'Select text'}
           </button>
         )}
       </div>

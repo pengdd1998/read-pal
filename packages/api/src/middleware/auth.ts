@@ -1,5 +1,6 @@
 import { type Request, type Response, type NextFunction, type RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
+import { User } from '../models';
 
 // ============================================================================
 // Types
@@ -24,7 +25,7 @@ export interface AuthRequest extends Request {
 /**
  * Verify JWT token and attach user to request
  */
-export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function authenticate(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const authHeader = req.headers.authorization;
 
@@ -58,11 +59,25 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
 
     // Attach user to request
     const userId = decoded.userId || decoded.sub || '';
+
+    // Verify user still exists in DB (handles stale tokens after DB resets)
+    const user = await User.findByPk(userId);
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User account not found. Please sign in again.'
+        }
+      });
+      return;
+    }
+
     req.userId = userId;
     req.user = {
       id: userId,
-      email: decoded.email || '',
-      name: decoded.name || ''
+      email: user.email,
+      name: user.name
     };
 
     next();
