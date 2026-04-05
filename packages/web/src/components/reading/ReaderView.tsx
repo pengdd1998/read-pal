@@ -151,11 +151,11 @@ export function ReaderView({
   const clampedProgress = Math.min(100, Math.max(0, overallProgress));
 
   return (
-    <div className={`flex flex-col h-full ${themeClasses[theme]} transition-colors duration-200`}>
+    <div className={`flex flex-col h-full overflow-hidden ${themeClasses[theme]} transition-colors duration-200`}>
       {/* Scrollable reading area */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto min-h-0"
         style={{ WebkitOverflowScrolling: 'touch' }}
         onScroll={updateScrollProgress}
       >
@@ -196,7 +196,7 @@ export function ReaderView({
 
       {/* Bottom navigation bar — always visible */}
       <footer
-        className={`flex-shrink-0 border-t transition-colors duration-200 ${
+        className={`shrink-0 border-t transition-colors duration-200 ${
           theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-[#faf6f0]/95' : 'border-gray-200/60 bg-white/95'
         } backdrop-blur-sm`}
         onClick={(e) => e.stopPropagation()}
