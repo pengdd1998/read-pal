@@ -15,6 +15,22 @@ import type { Book, Chapter, Annotation } from '@read-pal/shared';
 
 const SETTINGS_KEY_PREFIX = 'reader-settings';
 
+/** Subtle selection hint that auto-dismisses after a few seconds. */
+function SelectionHint({ onDismiss }: { onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 6000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+
+  return (
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in opacity-0" style={{ animation: 'fade-in 0.5s 1s forwards, fade-in 0.5s 5s reverse forwards' }}>
+      <div className="px-3 py-1.5 rounded-full bg-gray-500/60 text-white text-xs backdrop-blur-sm">
+        Select text to highlight or add notes
+      </div>
+    </div>
+  );
+}
+
 function loadReaderSettings(bookId: string) {
   if (typeof window === 'undefined') return null;
   try {
@@ -522,13 +538,9 @@ export default function ReadPage() {
         </div>
       </div>
 
-      {/* Selection hint - fades out after first selection */}
+      {/* Selection hint — subtle, auto-hides after 6 seconds or first selection */}
       {!hasMadeSelection && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in">
-          <div className="px-4 py-2 rounded-full bg-gray-800/80 dark:bg-gray-200/80 text-white dark:text-gray-800 text-xs font-medium backdrop-blur-sm">
-            Select text to highlight or add notes
-          </div>
-        </div>
+        <SelectionHint onDismiss={() => setHasMadeSelection(true)} />
       )}
 
       {/* Selection toolbar - appears on text selection */}

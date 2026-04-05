@@ -42,8 +42,10 @@ export function ReaderView({
     setScrollProgress(maxScroll > 0 ? scrollTop / maxScroll : 0);
   }, []);
 
-  // Reset scroll position on chapter change
+  // Reset scroll position on chapter change + animate
+  const [chapterKey, setChapterKey] = useState(0);
   useEffect(() => {
+    setChapterKey((k) => k + 1);
     requestAnimationFrame(() => {
       if (containerRef.current) {
         containerRef.current.scrollTop = 0;
@@ -52,26 +54,13 @@ export function ReaderView({
     });
   }, [chapterContent]);
 
-  // --- Navigation ---
+  // --- Navigation (direct chapter navigation) ---
   const goNextPage = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const { scrollTop, scrollHeight, clientHeight } = el;
-    if (scrollTop >= scrollHeight - clientHeight - 20) {
-      if (currentPage < totalPages - 1) onPageChange(currentPage + 1);
-    } else {
-      el.scrollBy({ top: clientHeight * 0.85, behavior: 'smooth' });
-    }
+    if (currentPage < totalPages - 1) onPageChange(currentPage + 1);
   }, [currentPage, totalPages, onPageChange]);
 
   const goPrevPage = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (el.scrollTop <= 20) {
-      if (currentPage > 0) onPageChange(currentPage - 1);
-    } else {
-      el.scrollBy({ top: -el.clientHeight * 0.85, behavior: 'smooth' });
-    }
+    if (currentPage > 0) onPageChange(currentPage - 1);
   }, [currentPage, onPageChange]);
 
   // --- Keyboard navigation ---
@@ -171,12 +160,13 @@ export function ReaderView({
         onScroll={updateScrollProgress}
       >
         <article
+          key={chapterKey}
           ref={(el) => {
             if (contentRef) {
               (contentRef as React.MutableRefObject<HTMLElement | null>).current = el;
             }
           }}
-          className="reading-mode select-text"
+          className="reading-mode select-text animate-chapter-fade"
           style={{
             fontSize: `${fontSize}px`,
           }}
@@ -211,38 +201,45 @@ export function ReaderView({
         } backdrop-blur-sm`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Progress bar */}
-        <div className={`h-0.5 ${progressBg[theme]}`}>
+        {/* Progress bar — overall book progress */}
+        <div className={`h-1 ${progressBg[theme]}`}>
           <div
-            className={`h-0.5 ${progressFill[theme]} transition-all duration-150 ease-out`}
-            style={{ width: `${scrollProgress * 100}%` }}
+            className={`h-1 ${progressFill[theme]} transition-all duration-300 ease-out`}
+            style={{ width: `${clampedProgress}%` }}
           />
         </div>
 
-        {/* Chapter navigation — always visible */}
-        <div className="flex items-center justify-between px-3 md:px-6 py-2">
+        {/* Chapter navigation */}
+        <div className="flex items-center justify-between px-3 md:px-6 py-2.5">
           <button
             onClick={goPrevPage}
-            disabled={currentPage === 0 && scrollProgress < 0.02}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
+            disabled={currentPage === 0}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
           >
-            &#8592; Prev
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="hidden sm:inline">Prev</span>
           </button>
 
-          <div className="flex-1 mx-3 text-center min-w-0">
-            <div className="text-xs opacity-50 truncate">
-              Ch. {currentPage + 1} of {totalPages}
-              <span className="mx-1.5">&middot;</span>
-              {clampedProgress}% of book
+          <div className="flex-1 mx-4 text-center min-w-0">
+            <div className="text-xs font-medium opacity-60 truncate">
+              Chapter {currentPage + 1} of {totalPages}
+            </div>
+            <div className="text-[10px] opacity-40 mt-0.5">
+              {clampedProgress}% complete
             </div>
           </div>
 
           <button
             onClick={goNextPage}
-            disabled={currentPage >= totalPages - 1 && scrollProgress > 0.98}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
+            disabled={currentPage >= totalPages - 1}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
           >
-            Next &#8594;
+            <span className="hidden sm:inline">Next</span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </footer>
