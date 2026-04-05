@@ -28,11 +28,9 @@ export function ReaderView({
   fontSize,
   theme,
 }: ReaderViewProps) {
-  const [showControls, setShowControls] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // --- Scroll progress tracking ---
@@ -137,30 +135,6 @@ export function ReaderView({
     };
   }, [currentPage, totalPages, onPageChange]);
 
-  // --- Controls toggle (don't toggle on text selection) ---
-  const toggleControls = useCallback(() => {
-    const sel = window.getSelection();
-    if (sel && sel.toString().trim()) return;
-
-    setShowControls((prev) => {
-      const next = !prev;
-      if (next) {
-        if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
-        autoHideTimerRef.current = setTimeout(() => {
-          setShowControls(false);
-        }, 4000);
-      }
-      return next;
-    });
-  }, []);
-
-  // Cleanup timers
-  useEffect(() => {
-    return () => {
-      if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
-    };
-  }, []);
-
   // --- Theme classes ---
   const themeClasses = {
     light: 'bg-white text-gray-800',
@@ -195,7 +169,6 @@ export function ReaderView({
         className="flex-1 overflow-y-auto"
         style={{ WebkitOverflowScrolling: 'touch' }}
         onScroll={updateScrollProgress}
-        onClick={toggleControls}
       >
         <article
           ref={(el) => {
@@ -231,14 +204,14 @@ export function ReaderView({
         </article>
       </div>
 
-      {/* Bottom navigation bar - always visible */}
+      {/* Bottom navigation bar — always visible */}
       <footer
         className={`flex-shrink-0 border-t transition-colors duration-200 ${
           theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-[#faf6f0]/95' : 'border-gray-200/60 bg-white/95'
         } backdrop-blur-sm`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Always-visible thin progress bar */}
+        {/* Progress bar */}
         <div className={`h-0.5 ${progressBg[theme]}`}>
           <div
             className={`h-0.5 ${progressFill[theme]} transition-all duration-150 ease-out`}
@@ -246,35 +219,31 @@ export function ReaderView({
           />
         </div>
 
-        {/* Expandable controls */}
-        <div className={`transition-all duration-300 ease-out overflow-hidden ${
-          showControls ? 'max-h-28 opacity-100' : 'max-h-0 opacity-0'
-        }`}>
-          <div className="flex items-center justify-between px-3 md:px-6 py-2.5">
-            <button
-              onClick={goPrevPage}
-              disabled={currentPage === 0 && scrollProgress < 0.02}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-            >
-              &#8592; Prev
-            </button>
+        {/* Chapter navigation — always visible */}
+        <div className="flex items-center justify-between px-3 md:px-6 py-2">
+          <button
+            onClick={goPrevPage}
+            disabled={currentPage === 0 && scrollProgress < 0.02}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
+          >
+            &#8592; Prev
+          </button>
 
-            <div className="flex-1 mx-3 text-center min-w-0">
-              <div className="text-xs opacity-50 truncate">
-                Ch. {currentPage + 1} of {totalPages}
-                <span className="mx-1.5">&middot;</span>
-                {clampedProgress}% of book
-              </div>
+          <div className="flex-1 mx-3 text-center min-w-0">
+            <div className="text-xs opacity-50 truncate">
+              Ch. {currentPage + 1} of {totalPages}
+              <span className="mx-1.5">&middot;</span>
+              {clampedProgress}% of book
             </div>
-
-            <button
-              onClick={goNextPage}
-              disabled={currentPage >= totalPages - 1 && scrollProgress > 0.98}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-            >
-              Next &#8594;
-            </button>
           </div>
+
+          <button
+            onClick={goNextPage}
+            disabled={currentPage >= totalPages - 1 && scrollProgress > 0.98}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
+          >
+            Next &#8594;
+          </button>
         </div>
       </footer>
     </div>

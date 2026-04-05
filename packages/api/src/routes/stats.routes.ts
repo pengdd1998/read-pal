@@ -24,10 +24,11 @@ interface DayActivity {
 /**
  * Calculate the current consecutive-day reading streak.
  *
- * A streak is counted backwards from today (or yesterday) and includes every
- * day that has at least one ReadingSession row for the user.
+ * Primary source: ReadingSession rows.
+ * Fallback: books with lastReadAt within the last 7 days.
  */
 async function calculateStreak(userId: string): Promise<number> {
+  // --- Primary: use ReadingSession days ---
   const rows = await ReadingSession.findAll({
     attributes: [
       [fn('DATE', col('startedAt')), 'day'],
@@ -38,11 +39,31 @@ async function calculateStreak(userId: string): Promise<number> {
     raw: true,
   }) as any[];
 
-  if (rows.length === 0) return 0;
+  let days: string[] = rows.map((r: any) => r.day as string);
 
-  const days = rows.map((r: any) => r.day as string);
+  // --- Fallback: use Book.lastReadAt when no sessions exist ---
+  if (days.length === 0) {
+    const bookDays = await Book.findAll({
+      attributes: [
+        [fn('DATE', col('lastReadAt')), 'day'],
+      ],
+      where: {
+        userId,
+        lastReadAt: {
+          [Op.ne]: null as any,
+          [Op.gte]: literal("NOW() - INTERVAL '7 days'"),
+        },
+      },
+      group: [fn('DATE', col('lastReadAt'))],
+      order: [[fn('DATE', col('lastReadAt')), 'DESC']],
+      raw: true,
+    }) as any[];
 
-  // The most recent reading day must be today or yesterday to count.
+    days = bookDays.map((r: any) => r.day as string);
+  }
+
+  if (days.length === 0) return 0;
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const yesterday = new Date(today);
@@ -90,45 +111,32 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
     // --- Parallel queries --------------------------------------------------
 
     const [
-      totalBooks,
       completedBooks,
-      pagesResult,
-      highlightCount,
-      connectionCount,
+      totalPagesResult,
       recentBooks,
       booksByStatus,
-      weeklyActivity,
-      streak,
+      sessionPagesRead,
+      sessionWeeklyActivity,
       totalMinutesResult,
+      streak,
+      conceptCount,
+      connectionCount,
     ] = await Promise.all([
-      // Total books
+      // 1. Total books in library
       Book.count({ where: { userId } }),
 
-      // Completed books
-      Book.count({ where: { userId, status: 'completed' } }),
+      // 2. Sum of totalPages across all books
+      Book.sum('totalPages', { where: { userId } }) as Promise<number>,
 
-      // Total pages read (sum of pagesRead from ReadingSessions)
-      ReadingSession.sum('pagesRead', { where: { userId } }) as Promise<number>,
-
-      // Highlights (used as proxy for "concepts discovered")
-      Annotation.count({
-        where: { userId, type: 'highlight' },
-      }),
-
-      // Notes count (used as "connections")
-      Annotation.count({
-        where: { userId, type: 'note' },
-      }),
-
-      // Recent books (last 4 by lastReadAt)
+      // 3. Recent books (last 5 by addedAt — include all books, not just read ones)
       Book.findAll({
-        where: { userId, lastReadAt: { [Op.ne]: undefined as any } },
-        order: [['lastReadAt', 'DESC']],
-        limit: 4,
-        attributes: ['id', 'title', 'author', 'progress', 'lastReadAt', 'coverUrl'],
+        where: { userId },
+        order: [['lastReadAt', 'DESC NULLS LAST'], ['addedAt', 'DESC']],
+        limit: 5,
+        attributes: ['id', 'title', 'author', 'progress', 'totalPages', 'lastReadAt', 'coverUrl', 'status', 'addedAt'],
       }),
 
-      // Books by status
+      // 4. Books by status
       Book.findAll({
         where: { userId },
         attributes: ['status', [fn('COUNT', col('id')), 'count']],
@@ -136,7 +144,10 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
         raw: true,
       }),
 
-      // Weekly activity: aggregate ReadingSession by day for last 7 days
+      // 5. Total pages read from ReadingSessions
+      ReadingSession.sum('pagesRead', { where: { userId } }) as Promise<number>,
+
+      // 6. Weekly activity from ReadingSessions (last 7 days)
       sequelize.query<{
         day: string;
         pages: string;
@@ -154,16 +165,38 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
         { bind: [userId], type: QueryTypes.SELECT },
       ),
 
-      // Reading streak
+      // 7. Total reading time in minutes (duration is stored in seconds)
+      ReadingSession.sum('duration', { where: { userId } }) as Promise<number>,
+
+      // 8. Reading streak (with fallback to book.lastReadAt)
       calculateStreak(userId),
 
-      // Total reading time in minutes
-      ReadingSession.sum('duration', { where: { userId } }) as Promise<number>,
+      // 9. Concepts learned: count of annotations with type 'note' or 'highlight'
+      Annotation.count({
+        where: { userId, type: { [Op.in]: ['note', 'highlight'] } },
+      }),
+
+      // 10. Connections: total count of all annotations
+      Annotation.count({ where: { userId } }),
     ]);
 
     // --- Format response ---------------------------------------------------
 
-    const pagesRead = Math.round(Number(pagesResult) || 0);
+    const totalPages = Math.round(Number(totalPagesResult) || 0);
+
+    // pagesRead: prefer session data; fallback to sum of (progress * totalPages) per book
+    let pagesRead = Math.round(Number(sessionPagesRead) || 0);
+    if (pagesRead === 0 && recentBooks.length > 0) {
+      // Fetch all books to compute from progress
+      const allBooks = await Book.findAll({
+        where: { userId },
+        attributes: ['progress', 'totalPages'],
+      });
+      pagesRead = allBooks.reduce((sum, book) => {
+        return sum + Math.round((Number(book.progress) / 100) * book.totalPages);
+      }, 0);
+    }
+
     const totalMinutes = Math.round((Number(totalMinutesResult) || 0) / 60);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
@@ -173,7 +206,7 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const now = new Date();
     const activityMap = new Map<string, DayActivity>();
-    for (const row of weeklyActivity) {
+    for (const row of sessionWeeklyActivity) {
       activityMap.set(row.day, {
         day: row.day,
         pages: parseInt(String(row.pages), 10) || 0,
@@ -190,6 +223,37 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
       activity.push(existing || { day: dayName, pages: 0, minutes: 0 });
     }
 
+    // If weekly activity has no session data, estimate from books read during the week
+    const hasActivity = activity.some((a) => a.pages > 0);
+    if (!hasActivity) {
+      // Use book.lastReadAt and progress to provide estimated activity
+      const recentWeekBooks = await Book.findAll({
+        where: {
+          userId,
+          lastReadAt: {
+            [Op.gte]: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+          },
+        },
+        attributes: ['lastReadAt', 'progress', 'totalPages'],
+      });
+
+      // Group by day
+      const dayBookMap = new Map<string, number>();
+      for (const book of recentWeekBooks) {
+        if (!book.lastReadAt) continue;
+        const bookDate = new Date(book.lastReadAt);
+        const dayIdx = bookDate.getDay();
+        const dayLabel = dayNames[dayIdx];
+        const estimated = Math.round((Number(book.progress) / 100) * book.totalPages);
+        dayBookMap.set(dayLabel, (dayBookMap.get(dayLabel) || 0) + estimated);
+      }
+
+      // Overwrite activity with book-based estimates
+      for (const entry of activity) {
+        entry.pages = dayBookMap.get(entry.day) || 0;
+      }
+    }
+
     // Books by status map
     const statusMap: Record<string, number> = { unread: 0, reading: 0, completed: 0 };
     for (const row of booksByStatus as any[]) {
@@ -198,10 +262,10 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
 
     // Recent books formatted for frontend
     const recentBooksFormatted = recentBooks.map((book) => {
-      const lastRead = book.lastReadAt;
+      const lastRead = book.lastReadAt || (book as any).addedAt;
       let lastReadStr = 'N/A';
       if (lastRead) {
-        const diff = Date.now() - new Date(lastRead).getTime();
+        const diff = Date.now() - new Date(lastRead as string).getTime();
         const hoursDiff = Math.floor(diff / (1000 * 60 * 60));
         if (hoursDiff < 1) lastReadStr = 'Just now';
         else if (hoursDiff < 24) lastReadStr = `${hoursDiff}h ago`;
@@ -226,12 +290,12 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
       success: true,
       data: {
         stats: {
-          booksRead: completedBooks,
-          totalPages: totalBooks,
+          booksRead: completedBooks, // total books in library
+          totalPages,
           pagesRead,
           readingStreak: streak,
           totalTime: totalTimeStr,
-          conceptsLearned: highlightCount,
+          conceptsLearned: conceptCount,
           connections: connectionCount,
         },
         recentBooks: recentBooksFormatted,

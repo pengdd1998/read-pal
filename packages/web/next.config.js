@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
   transpilePackages: ['@read-pal/shared'],
   async rewrites() {
     const apiTarget = process.env.API_URL || 'http://localhost:3001';

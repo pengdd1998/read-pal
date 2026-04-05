@@ -38,9 +38,9 @@ export function BookCard({
 
   return (
     <Link href={`/read/${id}`} className="group">
-      <div className="card-hover h-full flex flex-col">
+      <div className="group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 h-full flex flex-col rounded-2xl bg-surface-0 border border-gray-100 dark:border-gray-800 p-3 hover:ring-1 hover:ring-primary-300/50">
         {/* Cover */}
-        <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-primary-400/80 to-primary-700/80">
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-primary-400/30 to-primary-600/70">
           {coverUrl ? (
             <img
               src={coverUrl}

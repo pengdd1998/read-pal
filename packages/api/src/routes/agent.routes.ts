@@ -47,6 +47,35 @@ router.post(
       });
     }
 
+    // Build reading context for the AI so it knows what the user is reading
+    let enrichedQuery = message;
+    if (context) {
+      const readingParts: string[] = [];
+      if (context.bookTitle) {
+        readingParts.push(`Book: "${context.bookTitle}"${context.author ? ` by ${context.author}` : ''}`);
+      }
+      if (context.currentPage !== undefined) {
+        const pageDisplay = context.currentPage + 1;
+        readingParts.push(
+          `Location: page ${pageDisplay}${context.totalPages ? ` of ${context.totalPages}` : ''}`,
+        );
+      }
+      if (context.chapterContent) {
+        // Strip any residual HTML and truncate for token budget
+        const plainText = String(context.chapterContent)
+          .replace(/<[^>]*>/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 3000);
+        if (plainText) {
+          readingParts.push(`Current chapter content:\n${plainText}`);
+        }
+      }
+      if (readingParts.length > 0) {
+        enrichedQuery = `[Reading Context]\n${readingParts.join('\n')}\n\n[User Question]\n${message}`;
+      }
+    }
+
     const orchestrator: AgentOrchestrator | null = req.app.get('orchestrator');
     if (!orchestrator) {
       return res.status(503).json({
@@ -68,7 +97,7 @@ router.post(
     const response: OrchestratorResponse = await orchestrator.process({
       userId: req.user!.id,
       sessionId: (req.session as { id?: string })?.id || req.id!,
-      query: message,
+      query: enrichedQuery,
       context,
       options: agent ? { agent } : undefined
     });
@@ -220,20 +249,10 @@ router.post('/summarize', authenticate, agentRateLimiter, async (req: AuthReques
       });
     }
 
-    // For long texts, summarize in chunks
-    let inputText = text;
-    if (text.length > 5000) {
-      const chunks: string[] = [];
-      for (let i = 0; i < text.length; i += 5000) {
-        chunks.push(text.substring(i, i + 5000));
-      }
-      inputText = chunks.join('\n\n---\n\n');
-    }
-
     const response: OrchestratorResponse = await orchestrator.process({
       userId: req.user!.id,
       sessionId: (req.session as { id?: string })?.id || req.id!,
-      query: `Summarize this text with ${detail} detail: ${inputText}`,
+      query: `Summarize this text with ${detail} detail: ${text}`,
       options: { agent: 'companion' }
     });
 

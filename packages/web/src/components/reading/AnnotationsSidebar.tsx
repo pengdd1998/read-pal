@@ -53,17 +53,17 @@ export function AnnotationsSidebar({
 
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Backdrop — always visible when open, click to close */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-20 md:hidden animate-fade-in"
+          className="fixed inset-0 bg-black/30 animate-fade-in z-30"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed right-0 top-0 h-screen w-full md:w-[360px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-lg z-20 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col ${
+        className={`fixed right-0 top-0 h-screen w-full md:w-[360px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-lg z-30 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

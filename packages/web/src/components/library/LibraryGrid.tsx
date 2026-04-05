@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
 import { BookCard } from './BookCard';
 import { BookUploader } from './BookUploader';
 
-export function LibraryGrid() {
+interface LibraryGridProps {
+  viewMode?: 'grid' | 'list';
+}
+
+export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -79,9 +84,13 @@ export function LibraryGrid() {
         </div>
       )}
 
-      {/* Books Grid */}
+      {/* Books Grid / List */}
       {books.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+        <div className={
+          viewMode === 'grid'
+            ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5'
+            : 'flex flex-col gap-3'
+        }>
           {books.map((book, i) => (
             <div key={book.id} className={`stagger-${Math.min(i + 1, 6)} animate-slide-up`}>
               <BookCard
@@ -100,14 +109,21 @@ export function LibraryGrid() {
         </div>
       ) : (
         !error && (
-          <div className="card text-center py-20 animate-scale-in">
-            <div className="text-6xl mb-5 opacity-40">{'\uD83D\uDCDA'}</div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          <div className="flex flex-col items-center justify-center py-24 px-8 text-center animate-scale-in">
+            <div className="w-24 h-24 mb-4 text-primary-400">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                <path d="M12 6.252a7.5 5.5 0 0 1 7.5 5.5V19a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4.5 19v-7.248a7.5 5.5 0 0 1 7.5-5.5zm0 0V3m-5 6 7.5 0" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">
               Your library is empty
-            </h2>
-            <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6 leading-relaxed">
-              Upload your first EPUB or PDF to start reading with your AI companions.
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Add your first book to start your reading journey.
             </p>
+            <Link href="/upload" className="btn btn-primary">
+              Add a Book
+            </Link>
           </div>
         )
       )}
