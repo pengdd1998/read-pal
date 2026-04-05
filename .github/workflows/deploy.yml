@@ -12,14 +12,8 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to Server
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/read-pal
-            bash /home/ubuntu/deploy.sh
+      - name: Pull and deploy
+        working-directory: /home/ubuntu/read-pal
+        run: bash /home/ubuntu/deploy.sh
