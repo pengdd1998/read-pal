@@ -38,9 +38,11 @@ class WebSocketClient {
   constructor() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
     // Use current host for WebSocket if no explicit API URL
+    // IMPORTANT: Next.js rewrites only proxy HTTP, not WebSocket.
+    // We must connect directly to the API server (port 3001) for WS.
     const wsBase = apiUrl
       ? apiUrl.replace('http', 'ws').replace('https', 'wss')
-      : `${typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws'}://${typeof window !== 'undefined' ? window.location.host : 'localhost:3000'}`;
+      : `${typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws'}://${typeof window !== 'undefined' ? window.location.hostname + ':3001' : 'localhost:3001'}`;
     this.url = wsBase + '/ws/agents';
   }
 
