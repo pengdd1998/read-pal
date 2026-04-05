@@ -15,6 +15,8 @@ interface ReaderViewProps {
   theme: 'light' | 'dark' | 'sepia';
   onThemeChange?: (theme: 'light' | 'dark' | 'sepia') => void;
   onFontSizeChange?: (fontSize: number) => void;
+  showControls?: boolean;
+  onToggleControls?: () => void;
 }
 
 export function ReaderView({
@@ -27,6 +29,8 @@ export function ReaderView({
   contentRef,
   fontSize,
   theme,
+  showControls = true,
+  onToggleControls,
 }: ReaderViewProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -151,7 +155,16 @@ export function ReaderView({
   const clampedProgress = Math.min(100, Math.max(0, overallProgress));
 
   return (
-    <div className={`flex flex-col h-full overflow-hidden ${themeClasses[theme]} transition-colors duration-200`}>
+    <div
+      className={`flex flex-col h-full overflow-hidden ${themeClasses[theme]} transition-colors duration-200`}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('button, a, [data-selection-toolbar], footer')) return;
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed && sel.toString().trim()) return;
+        onToggleControls?.();
+      }}
+    >
       {/* Scrollable reading area */}
       <div
         ref={containerRef}
@@ -194,11 +207,13 @@ export function ReaderView({
         </article>
       </div>
 
-      {/* Bottom navigation bar — always visible */}
+      {/* Bottom navigation bar — toggles with controls */}
       <footer
-        className={`shrink-0 border-t transition-colors duration-200 ${
+        className={`shrink-0 border-t transition-all duration-300 ease-out ${
           theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-[#faf6f0]/95' : 'border-gray-200/60 bg-white/95'
-        } backdrop-blur-sm`}
+        } backdrop-blur-sm ${
+          showControls ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Progress bar — overall book progress */}
