@@ -1,231 +1,284 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, type RefObject } from 'react';
 import DOMPurify from 'dompurify';
 
 interface ReaderViewProps {
   bookId: string;
-  content: string;
-  title: string;
+  chapterContent: string;
+  chapterTitle: string;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-}
-
-const STORAGE_KEY_PREFIX = 'reader-settings';
-
-function loadSettings(bookId: string) {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}-${bookId}`);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveSettings(bookId: string, settings: { fontSize: number; theme: string }) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}-${bookId}`, JSON.stringify(settings));
-  } catch {
-    // Storage full or unavailable
-  }
+  contentRef?: RefObject<HTMLElement | null>;
+  fontSize: number;
+  theme: 'light' | 'dark' | 'sepia';
+  onThemeChange?: (theme: 'light' | 'dark' | 'sepia') => void;
+  onFontSizeChange?: (fontSize: number) => void;
 }
 
 export function ReaderView({
   bookId,
-  content,
-  title,
+  chapterContent,
+  chapterTitle,
   currentPage,
   totalPages,
   onPageChange,
+  contentRef,
+  fontSize,
+  theme,
 }: ReaderViewProps) {
-  const [fontSize, setFontSize] = useState(18);
-  const [theme, setTheme] = useState<'light' | 'dark' | 'sepia'>('light');
   const [showControls, setShowControls] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
-  // Load persisted settings on mount / book change
+  const containerRef = useRef<HTMLDivElement>(null);
+  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  // --- Scroll progress tracking ---
+  const updateScrollProgress = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const maxScroll = scrollHeight - clientHeight;
+    setScrollProgress(maxScroll > 0 ? scrollTop / maxScroll : 0);
+  }, []);
+
+  // Reset scroll position on chapter change
   useEffect(() => {
-    const saved = loadSettings(bookId);
-    if (saved) {
-      if (typeof saved.fontSize === 'number') setFontSize(saved.fontSize);
-      if (saved.theme === 'light' || saved.theme === 'dark' || saved.theme === 'sepia') {
-        setTheme(saved.theme);
+    requestAnimationFrame(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+        setScrollProgress(0);
       }
-    }
-  }, [bookId]);
+    });
+  }, [chapterContent]);
 
-  // Persist settings whenever they change
-  useEffect(() => {
-    saveSettings(bookId, { fontSize, theme });
-  }, [bookId, fontSize, theme]);
-
-  const handlePrevious = useCallback(() => {
-    if (currentPage > 0) {
-      onPageChange(currentPage - 1);
-    }
-  }, [currentPage, onPageChange]);
-
-  const handleNext = useCallback(() => {
-    if (currentPage < totalPages - 1) {
-      onPageChange(currentPage + 1);
+  // --- Navigation ---
+  const goNextPage = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    if (scrollTop >= scrollHeight - clientHeight - 20) {
+      if (currentPage < totalPages - 1) onPageChange(currentPage + 1);
+    } else {
+      el.scrollBy({ top: clientHeight * 0.85, behavior: 'smooth' });
     }
   }, [currentPage, totalPages, onPageChange]);
 
+  const goPrevPage = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (el.scrollTop <= 20) {
+      if (currentPage > 0) onPageChange(currentPage - 1);
+    } else {
+      el.scrollBy({ top: -el.clientHeight * 0.85, behavior: 'smooth' });
+    }
+  }, [currentPage, onPageChange]);
+
+  // --- Keyboard navigation ---
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input/textarea
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
         e.preventDefault();
-        handlePrevious();
+        goNextPage();
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        goPrevPage();
+      } else if (e.key === 'ArrowRight') {
+        if (e.shiftKey) {
+          if (currentPage < totalPages - 1) onPageChange(currentPage + 1);
+        }
+      } else if (e.key === 'ArrowLeft') {
+        if (e.shiftKey) {
+          if (currentPage > 0) onPageChange(currentPage - 1);
+        }
       }
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        handleNext();
+    };
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [goNextPage, goPrevPage, currentPage, totalPages, onPageChange]);
+
+  // --- Touch swipe for chapter navigation ---
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!touchStartRef.current) return;
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartRef.current.x;
+      const deltaY = touch.clientY - touchStartRef.current.y;
+      touchStartRef.current = null;
+
+      // Only handle distinct horizontal swipes
+      if (Math.abs(deltaX) < 100 || Math.abs(deltaY) > Math.abs(deltaX) * 0.7) return;
+
+      if (deltaX < 0 && currentPage < totalPages - 1) {
+        onPageChange(currentPage + 1);
+      } else if (deltaX > 0 && currentPage > 0) {
+        onPageChange(currentPage - 1);
       }
     };
 
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, [handlePrevious, handleNext]);
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [currentPage, totalPages, onPageChange]);
 
+  // --- Controls toggle (don't toggle on text selection) ---
+  const toggleControls = useCallback(() => {
+    const sel = window.getSelection();
+    if (sel && sel.toString().trim()) return;
+
+    setShowControls((prev) => {
+      const next = !prev;
+      if (next) {
+        if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+        autoHideTimerRef.current = setTimeout(() => {
+          setShowControls(false);
+        }, 4000);
+      }
+      return next;
+    });
+  }, []);
+
+  // Cleanup timers
+  useEffect(() => {
+    return () => {
+      if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+    };
+  }, []);
+
+  // --- Theme classes ---
   const themeClasses = {
-    light: 'bg-white text-gray-900',
-    dark: 'bg-gray-900 text-gray-100',
-    sepia: 'bg-amber-50 text-amber-900',
+    light: 'bg-white text-gray-800',
+    dark: 'bg-gray-900 text-gray-200',
+    sepia: 'bg-[#faf6f0] text-[#5c4b37]',
   };
 
+  const progressBg = {
+    light: 'bg-gray-200',
+    dark: 'bg-gray-700',
+    sepia: 'bg-amber-200/60',
+  };
+
+  const progressFill = {
+    light: 'bg-teal-600',
+    dark: 'bg-teal-400',
+    sepia: 'bg-amber-700',
+  };
+
+  // Overall book progress
+  const overallProgress = totalPages > 1
+    ? Math.round(((currentPage + scrollProgress) / totalPages) * 100)
+    : Math.round(scrollProgress * 100);
+
+  const clampedProgress = Math.min(100, Math.max(0, overallProgress));
+
   return (
-    <div
-      className={`flex flex-col h-screen ${themeClasses[theme]} transition-colors duration-200`}
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
-    >
-      {/* Header */}
-      <header
-        className={`flex flex-col md:flex-row md:items-center md:justify-between px-4 md:px-6 py-3 md:py-4 border-b transition-opacity duration-200 gap-2 ${
-          showControls ? 'opacity-100' : 'opacity-0'
-        }`}
+    <div className={`flex flex-col h-full ${themeClasses[theme]} transition-colors duration-200`}>
+      {/* Scrollable reading area */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+        onScroll={updateScrollProgress}
+        onClick={toggleControls}
       >
-        <div className="min-w-0">
-          <h1 className="text-base md:text-xl font-semibold truncate">{title}</h1>
-          <p className="text-sm opacity-70">
-            Page {currentPage + 1} of {totalPages}
-          </p>
-        </div>
-
-        {/* Reading Controls */}
-        <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
-          {/* Font Size */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-              className="px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-              aria-label="Decrease font size"
-            >
-              A-
-            </button>
-            <span className="text-sm">{fontSize}px</span>
-            <button
-              onClick={() => setFontSize(Math.min(32, fontSize + 2))}
-              className="px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-              aria-label="Increase font size"
-            >
-              A+
-            </button>
-          </div>
-
-          {/* Theme */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setTheme('light')}
-              className={`px-3 py-1 rounded ${
-                theme === 'light'
-                  ? 'bg-gray-300 dark:bg-gray-600'
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-              aria-label="Light theme"
-            >
-              {'☀\uFE0F'}
-            </button>
-            <button
-              onClick={() => setTheme('sepia')}
-              className={`px-3 py-1 rounded ${
-                theme === 'sepia'
-                  ? 'bg-amber-200'
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-              aria-label="Sepia theme"
-            >
-              {'📖'}
-            </button>
-            <button
-              onClick={() => setTheme('dark')}
-              className={`px-3 py-1 rounded ${
-                theme === 'dark'
-                  ? 'bg-gray-700'
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-              aria-label="Dark theme"
-            >
-              {'🌙'}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
         <article
-          className="reading-mode"
-          style={{ fontSize: `${fontSize}px` }}
+          ref={(el) => {
+            if (contentRef) {
+              (contentRef as React.MutableRefObject<HTMLElement | null>).current = el;
+            }
+          }}
+          className="reading-mode select-text"
+          style={{
+            fontSize: `${fontSize}px`,
+          }}
         >
+          {/* Chapter header */}
+          {chapterTitle && (
+            <div className="chapter-header">
+              <span className="chapter-number">Chapter {currentPage + 1}</span>
+              <h2 className="chapter-title">{chapterTitle}</h2>
+              <div className="chapter-divider">
+                <span className="chapter-ornament">&#10047;</span>
+              </div>
+            </div>
+          )}
+
           <div
             className="prose prose-lg max-w-none dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(chapterContent) }}
           />
+
+          {/* End-of-chapter marker */}
+          <div className="chapter-end">
+            <div className="chapter-end-line" />
+          </div>
         </article>
       </div>
 
-      {/* Footer Navigation */}
+      {/* Bottom navigation bar - always visible */}
       <footer
-        className={`flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-t transition-opacity duration-200 ${
-          showControls ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`flex-shrink-0 border-t transition-colors duration-200 ${
+          theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-[#faf6f0]/95' : 'border-gray-200/60 bg-white/95'
+        } backdrop-blur-sm`}
+        onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={handlePrevious}
-          disabled={currentPage === 0}
-          className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
-        >
-          {'\u2190'} Prev
-        </button>
-
-        {/* Progress Bar */}
-        <div className="flex-1 mx-2 md:mx-8">
-          <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentPage + 1) / totalPages) * 100}%` }}
-            />
-          </div>
-          <p className="text-center text-xs md:text-sm mt-1 opacity-70">
-            {Math.round(((currentPage + 1) / totalPages) * 100)}%
-          </p>
+        {/* Always-visible thin progress bar */}
+        <div className={`h-0.5 ${progressBg[theme]}`}>
+          <div
+            className={`h-0.5 ${progressFill[theme]} transition-all duration-150 ease-out`}
+            style={{ width: `${scrollProgress * 100}%` }}
+          />
         </div>
 
-        <button
-          onClick={handleNext}
-          disabled={currentPage >= totalPages - 1}
-          className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
-        >
-          Next {'\u2192'}
-        </button>
+        {/* Expandable controls */}
+        <div className={`transition-all duration-300 ease-out overflow-hidden ${
+          showControls ? 'max-h-28 opacity-100' : 'max-h-0 opacity-0'
+        }`}>
+          <div className="flex items-center justify-between px-3 md:px-6 py-2.5">
+            <button
+              onClick={goPrevPage}
+              disabled={currentPage === 0 && scrollProgress < 0.02}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >
+              &#8592; Prev
+            </button>
+
+            <div className="flex-1 mx-3 text-center min-w-0">
+              <div className="text-xs opacity-50 truncate">
+                Ch. {currentPage + 1} of {totalPages}
+                <span className="mx-1.5">&middot;</span>
+                {clampedProgress}% of book
+              </div>
+            </div>
+
+            <button
+              onClick={goNextPage}
+              disabled={currentPage >= totalPages - 1 && scrollProgress > 0.98}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >
+              Next &#8594;
+            </button>
+          </div>
+        </div>
       </footer>
     </div>
   );
 }
+
+export type { ReaderViewProps };
