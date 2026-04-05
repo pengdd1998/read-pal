@@ -127,10 +127,11 @@ Agent intervenes when helpful:
 ## Key Innovations
 
 ### 1. True Agent Architecture
-- Uses Claude Agent SDK for multi-step reasoning
-- Agents can use tools (search, database, code execution)
+- Multi-agent orchestrator for intelligent routing
+- Agents can use tools (search, database, semantic lookup)
 - Self-correction and verification capabilities
 - Not just API calls—intelligent, goal-directed behavior
+- Currently powered by GLM (Zhipu AI) for cost efficiency
 
 ### 2. Cross-Session Memory
 - Remembers what you've read and understood
@@ -160,38 +161,32 @@ Agent intervenes when helpful:
 
 ## Development Roadmap
 
-### Phase 1: Foundation (Months 1-3) 💰 $150K
-- MVP reading interface (EPUB, PDF)
-- Single Companion Agent
-- User auth and library management
-- **100 beta users**
+### Phase 1: Foundation (Months 1-3) ✅ COMPLETE
+- ✅ MVP reading interface (EPUB)
+- ✅ Multi-agent AI system (Companion, Research, Coach, Synthesis, Friend)
+- ✅ User auth (JWT) and library management
+- ✅ Annotations (highlights, notes, bookmarks)
+- ✅ Real-time chat with streaming (WebSocket)
+- ✅ Web application (Next.js) deployed
+- ✅ Self-hosted deployment pipeline
 
-### Phase 2: Multi-Agent (Months 4-6) 💰 $300K
-- Research, Coach, and Synthesis Agents
-- Knowledge graph MVP
-- Mobile apps (iOS/Android)
-- **1,000 beta users**
-
-### Phase 3: Innovation (Months 7-9) 💰 $250K
-- Reading Persona System
-- Conversation with Books
-- Proactive coaching
+### Phase 2: Polish & Mobile (Months 4-6) 🔄 CURRENT
+- Reading Friend personalities with memory
+- Knowledge graph visualization
+- Mobile apps (React Native scaffold started)
 - Browser extension
+
+### Phase 3: Innovation (Months 7-9) 📋
+- Proactive coaching system
+- Memory book generation
+- Advanced analytics
 - **10,000 users**
 
-### Phase 4: Launch (Months 10-12) 💰 $200K
-- Collaborative features
+### Phase 4: Launch (Months 10-12) 📋
+- Collaborative reading features
 - E-reader integrations
 - **Public launch**
 - **50,000+ users target**
-
-### Phase 5: Scale (Year 2+) 💰 $500K+
-- API and platform
-- Enterprise offering
-- Multi-language expansion
-- **Market dominance**
-
-**Total Year 1 Investment: ~$900K**
 
 ---
 
@@ -298,7 +293,7 @@ Agent intervenes when helpful:
 | **Backend Engineer** | 1 | Medium | Month 4 |
 
 ### Advisor Needs
-- **AI/ML:** Claude Agent SDK expertise
+- **AI/ML:** Multi-agent architecture expertise
 - **EdTech:** Learning science and pedagogy
 - **Legal:** Privacy and copyright
 - **Business:** Monetization and growth

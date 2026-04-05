@@ -1,8 +1,99 @@
-# read-pal Project Setup Complete
+# read-pal Project Status
 
-## Summary
+## Current State (April 2026)
 
-The read-pal project has been fully configured and aligned with the vision established in expert meetings and product planning. The project structure is now ready for development.
+read-pal has a functional web application deployed on a self-hosted Ubuntu server with multi-agent AI capabilities.
+
+## What's Built
+
+### Web Application (packages/web)
+- Next.js 14 app with TailwindCSS, custom design system
+- Reading page with EPUB rendering, themes (light/dark/sepia), adjustable fonts
+- Chapter navigation with smooth transitions and progress tracking
+- Text selection toolbar for highlights, notes, and copy
+- Annotations sidebar with bookmark support
+- AI Companion Chat — floating draggable bubble with real-time streaming
+- Library management with book grid and upload
+- Dashboard with reading statistics
+- Auth (login/register) with JWT
+
+### API Server (packages/api)
+- Express + TypeScript server on port 3001
+- Multi-agent orchestrator routing to 5 AI agents:
+  - **Companion**: Explanations, Q&A, summarization
+  - **Research**: Semantic search across library (Pinecone)
+  - **Coach**: Reading strategies, comprehension support
+  - **Synthesis**: Cross-document analysis
+  - **Friend**: Reading friend personality system
+- WebSocket server for real-time streaming
+- Full REST API: auth, books, annotations, reading sessions, stats, uploads
+- PostgreSQL + Redis backend
+- GLM (Zhipu AI) as the LLM engine via OpenAI-compatible API
+
+### Shared Package (packages/shared)
+- TypeScript types (Book, Chapter, Annotation, User, etc.)
+- Shared constants (annotation colors, etc.)
+
+### Mobile (packages/mobile)
+- React Native/Expo scaffold (early stage)
+
+### Deployment
+- Self-hosted on Ubuntu server (192.168.1.13)
+- PM2 manages web (:3000) and API (:3001)
+- Cron-based auto-deploy polling GitHub every 2 minutes
+- Next.js standalone output mode
+
+## Architecture
+
+```
+Browser → Next.js (:3000) → /api/* rewrite → Express API (:3001)
+                                               ├── Agents (GLM/Zhipu AI)
+                                               ├── PostgreSQL
+                                               ├── Redis
+                                               └── Pinecone (vectors)
+         WebSocket (:3001) → WS Manager → Agent streaming
+```
+
+## Key Technical Decisions
+
+| Decision | Choice | Why |
+|----------|--------|-----|
+| AI Engine | GLM (Zhipu AI) | Cost efficiency, OpenAI-compatible API |
+| Frontend | Next.js standalone | SSR + API proxy in one server |
+| Monorepo | pnpm workspaces | Shared types between packages |
+| Deploy | PM2 + cron | Simple self-hosted, no cloud dependency |
+| DB | PostgreSQL + Redis | Proven, simple, adequate for MVP |
+
+## Commands
+
+```bash
+# Development
+pnpm install
+pnpm --filter @read-pal/shared build
+pnpm --filter @read-pal/api dev     # port 3001
+pnpm --filter @read-pal/web dev     # port 3000
+
+# Production build
+pnpm --filter @read-pal/shared build
+NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build
+pnpm --filter @read-pal/api build
+
+# Type checking
+npx tsc --noEmit --project packages/web/tsconfig.json
+npx tsc --noEmit --project packages/api/tsconfig.json
+```
+
+## Documentation
+
+- `docs/executive-summary.md` — Product vision and business plan
+- `docs/product-plan.md` — Full product specifications
+- `docs/api-structure-summary.md` — API architecture details
+- `docs/contributing.md` — Contribution guidelines
+- `CLAUDE.md` — Project instructions for AI-assisted development
+
+---
+
+*Last updated: April 6, 2026*
 
 ## What's Been Created/Updated
 
