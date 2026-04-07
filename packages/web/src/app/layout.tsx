@@ -1,25 +1,65 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Merriweather } from 'next/font/google';
+import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 import './globals.css';
 
-const jakarta = Plus_Jakarta_Sans({
+const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
 });
 
-const merriweather = Merriweather({
+const crimsonPro = Crimson_Pro({
   subsets: ['latin'],
-  weight: ['300', '400', '700'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const sourceSerif = Source_Serif_4({
+  subsets: ['latin'],
   variable: '--font-serif',
   display: 'swap',
 });
 
+const literata = Literata({
+  subsets: ['latin'],
+  variable: '--font-reading',
+  display: 'swap',
+});
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://read-pal.app';
+
 export const metadata: Metadata = {
-  title: 'read-pal — Your AI Reading Companion',
-  description: 'Transform passive reading into active, social, and memorable learning with AI companions.',
+  title: {
+    default: 'read-pal — Your AI Reading Companion',
+    template: '%s | read-pal',
+  },
+  description:
+    'Transform passive reading into active, social, and memorable learning with AI companions that read with you, explain concepts, and build your knowledge graph.',
+  metadataBase: new URL(APP_URL),
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: APP_URL,
+    siteName: 'read-pal',
+    title: 'read-pal — Your AI Reading Companion',
+    description:
+      'Transform passive reading into active, social, and memorable learning with AI companions that read with you, explain concepts, and build your knowledge graph.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'read-pal — Your AI Reading Companion',
+    description:
+      'Transform passive reading into active, social, and memorable learning with AI companions.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: APP_URL,
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${merriweather.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable}`}>
       <body className="font-sans antialiased">
         <AuthProvider>
           <AppShell>{children}</AppShell>

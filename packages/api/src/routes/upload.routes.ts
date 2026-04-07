@@ -66,10 +66,11 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
     const ext = path.extname(file.originalname).toLowerCase();
     const fileType = ext === '.epub' ? 'epub' : 'pdf';
 
-    // Create temp file path
+    // Create temp file path (sanitize filename to prevent path traversal)
     const uploadDir = path.join(process.cwd(), 'uploads');
     await fs.mkdir(uploadDir, { recursive: true });
-    const tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
+    const safeName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const tempPath = path.join(uploadDir, `${Date.now()}-${safeName}`);
 
     // Write buffer to temp file
     await fs.writeFile(tempPath, file.buffer);
