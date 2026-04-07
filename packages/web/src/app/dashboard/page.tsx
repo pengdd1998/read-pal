@@ -37,7 +37,7 @@ interface AgentInsight {
   color: string;
 }
 
-const DEFAULT_INSIGHTS: AgentInsight[] = [
+const GETTING_STARTED_TIPS: AgentInsight[] = [
   { agent: 'Companion', icon: '\uD83D\uDCD6', message: 'Start reading to unlock personalized insights from your AI companions.', color: 'text-teal-500' },
   { agent: 'Research', icon: '\uD83D\uDD2C', message: 'As you read, I\'ll find connections across your library.', color: 'text-violet-500' },
   { agent: 'Coach', icon: '\uD83C\uDFAF', message: 'Begin your reading journey and I\'ll help track your progress.', color: 'text-emerald-500' },
@@ -97,7 +97,8 @@ export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [agentInsights] = useState<AgentInsight[]>(DEFAULT_INSIGHTS);
+  const [agentInsights] = useState<AgentInsight[]>(GETTING_STARTED_TIPS);
+  const [seeding, setSeeding] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,22 +121,38 @@ export default function DashboardPage() {
   const recentBooks = dashboardData?.recentBooks ?? [];
   const weeklyActivity = dashboardData?.weeklyActivity ?? [];
   const booksByStatus = dashboardData?.booksByStatus;
-  const isEmpty = !loading && stats !== null && stats.booksRead === 0;
+  const isEmpty = !loading && stats !== null && stats.booksRead === 0 && stats.pagesRead === 0;
+
+  const handleSeedSample = async () => {
+    try {
+      setSeeding(true);
+      const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
+      if (res.success) {
+        window.location.href = '/library';
+      }
+    } catch {
+      // Silently fail — user can still upload manually
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Welcome */}
       <div className="mb-10 animate-fade-in">
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-          Welcome back, Reader
+          {isEmpty ? 'Welcome to read-pal' : 'Welcome back, Reader'}
         </h1>
         <p className="text-gray-500 mt-2 text-base">
           {loading ? (
             <SkeletonPulse className="w-64 h-5 inline-block" />
+          ) : isEmpty ? (
+            'Your AI-powered reading companion is ready. Let\'s get started.'
           ) : stats && stats.readingStreak > 0 ? (
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse animate-streak-glow" />
-              You&apos;re on a <strong className="text-amber-600 dark:text-amber-400">{stats.readingStreak}-day</strong> reading streak 🔥 Keep it up!
+              You&apos;re on a <strong className="text-amber-600 dark:text-amber-400">{stats.readingStreak}-day</strong> reading streak Keep it up!
             </span>
           ) : (
             'Start your reading journey today.'
@@ -150,26 +167,96 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="card text-center">
-              <SkeletonPulse className="h-8 w-16 mx-auto" />
-              <SkeletonPulse className="h-3 w-12 mx-auto mt-2" />
+      {/* Stats — hidden for new users, replaced by Getting Started section */}
+      {isEmpty ? (
+        /* Getting Started cards for new users */
+        <div className="mb-12 animate-fade-in">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Getting Started</h2>
+          <div className="grid sm:grid-cols-3 gap-5">
+            {/* Card 1: Upload a book */}
+            <Link
+              href="/library"
+              className="group card hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="flex flex-col items-center text-center py-6">
+                <div className="w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-3xl">{'\uD83D\uDCD6'}</span>
+                </div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Upload your first book</h3>
+                <p className="text-sm text-gray-500">Add an EPUB or PDF to start reading with your AI companion.</p>
+              </div>
+            </Link>
+
+            {/* Card 2: Try the AI companion */}
+            <Link
+              href="/library"
+              className="group card hover:border-teal-200 dark:hover:border-teal-800 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="flex flex-col items-center text-center py-6">
+                <div className="w-14 h-14 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-3xl">{'\uD83E\uDD16'}</span>
+                </div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Try the AI companion</h3>
+                <p className="text-sm text-gray-500">Chat with intelligent agents that help you understand and remember what you read.</p>
+              </div>
+            </Link>
+
+            {/* Card 3: Customize your reading */}
+            <Link
+              href="/settings"
+              className="group card hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="flex flex-col items-center text-center py-6">
+                <div className="w-14 h-14 rounded-2xl bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-3xl">{'\u2728'}</span>
+                </div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Customize your reading</h3>
+                <p className="text-sm text-gray-500">Choose themes, fonts, and reading friend personalities that match your style.</p>
+              </div>
+            </Link>
+          </div>
+
+          {/* Quick-start: try a sample book */}
+          <div className="mt-6 card bg-gradient-to-r from-primary-50/60 to-teal-50/60 dark:from-primary-950/20 dark:to-teal-950/20 border-primary-100 dark:border-primary-900">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{'\uD83C\uDF31'}</span>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Want to explore right away?</h3>
+                  <p className="text-sm text-gray-500">Load a sample book and try all the features instantly.</p>
+                </div>
+              </div>
+              <button
+                onClick={handleSeedSample}
+                disabled={seeding}
+                className="btn btn-primary whitespace-nowrap hover:scale-105 active:scale-95 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {seeding ? 'Loading sample...' : 'Try a sample book'}
+              </button>
             </div>
-          ))
-        ) : (
-          <>
-            <AnimatedCounter value={stats?.booksRead ?? 0} label="Library" delay={1} />
-            <AnimatedCounter value={(stats?.pagesRead ?? 0).toLocaleString()} label="Pages" delay={2} />
-            <AnimatedCounter value={stats?.readingStreak ?? 0} label="Day Streak" accent="text-amber-600" delay={3} />
-            <AnimatedCounter value={booksByStatus?.reading ?? 0} label="In Progress" delay={4} />
-            <AnimatedCounter value={stats?.conceptsLearned ?? 0} label="Concepts" accent="text-violet-600" delay={5} />
-            <AnimatedCounter value={booksByStatus?.completed ?? 0} label="Completed" accent="text-emerald-600" delay={6} />
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="card text-center">
+                <SkeletonPulse className="h-8 w-16 mx-auto" />
+                <SkeletonPulse className="h-3 w-12 mx-auto mt-2" />
+              </div>
+            ))
+          ) : (
+            <>
+              <AnimatedCounter value={stats?.booksRead ?? 0} label="Library" delay={1} />
+              <AnimatedCounter value={(stats?.pagesRead ?? 0).toLocaleString()} label="Pages" delay={2} />
+              <AnimatedCounter value={stats?.readingStreak ?? 0} label="Day Streak" accent="text-amber-600" delay={3} />
+              <AnimatedCounter value={booksByStatus?.reading ?? 0} label="In Progress" delay={4} />
+              <AnimatedCounter value={stats?.conceptsLearned ?? 0} label="Concepts" accent="text-violet-600" delay={5} />
+              <AnimatedCounter value={booksByStatus?.completed ?? 0} label="Completed" accent="text-emerald-600" delay={6} />
+            </>
+          )}
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-10">
         {/* Continue Reading */}
@@ -200,12 +287,29 @@ export default function DashboardPage() {
           ) : isEmpty || recentBooks.length === 0 ? (
             <div className="card text-center py-16 animate-scale-in">
               <div className="text-6xl mb-4 opacity-50">{'\uD83D\uDCDA'}</div>
-              <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-2">No books yet</h3>
-              <p className="text-sm text-gray-500 mb-1">Your next adventure awaits</p>
-              <p className="text-xs text-gray-400 mb-6">Add a book to your library to get started.</p>
-              <Link href="/library" className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
-                Browse Library
-              </Link>
+              <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-2">
+                {isEmpty ? 'No books yet' : 'No recent reading'}
+              </h3>
+              <p className="text-sm text-gray-500 mb-1">
+                {isEmpty ? 'Your next adventure awaits' : 'Pick up where you left off'}
+              </p>
+              <p className="text-xs text-gray-400 mb-6">
+                {isEmpty ? 'Add a book to your library to get started.' : 'Open a book from your library to continue reading.'}
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <Link href="/library" className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
+                  {isEmpty ? 'Browse Library' : 'Go to Library'}
+                </Link>
+                {isEmpty && (
+                  <button
+                    onClick={handleSeedSample}
+                    disabled={seeding}
+                    className="btn hover:scale-105 active:scale-95 transition-transform duration-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {seeding ? 'Loading...' : 'Try a sample book'}
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -255,7 +359,7 @@ export default function DashboardPage() {
 
         {/* Agent Insights */}
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Agent Insights</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Getting Started Tips</h2>
           <div className="space-y-3">
             {agentInsights.map((insight, i) => (
               <div key={i} className={`card stagger-${i + 1} animate-slide-up transition-transform duration-200 hover:scale-[1.02] hover:shadow-soft`}>
@@ -263,7 +367,7 @@ export default function DashboardPage() {
                   <span className="text-2xl leading-none mt-0.5">{insight.icon}</span>
                   <div>
                     <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
-                      {insight.agent} Agent
+                      {insight.agent}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
                       {insight.message}
