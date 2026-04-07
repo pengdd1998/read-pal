@@ -1,11 +1,16 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://read-pal.app';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-    },
-    sitemap: `${process.env.NEXT_PUBLIC_URL || 'https://readpal.com'}/sitemap.xml`,
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/api/', '/read/'],
+      },
+    ],
+    sitemap: `${APP_URL}/sitemap.xml`,
   };
 }
