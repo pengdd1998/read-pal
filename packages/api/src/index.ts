@@ -104,7 +104,36 @@ const config: any = {
 // Initialize Express
 // ============================================================================
 
+// ============================================================================
+// Startup Validation
+// ============================================================================
+
+function validateCriticalEnvVars(): void {
+  const required: Array<{ name: string; value: string | undefined }> = [
+    { name: 'GLM_API_KEY', value: process.env.GLM_API_KEY },
+    { name: 'DATABASE_URL', value: process.env.DATABASE_URL },
+    { name: 'JWT_SECRET', value: process.env.JWT_SECRET || process.env.AUTH_SECRET },
+  ];
+
+  const missing = required.filter((v) => !v.value);
+
+  if (missing.length > 0) {
+    const names = missing.map((v) => v.name).join(', ');
+    if (process.env.NODE_ENV === 'production') {
+      console.error(`[FATAL] Missing critical environment variables: ${names}. Refusing to start.`);
+      process.exit(1);
+    } else {
+      console.warn(`[WARN] Missing environment variables: ${names}. Some features will be unavailable.`);
+    }
+  } else {
+    console.log('[INFO] All critical environment variables are set.');
+  }
+}
+
 const app: express.Application = express();
+
+// Run startup validation
+validateCriticalEnvVars();
 
 // Initialize middleware
 initializeMiddleware(app, config);
