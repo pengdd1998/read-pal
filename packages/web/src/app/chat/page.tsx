@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { api } from '@/lib/api';
 
 type AgentType = 'companion' | 'research' | 'coach' | 'synthesis' | 'friend';
@@ -57,7 +58,7 @@ const SUGGESTIONS: Record<AgentType, string[]> = {
   ],
 };
 
-/** Simple markdown renderer for AI responses. */
+/** Simple markdown renderer for AI responses. Output is sanitized through DOMPurify. */
 function renderSimpleMarkdown(text: string): string {
   let html = text;
   html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-200 dark:bg-gray-900 rounded p-2 my-1 overflow-x-auto text-xs"><code>$1</code></pre>');
@@ -65,7 +66,7 @@ function renderSimpleMarkdown(text: string): string {
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
   html = html.replace(/\n/g, '<br />');
-  return html;
+  return DOMPurify.sanitize(html);
 }
 
 function uid(): string {
