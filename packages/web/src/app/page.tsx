@@ -5,38 +5,38 @@ const AGENTS = [
     name: 'Companion',
     emoji: '\uD83D\uDCD6',
     desc: 'Explains difficult concepts in context. Answers questions about what you\'re reading right now.',
-    color: 'from-teal-500 to-teal-700',
-    tagBg: 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300',
+    color: 'bg-sage',
+    tagBg: 'bg-sage/10 text-sage',
   },
   {
     name: 'Research',
     emoji: '\uD83D\uDD2C',
     desc: 'Deep-dives into topics. Provides historical context, cross-references, and fact-checking.',
-    color: 'from-violet-500 to-violet-700',
-    tagBg: 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300',
+    color: 'bg-navy-500',
+    tagBg: 'bg-navy-100 dark:bg-navy-800/40 text-navy-700 dark:text-navy-300',
   },
   {
     name: 'Coach',
     emoji: '\uD83C\uDFAF',
     desc: 'Improves your reading skills with exercises, vocabulary building, and spaced repetition.',
-    color: 'from-emerald-500 to-emerald-700',
-    tagBg: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300',
+    color: 'bg-forest',
+    tagBg: 'bg-forest/10 text-forest',
   },
   {
     name: 'Synthesis',
     emoji: '\uD83E\uDDE0',
     desc: 'Connects ideas across all your books. Builds knowledge graphs and finds hidden relationships.',
-    color: 'from-amber-500 to-amber-700',
-    tagBg: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300',
+    color: 'bg-russet',
+    tagBg: 'bg-russet/10 text-russet',
   },
 ];
 
 const FRIENDS = [
-  { name: 'Sage', emoji: '\uD83E\uDDD9', desc: 'Wise & patient. Asks deep questions.', accent: 'border-l-teal-500' },
-  { name: 'Penny', emoji: '\uD83C\uDF1F', desc: 'Enthusiastic explorer of ideas.', accent: 'border-l-yellow-500' },
-  { name: 'Alex', emoji: '\u26A1', desc: 'Gentle challenger. Pushes thinking.', accent: 'border-l-red-400' },
-  { name: 'Quinn', emoji: '\uD83C\uDF19', desc: 'Quiet companion. Speaks when needed.', accent: 'border-l-slate-400' },
-  { name: 'Sam', emoji: '\uD83D\uDCDA', desc: 'Study buddy. Practical & focused.', accent: 'border-l-purple-500' },
+  { name: 'Sage', emoji: '\uD83E\uDDD9', desc: 'Wise & patient. Asks deep questions.', accent: 'border-l-sage' },
+  { name: 'Penny', emoji: '\uD83C\uDF1F', desc: 'Enthusiastic explorer of ideas.', accent: 'border-l-amber-500' },
+  { name: 'Alex', emoji: '\u26A1', desc: 'Gentle challenger. Pushes thinking.', accent: 'border-l-russet' },
+  { name: 'Quinn', emoji: '\uD83C\uDF19', desc: 'Quiet companion. Speaks when needed.', accent: 'border-l-navy-400' },
+  { name: 'Sam', emoji: '\uD83D\uDCDA', desc: 'Study buddy. Practical & focused.', accent: 'border-l-forest' },
 ];
 
 const REVIEWS = [
@@ -58,13 +58,13 @@ export default function HomePage() {
 
         <div className="max-w-5xl mx-auto px-4 pt-24 pb-20 text-center">
           <div className="animate-fade-in">
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 text-sm font-medium rounded-full border border-primary-200/50 dark:border-primary-800/50">
-              <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-sm font-medium rounded-full border border-amber-200/50 dark:border-amber-800/50">
+              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
               AI-Powered Reading Companion
             </span>
           </div>
 
-          <h1 className="mt-8 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-[0.95] animate-slide-up">
+          <h1 className="mt-8 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-navy-700 dark:text-white leading-[0.95] animate-slide-up font-display">
             Read Smarter.
             <br />
             <span className="text-gradient">Remember More.</span>
@@ -80,7 +80,7 @@ export default function HomePage() {
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up-delayed">
             <Link
               href="/register"
-              className="btn btn-primary px-8 py-4 text-base rounded-2xl shadow-glow"
+              className="btn btn-primary px-8 py-4 text-base rounded-2xl shadow-glow-amber"
             >
               Start Reading Free
               <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -100,7 +100,7 @@ export default function HomePage() {
       {/* Agents */}
       <section className="max-w-7xl mx-auto px-4 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
             Four AI Agents, One Reading Companion
           </h2>
           <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
@@ -114,10 +114,10 @@ export default function HomePage() {
               key={agent.name}
               className={`card-hover stagger-${i + 1} animate-slide-up group`}
             >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${agent.color} flex items-center justify-center text-white text-xl mb-5 shadow-soft`}>
+              <div className={`w-12 h-12 rounded-xl ${agent.color} flex items-center justify-center text-white text-xl mb-5 shadow-soft`}>
                 {agent.emoji}
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{agent.name} Agent</h3>
+              <h3 className="text-lg font-bold text-navy-700 dark:text-white mb-2">{agent.name} Agent</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
                 {agent.desc}
               </p>
@@ -134,7 +134,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight mb-6">
+              <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight mb-6 font-display">
                 Your Personal Knowledge Graph
               </h2>
               <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-8">
@@ -149,8 +149,8 @@ export default function HomePage() {
                   'Find contradictions and agreements between authors',
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                    <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
@@ -160,21 +160,21 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="card bg-gradient-to-br from-primary-50/50 to-accent-50/30 dark:from-primary-950/30 dark:to-accent-950/20 text-center py-16 shadow-soft">
+            <div className="card bg-gradient-to-br from-amber-50/50 to-primary-100/30 dark:from-amber-950/30 dark:to-primary-950/20 text-center py-16 shadow-soft">
               <div className="text-7xl mb-4 animate-float">{'\uD83D\uDD78'}</div>
-              <div className="text-lg font-bold text-gray-900 dark:text-white">Knowledge Graph</div>
+              <div className="text-lg font-bold text-navy-700 dark:text-white">Knowledge Graph</div>
               <div className="text-sm text-gray-500 mt-2">156 concepts, 89 connections, 23 themes</div>
               <div className="mt-6 flex justify-center gap-6 text-xs text-gray-400">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-primary-400" />
+                  <span className="w-2 h-2 rounded-full bg-sage" />
                   Concepts
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-accent-400" />
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
                   Connections
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-violet-400" />
+                  <span className="w-2 h-2 rounded-full bg-navy-400" />
                   Themes
                 </span>
               </div>
@@ -186,7 +186,7 @@ export default function HomePage() {
       {/* Reading Friends */}
       <section className="max-w-7xl mx-auto px-4 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
             Meet Your Reading Friend
           </h2>
           <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
@@ -209,7 +209,7 @@ export default function HomePage() {
       {/* Social Proof */}
       <section className="bg-surface-1 py-20">
         <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white text-center mb-12 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold text-navy-700 dark:text-white text-center mb-12 tracking-tight font-display">
             What Readers Are Saying
           </h2>
 
@@ -231,24 +231,21 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mt-14 flex flex-wrap justify-center gap-x-10 gap-y-4 items-center">
-            <span className="text-sm font-medium text-gray-400">Trusted by readers at</span>
-            {['Stanford', 'MIT', 'Google', 'Amazon', 'Harvard'].map((name) => (
-              <span key={name} className="text-sm font-semibold text-gray-300 dark:text-gray-600 tracking-wide">{name}</span>
-            ))}
+          <div className="mt-14 text-center">
+            <p className="text-sm text-gray-400">Join our growing community of readers</p>
           </div>
         </div>
       </section>
 
       {/* CTA */}
       <section className="max-w-3xl mx-auto px-4 py-24 text-center">
-        <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight mb-5">
+        <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight mb-5 font-display">
           Ready to Transform Your Reading?
         </h2>
         <p className="text-gray-600 dark:text-gray-400 text-lg mb-10">
           Join thousands of readers who are building knowledge, not just checking off books.
         </p>
-        <Link href="/register" className="btn btn-primary px-10 py-4 text-base rounded-2xl shadow-glow">
+        <Link href="/register" className="btn btn-primary px-10 py-4 text-base rounded-2xl shadow-glow-amber">
           Get Started Free
         </Link>
         <p className="text-sm text-gray-400 mt-5">No credit card required. Free forever plan available.</p>
