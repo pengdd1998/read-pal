@@ -3,6 +3,15 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { api } from './api';
 
+/** Set a simple cookie so Next.js middleware can detect auth state */
+function setAuthCookie(token: string) {
+  document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+}
+
+function clearAuthCookie() {
+  document.cookie = 'auth_token=; path=/; max-age=0';
+}
+
 interface User {
   id: string;
   email: string;
@@ -36,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (savedToken && savedUser) {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));
+        setAuthCookie(savedToken);
       }
     } catch {
       // Invalid stored data
@@ -53,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { token: newToken, user: newUser } = result.data;
       localStorage.setItem('auth_token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
+      setAuthCookie(newToken);
       setToken(newToken);
       setUser(newUser);
     } else {
@@ -69,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { token: newToken, user: newUser } = result.data;
       localStorage.setItem('auth_token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
+      setAuthCookie(newToken);
       setToken(newToken);
       setUser(newUser);
     } else {
@@ -79,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
+    clearAuthCookie();
     setToken(null);
     setUser(null);
   }, []);
