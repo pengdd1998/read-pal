@@ -44,9 +44,31 @@ const GETTING_STARTED_TIPS: AgentInsight[] = [
   { agent: 'Synthesis', icon: '\uD83E\uDDE0', message: 'I\'ll discover patterns and build your knowledge graph as you read.', color: 'text-amber-500' },
 ];
 
+const TIP_BORDER_COLORS: Record<string, string> = {
+  'Companion': 'border-l-teal-500 dark:border-l-teal-400',
+  'Research': 'border-l-violet-500 dark:border-l-violet-400',
+  'Coach': 'border-l-emerald-500 dark:border-l-emerald-400',
+  'Synthesis': 'border-l-amber-500 dark:border-l-amber-400',
+};
+
 function SkeletonPulse({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
   return <div className={`bg-gray-100 dark:bg-gray-800 rounded animate-pulse ${className}`} />;
 }
+
+interface StatConfig {
+  icon: string;
+  gradient: string;
+  iconBg: string;
+}
+
+const STAT_STYLES: Record<string, StatConfig> = {
+  'Library': { icon: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z', gradient: 'from-teal-50/80 to-teal-100/40 dark:from-teal-950/30 dark:to-teal-900/10', iconBg: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400' },
+  'Pages': { icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', gradient: 'from-amber-50/80 to-amber-100/40 dark:from-amber-950/30 dark:to-amber-900/10', iconBg: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' },
+  'Day Streak': { icon: 'M13 10V3L4 14h7v7l9-11h-7z', gradient: 'from-orange-50/80 to-orange-100/40 dark:from-orange-950/30 dark:to-orange-900/10', iconBg: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' },
+  'In Progress': { icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', gradient: 'from-blue-50/80 to-blue-100/40 dark:from-blue-950/30 dark:to-blue-900/10', iconBg: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' },
+  'Concepts': { icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', gradient: 'from-violet-50/80 to-violet-100/40 dark:from-violet-950/30 dark:to-violet-900/10', iconBg: 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400' },
+  'Completed': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', gradient: 'from-emerald-50/80 to-emerald-100/40 dark:from-emerald-950/30 dark:to-emerald-900/10', iconBg: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' },
+};
 
 function AnimatedCounter({ value, label, accent = 'text-primary-600', delay }: {
   value: number | string;
@@ -56,8 +78,10 @@ function AnimatedCounter({ value, label, accent = 'text-primary-600', delay }: {
 }) {
   const [displayed, setDisplayed] = useState(0);
   const numValue = typeof value === 'number' ? value : 0;
+  const style = STAT_STYLES[label] ?? STAT_STYLES['Library'];
 
   useEffect(() => {
+    if (typeof value === 'string') return;
     const duration = 600;
     const steps = 20;
     const increment = numValue / steps;
@@ -72,11 +96,14 @@ function AnimatedCounter({ value, label, accent = 'text-primary-600', delay }: {
       }
     }, duration / steps);
     return () => clearInterval(timer);
-  }, [numValue]);
+  }, [numValue, value]);
 
   if (typeof value === 'string') {
     return (
-      <div className={`card text-center animate-slide-up stagger-${delay}`}>
+      <div className={`bg-gradient-to-br ${style.gradient} rounded-2xl border border-gray-100 dark:border-gray-800 p-4 animate-slide-up stagger-${delay}`}>
+        <div className={`w-8 h-8 rounded-lg ${style.iconBg} flex items-center justify-center mb-2`}>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d={style.icon} /></svg>
+        </div>
         <div className={`text-2xl font-bold ${accent} tabular-nums`}>{value}</div>
         <div className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">{label}</div>
       </div>
@@ -84,13 +111,36 @@ function AnimatedCounter({ value, label, accent = 'text-primary-600', delay }: {
   }
 
   return (
-    <div className={`card text-center animate-slide-up stagger-${delay}`}>
+    <div className={`bg-gradient-to-br ${style.gradient} rounded-2xl border border-gray-100 dark:border-gray-800 p-4 animate-slide-up stagger-${delay}`}>
+      <div className={`w-8 h-8 rounded-lg ${style.iconBg} flex items-center justify-center mb-2`}>
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d={style.icon} /></svg>
+      </div>
       <div className={`text-2xl font-bold ${accent} tabular-nums animate-count-up`}>
-        {typeof value === 'number' ? displayed.toLocaleString() : value}
+        {displayed.toLocaleString()}
       </div>
       <div className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">{label}</div>
     </div>
   );
+}
+
+/** Formats a date/string into a human-readable "last read X ago" label */
+function formatLastRead(lastRead: string): string {
+  try {
+    const date = new Date(lastRead);
+    if (isNaN(date.getTime())) return lastRead;
+    const now = Date.now();
+    const diffMs = now - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } catch {
+    return lastRead;
+  }
 }
 
 export default function DashboardPage() {
@@ -275,7 +325,7 @@ export default function DashboardPage() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="card">
                   <div className="flex items-center gap-4">
-                    <SkeletonPulse className="w-10 h-14 rounded-lg flex-shrink-0" />
+                    <SkeletonPulse className="w-12 h-16 rounded-lg flex-shrink-0" />
                     <div className="flex-1">
                       <SkeletonPulse className="h-4 w-48 mb-2" />
                       <SkeletonPulse className="h-3 w-32" />
@@ -320,8 +370,8 @@ export default function DashboardPage() {
                   className={`block card group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 ease-out stagger-${i + 1} animate-slide-up`}
                 >
                   <div className="flex items-center gap-4">
-                    {/* Mini cover */}
-                    <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {/* Book cover thumbnail */}
+                    <div className="w-12 h-16 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
                       {book.coverUrl ? (
                         <img src={book.coverUrl} alt="" className="w-full h-full object-cover rounded-lg" />
                       ) : (
@@ -334,21 +384,28 @@ export default function DashboardPage() {
                         {book.title}
                       </h3>
                       <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>
+                      {/* Inline progress bar */}
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <div className="flex-1 max-w-[120px]">
+                          <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
+                            <div
+                              className="bg-primary-500 rounded-full h-1.5 transition-all duration-500 ease-out"
+                              style={{ width: `${Math.min(100, book.progress)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-gray-400 tabular-nums">{book.progress}%</span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-4 flex-shrink-0">
-                      <span className="text-xs text-gray-400 hidden sm:inline">{book.lastRead}</span>
-                      <div className="w-20 hidden sm:block">
-                        <div className="flex justify-between text-[10px] text-gray-400 mb-1 tabular-nums">
-                          <span>{book.progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
-                          <div
-                            className="bg-primary-500 rounded-full h-1.5 transition-all duration-500 ease-out"
-                            style={{ width: `${Math.min(100, book.progress)}%` }}
-                          />
-                        </div>
-                      </div>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      {/* "Last read X ago" timestamp */}
+                      <span className="text-[10px] text-gray-400 whitespace-nowrap">{formatLastRead(book.lastRead)}</span>
+                      {/* Prominent Continue button on hover */}
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
+                        Continue
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -362,7 +419,7 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Getting Started Tips</h2>
           <div className="space-y-3">
             {agentInsights.map((insight, i) => (
-              <div key={i} className={`card stagger-${i + 1} animate-slide-up transition-transform duration-200 hover:scale-[1.02] hover:shadow-soft`}>
+              <div key={i} className={`card stagger-${i + 1} animate-slide-up transition-transform duration-200 hover:scale-[1.02] hover:shadow-soft border-l-4 ${TIP_BORDER_COLORS[insight.agent] ?? 'border-l-gray-400'}`}>
                 <div className="flex items-start gap-3">
                   <span className="text-2xl leading-none mt-0.5">{insight.icon}</span>
                   <div>

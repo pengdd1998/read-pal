@@ -500,6 +500,17 @@
 .animate-count-up { animation: count-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-gradient-shift { animation: gradient-shift 3s ease infinite; background-size: 200% 100%; }
 
+@keyframes border-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-border-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(217, 119, 6, 0.15) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: border-shimmer 3s ease-in-out infinite;
+}
+
 @keyframes badge-shift {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
