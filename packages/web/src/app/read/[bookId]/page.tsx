@@ -575,6 +575,7 @@ export default function ReadPage() {
             chapterTitle={chapters[currentChapter]?.title || book.title}
             currentPage={currentChapter}
             totalPages={chapters.length || 1}
+            chapters={chapters.map((ch) => ({ title: ch.title }))}
             onPageChange={handleChapterChange}
             contentRef={contentRef}
             fontSize={fontSize}
