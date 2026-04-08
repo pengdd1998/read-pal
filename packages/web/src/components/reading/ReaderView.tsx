@@ -13,8 +13,6 @@ interface ReaderViewProps {
   contentRef?: RefObject<HTMLElement | null>;
   fontSize: number;
   theme: 'light' | 'dark' | 'sepia';
-  onThemeChange?: (theme: 'light' | 'dark' | 'sepia') => void;
-  onFontSizeChange?: (fontSize: number) => void;
   showControls?: boolean;
   onToggleControls?: () => void;
 }
