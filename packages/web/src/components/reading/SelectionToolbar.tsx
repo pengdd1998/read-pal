@@ -23,6 +23,7 @@ export function SelectionToolbar({
 }: SelectionToolbarProps) {
   const [showNote, setShowNote] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [highlightToast, setHighlightToast] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   // Compute position — rect is from getBoundingClientRect (viewport-relative),
@@ -38,8 +39,8 @@ export function SelectionToolbar({
   const left = Math.max(
     16,
     Math.min(
-      rect.left + rect.width / 2 - 190,
-      window.innerWidth - 396,
+      rect.left + rect.width / 2 - 210,
+      window.innerWidth - 440,
     ),
   );
 
@@ -55,6 +56,14 @@ export function SelectionToolbar({
       // Fallback or ignore
     }
   }, [text, onDismiss]);
+
+  const handleHighlight = useCallback((color: string) => {
+    onHighlight(text, color);
+    setHighlightToast(true);
+    setTimeout(() => {
+      setHighlightToast(false);
+    }, 1200);
+  }, [text, onHighlight]);
 
   // Escape key
   useEffect(() => {
@@ -79,24 +88,24 @@ export function SelectionToolbar({
       style={{ top, left }}
     >
       {/* Toolbar */}
-      <div className="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
         {/* Color dots */}
         {ANNOTATION_COLORS.map((color) => (
           <button
             key={color}
-            onClick={() => onHighlight(text, color)}
-            className="w-7 h-7 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-150 hover:scale-110 active:scale-95"
+            onClick={() => handleHighlight(color)}
+            className="w-7 h-7 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
             style={{ backgroundColor: color }}
             aria-label={`Highlight in ${color}`}
           />
         ))}
 
-        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1" />
+        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
 
         {/* Note button */}
         <button
           onClick={() => setShowNote(!showNote)}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           aria-label="Add note"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -105,12 +114,12 @@ export function SelectionToolbar({
           <span className="hidden sm:inline">Note</span>
         </button>
 
-        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1" />
+        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
 
         {/* Copy button */}
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           aria-label="Copy text"
         >
           {copied ? (
@@ -130,6 +139,18 @@ export function SelectionToolbar({
           )}
         </button>
       </div>
+
+      {/* Highlight confirmation toast */}
+      {highlightToast && (
+        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 animate-bounce-in">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 text-white text-xs font-medium shadow-lg">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Highlighted!
+          </div>
+        </div>
+      )}
 
       {/* Note popover */}
       {showNote && (
