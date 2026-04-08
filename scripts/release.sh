@@ -55,7 +55,7 @@ pm2 delete all 2>/dev/null || true
 sleep 1
 pm2 start REDACTED_DEPLOY_PATH/packages/api/dist/index.js --name read-pal-api --cwd REDACTED_DEPLOY_PATH/packages/api
 sleep 2
-pm2 start node --name read-pal-web --cwd REDACTED_DEPLOY_PATH/packages/web -- .next/standalone/server.js
+pm2 start node --name read-pal-web --cwd REDACTED_DEPLOY_PATH/packages/web -- .next/standalone/packages/web/server.js
 pm2 save
 sleep 5
 
