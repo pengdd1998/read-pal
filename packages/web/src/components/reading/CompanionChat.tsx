@@ -21,6 +21,21 @@ interface CompanionChatProps {
   chapterContent?: string;
 }
 
+interface FriendPersona {
+  name: string;
+  emoji: string;
+}
+
+const FRIEND_PERSONAS: Record<string, FriendPersona> = {
+  sage: { name: 'Sage', emoji: '\uD83E\uDD89' },
+  penny: { name: 'Penny', emoji: '\u2B50' },
+  alex: { name: 'Alex', emoji: '\uD83D\uDD0D' },
+  quinn: { name: 'Quinn', emoji: '\uD83C\uDF0A' },
+  sam: { name: 'Sam', emoji: '\uD83C\uDFAF' },
+};
+
+const DEFAULT_PERSONA: FriendPersona = { name: 'Penny', emoji: '\u2B50' };
+
 function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -41,8 +56,30 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [friendName, setFriendName] = useState<string>(DEFAULT_PERSONA.name);
+  const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch friend persona from settings
+  useEffect(() => {
+    let cancelled = false;
+    const loadPersona = async () => {
+      try {
+        const result = await api.get<{ friendPersona?: string }>('/api/settings');
+        if (!cancelled && result.success && result.data) {
+          const data = result.data as unknown as { friendPersona?: string };
+          const persona = FRIEND_PERSONAS[data.friendPersona ?? ''] ?? DEFAULT_PERSONA;
+          setFriendName(persona.name);
+          setFriendEmoji(persona.emoji);
+        }
+      } catch {
+        // Keep defaults on error
+      }
+    };
+    loadPersona();
+    return () => { cancelled = true; };
+  }, []);
 
   // Auto-scroll
   const scrollToBottom = useCallback(() => {
@@ -150,12 +187,12 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/50 dark:border-amber-900/30">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-teal-500 text-white text-sm font-bold shrink-0">
-                  R
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-teal-500 text-sm shrink-0">
+                  {friendEmoji}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm text-amber-900 dark:text-amber-100">Your Reading Friend</h3>
-                  <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Here to explore this book with you</p>
+                  <h3 className="font-semibold text-sm text-amber-900 dark:text-amber-100">{friendName}</h3>
+                  <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Your reading companion</p>
                 </div>
               </div>
               <button
