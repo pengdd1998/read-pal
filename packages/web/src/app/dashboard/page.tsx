@@ -143,12 +143,34 @@ function formatLastRead(lastRead: string): string {
   }
 }
 
+const STATS_EXPANDED_KEY = 'dashboard-stats-expanded';
+
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agentInsights] = useState<AgentInsight[]>(GETTING_STARTED_TIPS);
   const [seeding, setSeeding] = useState(false);
+  const [statsExpanded, setStatsExpanded] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem(STATS_EXPANDED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleStatsExpanded = () => {
+    setStatsExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STATS_EXPANDED_KEY, String(next));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -287,24 +309,55 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
-          {loading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="card text-center">
-                <SkeletonPulse className="h-8 w-16 mx-auto" />
-                <SkeletonPulse className="h-3 w-12 mx-auto mt-2" />
-              </div>
-            ))
-          ) : (
-            <>
-              <AnimatedCounter value={stats?.booksRead ?? 0} label="Library" delay={1} />
-              <AnimatedCounter value={(stats?.pagesRead ?? 0).toLocaleString()} label="Pages" delay={2} />
-              <AnimatedCounter value={stats?.readingStreak ?? 0} label="Day Streak" accent="text-amber-600" delay={3} />
-              <AnimatedCounter value={booksByStatus?.reading ?? 0} label="In Progress" delay={4} />
-              <AnimatedCounter value={stats?.conceptsLearned ?? 0} label="Concepts" accent="text-violet-600" delay={5} />
-              <AnimatedCounter value={booksByStatus?.completed ?? 0} label="Completed" accent="text-emerald-600" delay={6} />
-            </>
+        <div className="mb-12">
+          <div className="grid grid-cols-3 gap-4">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="card text-center">
+                  <SkeletonPulse className="h-8 w-16 mx-auto" />
+                  <SkeletonPulse className="h-3 w-12 mx-auto mt-2" />
+                </div>
+              ))
+            ) : (
+              <>
+                <AnimatedCounter value={stats?.booksRead ?? 0} label="Library" delay={1} />
+                <AnimatedCounter value={stats?.readingStreak ?? 0} label="Day Streak" accent="text-amber-600" delay={2} />
+                <AnimatedCounter value={booksByStatus?.completed ?? 0} label="Completed" accent="text-emerald-600" delay={3} />
+              </>
+            )}
+          </div>
+
+          {/* View All Stats toggle */}
+          {!loading && (
+            <div className="flex justify-center mt-3">
+              <button
+                onClick={toggleStatsExpanded}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              >
+                {statsExpanded ? 'Show Less' : 'View All Stats'}
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform duration-300 ${statsExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           )}
+
+          {/* Expandable extra stats */}
+          <div
+            className={`grid grid-cols-3 gap-4 overflow-hidden transition-all duration-500 ease-in-out ${
+              statsExpanded ? 'max-h-40 opacity-100 mt-4' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <AnimatedCounter value={(stats?.pagesRead ?? 0).toLocaleString()} label="Pages" delay={1} />
+            <AnimatedCounter value={booksByStatus?.reading ?? 0} label="In Progress" delay={2} />
+            <AnimatedCounter value={stats?.conceptsLearned ?? 0} label="Concepts" accent="text-violet-600" delay={3} />
+          </div>
         </div>
       )}
 
