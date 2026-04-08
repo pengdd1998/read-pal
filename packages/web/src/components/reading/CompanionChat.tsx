@@ -146,13 +146,13 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
   useEffect(() => { setHistoryLoaded(false); setMessages([]); }, [bookId]);
 
-  // WebSocket streaming
+  // WebSocket streaming — connect only when chat is open, disconnect on close
   useEffect(() => {
+    if (!isOpen) return;
+
     const token = localStorage.getItem('auth_token');
     if (token) wsClient.connect(token);
-  }, []);
 
-  useEffect(() => {
     const handler = (msg: { type: string; content?: string }) => {
       if (msg.type === 'token' && msg.content) {
         setMessages((prev) => {
@@ -165,8 +165,12 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       }
     };
     const unsub = wsClient.onMessage(handler);
-    return unsub;
-  }, []);
+
+    return () => {
+      unsub();
+      wsClient.disconnect();
+    };
+  }, [isOpen]);
 
   // Send
   const handleSend = async () => {
