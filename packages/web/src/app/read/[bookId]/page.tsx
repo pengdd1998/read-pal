@@ -6,7 +6,7 @@ import { ReaderView } from '@/components/reading/ReaderView';
 import { SelectionToolbar } from '@/components/reading/SelectionToolbar';
 import { AnnotationsSidebar } from '@/components/reading/AnnotationsSidebar';
 import { BookmarkToggle } from '@/components/reading/BookmarkToggle';
-import { CompanionChat } from '@/components/reading/CompanionChat';
+import { CompanionChat, type CompanionChatHandle } from '@/components/reading/CompanionChat';
 import { ReadingBackground } from '@/components/reading/ReadingBackground';
 import { useTextSelection } from '@/hooks/useTextSelection';
 import { useAnnotationHighlights } from '@/hooks/useAnnotationHighlights';
@@ -86,6 +86,7 @@ export default function ReadPage() {
   const sessionIdRef = useRef<string | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentChapterRef = useRef(currentChapter);
+  const chatRef = useRef<CompanionChatHandle>(null);
   const selection = useTextSelection(contentRef);
 
   // Keep ref in sync so heartbeat always sends the latest chapter
@@ -598,6 +599,10 @@ export default function ReadPage() {
           onHighlight={handleAddHighlight}
           onNote={handleAddNote}
           onDismiss={dismissSelection}
+          onAskAI={(text) => {
+            const truncated = text.length > 200 ? text.slice(0, 200) + '...' : text;
+            chatRef.current?.openWithMessage(`Can you explain this passage: '${truncated}'`);
+          }}
         />
       )}
 
@@ -612,6 +617,7 @@ export default function ReadPage() {
 
       {/* Companion chat */}
       <CompanionChat
+        ref={chatRef}
         bookId={bookId}
         currentPage={currentChapter}
         totalPages={chapters.length}
