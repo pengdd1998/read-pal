@@ -68,13 +68,13 @@ export function AnnotationsSidebar({
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/50 dark:border-amber-900/30">
+          <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
             Annotations
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
             aria-label="Close annotations (Esc)"
             title="Close (Esc)"
           >
@@ -118,12 +118,16 @@ export function AnnotationsSidebar({
           {filtered.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl opacity-30 mb-3">
-                {activeTab === 'bookmark' ? '\u{1F516}' : activeTab === 'note' ? '\u{1F4DD}' : '\u{1F4CB}'}
+                {activeTab === 'bookmark' ? '\u{1F516}' : activeTab === 'note' ? '\u{1F4DD}' : activeTab === 'highlight' ? '\u{1F58D}' : '\u{1F4CB}'}
               </div>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-amber-700/50 dark:text-amber-400/40">
                 {activeTab === 'all'
                   ? 'No annotations yet. Select text to start highlighting.'
-                  : `No ${activeTab}s yet.`}
+                  : activeTab === 'highlight'
+                  ? 'No highlights yet. Select text and pick a color.'
+                  : activeTab === 'note'
+                  ? 'No notes yet. Select text and tap the note button.'
+                  : 'No bookmarks yet. Tap the bookmark icon to save your place.'}
               </p>
             </div>
           ) : (
