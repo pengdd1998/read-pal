@@ -148,10 +148,15 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
             className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col animate-slide-in-right"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <h3 className="font-semibold text-sm">Reading Companion</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Ask about what you&apos;re reading</p>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/50 dark:border-amber-900/30">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-teal-500 text-white text-sm font-bold shrink-0">
+                  R
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm text-amber-900 dark:text-amber-100">Your Reading Friend</h3>
+                  <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Here to explore this book with you</p>
+                </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -167,19 +172,19 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
             {/* Messages */}
             <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && !loading ? (
-                <div className="text-center text-gray-500 dark:text-gray-400 py-10">
-                  <div className="text-3xl mb-3">{'\uD83E\uDD16'}</div>
-                  <p className="text-sm mb-4">Ask me anything about what you&apos;re reading!</p>
+                <div className="text-center text-amber-700/60 dark:text-amber-300/50 py-10">
+                  <div className="text-3xl mb-3">{'\uD83D\uDCD6'}</div>
+                  <p className="text-sm mb-4">Let&apos;s explore this book together!</p>
                   <div className="text-left space-y-2 max-w-xs mx-auto">
                     {[
-                      'What are the main ideas in this chapter?',
-                      'Explain the key concept here',
-                      'Summarize what I just read',
+                      "What's the author really saying here?",
+                      'Help me connect this to the bigger picture',
+                      'What should I pay attention to next?',
                     ].map((q) => (
                       <button
                         key={q}
                         onClick={() => setInput(q)}
-                        className="block w-full text-left text-xs p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        className="block w-full text-left text-xs p-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-amber-200/50 dark:border-amber-800/30 transition-colors"
                       >
                         {q}
                       </button>
@@ -191,8 +196,8 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
                   <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
                       msg.role === 'user'
-                        ? 'bg-primary-600 text-white rounded-br-md'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md'
+                        ? 'bg-teal-600 text-white rounded-br-md'
+                        : 'bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100 border border-amber-200/50 dark:border-amber-800/30 rounded-bl-md'
                     }`}>
                       {msg.role === 'assistant' ? (
                         <div
@@ -208,11 +213,11 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
               )}
               {loading && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex gap-1.5">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 rounded-2xl rounded-bl-md px-4 py-3">
+                    <div className="flex gap-1.5 items-center">
+                      <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDuration: '0.6s' }} />
+                      <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '120ms', animationDuration: '0.6s' }} />
+                      <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '240ms', animationDuration: '0.6s' }} />
                     </div>
                   </div>
                 </div>
@@ -221,21 +226,21 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
             </div>
 
             {/* Input */}
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-3 border-t border-amber-200/50 dark:border-amber-900/30">
               <div className="flex gap-2">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
                   placeholder="Ask about what you're reading..."
-                  className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
                   rows={2}
                   disabled={loading}
                 />
                 <button
                   onClick={handleSend}
                   disabled={loading || !input.trim()}
-                  className="btn btn-primary self-end shrink-0"
+                  className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 shadow-soft"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
