@@ -10,13 +10,17 @@ interface BookUploaderProps {
 
 export function BookUploader({ onUploadComplete }: BookUploaderProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = async (file: File) => {
     setUploading(true);
+    setUploadProgress(0);
     setError('');
+    setSuccess(false);
 
     try {
       const formData = new FormData();
@@ -24,11 +28,20 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
       formData.append('author', 'Unknown Author');
 
-      const result = await api.upload<{ book: Book }>('/api/upload', formData);
+      const result = await api.upload<{ book: Book }>(
+        '/api/upload',
+        formData,
+        (percent) => setUploadProgress(percent),
+      );
 
       if (result.success && result.data) {
         const data = result.data as unknown as { book: Book };
-        onUploadComplete(data.book);
+        setUploadProgress(100);
+        setSuccess(true);
+        setTimeout(() => {
+          onUploadComplete(data.book);
+          setSuccess(false);
+        }, 1500);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -72,7 +85,7 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
   };
 
   const handleClick = () => {
-    if (!uploading) fileInputRef.current?.click();
+    if (!uploading && !success) fileInputRef.current?.click();
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,11 +100,13 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 overflow-hidden ${
-        uploading
-          ? 'border-gray-300 dark:border-gray-600 opacity-50'
-          : dragOver
-            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-[1.01]'
-            : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
+        success
+          ? 'border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/20'
+          : uploading
+            ? 'border-amber-400 dark:border-amber-600 bg-amber-50/30 dark:bg-amber-900/10'
+            : dragOver
+              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-[1.01]'
+              : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
       }`}
     >
       <input
@@ -99,36 +114,56 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
         type="file"
         accept=".epub,.pdf,application/epub+zip,application/pdf"
         onChange={handleFileSelect}
-        disabled={uploading}
+        disabled={uploading || success}
         className="hidden"
       />
 
-      {/* Animated dashed border shimmer */}
-      {!uploading && !dragOver && (
-        <div className="absolute inset-0 rounded-2xl pointer-events-none animate-border-shimmer opacity-30" />
-      )}
-
-      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-100 to-amber-100 dark:from-primary-900/30 dark:to-amber-900/30 flex items-center justify-center">
-        <svg className="w-7 h-7 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-      </div>
-      <h3 className="text-lg font-semibold mb-1">
-        {uploading ? 'Uploading...' : 'Click or drag your book here to upload'}
-      </h3>
-      <p className="text-gray-500 dark:text-gray-400 text-sm">
-        EPUB or PDF, max 50MB
-      </p>
-
-      {uploading && (
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div className="bg-primary-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }} />
+      {/* Success state */}
+      {success ? (
+        <div className="animate-scale-in">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/40 dark:to-emerald-900/40 flex items-center justify-center">
+            <svg className="w-8 h-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Processing your book...</p>
+          <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-300">Book uploaded!</h3>
+          <p className="text-teal-600 dark:text-teal-400 text-sm mt-1">Adding to your library...</p>
         </div>
+      ) : (
+        <>
+          {/* Animated dashed border shimmer */}
+          {!uploading && !dragOver && (
+            <div className="absolute inset-0 rounded-2xl pointer-events-none animate-border-shimmer opacity-30" />
+          )}
+
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-100 to-amber-100 dark:from-primary-900/30 dark:to-amber-900/30 flex items-center justify-center">
+            <svg className="w-7 h-7 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold mb-1">
+            {uploading ? 'Uploading...' : 'Click or drag your book here to upload'}
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            EPUB or PDF, max 50MB
+          </p>
+
+          {uploading && (
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-amber-500 to-teal-500 h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                {uploadProgress < 100 ? `${uploadProgress}% uploaded...` : 'Processing your book...'}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {error && (

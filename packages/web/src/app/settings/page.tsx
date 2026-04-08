@@ -14,11 +14,11 @@ interface UserSettings {
 }
 
 const PERSONAS = [
-  { id: 'sage', name: 'Sage', description: 'Wise and thoughtful', emoji: '\uD83E\uDDD9' },
-  { id: 'penny', name: 'Penny', description: 'Enthusiastic and curious', emoji: '\u2728' },
-  { id: 'alex', name: 'Alex', description: 'Challenging and direct', emoji: '\uD83C\uDFAF' },
-  { id: 'quinn', name: 'Quinn', description: 'Calm and minimalist', emoji: '\uD83C\uDF43' },
-  { id: 'sam', name: 'Sam', description: 'Practical and focused', emoji: '\uD83D\uDCDA' },
+  { id: 'sage', name: 'Sage', description: 'Wise and thoughtful', emoji: '\uD83E\uDDD9', color: 'from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30', accent: 'text-violet-600 dark:text-violet-400' },
+  { id: 'penny', name: 'Penny', description: 'Enthusiastic and curious', emoji: '\u2728', color: 'from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30', accent: 'text-amber-600 dark:text-amber-400' },
+  { id: 'alex', name: 'Alex', description: 'Challenging and direct', emoji: '\uD83C\uDFAF', color: 'from-red-100 to-orange-100 dark:from-red-900/30 dark:to-orange-900/30', accent: 'text-red-600 dark:text-red-400' },
+  { id: 'quinn', name: 'Quinn', description: 'Calm and minimalist', emoji: '\uD83C\uDF43', color: 'from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30', accent: 'text-emerald-600 dark:text-emerald-400' },
+  { id: 'sam', name: 'Sam', description: 'Practical and focused', emoji: '\uD83D\uDCDA', color: 'from-blue-100 to-sky-100 dark:from-blue-900/30 dark:to-sky-900/30', accent: 'text-blue-600 dark:text-blue-400' },
 ];
 
 export default function SettingsPage() {
@@ -69,7 +69,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-amber-500 border-t-transparent" />
       </div>
     );
   }
@@ -77,8 +77,13 @@ export default function SettingsPage() {
   if (!settings) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Failed to load settings</p>
+        <div className="text-center animate-scale-in">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <svg className="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <p className="text-lg font-semibold mb-4">Failed to load settings</p>
           {error && <p className="text-sm text-gray-500 mb-4">{error}</p>}
           <button onClick={loadSettings} className="btn btn-primary">Retry</button>
         </div>
@@ -87,123 +92,236 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Settings</h1>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
+      {/* Header */}
+      <div className="mb-8 animate-slide-up">
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">Customize your reading experience</p>
+      </div>
 
-        {error && (
-          <div className="mb-6 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded text-sm">
-            {error}
+      {/* Saving indicator */}
+      {(saving || saved) && (
+        <div className={`mb-6 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium animate-slide-up transition-all ${
+          saved
+            ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
+            : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+        }`}>
+          {saved ? (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Settings saved
+            </>
+          ) : (
+            <>
+              <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              Saving...
+            </>
+          )}
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up">
+          {error}
+        </div>
+      )}
+
+      {/* Appearance Section */}
+      <section className="mb-6 animate-slide-up stagger-1">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/40 dark:to-amber-800/40 flex items-center justify-center">
+            <svg className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+            </svg>
           </div>
-        )}
-
-        {/* Appearance */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Appearance</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-              <select
-                value={settings.theme}
-                onChange={(e) => saveSettings({ theme: e.target.value })}
-                className="input"
-                disabled={saving}
-              >
-                <option value="system">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Font Size: {settings.fontSize}px
-              </label>
-              <input
-                type="range"
-                min="12"
-                max="32"
-                value={settings.fontSize}
-                onChange={(e) => saveSettings({ fontSize: parseInt(e.target.value) })}
-                className="w-full"
-                disabled={saving}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Font Family</label>
-              <select
-                value={settings.fontFamily}
-                onChange={(e) => saveSettings({ fontFamily: e.target.value })}
-                className="input"
-                disabled={saving}
-              >
-                <option value="Inter">Inter</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Merriweather">Merriweather</option>
-                <option value="system-ui">System Default</option>
-              </select>
-            </div>
-          </div>
-        </section>
-
-        {/* Reading Goals */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Reading Goals</h2>
+          <h2 className="text-lg font-semibold">Appearance</h2>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+          {/* Theme */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Books per week</label>
+            <label className="block text-sm font-medium mb-2">Theme</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['system', 'light', 'dark'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => saveSettings({ theme: t })}
+                  disabled={saving}
+                  className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                    settings.theme === t
+                      ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 shadow-xs'
+                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  {t === 'system' ? 'System' : t === 'light' ? 'Light' : 'Dark'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Font Size */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">Font Size</label>
+              <span className="text-xs px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 font-medium">
+                {settings.fontSize}px
+              </span>
+            </div>
             <input
-              type="number"
-              min="1"
-              max="10"
-              value={settings.readingGoal}
-              onChange={(e) => saveSettings({ readingGoal: parseInt(e.target.value) || 1 })}
-              className="w-24 input"
+              type="range"
+              min="12"
+              max="32"
+              value={settings.fontSize}
+              onChange={(e) => saveSettings({ fontSize: parseInt(e.target.value) })}
+              className="w-full accent-amber-500"
               disabled={saving}
             />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>A</span>
+              <span className="text-lg">A</span>
+            </div>
           </div>
-        </section>
 
-        {/* Reading Friend */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Reading Friend</h2>
-          <div className="grid grid-cols-1 gap-3 mb-4">
-            {PERSONAS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => saveSettings({ friendPersona: p.id })}
-                disabled={saving}
-                className={`flex items-center gap-3 p-3 rounded-lg border-2 transition ${
-                  settings.friendPersona === p.id
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                }`}
-              >
-                <span className="text-2xl">{p.emoji}</span>
-                <div className="text-left">
-                  <div className="font-medium text-gray-900 dark:text-white">{p.name}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{p.description}</div>
-                </div>
-              </button>
-            ))}
-          </div>
+          {/* Font Family */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Interaction frequency
-            </label>
-            <select
-              value={settings.friendFrequency}
-              onChange={(e) => saveSettings({ friendFrequency: e.target.value })}
-              className="input"
-              disabled={saving}
-            >
-              <option value="minimal">Minimal - Only when asked</option>
-              <option value="normal">Normal - Helpful nudges</option>
-              <option value="frequent">Frequent - Active companion</option>
-            </select>
+            <label className="block text-sm font-medium mb-2">Font Family</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['Inter', 'Georgia', 'Merriweather', 'system-ui'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => saveSettings({ fontFamily: f })}
+                  disabled={saving}
+                  className={`py-2.5 px-3 rounded-xl text-sm transition-all duration-200 border ${
+                    settings.fontFamily === f
+                      ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 shadow-xs font-medium'
+                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                  style={{ fontFamily: f }}
+                >
+                  {f === 'system-ui' ? 'System' : f}
+                </button>
+              ))}
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {saving && <p className="text-sm text-gray-500">Saving...</p>}
-        {saved && <p className="text-sm text-green-600">Settings saved!</p>}
+      {/* Reading Goals Section */}
+      <section className="mb-6 animate-slide-up stagger-2">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/40 dark:to-emerald-900/40 flex items-center justify-center">
+            <svg className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold">Reading Goals</h2>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+          <label className="block text-sm font-medium mb-2">Books per week</label>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1.5">
+              {[1, 2, 3, 5, 7].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => saveSettings({ readingGoal: n })}
+                  disabled={saving}
+                  className={`w-10 h-10 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                    settings.readingGoal === n
+                      ? 'bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 shadow-xs'
+                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Reading Friend Section */}
+      <section className="mb-6 animate-slide-up stagger-3">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/40 dark:to-teal-900/40 flex items-center justify-center">
+            <span className="text-lg">{'\u2728'}</span>
+          </div>
+          <h2 className="text-lg font-semibold">Reading Friend</h2>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+          {/* Persona selection */}
+          <div>
+            <label className="block text-sm font-medium mb-3">Choose your companion</label>
+            <div className="grid grid-cols-1 gap-2">
+              {PERSONAS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => saveSettings({ friendPersona: p.id })}
+                  disabled={saving}
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 ${
+                    settings.friendPersona === p.id
+                      ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/10'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-gray-50/50 dark:bg-gray-800/50'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center flex-shrink-0`}>
+                    <span className="text-lg">{p.emoji}</span>
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-sm">{p.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{p.description}</div>
+                  </div>
+                  {settings.friendPersona === p.id && (
+                    <svg className="w-5 h-5 text-amber-500 ml-auto flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Frequency */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Interaction frequency</label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                ['minimal', 'Quiet', 'Only when asked'],
+                ['normal', 'Friendly', 'Helpful nudges'],
+                ['frequent', 'Active', 'Always nearby'],
+              ] as const).map(([value, label, desc]) => (
+                <button
+                  key={value}
+                  onClick={() => saveSettings({ friendFrequency: value })}
+                  disabled={saving}
+                  className={`py-3 px-2 rounded-xl text-center transition-all duration-200 border ${
+                    settings.friendFrequency === value
+                      ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 shadow-xs'
+                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  <div className={`text-sm font-medium ${settings.friendFrequency === value ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                    {label}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">{desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Back link */}
+      <div className="mt-8 animate-slide-up stagger-4">
+        <a
+          href="/dashboard"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Dashboard
+        </a>
       </div>
     </div>
   );

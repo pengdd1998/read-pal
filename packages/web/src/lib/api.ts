@@ -79,11 +79,20 @@ class ApiClient {
     return response.data;
   }
 
-  /** Upload a file (FormData) to a given endpoint */
-  async upload<T>(url: string, formData: FormData): Promise<ApiResponse<T>> {
+  /** Upload a file (FormData) to a given endpoint, with optional progress callback */
+  async upload<T>(
+    url: string,
+    formData: FormData,
+    onProgress?: (percent: number) => void,
+  ): Promise<ApiResponse<T>> {
     const response = await this.client.post<ApiResponse<T>>(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (e) => {
+        if (e.total && onProgress) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
       },
     });
     return response.data;
