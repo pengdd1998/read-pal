@@ -24,7 +24,7 @@ function SelectionHint({ onDismiss }: { onDismiss: () => void }) {
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in opacity-0" style={{ animation: 'fade-in 0.5s 1s forwards, fade-in 0.5s 5s reverse forwards' }}>
-      <div className="px-3 py-1.5 rounded-full bg-gray-500/60 text-white text-xs backdrop-blur-sm">
+      <div className="px-3 py-1.5 rounded-full bg-amber-600/70 text-white text-xs backdrop-blur-sm">
         Select text to highlight or add notes
       </div>
     </div>
@@ -85,7 +85,13 @@ export default function ReadPage() {
   const contentRef = useRef<HTMLElement | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentChapterRef = useRef(currentChapter);
   const selection = useTextSelection(contentRef);
+
+  // Keep ref in sync so heartbeat always sends the latest chapter
+  useEffect(() => {
+    currentChapterRef.current = currentChapter;
+  }, [currentChapter]);
 
   // Derive current chapter content from chapters array
   const chapterContent = chapters[currentChapter]?.content || '';
@@ -144,7 +150,7 @@ export default function ReadPage() {
             if (!sessionIdRef.current) return;
             try {
               await api.patch(`/api/reading-sessions/${sessionIdRef.current}/heartbeat`, {
-                pagesRead: currentChapter + 1,
+                pagesRead: currentChapterRef.current + 1,
               });
             } catch {
               // heartbeat failure is non-critical
@@ -164,15 +170,16 @@ export default function ReadPage() {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (sessionIdRef.current) {
         const sid = sessionIdRef.current;
+        const finalChapter = currentChapterRef.current;
         api.post(`/api/reading-sessions/${sid}/end`, {
-          pagesRead: currentChapter + 1,
-          currentPage: currentChapter,
+          pagesRead: finalChapter + 1,
+          currentPage: finalChapter,
           totalPages: chapters.length,
         }).catch(() => {});
         sessionIdRef.current = null;
       }
     };
-  }, [bookId, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [bookId, loading]);
 
   // Render annotation highlights in the content
   useAnnotationHighlights(contentRef, annotations, currentChapter, theme);
@@ -365,7 +372,7 @@ export default function ReadPage() {
     if (mark) {
       mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
       const original = (mark as HTMLElement).style.backgroundColor;
-      (mark as HTMLElement).style.backgroundColor = 'rgba(59, 130, 246, 0.5)';
+      (mark as HTMLElement).style.backgroundColor = 'rgba(217, 119, 6, 0.5)'; // Warm amber highlight
       setTimeout(() => {
         (mark as HTMLElement).style.backgroundColor = original;
       }, 1500);
@@ -375,23 +382,25 @@ export default function ReadPage() {
     }
   }, []);
 
+  // Warm bookish design - paper backgrounds
   const themeClasses = {
-    light: 'bg-white text-gray-900',
-    dark: 'bg-gray-900 text-gray-100',
-    sepia: 'bg-amber-50 text-amber-900',
+    light: 'bg-[#fefdfb] text-gray-900',
+    dark: 'bg-[#0f1419] text-gray-100',
+    sepia: 'bg-[#f8f4ec] text-amber-900',
   };
 
+  // Warm cream tones for headers
   const headerBgClasses = {
-    light: 'bg-white/90 border-gray-200',
-    dark: 'bg-gray-900/90 border-gray-700',
-    sepia: 'bg-amber-50/90 border-amber-200',
+    light: 'bg-[#fdfbf7]/95 border-amber-200/50',
+    dark: 'bg-[#1a1f26]/95 border-amber-900/30',
+    sepia: 'bg-[#f5f0e6]/95 border-amber-300/50',
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-[#fefdfb]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
@@ -421,7 +430,7 @@ export default function ReadPage() {
         enabled={bgEnabled}
       />
 
-      {/* Top bar — slides in/out with controls */}
+      {/* Top bar — slides in/out with controls - warm bookish design */}
       <div
         className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${headerBgClasses[theme]} transition-all duration-300 ease-out ${
           showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
@@ -432,7 +441,7 @@ export default function ReadPage() {
           {/* Back arrow - only navigation button */}
           <a
             href="/library"
-            className="flex items-center justify-center w-10 h-10 -ml-1 rounded-xl text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center justify-center w-10 h-10 -ml-1 rounded-xl text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors"
             aria-label="Back to library"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -441,34 +450,65 @@ export default function ReadPage() {
           </a>
 
           <div className="min-w-0">
-            <h1 className="text-sm font-medium truncate">{book.title}</h1>
+            <h1 className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
             {book.author && (
-              <p className="text-xs text-gray-400 truncate">{book.author}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{book.author}</p>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
-          {/* Font Size Controls */}
-          <div className="hidden sm:flex items-center gap-1">
+          {/* Mobile-only compact settings row — font size + theme cycle */}
+          <div className="flex sm:hidden items-center gap-0.5">
             <button
               onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-              className="px-2 py-1 rounded-lg text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center justify-center w-11 h-11 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors active:scale-95"
               aria-label="Decrease font size"
             >
               A-
             </button>
-            <span className="text-xs text-gray-400 min-w-[2rem] text-center">{fontSize}</span>
+            <span className="text-[10px] text-amber-600 dark:text-amber-400 min-w-[1.5rem] text-center font-medium select-none">{fontSize}</span>
             <button
               onClick={() => setFontSize(Math.min(32, fontSize + 2))}
-              className="px-2 py-1 rounded-lg text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center justify-center w-11 h-11 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors active:scale-95"
+              aria-label="Increase font size"
+            >
+              A+
+            </button>
+            <div className="w-px h-5 bg-amber-200/50 dark:bg-amber-900/30 mx-0.5" />
+            <button
+              onClick={() => {
+                const themes: ('light' | 'sepia' | 'dark')[] = ['light', 'sepia', 'dark'];
+                const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
+                setTheme(themes[nextIndex]);
+              }}
+              className="flex items-center justify-center w-11 h-11 rounded-lg text-sm transition-colors hover:bg-amber-100/50 dark:hover:bg-amber-900/30 active:scale-95"
+              aria-label={`Current theme: ${theme}. Tap to change.`}
+            >
+              {theme === 'light' ? '\u2600\uFE0F' : theme === 'sepia' ? '\uD83D\uDCD6' : '\uD83C\uDF19'}
+            </button>
+          </div>
+
+          {/* Desktop Font Size Controls - warm amber accent */}
+          <div className="hidden sm:flex items-center gap-1">
+            <button
+              onClick={() => setFontSize(Math.max(12, fontSize - 2))}
+              className="px-2 py-1 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors"
+              aria-label="Decrease font size"
+            >
+              A-
+            </button>
+            <span className="text-xs text-amber-600 dark:text-amber-400 min-w-[2rem] text-center font-medium">{fontSize}</span>
+            <button
+              onClick={() => setFontSize(Math.min(32, fontSize + 2))}
+              className="px-2 py-1 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors"
               aria-label="Increase font size"
             >
               A+
             </button>
           </div>
 
-          {/* Theme Toggle */}
+          {/* Desktop Theme Toggle - warm amber highlight for active state */}
           <div className="hidden sm:flex gap-0.5">
             {(['light', 'sepia', 'dark'] as const).map((t) => (
               <button
@@ -476,8 +516,8 @@ export default function ReadPage() {
                 onClick={() => setTheme(t)}
                 className={`px-2 py-1 rounded-lg text-xs transition-colors ${
                   theme === t
-                    ? t === 'light' ? 'bg-gray-200 text-gray-800' : t === 'dark' ? 'bg-gray-700 text-gray-100' : 'bg-amber-200 text-amber-900'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? t === 'light' ? 'bg-amber-100 text-amber-800' : t === 'dark' ? 'bg-amber-900/50 text-amber-200' : 'bg-amber-200 text-amber-900'
+                    : 'text-gray-400 hover:text-amber-600 hover:bg-amber-100/50 dark:hover:bg-amber-900/30'
                 }`}
                 aria-label={`${t} theme`}
               >
@@ -486,12 +526,12 @@ export default function ReadPage() {
             ))}
           </div>
 
-          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block" />
+          <div className="w-px h-6 bg-amber-200/50 dark:bg-amber-900/30 mx-1 hidden sm:block" />
 
           {/* Background toggle */}
           <button
             onClick={() => setBgEnabled(!bgEnabled)}
-            className="p-2 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg text-xs font-medium text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors"
             title={bgEnabled ? 'Disable dynamic background' : 'Enable dynamic background'}
           >
             {bgEnabled ? 'BG On' : 'BG Off'}
@@ -503,13 +543,13 @@ export default function ReadPage() {
             onToggle={handleToggleBookmark}
           />
 
-          {/* Annotations badge button */}
+          {/* Annotations badge button - warm amber accent */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               sidebarOpen
-                ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 hover:text-amber-700 dark:hover:text-amber-300'
             }`}
             aria-label="Toggle annotations sidebar"
           >
@@ -517,7 +557,7 @@ export default function ReadPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
             {annotations.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 text-xs font-semibold">
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-xs font-semibold">
                 {annotations.length}
               </span>
             )}
@@ -538,8 +578,6 @@ export default function ReadPage() {
             contentRef={contentRef}
             fontSize={fontSize}
             theme={theme}
-            onThemeChange={setTheme}
-            onFontSizeChange={setFontSize}
             showControls={showControls}
             onToggleControls={() => setShowControls((v) => !v)}
           />
