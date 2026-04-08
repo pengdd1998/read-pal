@@ -3,12 +3,17 @@
 import React, { useState, useEffect, useCallback, useRef, type RefObject } from 'react';
 import DOMPurify from 'dompurify';
 
+interface ChapterItem {
+  title: string;
+}
+
 interface ReaderViewProps {
   bookId: string;
   chapterContent: string;
   chapterTitle: string;
   currentPage: number;
   totalPages: number;
+  chapters: ChapterItem[];
   onPageChange: (page: number) => void;
   contentRef?: RefObject<HTMLElement | null>;
   fontSize: number;
@@ -23,6 +28,7 @@ export function ReaderView({
   chapterTitle,
   currentPage,
   totalPages,
+  chapters,
   onPageChange,
   contentRef,
   fontSize,
@@ -31,6 +37,8 @@ export function ReaderView({
   onToggleControls,
 }: ReaderViewProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [showChapterMenu, setShowChapterMenu] = useState(false);
+  const chapterMenuRef = useRef<HTMLDivElement>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -145,6 +153,23 @@ export function ReaderView({
     sepia: 'bg-gradient-to-r from-amber-600 to-amber-400',
   };
 
+  // --- Close chapter menu on outside click ---
+  useEffect(() => {
+    if (!showChapterMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (chapterMenuRef.current && !chapterMenuRef.current.contains(e.target as Node)) {
+        setShowChapterMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showChapterMenu]);
+
+  // Close chapter menu when controls are hidden
+  useEffect(() => {
+    if (!showControls) setShowChapterMenu(false);
+  }, [showControls]);
+
   // Overall book progress
   const overallProgress = totalPages > 1
     ? Math.round(((currentPage + scrollProgress) / totalPages) * 100)
@@ -235,13 +260,107 @@ export function ReaderView({
             <span className="hidden sm:inline">Prev</span>
           </button>
 
-          <div className="flex-1 mx-4 text-center min-w-0">
-            <div className="text-xs font-medium opacity-60 truncate">
-              Chapter {currentPage + 1} of {totalPages}
-            </div>
-            <div className="text-[10px] opacity-40 mt-0.5">
-              {clampedProgress}% complete
-            </div>
+          {/* Chapter dropdown / TOC */}
+          <div className="flex-1 mx-2 sm:mx-4 min-w-0 relative" ref={chapterMenuRef}>
+            <button
+              onClick={() => setShowChapterMenu((v) => !v)}
+              className={`w-full flex flex-col items-center px-2 py-1 rounded-lg transition-colors ${
+                showChapterMenu
+                  ? 'bg-amber-100/80 dark:bg-amber-900/40'
+                  : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+              aria-label="Open chapter list"
+              aria-expanded={showChapterMenu}
+            >
+              <span className="text-xs font-medium opacity-70 truncate w-full text-center">
+                Chapter {currentPage + 1} of {totalPages}
+              </span>
+              <span className="text-[10px] opacity-40 mt-0.5 truncate w-full text-center">
+                {chapters[currentPage]?.title || ''} &middot; {clampedProgress}%
+              </span>
+              <svg
+                className={`w-3 h-3 opacity-40 mt-0.5 transition-transform ${showChapterMenu ? 'rotate-180' : ''}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown / bottom sheet */}
+            {showChapterMenu && (
+              <>
+                {/* Mobile backdrop */}
+                <div
+                  className="fixed inset-0 z-30 md:hidden bg-black/20 backdrop-blur-sm"
+                  onClick={() => setShowChapterMenu(false)}
+                />
+
+                {/* Dropdown panel — opens upward since footer is at bottom */}
+                <div
+                  className={`absolute left-0 right-0 bottom-full z-40 mb-1 rounded-xl shadow-lg border max-h-[60vh] md:max-h-[40vh] overflow-y-auto ${
+                    theme === 'dark'
+                      ? 'bg-gray-800 border-gray-700'
+                      : theme === 'sepia'
+                        ? 'bg-[#f5f0e6] border-amber-300/60'
+                        : 'bg-white border-amber-200/60'
+                  }`}
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                  {/* Header */}
+                  <div className={`sticky top-0 px-3 py-2 text-xs font-semibold uppercase tracking-wider border-b ${
+                    theme === 'dark'
+                      ? 'bg-gray-800 text-gray-400 border-gray-700'
+                      : theme === 'sepia'
+                        ? 'bg-[#f5f0e6] text-amber-700 border-amber-300/60'
+                        : 'bg-white text-amber-600 border-amber-200/60'
+                  }`}>
+                    Table of Contents
+                  </div>
+
+                  {chapters.map((ch, i) => {
+                    const isCurrent = i === currentPage;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          onPageChange(i);
+                          setShowChapterMenu(false);
+                        }}
+                        className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-2 transition-colors ${
+                          isCurrent
+                            ? theme === 'dark'
+                              ? 'bg-amber-900/30 text-amber-300'
+                              : theme === 'sepia'
+                                ? 'bg-amber-200/50 text-amber-900'
+                                : 'bg-amber-100/60 text-amber-800'
+                            : theme === 'dark'
+                              ? 'text-gray-300 hover:bg-gray-700/60'
+                              : theme === 'sepia'
+                                ? 'text-amber-900/80 hover:bg-amber-100/40'
+                                : 'text-gray-700 hover:bg-amber-50'
+                        }`}
+                      >
+                        <span className={`flex-shrink-0 w-6 text-xs font-mono text-right ${
+                          isCurrent ? 'font-bold' : 'opacity-40'
+                        }`}>
+                          {i + 1}
+                        </span>
+                        <span className={`truncate ${isCurrent ? 'font-semibold' : ''}`}>
+                          {ch.title || `Chapter ${i + 1}`}
+                        </span>
+                        {isCurrent && (
+                          <span className="flex-shrink-0 ml-auto">
+                            <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           <button
