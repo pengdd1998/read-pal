@@ -128,14 +128,16 @@ const defaultLogger: Logger = {
 export class KnowledgeGraphService {
   private readonly driver: Driver | null;
   private readonly logger: Logger;
+  private driverWarned = false;
 
   constructor(logger?: Logger) {
     this.driver = neo4jDriver;
     this.logger = logger ?? defaultLogger;
 
-    if (!this.driver) {
-      this.logger.warn(
-        'Neo4j driver is not initialised. All knowledge graph operations will throw.'
+    if (!this.driver && !this.driverWarned) {
+      this.driverWarned = true;
+      this.logger.info(
+        'Neo4j driver is not initialised. Knowledge graph operations will be silently skipped.'
       );
     }
   }
@@ -158,7 +160,19 @@ export class KnowledgeGraphService {
     context?: string,
     sourceLocation?: string,
   ): Promise<Concept> {
-    this.requireDriver();
+    if (!this.isAvailable()) {
+      return {
+        id: '',
+        userId,
+        bookId,
+        name: concept.name,
+        description: concept.description,
+        context,
+        sourceLocation,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
     const session = this.openSession();
 
     try {
@@ -214,7 +228,17 @@ export class KnowledgeGraphService {
     strength?: number,
     description?: string,
   ): Promise<ConceptRelationship> {
-    this.requireDriver();
+    if (!this.isAvailable()) {
+      return {
+        id: '',
+        fromConceptId,
+        toConceptId,
+        type: relationshipType,
+        strength,
+        description,
+        createdAt: new Date().toISOString(),
+      };
+    }
     const session = this.openSession();
 
     try {
@@ -278,7 +302,7 @@ export class KnowledgeGraphService {
    * Retrieve concepts for a user, optionally filtered by book.
    */
   async getConcepts(userId: string, bookId?: string): Promise<Concept[]> {
-    this.requireDriver();
+    if (!this.isAvailable()) return [];
     const session = this.openSession();
 
     try {
@@ -312,7 +336,7 @@ export class KnowledgeGraphService {
     conceptId: string,
     depth: number = 1,
   ): Promise<Concept[]> {
-    this.requireDriver();
+    if (!this.isAvailable()) return [];
 
     if (depth < 1 || depth > 5) {
       throw new Error('Depth must be between 1 and 5.');
@@ -349,7 +373,7 @@ export class KnowledgeGraphService {
     bookId1: string,
     bookId2: string,
   ): Promise<BookConnection[]> {
-    this.requireDriver();
+    if (!this.isAvailable()) return [];
     const session = this.openSession();
 
     try {
@@ -411,7 +435,7 @@ export class KnowledgeGraphService {
    * frontend (e.g. D3.js, Cytoscape, or Vis.js).
    */
   async getGraphVisualization(userId: string): Promise<GraphVisualization> {
-    this.requireDriver();
+    if (!this.isAvailable()) return { nodes: [], edges: [] };
     const session = this.openSession();
 
     try {
@@ -470,7 +494,7 @@ export class KnowledgeGraphService {
    * layered on top of this in a future iteration.
    */
   async searchConcepts(userId: string, query: string): Promise<ConceptSearchResult[]> {
-    this.requireDriver();
+    if (!this.isAvailable()) return [];
 
     if (!query || query.trim().length === 0) {
       throw new Error('Search query must not be empty.');
@@ -523,7 +547,7 @@ export class KnowledgeGraphService {
    * book. Results are ordered by the number of distinct books involved.
    */
   async getCrossBookThemes(userId: string): Promise<CrossBookTheme[]> {
-    this.requireDriver();
+    if (!this.isAvailable()) return [];
     const session = this.openSession();
 
     try {
@@ -570,7 +594,7 @@ export class KnowledgeGraphService {
    * Remove a concept and all its relationships from the graph.
    */
   async removeConcept(userId: string, conceptId: string): Promise<boolean> {
-    this.requireDriver();
+    if (!this.isAvailable()) return false;
     const session = this.openSession();
 
     try {
@@ -599,13 +623,9 @@ export class KnowledgeGraphService {
   // Private helpers
   // -----------------------------------------------------------------------
 
-  /** Throw if the Neo4j driver has not been initialised. */
-  private requireDriver(): void {
-    if (!this.driver) {
-      throw new Error(
-        'Neo4j driver is not initialised. Set NEO4J_URI, NEO4J_USER, and NEO4J_PASSWORD environment variables.',
-      );
-    }
+  /** Return false if the Neo4j driver has not been initialised. */
+  private isAvailable(): boolean {
+    return this.driver !== null;
   }
 
   /** Open a new Neo4j session. Caller must close it when done. */
