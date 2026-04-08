@@ -21,7 +21,19 @@ export default function RegisterPage() {
 
     try {
       await register(name, email, password);
-      router.push('/dashboard');
+      // Auto-seed a sample book for the magic first experience
+      try {
+        await fetch((process.env.NEXT_PUBLIC_API_URL || '') + '/api/books/seed-sample', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+          },
+        });
+      } catch {
+        // Non-blocking — user can still use the app
+      }
+      router.push('/welcome');
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || err?.message || 'Registration failed');
     } finally {
