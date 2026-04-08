@@ -20,7 +20,7 @@ export function AnnotationCard({ annotation, onDelete, onClick }: AnnotationCard
 
   return (
     <div
-      className="group p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border-l-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      className="group p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border-l-4 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/10 hover:shadow-sm transition-all duration-200"
       style={{ borderLeftColor: borderColor }}
       onClick={onClick}
     >
