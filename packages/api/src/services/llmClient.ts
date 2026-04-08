@@ -66,6 +66,9 @@ if (process.env.NODE_ENV !== 'test') {
   }
 }
 
+// Track auth failure state to avoid log spam on repeated 401s.
+let authFailureLogged = false;
+
 const client = new OpenAI({
   apiKey: process.env.GLM_API_KEY || '',
   baseURL: GLM_BASE_URL,
@@ -179,7 +182,19 @@ export async function chatCompletion(params: ChatCompletionParams): Promise<stri
           { statusCode, retryable: true, attempt, cause: err as Error },
         );
       } else {
-        // Non-retryable — throw immediately
+        // Non-retryable — log once for auth errors to avoid spam, then throw
+        if (statusCode === 401) {
+          if (!authFailureLogged) {
+            authFailureLogged = true;
+            log('error', 'GLM API authentication failed (401). Token may be expired or invalid. Subsequent 401 errors will be suppressed.', {
+              statusCode,
+              model,
+              message: openaiErr.message,
+            });
+          }
+        } else {
+          log('error', `Non-retryable API error on attempt ${attempt}`, { statusCode, model });
+        }
         throw new LLMClientError(
           `API error ${statusCode ?? 'unknown'}: ${openaiErr.message}`,
           { statusCode, retryable: false, attempt, cause: err as Error },
