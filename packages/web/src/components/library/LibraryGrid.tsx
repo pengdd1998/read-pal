@@ -107,19 +107,23 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
       {/* Empty state with prominent CTA */}
       {!hasBooks && !error && (
         <div className="animate-scale-in">
-          <div className="text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-5 text-primary-300 dark:text-primary-700">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                <line x1="9" y1="7" x2="16" y2="7" />
-                <line x1="9" y1="11" x2="14" y2="11" />
-              </svg>
+          <div className="text-center py-16">
+            {/* Large illustrated book icon */}
+            <div className="w-28 h-28 mx-auto mb-6 relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-100 to-amber-100 dark:from-primary-900/30 dark:to-amber-900/30 rounded-3xl rotate-6 scale-95" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-amber-50 dark:from-primary-900/20 dark:to-amber-900/20 rounded-3xl flex items-center justify-center shadow-sm">
+                <svg className="w-12 h-12 text-primary-400 dark:text-primary-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  <line x1="9" y1="7" x2="16" y2="7" />
+                  <line x1="9" y1="11" x2="14" y2="11" />
+                </svg>
+              </div>
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-2">
+            <h3 className="font-bold text-gray-900 dark:text-white text-2xl mb-2">
               Your library is empty
             </h3>
-            <p className="text-sm text-gray-500 max-w-md mx-auto mb-8">
+            <p className="text-sm text-gray-500 max-w-md mx-auto mb-8 leading-relaxed">
               Upload an EPUB or PDF above, or try a sample book to explore all features
               including AI chat, highlights, and annotations.
             </p>
@@ -144,7 +148,7 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
       {/* Books Grid / List */}
       {hasBooks && (
         <>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between animate-slide-up">
             <p className="text-sm text-gray-500">
               {books.length} book{books.length !== 1 ? 's' : ''} in your library
             </p>

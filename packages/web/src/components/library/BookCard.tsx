@@ -38,9 +38,9 @@ export function BookCard({
 
   return (
     <Link href={`/read/${id}`} className="group">
-      <div className="group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 h-full flex flex-col rounded-2xl bg-surface-0 border border-gray-100 dark:border-gray-800 p-3 hover:ring-1 hover:ring-primary-300/50">
+      <div className="group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 h-full flex flex-col rounded-2xl bg-surface-0 border border-gray-100 dark:border-gray-800 p-3 shadow-xs hover:ring-1 hover:ring-primary-300/50">
         {/* Cover */}
-        <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-primary-400/30 to-primary-600/70">
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-primary-400/30 to-primary-600/70">
           {coverUrl ? (
             <img
               src={coverUrl}
@@ -55,22 +55,34 @@ export function BookCard({
 
           {/* Status dot */}
           <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900" style={{ backgroundColor: cfg.dot }} />
+
+          {/* Reading progress overlay bar at bottom of cover */}
+          {status !== 'unread' && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/10">
+              <div
+                className={`h-full transition-all duration-500 ease-out ${
+                  status === 'completed' ? 'bg-emerald-400' : 'bg-amber-400'
+                }`}
+                style={{ width: `${Math.min(100, progress)}%` }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Title & Author */}
         <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2 leading-snug mb-1 group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">
           {title}
         </h3>
-        <p className="text-xs text-gray-500 mb-3">{author}</p>
+        <p className="text-xs text-gray-500 mb-2">{author}</p>
 
         {/* Status Badge */}
-        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase ${cfg.ring}`}>
+        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase w-fit ${cfg.ring}`}>
           {cfg.label}
         </span>
 
-        {/* Progress */}
+        {/* Progress details */}
         {status !== 'unread' && (
-          <div className="mt-auto pt-4">
+          <div className="mt-auto pt-3">
             <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ease-out ${
@@ -79,9 +91,14 @@ export function BookCard({
                 style={{ width: `${Math.min(100, progress)}%` }}
               />
             </div>
-            <p className="text-[10px] text-gray-400 mt-1.5 tabular-nums">
-              {currentPage} / {totalPages} pages
-            </p>
+            <div className="flex items-center justify-between mt-1.5">
+              <p className="text-[10px] text-gray-400 tabular-nums">
+                {currentPage} / {totalPages} pages
+              </p>
+              <p className="text-[10px] text-primary-500 font-semibold tabular-nums">
+                {progress}%
+              </p>
+            </div>
           </div>
         )}
 

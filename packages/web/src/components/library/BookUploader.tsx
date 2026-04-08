@@ -86,12 +86,12 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       onDrop={handleDrop}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
-      className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
+      className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 overflow-hidden ${
         uploading
           ? 'border-gray-300 dark:border-gray-600 opacity-50'
           : dragOver
-            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-            : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500'
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-[1.01]'
+            : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
       }`}
     >
       <input
@@ -103,7 +103,18 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
         className="hidden"
       />
 
-      <div className="text-5xl mb-3">{'\uD83D\uDCDA'}</div>
+      {/* Animated dashed border shimmer */}
+      {!uploading && !dragOver && (
+        <div className="absolute inset-0 rounded-2xl pointer-events-none animate-border-shimmer opacity-30" />
+      )}
+
+      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-100 to-amber-100 dark:from-primary-900/30 dark:to-amber-900/30 flex items-center justify-center">
+        <svg className="w-7 h-7 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+      </div>
       <h3 className="text-lg font-semibold mb-1">
         {uploading ? 'Uploading...' : 'Click or drag your book here to upload'}
       </h3>
@@ -121,7 +132,7 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       )}
 
       {error && (
-        <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded text-sm">
+        <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-lg text-sm">
           {error}
         </div>
       )}
