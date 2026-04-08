@@ -7,6 +7,12 @@ const AGENTS = [
     desc: 'Explains difficult concepts in context. Answers questions about what you\'re reading right now.',
     color: 'bg-sage',
     tagBg: 'bg-sage/10 text-sage',
+    tag: 'Real-time help',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+      </svg>
+    ),
   },
   {
     name: 'Research',
@@ -14,6 +20,12 @@ const AGENTS = [
     desc: 'Deep-dives into topics. Provides historical context, cross-references, and fact-checking.',
     color: 'bg-navy-500',
     tagBg: 'bg-navy-100 dark:bg-navy-800/40 text-navy-700 dark:text-navy-300',
+    tag: 'Deep analysis',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+    ),
   },
   {
     name: 'Coach',
@@ -21,6 +33,12 @@ const AGENTS = [
     desc: 'Improves your reading skills with exercises, vocabulary building, and spaced repetition.',
     color: 'bg-forest',
     tagBg: 'bg-forest/10 text-forest',
+    tag: 'Skill building',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+      </svg>
+    ),
   },
   {
     name: 'Synthesis',
@@ -28,6 +46,12 @@ const AGENTS = [
     desc: 'Connects ideas across all your books. Builds knowledge graphs and finds hidden relationships.',
     color: 'bg-russet',
     tagBg: 'bg-russet/10 text-russet',
+    tag: 'Cross-book insights',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+      </svg>
+    ),
   },
 ];
 
@@ -39,32 +63,61 @@ const FRIENDS = [
   { name: 'Sam', emoji: '\uD83D\uDCDA', desc: 'Study buddy. Practical & focused.', accent: 'border-l-forest' },
 ];
 
-const REVIEWS = [
-  { quote: 'read-pal helped me understand Thinking, Fast and Slow in a way no other tool could. The AI companion asks questions I never thought to ask.', reader: 'Sarah K., Product Manager' },
-  { quote: 'The knowledge graph is incredible. I can see how concepts from different books connect. It\'s like having a personal research assistant.', reader: 'David M., PhD Student' },
-  { quote: 'My reading streak is now 45 days! The Coach Agent keeps me motivated and the Reading Friend makes it feel less lonely.', reader: 'Emma L., Software Engineer' },
+const STEPS = [
+  {
+    number: '01',
+    title: 'Upload a book',
+    desc: 'Add any EPUB to your library. Your AI companion gets to know the content instantly.',
+    icon: (
+      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+      </svg>
+    ),
+  },
+  {
+    number: '02',
+    title: 'Read with AI agents',
+    desc: 'Four specialized agents help you understand, research, practice, and connect ideas.',
+    icon: (
+      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+      </svg>
+    ),
+  },
+  {
+    number: '03',
+    title: 'Build lasting knowledge',
+    desc: 'Knowledge graphs and memory grow with every page, creating a permanent learning archive.',
+    icon: (
+      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+      </svg>
+    ),
+  },
 ];
 
 export default function HomePage() {
   return (
     <div className="min-h-[80vh]">
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        {/* Background decoration */}
+      <section className="relative overflow-hidden noise-overlay">
+        {/* Animated gradient orbs */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-100/40 dark:bg-primary-900/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent-100/30 dark:bg-accent-900/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
+          <div className="hero-orb hero-orb-1" />
+          <div className="hero-orb hero-orb-2" />
+          <div className="hero-orb hero-orb-3" />
         </div>
 
-        <div className="max-w-5xl mx-auto px-4 pt-24 pb-20 text-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 pt-28 pb-24 text-center">
+          {/* Animated gradient badge */}
           <div className="animate-fade-in">
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-sm font-medium rounded-full border border-amber-200/50 dark:border-amber-800/50">
-              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+            <span className="badge-gradient inline-flex items-center gap-2 px-5 py-2 text-white text-sm font-semibold rounded-full shadow-glow">
+              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
               AI-Powered Reading Companion
             </span>
           </div>
 
-          <h1 className="mt-8 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-navy-700 dark:text-white leading-[0.95] animate-slide-up font-display">
+          <h1 className="mt-10 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-navy-700 dark:text-white leading-[0.95] animate-slide-up font-display">
             Read Smarter.
             <br />
             <span className="text-gradient">Remember More.</span>
@@ -80,7 +133,7 @@ export default function HomePage() {
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up-delayed">
             <Link
               href="/register"
-              className="btn btn-primary px-8 py-4 text-base rounded-2xl shadow-glow-amber"
+              className="btn btn-primary btn-glow px-8 py-4 text-base rounded-2xl shadow-glow-amber"
             >
               Start Reading Free
               <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -93,6 +146,33 @@ export default function HomePage() {
             >
               Sign In
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="bg-surface-1 py-20">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
+              How It Works
+            </h2>
+            <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">
+              Three steps to transform how you read and retain knowledge.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {STEPS.map((step) => (
+              <div key={step.number} className="step-connector text-center group">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-500/10 dark:bg-primary-500/20 text-primary-500 mb-5 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
+                  {step.icon}
+                </div>
+                <div className="text-xs font-mono font-bold text-primary-500 tracking-wider mb-2">{step.number}</div>
+                <h3 className="text-lg font-bold text-navy-700 dark:text-white mb-2">{step.title}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -114,15 +194,15 @@ export default function HomePage() {
               key={agent.name}
               className={`card-hover stagger-${i + 1} animate-slide-up group`}
             >
-              <div className={`w-12 h-12 rounded-xl ${agent.color} flex items-center justify-center text-white text-xl mb-5 shadow-soft`}>
-                {agent.emoji}
+              <div className={`feature-icon ${agent.color} text-white`}>
+                {agent.icon}
               </div>
-              <h3 className="text-lg font-bold text-navy-700 dark:text-white mb-2">{agent.name} Agent</h3>
+              <h3 className="text-lg font-bold text-navy-700 dark:text-white mb-2 mt-5">{agent.name} Agent</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
                 {agent.desc}
               </p>
               <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${agent.tagBg}`}>
-                {agent.name === 'Companion' ? 'Real-time help' : agent.name === 'Research' ? 'Deep analysis' : agent.name === 'Coach' ? 'Skill building' : 'Cross-book insights'}
+                {agent.tag}
               </span>
             </div>
           ))}
@@ -206,49 +286,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="bg-surface-1 py-20">
-        <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-navy-700 dark:text-white text-center mb-12 tracking-tight font-display">
-            What Readers Are Saying
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {REVIEWS.map((review, i) => (
-              <div key={i} className={`card stagger-${i + 1} animate-slide-up`}>
-                <div className="flex gap-0.5 mb-4">
-                  {[1,2,3,4,5].map((s) => (
-                    <svg key={s} className="w-4 h-4 text-accent-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed mb-4">
-                  &ldquo;{review.quote}&rdquo;
-                </p>
-                <p className="text-xs text-gray-500 font-medium">{review.reader}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-14 text-center">
-            <p className="text-sm text-gray-400">Join our growing community of readers</p>
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="max-w-3xl mx-auto px-4 py-24 text-center">
-        <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight mb-5 font-display">
-          Ready to Transform Your Reading?
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 text-lg mb-10">
-          Join thousands of readers who are building knowledge, not just checking off books.
-        </p>
-        <Link href="/register" className="btn btn-primary px-10 py-4 text-base rounded-2xl shadow-glow-amber">
-          Get Started Free
-        </Link>
-        <p className="text-sm text-gray-400 mt-5">No credit card required. Free forever plan available.</p>
+      <section className="relative overflow-hidden bg-gradient-to-br from-navy-700 via-navy-800 to-navy-900 dark:from-navy-900 dark:via-gray-950 dark:to-navy-900 py-24 noise-overlay">
+        <div className="hero-orb hero-orb-1 opacity-30" />
+        <div className="relative z-10 max-w-3xl mx-auto px-4 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-5 font-display">
+            Ready to Transform Your Reading?
+          </h2>
+          <p className="text-gray-300 text-lg mb-10">
+            Start building real knowledge, not just checking off books.
+          </p>
+          <Link href="/register" className="btn btn-primary btn-glow px-10 py-4 text-base rounded-2xl shadow-glow-amber">
+            Get Started Free
+          </Link>
+          <p className="text-sm text-gray-400 mt-5">No credit card required. Free forever plan available.</p>
+        </div>
       </section>
     </div>
   );
