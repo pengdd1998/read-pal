@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import DOMPurify from 'dompurify';
 import { api } from '@/lib/api';
 import { wsClient } from '@/lib/websocket';
@@ -10,6 +10,10 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+}
+
+export interface CompanionChatHandle {
+  openWithMessage: (message: string) => void;
 }
 
 interface CompanionChatProps {
@@ -50,7 +54,7 @@ function renderSimpleMarkdown(text: string): string {
   return html;
 }
 
-export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent }: CompanionChatProps) {
+export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent }, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -60,6 +64,40 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const pendingMessageRef = useRef<string | null>(null);
+
+  // Expose imperative handle so parent can open chat with a pre-filled message
+  useImperativeHandle(ref, () => ({
+    openWithMessage: (message: string) => {
+      pendingMessageRef.current = message;
+      setIsOpen(true);
+    },
+  }), []);
+
+  // Auto-send pending message after chat opens
+  useEffect(() => {
+    if (isOpen && pendingMessageRef.current && !loading) {
+      const msg = pendingMessageRef.current;
+      pendingMessageRef.current = null;
+      setInput(msg);
+      // Use setTimeout to ensure input state is set before sending
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { id: uid(), role: 'user', content: msg, timestamp: Date.now() }]);
+        setLoading(true);
+        api.post<{ content: string; agentsUsed: string[] }>('/api/agents/chat', {
+          message: msg,
+          context: { bookId, currentPage, totalPages: totalPages ?? 0, bookTitle: bookTitle ?? '', author: author ?? '', chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '' },
+        }).then((result) => {
+          const raw = result as unknown as { success: boolean; content?: string };
+          const assistantContent = raw.content ?? (result.data as { content?: string })?.content;
+          setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: assistantContent || 'Sorry, I encountered an error. Please try again.', timestamp: Date.now() }]);
+        }).catch(() => {
+          setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: 'Failed to connect to the AI companion. Please check your connection.', timestamp: Date.now() }]);
+        }).finally(() => setLoading(false));
+      }, 100);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Fetch friend persona from settings
   useEffect(() => {
@@ -290,4 +328,4 @@ export function CompanionChat({ bookId, currentPage, totalPages, bookTitle, auth
       )}
     </>
   );
-}
+});
