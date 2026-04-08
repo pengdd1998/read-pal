@@ -243,7 +243,9 @@ export default function HomePage() {
             <div className="card bg-gradient-to-br from-amber-50/50 to-primary-100/30 dark:from-amber-950/30 dark:to-primary-950/20 text-center py-16 shadow-soft">
               <div className="text-7xl mb-4 animate-float">{'\uD83D\uDD78'}</div>
               <div className="text-lg font-bold text-navy-700 dark:text-white">Knowledge Graph</div>
-              <div className="text-sm text-gray-500 mt-2">156 concepts, 89 connections, 23 themes</div>
+              <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto leading-relaxed">
+                Your reading builds a personal knowledge network&nbsp;&mdash; connections grow as you read more.
+              </p>
               <div className="mt-6 flex justify-center gap-6 text-xs text-gray-400">
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-sage" />
