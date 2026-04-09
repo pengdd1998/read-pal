@@ -232,10 +232,12 @@ export function ReaderView({
 
       {/* Bottom navigation bar — toggles with controls */}
       <footer
-        className={`shrink-0 border-t transition-all duration-300 ease-out ${
+        className={`border-t transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-[#faf6f0]/95' : 'border-gray-200/60 bg-white/95'
         } backdrop-blur-sm ${
-          showControls ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+          showControls
+            ? 'translate-y-0 opacity-100 shrink-0'
+            : 'translate-y-full opacity-0 pointer-events-none absolute bottom-0 left-0 right-0'
         }`}
         onClick={(e) => e.stopPropagation()}
       >

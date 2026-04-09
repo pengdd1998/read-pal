@@ -84,6 +84,33 @@ export default function ReadPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // --- Auto-hide controls after 3s of inactivity ---
+  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetAutoHideTimer = useCallback(() => {
+    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+    autoHideTimerRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  }, []);
+
+  // Start the auto-hide timer on mount
+  useEffect(() => {
+    resetAutoHideTimer();
+    return () => {
+      if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+    };
+  }, [resetAutoHideTimer]);
+
+  // Reset timer on scroll (reading activity)
+  useEffect(() => {
+    const handleScroll = () => {
+      if (showControls) resetAutoHideTimer();
+    };
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [showControls, resetAutoHideTimer]);
+
   const contentRef = useRef<HTMLElement | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -426,7 +453,7 @@ export default function ReadPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col relative">
       {/* Dynamic AI-generated reading background */}
       <ReadingBackground
         content={chapterContent}
@@ -435,10 +462,9 @@ export default function ReadPage() {
 
       {/* Top bar — slides in/out with controls - warm bookish design */}
       <div
-        className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${headerBgClasses[theme]} transition-all duration-300 ease-out ${
-          showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+        className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${headerBgClasses[theme]} transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+          showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none absolute'
         }`}
-        style={{ height: showControls ? undefined : 0, overflow: 'hidden' }}
       >
         <div className="flex items-center gap-2 min-w-0">
           {/* Back arrow - only navigation button */}
@@ -709,7 +735,12 @@ export default function ReadPage() {
             fontSize={fontSize}
             theme={theme}
             showControls={showControls}
-            onToggleControls={() => setShowControls((v) => !v)}
+            onToggleControls={() => {
+              setShowControls((v) => {
+                if (!v) resetAutoHideTimer();
+                return !v;
+              });
+            }}
           />
         </div>
       </div>
