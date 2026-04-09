@@ -135,7 +135,29 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         if (!cancelled && result.success && result.data) {
           const raw = result.data as unknown as Message[];
           if (Array.isArray(raw) && raw.length > 0) {
-            setMessages(raw.map((m) => ({ id: m.id || uid(), role: m.role, content: m.content, timestamp: m.timestamp || Date.now() })));
+            const history = raw.map((m) => ({ id: m.id || uid(), role: m.role, content: m.content, timestamp: m.timestamp || Date.now() }));
+            setMessages(history);
+
+            // Add a contextual greeting after loading history
+            const lastMsg = history[history.length - 1];
+            const isReturning = lastMsg && (Date.now() - lastMsg.timestamp > 30 * 60 * 1000); // 30 min gap
+            if (isReturning && lastMsg.role === 'user') {
+              const greetings = [
+                "Welcome back! Ready to pick up where we left off?",
+                "Hey! Good to see you again. Let's continue.",
+                "You're back! I was thinking about our last discussion...",
+              ];
+              setTimeout(() => {
+                if (!cancelled) {
+                  setMessages((prev) => [...prev, {
+                    id: uid(),
+                    role: 'assistant' as const,
+                    content: greetings[Math.floor(Math.random() * greetings.length)],
+                    timestamp: Date.now(),
+                  }]);
+                }
+              }, 800);
+            }
           }
         }
       } catch {} finally { if (!cancelled) setHistoryLoaded(true); }
@@ -252,12 +274,17 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && !loading ? (
                 <div className="text-center text-amber-700/60 dark:text-amber-300/50 py-10">
-                  <div className="text-3xl mb-3">{'\uD83D\uDCD6'}</div>
-                  <p className="text-sm mb-4">Let&apos;s explore this book together!</p>
+                  <div className="text-3xl mb-3">{friendEmoji}</div>
+                  <p className="text-sm mb-1 font-medium text-amber-800 dark:text-amber-200">
+                    {bookTitle ? `${friendName} on "${bookTitle}"` : `Chat with ${friendName}`}
+                  </p>
+                  <p className="text-xs text-amber-600/60 dark:text-amber-400/40 mb-4">
+                    Ask anything about what you&apos;re reading
+                  </p>
                   <div className="text-left space-y-2 max-w-xs mx-auto">
                     {[
-                      "What's the author really saying here?",
-                      'Help me connect this to the bigger picture',
+                      "What's the main idea of this chapter?",
+                      'Help me understand this passage better',
                       'What should I pay attention to next?',
                     ].map((q) => (
                       <button
