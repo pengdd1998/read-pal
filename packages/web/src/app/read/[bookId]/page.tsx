@@ -613,6 +613,11 @@ export default function ReadPage() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onDeleteAnnotation={handleDeleteAnnotation}
+        onUpdateAnnotation={(updated) => {
+          setAnnotations((prev) =>
+            prev.map((a) => (a.id === updated.id ? updated : a)),
+          );
+        }}
         onScrollToAnnotation={handleScrollToAnnotation}
       />
 

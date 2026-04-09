@@ -9,6 +9,7 @@ interface AnnotationsSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onDeleteAnnotation: (id: string) => void;
+  onUpdateAnnotation: (updated: Annotation) => void;
   onScrollToAnnotation: (annotation: Annotation) => void;
 }
 
@@ -26,6 +27,7 @@ export function AnnotationsSidebar({
   isOpen,
   onClose,
   onDeleteAnnotation,
+  onUpdateAnnotation,
   onScrollToAnnotation,
 }: AnnotationsSidebarProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -136,6 +138,7 @@ export function AnnotationsSidebar({
                 key={annotation.id}
                 annotation={annotation}
                 onDelete={() => onDeleteAnnotation(annotation.id)}
+                onUpdate={(updated) => onUpdateAnnotation(updated)}
                 onClick={() => onScrollToAnnotation(annotation)}
               />
             ))
