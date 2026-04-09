@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
-import axios from 'axios';
+import { api } from '@/lib/api';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -16,10 +16,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      await axios.post('/api/auth/forgot-password', { email });
+      await api.post('/api/auth/forgot-password', { email });
       setSubmitted(true);
     } catch {
-      // Gracefully handle missing endpoint or any error — still show success
+      // Gracefully handle any error — still show success
       // to avoid leaking whether an email exists in our system
       setSubmitted(true);
     } finally {

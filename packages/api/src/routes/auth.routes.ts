@@ -266,6 +266,27 @@ router.patch('/me', authenticate, async (req: AuthRequest, res) => {
 });
 
 /**
+ * POST /api/auth/forgot-password
+ * Stub — always returns success to prevent email enumeration.
+ * Email sending not yet configured.
+ */
+router.post('/forgot-password', rateLimiter({ windowMs: 60000, max: 5 }), async (req, res) => {
+  const { email } = req.body;
+
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'VALIDATION_ERROR', message: 'Email is required' },
+    });
+  }
+
+  res.json({
+    success: true,
+    data: { message: 'If an account with that email exists, a reset link has been sent.' },
+  });
+});
+
+/**
  * POST /api/auth/logout
  * Logout user (invalidate token)
  */
