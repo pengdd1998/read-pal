@@ -81,6 +81,8 @@ export default function ReadPage() {
   const [fontSize, setFontSize] = useState(18);
   const [hasMadeSelection, setHasMadeSelection] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const contentRef = useRef<HTMLElement | null>(null);
   const sessionIdRef = useRef<string | null>(null);
@@ -529,6 +531,21 @@ export default function ReadPage() {
 
           <div className="w-px h-6 bg-amber-200/50 dark:bg-amber-900/30 mx-1 hidden sm:block" />
 
+          {/* In-book search */}
+          <button
+            onClick={() => setSearchOpen(!searchOpen)}
+            className={`p-2 rounded-lg text-sm transition-colors ${
+              searchOpen
+                ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30'
+            }`}
+            aria-label="Search in book"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
           {/* Background toggle */}
           <button
             onClick={() => setBgEnabled(!bgEnabled)}
@@ -565,6 +582,117 @@ export default function ReadPage() {
           </button>
         </div>
       </div>
+
+      {/* In-book search overlay */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-fade-in" onClick={() => setSearchOpen(false)}>
+          <div
+            className="absolute top-16 left-1/2 -translate-x-1/2 w-full max-w-lg px-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search in this book..."
+                  className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 outline-none"
+                  autoFocus
+                />
+                <span className="text-xs text-gray-400">
+                  {searchQuery.trim().length >= 2
+                    ? `${chapters.filter((ch) => {
+                        const q = searchQuery.toLowerCase();
+                        return (
+                          (ch.title || '').toLowerCase().includes(q) ||
+                          (ch.content || '').toLowerCase().includes(q)
+                        );
+                      }).length} chapters`
+                    : ''}
+                </span>
+                <button
+                  onClick={() => { setSearchQuery(''); setSearchOpen(false); }}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {searchQuery.trim().length >= 2 && (
+                <div className="max-h-64 overflow-y-auto border-t border-gray-100 dark:border-gray-800">
+                  {(() => {
+                    const q = searchQuery.toLowerCase();
+                    const results = chapters
+                      .map((ch, i) => {
+                        const titleMatch = (ch.title || '').toLowerCase().includes(q);
+                        const contentLower = (ch.content || '').toLowerCase();
+                        const contentMatch = contentLower.includes(q);
+                        if (!titleMatch && !contentMatch) return null;
+
+                        // Extract snippet around first match
+                        let snippet = '';
+                        if (contentMatch) {
+                          const idx = contentLower.indexOf(q);
+                          const start = Math.max(0, idx - 40);
+                          const end = Math.min(ch.content!.length, idx + q.length + 40);
+                          snippet = (start > 0 ? '...' : '') +
+                            ch.content!.slice(start, end) +
+                            (end < ch.content!.length ? '...' : '');
+                        }
+
+                        return { index: i, title: ch.title || `Chapter ${i + 1}`, snippet, titleMatch };
+                      })
+                      .filter(Boolean) as { index: number; title: string; snippet: string; titleMatch: boolean }[];
+
+                    return results.length > 0 ? (
+                      results.map((r) => (
+                        <button
+                          key={r.index}
+                          onClick={() => {
+                            setCurrentChapter(r.index);
+                            setSearchOpen(false);
+                            setSearchQuery('');
+                          }}
+                          className={`w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors ${
+                            r.index === currentChapter ? 'bg-amber-50/50 dark:bg-amber-900/5' : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-amber-500 font-mono font-bold">{r.index + 1}</span>
+                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                              {r.title}
+                            </span>
+                            {r.index === currentChapter && (
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full font-medium">
+                                Current
+                              </span>
+                            )}
+                          </div>
+                          {r.snippet && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2 leading-relaxed pl-5">
+                              {r.snippet}
+                            </p>
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-6 text-center text-sm text-gray-400">
+                        No results for &ldquo;{searchQuery}&rdquo;
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main content area - takes remaining space */}
       <div className={`flex-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:mr-[360px]' : ''}`}>
