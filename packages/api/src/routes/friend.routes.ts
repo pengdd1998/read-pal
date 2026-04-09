@@ -11,8 +11,24 @@
 import { Router } from 'express';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import type { ReadingFriendPersona } from '../types';
+import { User } from '../models';
 
 const router: Router = Router();
+
+/**
+ * Sync the friendAgent's in-memory persona with the user's persisted settings.
+ * Called before every friend request to handle server restarts.
+ */
+async function syncPersonaFromSettings(userId: string, friendAgent: any): Promise<void> {
+  try {
+    const user = await User.findByPk(userId, { attributes: ['settings'] });
+    if (user?.settings?.friendPersona) {
+      friendAgent.setPersona(userId, user.settings.friendPersona as ReadingFriendPersona);
+    }
+  } catch {
+    // Non-critical — use in-memory default
+  }
+}
 
 // ============================================================================
 // Request/Response Types
@@ -92,6 +108,8 @@ router.post('/chat', authenticate, async (req: AuthRequest, res) => {
       });
     }
 
+    await syncPersonaFromSettings(req.userId!, friendAgent);
+
     const result = await friendAgent.chat(req.userId!, message, context);
 
     res.json({
@@ -152,6 +170,8 @@ router.post('/react', authenticate, async (req: AuthRequest, res) => {
       });
     }
 
+    await syncPersonaFromSettings(req.userId!, friendAgent);
+
     const result = await friendAgent.react(req.userId!, text, context);
 
     res.json({
@@ -190,6 +210,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     }
 
     const userId = req.userId!;
+    await syncPersonaFromSettings(userId, friendAgent);
     const persona = friendAgent.getUserPersona(userId);
     const personaDetails = friendAgent.getPersonaDefinition(persona);
     const history = friendAgent.getHistory(userId);
@@ -236,6 +257,8 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
         },
       });
     }
+
+    await syncPersonaFromSettings(req.userId!, friendAgent);
 
     if (persona !== undefined) {
       const validPersonas: ReadingFriendPersona[] = ['sage', 'penny', 'alex', 'quinn', 'sam'];
