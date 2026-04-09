@@ -121,58 +121,43 @@ export default function HomePage() {
       </section>
 
 
-      {/* Knowledge Graph */}
+      {/* Reading Experience */}
       <section className="bg-gradient-to-b from-surface-1 to-transparent py-20">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight mb-6 font-display">
-                See How Your Ideas Connect
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-8">
-                As you read, your companion quietly connects the dots &mdash; linking themes,
-                ideas, and aha moments across everything you&apos;ve read.
-              </p>
-              <ul className="space-y-4">
-                {[
-                  'Discover hidden connections between books',
-                  'Watch your ideas grow into a living map',
-                  'See how your understanding evolves over time',
-                  'Find where different authors agree or disagree',
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                    <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-sm font-medium">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight mb-4 font-display">
+              Reading, But Better
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">
+              Highlight a passage and ask &ldquo;why does this matter?&rdquo; Get an instant answer in context.
+              No tabs, no searching, no losing your place.
+            </p>
+          </div>
 
-            <div className="card bg-gradient-to-br from-amber-50/50 to-primary-100/30 dark:from-amber-950/30 dark:to-primary-950/20 text-center py-16 shadow-soft">
-              <div className="text-7xl mb-4 animate-float">{'\uD83D\uDD78'}</div>
-              <div className="text-lg font-bold text-navy-700 dark:text-white">Your Idea Map</div>
-              <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto leading-relaxed">
-                Every page you read adds new connections&nbsp;&mdash; watch your web of knowledge grow.
-              </p>
-              <div className="mt-6 flex justify-center gap-6 text-xs text-gray-400">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-sage" />
-                  Concepts
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  Connections
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-navy-400" />
-                  Themes
-                </span>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: '\uD83D\uDDA5',
+                title: 'Highlight & Ask',
+                desc: 'Select any text and ask your friend about it. Get explanations that make sense in context.',
+              },
+              {
+                icon: '\uD83D\uDCDD',
+                title: 'Notes That Remember',
+                desc: 'Add notes and highlights. Your friend connects them across chapters and books automatically.',
+              },
+              {
+                icon: '\uD83C\uDF1F',
+                title: '"Aha!" Moments',
+                desc: 'Your friend notices when something clicks and celebrates with you. Reading becomes a shared experience.',
+              },
+            ].map((item) => (
+              <div key={item.title} className="card text-center group hover:shadow-lg transition-shadow duration-300">
+                <div className="text-4xl mb-4">{item.icon}</div>
+                <h3 className="font-bold text-navy-700 dark:text-white mb-2">{item.title}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.desc}</p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
