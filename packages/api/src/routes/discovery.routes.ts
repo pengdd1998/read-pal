@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { Book } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { Op } from 'sequelize';
 
 const router: Router = Router();
@@ -15,7 +16,7 @@ const router: Router = Router();
  * GET /api/discovery/search
  * Search user's library by title, author, or status
  */
-router.get('/search', authenticate, async (req: AuthRequest, res) => {
+router.get('/search', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const { q, status, sortBy = 'lastReadAt', order = 'DESC' } = req.query;
 
@@ -64,7 +65,7 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
  * GET /api/discovery/recommendations
  * Get book recommendations based on reading history
  */
-router.get('/recommendations', authenticate, async (req: AuthRequest, res) => {
+router.get('/recommendations', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res) => {
   try {
     // Get user's reading history to find patterns
     const completedBooks = await Book.findAll({
@@ -132,7 +133,7 @@ router.get('/recommendations', authenticate, async (req: AuthRequest, res) => {
  * GET /api/discovery/free-books
  * List free public domain books for import
  */
-router.get('/free-books', authenticate, async (req: AuthRequest, res) => {
+router.get('/free-books', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const { query, page = 1 } = req.query;
 
