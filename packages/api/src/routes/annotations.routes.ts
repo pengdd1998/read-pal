@@ -277,4 +277,84 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * GET /api/annotations/export
+ * Export annotations for a book as Markdown or JSON
+ */
+router.get('/export', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { bookId, format } = req.query;
+
+    if (!bookId || typeof bookId !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'bookId query parameter is required' },
+      });
+    }
+
+    const annotations = await Annotation.findAll({
+      where: { userId: req.userId, bookId },
+      order: [['createdAt', 'ASC']],
+    });
+
+    const fmt = (format as string) || 'markdown';
+
+    if (fmt === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.json"`);
+      return res.json(annotations);
+    }
+
+    // Markdown export
+    const lines: string[] = [`# Annotations`, ``, `_Exported ${new Date().toLocaleDateString()}_`, ``];
+
+    const highlights = annotations.filter((a) => a.type === 'highlight');
+    const notes = annotations.filter((a) => a.type === 'note');
+    const bookmarks = annotations.filter((a) => a.type === 'bookmark');
+
+    if (highlights.length > 0) {
+      lines.push(`## Highlights (${highlights.length})`, ``);
+      for (const h of highlights) {
+        lines.push(`> ${h.content.replace(/\n/g, '\n> ')}`);
+        if (h.note) lines.push(``, `**Note:** ${h.note}`);
+        if (h.color) lines.push(``, `_Color: ${h.color}_`);
+        lines.push(``);
+      }
+    }
+
+    if (notes.length > 0) {
+      lines.push(`## Notes (${notes.length})`, ``);
+      for (const n of notes) {
+        lines.push(`### ${n.content.slice(0, 60)}${n.content.length > 60 ? '...' : ''}`);
+        if (n.note) lines.push(``, n.note);
+        lines.push(``);
+      }
+    }
+
+    if (bookmarks.length > 0) {
+      lines.push(`## Bookmarks (${bookmarks.length})`, ``);
+      for (const b of bookmarks) {
+        const loc = b.location?.pageNumber ? ` (p. ${b.location.pageNumber})` : '';
+        lines.push(`- ${b.content}${loc}`);
+      }
+      lines.push(``);
+    }
+
+    if (annotations.length === 0) {
+      lines.push(`_No annotations yet._`);
+    }
+
+    const md = lines.join('\n');
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.md"`);
+    res.send(md);
+  } catch (error) {
+    console.error('Error exporting annotations:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'EXPORT_ERROR', message: 'Failed to export annotations' },
+    });
+  }
+});
+
 export default router;

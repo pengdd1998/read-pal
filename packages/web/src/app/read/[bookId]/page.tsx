@@ -769,6 +769,7 @@ export default function ReadPage() {
       {/* Annotations sidebar */}
       <AnnotationsSidebar
         annotations={annotations}
+        bookId={bookId}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onDeleteAnnotation={handleDeleteAnnotation}
