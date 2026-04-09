@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
 import { AgentOrchestrator } from '../agents/orchestrator/AgentOrchestrator';
 import { WebSocketManager } from '../services/WebSocketManager';
+import { ChatMessage } from '../models/ChatMessage';
 import type { StreamClient } from '../services/WebSocketManager';
 import type { OrchestratorResponse } from '../agents/orchestrator/AgentOrchestrator';
 import type { IAgent } from '../types';
@@ -123,6 +124,15 @@ router.post(
       }
     }
 
+    // Save chat history (non-blocking)
+    const bookId = context?.bookId as string | undefined;
+    if (bookId) {
+      ChatMessage.bulkCreate([
+        { userId: req.user!.id, bookId, role: 'user', content: message },
+        { userId: req.user!.id, bookId, role: 'assistant', content: response.content || '' },
+      ]).catch((err) => console.warn('Failed to save chat history:', (err as Error).message));
+    }
+
     return res.status(response.success ? 200 : 500).json({
       success: response.success,
       content: response.content,
@@ -143,6 +153,49 @@ router.post(
     });
   }
 });
+
+/**
+ * @route   GET /api/agents/history
+ * @desc    Get chat history for a book
+ * @access  Private
+ */
+router.get(
+  '/history',
+  authenticate,
+  validate([
+    query('bookId').isUUID().withMessage('bookId is required'),
+    query('limit').optional().isInt({ min: 1, max: 200 }).toInt(),
+  ]),
+  async (req: AuthRequest, res) => {
+    try {
+      const bookId = req.query.bookId as string;
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 200);
+
+      const messages = await ChatMessage.findAll({
+        where: { userId: req.user!.id, bookId },
+        order: [['createdAt', 'ASC']],
+        limit: Math.min(limit, 200),
+        attributes: ['id', 'role', 'content', 'createdAt'],
+      });
+
+      return res.json({
+        success: true,
+        data: messages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.createdAt).getTime(),
+        })),
+      });
+    } catch (error) {
+      console.error('Chat history error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'HISTORY_ERROR', message: 'Failed to load chat history' },
+      });
+    }
+  },
+);
 
 /**
  * @route   POST /api/agents/explain
