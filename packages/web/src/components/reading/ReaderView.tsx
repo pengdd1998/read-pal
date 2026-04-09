@@ -179,7 +179,7 @@ export function ReaderView({
 
   return (
     <div
-      className={`flex flex-col h-full overflow-hidden ${themeClasses[theme]} transition-colors duration-200`}
+      className={`relative flex flex-col h-full overflow-hidden ${themeClasses[theme]} transition-colors duration-200`}
       onClick={(e) => {
         const target = e.target as HTMLElement;
         if (target.closest('button, a, [data-selection-toolbar], footer')) return;

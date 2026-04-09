@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { ReaderView } from '@/components/reading/ReaderView';
 import { SelectionToolbar } from '@/components/reading/SelectionToolbar';
 import { AnnotationsSidebar } from '@/components/reading/AnnotationsSidebar';
@@ -67,6 +67,7 @@ function computeOffsets(
 
 export default function ReadPage() {
   const params = useParams();
+  const router = useRouter();
   const bookId = params.bookId as string;
 
   const [book, setBook] = useState<Book | null>(null);
@@ -83,6 +84,8 @@ export default function ReadPage() {
   const [showControls, setShowControls] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sessionSummary, setSessionSummary] = useState<{ duration: number; chaptersRead: number } | null>(null);
+  const sessionStartRef = useRef<number>(Date.now());
 
   // --- Auto-hide controls after 3s of inactivity ---
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -467,16 +470,23 @@ export default function ReadPage() {
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {/* Back arrow - only navigation button */}
-          <a
-            href="/library"
+          {/* Back arrow - shows session summary before leaving */}
+          <button
+            onClick={() => {
+              const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000);
+              if (elapsed > 30) {
+                setSessionSummary({ duration: elapsed, chaptersRead: currentChapter + 1 });
+              } else {
+                router.push('/library');
+              }
+            }}
             className="flex items-center justify-center w-10 h-10 -ml-1 rounded-xl text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors"
             aria-label="Back to library"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-          </a>
+          </button>
 
           <div className="min-w-0">
             <h1 className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
@@ -791,6 +801,57 @@ export default function ReadPage() {
         author={book?.author || ''}
         chapterContent={chapterContent}
       />
+
+      {/* Session summary modal */}
+      {sessionSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in" onClick={() => setSessionSummary(null)}>
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="text-4xl mb-3">{'\uD83D\uDCD6'}</div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Reading Session</h3>
+              <p className="text-sm text-gray-500 mb-4">Great reading today!</p>
+
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
+                  <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    {Math.floor(sessionSummary.duration / 60)}m {sessionSummary.duration % 60}s
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">Time spent</div>
+                </div>
+                <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
+                  <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                    {sessionSummary.chaptersRead}/{chapters.length}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">Chapters read</div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setSessionSummary(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Keep Reading
+                </button>
+                <button
+                  onClick={() => {
+                    setSessionSummary(null);
+                    router.push('/library');
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                >
+                  Back to Library
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
