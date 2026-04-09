@@ -54,7 +54,11 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
     }
 
     // Verify token
-    const secret = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Server configuration error' } });
+      return;
+    }
     const decoded = jwt.verify(token, secret) as JWTPayload;
 
     // Attach user to request
@@ -125,7 +129,11 @@ export function optionalAuthenticate(req: AuthRequest, res: Response, next: Next
 
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const secret = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+      const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Server configuration error' } });
+      return;
+    }
       const decoded = jwt.verify(token, secret) as JWTPayload;
 
       const userId = decoded.userId || decoded.sub || '';
