@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
 interface BookCardProps {
@@ -36,6 +37,7 @@ export function BookCard({
   onDelete,
 }: BookCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const router = useRouter();
   const cfg = STATUS_CONFIG[status];
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -76,6 +78,17 @@ export function BookCard({
 
           {/* Status dot */}
           <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900" style={{ backgroundColor: cfg.dot }} />
+
+          {/* Info button - links to detail page */}
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/book/${id}`); }}
+            className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50 transition-all duration-200"
+            title="Book details"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
 
           {/* Delete button - shows on hover */}
           <button
