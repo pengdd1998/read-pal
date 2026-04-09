@@ -58,38 +58,107 @@ export default function KnowledgePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'graph' | 'list' | 'themes'>('graph');
+  const [viewMode, setViewMode] = useState<'graph' | 'list' | 'themes'>('list');
 
   useEffect(() => {
     let cancelled = false;
 
+    // Load annotations as the data source for knowledge visualization
     Promise.all([
-      api.get<GraphData>('/api/knowledge/graph'),
-      api.get<{ themes: CrossBookTheme[] }>('/api/knowledge/themes'),
+      api.get<any[]>('/api/annotations', { limit: 100 }),
+      api.get<any[]>('/api/books'),
     ])
-      .then(([graphRes, themesRes]) => {
+      .then(([annotationsRes, booksRes]) => {
         if (cancelled) return;
 
-        const gd = graphRes.data as unknown as GraphData | undefined;
-        if (gd) {
-          const positioned = gd.nodes.map((node, i) => {
-            const pos = 'x' in node && typeof node.x === 'number'
-              ? { x: node.x, y: node.y }
-              : getNodePosition(i, gd.nodes.length);
-            return { ...node, ...pos };
-          });
-          setNodes(positioned);
-          setEdges(gd.edges ?? []);
+        const annotations = (annotationsRes.data as unknown as any[]) || [];
+        const books = (booksRes.data as unknown as any[]) || [];
+
+        if (annotations.length === 0) {
+          setLoading(false);
+          return;
         }
 
-        const td = themesRes.data as unknown as { themes: CrossBookTheme[] } | CrossBookTheme[] | undefined;
-        if (td) {
-          const themeArray = Array.isArray(td) ? td : (td as { themes: CrossBookTheme[] }).themes ?? [];
-          setThemes(themeArray);
+        // Build book lookup
+        const bookMap = new Map(books.map((b: any) => [b.id, b.title || 'Untitled']));
+
+        // Group annotations by book
+        const bookGroups = new Map<string, { title: string; count: number; types: Set<string> }>();
+        for (const a of annotations) {
+          const bookId = a.bookId || a.book_id;
+          const existing = bookGroups.get(bookId) || { title: bookMap.get(bookId) || 'Unknown', count: 0, types: new Set() };
+          existing.count++;
+          existing.types.add(a.type);
+          bookGroups.set(bookId, existing);
         }
+
+        // Build graph nodes from books
+        const graphNodes: GraphNode[] = [];
+        const graphEdges: GraphEdge[] = [];
+        let idx = 0;
+
+        for (const [bookId, group] of bookGroups) {
+          graphNodes.push({
+            id: bookId,
+            label: group.title,
+            type: 'book',
+            ...getNodePosition(idx, bookGroups.size),
+          });
+          idx++;
+        }
+
+        // Extract color-based themes from highlights
+        const colorGroups = new Map<string, { books: Set<string>; count: number }>();
+        for (const a of annotations) {
+          if (a.color) {
+            const existing = colorGroups.get(a.color) || { books: new Set(), count: 0 };
+            existing.books.add(a.bookId || a.book_id);
+            existing.count++;
+            colorGroups.set(a.color, existing);
+          }
+        }
+
+        // Add theme nodes for colors shared across books
+        const crossBookThemes: CrossBookTheme[] = [];
+        const colorNames: Record<string, string> = {
+          '#FFEB3B': 'Important Ideas',
+          '#FF9800': 'Questions & Wonders',
+          '#4CAF50': 'Key Insights',
+          '#2196F3': 'Connections',
+          '#9C27B0': 'Creative Thoughts',
+          '#F44336': 'Critical Points',
+        };
+
+        for (const [color, group] of colorGroups) {
+          if (group.books.size > 1) {
+            const themeName = colorNames[color] || `Theme (${color})`;
+            graphNodes.push({
+              id: `theme-${color}`,
+              label: themeName,
+              type: 'theme',
+              ...getNodePosition(idx, bookGroups.size + colorGroups.size),
+            });
+            idx++;
+
+            for (const bookId of group.books) {
+              graphEdges.push({ source: `theme-${color}`, target: bookId, type: 'shared highlight' });
+            }
+
+            crossBookThemes.push({
+              theme: themeName,
+              books: Array.from(group.books).map((id) => bookMap.get(id) || 'Unknown'),
+              connections: group.count,
+              strength: Math.min(1, group.count / 10),
+            });
+          }
+        }
+
+        setNodes(graphNodes);
+        setEdges(graphEdges);
+        setThemes(crossBookThemes);
       })
       .catch(() => {
-        if (!cancelled) setError('Failed to load knowledge graph. Please try again later.');
+        if (!cancelled) setError('Failed to load knowledge data. Please try again later.');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -132,17 +201,6 @@ export default function KnowledgePage() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Coming Soon Banner — always shown */}
-      <div className="mb-8 p-5 rounded-xl bg-gradient-to-r from-amber-50 to-teal-50 dark:from-amber-950/40 dark:to-teal-950/30 border border-amber-200/60 dark:border-amber-800/30">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-xl">{'\u2728'}</span>
-          <span className="text-sm font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wide">Coming Soon</span>
-        </div>
-        <p className="text-sm text-[#5c5c5c] dark:text-gray-300 leading-relaxed">
-          The Knowledge Graph is a core part of read-pal&apos;s future. As you read, concepts, themes, and cross-book connections will be automatically discovered and woven into a personal knowledge network you can explore visually.
-        </p>
       </div>
 
       {error && (
