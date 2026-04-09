@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 interface BookCardProps {
   id: string;
@@ -12,6 +14,7 @@ interface BookCardProps {
   currentPage: number;
   totalPages: number;
   lastReadAt?: Date | string;
+  onDelete?: (id: string) => void;
 }
 
 const STATUS_CONFIG = {
@@ -30,8 +33,26 @@ export function BookCard({
   currentPage,
   totalPages,
   lastReadAt,
+  onDelete,
 }: BookCardProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const cfg = STATUS_CONFIG[status];
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 3000);
+      return;
+    }
+    try {
+      await api.delete(`/api/books/${id}`);
+      onDelete?.(id);
+    } catch {
+      setConfirmDelete(false);
+    }
+  };
   const formattedDate = lastReadAt
     ? new Date(lastReadAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     : null;
@@ -55,6 +76,21 @@ export function BookCard({
 
           {/* Status dot */}
           <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900" style={{ backgroundColor: cfg.dot }} />
+
+          {/* Delete button - shows on hover */}
+          <button
+            onClick={handleDelete}
+            className={`absolute top-2 left-2.5 p-1.5 rounded-lg transition-all duration-200 ${
+              confirmDelete
+                ? 'bg-red-500 text-white opacity-100'
+                : 'bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-red-500'
+            }`}
+            title={confirmDelete ? 'Click again to confirm' : 'Delete book'}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
 
           {/* Reading progress overlay bar at bottom of cover */}
           {status !== 'unread' && (

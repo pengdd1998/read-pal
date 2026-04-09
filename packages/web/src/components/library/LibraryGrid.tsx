@@ -51,6 +51,10 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
     setBooks((prev) => [newBook, ...prev]);
   };
 
+  const handleDeleteBook = (id: string) => {
+    setBooks((prev) => prev.filter((b) => b.id !== id));
+  };
+
   const handleSeedSample = async () => {
     try {
       setSeeding(true);
@@ -255,6 +259,7 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
                     currentPage={book.currentPage || 0}
                     totalPages={book.totalPages || 0}
                     lastReadAt={book.lastReadAt}
+                    onDelete={handleDeleteBook}
                   />
                 </div>
               ))}
