@@ -469,7 +469,12 @@ export default function DashboardPage() {
 
         {/* Agent Insights */}
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Getting Started Tips</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Getting Started Tips</h2>
+            <Link href="/friend" className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
+              Meet your Reading Friend &rarr;
+            </Link>
+          </div>
           <div className="space-y-3">
             {agentInsights.map((insight, i) => (
               <div key={i} className={`card stagger-${i + 1} animate-slide-up transition-transform duration-200 hover:scale-[1.02] hover:shadow-soft border-l-4 ${TIP_BORDER_COLORS[insight.agent] ?? 'border-l-gray-400'}`}>
