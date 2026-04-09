@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+.pnpm-store/
 .pnp
 .pnp.js
 
@@ -197,6 +198,26 @@ session/
 
 # Cache with potential sensitive data
 .cache/*.cache
-packages/agent-daemon/.env
-packages/agent-daemon/node_modules/
-packages/agent-daemon/dist/
+
+# Agent daemon — stays local, not for public repo
+packages/agent-daemon/
+
+# Agent configs and reports — stays local
+.agents/
+
+# Expo generated files
+.expo/
+
+# Compiled TypeScript output (source is .ts)
+packages/api/src/**/*.js
+packages/api/src/**/*.d.ts
+packages/api/src/**/*.js.map
+packages/web/src/**/*.js
+packages/web/src/**/*.d.ts
+packages/web/src/**/*.js.map
+packages/mobile/src/**/*.js
+packages/mobile/src/**/*.d.ts
+packages/mobile/src/**/*.js.map
+packages/shared/src/**/*.js
+packages/shared/src/**/*.d.ts
+packages/shared/src/**/*.js.map
