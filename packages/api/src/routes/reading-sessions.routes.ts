@@ -164,6 +164,18 @@ router.patch('/:id/heartbeat', authenticate, async (req: AuthRequest, res) => {
       duration: currentDuration,
     });
 
+    // Update book progress in real-time (non-blocking)
+    if (req.body.pagesRead && session.bookId) {
+      Book.update(
+        {
+          currentPage: req.body.pagesRead - 1,
+          lastReadAt: new Date(),
+          status: 'reading',
+        },
+        { where: { id: session.bookId, userId: req.userId } },
+      ).catch(() => {});
+    }
+
     res.json({
       success: true,
       data: { duration: currentDuration, pagesRead: session.pagesRead },
