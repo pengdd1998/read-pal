@@ -85,6 +85,7 @@ export default function ReadPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sessionSummary, setSessionSummary] = useState<{ duration: number; chaptersRead: number } | null>(null);
+  const [showCompletion, setShowCompletion] = useState(false);
   const sessionStartRef = useRef<number>(Date.now());
 
   // --- Auto-hide controls after 3s of inactivity ---
@@ -216,6 +217,15 @@ export default function ReadPage() {
 
   // Render annotation highlights in the content
   useAnnotationHighlights(contentRef, annotations, currentChapter, theme);
+
+  // Detect book completion (reached last chapter)
+  useEffect(() => {
+    if (!loading && chapters.length > 0 && currentChapter === chapters.length - 1) {
+      // Show completion after a brief delay so the last chapter loads first
+      const timer = setTimeout(() => setShowCompletion(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentChapter, chapters.length, loading]);
 
   const loadAnnotations = useCallback(async () => {
     try {
@@ -801,6 +811,42 @@ export default function ReadPage() {
         author={book?.author || ''}
         chapterContent={chapterContent}
       />
+
+      {/* Book completion celebration */}
+      {showCompletion && book && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in" onClick={() => setShowCompletion(false)}>
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-scale-in text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-6xl mb-4">{'\uD83C\uDF89'}</div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Book Complete!</h3>
+            <p className="text-gray-500 mb-5">You finished <strong>{book.title}</strong></p>
+
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
+                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{annotations.filter((a) => a.type === 'highlight').length}</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">Highlights</div>
+              </div>
+              <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
+                <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{annotations.filter((a) => a.type === 'note').length}</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">Notes</div>
+              </div>
+              <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3">
+                <div className="text-xl font-bold text-violet-600 dark:text-violet-400">{chapters.length}</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">Chapters</div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowCompletion(false)}
+              className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+            >
+              Amazing! Keep Exploring
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Session summary modal */}
       {sessionSummary && (
