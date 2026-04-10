@@ -17,6 +17,7 @@ interface BookAttributes {
   currentPage: number;
   progress: number;
   status: 'unread' | 'reading' | 'completed';
+  tags: string[];
   addedAt: Date;
   startedAt?: Date;
   completedAt?: Date;
@@ -24,7 +25,7 @@ interface BookAttributes {
   metadata?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
-}interface BookCreationAttributes extends Optional<BookAttributes, 'id' | 'coverUrl' | 'startedAt' | 'completedAt' | 'lastReadAt' | 'metadata' | 'createdAt' | 'updatedAt'> {}
+}interface BookCreationAttributes extends Optional<BookAttributes, 'id' | 'coverUrl' | 'tags' | 'startedAt' | 'completedAt' | 'lastReadAt' | 'metadata' | 'createdAt' | 'updatedAt'> {}
 
 export class Book extends Model<BookAttributes, BookCreationAttributes> implements BookAttributes {
   public id!: string;
@@ -38,6 +39,7 @@ export class Book extends Model<BookAttributes, BookCreationAttributes> implemen
   public currentPage!: number;
   public progress!: number;
   public status!: 'unread' | 'reading' | 'completed';
+  public tags!: string[];
   public addedAt!: Date;
   public startedAt?: Date;
   public completedAt?: Date;
@@ -102,6 +104,11 @@ Book.init(
       allowNull: false,
       defaultValue: 'unread',
     },
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+      defaultValue: [],
+    },
     addedAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -141,6 +148,7 @@ Book.init(
       { fields: ['status'] },
       { fields: ['fileType'] },
       { fields: ['userId', 'status'] },
+      { fields: ['tags'], using: 'GIN' },
     ],
   }
 );

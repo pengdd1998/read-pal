@@ -34,6 +34,7 @@ export interface Book {
   currentPage: number;
   progress: number; // 0-1
   status: 'unread' | 'reading' | 'completed';
+  tags: string[];
   addedAt: Date;
   startedAt?: Date;
   completedAt?: Date;

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import DOMPurify from 'dompurify';
-import { api } from '@/lib/api';
+import { API_BASE_URL } from '@/lib/api';
 
 type AgentType = 'companion' | 'research' | 'coach' | 'synthesis' | 'friend';
 type FriendPersona = 'sage' | 'penny' | 'alex' | 'quinn' | 'sam';
@@ -12,6 +12,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   agent?: AgentType;
+  streaming?: boolean;
 }
 
 const AGENTS: { id: AgentType; name: string; emoji: string; desc: string }[] = [
@@ -73,68 +74,232 @@ function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/**
+ * Consume an SSE stream from the backend, calling `onToken` for each token
+ * chunk and `onDone` when the stream completes. Returns an AbortController
+ * so the caller can cancel.
+ */
+function consumeSSEStream(
+  response: Response,
+  onToken: (token: string) => void,
+  onDone: () => void,
+  onError: (err: string) => void,
+): AbortController {
+  const controller = new AbortController();
+  const reader = response.body?.getReader();
+
+  if (!reader) {
+    onError('No response body');
+    return controller;
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const processChunk = (chunk: string): void => {
+    buffer += chunk;
+    const lines = buffer.split('\n');
+    // Keep the last (potentially incomplete) line in the buffer
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith('data: ')) continue;
+
+      const payload = trimmed.slice(6); // strip "data: "
+      if (payload === '[DONE]') {
+        onDone();
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(payload) as { token?: string; error?: string };
+        if (parsed.error) {
+          onError(parsed.error);
+          return;
+        }
+        if (parsed.token) {
+          onToken(parsed.token);
+        }
+      } catch {
+        // Ignore malformed JSON lines
+      }
+    }
+  };
+
+  (async () => {
+    try {
+      while (!controller.signal.aborted) {
+        const result = await reader.read();
+        if (result.done) break;
+        processChunk(decoder.decode(result.value, { stream: true }));
+      }
+      // If stream ended without [DONE], still finalize
+      onDone();
+    } catch (err) {
+      if (!controller.signal.aborted) {
+        onError(err instanceof Error ? err.message : 'Stream read failed');
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  })();
+
+  return controller;
+}
+
 export default function ChatPage() {
   const [selectedAgent, setSelectedAgent] = useState<AgentType>('companion');
   const [selectedPersona, setSelectedPersona] = useState<FriendPersona>('sage');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  const handleSend = async (text?: string) => {
+  // Abort any in-flight stream when the component unmounts
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  const stopStreaming = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setMessages((prev) =>
+      prev.map((m) => (m.streaming ? { ...m, streaming: false } : m)),
+    );
+    setLoading(false);
+    setConnecting(false);
+  }, []);
+
+  const handleSend = async (text?: string): Promise<void> => {
     const message = text || input.trim();
     if (!message || loading) return;
 
     setInput('');
     setLoading(true);
-    setMessages((prev) => [...prev, { id: uid(), role: 'user', content: message, agent: selectedAgent }]);
+    setConnecting(true);
+
+    const userMsgId = uid();
+    const assistantMsgId = uid();
+
+    setMessages((prev) => [
+      ...prev,
+      { id: userMsgId, role: 'user', content: message, agent: selectedAgent },
+      { id: assistantMsgId, role: 'assistant', content: '', agent: selectedAgent, streaming: true },
+    ]);
+
+    const endpoint = selectedAgent === 'friend'
+      ? `${API_BASE_URL}/api/friend/chat/stream`
+      : `${API_BASE_URL}/api/agents/chat/stream`;
+
+    const body = selectedAgent === 'friend'
+      ? { message, context: { persona: selectedPersona } }
+      : { message, agent: selectedAgent };
 
     try {
-      let assistantContent = '';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 
-      if (selectedAgent === 'friend') {
-        const result = await api.post<{ response: string; persona: string; emotion: string }>(
-          '/api/friend/chat',
-          { message, context: { persona: selectedPersona } },
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Server error (${response.status})`;
+        try {
+          const errData = await response.json() as { error?: { message?: string } };
+          errorMsg = errData.error?.message || errorMsg;
+        } catch { /* use default error message */ }
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMsgId
+              ? { ...m, content: `Error: ${errorMsg}`, streaming: false }
+              : m,
+          ),
         );
-        const friendData = (result.data as { response?: string }) ?? {};
-        assistantContent = friendData.response || '';
-      } else {
-        const result = await api.post<{ content: string; agentsUsed: string[] }>(
-          '/api/agents/chat',
-          { message, agent: selectedAgent },
-        );
-        const data = result.data as { content?: string } | undefined;
-        assistantContent = data?.content ?? '';
+        setLoading(false);
+        setConnecting(false);
+        return;
       }
 
-      if (assistantContent) {
-        setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: assistantContent, agent: selectedAgent }]);
-      } else {
-        setMessages((prev) => [...prev, {
-          id: uid(),
-          role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
-          agent: selectedAgent,
-        }]);
-      }
+      setConnecting(false);
+
+      abortRef.current = consumeSSEStream(
+        response,
+        // onToken: append token to the assistant message
+        (tokenChunk: string) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId
+                ? { ...m, content: m.content + tokenChunk }
+                : m,
+            ),
+          );
+        },
+        // onDone: finalize the message
+        () => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId
+                ? {
+                    ...m,
+                    streaming: false,
+                    content: m.content || 'Sorry, I couldn\'t generate a response.',
+                  }
+                : m,
+            ),
+          );
+          setLoading(false);
+          setConnecting(false);
+          abortRef.current = null;
+        },
+        // onError
+        (errMsg: string) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId
+                ? {
+                    ...m,
+                    content: m.content
+                      ? m.content
+                      : `Failed: ${errMsg}`,
+                    streaming: false,
+                  }
+                : m,
+            ),
+          );
+          setLoading(false);
+          setConnecting(false);
+          abortRef.current = null;
+        },
+      );
     } catch {
-      setMessages((prev) => [...prev, {
-        id: uid(),
-        role: 'assistant',
-        content: 'Failed to connect to the AI. Please check your connection.',
-        agent: selectedAgent,
-      }]);
-    } finally {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId
+            ? { ...m, content: 'Failed to connect to the AI. Please check your connection.', streaming: false }
+            : m,
+        ),
+      );
       setLoading(false);
+      setConnecting(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -250,11 +415,16 @@ export default function ChatPage() {
                   ) : (
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
+                  {/* Blinking cursor while streaming */}
+                  {msg.role === 'assistant' && msg.streaming && (
+                    <span className="inline-block w-1.5 h-4 ml-0.5 bg-gray-600 dark:bg-gray-300 animate-pulse align-text-bottom" />
+                  )}
                 </div>
               </div>
             ))
           )}
-          {loading && (
+          {/* Connecting indicator (shown only during the initial fetch, before streaming starts) */}
+          {connecting && (
             <div className="flex justify-start">
               <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-3">
                 <div className="flex gap-1.5">
@@ -280,13 +450,22 @@ export default function ChatPage() {
               rows={2}
               disabled={loading}
             />
-            <button
-              onClick={() => handleSend()}
-              disabled={loading || !input.trim()}
-              className="btn btn-primary self-end disabled:opacity-50"
-            >
-              Send
-            </button>
+            {loading ? (
+              <button
+                onClick={stopStreaming}
+                className="btn self-end px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors"
+              >
+                Stop
+              </button>
+            ) : (
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim()}
+                className="btn btn-primary self-end disabled:opacity-50"
+              >
+                Send
+              </button>
+            )}
           </div>
         </div>
       </div>

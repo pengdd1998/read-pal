@@ -218,4 +218,44 @@ export async function chatCompletion(params: ChatCompletionParams): Promise<stri
   throw lastError ?? new LLMClientError('All retries exhausted', { retryable: false, attempt: MAX_RETRIES });
 }
 
+/**
+ * Streaming variant of chatCompletion.
+ *
+ * Returns an AsyncIterable of string tokens, each yielded as soon as the
+ * upstream GLM/OpenAI-compatible API emits it.
+ *
+ * Does NOT retry on stream errors – the caller can decide to restart.
+ */
+export async function* chatCompletionStream(params: ChatCompletionParams): AsyncGenerator<string> {
+  validateApiKey();
+
+  const model = params.model || DEFAULT_MODEL;
+  const apiMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system', content: params.system },
+    ...params.messages,
+  ];
+
+  log('info', 'Starting streaming chat completion', { model, messageCount: params.messages.length });
+
+  const stream = await client.chat.completions.create(
+    {
+      model,
+      messages: apiMessages,
+      max_tokens: params.maxTokens || 2048,
+      temperature: params.temperature ?? 0.7,
+      stream: true,
+    },
+    { timeout: DEFAULT_TIMEOUT_MS },
+  );
+
+  for await (const chunk of stream) {
+    const token = chunk.choices[0]?.delta?.content;
+    if (token) {
+      yield token;
+    }
+  }
+
+  log('info', 'Streaming chat completion finished', { model });
+}
+
 export default client;
