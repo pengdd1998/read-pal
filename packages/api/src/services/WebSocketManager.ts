@@ -6,8 +6,7 @@
  */
 
 import { WebSocketServer, WebSocket } from 'ws';
-import type { Server } from 'http';
-import type express from 'express';
+import type { Server, IncomingMessage } from 'http';
 import { verifyToken } from '../utils/auth';
 
 // ============================================================================
@@ -51,7 +50,7 @@ export class WebSocketManager {
       server,
       path: '/ws/agents',
       // Verify origin for security
-      verifyClient: (info: { req: express.Request & { url?: string; headers: { host?: string } } }, callback: (ok: boolean, code?: number, reason?: string) => void) => {
+      verifyClient: (info: { req: IncomingMessage }, callback: (ok: boolean, code?: number, reason?: string) => void) => {
         try {
           const url = new URL(info.req.url || '', `http://${info.req.headers.host}`);
           const token = url.searchParams.get('token');
@@ -76,7 +75,7 @@ export class WebSocketManager {
       },
     });
 
-    this.wss.on('connection', (ws: WebSocket, req: express.Request) => {
+    this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
       const userId = (req as { userId?: string }).userId || '';
       const clientId = this.generateClientId();
 
