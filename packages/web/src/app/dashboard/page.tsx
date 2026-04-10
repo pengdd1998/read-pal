@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { OnboardingWalkthrough } from '@/components/onboarding/OnboardingWalkthrough';
 import { ShareReadingCard } from '@/components/share/ReadingShareCard';
+import StreakCalendar from '@/components/dashboard/StreakCalendar';
 
 interface DashboardStats {
   booksRead: number;
@@ -268,6 +269,13 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Streak Calendar ── */}
+      {hasData && !loading && (
+        <div className="mt-5 animate-fade-in">
+          <StreakCalendar />
         </div>
       )}
 
