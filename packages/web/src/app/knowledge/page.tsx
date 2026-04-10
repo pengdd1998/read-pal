@@ -179,10 +179,10 @@ export default function KnowledgePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-[#1e3a5f] dark:text-white">Knowledge Graph</h1>
-          <p className="text-[#5c5c5c] dark:text-gray-400 mt-1">Your reading knowledge, connected and visualized</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#1e3a5f] dark:text-white">Knowledge Graph</h1>
+          <p className="text-sm sm:text-base text-[#5c5c5c] dark:text-gray-400 mt-1">Your reading knowledge, connected and visualized</p>
         </div>
         {!isEmpty && (
           <div className="flex gap-2">
@@ -190,7 +190,7 @@ export default function KnowledgePage() {
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   viewMode === mode
                     ? 'bg-amber-600 text-white'
                     : 'bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-gray-700'
@@ -211,7 +211,7 @@ export default function KnowledgePage() {
 
       {/* Stats */}
       {!isEmpty && (
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
           {loading
             ? STAT_ITEMS.map((label) => (
                 <div key={label} className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 p-4 text-center animate-pulse">
@@ -220,9 +220,9 @@ export default function KnowledgePage() {
                 </div>
               ))
             : statValues.map((val, i) => (
-                <div key={STAT_ITEMS[i]} className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 p-4 text-center">
-                  <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{val}</div>
-                  <div className="text-sm text-[#5c5c5c] dark:text-gray-400">{STAT_ITEMS[i]}</div>
+                <div key={STAT_ITEMS[i]} className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 p-3 sm:p-4 text-center">
+                  <div className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">{val}</div>
+                  <div className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400">{STAT_ITEMS[i]}</div>
                 </div>
               ))}
         </div>

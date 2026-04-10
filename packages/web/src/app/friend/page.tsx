@@ -43,10 +43,45 @@ export default function FriendPage() {
   const persona = settings ? PERSONAS[settings.friendPersona] || PERSONAS.penny : PERSONAS.penny;
   const frequencyLabel = settings?.friendFrequency === 'minimal' ? 'Quiet Mode' : settings?.friendFrequency === 'frequent' ? 'Active Companion' : 'Friendly';
 
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
+        {/* Back link skeleton */}
+        <div className="mb-8">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
+        </div>
+        {/* Persona card skeleton */}
+        <div className="text-center mb-10">
+          <div className="w-24 h-24 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-3xl animate-pulse" />
+          <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-lg w-20 mx-auto animate-pulse" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 mx-auto mt-2 animate-pulse" />
+        </div>
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 animate-pulse">
+              <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-16 mx-auto" />
+              <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-10 mx-auto mt-2" />
+            </div>
+          ))}
+        </div>
+        {/* Persona selector skeleton */}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
+          <div className="h-5 bg-gray-100 dark:bg-gray-800 rounded w-44 mb-4 animate-pulse" />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-14 bg-gray-50 dark:bg-gray-800/50 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
+    <div className="max-w-2xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-fade-in">
       {/* Back link */}
-      <div className="mb-8 animate-slide-up">
+      <div className="mb-6 sm:mb-8 animate-slide-up">
         <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />

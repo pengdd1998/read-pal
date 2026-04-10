@@ -55,17 +55,17 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-[#f9f5f0] dark:bg-gray-950">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#1e3a5f] dark:text-white">Search</h1>
-          <p className="text-[#5c5c5c] dark:text-gray-400 mt-1">Find books, highlights, and notes across your library</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#1e3a5f] dark:text-white">Search</h1>
+          <p className="text-sm sm:text-base text-[#5c5c5c] dark:text-gray-400 mt-1">Find books, highlights, and notes across your library</p>
         </div>
 
         {/* Search Input */}
-        <div className="relative mb-8">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="relative mb-6 sm:mb-8">
+          <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -74,7 +74,7 @@ export default function SearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search across your library..."
-            className="w-full pl-12 pr-4 py-4 rounded-xl border border-amber-200/60 dark:border-amber-800/40 bg-white dark:bg-gray-900 text-[#1e3a5f] dark:text-white placeholder-[#a3a3a3] dark:placeholder-gray-500 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 text-lg shadow-sm transition-all duration-200"
+            className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl border border-amber-200/60 dark:border-amber-800/40 bg-white dark:bg-gray-900 text-[#1e3a5f] dark:text-white placeholder-[#a3a3a3] dark:placeholder-gray-500 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 text-base sm:text-lg shadow-sm transition-all duration-200"
             autoFocus
           />
           {searching && (
