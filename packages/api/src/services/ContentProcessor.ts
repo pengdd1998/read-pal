@@ -107,11 +107,11 @@ export class ContentProcessor {
 
       epub.on('end', () => {
         const metadata: BookMetadata = {
-          title: epub.metadata?.title,
-          author: epub.metadata?.creator,
-          language: epub.metadata?.language,
-          publisher: epub.metadata?.publisher,
-          publishedDate: epub.metadata?.date,
+          title: epub.metadata?.title as string | undefined,
+          author: epub.metadata?.creator as string | undefined,
+          language: epub.metadata?.language as string | undefined,
+          publisher: epub.metadata?.publisher as string | undefined,
+          publishedDate: epub.metadata?.date as string | undefined,
         };
 
         const chapters: { title: string; content: string }[] = [];
