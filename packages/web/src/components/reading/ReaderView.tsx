@@ -20,6 +20,9 @@ interface ReaderViewProps {
   theme: 'light' | 'dark' | 'sepia';
   showControls?: boolean;
   onToggleControls?: () => void;
+  externalTocOpen?: boolean;
+  onTocClose?: () => void;
+  highlightMode?: boolean;
 }
 
 export function ReaderView({
@@ -35,10 +38,27 @@ export function ReaderView({
   theme,
   showControls = true,
   onToggleControls,
+  externalTocOpen,
+  onTocClose,
+  highlightMode: _highlightMode,
 }: ReaderViewProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
   const chapterMenuRef = useRef<HTMLDivElement>(null);
+
+  // Sync with external TOC control
+  useEffect(() => {
+    if (externalTocOpen !== undefined && externalTocOpen !== showChapterMenu) {
+      setShowChapterMenu(externalTocOpen);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalTocOpen]);
+
+  // Notify parent when TOC closes internally
+  const closeChapterMenu = useCallback(() => {
+    setShowChapterMenu(false);
+    onTocClose?.();
+  }, [onTocClose]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -158,7 +178,7 @@ export function ReaderView({
     if (!showChapterMenu) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (chapterMenuRef.current && !chapterMenuRef.current.contains(e.target as Node)) {
-        setShowChapterMenu(false);
+        closeChapterMenu();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -167,7 +187,7 @@ export function ReaderView({
 
   // Close chapter menu when controls are hidden
   useEffect(() => {
-    if (!showControls) setShowChapterMenu(false);
+    if (!showControls) closeChapterMenu();
   }, [showControls]);
 
   // Overall book progress
@@ -254,7 +274,7 @@ export function ReaderView({
           <button
             onClick={goPrevPage}
             disabled={currentPage === 0}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95 min-w-[80px]"
+            className="flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-xl text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95 min-w-[60px] sm:min-w-[80px]"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -266,7 +286,7 @@ export function ReaderView({
           <div className="flex-1 mx-2 sm:mx-4 min-w-0 relative" ref={chapterMenuRef}>
             <button
               onClick={() => setShowChapterMenu((v) => !v)}
-              className={`w-full flex flex-col items-center px-2 py-1 rounded-lg transition-colors ${
+              className={`w-full flex flex-col items-center px-2 py-2 sm:py-1 rounded-lg transition-colors ${
                 showChapterMenu
                   ? 'bg-amber-100/80 dark:bg-amber-900/40'
                   : 'hover:bg-black/5 dark:hover:bg-white/5'
@@ -294,7 +314,7 @@ export function ReaderView({
                 {/* Mobile backdrop */}
                 <div
                   className="fixed inset-0 z-30 md:hidden bg-black/20 backdrop-blur-sm"
-                  onClick={() => setShowChapterMenu(false)}
+                  onClick={closeChapterMenu}
                 />
 
                 {/* Dropdown panel — opens upward since footer is at bottom */}
@@ -326,7 +346,7 @@ export function ReaderView({
                         key={i}
                         onClick={() => {
                           onPageChange(i);
-                          setShowChapterMenu(false);
+                          closeChapterMenu();
                         }}
                         className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-2 transition-colors ${
                           isCurrent
@@ -368,7 +388,7 @@ export function ReaderView({
           <button
             onClick={goNextPage}
             disabled={currentPage >= totalPages - 1}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95 min-w-[80px] justify-end"
+            className="flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-xl text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95 min-w-[60px] sm:min-w-[80px] justify-end"
           >
             <span className="hidden sm:inline">Next</span>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
