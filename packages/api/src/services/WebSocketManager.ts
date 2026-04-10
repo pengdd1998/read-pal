@@ -7,6 +7,7 @@
 
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
+import type express from 'express';
 import { verifyToken } from '../utils/auth';
 
 // ============================================================================
@@ -67,7 +68,7 @@ export class WebSocketManager {
           }
 
           // Attach userId to the request for use in the connection handler
-          (info.req as any).userId = decoded.userId;
+          (info.req as { userId?: string }).userId = decoded.userId;
           callback(true);
         } catch {
           callback(false, 401, 'Unauthorized: Token verification failed');
@@ -75,8 +76,8 @@ export class WebSocketManager {
       },
     });
 
-    this.wss.on('connection', (ws, req) => {
-      const userId = (req as any).userId;
+    this.wss.on('connection', (ws: WebSocket, req: express.Request) => {
+      const userId = (req as { userId?: string }).userId || '';
       const clientId = this.generateClientId();
 
       const client: StreamClient = {
@@ -94,7 +95,7 @@ export class WebSocketManager {
         client.isAlive = true;
       });
 
-      ws.on('message', (data) => {
+      ws.on('message', (data: Buffer) => {
         this.handleMessage(clientId, data.toString());
       });
 
@@ -103,7 +104,7 @@ export class WebSocketManager {
         console.log(`[WS] Client disconnected: ${clientId}`);
       });
 
-      ws.on('error', (error) => {
+      ws.on('error', (error: Error) => {
         console.error(`[WS] Client error (${clientId}):`, error.message);
         this.clients.delete(clientId);
       });
@@ -118,7 +119,7 @@ export class WebSocketManager {
 
     // Start heartbeat to detect dead connections
     this.heartbeatInterval = setInterval(() => {
-      this.wss?.clients.forEach((ws) => {
+      this.wss?.clients.forEach((ws: WebSocket) => {
         const client = this.findClientByWs(ws);
         if (!client) return;
 
