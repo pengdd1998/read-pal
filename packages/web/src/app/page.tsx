@@ -1,4 +1,21 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'read-pal — A Friend Who Reads With You',
+  description:
+    'read-pal is your AI reading companion. Upload any book, read alongside an intelligent friend who asks questions, explains concepts, and helps you remember every insight. Free to start.',
+  openGraph: {
+    title: 'read-pal — A Friend Who Reads With You',
+    description:
+      'Upload any book and read alongside an AI friend who asks thoughtful questions, explains tricky parts, and celebrates insights with you.',
+  },
+  twitter: {
+    title: 'read-pal — A Friend Who Reads With You',
+    description:
+      'Upload any book and read alongside an AI friend who asks thoughtful questions, explains tricky parts, and celebrates insights with you.',
+  },
+};
 
 const FRIENDS = [
   { name: 'Sage', emoji: '\uD83E\uDDD9', desc: 'Wise & patient. Asks deep questions.', accent: 'border-l-sage' },

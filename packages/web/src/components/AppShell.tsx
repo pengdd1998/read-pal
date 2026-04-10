@@ -22,19 +22,27 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
+  // Close mobile menu on navigation
+  const handleMobileNav = () => setMobileOpen(false);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f5f0] dark:bg-gray-950">
+      {/* Skip to main content for accessibility */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-amber-500 focus:text-white focus:rounded-lg focus:text-sm focus:font-medium">
+        Skip to main content
+      </a>
+
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0]/95 dark:bg-gray-950/95 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 sm:gap-6">
               <Link
                 href={isAuthenticated ? '/dashboard' : '/'}
-                className="flex items-center gap-2.5 text-lg font-display font-bold tracking-tight text-[#1e3a5f] dark:text-white"
+                className="flex items-center gap-2 text-base sm:text-lg font-display font-bold tracking-tight text-[#1e3a5f] dark:text-white"
               >
-                <span className="w-8 h-8 rounded-lg bg-[#d97706] flex items-center justify-center text-white text-sm font-bold">
+                <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#d97706] flex items-center justify-center text-white text-xs sm:text-sm font-bold">
                   r
                 </span>
                 read-pal
@@ -42,13 +50,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
               {/* Desktop Nav */}
               {isAuthenticated && (
-                <nav className="hidden md:flex items-center gap-1">
+                <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
                   {NAV_ITEMS.map((item) => {
                     const active = isActive(item.href);
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
+                        aria-current={active ? 'page' : undefined}
                         className={`nav-link relative px-3 py-2 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out ${
                           active
                             ? 'nav-link-active text-[#1e3a5f] dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'
@@ -69,15 +78,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             {/* Right side */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {isAuthenticated ? (
                 <>
-                  <span className="text-sm text-[#5c5c5c] dark:text-gray-400 hidden sm:inline truncate max-w-[160px]">
+                  <span className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hidden sm:inline truncate max-w-[160px]">
                     {user?.name || user?.email}
                   </span>
                   <button
                     onClick={logout}
-                    className="btn btn-ghost text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#1e3a5f] dark:hover:text-white"
+                    className="btn btn-ghost text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#1e3a5f] dark:hover:text-white"
                   >
                     Sign Out
                   </button>
@@ -93,7 +102,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <button
                   onClick={() => setMobileOpen(!mobileOpen)}
                   className="md:hidden p-2 rounded-lg text-[#5c5c5c] dark:text-gray-400 hover:bg-[#f0e9e0] dark:hover:bg-gray-800 transition-colors"
-                  aria-label="Toggle menu"
+                  aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+                  aria-expanded={mobileOpen}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     {mobileOpen ? (
@@ -110,7 +120,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Mobile Nav */}
         {isAuthenticated && mobileOpen && (
-          <nav className="md:hidden border-t border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0] dark:bg-gray-950 animate-slide-up">
+          <nav className="md:hidden border-t border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0] dark:bg-gray-950 animate-slide-up" aria-label="Mobile navigation">
             <div className="px-4 py-3 space-y-1">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
@@ -118,7 +128,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={handleMobileNav}
+                    aria-current={active ? 'page' : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out ${
                       active
                         ? 'text-[#1e3a5f] dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-l-2 border-amber-500'
@@ -138,24 +149,24 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <ErrorBoundary>{children}</ErrorBoundary>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">
+      <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-8 sm:py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-md bg-[#d97706] flex items-center justify-center text-white text-xs font-bold">
               r
             </span>
-            <span className="text-sm text-[#5c5c5c] dark:text-gray-400 font-sans">
+            <span className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 font-sans">
               &copy; 2026 read-pal. Your AI reading companion.
             </span>
           </div>
-          <div className="flex items-center gap-6">
-            <Link href="/search" className="text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Explore</Link>
-            <Link href="/settings" className="text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Settings</Link>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <Link href="/search" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Explore</Link>
+            <Link href="/settings" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Settings</Link>
           </div>
         </div>
       </footer>

@@ -212,6 +212,9 @@ packages/agent-daemon/
 packages/api/src/**/*.js
 packages/api/src/**/*.d.ts
 packages/api/src/**/*.js.map
+packages/api/tests/**/*.js
+packages/api/tests/**/*.d.ts
+packages/api/tests/**/*.js.map
 packages/web/src/**/*.js
 packages/web/src/**/*.d.ts
 packages/web/src/**/*.js.map

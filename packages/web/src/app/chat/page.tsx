@@ -144,29 +144,29 @@ export default function ChatPage() {
   const currentAgent = AGENTS.find((a) => a.id === selectedAgent)!;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">AI Chat</h1>
-        <p className="text-gray-600 dark:text-gray-400">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">AI Chat</h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Chat with your AI agents about anything -- no book required.
         </p>
       </div>
 
       {/* Agent Selector */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-6">
         {AGENTS.map((agent) => (
           <button
             key={agent.id}
             onClick={() => setSelectedAgent(agent.id)}
-            className={`p-3 rounded-xl border-2 text-left transition-all ${
+            className={`p-2.5 sm:p-3 rounded-xl border-2 text-left transition-all ${
               selectedAgent === agent.id
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
-            <div className="text-2xl mb-1">{agent.emoji}</div>
-            <div className="font-medium text-sm text-gray-900 dark:text-white">{agent.name}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{agent.desc}</div>
+            <div className="text-xl sm:text-2xl mb-1">{agent.emoji}</div>
+            <div className="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{agent.name}</div>
+            <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 line-clamp-2">{agent.desc}</div>
           </button>
         ))}
       </div>
@@ -206,7 +206,7 @@ export default function ChatPage() {
         </div>
 
         {/* Messages */}
-        <div className="h-[50vh] min-h-[400px] overflow-y-auto p-4 space-y-4">
+        <div className="h-[45vh] sm:h-[50vh] min-h-[300px] sm:min-h-[400px] overflow-y-auto p-3 sm:p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-5xl mb-4">{currentAgent.emoji}</div>
@@ -269,14 +269,14 @@ export default function ChatPage() {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex gap-2">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={`Ask ${currentAgent.name} anything...`}
-              className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[60px]"
               rows={2}
               disabled={loading}
             />

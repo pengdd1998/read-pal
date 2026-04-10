@@ -5,6 +5,9 @@
  * run without requiring live infrastructure.
  */
 
+// Set required environment variables before any module loads
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-for-testing';
+
 // Mock Sequelize
 jest.mock('../src/db', () => ({
   sequelize: {

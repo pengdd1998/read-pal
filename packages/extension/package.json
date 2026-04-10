@@ -11,7 +11,7 @@
   "dependencies": {
     "@read-pal/shared": "workspace:*",
     "@anthropic-ai/sdk": "^0.27.0",
-    "axios": "^1.6.0"
+    "axios": "^1.15.0"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.251",

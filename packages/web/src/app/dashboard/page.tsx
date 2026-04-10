@@ -213,13 +213,13 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
       {/* Welcome */}
-      <div className="mb-10 animate-fade-in">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+      <div className="mb-8 sm:mb-10 animate-fade-in">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
           {isEmpty ? 'Welcome to read-pal' : 'Welcome back, Reader'}
         </h1>
-        <p className="text-gray-500 mt-2 text-base">
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">
           {loading ? (
             <SkeletonPulse className="w-64 h-5 inline-block" />
           ) : isEmpty ? (
@@ -245,9 +245,9 @@ export default function DashboardPage() {
       {/* Stats — hidden for new users, replaced by Getting Started section */}
       {isEmpty ? (
         /* Getting Started cards for new users */
-        <div className="mb-12 animate-fade-in">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Getting Started</h2>
-          <div className="grid sm:grid-cols-3 gap-5">
+        <div className="mb-8 sm:mb-12 animate-fade-in">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Getting Started</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             {/* Card 1: Upload a book */}
             <Link
               href="/library"
@@ -313,7 +313,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="mb-12">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="card text-center">
@@ -353,7 +353,7 @@ export default function DashboardPage() {
 
           {/* Expandable extra stats */}
           <div
-            className={`grid grid-cols-3 gap-4 overflow-hidden transition-all duration-500 ease-in-out ${
+            className={`grid grid-cols-3 gap-3 sm:gap-4 overflow-hidden transition-all duration-500 ease-in-out ${
               statsExpanded ? 'max-h-40 opacity-100 mt-4' : 'max-h-0 opacity-0'
             }`}
           >
@@ -366,16 +366,16 @@ export default function DashboardPage() {
 
       {/* Streak Calendar & Reading Goals - engagement section */}
       {!isEmpty && !loading && (
-        <div className="mb-10 grid md:grid-cols-2 gap-6">
+        <div className="mb-8 sm:mb-10 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <StreakCalendar />
           <ReadingGoals />
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-10">
         {/* Continue Reading */}
         <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Continue Reading</h2>
             {recentBooks.length > 0 && (
               <Link href="/library" className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
@@ -480,7 +480,7 @@ export default function DashboardPage() {
 
         {/* Agent Insights */}
         <div>
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Getting Started Tips</h2>
             <Link href="/friend" className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
               Meet your Reading Friend &rarr;
@@ -523,8 +523,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Reading Activity */}
-      <div className="mt-12 card animate-slide-up">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Reading Activity</h2>
+      <div className="mt-8 sm:mt-12 card animate-slide-up overflow-hidden">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Reading Activity</h2>
         {loading ? (
           <div className="h-48 flex items-end justify-around gap-3 px-4">
             {Array.from({ length: 7 }).map((_, i) => (
