@@ -51,7 +51,7 @@ export class WebSocketManager {
       server,
       path: '/ws/agents',
       // Verify origin for security
-      verifyClient: (info, callback) => {
+      verifyClient: (info: { req: express.Request & { url?: string; headers: { host?: string } } }, callback: (ok: boolean, code?: number, reason?: string) => void) => {
         try {
           const url = new URL(info.req.url || '', `http://${info.req.headers.host}`);
           const token = url.searchParams.get('token');
