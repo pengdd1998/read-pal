@@ -144,6 +144,7 @@ router.post(
         fontSize: 16,
         fontFamily: 'Inter',
         readingGoal: 2,
+        dailyReadingMinutes: 30,
         notificationsEnabled: true,
       },
     });

@@ -82,7 +82,7 @@
   .reading-mode {
     max-width: 72ch;
     margin-inline: auto;
-    padding: 2.5rem 2rem 4rem;
+    padding: 1.5rem 1rem 2rem;
     font-family: 'Literata', 'Source Serif 4', Georgia, serif;
     line-height: 1.85;
     font-size: 1.125rem;
@@ -92,6 +92,12 @@
     widows: 3;
     word-spacing: 0.02em;
     hanging-punctuation: first last;
+  }
+
+  @media (min-width: 640px) {
+    .reading-mode {
+      padding: 2.5rem 2rem 4rem;
+    }
   }
 
   .reading-mode p {

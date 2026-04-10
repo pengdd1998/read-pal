@@ -10,6 +10,7 @@ export interface UserSettings {
   fontSize: number;
   fontFamily: string;
   readingGoal: number;
+  dailyReadingMinutes: number;
   notificationsEnabled: boolean;
   friendPersona?: string;
   friendFrequency?: string;

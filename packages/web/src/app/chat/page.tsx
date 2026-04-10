@@ -206,7 +206,7 @@ export default function ChatPage() {
         </div>
 
         {/* Messages */}
-        <div className="h-[400px] overflow-y-auto p-4 space-y-4">
+        <div className="h-[50vh] min-h-[400px] overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-5xl mb-4">{currentAgent.emoji}</div>
