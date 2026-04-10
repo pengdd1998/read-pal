@@ -4,10 +4,9 @@
 
 import express from 'express';
 import 'dotenv/config';
-import crypto from 'crypto';
 
 import { initializeMiddleware, errorHandler, notFoundHandler } from './middleware/middleware';
-import { EnvironmentConfig, IAgent, AgentRequest, AgentResponse, Logger } from './types';
+import { IAgent, AgentRequest, AgentResponse, Logger } from './types';
 
 // Routes
 import healthRoutes from './routes/health.routes';
@@ -45,8 +44,27 @@ import { wsManager } from './services/WebSocketManager';
 // Configuration
 // ============================================================================
 
-const config: any = {
-  nodeEnv: (process.env.NODE_ENV as any) || 'development',
+interface ServerConfig {
+  nodeEnv: 'development' | 'staging' | 'production' | 'test';
+  api: { port: number; url: string; version?: string };
+  database: { url: string; poolMin: number; poolMax: number };
+  redis: { url: string; password: string | undefined; db: number };
+  pinecone: { apiKey: string; environment: string; index: string };
+  neo4j: { uri: string; user: string; password: string };
+  glm: { apiKey: string; baseUrl: string; model: string; maxTokens: number; temperature: number; timeout: number };
+  auth: { provider: string; secret: string; domain: string | undefined; clientId: string | undefined; clientSecret: string | undefined };
+  sentry?: { dsn: string; environment: string; tracesSampleRate: number };
+  features: {
+    readingFriend: boolean;
+    knowledgeGraph: boolean;
+    memoryBooks: boolean;
+    collaborativeReading: boolean;
+    ereaderIntegration: boolean;
+  };
+}
+
+const config: ServerConfig = {
+  nodeEnv: (process.env.NODE_ENV || 'development') as ServerConfig['nodeEnv'],
   api: {
     port: parseInt(process.env.API_PORT || '3001', 10),
     url: process.env.API_URL || 'http://localhost:3001'
@@ -88,7 +106,7 @@ const config: any = {
   },
   sentry: process.env.SENTRY_DSN ? {
     dsn: process.env.SENTRY_DSN,
-    environment: process.env.SENTRY_ENVIRONMENT || (process.env.NODE_ENV as any) || 'development',
+    environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
     tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1')
   } : undefined,
   features: {
@@ -143,16 +161,17 @@ initializeMiddleware(app, config);
 // ============================================================================
 
 const logger: Logger = {
-  info: (message: string, meta?: any) => console.log(`[INFO] ${message}`, meta || ''),
-  error: (message: string, meta?: any) => console.error(`[ERROR] ${message}`, meta || ''),
-  warn: (message: string, meta?: any) => console.warn(`[WARN] ${message}`, meta || ''),
-  debug: (message: string, meta?: any) => {
+  info: (message: string, meta?: unknown) => console.log(`[INFO] ${message}`, meta || ''),
+  error: (message: string, meta?: unknown) => console.error(`[ERROR] ${message}`, meta || ''),
+  warn: (message: string, meta?: unknown) => console.warn(`[WARN] ${message}`, meta || ''),
+  debug: (message: string, meta?: unknown) => {
     if (config.nodeEnv === 'development') {
       console.log(`[DEBUG] ${message}`, meta || '');
     }
   },
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createAgentWrapper(name: string, displayName: string, agentInstance: any): IAgent {
   return {
     name,
@@ -160,17 +179,18 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
     version: '1.0.0',
     purpose: displayName,
     responsibilities: [],
-    model: DEFAULT_MODEL as any,
+    model: DEFAULT_MODEL,
     systemPrompt: '',
     tools: [],
-    memoryType: 'session' as any,
-    interventionStyle: 'reactive' as any,
+    memoryType: 'session',
+    interventionStyle: 'reactive',
     execute: async (request: AgentRequest): Promise<AgentResponse> => {
       const startTime = Date.now();
       try {
         // Extract the query from the request input
-        const input = request.input as Record<string, any> || {};
-        const query = input.query || input.message || '';
+        const input = (request.input as Record<string, unknown>) || {};
+        const query = (input.query || input.message || '') as string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let result: any;
 
         // Each agent has a different method signature - adapt accordingly
@@ -182,7 +202,7 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
             break;
           case 'research': {
             // ResearchAgent.execute(userId, message, action, context)
-            const action = (request.action === 'chat' ? 'deep_dive' : request.action) as string;
+            const action = (request.action === 'chat' ? 'deep_dive' : request.action || 'deep_dive') as string;
             result = await agentInstance.execute(request.userId, query, action, request.context);
             break;
           }
@@ -219,11 +239,12 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
             tokensUsed: result?.metadata?.tokensUsed || result?.tokensUsed || 0,
             cost: result?.metadata?.cost || result?.cost || 0,
             duration: Date.now() - startTime,
-            modelUsed: result?.metadata?.modelUsed || result?.modelUsed || DEFAULT_MODEL as any,
+            modelUsed: result?.metadata?.modelUsed || result?.modelUsed || DEFAULT_MODEL,
           },
         };
-      } catch (error: any) {
-        logger.error(`Agent ${name} execution failed`, { error: error.message });
+      } catch (error: unknown) {
+        const errMsg = error instanceof Error ? error.message : 'Unknown error';
+        logger.error(`Agent ${name} execution failed`, { error: errMsg });
         return {
           content: 'I encountered an error processing your request. Please try again.',
           success: false,
@@ -232,11 +253,11 @@ function createAgentWrapper(name: string, displayName: string, agentInstance: an
             tokensUsed: 0,
             cost: 0,
             duration: Date.now() - startTime,
-            modelUsed: DEFAULT_MODEL as any,
+            modelUsed: DEFAULT_MODEL,
           },
           error: {
             code: 'AGENT_ERROR',
-            message: error.message || 'Unknown error',
+            message: errMsg,
             recoverable: true,
           },
         };
@@ -289,8 +310,9 @@ async function initializeAgents(): Promise<void> {
       agents: Array.from(agents.keys()),
       defaultAgent: 'companion',
     });
-  } catch (error: any) {
-    logger.error('Failed to initialize agent orchestrator', { error: error.message });
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Failed to initialize agent orchestrator', { error: errMsg });
   }
 }
 
@@ -306,8 +328,9 @@ async function syncDatabase(): Promise<void> {
     }
     await sequelize.sync({ force, alter: !force });
     logger.info('Database synced successfully', { force, alter: !force });
-  } catch (error: any) {
-    logger.error('Database sync failed', { error: error.message });
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Database sync failed', { error: errMsg });
   }
 }
 
