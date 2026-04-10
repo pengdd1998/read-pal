@@ -93,7 +93,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
 
     const currentSettings =
       typeof user.settings === 'object' && user.settings !== null
-        ? (user.settings as Record<string, any>)
+        ? (user.settings as Record<string, unknown>)
         : {};
 
     const updates: Record<string, any> = {};
@@ -165,12 +165,12 @@ router.get('/reading-goals', authenticate, async (req: AuthRequest, res) => {
     const userId = req.userId!;
     const user = await User.findByPk(userId);
     const settings =
-      typeof (user as any)?.settings === 'object'
-        ? (user as any).settings
-        : {};
+      typeof user?.settings === 'object' && user.settings !== null
+        ? (user.settings as Record<string, unknown>)
+        : ({} as Record<string, unknown>);
 
-    const booksPerWeekGoal = settings.readingGoal || DEFAULT_SETTINGS.readingGoal;
-    const dailyReadingMinutes = settings.dailyReadingMinutes || DEFAULT_SETTINGS.dailyReadingMinutes;
+    const booksPerWeekGoal = (settings.readingGoal as number) || DEFAULT_SETTINGS.readingGoal;
+    const dailyReadingMinutes = (settings.dailyReadingMinutes as number) || DEFAULT_SETTINGS.dailyReadingMinutes;
 
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());

@@ -37,9 +37,9 @@ async function calculateStreak(userId: string): Promise<number> {
     group: [fn('DATE', col('startedAt'))],
     order: [[fn('DATE', col('startedAt')), 'DESC']],
     raw: true,
-  }) as any[];
+  }) as unknown as { day: string }[];
 
-  let days: string[] = rows.map((r: any) => r.day as string);
+  let days: string[] = rows.map((r) => r.day);
 
   // --- Fallback: use Book.lastReadAt when no sessions exist ---
   if (days.length === 0) {
@@ -50,16 +50,16 @@ async function calculateStreak(userId: string): Promise<number> {
       where: {
         userId,
         lastReadAt: {
-          [Op.ne]: null as any,
+          [Op.ne]: null as unknown as Date,
           [Op.gte]: literal("NOW() - INTERVAL '7 days'"),
         },
       },
       group: [fn('DATE', col('lastReadAt'))],
       order: [[fn('DATE', col('lastReadAt')), 'DESC']],
       raw: true,
-    }) as any[];
+    }) as unknown as { day: string }[];
 
-    days = bookDays.map((r: any) => r.day as string);
+    days = bookDays.map((r) => r.day);
   }
 
   if (days.length === 0) return 0;
@@ -362,16 +362,16 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
 
     // Books by status map
     const statusMap: Record<string, number> = { unread: 0, reading: 0, completed: 0 };
-    for (const row of booksByStatus as any[]) {
+    for (const row of booksByStatus as unknown as { status: string; count: string }[]) {
       statusMap[row.status] = parseInt(String(row.count), 10) || 0;
     }
 
     // Recent books formatted for frontend
     const recentBooksFormatted = recentBooks.map((book) => {
-      const lastRead = book.lastReadAt || (book as any).addedAt;
+      const lastRead = book.lastReadAt || book.addedAt;
       let lastReadStr = 'N/A';
       if (lastRead) {
-        const diff = Date.now() - new Date(lastRead as string).getTime();
+        const diff = Date.now() - new Date(lastRead).getTime();
         const hoursDiff = Math.floor(diff / (1000 * 60 * 60));
         if (hoursDiff < 1) lastReadStr = 'Just now';
         else if (hoursDiff < 24) lastReadStr = `${hoursDiff}h ago`;
