@@ -3,11 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';
+import { QuoteCard } from './QuoteCard';
 
 interface SelectionToolbarProps {
   text: string;
   rect: DOMRect | null;
   range: Range | null;
+  bookTitle?: string;
+  author?: string;
   onHighlight: (text: string, color: string) => void;
   onNote: (text: string, note: string) => void;
   onDismiss: () => void;
@@ -18,6 +21,8 @@ export function SelectionToolbar({
   text,
   rect,
   range,
+  bookTitle,
+  author,
   onHighlight,
   onNote,
   onDismiss,
@@ -26,6 +31,7 @@ export function SelectionToolbar({
   const [showNote, setShowNote] = useState(false);
   const [copied, setCopied] = useState(false);
   const [highlightToast, setHighlightToast] = useState(false);
+  const [showQuoteCard, setShowQuoteCard] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   // Compute position — rect is from getBoundingClientRect (viewport-relative),
@@ -143,6 +149,20 @@ export function SelectionToolbar({
 
         <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
 
+        {/* Share as Quote Card button */}
+        <button
+          onClick={() => setShowQuoteCard(true)}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          aria-label="Share as quote card"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span className="hidden sm:inline">Share</span>
+        </button>
+
+        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
+
         {/* Ask AI button */}
         {onAskAI && (
           <button
@@ -182,6 +202,16 @@ export function SelectionToolbar({
             setShowNote(false);
           }}
           onCancel={() => setShowNote(false)}
+        />
+      )}
+
+      {/* Quote Card overlay */}
+      {showQuoteCard && (
+        <QuoteCard
+          text={text}
+          bookTitle={bookTitle || ''}
+          author={author || ''}
+          onClose={() => setShowQuoteCard(false)}
         />
       )}
     </div>

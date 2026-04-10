@@ -100,6 +100,112 @@ async function calculateStreak(userId: string): Promise<number> {
 // ---------------------------------------------------------------------------
 
 /**
+ * GET /api/stats/reading-calendar
+ *
+ * Returns 30-day reading activity for the streak calendar visualization.
+ * Each entry includes: date, pages read, minutes, and whether the user met their goal.
+ */
+router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId!;
+
+    const rows = await sequelize.query<{
+      date: string;
+      pages: string;
+      minutes: string;
+    }>(
+      `SELECT
+         DATE("startedAt")::text               AS date,
+         COALESCE(SUM("pagesRead"), 0)::int     AS pages,
+         COALESCE(SUM("duration") / 60, 0)::int AS minutes
+       FROM reading_sessions
+       WHERE "userId" = $1
+         AND "startedAt" >= NOW() - INTERVAL '30 days'
+       GROUP BY DATE("startedAt")
+       ORDER BY DATE("startedAt") ASC`,
+      { bind: [userId], type: QueryTypes.SELECT },
+    );
+
+    // Build a map for quick lookup
+    const activityMap = new Map<string, { pages: number; minutes: number }>();
+    for (const row of rows) {
+      activityMap.set(row.date, {
+        pages: parseInt(String(row.pages), 10) || 0,
+        minutes: parseInt(String(row.minutes), 10) || 0,
+      });
+    }
+
+    // Fallback: if no session data, use book.lastReadAt
+    if (rows.length === 0) {
+      const recentBooks = await Book.findAll({
+        where: {
+          userId,
+          lastReadAt: {
+            [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          },
+        },
+        attributes: ['lastReadAt', 'progress', 'totalPages'],
+        raw: true,
+      });
+
+      for (const book of recentBooks) {
+        if (!book.lastReadAt) continue;
+        const dateStr = new Date(book.lastReadAt).toISOString().slice(0, 10);
+        const existing = activityMap.get(dateStr) || { pages: 0, minutes: 0 };
+        existing.pages += Math.round((Number(book.progress) / 100) * book.totalPages);
+        activityMap.set(dateStr, existing);
+      }
+    }
+
+    // Build 30-day array
+    const calendar: { date: string; pages: number; minutes: number }[] = [];
+    const now = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const entry = activityMap.get(dateStr);
+      calendar.push({
+        date: dateStr,
+        pages: entry?.pages ?? 0,
+        minutes: entry?.minutes ?? 0,
+      });
+    }
+
+    // Calculate current streak
+    const streak = await calculateStreak(userId);
+
+    // Calculate longest streak in the 30-day window
+    let longestStreak = 0;
+    let currentRun = 0;
+    for (const day of calendar) {
+      if (day.pages > 0 || day.minutes > 0) {
+        currentRun++;
+        longestStreak = Math.max(longestStreak, currentRun);
+      } else {
+        currentRun = 0;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        calendar,
+        currentStreak: streak,
+        longestStreak,
+        totalDaysActive: calendar.filter((d) => d.pages > 0 || d.minutes > 0).length,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching reading calendar:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'CALENDAR_FETCH_ERROR', message: 'Failed to fetch reading calendar' },
+    });
+  }
+});
+
+/**
  * GET /api/stats/dashboard
  *
  * Returns all aggregated reading stats needed by the dashboard page.

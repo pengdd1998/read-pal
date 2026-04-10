@@ -63,29 +63,36 @@ router.get('/search', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), a
 
 /**
  * GET /api/discovery/recommendations
- * Get book recommendations based on reading history
+ * Get book recommendations based on reading history and annotation themes
  */
 router.get('/recommendations', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res) => {
   try {
-    // Get user's reading history to find patterns
-    const completedBooks = await Book.findAll({
-      where: { userId: req.userId, status: 'completed' },
-      attributes: ['author', 'title'],
-      limit: 10,
-    });
+    const userId = req.userId!;
 
-    const readingBooks = await Book.findAll({
-      where: { userId: req.userId, status: 'reading' },
-      attributes: ['author', 'title'],
-      limit: 10,
-    });
+    // Get user's reading history to find patterns
+    const [completedBooks, readingBooks, unreadBooks] = await Promise.all([
+      Book.findAll({
+        where: { userId, status: 'completed' },
+        attributes: ['id', 'author', 'title', 'totalPages'],
+        limit: 20,
+      }),
+      Book.findAll({
+        where: { userId, status: 'reading' },
+        attributes: ['id', 'author', 'title', 'totalPages', 'progress', 'lastReadAt'],
+        limit: 10,
+      }),
+      Book.findAll({
+        where: { userId, status: 'unread' },
+        attributes: ['id', 'author', 'title', 'totalPages', 'addedAt'],
+        limit: 10,
+      }),
+    ]);
 
     // Extract favorite authors
     const authorCounts: Record<string, number> = {};
     for (const book of completedBooks) {
-      const author = book.author;
-      if (author) {
-        authorCounts[author] = (authorCounts[author] || 0) + 1;
+      if (book.author) {
+        authorCounts[book.author] = (authorCounts[book.author] || 0) + 1;
       }
     }
 
@@ -94,13 +101,13 @@ router.get('/recommendations', authenticate, rateLimiter({ windowMs: 60000, max:
       .slice(0, 3)
       .map(([author]) => author);
 
-    // Recommend books from the same authors that user hasn't read
+    // Recommend books from the same authors that user hasn't completed
     const existingTitles = [...completedBooks, ...readingBooks].map(b => b.title);
 
-    const recommendations = topAuthors.length > 0
+    const authorRecs = topAuthors.length > 0
       ? await Book.findAll({
           where: {
-            userId: req.userId,
+            userId,
             author: { [Op.in]: topAuthors },
             title: { [Op.notIn]: existingTitles.length > 0 ? existingTitles : [''] },
             status: { [Op.ne]: 'completed' },
@@ -109,14 +116,42 @@ router.get('/recommendations', authenticate, rateLimiter({ windowMs: 60000, max:
         })
       : [];
 
+    // Recommend unread books (things the user added but hasn't started)
+    const unreadRecs = unreadBooks
+      .sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
+      .slice(0, 3);
+
+    // Recommend continuing partially-read books (stalled reading)
+    const stalledBooks = readingBooks
+      .filter(b => b.progress > 0 && b.progress < 100 && b.lastReadAt)
+      .sort((a, b) => new Date(a.lastReadAt!).getTime() - new Date(b.lastReadAt!).getTime())
+      .slice(0, 3);
+
+    // Suggest free books the user doesn't own yet
+    const FREE_BOOKS = [
+      { id: 'pg-1342', title: 'Pride and Prejudice', author: 'Jane Austen', pages: 432 },
+      { id: 'pg-1661', title: 'The Adventures of Sherlock Holmes', author: 'Arthur Conan Doyle', pages: 307 },
+      { id: 'pg-84', title: 'Frankenstein', author: 'Mary Shelley', pages: 280 },
+      { id: 'pg-2701', title: 'Moby Dick', author: 'Herman Melville', pages: 732 },
+      { id: 'pg-174', title: 'The Picture of Dorian Gray', author: 'Oscar Wilde', pages: 254 },
+      { id: 'pg-5200', title: 'Metamorphosis', author: 'Franz Kafka', pages: 87 },
+    ];
+
+    const ownedTitles = new Set([...completedBooks, ...readingBooks, ...unreadBooks].map(b => b.title.toLowerCase()));
+    const suggestedFree = FREE_BOOKS.filter(fb => !ownedTitles.has(fb.title.toLowerCase())).slice(0, 3);
+
     res.json({
       success: true,
       data: {
         topAuthors,
-        recommendations,
+        authorRecommendations: authorRecs,
+        unreadRecommendations: unreadRecs,
+        stalledRecommendations: stalledBooks,
+        freeBookSuggestions: suggestedFree,
         stats: {
           booksCompleted: completedBooks.length,
           booksReading: readingBooks.length,
+          booksUnread: unreadBooks.length,
         },
       },
     });

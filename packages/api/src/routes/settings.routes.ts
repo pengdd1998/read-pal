@@ -7,7 +7,7 @@
 
 import { Router } from 'express';
 import { Op } from 'sequelize';
-import { User, Book } from '../models';
+import { User, Book, ReadingSession } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 
 const router: Router = Router();
@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS = {
   fontSize: 16,
   fontFamily: 'Inter',
   readingGoal: 2,
+  dailyReadingMinutes: 30,
   notificationsEnabled: true,
   friendPersona: 'sage',
   friendFrequency: 'normal' as const,
@@ -84,6 +85,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
       'fontSize',
       'fontFamily',
       'readingGoal',
+      'dailyReadingMinutes',
       'notificationsEnabled',
       'friendPersona',
       'friendFrequency',
@@ -156,34 +158,48 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
 /**
  * GET /api/settings/reading-goals
  *
- * Returns the user's weekly reading goal progress.
+ * Returns the user's weekly reading goal progress and daily reading time goal.
  */
 router.get('/reading-goals', authenticate, async (req: AuthRequest, res) => {
   try {
-    const user = await User.findByPk(req.userId);
+    const userId = req.userId!;
+    const user = await User.findByPk(userId);
     const settings =
       typeof (user as any)?.settings === 'object'
         ? (user as any).settings
         : {};
 
     const booksPerWeekGoal = settings.readingGoal || DEFAULT_SETTINGS.readingGoal;
+    const dailyReadingMinutes = settings.dailyReadingMinutes || DEFAULT_SETTINGS.dailyReadingMinutes;
 
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
 
-    const [completedThisWeek, booksInProgress] = await Promise.all([
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const [completedThisWeek, booksInProgress, todayMinutesResult] = await Promise.all([
       Book.count({
         where: {
-          userId: req.userId,
+          userId,
           status: 'completed',
           completedAt: { [Op.gte]: startOfWeek },
         },
       }),
       Book.count({
-        where: { userId: req.userId, status: 'reading' },
+        where: { userId, status: 'reading' },
+      }),
+      // Today's reading time from sessions
+      ReadingSession.sum('duration', {
+        where: {
+          userId,
+          startedAt: { [Op.gte]: startOfToday },
+        },
       }),
     ]);
+
+    const todayMinutes = Math.round((Number(todayMinutesResult) || 0) / 60);
 
     res.json({
       success: true,
@@ -193,6 +209,10 @@ router.get('/reading-goals', authenticate, async (req: AuthRequest, res) => {
         inProgress: booksInProgress,
         onTrack: completedThisWeek >= booksPerWeekGoal,
         remaining: Math.max(0, booksPerWeekGoal - completedThisWeek),
+        dailyGoalMinutes: dailyReadingMinutes,
+        todayMinutes,
+        dailyOnTrack: todayMinutes >= dailyReadingMinutes,
+        dailyRemaining: Math.max(0, dailyReadingMinutes - todayMinutes),
       },
     });
   } catch (error) {
