@@ -23,7 +23,7 @@ export class BookProcessor {
       epub.on('end', async () => {
         try {
           // epub.flow is the array of chapter items with id, href, title
-          const items: any[] = (epub as any).flow || [];
+          const items = ((epub as unknown as Record<string, unknown>).flow || []) as { id?: string; href?: string; title?: string }[];
           const chapters: Chapter[] = [];
           let fullContent = '';
 
@@ -34,7 +34,7 @@ export class BookProcessor {
             let text = '';
             try {
               text = await new Promise<string>((res, rej) => {
-                epub.getChapter(item.id, (err: Error | null, data: string) => {
+                epub.getChapter(item.id || '', (err: Error | null, data: string) => {
                   if (err) {
                     rej(err);
                     return;
