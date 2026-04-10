@@ -136,11 +136,12 @@ export class WebSearchTool extends BaseTool {
         return serpResults;
       }
     } catch {
-      // Intentionally swallowed – fall through to mock
+      // Search unavailable – return empty rather than fabricated results
     }
 
-    // --- Fallback: mock results for development / offline ---
-    return this.getMockResults(query, numResults);
+    // Return empty results when search is unavailable.
+    // Never return fabricated/mock URLs — integrity risk.
+    return [];
   }
 
   // --------------------------------------------------------------------------

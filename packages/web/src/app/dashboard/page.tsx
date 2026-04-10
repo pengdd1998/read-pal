@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import StreakCalendar from '@/components/dashboard/StreakCalendar';
+import { ReadingGoals } from '@/components/dashboard/ReadingGoals';
+import { OnboardingWalkthrough } from '@/components/onboarding/OnboardingWalkthrough';
 
 interface DashboardStats {
   booksRead: number;
@@ -361,6 +364,14 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Streak Calendar & Reading Goals - engagement section */}
+      {!isEmpty && !loading && (
+        <div className="mb-10 grid md:grid-cols-2 gap-6">
+          <StreakCalendar />
+          <ReadingGoals />
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-10">
         {/* Continue Reading */}
         <div className="lg:col-span-2">
@@ -493,7 +504,8 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Knowledge Graph Card */}
+          {/* Knowledge Graph Card — only show once user has discovered concepts */}
+          {stats && stats.conceptsLearned > 0 && (
           <Link
             href="/knowledge"
             className="block card mt-4 bg-gradient-to-br from-violet-50/50 to-primary-50/50 dark:from-violet-950/20 dark:to-primary-950/20 hover:border-violet-200 dark:hover:border-violet-800 transition-all duration-200 ease-out group animate-slide-up stagger-5"
@@ -506,6 +518,7 @@ export default function DashboardPage() {
               </p>
             </div>
           </Link>
+          )}
         </div>
       </div>
 
@@ -545,6 +558,9 @@ export default function DashboardPage() {
         )}
         <p className="mt-4 text-center text-xs text-gray-400">Pages read per day this week</p>
       </div>
+
+      {/* Onboarding walkthrough for new users */}
+      <OnboardingWalkthrough />
     </div>
   );
 }
