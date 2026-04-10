@@ -11,6 +11,41 @@ interface LibraryGridProps {
 }
 
 type StatusFilter = 'all' | 'reading' | 'completed' | 'unread';
+type SortOption = 'addedAt-desc' | 'title-asc' | 'author-asc' | 'lastReadAt-desc' | 'progress-desc';
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'addedAt-desc', label: 'Recently Added' },
+  { value: 'title-asc', label: 'Title A-Z' },
+  { value: 'author-asc', label: 'Author A-Z' },
+  { value: 'lastReadAt-desc', label: 'Last Read' },
+  { value: 'progress-desc', label: 'Progress' },
+];
+
+function sortBooks(bookList: Book[], sortOption: SortOption): Book[] {
+  const sorted = [...bookList];
+  const [field, direction] = sortOption.split('-') as [keyof Book, 'asc' | 'desc'];
+  const mult = direction === 'asc' ? 1 : -1;
+
+  sorted.sort((a, b) => {
+    const aVal = a[field];
+    const bVal = b[field];
+
+    if (field === 'progress') {
+      return mult * ((aVal as number ?? 0) - (bVal as number ?? 0));
+    }
+    if (field === 'lastReadAt' || field === 'addedAt') {
+      const aTime = aVal ? new Date(aVal as string | Date).getTime() : 0;
+      const bTime = bVal ? new Date(bVal as string | Date).getTime() : 0;
+      return mult * (aTime - bTime);
+    }
+    // String fields (title, author)
+    const aStr = String(aVal ?? '').toLowerCase();
+    const bStr = String(bVal ?? '').toLowerCase();
+    return mult * aStr.localeCompare(bStr);
+  });
+
+  return sorted;
+}
 
 export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
   const [books, setBooks] = useState<Book[]>([]);
@@ -19,9 +54,10 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
   const [seeding, setSeeding] = useState(false);
   const uploaderRef = useRef<HTMLDivElement>(null);
 
-  // Search & filter
+  // Search, filter & sort
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sortOption, setSortOption] = useState<SortOption>('addedAt-desc');
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   const loadLibrary = useCallback(async () => {
@@ -72,20 +108,27 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
     }
   };
 
-  // Client-side filter (works with loaded books; no extra API calls)
-  const filteredBooks = books.filter((book) => {
-    const matchesStatus = statusFilter === 'all' || book.status === statusFilter;
-    if (!matchesStatus) return false;
+  // Client-side filter & sort (works with loaded books; no extra API calls)
+  const filteredBooks = sortBooks(
+    books.filter((book) => {
+      const matchesStatus = statusFilter === 'all' || book.status === statusFilter;
+      if (!matchesStatus) return false;
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        (book.title || '').toLowerCase().includes(q) ||
-        (book.author || '').toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesText = (book.title || '').toLowerCase().includes(q)
+          || (book.author || '').toLowerCase().includes(q);
+        const matchesTags = (book.tags || []).some((t) => t.includes(q));
+        return matchesText || matchesTags;
+      }
+      return true;
+    }),
+    sortOption,
+  );
+
+  const handleTagsChange = useCallback((id: string, newTags: string[]) => {
+    setBooks((prev) => prev.map((b) => (b.id === id ? { ...b, tags: newTags } : b)));
+  }, []);
 
   if (loading) {
     return (
@@ -201,26 +244,41 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
               )}
             </div>
 
-            {/* Status filter pills */}
-            <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
-              {([
-                ['all', 'All'],
-                ['reading', 'Reading'],
-                ['completed', 'Done'],
-                ['unread', 'Unread'],
-              ] as [StatusFilter, string][]).map(([value, label]) => (
-                <button
-                  key={value}
-                  onClick={() => setStatusFilter(value)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                    statusFilter === value
-                      ? 'bg-white dark:bg-gray-800 shadow-xs text-primary-600 dark:text-primary-400'
-                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+            {/* Status filter pills + Sort dropdown */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
+                {([
+                  ['all', 'All'],
+                  ['reading', 'Reading'],
+                  ['completed', 'Done'],
+                  ['unread', 'Unread'],
+                ] as [StatusFilter, string][]).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setStatusFilter(value)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      statusFilter === value
+                        ? 'bg-white dark:bg-gray-800 shadow-xs text-primary-600 dark:text-primary-400'
+                        : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sort dropdown */}
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as SortOption)}
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs font-medium text-gray-600 dark:text-gray-300 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all duration-200 appearance-none pr-8 bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[position:right_8px_center] bg-no-repeat"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -258,8 +316,10 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
                     status={book.status}
                     currentPage={book.currentPage || 0}
                     totalPages={book.totalPages || 0}
+                    tags={book.tags}
                     lastReadAt={book.lastReadAt}
                     onDelete={handleDeleteBook}
+                    onTagsChange={handleTagsChange}
                   />
                 </div>
               ))}

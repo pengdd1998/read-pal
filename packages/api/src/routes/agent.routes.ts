@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { body, query } from 'express-validator';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -6,6 +6,7 @@ import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
 import { AgentOrchestrator } from '../agents/orchestrator/AgentOrchestrator';
 import { WebSocketManager } from '../services/WebSocketManager';
 import { ChatMessage } from '../models/ChatMessage';
+import { chatCompletionStream } from '../services/llmClient';
 import type { StreamClient } from '../services/WebSocketManager';
 import type { OrchestratorResponse } from '../agents/orchestrator/AgentOrchestrator';
 import type { IAgent } from '../types';
@@ -153,6 +154,115 @@ router.post(
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// System prompts for each agent type (used by the streaming endpoint)
+// ---------------------------------------------------------------------------
+
+const AGENT_SYSTEM_PROMPTS: Record<string, string> = {
+  companion: `You are a Companion Agent for read-pal, an AI reading companion.
+You help readers understand text in context by explaining difficult concepts, answering questions, and providing relevant background information.
+Be friendly but professional, patient, supportive, and concise. Keep responses under 200 words unless asked for more detail.
+Never make up information. Admit when you don't know something.`,
+
+  research: `You are a Research Agent for read-pal, an AI reading companion.
+You deep-dive into topics, fact-check claims, and find cross-references. Provide thorough, well-sourced analysis.
+Be analytical, thorough, and objective. Present multiple perspectives when relevant.`,
+
+  coach: `You are a Coach Agent for read-pal, an AI reading companion.
+You help improve reading skills with exercises, vocabulary tests, and review schedules.
+Be encouraging, structured, and goal-oriented. Push the reader gently to grow.`,
+
+  synthesis: `You are a Synthesis Agent for read-pal, an AI reading companion.
+You connect ideas across the user's reading library, find themes, and create knowledge summaries.
+Be insightful, creative, and good at pattern recognition. Help the reader see the big picture.`,
+};
+
+/**
+ * @route   POST /api/agents/chat/stream
+ * @desc    Send a message to an agent and receive a streaming SSE response
+ * @access  Private
+ */
+router.post(
+  '/chat/stream',
+  rateLimiter({
+    windowMs: 60000,
+    max: 20,
+    keyGenerator: (req) => (req as AuthRequest).userId || req.ip || 'unknown',
+  }),
+  authenticate,
+  agentRateLimiter,
+  validate([
+    body('message').isLength({ max: 5000 }).withMessage('Message is required and must be at most 5000 characters'),
+    body('context').optional().isObject().withMessage('Context must be an object'),
+  ]),
+  async (req: AuthRequest, res: Response) => {
+    const { agent = 'companion', message, context } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_INPUT', message: 'Message is required and must be a string' },
+      });
+    }
+
+    // Build enriched query with reading context
+    let enrichedQuery = message;
+    if (context) {
+      const readingParts: string[] = [];
+      if (context.bookTitle) {
+        readingParts.push(`Book: "${context.bookTitle}"${context.author ? ` by ${context.author}` : ''}`);
+      }
+      if (context.currentPage !== undefined) {
+        readingParts.push(`Location: page ${context.currentPage + 1}${context.totalPages ? ` of ${context.totalPages}` : ''}`);
+      }
+      if (context.chapterContent) {
+        const plainText = String(context.chapterContent)
+          .replace(/<[^>]*>/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 3000);
+        if (plainText) {
+          readingParts.push(`Current chapter content:\n${plainText}`);
+        }
+      }
+      if (readingParts.length > 0) {
+        enrichedQuery = `[Reading Context]\n${readingParts.join('\n')}\n\n[User Question]\n${message}`;
+      }
+    }
+
+    // SSE headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    // Flush headers immediately so the client sees the connection open
+    res.flushHeaders();
+
+    const systemPrompt = AGENT_SYSTEM_PROMPTS[agent] || AGENT_SYSTEM_PROMPTS.companion;
+
+    try {
+      const stream = chatCompletionStream({
+        system: systemPrompt,
+        messages: [{ role: 'user', content: enrichedQuery }],
+      });
+
+      for await (const token of stream) {
+        res.write(`data: ${JSON.stringify({ token })}\n\n`);
+      }
+
+      res.write('data: [DONE]\n\n');
+    } catch (error) {
+      console.error('Agent chat stream error:', error);
+      res.write(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'Stream failed' })}\n\n`);
+    } finally {
+      res.end();
+    }
+  },
+);
 
 /**
  * @route   GET /api/agents/history

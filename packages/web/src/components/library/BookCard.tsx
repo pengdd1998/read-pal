@@ -14,8 +14,10 @@ interface BookCardProps {
   status: 'unread' | 'reading' | 'completed';
   currentPage: number;
   totalPages: number;
+  tags?: string[];
   lastReadAt?: Date | string;
   onDelete?: (id: string) => void;
+  onTagsChange?: (id: string, tags: string[]) => void;
 }
 
 const STATUS_CONFIG = {
@@ -33,10 +35,14 @@ export function BookCard({
   status,
   currentPage,
   totalPages,
+  tags = [],
   lastReadAt,
   onDelete,
+  onTagsChange,
 }: BookCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingTags, setEditingTags] = useState(false);
+  const [tagInput, setTagInput] = useState('');
   const router = useRouter();
   const cfg = STATUS_CONFIG[status];
 
@@ -54,6 +60,26 @@ export function BookCard({
     } catch {
       setConfirmDelete(false);
     }
+  };
+
+  const handleAddTag = async (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter') return;
+    const tag = tagInput.trim().toLowerCase();
+    if (!tag || tags.includes(tag)) { setTagInput(''); return; }
+    const newTags = [...tags, tag];
+    try {
+      await api.put(`/api/books/${id}/tags`, { tags: newTags });
+      onTagsChange?.(id, newTags);
+      setTagInput('');
+    } catch { /* silent */ }
+  };
+
+  const handleRemoveTag = async (tag: string) => {
+    const newTags = tags.filter((t) => t !== tag);
+    try {
+      await api.put(`/api/books/${id}/tags`, { tags: newTags });
+      onTagsChange?.(id, newTags);
+    } catch { /* silent */ }
   };
   const formattedDate = lastReadAt
     ? new Date(lastReadAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
@@ -123,6 +149,46 @@ export function BookCard({
           {title}
         </h3>
         <p className="text-xs text-gray-500 mb-2">{author}</p>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1 mb-2">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+            >
+              {tag}
+              {editingTags && (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveTag(tag); }}
+                  className="ml-0.5 text-amber-400 hover:text-red-500"
+                >
+                  x
+                </button>
+              )}
+            </span>
+          ))}
+          {editingTags ? (
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => { e.stopPropagation(); handleAddTag(e); }}
+              onBlur={() => setEditingTags(false)}
+              placeholder="tag..."
+              className="px-1.5 py-0.5 text-[9px] rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 w-16 focus:outline-none focus:ring-1 focus:ring-amber-400"
+              autoFocus
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            />
+          ) : (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingTags(true); }}
+              className="px-1.5 py-0.5 rounded text-[9px] text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+            >
+              + tag
+            </button>
+          )}
+        </div>
 
         {/* Status Badge */}
         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase w-fit ${cfg.ring}`}>

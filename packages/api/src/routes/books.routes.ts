@@ -15,15 +15,25 @@ const router: Router = Router();
  * GET /api/books
  * Get all books for the authenticated user
  */
+const ALLOWED_SORT_FIELDS = ['title', 'author', 'addedAt', 'lastReadAt', 'progress'] as const;
+type SortField = (typeof ALLOWED_SORT_FIELDS)[number];
+
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
     const offset = (page - 1) * limit;
 
+    const rawSort = (req.query.sort as string) || 'addedAt';
+    const sortField: SortField = (ALLOWED_SORT_FIELDS as readonly string[]).includes(rawSort)
+      ? (rawSort as SortField)
+      : 'addedAt';
+    const rawOrder = (req.query.order as string) || 'desc';
+    const order: 'ASC' | 'DESC' = rawOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
     const books = await Book.findAll({
       where: { userId: req.userId },
-      order: [['addedAt', 'DESC']],
+      order: [[sortField, order]],
       limit,
       offset,
     });
@@ -47,6 +57,81 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
         code: 'BOOKS_FETCH_ERROR',
         message: 'Failed to fetch books',
       },
+    });
+  }
+});
+
+/**
+ * GET /api/books/tags
+ * Get all unique tags for the authenticated user's library
+ */
+router.get('/tags', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const books = await Book.findAll({
+      where: { userId: req.userId },
+      attributes: ['tags'],
+    });
+
+    const tagSet = new Set<string>();
+    for (const book of books) {
+      for (const tag of (book.tags || [])) {
+        tagSet.add(tag);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: Array.from(tagSet).sort(),
+    });
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'TAGS_FETCH_ERROR', message: 'Failed to fetch tags' },
+    });
+  }
+});
+
+/**
+ * PUT /api/books/:id/tags
+ * Replace all tags on a book
+ */
+router.put('/:id/tags', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const book = await Book.findOne({
+      where: { id: req.params.id, userId: req.userId },
+    });
+
+    if (!book) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'BOOK_NOT_FOUND', message: 'Book not found' },
+      });
+    }
+
+    const { tags } = req.body;
+    if (!Array.isArray(tags)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'tags must be an array of strings' },
+      });
+    }
+
+    const sanitized = tags
+      .filter((t: unknown) => typeof t === 'string')
+      .map((t: string) => t.trim().toLowerCase())
+      .filter((t: string) => t.length > 0 && t.length <= 50)
+      .slice(0, 20);
+
+    book.tags = sanitized;
+    await book.save();
+
+    res.json({ success: true, data: book });
+  } catch (error) {
+    console.error('Error updating tags:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'TAG_UPDATE_ERROR', message: 'Failed to update tags' },
     });
   }
 });

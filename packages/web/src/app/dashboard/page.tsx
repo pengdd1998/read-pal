@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import StreakCalendar from '@/components/dashboard/StreakCalendar';
-import { ReadingGoals } from '@/components/dashboard/ReadingGoals';
 import { OnboardingWalkthrough } from '@/components/onboarding/OnboardingWalkthrough';
+import { ShareReadingCard } from '@/components/share/ReadingShareCard';
 
 interface DashboardStats {
   booksRead: number;
@@ -37,102 +36,25 @@ interface AgentInsight {
   agent: string;
   icon: string;
   message: string;
-  color: string;
 }
 
-const GETTING_STARTED_TIPS: AgentInsight[] = [
-  { agent: 'Companion', icon: '\uD83D\uDCD6', message: 'Start reading to unlock personalized insights from your AI companions.', color: 'text-teal-500' },
-  { agent: 'Research', icon: '\uD83D\uDD2C', message: 'As you read, I\'ll find connections across your library.', color: 'text-violet-500' },
-  { agent: 'Coach', icon: '\uD83C\uDFAF', message: 'Begin your reading journey and I\'ll help track your progress.', color: 'text-emerald-500' },
-  { agent: 'Synthesis', icon: '\uD83E\uDDE0', message: 'I\'ll discover patterns and build your knowledge graph as you read.', color: 'text-amber-500' },
+const INSIGHTS_POOL: AgentInsight[] = [
+  { agent: 'Companion', icon: '\uD83D\uDCD6', message: 'What surprised you most in your last reading session?' },
+  { agent: 'Research', icon: '\uD83D\uDD2C', message: 'Try connecting what you just read to something you already know.' },
+  { agent: 'Coach', icon: '\uD83C\uDFAF', message: 'Consistency beats intensity. Even 10 minutes today counts.' },
+  { agent: 'Synthesis', icon: '\uD83E\uDDE0', message: 'Revisit your highlights from last week — patterns emerge on review.' },
+  { agent: 'Friend', icon: '\uD83E\uDD1D', message: 'Reading is better together. Share a thought with your Reading Friend.' },
 ];
 
-const TIP_BORDER_COLORS: Record<string, string> = {
-  'Companion': 'border-l-teal-500 dark:border-l-teal-400',
-  'Research': 'border-l-violet-500 dark:border-l-violet-400',
-  'Coach': 'border-l-emerald-500 dark:border-l-emerald-400',
-  'Synthesis': 'border-l-amber-500 dark:border-l-amber-400',
-};
-
-function SkeletonPulse({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
+function SkeletonPulse({ className = '' }: { className?: string }) {
   return <div className={`bg-gray-100 dark:bg-gray-800 rounded animate-pulse ${className}`} />;
 }
 
-interface StatConfig {
-  icon: string;
-  gradient: string;
-  iconBg: string;
-}
-
-const STAT_STYLES: Record<string, StatConfig> = {
-  'Library': { icon: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z', gradient: 'from-teal-50/80 to-teal-100/40 dark:from-teal-950/30 dark:to-teal-900/10', iconBg: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400' },
-  'Pages': { icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', gradient: 'from-amber-50/80 to-amber-100/40 dark:from-amber-950/30 dark:to-amber-900/10', iconBg: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' },
-  'Day Streak': { icon: 'M13 10V3L4 14h7v7l9-11h-7z', gradient: 'from-orange-50/80 to-orange-100/40 dark:from-orange-950/30 dark:to-orange-900/10', iconBg: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' },
-  'In Progress': { icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', gradient: 'from-blue-50/80 to-blue-100/40 dark:from-blue-950/30 dark:to-blue-900/10', iconBg: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' },
-  'Concepts': { icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', gradient: 'from-violet-50/80 to-violet-100/40 dark:from-violet-950/30 dark:to-violet-900/10', iconBg: 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400' },
-  'Completed': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', gradient: 'from-emerald-50/80 to-emerald-100/40 dark:from-emerald-950/30 dark:to-emerald-900/10', iconBg: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' },
-};
-
-function AnimatedCounter({ value, label, accent = 'text-primary-600', delay }: {
-  value: number | string;
-  label: string;
-  accent?: string;
-  delay: number;
-}) {
-  const [displayed, setDisplayed] = useState(0);
-  const numValue = typeof value === 'number' ? value : 0;
-  const style = STAT_STYLES[label] ?? STAT_STYLES['Library'];
-
-  useEffect(() => {
-    if (typeof value === 'string') return;
-    const duration = 600;
-    const steps = 20;
-    const increment = numValue / steps;
-    let current = 0;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= numValue) {
-        setDisplayed(numValue);
-        clearInterval(timer);
-      } else {
-        setDisplayed(Math.floor(current));
-      }
-    }, duration / steps);
-    return () => clearInterval(timer);
-  }, [numValue, value]);
-
-  if (typeof value === 'string') {
-    return (
-      <div className={`bg-gradient-to-br ${style.gradient} rounded-2xl border border-gray-100 dark:border-gray-800 p-4 animate-slide-up stagger-${delay}`}>
-        <div className={`w-8 h-8 rounded-lg ${style.iconBg} flex items-center justify-center mb-2`}>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d={style.icon} /></svg>
-        </div>
-        <div className={`text-2xl font-bold ${accent} tabular-nums`}>{value}</div>
-        <div className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">{label}</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`bg-gradient-to-br ${style.gradient} rounded-2xl border border-gray-100 dark:border-gray-800 p-4 animate-slide-up stagger-${delay}`}>
-      <div className={`w-8 h-8 rounded-lg ${style.iconBg} flex items-center justify-center mb-2`}>
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d={style.icon} /></svg>
-      </div>
-      <div className={`text-2xl font-bold ${accent} tabular-nums animate-count-up`}>
-        {displayed.toLocaleString()}
-      </div>
-      <div className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">{label}</div>
-    </div>
-  );
-}
-
-/** Formats a date/string into a human-readable "last read X ago" label */
 function formatLastRead(lastRead: string): string {
   try {
     const date = new Date(lastRead);
     if (isNaN(date.getTime())) return lastRead;
-    const now = Date.now();
-    const diffMs = now - date.getTime();
+    const diffMs = Date.now() - date.getTime();
     const diffMin = Math.floor(diffMs / 60000);
     if (diffMin < 1) return 'Just now';
     if (diffMin < 60) return `${diffMin}m ago`;
@@ -146,38 +68,16 @@ function formatLastRead(lastRead: string): string {
   }
 }
 
-const STATS_EXPANDED_KEY = 'dashboard-stats-expanded';
-
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [agentInsights] = useState<AgentInsight[]>(GETTING_STARTED_TIPS);
   const [seeding, setSeeding] = useState(false);
-  const [statsExpanded, setStatsExpanded] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return localStorage.getItem(STATS_EXPANDED_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
 
-  const toggleStatsExpanded = () => {
-    setStatsExpanded((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(STATS_EXPANDED_KEY, String(next));
-      } catch {
-        // Ignore storage errors
-      }
-      return next;
-    });
-  };
+  const insightOfDay = INSIGHTS_POOL[new Date().getDate() % INSIGHTS_POOL.length];
 
   useEffect(() => {
     let cancelled = false;
-
     api.get<DashboardData>('/api/stats/dashboard')
       .then((res) => {
         if (!cancelled) setDashboardData((res.data as unknown as DashboardData) ?? null);
@@ -188,15 +88,14 @@ export default function DashboardPage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-
     return () => { cancelled = true; };
   }, []);
 
   const stats = dashboardData?.stats ?? null;
   const recentBooks = dashboardData?.recentBooks ?? [];
-  const weeklyActivity = dashboardData?.weeklyActivity ?? [];
-  const booksByStatus = dashboardData?.booksByStatus;
-  const isEmpty = !loading && stats !== null && stats.booksRead === 0 && stats.pagesRead === 0;
+  const currentBook = recentBooks.length > 0 ? recentBooks[0] : null;
+  const streak = stats?.readingStreak ?? 0;
+  const hasData = !loading && stats !== null && (stats.booksRead > 0 || stats.pagesRead > 0);
 
   const handleSeedSample = async () => {
     try {
@@ -213,24 +112,22 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+    <div className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-10">
       {/* Welcome */}
-      <div className="mb-8 sm:mb-10 animate-fade-in">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-          {isEmpty ? 'Welcome to read-pal' : 'Welcome back, Reader'}
+      <div className="mb-8 animate-fade-in">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+          {!hasData && !loading ? 'Welcome to read-pal' : 'Welcome back'}
         </h1>
         <p className="text-gray-500 mt-2 text-sm sm:text-base">
           {loading ? (
-            <SkeletonPulse className="w-64 h-5 inline-block" />
-          ) : isEmpty ? (
-            'Your AI-powered reading companion is ready. Let\'s get started.'
-          ) : stats && stats.readingStreak > 0 ? (
+            <SkeletonPulse className="w-48 h-5 inline-block" />
+          ) : hasData && streak > 0 ? (
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse animate-streak-glow" />
-              You&apos;re on a <strong className="text-amber-600 dark:text-amber-400">{stats.readingStreak}-day</strong> reading streak Keep it up!
+              You&apos;re on a <strong className="text-amber-600 dark:text-amber-400">{streak}-day</strong> reading streak
             </span>
           ) : (
-            'Start your reading journey today.'
+            'What will you read today?'
           )}
         </p>
       </div>
@@ -242,322 +139,188 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Stats — hidden for new users, replaced by Getting Started section */}
-      {isEmpty ? (
-        /* Getting Started cards for new users */
-        <div className="mb-8 sm:mb-12 animate-fade-in">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Getting Started</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-            {/* Card 1: Upload a book */}
-            <Link
-              href="/library"
-              className="group card hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-lg transition-all duration-200"
-            >
-              <div className="flex flex-col items-center text-center py-6">
-                <div className="w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                  <span className="text-3xl">{'\uD83D\uDCD6'}</span>
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Upload your first book</h3>
-                <p className="text-sm text-gray-500">Add an EPUB or PDF to start reading with your AI companion.</p>
-              </div>
-            </Link>
-
-            {/* Card 2: Try the AI companion */}
-            <Link
-              href="/library"
-              className="group card hover:border-teal-200 dark:hover:border-teal-800 hover:shadow-lg transition-all duration-200"
-            >
-              <div className="flex flex-col items-center text-center py-6">
-                <div className="w-14 h-14 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                  <span className="text-3xl">{'\uD83E\uDD16'}</span>
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Try the AI companion</h3>
-                <p className="text-sm text-gray-500">Chat with intelligent agents that help you understand and remember what you read.</p>
-              </div>
-            </Link>
-
-            {/* Card 3: Customize your reading */}
-            <Link
-              href="/settings"
-              className="group card hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-lg transition-all duration-200"
-            >
-              <div className="flex flex-col items-center text-center py-6">
-                <div className="w-14 h-14 rounded-2xl bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                  <span className="text-3xl">{'\u2728'}</span>
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Customize your reading</h3>
-                <p className="text-sm text-gray-500">Choose themes, fonts, and reading friend personalities that match your style.</p>
-              </div>
-            </Link>
-          </div>
-
-          {/* Quick-start: try a sample book */}
-          <div className="mt-6 card bg-gradient-to-r from-primary-50/60 to-teal-50/60 dark:from-primary-950/20 dark:to-teal-950/20 border-primary-100 dark:border-primary-900">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{'\uD83C\uDF31'}</span>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Want to explore right away?</h3>
-                  <p className="text-sm text-gray-500">Load a sample book and try all the features instantly.</p>
-                </div>
-              </div>
+      {/* ── NO ACTIVE READING: Warm welcome state ── */}
+      {!hasData && !loading ? (
+        <div className="animate-fade-in">
+          <div className="card text-center py-12 sm:py-16 mb-6">
+            <div className="text-6xl mb-4 opacity-60">{'\uD83D\uDCDA'}</div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              Your next adventure awaits
+            </h2>
+            <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+              Add a book to your library and start reading with your AI companion.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Link
+                href="/library"
+                className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200"
+              >
+                Start reading
+              </Link>
               <button
                 onClick={handleSeedSample}
                 disabled={seeding}
-                className="btn btn-primary whitespace-nowrap hover:scale-105 active:scale-95 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn hover:scale-105 active:scale-95 transition-transform duration-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {seeding ? 'Loading sample...' : 'Try a sample book'}
+                {seeding ? 'Loading...' : 'Try a sample book'}
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <div className="mb-12">
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        /* ── ACTIVE USER: 3 primary cards ── */
+        <div className="space-y-5 animate-fade-in">
+          {/* Card 1: Current Reading */}
+          <div>
+            <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+              Current Reading
+            </h2>
             {loading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="card text-center">
-                  <SkeletonPulse className="h-8 w-16 mx-auto" />
-                  <SkeletonPulse className="h-3 w-12 mx-auto mt-2" />
-                </div>
-              ))
-            ) : (
-              <>
-                <AnimatedCounter value={stats?.booksRead ?? 0} label="Library" delay={1} />
-                <AnimatedCounter value={stats?.readingStreak ?? 0} label="Day Streak" accent="text-amber-600" delay={2} />
-                <AnimatedCounter value={booksByStatus?.completed ?? 0} label="Completed" accent="text-emerald-600" delay={3} />
-              </>
-            )}
-          </div>
-
-          {/* View All Stats toggle */}
-          {!loading && (
-            <div className="flex justify-center mt-3">
-              <button
-                onClick={toggleStatsExpanded}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              >
-                {statsExpanded ? 'Show Less' : 'View All Stats'}
-                <svg
-                  className={`w-3.5 h-3.5 transition-transform duration-300 ${statsExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
-          )}
-
-          {/* Expandable extra stats */}
-          <div
-            className={`grid grid-cols-3 gap-3 sm:gap-4 overflow-hidden transition-all duration-500 ease-in-out ${
-              statsExpanded ? 'max-h-40 opacity-100 mt-4' : 'max-h-0 opacity-0'
-            }`}
-          >
-            <AnimatedCounter value={(stats?.pagesRead ?? 0).toLocaleString()} label="Pages" delay={1} />
-            <AnimatedCounter value={booksByStatus?.reading ?? 0} label="In Progress" delay={2} />
-            <AnimatedCounter value={stats?.conceptsLearned ?? 0} label="Concepts" accent="text-violet-600" delay={3} />
-          </div>
-        </div>
-      )}
-
-      {/* Streak Calendar & Reading Goals - engagement section */}
-      {!isEmpty && !loading && (
-        <div className="mb-8 sm:mb-10 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-          <StreakCalendar />
-          <ReadingGoals />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-10">
-        {/* Continue Reading */}
-        <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-4 sm:mb-5">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Continue Reading</h2>
-            {recentBooks.length > 0 && (
-              <Link href="/library" className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
-                View all
-              </Link>
-            )}
-          </div>
-
-          {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="card">
-                  <div className="flex items-center gap-4">
-                    <SkeletonPulse className="w-12 h-16 rounded-lg flex-shrink-0" />
-                    <div className="flex-1">
-                      <SkeletonPulse className="h-4 w-48 mb-2" />
-                      <SkeletonPulse className="h-3 w-32" />
-                    </div>
+              <div className="card">
+                <div className="flex items-center gap-4">
+                  <SkeletonPulse className="w-12 h-16 rounded-lg flex-shrink-0" />
+                  <div className="flex-1">
+                    <SkeletonPulse className="h-4 w-48 mb-2" />
+                    <SkeletonPulse className="h-3 w-32" />
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : isEmpty || recentBooks.length === 0 ? (
-            <div className="card text-center py-16 animate-scale-in">
-              <div className="text-6xl mb-4 opacity-50">{'\uD83D\uDCDA'}</div>
-              <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-2">
-                {isEmpty ? 'No books yet' : 'No recent reading'}
-              </h3>
-              <p className="text-sm text-gray-500 mb-1">
-                {isEmpty ? 'Your next adventure awaits' : 'Pick up where you left off'}
-              </p>
-              <p className="text-xs text-gray-400 mb-6">
-                {isEmpty ? 'Add a book to your library to get started.' : 'Open a book from your library to continue reading.'}
-              </p>
-              <div className="flex items-center justify-center gap-3">
+              </div>
+            ) : currentBook ? (
+              <Link
+                href={`/read/${currentBook.id}`}
+                className="block card group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+                    {currentBook.coverUrl ? (
+                      <img src={currentBook.coverUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                    ) : (
+                      <span className="text-white text-xl">{'\uD83D\uDCD6'}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                      {currentBook.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">{currentBook.author}</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="flex-1 max-w-[180px]">
+                        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
+                          <div
+                            className="bg-primary-500 rounded-full h-2 transition-all duration-500 ease-out"
+                            style={{ width: `${Math.min(100, currentBook.progress)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-400 tabular-nums font-medium">{currentBook.progress}%</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <span className="text-[10px] text-gray-400 whitespace-nowrap">{formatLastRead(currentBook.lastRead)}</span>
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
+                      Continue
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ) : (
+              <div className="card text-center py-10">
+                <p className="text-sm text-gray-500 mb-4">No active reading right now.</p>
                 <Link href="/library" className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
-                  {isEmpty ? 'Browse Library' : 'Go to Library'}
+                  Pick a book
                 </Link>
-                {isEmpty && (
-                  <button
-                    onClick={handleSeedSample}
-                    disabled={seeding}
-                    className="btn hover:scale-105 active:scale-95 transition-transform duration-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {seeding ? 'Loading...' : 'Try a sample book'}
-                  </button>
-                )}
+              </div>
+            )}
+          </div>
+
+          {/* Card 2: Reading Streak */}
+          <div className="card flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-orange-500 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 tabular-nums">
+                {loading ? <SkeletonPulse className="h-8 w-10 inline-block" /> : streak}
+              </div>
+              <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Day Streak</div>
+            </div>
+            {streak === 0 && !loading && (
+              <p className="text-xs text-gray-400">Read today to start your streak</p>
+            )}
+          </div>
+
+          {/* Card 3: Quick Insight */}
+          <div className="card border-l-4 border-l-primary-400 dark:border-l-primary-600">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none mt-0.5">{insightOfDay.icon}</span>
+              <div>
+                <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
+                  {insightOfDay.agent}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
+                  {insightOfDay.message}
+                </p>
               </div>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {recentBooks.map((book, i) => (
-                <Link
-                  key={book.id}
-                  href={`/read/${book.id}`}
-                  className={`block card group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 ease-out stagger-${i + 1} animate-slide-up`}
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Book cover thumbnail */}
-                    <div className="w-12 h-16 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
-                      {book.coverUrl ? (
-                        <img src={book.coverUrl} alt="" className="w-full h-full object-cover rounded-lg" />
-                      ) : (
-                        <span className="text-white text-lg">{'\uD83D\uDCD6'}</span>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 dark:text-white truncate text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                        {book.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>
-                      {/* Inline progress bar */}
-                      <div className="flex items-center gap-3 mt-1.5">
-                        <div className="flex-1 max-w-[120px]">
-                          <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
-                            <div
-                              className="bg-primary-500 rounded-full h-1.5 transition-all duration-500 ease-out"
-                              style={{ width: `${Math.min(100, book.progress)}%` }}
-                            />
-                          </div>
-                        </div>
-                        <span className="text-[10px] text-gray-400 tabular-nums">{book.progress}%</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                      {/* "Last read X ago" timestamp */}
-                      <span className="text-[10px] text-gray-400 whitespace-nowrap">{formatLastRead(book.lastRead)}</span>
-                      {/* Prominent Continue button on hover */}
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
-                        Continue
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+          </div>
         </div>
+      )}
 
-        {/* Agent Insights */}
-        <div>
-          <div className="flex items-center justify-between mb-4 sm:mb-5">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Getting Started Tips</h2>
-            <Link href="/friend" className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
-              Meet your Reading Friend &rarr;
+      {/* ── Explore More: subtle links to advanced features ── */}
+      {hasData && !loading && (
+        <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800 animate-fade-in">
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide mb-3">Explore more</p>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link
+              href="/library"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+              </svg>
+              Library
+            </Link>
+            <Link
+              href="/knowledge"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              Knowledge Graph
+            </Link>
+            <Link
+              href="/friend"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Reading Friend
+            </Link>
+            <Link
+              href="/settings"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Settings
             </Link>
           </div>
-          <div className="space-y-3">
-            {agentInsights.map((insight, i) => (
-              <div key={i} className={`card stagger-${i + 1} animate-slide-up transition-transform duration-200 hover:scale-[1.02] hover:shadow-soft border-l-4 ${TIP_BORDER_COLORS[insight.agent] ?? 'border-l-gray-400'}`}>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl leading-none mt-0.5">{insight.icon}</span>
-                  <div>
-                    <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
-                      {insight.agent}
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                      {insight.message}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
 
-          {/* Knowledge Graph Card — only show once user has discovered concepts */}
-          {stats && stats.conceptsLearned > 0 && (
-          <Link
-            href="/knowledge"
-            className="block card mt-4 bg-gradient-to-br from-violet-50/50 to-primary-50/50 dark:from-violet-950/20 dark:to-primary-950/20 hover:border-violet-200 dark:hover:border-violet-800 transition-all duration-200 ease-out group animate-slide-up stagger-5"
-          >
-            <div className="text-center">
-              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform duration-300 ease-out">{'\uD83D\uDD78'}</div>
-              <h3 className="font-bold text-gray-900 dark:text-white">Knowledge Graph</h3>
-              <p className="text-sm text-gray-500 mt-1 tabular-nums">
-                {loading ? 'Loading...' : `${stats?.conceptsLearned ?? 0} concepts discovered`}
-              </p>
-            </div>
-          </Link>
-          )}
+          {/* Share reading progress */}
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <ShareReadingCard />
+          </div>
         </div>
-      </div>
-
-      {/* Reading Activity */}
-      <div className="mt-8 sm:mt-12 card animate-slide-up overflow-hidden">
-        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Reading Activity</h2>
-        {loading ? (
-          <div className="h-48 flex items-end justify-around gap-3 px-4">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <SkeletonPulse key={i} className="w-full rounded-t" style={{ height: `${30 + (i * 8.5) % 60}%` }} />
-            ))}
-          </div>
-        ) : weeklyActivity.length === 0 ? (
-          <div className="h-48 flex items-center justify-center">
-            <p className="text-sm text-gray-400">No activity this week. Start reading to see your progress!</p>
-          </div>
-        ) : (
-          <div className="h-48 flex items-end gap-2 px-4">
-            {(() => {
-              const maxPages = Math.max(...weeklyActivity.map((e) => e.pages), 1);
-              return weeklyActivity.map((entry, i) => {
-              const heightPct = Math.max((entry.pages / maxPages) * 100, 6);
-              return (
-                <div key={entry.day} className={`flex flex-col items-center gap-2 flex-1 stagger-${i + 1} animate-slide-up`}>
-                  <span className="text-[10px] text-gray-400 tabular-nums font-medium">{entry.pages}</span>
-                  <div
-                    className="w-full bg-gradient-to-t from-primary-400/80 to-teal-600/60 dark:from-primary-600/60 dark:to-teal-400/60 rounded-t-md transition-all duration-500 ease-out hover:from-primary-500 dark:hover:from-primary-400 cursor-default"
-                    style={{ height: `${heightPct}%` }}
-                    title={`${entry.pages} pages`}
-                  />
-                  <span className="text-[10px] text-gray-400 font-medium">{entry.day}</span>
-                </div>
-              );
-            });
-            })()}
-          </div>
-        )}
-        <p className="mt-4 text-center text-xs text-gray-400">Pages read per day this week</p>
-      </div>
+      )}
 
       {/* Onboarding walkthrough for new users */}
       <OnboardingWalkthrough />
