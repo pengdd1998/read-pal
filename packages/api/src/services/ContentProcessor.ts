@@ -128,7 +128,7 @@ export class ContentProcessor {
           }
 
           const item = spine[idx];
-          epub.getChapter(item.id || '', (err, text) => {
+          epub.getChapter(item.id || '', (err: Error | null, text: string | null) => {
             if (!err && text) {
               const cleanText = this.cleanHTML(text);
               if (cleanText.trim()) {
