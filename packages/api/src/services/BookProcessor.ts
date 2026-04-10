@@ -34,12 +34,12 @@ export class BookProcessor {
             let text = '';
             try {
               text = await new Promise<string>((res, rej) => {
-                epub.getChapter(item.id || '', (err: Error | null, data: string) => {
+                epub.getChapter(item.id || '', (err: Error | null, data: string | null) => {
                   if (err) {
                     rej(err);
                     return;
                   }
-                  res(data);
+                  res(data || '');
                 });
               });
             } catch {
