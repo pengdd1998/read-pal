@@ -193,6 +193,10 @@ export function OnboardingWalkthrough() {
 
         {/* Step content */}
         <div className="px-8 pt-10 pb-6">
+          {/* Step counter */}
+          <div className="text-center text-[10px] font-semibold text-amber-500/70 uppercase tracking-widest mb-4">
+            Step {currentStep + 1} of {STEPS.length}
+          </div>
           <div
             className={`text-center transition-all duration-300 ease-out ${contentSlideClass}`}
           >
