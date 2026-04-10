@@ -5,11 +5,20 @@ declare module 'epub' {
     src: string | undefined;
   }
 
+  interface EpubMetadata {
+    title?: string;
+    creator?: string;
+    [key: string]: unknown;
+  }
+
   class EPub {
     constructor(filePath: string);
     title: string;
     creator: string;
     chapters: EpubChapter[];
+    metadata: EpubMetadata;
+    spine: { id?: string; title?: string; href?: string; order?: number }[];
+    flow: { id?: string; href?: string; title?: string }[];
 
     on(event: 'end', callback: () => void): this;
     on(event: 'error', callback: (err: Error) => void): this;
