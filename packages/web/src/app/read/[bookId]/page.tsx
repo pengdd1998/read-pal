@@ -137,6 +137,15 @@ export default function ReadPage() {
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
   const sessionStartRef = useRef<number>(Date.now());
+  const [sessionElapsed, setSessionElapsed] = useState(0);
+
+  // Update session timer every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSessionElapsed(Math.floor((Date.now() - sessionStartRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // --- Auto-hide controls after 3s of inactivity ---
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -627,6 +636,13 @@ export default function ReadPage() {
             {book.author && (
               <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{book.author}</p>
             )}
+          </div>
+          {/* Session timer */}
+          <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 ml-2 flex-shrink-0">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {Math.floor(sessionElapsed / 60)}:{String(sessionElapsed % 60).padStart(2, '0')}
           </div>
         </div>
 
