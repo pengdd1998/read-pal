@@ -410,7 +410,7 @@ export default function ChatPage() {
                   {msg.role === 'assistant' ? (
                     <div
                       className="text-sm prose-sm prose-p:my-1 prose-pre:my-1"
-                      dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(msg.content) }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderSimpleMarkdown(msg.content)) }}
                     />
                   ) : (
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
