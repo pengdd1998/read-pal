@@ -109,6 +109,9 @@ export default function BookDetailPage() {
   }
 
   const progressPct = Math.round(book.progress);
+  const estimatedMinutesLeft = book.totalPages > 0
+    ? Math.round((book.totalPages - book.currentPage) * 8) // ~8 min per chapter avg
+    : 0;
   const statusConfig = {
     unread: { label: 'Not Started', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
     reading: { label: 'Reading', color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' },
@@ -173,6 +176,11 @@ export default function BookDetailPage() {
           <span className="text-gray-500">{book.currentPage} of {book.totalPages} chapters</span>
           <span className="font-semibold text-amber-600 dark:text-amber-400">{progressPct}%</span>
         </div>
+        {book.status === 'reading' && estimatedMinutesLeft > 0 && (
+          <p className="text-xs text-gray-400 mt-2">
+            ~{estimatedMinutesLeft < 60 ? `${estimatedMinutesLeft} min` : `${Math.floor(estimatedMinutesLeft / 60)}h ${estimatedMinutesLeft % 60}m`} remaining
+          </p>
+        )}
       </div>
 
       {/* Stats grid */}

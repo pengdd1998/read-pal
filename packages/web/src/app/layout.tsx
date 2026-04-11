@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -138,7 +139,9 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <AuthProvider>
-          <AppShell>{children}</AppShell>
+          <ErrorBoundary>
+            <AppShell>{children}</AppShell>
+          </ErrorBoundary>
         </AuthProvider>
       </body>
     </html>
