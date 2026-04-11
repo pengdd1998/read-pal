@@ -34,6 +34,7 @@ export function AnnotationsSidebar({
 }: AnnotationsSidebarProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [exporting, setExporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleExport = async (format: 'markdown' | 'json') => {
     try {
@@ -68,9 +69,17 @@ export function AnnotationsSidebar({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const filtered = activeTab === 'all'
+  const filtered = (activeTab === 'all'
     ? annotations
-    : annotations.filter((a) => a.type === activeTab);
+    : annotations.filter((a) => a.type === activeTab)
+  ).filter((a) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (a.content || '').toLowerCase().includes(q) ||
+      (a.note || '').toLowerCase().includes(q)
+    );
+  });
 
   const counts = {
     all: annotations.length,
@@ -140,6 +149,15 @@ export function AnnotationsSidebar({
         </div>
 
         {/* Filter tabs */}
+        <div className="px-3 pt-3 pb-1">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search annotations..."
+            className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
+          />
+        </div>
         <div className="flex border-b border-gray-200 dark:border-gray-700 px-2">
           {TABS.map((tab) => (
             <button

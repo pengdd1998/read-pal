@@ -235,6 +235,86 @@ export default function StatsPage() {
               </div>
             </div>
           )}
+
+          {/* Activity Heatmap */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Activity</h2>
+            <div className="flex flex-wrap gap-1">
+              {(() => {
+                const days = 84; // 12 weeks
+                const cells = [];
+                for (let i = 0; i < days; i++) {
+                  const dayActivity = sessions.find((s) => {
+                    const sessionDate = new Date(s.date);
+                    const targetDate = new Date();
+                    targetDate.setDate(targetDate.getDate() - (days - 1 - i));
+                    return sessionDate.toDateString() === targetDate.toDateString();
+                  });
+                  const level = dayActivity
+                    ? dayActivity.pagesRead > 10 ? 3
+                      : dayActivity.pagesRead > 5 ? 2
+                        : 1
+                    : 0;
+                  const colors = [
+                    'bg-gray-100 dark:bg-gray-800',
+                    'bg-amber-200 dark:bg-amber-800',
+                    'bg-amber-400 dark:bg-amber-600',
+                    'bg-amber-600 dark:bg-amber-400',
+                  ];
+                  const date = new Date();
+                  date.setDate(date.getDate() - (days - 1 - i));
+                  cells.push(
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-sm ${colors[level]}`}
+                      title={`${date.toLocaleDateString()} - ${dayActivity ? `${dayActivity.pagesRead} pages` : 'No activity'}`}
+                    />,
+                  );
+                }
+                return cells;
+              })()}
+            </div>
+            <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+              <span>Less</span>
+              <div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800" />
+              <div className="w-3 h-3 rounded-sm bg-amber-200 dark:bg-amber-800" />
+              <div className="w-3 h-3 rounded-sm bg-amber-400 dark:bg-amber-600" />
+              <div className="w-3 h-3 rounded-sm bg-amber-600 dark:bg-amber-400" />
+              <span>More</span>
+            </div>
+          </div>
+
+          {/* Achievements */}
+          {stats && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+              <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Achievements</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { icon: '\uD83D\uDCD6', title: 'First Book', desc: 'Complete your first book', unlocked: (stats.booksRead || 0) >= 1 },
+                  { icon: '\uD83D\uDD25', title: 'On Fire', desc: '7-day reading streak', unlocked: (stats.readingStreak || 0) >= 7 },
+                  { icon: '\uD83D\uDCA1', title: 'Curious Mind', desc: 'Make 10 highlights', unlocked: false },
+                  { icon: '\uD83C\uDFAF', title: 'Bookworm', desc: 'Read 5 books', unlocked: (stats.booksRead || 0) >= 5 },
+                  { icon: '\u23F1\uFE0F', title: 'Deep Reader', desc: '10 hours of reading', unlocked: false },
+                  { icon: '\uD83E\uDD1D', title: 'Social Reader', desc: 'Chat with your Friend', unlocked: false },
+                  { icon: '\uD83D\uDCD3', title: 'Memory Keeper', desc: 'Generate a memory book', unlocked: false },
+                  { icon: '\uD83C\uDFC6', title: 'Champion', desc: 'Complete 10 books', unlocked: (stats.booksRead || 0) >= 10 },
+                ].map((badge) => (
+                  <div
+                    key={badge.title}
+                    className={`rounded-xl p-3 text-center transition-all ${
+                      badge.unlocked
+                        ? 'bg-gradient-to-br from-amber-50 to-teal-50 dark:from-amber-900/10 dark:to-teal-900/10 border border-amber-200 dark:border-amber-800'
+                        : 'bg-gray-50 dark:bg-gray-800/50 opacity-50'
+                    }`}
+                  >
+                    <div className={`text-2xl mb-1 ${badge.unlocked ? '' : 'grayscale'}`}>{badge.icon}</div>
+                    <div className="text-xs font-semibold text-gray-900 dark:text-white">{badge.title}</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">{badge.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
