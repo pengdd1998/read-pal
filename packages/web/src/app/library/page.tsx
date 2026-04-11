@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LibraryGrid } from '@/components/library/LibraryGrid';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 interface FreeBook {
   title: string;
@@ -14,6 +15,7 @@ interface FreeBook {
 }
 
 export default function LibraryPage() {
+  const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [suggestions, setSuggestions] = useState<FreeBook[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
@@ -25,7 +27,7 @@ export default function LibraryPage() {
           setSuggestions(res.data.books.slice(0, 6));
         }
       })
-      .catch(() => {})
+      .catch(() => { toast('Failed to load book suggestions', 'error'); })
       .finally(() => setLoadingSuggestions(false));
   }, []);
 
