@@ -351,6 +351,23 @@ export default function ReadPage() {
     }
   }, [currentChapter, chapters.length, loading]);
 
+  // Milestone detection (25%, 50%, 75%)
+  const [milestone, setMilestone] = useState<string | null>(null);
+  const shownMilestones = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (loading || chapters.length === 0) return;
+    const pct = ((currentChapter + 1) / chapters.length) * 100;
+    const milestones = [25, 50, 75];
+    for (const m of milestones) {
+      if (pct >= m && !shownMilestones.current.has(m)) {
+        shownMilestones.current.add(m);
+        setMilestone(`${m}%`);
+        setTimeout(() => setMilestone(null), 3000);
+        break;
+      }
+    }
+  }, [currentChapter, chapters.length, loading]);
+
   const loadAnnotations = useCallback(async () => {
     try {
       const result = await api.get<Annotation[]>('/api/annotations', { bookId });
@@ -1048,6 +1065,15 @@ export default function ReadPage() {
       {highlightMode && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-full bg-amber-500 text-white text-xs font-medium shadow-lg animate-fade-in">
           Highlight mode on — select text to highlight
+        </div>
+      )}
+
+      {/* Milestone toast */}
+      {milestone && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
+          <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-teal-500 text-white text-sm font-semibold shadow-lg">
+            {'\uD83C\uDF1F'} {milestone} complete!
+          </div>
         </div>
       )}
 

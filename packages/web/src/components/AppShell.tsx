@@ -93,6 +93,22 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2 sm:gap-3">
               {isAuthenticated ? (
                 <>
+                  {/* Dark mode toggle */}
+                  <button
+                    onClick={() => {
+                      const isDark = document.documentElement.classList.toggle('dark');
+                      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    }}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                    aria-label="Toggle dark mode"
+                  >
+                    <svg className="w-4 h-4 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    <svg className="w-4 h-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </button>
                   <span className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hidden sm:inline truncate max-w-[160px]">
                     {user?.name || user?.email}
                   </span>
