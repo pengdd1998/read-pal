@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
+import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { api, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -118,6 +118,17 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Memoize sanitized assistant messages to avoid re-sanitizing on every render
+  const sanitizedMessages = useMemo(() => {
+    const cache = new Map<string, string>();
+    return messages.map((msg) => {
+      if (msg.role === 'assistant' && !cache.has(msg.id)) {
+        cache.set(msg.id, DOMPurify.sanitize(renderSimpleMarkdown(msg.content)));
+      }
+      return { ...msg, sanitized: cache.get(msg.id) || '' };
+    });
+  }, [messages]);
   const pendingMessageRef = useRef<string | null>(null);
 
   // Expose imperative handle so parent can open chat with a pre-filled message
@@ -378,7 +389,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                   </div>
                 </div>
               ) : (
-                messages.map((msg) => (
+                sanitizedMessages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
                       msg.role === 'user'
@@ -388,7 +399,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                       {msg.role === 'assistant' ? (
                         <div className="text-sm prose-sm prose-p:my-1 prose-pre:my-1">
                           <div
-                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderSimpleMarkdown(msg.content)) }}
+                            dangerouslySetInnerHTML={{ __html: msg.sanitized }}
                           />
                           {msg.streaming && (
                             <span className="inline-block w-1.5 h-4 ml-0.5 bg-amber-600/60 dark:bg-amber-400/60 animate-pulse align-text-bottom" />
