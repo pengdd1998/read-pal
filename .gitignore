@@ -208,6 +208,9 @@ packages/agent-daemon/
 # Expo generated files
 .expo/
 
+# Next.js generated files
+next-env.d.ts
+
 # Compiled TypeScript output (source is .ts)
 packages/api/src/**/*.js
 packages/api/src/**/*.d.ts
