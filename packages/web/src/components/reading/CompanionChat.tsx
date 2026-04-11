@@ -2,14 +2,15 @@
 
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import DOMPurify from 'dompurify';
-import { api } from '@/lib/api';
-import { wsClient } from '@/lib/websocket';
+import { api, API_BASE_URL } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  streaming?: boolean;
 }
 
 export interface CompanionChatHandle {
@@ -44,6 +45,56 @@ function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/**
+ * Consume an SSE stream, calling onToken for each chunk.
+ * Returns an AbortController so the caller can cancel.
+ */
+function consumeSSEStream(
+  response: Response,
+  onToken: (token: string) => void,
+  onDone: () => void,
+  onError: (err: string) => void,
+): AbortController {
+  const controller = new AbortController();
+  const reader = response.body?.getReader();
+  if (!reader) { onError('No response body'); return controller; }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const processChunk = (chunk: string): void => {
+    buffer += chunk;
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith('data: ')) continue;
+      const payload = trimmed.slice(6);
+      if (payload === '[DONE]') { onDone(); return; }
+      try {
+        const parsed = JSON.parse(payload) as { token?: string; error?: string };
+        if (parsed.error) { onError(parsed.error); return; }
+        if (parsed.token) onToken(parsed.token);
+      } catch { /* ignore malformed JSON */ }
+    }
+  };
+
+  (async () => {
+    try {
+      while (!controller.signal.aborted) {
+        const result = await reader.read();
+        if (result.done) break;
+        processChunk(decoder.decode(result.value, { stream: true }));
+      }
+      onDone();
+    } catch (err) {
+      if (!controller.signal.aborted) onError(err instanceof Error ? err.message : 'Stream failed');
+    } finally { reader.releaseLock(); }
+  })();
+
+  return controller;
+}
+
 function renderSimpleMarkdown(text: string): string {
   let html = text;
   html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-200 dark:bg-gray-900 rounded p-2 my-1 overflow-x-auto text-xs"><code>$1</code></pre>');
@@ -55,10 +106,13 @@ function renderSimpleMarkdown(text: string): string {
 }
 
 export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent }, ref) {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [friendName, setFriendName] = useState<string>(DEFAULT_PERSONA.name);
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
@@ -74,30 +128,83 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     },
   }), []);
 
+  // Helper to send a message via SSE streaming
+  const sendStreamMessage = useCallback(async (msg: string) => {
+    const assistantMsgId = uid();
+    setMessages((prev) => [
+      ...prev,
+      { id: uid(), role: 'user', content: msg, timestamp: Date.now() },
+      { id: assistantMsgId, role: 'assistant', content: '', timestamp: Date.now(), streaming: true },
+    ]);
+    setLoading(true);
+    setConnecting(true);
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/agents/chat/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          message: msg,
+          context: {
+            bookId,
+            currentPage,
+            totalPages: totalPages ?? 0,
+            bookTitle: bookTitle ?? '',
+            author: author ?? '',
+            chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '',
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Server error (${response.status})`;
+        try { const errData = await response.json() as { error?: { message?: string } }; errorMsg = errData.error?.message || errorMsg; } catch { /* use default */ }
+        setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Error: ${errorMsg}`, streaming: false } : m));
+        setLoading(false);
+        setConnecting(false);
+        return;
+      }
+
+      setConnecting(false);
+      abortRef.current = consumeSSEStream(
+        response,
+        (tokenChunk: string) => {
+          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content + tokenChunk } : m));
+        },
+        () => {
+          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, streaming: false, content: m.content || "Sorry, I couldn't generate a response." } : m));
+          setLoading(false);
+          setConnecting(false);
+          abortRef.current = null;
+        },
+        (errMsg: string) => {
+          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content || `Failed: ${errMsg}`, streaming: false } : m));
+          setLoading(false);
+          setConnecting(false);
+          abortRef.current = null;
+        },
+      );
+    } catch {
+      setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: 'Failed to connect to the AI companion. Please check your connection.', streaming: false } : m));
+      setLoading(false);
+      setConnecting(false);
+    }
+  }, [bookId, currentPage, totalPages, bookTitle, author, chapterContent]);
+
   // Auto-send pending message after chat opens
   useEffect(() => {
     if (isOpen && pendingMessageRef.current && !loading) {
       const msg = pendingMessageRef.current;
       pendingMessageRef.current = null;
       setInput(msg);
-      // Use setTimeout to ensure input state is set before sending
-      setTimeout(() => {
-        setMessages((prev) => [...prev, { id: uid(), role: 'user', content: msg, timestamp: Date.now() }]);
-        setLoading(true);
-        api.post<{ content: string; agentsUsed: string[] }>('/api/agents/chat', {
-          message: msg,
-          context: { bookId, currentPage, totalPages: totalPages ?? 0, bookTitle: bookTitle ?? '', author: author ?? '', chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '' },
-        }).then((result) => {
-          const raw = result as unknown as { success: boolean; content?: string };
-          const assistantContent = raw.content ?? (result.data as { content?: string })?.content;
-          setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: assistantContent || 'Sorry, I encountered an error. Please try again.', timestamp: Date.now() }]);
-        }).catch(() => {
-          setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: 'Failed to connect to the AI companion. Please check your connection.', timestamp: Date.now() }]);
-        }).finally(() => setLoading(false));
-      }, 100);
+      setTimeout(() => sendStreamMessage(msg), 100);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, sendStreamMessage]);
 
   // Fetch friend persona from settings
   useEffect(() => {
@@ -123,7 +230,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }));
   }, []);
-  useEffect(() => { scrollToBottom(); }, [messages, loading, scrollToBottom]);
+  useEffect(() => { scrollToBottom(); }, [messages, loading, connecting, scrollToBottom]);
 
   // Load history
   useEffect(() => {
@@ -160,7 +267,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             }
           }
         }
-      } catch {} finally { if (!cancelled) setHistoryLoaded(true); }
+      } catch { toast('Failed to load chat history', 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
     };
     load();
     return () => { cancelled = true; };
@@ -168,50 +275,23 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
   useEffect(() => { setHistoryLoaded(false); setMessages([]); }, [bookId]);
 
-  // WebSocket streaming — connect only when chat is open, disconnect on close
-  useEffect(() => {
-    if (!isOpen) return;
+  // Abort stream on unmount
+  useEffect(() => { return () => { abortRef.current?.abort(); }; }, []);
 
-    const token = localStorage.getItem('auth_token');
-    if (token) wsClient.connect(token);
-
-    const handler = (msg: { type: string; content?: string }) => {
-      if (msg.type === 'token' && msg.content) {
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          if (last && last.role === 'assistant') {
-            return [...prev.slice(0, -1), { ...last, content: last.content + msg.content! }];
-          }
-          return prev;
-        });
-      }
-    };
-    const unsub = wsClient.onMessage(handler);
-
-    return () => {
-      unsub();
-      wsClient.disconnect();
-    };
-  }, [isOpen]);
+  const stopStreaming = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setMessages((prev) => prev.map((m) => m.streaming ? { ...m, streaming: false } : m));
+    setLoading(false);
+    setConnecting(false);
+  }, []);
 
   // Send
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim() || loading) return;
-    const userMessage = input.trim();
+    const msg = input.trim();
     setInput('');
-    setLoading(true);
-    setMessages((prev) => [...prev, { id: uid(), role: 'user', content: userMessage, timestamp: Date.now() }]);
-    try {
-      const result = await api.post<{ content: string; agentsUsed: string[] }>('/api/agents/chat', {
-        message: userMessage,
-        context: { bookId, currentPage, totalPages: totalPages ?? 0, bookTitle: bookTitle ?? '', author: author ?? '', chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '' },
-      });
-      const raw = result as unknown as { success: boolean; content?: string };
-      const assistantContent = raw.content ?? (result.data as { content?: string })?.content;
-      setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: assistantContent || 'Sorry, I encountered an error. Please try again.', timestamp: Date.now() }]);
-    } catch {
-      setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: 'Failed to connect to the AI companion. Please check your connection.', timestamp: Date.now() }]);
-    } finally { setLoading(false); }
+    sendStreamMessage(msg);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -306,10 +386,14 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                         : 'bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100 border border-amber-200/50 dark:border-amber-800/30 rounded-bl-md'
                     }`}>
                       {msg.role === 'assistant' ? (
-                        <div
-                          className="text-sm prose-sm prose-p:my-1 prose-pre:my-1"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderSimpleMarkdown(msg.content)) }}
-                        />
+                        <div className="text-sm prose-sm prose-p:my-1 prose-pre:my-1">
+                          <div
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderSimpleMarkdown(msg.content)) }}
+                          />
+                          {msg.streaming && (
+                            <span className="inline-block w-1.5 h-4 ml-0.5 bg-amber-600/60 dark:bg-amber-400/60 animate-pulse align-text-bottom" />
+                          )}
+                        </div>
                       ) : (
                         <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                       )}
@@ -324,6 +408,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDuration: '0.6s' }} />
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '120ms', animationDuration: '0.6s' }} />
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '240ms', animationDuration: '0.6s' }} />
+                      <span className="text-[10px] text-amber-500/80 ml-1">Thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -343,15 +428,24 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                   rows={2}
                   disabled={loading}
                 />
-                <button
-                  onClick={handleSend}
-                  disabled={loading || !input.trim()}
-                  className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 shadow-soft"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                </button>
+                {loading ? (
+                  <button
+                    onClick={stopStreaming}
+                    className="self-end shrink-0 px-3 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-medium transition-colors"
+                  >
+                    Stop
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSend}
+                    disabled={!input.trim()}
+                    className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 shadow-soft disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 interface ReadingStats {
   booksRead: number;
@@ -51,6 +52,7 @@ function getDayName(dateStr: string) {
 }
 
 export default function StatsPage() {
+  const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ export default function StatsPage() {
           setSessions(Array.isArray(sessData) ? sessData.slice(0, 30) : []);
         }
       })
-      .catch(() => setError('Failed to load stats'))
+      .catch(() => { setError('Failed to load stats'); toast('Failed to load stats', 'error'); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -214,7 +216,7 @@ export default function StatsPage() {
               <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Books Progress</h2>
               <div className="space-y-3">
                 {data.recentBooks.slice(0, 6).map((book) => (
-                  <Link key={book.id} href={`/book/${book.id}`} className="flex items-center gap-3 group">
+                  <Link key={book.id} href={`/read/${book.id}`} className="flex items-center gap-3 group">
                     <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-400/30 to-amber-600/50 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm">{'\uD83D\uDCD6'}</span>
                     </div>

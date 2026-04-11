@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ReaderView } from '@/components/reading/ReaderView';
+import { useToast } from '@/components/Toast';
 import { SelectionToolbar } from '@/components/reading/SelectionToolbar';
 import { AnnotationsSidebar } from '@/components/reading/AnnotationsSidebar';
 import { BookmarkToggle } from '@/components/reading/BookmarkToggle';
@@ -114,6 +115,7 @@ export default function ReadPage() {
   const params = useParams();
   const router = useRouter();
   const bookId = params.bookId as string;
+  const { toast } = useToast();
 
   const [book, setBook] = useState<Book | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -377,6 +379,7 @@ export default function ReadPage() {
       }
     } catch (err) {
       console.error('Failed to load annotations:', err);
+      toast('Failed to load annotations', 'error');
     }
   }, [bookId]);
 
@@ -433,6 +436,7 @@ export default function ReadPage() {
       await api.patch(`/api/books/${bookId}`, { currentPage: chapterIndex });
     } catch (err) {
       console.error('Failed to update progress:', err);
+      toast('Failed to save progress', 'error');
     }
   }, [currentChapter, bookId]);
 
@@ -467,6 +471,7 @@ export default function ReadPage() {
       }
     } catch (err) {
       console.error('Failed to add highlight:', err);
+      toast('Failed to save highlight', 'error');
     }
 
     dismissSelection();
@@ -498,6 +503,7 @@ export default function ReadPage() {
       }
     } catch (err) {
       console.error('Failed to add note:', err);
+      toast('Failed to save note', 'error');
     }
 
     dismissSelection();
@@ -555,6 +561,7 @@ export default function ReadPage() {
       setAnnotations((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
       console.error('Failed to delete annotation:', err);
+      toast('Failed to delete annotation', 'error');
     }
   };
 
