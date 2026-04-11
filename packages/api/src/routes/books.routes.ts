@@ -246,7 +246,38 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
       });
     }
 
-    const { currentPage, status } = req.body;
+    const { currentPage, status, title, author, metadata } = req.body;
+
+    // Update metadata fields (title, author)
+    if (title !== undefined) {
+      if (typeof title !== 'string' || title.trim().length === 0 || title.length > 200) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Title must be 1-200 characters' },
+        });
+      }
+      book.title = title.trim();
+    }
+
+    if (author !== undefined) {
+      if (typeof author !== 'string' || author.length > 200) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Author must be at most 200 characters' },
+        });
+      }
+      book.author = author.trim() || 'Unknown Author';
+    }
+
+    if (metadata !== undefined) {
+      if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'metadata must be an object' },
+        });
+      }
+      book.metadata = { ...(book.metadata || {}), ...metadata };
+    }
 
     const validStatuses = ['unread', 'reading', 'completed'];
     if (status !== undefined) {

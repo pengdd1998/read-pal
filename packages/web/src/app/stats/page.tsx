@@ -12,6 +12,8 @@ interface ReadingStats {
   totalTime: string;
   conceptsLearned: number;
   connections: number;
+  chatMessageCount?: number;
+  memoryBookCount?: number;
 }
 
 interface BookProgress {
@@ -292,11 +294,11 @@ export default function StatsPage() {
                 {[
                   { icon: '\uD83D\uDCD6', title: 'First Book', desc: 'Complete your first book', unlocked: (stats.booksRead || 0) >= 1 },
                   { icon: '\uD83D\uDD25', title: 'On Fire', desc: '7-day reading streak', unlocked: (stats.readingStreak || 0) >= 7 },
-                  { icon: '\uD83D\uDCA1', title: 'Curious Mind', desc: 'Make 10 highlights', unlocked: false },
+                  { icon: '\uD83D\uDCA1', title: 'Curious Mind', desc: 'Make 10 highlights', unlocked: (stats.conceptsLearned || 0) >= 10 },
                   { icon: '\uD83C\uDFAF', title: 'Bookworm', desc: 'Read 5 books', unlocked: (stats.booksRead || 0) >= 5 },
-                  { icon: '\u23F1\uFE0F', title: 'Deep Reader', desc: '10 hours of reading', unlocked: false },
-                  { icon: '\uD83E\uDD1D', title: 'Social Reader', desc: 'Chat with your Friend', unlocked: false },
-                  { icon: '\uD83D\uDCD3', title: 'Memory Keeper', desc: 'Generate a memory book', unlocked: false },
+                  { icon: '\u23F1\uFE0F', title: 'Deep Reader', desc: '10 hours of reading', unlocked: (() => { const h = stats.totalTime?.match(/(\d+)h/); return h ? parseInt(h[1]) >= 10 : false; })() },
+                  { icon: '\uD83E\uDD1D', title: 'Social Reader', desc: 'Chat with your Friend', unlocked: (stats.chatMessageCount || 0) >= 1 },
+                  { icon: '\uD83D\uDCD3', title: 'Memory Keeper', desc: 'Generate a memory book', unlocked: (stats.memoryBookCount || 0) >= 1 },
                   { icon: '\uD83C\uDFC6', title: 'Champion', desc: 'Complete 10 books', unlocked: (stats.booksRead || 0) >= 10 },
                 ].map((badge) => (
                   <div

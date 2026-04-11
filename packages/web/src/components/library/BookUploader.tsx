@@ -25,8 +25,7 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
-      formData.append('author', 'Unknown Author');
+      // Let backend extract metadata from EPUB/PDF — don't hardcode defaults
 
       const result = await api.upload<{ book: Book }>(
         '/api/upload',

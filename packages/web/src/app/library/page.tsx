@@ -1,10 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { LibraryGrid } from '@/components/library/LibraryGrid';
+import { api } from '@/lib/api';
+
+interface FreeBook {
+  title: string;
+  author: string;
+  coverUrl?: string;
+  subjects?: string[];
+  downloadUrl?: string;
+}
 
 export default function LibraryPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [suggestions, setSuggestions] = useState<FreeBook[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+
+  useEffect(() => {
+    api.get<{ books: FreeBook[] }>('/api/discovery/free-books')
+      .then((res) => {
+        if (res.success && res.data?.books) {
+          setSuggestions(res.data.books.slice(0, 6));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSuggestions(false));
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
@@ -56,32 +79,36 @@ export default function LibraryPage() {
         <LibraryGrid viewMode={viewMode} />
       </div>
 
-      {/* Recommendations */}
-      <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Discover More</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Recommended reading based on your interests</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {[
-            { title: 'Atomic Habits', author: 'James Clear', genre: 'Self-Help' },
-            { title: 'Deep Work', author: 'Cal Newport', genre: 'Productivity' },
-            { title: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', genre: 'Psychology' },
-            { title: 'The Pragmatic Programmer', author: 'Hunt & Thomas', genre: 'Technology' },
-            { title: 'Sapiens', author: 'Yuval Harari', genre: 'History' },
-            { title: 'Meditations', author: 'Marcus Aurelius', genre: 'Philosophy' },
-          ].map((book) => (
-            <div key={book.title} className="group">
-              <div className="w-full aspect-[2/3] rounded-xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-shadow border border-gray-200/50 dark:border-gray-800/50">
-                <span className="text-3xl mb-2">{'\uD83D\uDCD6'}</span>
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{book.title}</p>
-                <p className="text-[10px] text-gray-400 mt-1">{book.author}</p>
-              </div>
-              <div className="mt-1.5 text-center">
-                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{book.genre}</span>
-              </div>
+      {/* Free books to explore */}
+      {!loadingSuggestions && suggestions.length > 0 && (
+        <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Free Books to Explore</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Classic works from Project Gutenberg</p>
             </div>
-          ))}
+            <Link href="/search" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+              Browse all
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {suggestions.map((book) => (
+              <div key={book.title} className="group">
+                <div className="w-full aspect-[2/3] rounded-xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-shadow border border-gray-200/50 dark:border-gray-800/50">
+                  <span className="text-3xl mb-2">{'\uD83D\uDCD6'}</span>
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{book.title}</p>
+                  <p className="text-[10px] text-gray-400 mt-1">{book.author}</p>
+                </div>
+                {book.subjects && book.subjects.length > 0 && (
+                  <div className="mt-1.5 text-center">
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{book.subjects[0]}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
