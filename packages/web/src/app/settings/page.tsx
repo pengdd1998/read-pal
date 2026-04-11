@@ -250,24 +250,47 @@ export default function SettingsPage() {
           </div>
           <h2 className="text-lg font-semibold">Reading Goals</h2>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
-          <label className="block text-sm font-medium mb-2">Books per week</label>
-          <div className="flex items-center gap-3">
-            <div className="flex gap-1.5">
-              {[1, 2, 3, 5, 7].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => saveSettings({ readingGoal: n })}
-                  disabled={saving}
-                  className={`w-10 h-10 rounded-xl text-sm font-medium transition-all duration-200 border ${
-                    settings.readingGoal === n
-                      ? 'bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 shadow-xs'
-                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+          <div>
+            <label className="block text-sm font-medium mb-2">Books per week</label>
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5">
+                {[1, 2, 3, 5, 7].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => saveSettings({ readingGoal: n })}
+                    disabled={saving}
+                    className={`w-10 h-10 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                      settings.readingGoal === n
+                        ? 'bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 shadow-xs'
+                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Notifications */}
+          <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium">Reading Reminders</label>
+                <p className="text-xs text-gray-400 mt-0.5">Get nudged to read daily</p>
+              </div>
+              <button
+                onClick={() => saveSettings({ notificationsEnabled: !settings.notificationsEnabled })}
+                disabled={saving}
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                  settings.notificationsEnabled ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                  settings.notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
             </div>
           </div>
         </div>
