@@ -153,6 +153,24 @@ export default function WelcomePage() {
               >
                 Go to dashboard instead
               </button>
+              {!book && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
+                      if (res.success && res.data) {
+                        const data = res.data as unknown as { book: { id: string } };
+                        router.push(`/read/${data.book.id}`);
+                      }
+                    } catch {
+                      router.push('/library');
+                    }
+                  }}
+                  className="text-sm text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors ml-4"
+                >
+                  Load a sample book
+                </button>
+              )}
             </div>
           </div>
         )}
