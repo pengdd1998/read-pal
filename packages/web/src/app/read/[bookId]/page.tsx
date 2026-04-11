@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ReaderView } from '@/components/reading/ReaderView';
 import { useToast } from '@/components/Toast';
@@ -509,9 +509,28 @@ export default function ReadPage() {
     dismissSelection();
   };
 
+  // Memoized annotation counts (prevents re-filtering every render)
+  const highlightCount = useMemo(
+    () => annotations.filter((a) => a.type === 'highlight' && a.location?.pageIndex === currentChapter).length,
+    [annotations, currentChapter],
+  );
+  const bookmarkCount = useMemo(
+    () => annotations.filter((a) => a.type === 'bookmark').length,
+    [annotations],
+  );
+  const totalHighlights = useMemo(
+    () => annotations.filter((a) => a.type === 'highlight').length,
+    [annotations],
+  );
+  const totalNotes = useMemo(
+    () => annotations.filter((a) => a.type === 'note').length,
+    [annotations],
+  );
+
   // Bookmark state
-  const isBookmarked = annotations.some(
-    (a) => a.type === 'bookmark' && a.location?.pageIndex === currentChapter,
+  const isBookmarked = useMemo(
+    () => annotations.some((a) => a.type === 'bookmark' && a.location?.pageIndex === currentChapter),
+    [annotations, currentChapter],
   );
 
   const handleToggleBookmark = async () => {
@@ -915,8 +934,8 @@ export default function ReadPage() {
               });
             }}
             highlightMode={highlightMode}
-            highlightCount={annotations.filter((a) => a.type === 'highlight' && a.location?.pageIndex === currentChapter).length}
-            bookmarkCount={annotations.filter((a) => a.type === 'bookmark').length}
+            highlightCount={highlightCount}
+            bookmarkCount={bookmarkCount}
             externalTocOpen={tocOpen}
             onTocClose={() => setTocOpen(false)}
           />
@@ -979,7 +998,7 @@ export default function ReadPage() {
           currentPage={currentChapter}
           totalPages={chapters.length}
           sessionDuration={Math.round((Date.now() - sessionStartRef.current) / 1000)}
-          highlightCount={annotations.filter((a) => a.type === 'highlight').length}
+          highlightCount={totalHighlights}
         />
       )}
 
@@ -996,11 +1015,11 @@ export default function ReadPage() {
 
             <div className="grid grid-cols-3 gap-3 mb-6">
               <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
-                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{annotations.filter((a) => a.type === 'highlight').length}</div>
+                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalHighlights}</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">Highlights</div>
               </div>
               <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
-                <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{annotations.filter((a) => a.type === 'note').length}</div>
+                <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{totalNotes}</div>
                 <div className="text-[10px] text-gray-500 mt-0.5">Notes</div>
               </div>
               <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3">

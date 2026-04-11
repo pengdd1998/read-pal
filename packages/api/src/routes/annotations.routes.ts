@@ -70,6 +70,47 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 });
 
 /**
+ * GET /api/annotations/search
+ * Search annotations by text content (server-side filtering)
+ */
+router.get('/search', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { q, bookId, type } = req.query;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+
+    if (!q || typeof q !== 'string' || q.trim().length < 1) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const search = q.trim().toLowerCase();
+    const where: Record<string, unknown> = { userId: req.userId };
+
+    if (bookId) where.bookId = bookId;
+    if (type) where.type = type;
+
+    const annotations = await Annotation.findAll({
+      where: {
+        ...where,
+        [Op.or]: [
+          { content: { [Op.iLike]: `%${search}%` } },
+          { note: { [Op.iLike]: `%${search}%` } },
+        ],
+      },
+      order: [['createdAt', 'DESC']],
+      limit,
+    });
+
+    res.json({ success: true, data: annotations });
+  } catch (error) {
+    console.error('Error searching annotations:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'ANNOTATIONS_SEARCH_ERROR', message: 'Failed to search annotations' },
+    });
+  }
+});
+
+/**
  * GET /api/annotations/:id
  * Get a specific annotation
  */
