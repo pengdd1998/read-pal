@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Create Account',
+  title: 'Join read-pal — Start Reading With Your AI Friend | Free',
   description:
-    'Create a free read-pal account and start your AI-powered reading journey today.',
+    'Create your free read-pal account and meet your AI reading companion. Upload any EPUB, get explanations, build knowledge, and remember every insight. No credit card required.',
   openGraph: {
-    title: 'Create Account | read-pal',
+    title: 'Start Reading Free — read-pal',
     description:
-      'Join read-pal — your AI reading companion that transforms passive reading into active learning.',
+      'Create a free account and meet your AI reading friend. Upload any book and start reading smarter today.',
   },
 };
 
