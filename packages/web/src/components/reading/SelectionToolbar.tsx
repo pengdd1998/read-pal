@@ -34,21 +34,21 @@ export function SelectionToolbar({
   const [showQuoteCard, setShowQuoteCard] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
-  // Compute position — rect is from getBoundingClientRect (viewport-relative),
-  // toolbar uses position:fixed so no scroll offset needed
   if (!rect || rect.width === 0) return null;
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+  // Desktop positioning
   const toolbarHeight = 44;
   const gap = 12;
   const showBelow = rect.top < window.innerHeight * 0.3;
-  const top = showBelow
-    ? rect.bottom + gap
-    : rect.top - toolbarHeight - gap;
+  const top = showBelow ? rect.bottom + gap : rect.top - toolbarHeight - gap;
+  const toolbarWidth = 420;
   const left = Math.max(
-    16,
+    8,
     Math.min(
-      rect.left + rect.width / 2 - 210,
-      window.innerWidth - 440,
+      rect.left + rect.width / 2 - toolbarWidth / 2,
+      window.innerWidth - toolbarWidth - 8,
     ),
   );
 
@@ -65,135 +65,271 @@ export function SelectionToolbar({
     }
   }, [text, onDismiss]);
 
-  const handleHighlight = useCallback((color: string) => {
-    onHighlight(text, color);
-    setHighlightToast(true);
-    setTimeout(() => {
-      setHighlightToast(false);
-    }, 1200);
-  }, [text, onHighlight]);
+  const handleHighlight = useCallback(
+    (color: string) => {
+      onHighlight(text, color);
+      setHighlightToast(true);
+      setTimeout(() => setHighlightToast(false), 1200);
+    },
+    [text, onHighlight],
+  );
 
-  // Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showNote) {
-          setShowNote(false);
-        } else {
-          onDismiss();
-        }
+        if (showNote) setShowNote(false);
+        else onDismiss();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showNote, onDismiss]);
 
-  return (
-    <div
-      ref={toolbarRef}
-      data-selection-toolbar
-      className="fixed z-50 animate-bounce-in"
-      style={{ top, left }}
-    >
-      {/* Toolbar */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
-        {/* Color dots */}
-        {ANNOTATION_COLORS.map((color) => (
-          <button
-            key={color}
-            onClick={() => handleHighlight(color)}
-            className="w-7 h-7 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
-            style={{ backgroundColor: color }}
-            aria-label={`Highlight in ${color}`}
+  // ── MOBILE: bottom sheet ──
+  if (isMobile) {
+    return (
+      <>
+        <div
+          className="fixed inset-0 z-50 bg-black/20 animate-fade-in"
+          onClick={onDismiss}
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl animate-slide-up-mobile"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mt-3 mb-2" />
+
+            {/* Text preview */}
+            <div className="px-4 pb-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 italic leading-relaxed">
+                &ldquo;{text.length > 120 ? text.slice(0, 120) + '...' : text}
+                &rdquo;
+              </p>
+            </div>
+
+            {/* Color dots */}
+            <div className="flex items-center justify-center gap-3 px-4 py-3">
+              {ANNOTATION_COLORS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => handleHighlight(color)}
+                  className="w-9 h-9 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
+                  style={{ backgroundColor: color }}
+                  aria-label={`Highlight in ${color}`}
+                />
+              ))}
+            </div>
+
+            <div className="h-px bg-gray-100 dark:bg-gray-800 mx-4" />
+
+            {/* Actions */}
+            <div className="flex items-center justify-around px-4 py-3">
+              <button
+                onClick={() => setShowNote(!showNote)}
+                className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
+                aria-label="Add note"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-medium">Note</span>
+              </button>
+
+              <button
+                onClick={handleCopy}
+                className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
+                  copied ? 'text-emerald-500' : 'text-gray-600 dark:text-gray-400'
+                }`}
+                aria-label="Copy text"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${copied ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  {copied ? (
+                    <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </div>
+                <span className="text-[10px] font-medium">{copied ? 'Copied!' : 'Copy'}</span>
+              </button>
+
+              <button
+                onClick={() => setShowQuoteCard(true)}
+                className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
+                aria-label="Share as quote card"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-medium">Share</span>
+              </button>
+
+              {onAskAI && (
+                <button
+                  onClick={() => {
+                    onAskAI(text);
+                    onDismiss();
+                  }}
+                  className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                  aria-label="Ask AI about selected text"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 flex items-center justify-center shadow-sm">
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                    Ask AI
+                  </span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {showNote && (
+          <NotePopover
+            selectedText={text}
+            onSave={(note) => {
+              onNote(text, note);
+              setShowNote(false);
+            }}
+            onCancel={() => setShowNote(false)}
           />
-        ))}
+        )}
+        {showQuoteCard && (
+          <QuoteCard
+            text={text}
+            bookTitle={bookTitle || ''}
+            author={author || ''}
+            onClose={() => setShowQuoteCard(false)}
+          />
+        )}
+      </>
+    );
+  }
 
-        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
+  // ── DESKTOP: floating toolbar ──
+  return (
+    <>
+      <div
+        ref={toolbarRef}
+        data-selection-toolbar
+        className="fixed z-50 animate-bounce-in"
+        style={{ top, left }}
+      >
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
+          {/* Color dots */}
+          {ANNOTATION_COLORS.map((color) => (
+            <button
+              key={color}
+              onClick={() => handleHighlight(color)}
+              className="w-7 h-7 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
+              style={{ backgroundColor: color }}
+              aria-label={`Highlight in ${color}`}
+            />
+          ))}
 
-        {/* Note button */}
-        <button
-          onClick={() => setShowNote(!showNote)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          aria-label="Add note"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          <span className="hidden sm:inline">Note</span>
-        </button>
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
 
-        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
+          {/* Note */}
+          <button
+            onClick={() => setShowNote(!showNote)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Add note"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span>Note</span>
+          </button>
 
-        {/* Copy button */}
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          aria-label="Copy text"
-        >
-          {copied ? (
-            <>
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
+
+          {/* Copy */}
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Copy text"
+          >
+            {copied ? (
               <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <span className="text-emerald-500">Copied!</span>
-            </>
-          ) : (
-            <>
+            ) : (
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
-              <span className="hidden sm:inline">Copy</span>
-            </>
-          )}
-        </button>
+            )}
+            <span className={copied ? 'text-emerald-500' : ''}>
+              {copied ? 'Copied!' : 'Copy'}
+            </span>
+          </button>
 
-        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
 
-        {/* Share as Quote Card button */}
-        <button
-          onClick={() => setShowQuoteCard(true)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          aria-label="Share as quote card"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
-          <span className="hidden sm:inline">Share</span>
-        </button>
-
-        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
-
-        {/* Ask AI button */}
-        {onAskAI && (
+          {/* Share */}
           <button
-            onClick={() => {
-              onAskAI(text);
-              onDismiss();
-            }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 transition-colors active:scale-95"
-            aria-label="Ask AI about selected text"
+            onClick={() => setShowQuoteCard(true)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Share as quote card"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
-            <span>Ask AI</span>
+            <span>Share</span>
           </button>
+
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
+
+          {/* Ask AI */}
+          {onAskAI && (
+            <button
+              onClick={() => {
+                onAskAI(text);
+                onDismiss();
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 transition-colors active:scale-95"
+              aria-label="Ask AI about selected text"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              <span>Ask AI</span>
+            </button>
+          )}
+        </div>
+
+        {/* Highlight toast */}
+        {highlightToast && (
+          <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 animate-bounce-in">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 text-white text-xs font-medium shadow-lg">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Highlighted!
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Highlight confirmation toast */}
-      {highlightToast && (
-        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 animate-bounce-in">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 text-white text-xs font-medium shadow-lg">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            Highlighted!
-          </div>
-        </div>
-      )}
-
-      {/* Note popover */}
       {showNote && (
         <NotePopover
           selectedText={text}
@@ -204,8 +340,6 @@ export function SelectionToolbar({
           onCancel={() => setShowNote(false)}
         />
       )}
-
-      {/* Quote Card overlay */}
       {showQuoteCard && (
         <QuoteCard
           text={text}
@@ -214,6 +348,6 @@ export function SelectionToolbar({
           onClose={() => setShowQuoteCard(false)}
         />
       )}
-    </div>
+    </>
   );
 }
