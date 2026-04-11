@@ -4,8 +4,19 @@
 
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d';
+
+/**
+ * Get JWT secret — throws at import time if not configured.
+ * This ensures the server cannot start without a proper secret.
+ */
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('FATAL: JWT_SECRET environment variable is required. Set it before starting the server.');
+  }
+  return secret;
+}
 
 /**
  * Generate a JWT token for a user
@@ -15,10 +26,10 @@ export function generateToken(userId: string): string {
     {
       userId,
     },
-    JWT_SECRET,
+    getJwtSecret(),
     {
       expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
-    }
+    },
   );
 }
 
@@ -27,7 +38,7 @@ export function generateToken(userId: string): string {
  */
 export function verifyToken(token: string): { userId: string } | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string };
     return decoded;
   } catch (error) {
     console.error('Token verification failed:', error);
