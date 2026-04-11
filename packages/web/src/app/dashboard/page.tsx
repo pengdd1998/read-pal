@@ -95,6 +95,7 @@ export default function DashboardPage() {
   const stats = dashboardData?.stats ?? null;
   const recentBooks = dashboardData?.recentBooks ?? [];
   const currentBook = recentBooks.length > 0 ? recentBooks[0] : null;
+  const activeBooks = recentBooks.filter((b) => b.progress > 0 && b.progress < 100).slice(0, 3);
   const streak = stats?.readingStreak ?? 0;
   const hasData = !loading && stats !== null && (stats.booksRead > 0 || stats.pagesRead > 0);
 
@@ -171,10 +172,10 @@ export default function DashboardPage() {
       ) : (
         /* ── ACTIVE USER: 3 primary cards ── */
         <div className="space-y-5 animate-fade-in">
-          {/* Card 1: Current Reading */}
+          {/* Card 1: Current Reading — supports multiple active books */}
           <div>
             <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-              Current Reading
+              {activeBooks.length > 1 ? 'Currently Reading' : 'Current Reading'}
             </h2>
             {loading ? (
               <div className="card">
@@ -185,6 +186,57 @@ export default function DashboardPage() {
                     <SkeletonPulse className="h-3 w-32" />
                   </div>
                 </div>
+              </div>
+            ) : activeBooks.length > 0 ? (
+              <div className="space-y-3">
+                {activeBooks.map((book, i) => (
+                  <Link
+                    key={book.id}
+                    href={`/read/${book.id}`}
+                    className={`block card group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 ${i === 0 && activeBooks.length > 1 ? 'ring-1 ring-primary-200 dark:ring-primary-800' : ''}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+                        {book.coverUrl ? (
+                          <img src={book.coverUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                        ) : (
+                          <span className="text-white text-xl">{'\uD83D\uDCD6'}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                            {book.title}
+                          </h3>
+                          {i === 0 && activeBooks.length > 1 && (
+                            <span className="text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-1.5 py-0.5 rounded-full whitespace-nowrap">Latest</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <div className="flex-1 max-w-[180px]">
+                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
+                              <div
+                                className="bg-primary-500 rounded-full h-2 transition-all duration-500 ease-out"
+                                style={{ width: `${Math.min(100, book.progress)}%` }}
+                              />
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-400 tabular-nums font-medium">{book.progress}%</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <span className="text-[10px] text-gray-400 whitespace-nowrap">{formatLastRead(book.lastRead)}</span>
+                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
+                          Continue
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
             ) : currentBook ? (
               <Link

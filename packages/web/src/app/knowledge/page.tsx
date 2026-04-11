@@ -39,6 +39,72 @@ function getNodePosition(index: number, total: number) {
   };
 }
 
+/** Simple force-directed layout for better graph positioning */
+function forceDirectedLayout(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  iterations = 60,
+): GraphNode[] {
+  if (nodes.length < 2) return nodes;
+
+  const positioned = nodes.map((n) => ({
+    ...n,
+    x: 50 + (Math.random() - 0.5) * 40,
+    y: 50 + (Math.random() - 0.5) * 40,
+  }));
+
+  const nodeMap = new Map(positioned.map((n) => [n.id, n]));
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const temp = 0.1 * (1 - iter / iterations); // Cooling
+
+    // Repulsion between all nodes
+    for (let i = 0; i < positioned.length; i++) {
+      for (let j = i + 1; j < positioned.length; j++) {
+        const a = positioned[i];
+        const b = positioned[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
+        const force = 200 / (dist * dist);
+        const fx = (dx / dist) * force * temp;
+        const fy = (dy / dist) * force * temp;
+        a.x += fx;
+        a.y += fy;
+        b.x -= fx;
+        b.y -= fy;
+      }
+    }
+
+    // Attraction along edges
+    for (const edge of edges) {
+      const src = nodeMap.get(edge.source);
+      const tgt = nodeMap.get(edge.target);
+      if (!src || !tgt) continue;
+      const dx = tgt.x - src.x;
+      const dy = tgt.y - src.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
+      const force = (dist - 25) * 0.01 * temp;
+      const fx = (dx / dist) * force;
+      const fy = (dy / dist) * force;
+      src.x += fx;
+      src.y += fy;
+      tgt.x -= fx;
+      tgt.y -= fy;
+    }
+
+    // Center gravity
+    for (const n of positioned) {
+      n.x += (50 - n.x) * 0.01 * temp;
+      n.y += (50 - n.y) * 0.01 * temp;
+      n.x = Math.max(8, Math.min(92, n.x));
+      n.y = Math.max(8, Math.min(92, n.y));
+    }
+  }
+
+  return positioned;
+}
+
 function getNodeColor(type: string) {
   if (type === 'book') return '#d97706';
   if (type === 'theme') return '#14b8a6';
@@ -68,6 +134,10 @@ export default function KnowledgePage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'graph' | 'list' | 'themes'>('list');
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [hoverNode, setHoverNode] = useState<string | null>(null);
+  const [layoutNodes, setLayoutNodes] = useState<GraphNode[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,6 +235,7 @@ export default function KnowledgePage() {
         setNodes(graphNodes);
         setEdges(graphEdges);
         setThemes(crossBookThemes);
+        setLayoutNodes(forceDirectedLayout(graphNodes, graphEdges));
       })
       .catch(() => {
         if (!cancelled) setError('Failed to load knowledge data. Please try again later.');
@@ -283,40 +354,174 @@ export default function KnowledgePage() {
 
       {/* Graph View */}
       {!isEmpty && viewMode === 'graph' && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 relative" style={{ height: '500px' }}>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 relative overflow-hidden" style={{ height: '500px' }}>
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-pulse text-gray-400">Loading graph...</div>
             </div>
           ) : (
-            <svg width="100%" height="100%" className="overflow-visible">
-              {edges.map((edge, i) => {
-                const src = nodes.find((n) => n.id === edge.source);
-                const tgt = nodes.find((n) => n.id === edge.target);
-                if (!src || !tgt) return null;
+            <>
+              <svg width="100%" height="100%" className="overflow-visible" style={{ transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`, transformOrigin: 'center center', transition: 'transform 0.1s ease-out' }}>
+                {/* Connection count badge per node */}
+                {(() => {
+                  const displayNodes = layoutNodes.length > 0 ? layoutNodes : nodes;
+                  const connectedEdges = hoverNode || selectedNode
+                    ? edges.filter((e) => e.source === (hoverNode || selectedNode) || e.target === (hoverNode || selectedNode))
+                    : edges;
+                  const connectedNodeIds = new Set<string>();
+                  if (hoverNode || selectedNode) {
+                    connectedNodeIds.add(hoverNode || selectedNode || '');
+                    for (const e of connectedEdges) {
+                      connectedNodeIds.add(e.source);
+                      connectedNodeIds.add(e.target);
+                    }
+                  }
+                  return (
+                    <>
+                      {/* Edges */}
+                      {edges.map((edge, i) => {
+                        const src = displayNodes.find((n) => n.id === edge.source);
+                        const tgt = displayNodes.find((n) => n.id === edge.target);
+                        if (!src || !tgt) return null;
+                        const isHighlighted = connectedNodeIds.has(edge.source) && connectedNodeIds.has(edge.target);
+                        return (
+                          <g key={i}>
+                            <line
+                              x1={`${src.x}%`} y1={`${src.y}%`}
+                              x2={`${tgt.x}%`} y2={`${tgt.y}%`}
+                              stroke="#d97706"
+                              strokeWidth={isHighlighted ? 3 : 1.5}
+                              strokeOpacity={isHighlighted ? 0.7 : (connectedNodeIds.size > 0 ? 0.1 : 0.3)}
+                              strokeDasharray={isHighlighted ? 'none' : '4 2'}
+                            />
+                          </g>
+                        );
+                      })}
+                      {/* Nodes */}
+                      {displayNodes.map((node) => {
+                        const size = getNodeSize(node.type);
+                        const isActive = node.id === selectedNode || node.id === hoverNode;
+                        const isConnected = connectedNodeIds.size === 0 || connectedNodeIds.has(node.id);
+                        return (
+                          <g
+                            key={node.id}
+                            onClick={() => setSelectedNode(node.id === selectedNode ? null : node.id)}
+                            onMouseEnter={() => setHoverNode(node.id)}
+                            onMouseLeave={() => setHoverNode(null)}
+                            className="cursor-pointer"
+                            style={{ opacity: isConnected ? 1 : 0.2, transition: 'opacity 0.2s' }}
+                          >
+                            {/* Glow ring on hover */}
+                            {isActive && (
+                              <circle cx={`${node.x}%`} cy={`${node.y}%`} r={size + 6} fill="none" stroke={getNodeColor(node.type)} strokeWidth="2" strokeOpacity="0.4">
+                                <animate attributeName="r" from={size} to={size + 8} dur="1.5s" repeatCount="indefinite" />
+                                <animate attributeName="stroke-opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" />
+                              </circle>
+                            )}
+                            <circle
+                              cx={`${node.x}%`} cy={`${node.y}%`}
+                              r={isActive ? size + 3 : size}
+                              fill={getNodeColor(node.type)}
+                              fillOpacity={isActive ? 0.9 : 0.65}
+                              stroke={isActive ? '#fff' : 'none'}
+                              strokeWidth="2"
+                              style={{ transition: 'r 0.2s, fill-opacity 0.2s' }}
+                            />
+                            <text
+                              x={`${node.x}%`}
+                              y={`${node.y + size + 12}%`}
+                              className="text-[11px] font-medium fill-gray-700 dark:fill-gray-300"
+                              textAnchor="middle"
+                              style={{ textShadow: isActive ? '0 0 8px rgba(255,255,255,0.9)' : 'none' }}
+                            >
+                              {node.label.length > 20 ? node.label.slice(0, 18) + '...' : node.label}
+                            </text>
+                            {/* Connection count */}
+                            {(() => {
+                              const count = edges.filter((e) => e.source === node.id || e.target === node.id).length;
+                              return count > 0 ? (
+                                <text x={`${node.x + size * 0.7}%`} y={`${node.y - size * 0.7}%`} className="text-[9px] font-bold fill-gray-400" textAnchor="middle">
+                                  {count}
+                                </text>
+                              ) : null;
+                            })()}
+                          </g>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
+              </svg>
+              {/* Zoom controls */}
+              <div className="absolute top-4 right-4 flex flex-col gap-1.5">
+                <button
+                  onClick={() => setZoom((z) => Math.min(3, z + 0.2))}
+                  className="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center justify-center text-lg font-bold shadow-sm"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => setZoom((z) => Math.max(0.4, z - 0.2))}
+                  className="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center justify-center text-lg font-bold shadow-sm"
+                >
+                  -
+                </button>
+                <button
+                  onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+                  className="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm"
+                  title="Reset view"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+              {/* Node detail tooltip */}
+              {selectedNode && (() => {
+                const displayNodes = layoutNodes.length > 0 ? layoutNodes : nodes;
+                const node = displayNodes.find((n) => n.id === selectedNode);
+                if (!node) return null;
+                const connected = edges
+                  .filter((e) => e.source === selectedNode || e.target === selectedNode)
+                  .map((e) => {
+                    const otherId = e.source === selectedNode ? e.target : e.source;
+                    const other = displayNodes.find((n) => n.id === otherId);
+                    return { id: otherId, label: other?.label || otherId, type: e.type };
+                  });
                 return (
-                  <g key={i}>
-                    <line x1={`${src.x}%`} y1={`${src.y}%`} x2={`${tgt.x}%`} y2={`${tgt.y}%`} stroke="#d97706" strokeWidth="2" strokeOpacity="0.35" />
-                    <text x={`${(src.x + tgt.x) / 2}%`} y={`${(src.y + tgt.y) / 2}%`} className="text-[10px] fill-gray-400" textAnchor="middle">{edge.type}</text>
-                  </g>
+                  <div className="absolute bottom-4 left-4 right-16 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl p-4 border border-[#f0e9e0] dark:border-gray-700 shadow-lg max-h-48 overflow-y-auto">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getNodeColor(node.type) }} />
+                      <span className="font-semibold text-[#1e3a5f] dark:text-white text-sm">{node.label}</span>
+                      <span className="text-xs text-gray-400 capitalize bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{node.type}</span>
+                      <button onClick={() => setSelectedNode(null)} className="ml-auto text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    {connected.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Connections</p>
+                        {connected.map((c) => (
+                          <div key={c.id} className="flex items-center gap-2 text-xs">
+                            <span className="text-gray-500 dark:text-gray-400">{c.label}</span>
+                            <span className="text-gray-300 dark:text-gray-600">{c.type}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
-              })}
-              {nodes.map((node) => {
-                const size = getNodeSize(node.type);
-                return (
-                  <g key={node.id} onClick={() => setSelectedNode(node.id === selectedNode ? null : node.id)} className="cursor-pointer">
-                    <circle cx={`${node.x}%`} cy={`${node.y}%`} r={size} fill={getNodeColor(node.type)} fillOpacity={selectedNode === node.id ? 0.9 : 0.6} stroke={selectedNode === node.id ? '#fff' : 'none'} strokeWidth="2" />
-                    <text x={`${node.x}%`} y={`${node.y + size + 10}%`} className="text-xs font-medium fill-gray-700 dark:fill-gray-300" textAnchor="middle">{node.label}</text>
-                  </g>
-                );
-              })}
-            </svg>
+              })()}
+              {/* Legend */}
+              <div className="absolute top-4 left-4 bg-white/90 dark:bg-gray-900/90 rounded-lg p-3 text-xs border border-[#f0e9e0] dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1"><div className="w-3 h-3 rounded-full bg-amber-600" /> Book</div>
+                <div className="flex items-center gap-2 mb-1"><div className="w-3 h-3 rounded-full bg-teal-500" /> Theme</div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-400" /> Concept</div>
+              </div>
+            </>
           )}
-          <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-900/90 rounded-lg p-3 text-xs border border-[#f0e9e0] dark:border-gray-700">
-            <div className="flex items-center gap-2 mb-1"><div className="w-3 h-3 rounded-full bg-amber-600" /> Book</div>
-            <div className="flex items-center gap-2 mb-1"><div className="w-3 h-3 rounded-full bg-teal-500" /> Theme</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-400" /> Concept</div>
-          </div>
         </div>
       )}
 
