@@ -115,7 +115,7 @@ router.post(
             agentUsed.response?.metadata?.tokensUsed as number | undefined,
           );
         }
-        wsManager!.notifyComplete(wsClient.sessionId, response.content, response.metadata);
+        wsManager!.notifyComplete(wsClient.sessionId, response.content, response.metadata as unknown as Record<string, unknown>);
       } else {
         wsManager!.notifyError(
           wsClient.sessionId,

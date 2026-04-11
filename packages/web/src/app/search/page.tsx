@@ -59,19 +59,18 @@ export default function SearchPage() {
       try {
         const [bookRes, annRes] = await Promise.all([
           api.get<Book[]>('/api/discovery/search', { q: query }),
-          api.get<any[]>('/api/annotations', { bookId: '', limit: 100 }),
+          api.get<{ id: string; content: string; note?: string; type: string; bookId: string; createdAt: string }[]>('/api/annotations', { bookId: '', limit: 100 }),
         ]);
 
         if (bookRes.success && bookRes.data) {
-          const data = bookRes.data as unknown as Book[];
-          setResults(Array.isArray(data) ? data : []);
+          setResults(Array.isArray(bookRes.data) ? bookRes.data : []);
         } else {
           setResults([]);
         }
 
         // Filter annotations by query
         if (annRes.success && annRes.data) {
-          const allAnnotations = annRes.data as unknown as any[];
+          const allAnnotations = annRes.data;
           const q = query.toLowerCase();
           const matches = allAnnotations
             .filter((a) => (a.content || '').toLowerCase().includes(q) || (a.note || '').toLowerCase().includes(q))

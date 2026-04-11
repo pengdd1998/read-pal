@@ -41,7 +41,7 @@ router.post('/check', authenticate, async (req: AuthRequest, res) => {
 
     // Get chapter boundaries from book if available
     const book = await Book.findByPk(bookId);
-    const chapterPages = (book as any)?.chapterPages || undefined;
+    const chapterPages = (book?.metadata as Record<string, unknown> | undefined)?.chapterPages as number[] | undefined;
 
     const intervention = await InterventionService.evaluate(ctx, chapterPages);
 

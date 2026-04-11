@@ -30,6 +30,7 @@ export const validate = (validations: ValidationChain[]) => {
 
 interface ValidationRule {
   type: 'required' | 'email' | 'minLength' | 'maxLength' | 'in' | 'isInt';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   message: string;
 }

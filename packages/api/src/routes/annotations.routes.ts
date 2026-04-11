@@ -23,7 +23,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
     const offset = (page - 1) * limit;
 
-    const where: any = { userId: req.userId };
+    const where: Record<string, unknown> = { userId: req.userId };
 
     if (bookId) {
       where.bookId = bookId;
