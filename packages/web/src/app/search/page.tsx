@@ -61,7 +61,7 @@ export default function SearchPage() {
       try {
         const [bookRes, annRes] = await Promise.all([
           api.get<Book[]>('/api/discovery/search', { q: query }),
-          api.get<{ id: string; content: string; note?: string; type: string; bookId: string; createdAt: string }[]>('/api/annotations', { bookId: '', limit: 100 }),
+          api.get<{ id: string; content: string; note?: string; type: string; bookId: string; createdAt: string }[]>('/api/annotations/search', { q: query, limit: 20 }),
         ]);
 
         if (bookRes.success && bookRes.data) {
@@ -70,20 +70,15 @@ export default function SearchPage() {
           setResults([]);
         }
 
-        // Filter annotations by query
         if (annRes.success && annRes.data) {
-          const allAnnotations = annRes.data;
-          const q = query.toLowerCase();
-          const matches = allAnnotations
-            .filter((a) => (a.content || '').toLowerCase().includes(q) || (a.note || '').toLowerCase().includes(q))
-            .slice(0, 10);
-          setHighlights(matches.map((a) => ({
-            id: a.id,
-            content: a.content || a.note || '',
-            type: a.type,
-            bookId: a.bookId,
-            createdAt: a.createdAt,
-          })));
+          setHighlights((annRes.data as unknown as { id: string; content: string; note?: string; type: string; bookId: string; createdAt: string }[])
+            .map((a) => ({
+              id: a.id,
+              content: a.content || a.note || '',
+              type: a.type,
+              bookId: a.bookId,
+              createdAt: a.createdAt,
+            })));
         } else {
           setHighlights([]);
         }
@@ -104,7 +99,7 @@ export default function SearchPage() {
 
   const hasResults = results.length > 0 || highlights.length > 0;
 
-  const filteredResults = filter === 'notes' ? [] : filter === 'highlights' ? [] : results;
+  const filteredResults = filter === 'highlights' || filter === 'notes' ? [] : results;
   const filteredHighlights = filter === 'books' ? [] : highlights.filter((h) => {
     if (filter === 'notes') return h.type === 'note';
     if (filter === 'highlights') return h.type === 'highlight';

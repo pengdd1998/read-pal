@@ -19,6 +19,7 @@ export default function LibraryPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [suggestions, setSuggestions] = useState<FreeBook[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     api.get<{ books: FreeBook[] }>('/api/discovery/free-books')
@@ -31,6 +32,13 @@ export default function LibraryPage() {
       .finally(() => setLoadingSuggestions(false));
   }, []);
 
+  const filteredSuggestions = searchQuery.trim()
+    ? suggestions.filter((b) =>
+        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.author.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : suggestions;
+
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
       <div className="flex justify-between items-center mb-6 sm:mb-8">
@@ -41,39 +49,78 @@ export default function LibraryPage() {
           </p>
         </div>
 
-        {/* View Toggle */}
-        <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700 animate-slide-up stagger-2">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-lg transition-all duration-200 ${
-              viewMode === 'grid'
-                ? 'bg-white dark:bg-gray-800 shadow-xs text-primary-600 dark:text-primary-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-            }`}
-            aria-label="Grid view"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
-              <rect x="1" y="1" width="6" height="6" rx="1" />
-              <rect x="9" y="1" width="6" height="6" rx="1" />
-              <rect x="1" y="9" width="6" height="6" rx="1" />
-              <rect x="9" y="9" width="6" height="6" rx="1" />
+        <div className="flex items-center gap-2">
+          {/* Quick Search */}
+          <div className="hidden sm:flex items-center bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2">
+            <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded-lg transition-all duration-200 ${
-              viewMode === 'list'
-                ? 'bg-white dark:bg-gray-800 shadow-xs text-primary-600 dark:text-primary-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-            }`}
-            aria-label="List view"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
-              <rect x="1" y="1" width="14" height="3" rx="1" />
-              <rect x="1" y="6" width="14" height="3" rx="1" />
-              <rect x="1" y="11" width="14" height="3" rx="1" />
-            </svg>
-          </button>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search library..."
+              className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none w-36 lg:w-48"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700 animate-slide-up stagger-2">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-gray-800 shadow-xs text-primary-600 dark:text-primary-400'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
+              aria-label="Grid view"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+                <rect x="1" y="1" width="6" height="6" rx="1" />
+                <rect x="9" y="1" width="6" height="6" rx="1" />
+                <rect x="1" y="9" width="6" height="6" rx="1" />
+                <rect x="9" y="9" width="6" height="6" rx="1" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                viewMode === 'list'
+                  ? 'bg-white dark:bg-gray-800 shadow-xs text-primary-600 dark:text-primary-400'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
+              aria-label="List view"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+                <rect x="1" y="1" width="14" height="3" rx="1" />
+                <rect x="1" y="6" width="14" height="3" rx="1" />
+                <rect x="1" y="11" width="14" height="3" rx="1" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile search bar */}
+      <div className="sm:hidden mb-4">
+        <div className="flex items-center bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2.5">
+          <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search library..."
+            className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none flex-1"
+          />
         </div>
       </div>
 
@@ -82,7 +129,7 @@ export default function LibraryPage() {
       </div>
 
       {/* Free books to explore */}
-      {!loadingSuggestions && suggestions.length > 0 && (
+      {!loadingSuggestions && filteredSuggestions.length > 0 && (
         <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -94,7 +141,7 @@ export default function LibraryPage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {suggestions.map((book) => (
+            {filteredSuggestions.map((book) => (
               <div key={book.title} className="group">
                 <div className="w-full aspect-[2/3] rounded-xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-shadow border border-gray-200/50 dark:border-gray-800/50">
                   <span className="text-3xl mb-2">{'\uD83D\uDCD6'}</span>

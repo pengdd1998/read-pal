@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '@/lib/api';
 
 interface UserSettings {
@@ -29,6 +29,7 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -74,6 +75,12 @@ export default function SettingsPage() {
     }
     setSaving(false);
   }
+
+  // Debounced save for slider controls (font size)
+  const debouncedSave = useCallback((updates: Partial<UserSettings>) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => saveSettings(updates), 400);
+  }, [settings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -206,7 +213,11 @@ export default function SettingsPage() {
               min="12"
               max="32"
               value={settings.fontSize}
-              onChange={(e) => saveSettings({ fontSize: parseInt(e.target.value) })}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                setSettings({ ...settings!, fontSize: val });
+                debouncedSave({ fontSize: val });
+              }}
               className="w-full accent-amber-500"
               disabled={saving}
             />
