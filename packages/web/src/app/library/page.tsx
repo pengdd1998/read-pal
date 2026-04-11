@@ -55,6 +55,33 @@ export default function LibraryPage() {
       <div className="animate-slide-up stagger-3">
         <LibraryGrid viewMode={viewMode} />
       </div>
+
+      {/* Recommendations */}
+      <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Discover More</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Recommended reading based on your interests</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {[
+            { title: 'Atomic Habits', author: 'James Clear', genre: 'Self-Help' },
+            { title: 'Deep Work', author: 'Cal Newport', genre: 'Productivity' },
+            { title: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', genre: 'Psychology' },
+            { title: 'The Pragmatic Programmer', author: 'Hunt & Thomas', genre: 'Technology' },
+            { title: 'Sapiens', author: 'Yuval Harari', genre: 'History' },
+            { title: 'Meditations', author: 'Marcus Aurelius', genre: 'Philosophy' },
+          ].map((book) => (
+            <div key={book.title} className="group">
+              <div className="w-full aspect-[2/3] rounded-xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-shadow border border-gray-200/50 dark:border-gray-800/50">
+                <span className="text-3xl mb-2">{'\uD83D\uDCD6'}</span>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{book.title}</p>
+                <p className="text-[10px] text-gray-400 mt-1">{book.author}</p>
+              </div>
+              <div className="mt-1.5 text-center">
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{book.genre}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -97,6 +97,9 @@ export default function RegisterPage() {
                 placeholder="Min. 8 characters"
                 autoComplete="new-password"
               />
+              {password.length > 0 && password.length < 8 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Password must be at least 8 characters</p>
+              )}
             </div>
 
             {error && (
