@@ -75,22 +75,32 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
     // Write buffer to temp file
     await fs.writeFile(tempPath, file.buffer);
 
-    // Extract metadata if not provided
-    let bookTitle = title;
-    let bookAuthor = author;
+    // Extract metadata from file — always try extraction for rich metadata
+    let bookTitle = title || '';
+    let bookAuthor = author || '';
     let totalPages = 0;
+    let bookMetadata: Record<string, unknown> = {};
 
-    if (!title || !author) {
-      try {
-        const metadata = await processor.extractMetadata(tempPath, fileType);
-        bookTitle = bookTitle || metadata.title || path.basename(file.originalname, ext);
-        bookAuthor = bookAuthor || metadata.author || 'Unknown Author';
-        totalPages = metadata.totalPages || 0;
-      } catch (error) {
-        console.error('Metadata extraction failed:', error);
-        bookTitle = bookTitle || path.basename(file.originalname, ext);
-        bookAuthor = bookAuthor || 'Unknown Author';
+    try {
+      const extracted = await processor.extractMetadata(tempPath, fileType);
+      bookTitle = bookTitle || extracted.title || path.basename(file.originalname, ext).replace(/[-_]+/g, ' ').trim();
+      bookAuthor = bookAuthor || extracted.author || 'Unknown Author';
+      totalPages = extracted.totalPages || 0;
+
+      // Store all extracted metadata in JSONB field
+      const metaFields: Record<string, unknown> = {};
+      if (extracted.publisher) metaFields.publisher = extracted.publisher;
+      if (extracted.language) metaFields.language = extracted.language;
+      if (extracted.description) metaFields.description = extracted.description;
+      if (extracted.isbn) metaFields.isbn = extracted.isbn;
+      if (extracted.publishedDate) metaFields.publishedDate = extracted.publishedDate;
+      if (Object.keys(metaFields).length > 0) {
+        bookMetadata = metaFields;
       }
+    } catch (error) {
+      console.error('Metadata extraction failed:', error);
+      bookTitle = bookTitle || path.basename(file.originalname, ext).replace(/[-_]+/g, ' ').trim();
+      bookAuthor = bookAuthor || 'Unknown Author';
     }
 
     // Create book record
@@ -105,6 +115,7 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
       progress: 0,
       addedAt: new Date(),
       status: 'unread',
+      metadata: Object.keys(bookMetadata).length > 0 ? bookMetadata : undefined,
     });
 
     // Process content

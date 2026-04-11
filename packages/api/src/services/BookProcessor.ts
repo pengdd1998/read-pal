@@ -116,15 +116,86 @@ export class BookProcessor {
   }
 
   /**
-   * Clean HTML and extract text
+   * Clean HTML for text extraction while preserving meaningful structure.
+   * Uses a whitelist approach: structural elements (pre, code, table, blockquote,
+   * headings, lists) are converted to readable text with formatting cues,
+   * while all other tags are stripped.
    */
   private cleanHTML(html: string): string {
-    return html
-      .replace(/<script[^>]*>.*?<\/script>/gi, '')
-      .replace(/<style[^>]*>.*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
+    // Remove script and style blocks entirely
+    let text = html
+      .replace(/<script[^>]*>.*?<\/script>/gis, '')
+      .replace(/<style[^>]*>.*?<\/style>/gis, '');
+
+    // Preserve code blocks — convert <pre><code> to indented text
+    text = text.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, (_match, content: string) => {
+      const inner = content.replace(/<code[^>]*>|<\/code>/gi, '').replace(/<br\s*\/?>/gi, '\n');
+      const decoded = this.decodeEntities(inner);
+      return '\n' + decoded.split('\n').map((line: string) => '    ' + line).join('\n') + '\n';
+    });
+
+    // Preserve inline code
+    text = text.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, (_match, content: string) => {
+      return '`' + this.decodeEntities(content) + '`';
+    });
+
+    // Preserve tables — simple text rendering
+    text = text.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_match, content: string) => {
+      const rows = content.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+      return rows.map((row: string) => {
+        const cells = row.match(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi) || [];
+        return cells.map((cell: string) => cell.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()).join(' | ');
+      }).join('\n') + '\n';
+    });
+
+    // Preserve blockquotes
+    text = text.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_match, content: string) => {
+      const inner = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      return '\n> ' + inner + '\n';
+    });
+
+    // Preserve headings
+    text = text.replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi, (_match, level: string, content: string) => {
+      const inner = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      const prefix = '#'.repeat(parseInt(level));
+      return `\n${prefix} ${inner}\n`;
+    });
+
+    // Preserve list items
+    text = text.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_match, content: string) => {
+      const inner = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      return '\n• ' + inner;
+    });
+
+    // Line breaks
+    text = text.replace(/<br\s*\/?>/gi, '\n');
+    text = text.replace(/<\/p>/gi, '\n\n');
+
+    // Strip all remaining tags
+    text = text.replace(/<[^>]+>/g, ' ');
+
+    // Clean up whitespace while preserving intentional line breaks
+    text = text
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
+
+    return text;
+  }
+
+  /**
+   * Decode common HTML entities
+   */
+  private decodeEntities(text: string): string {
+    return text
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&#x27;/g, "'")
+      .replace(/&nbsp;/g, ' ');
   }
 
   /**
@@ -150,6 +221,11 @@ export class BookProcessor {
   async extractMetadata(filePath: string, fileType: 'epub' | 'pdf'): Promise<{
     title?: string;
     author?: string;
+    publisher?: string;
+    language?: string;
+    description?: string;
+    isbn?: string;
+    publishedDate?: string;
     totalPages?: number;
   }> {
     if (fileType === 'epub') {
@@ -159,11 +235,16 @@ export class BookProcessor {
   }
 
   /**
-   * Extract EPUB metadata
+   * Extract EPUB metadata from OPF package document
    */
   private async extractEPUBMetadata(filePath: string): Promise<{
     title?: string;
     author?: string;
+    publisher?: string;
+    language?: string;
+    description?: string;
+    isbn?: string;
+    publishedDate?: string;
     totalPages?: number;
   }> {
     return new Promise((resolve, reject) => {
@@ -173,9 +254,26 @@ export class BookProcessor {
 
       epub.on('end', () => {
         const contents = (epub as any).contents || [];
+        const meta = epub.metadata || {};
+
+        // Extract ISBN from EPUB identifiers
+        let isbn: string | undefined;
+        const identifiers = (epub as any).metadata?.identifiers as Array<{ id?: string; value?: string }> | undefined;
+        if (Array.isArray(identifiers)) {
+          const isbnEntry = identifiers.find((id) =>
+            id.id?.toLowerCase().includes('isbn') || id.value?.match(/^[\d-]{10,17}$/),
+          );
+          if (isbnEntry) isbn = isbnEntry.value;
+        }
+
         resolve({
-          title: epub.metadata.title,
-          author: epub.metadata.creator,
+          title: meta.title || undefined,
+          author: meta.creator || undefined,
+          publisher: meta.publisher || undefined,
+          language: meta.language || undefined,
+          description: meta.description || meta.subject || undefined,
+          isbn,
+          publishedDate: meta.date || undefined,
           totalPages: contents.length,
         });
       });
@@ -190,9 +288,19 @@ export class BookProcessor {
   private async extractPDFMetadata(filePath: string): Promise<{
     title?: string;
     author?: string;
+    publisher?: string;
     totalPages?: number;
   }> {
-    // Basic implementation - would need pdfinfo or similar for full metadata
-    return {};
+    try {
+      const data = await pdf(await import('fs/promises').then((f) => f.readFile(filePath)));
+      return {
+        title: data.info?.Title || undefined,
+        author: data.info?.Author || undefined,
+        publisher: data.info?.Producer || undefined,
+        totalPages: data.numpages || undefined,
+      };
+    } catch {
+      return {};
+    }
   }
 }

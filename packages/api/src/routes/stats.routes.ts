@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { Op, QueryTypes, fn, col, literal } from 'sequelize';
-import { Book, Annotation, ReadingSession, sequelize } from '../models';
+import { Book, Annotation, ReadingSession, ChatMessage, MemoryBook, sequelize } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 
 const router: Router = Router();
@@ -227,6 +227,8 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
       streak,
       conceptCount,
       connectionCount,
+      chatMessageCount,
+      memoryBookCount,
     ] = await Promise.all([
       // 1. Total books in library
       Book.count({ where: { userId } }),
@@ -284,6 +286,12 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
 
       // 10. Connections: total count of all annotations
       Annotation.count({ where: { userId } }),
+
+      // 11. Chat message count
+      ChatMessage.count({ where: { userId } }),
+
+      // 12. Memory book count
+      MemoryBook.count({ where: { userId } }),
     ]);
 
     // --- Format response ---------------------------------------------------
@@ -403,6 +411,8 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
           totalTime: totalTimeStr,
           conceptsLearned: conceptCount,
           connections: connectionCount,
+          chatMessageCount: chatMessageCount || 0,
+          memoryBookCount: memoryBookCount || 0,
         },
         recentBooks: recentBooksFormatted,
         weeklyActivity: activity,
