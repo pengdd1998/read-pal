@@ -23,6 +23,8 @@ interface ReaderViewProps {
   externalTocOpen?: boolean;
   onTocClose?: () => void;
   highlightMode?: boolean;
+  highlightCount?: number;
+  bookmarkCount?: number;
 }
 
 export function ReaderView({
@@ -41,6 +43,8 @@ export function ReaderView({
   externalTocOpen,
   onTocClose,
   highlightMode: _highlightMode,
+  highlightCount = 0,
+  bookmarkCount = 0,
 }: ReaderViewProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
@@ -300,6 +304,27 @@ export function ReaderView({
               <span className="text-[10px] opacity-40 mt-0.5 truncate w-full text-center">
                 {chapters[currentPage]?.title || ''} &middot; {clampedProgress}%
               </span>
+              {/* Highlight & bookmark badges */}
+              {(highlightCount > 0 || bookmarkCount > 0) && (
+                <div className="flex items-center gap-1.5 mt-1 justify-center">
+                  {highlightCount > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500/70">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 3.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 9H10a3 3 0 013 3v1a1 1 0 102 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z" />
+                      </svg>
+                      {highlightCount}
+                    </span>
+                  )}
+                  {bookmarkCount > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] text-teal-500/70">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                      </svg>
+                      {bookmarkCount}
+                    </span>
+                  )}
+                </div>
+              )}
               <svg
                 className={`w-3 h-3 opacity-40 mt-0.5 transition-transform ${showChapterMenu ? 'rotate-180' : ''}`}
                 fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}

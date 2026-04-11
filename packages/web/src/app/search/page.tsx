@@ -30,6 +30,7 @@ export default function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
   const [recentBooks, setRecentBooks] = useState<Book[]>([]);
+  const [filter, setFilter] = useState<'all' | 'books' | 'highlights' | 'notes'>('all');
 
   // Load recent books for recommendations when no search
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function SearchPage() {
       setHighlights([]);
       setError(null);
       setSearched(false);
+      setFilter('all');
       return;
     }
 
@@ -102,6 +104,14 @@ export default function SearchPage() {
 
   const hasResults = results.length > 0 || highlights.length > 0;
 
+  const filteredResults = filter === 'notes' ? [] : filter === 'highlights' ? [] : results;
+  const filteredHighlights = filter === 'books' ? [] : highlights.filter((h) => {
+    if (filter === 'notes') return h.type === 'note';
+    if (filter === 'highlights') return h.type === 'highlight';
+    return true;
+  });
+  const filteredHasResults = filteredResults.length > 0 || filteredHighlights.length > 0;
+
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
       {/* Header */}
@@ -139,16 +149,41 @@ export default function SearchPage() {
         </div>
       )}
 
+      {/* Filter Pills */}
+      {searched && hasResults && (
+        <div className="flex gap-2 mb-5">
+          {([
+            { key: 'all' as const, label: 'All', count: results.length + highlights.length },
+            { key: 'books' as const, label: 'Books', count: results.length },
+            { key: 'highlights' as const, label: 'Highlights', count: highlights.filter((h) => h.type === 'highlight').length },
+            { key: 'notes' as const, label: 'Notes', count: highlights.filter((h) => h.type === 'note').length },
+          ]).map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === f.key
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              {f.label}
+              {f.count > 0 && <span className="ml-1 text-xs opacity-70">({f.count})</span>}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Search Results */}
       {searched ? (
-        hasResults ? (
+        filteredHasResults ? (
           <div className="space-y-6">
             {/* Book results */}
-            {results.length > 0 && (
+            {filteredResults.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Books ({results.length})</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Books ({filteredResults.length})</h2>
                 <div className="space-y-3">
-                  {results.map((book) => (
+                  {filteredResults.map((book) => (
                     <Link key={book.id} href={`/read/${book.id}`}
                       className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200">
                       <div className="flex justify-between items-center">
@@ -176,11 +211,13 @@ export default function SearchPage() {
             )}
 
             {/* Highlight/Note results */}
-            {highlights.length > 0 && (
+            {filteredHighlights.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Highlights & Notes ({highlights.length})</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  {filter === 'notes' ? 'Notes' : filter === 'highlights' ? 'Highlights' : 'Highlights & Notes'} ({filteredHighlights.length})
+                </h2>
                 <div className="space-y-2">
-                  {highlights.map((h) => (
+                  {filteredHighlights.map((h) => (
                     <Link key={h.id} href={`/read/${h.bookId}`}
                       className="block bg-amber-50/50 dark:bg-amber-900/10 rounded-xl border border-amber-200/50 dark:border-amber-800/30 p-4 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-200">
                       <div className="flex items-start gap-2">

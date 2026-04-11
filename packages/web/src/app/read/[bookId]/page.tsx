@@ -915,6 +915,8 @@ export default function ReadPage() {
               });
             }}
             highlightMode={highlightMode}
+            highlightCount={annotations.filter((a) => a.type === 'highlight' && a.location?.pageIndex === currentChapter).length}
+            bookmarkCount={annotations.filter((a) => a.type === 'bookmark').length}
             externalTocOpen={tocOpen}
             onTocClose={() => setTocOpen(false)}
           />
