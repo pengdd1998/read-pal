@@ -267,13 +267,13 @@ export class BookProcessor {
         }
 
         resolve({
-          title: meta.title || undefined,
-          author: meta.creator || undefined,
-          publisher: meta.publisher || undefined,
-          language: meta.language || undefined,
-          description: meta.description || meta.subject || undefined,
+          title: (meta.title as string) || undefined,
+          author: (meta.creator as string) || undefined,
+          publisher: (meta.publisher as string) || undefined,
+          language: (meta.language as string) || undefined,
+          description: (meta.description as string) || (meta.subject as string) || undefined,
           isbn,
-          publishedDate: meta.date || undefined,
+          publishedDate: (meta.date as string) || undefined,
           totalPages: contents.length,
         });
       });
