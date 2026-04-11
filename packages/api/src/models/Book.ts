@@ -44,7 +44,7 @@ export class Book extends Model<BookAttributes, BookCreationAttributes> implemen
   public startedAt?: Date;
   public completedAt?: Date;
   public lastReadAt?: Date;
-  public metadata?: any;
+  public metadata?: Record<string, unknown>;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }

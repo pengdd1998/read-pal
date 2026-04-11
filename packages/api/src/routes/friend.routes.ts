@@ -20,7 +20,7 @@ const router: Router = Router();
  * Sync the friendAgent's in-memory persona with the user's persisted settings.
  * Called before every friend request to handle server restarts.
  */
-async function syncPersonaFromSettings(userId: string, friendAgent: any): Promise<void> {
+async function syncPersonaFromSettings(userId: string, friendAgent: { setPersona: (userId: string, persona: ReadingFriendPersona) => void }): Promise<void> {
   try {
     const user = await User.findByPk(userId, { attributes: ['settings'] });
     if (user?.settings?.friendPersona) {

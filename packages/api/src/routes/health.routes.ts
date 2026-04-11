@@ -129,11 +129,11 @@ async function checkDatabase(): Promise<ServiceCheckResult> {
       status: 'ok',
       latencyMs: Date.now() - start,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       status: 'error',
       latencyMs: Date.now() - start,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -146,11 +146,11 @@ async function checkRedis(): Promise<ServiceCheckResult> {
       status: pong === 'PONG' ? 'ok' : 'error',
       latencyMs: Date.now() - start,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       status: 'error',
       latencyMs: Date.now() - start,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -168,11 +168,11 @@ async function checkPinecone(): Promise<ServiceCheckResult> {
       status: 'ok',
       latencyMs: Date.now() - start,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       status: 'error',
       latencyMs: Date.now() - start,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -188,11 +188,11 @@ async function checkNeo4j(): Promise<ServiceCheckResult> {
       status: serverInfo ? 'ok' : 'error',
       latencyMs: Date.now() - start,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       status: 'error',
       latencyMs: Date.now() - start,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }

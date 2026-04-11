@@ -34,8 +34,9 @@ export default function RegisterPage() {
         // Non-blocking — user can still use the app
       }
       router.push('/welcome');
-    } catch (err: any) {
-      setError(err?.response?.data?.error?.message || err?.message || 'Registration failed');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Registration failed';
+      setError(msg);
     } finally {
       setLoading(false);
     }

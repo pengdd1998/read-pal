@@ -27,7 +27,7 @@ function getKnowledgeGraph(): KnowledgeGraphService | null {
  * Helper: build a standard "not configured" response so the frontend can
  * display a graceful empty state instead of an error.
  */
-function notConfiguredResponse(res: any, partial?: Record<string, unknown>): void {
+function notConfiguredResponse(res: { json: (body: unknown) => void }, partial?: Record<string, unknown>): void {
   res.json({
     success: true,
     data: {

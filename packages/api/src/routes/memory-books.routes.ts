@@ -91,8 +91,9 @@ router.post('/:bookId/generate', authenticate, async (req: AuthRequest, res) => 
       success: true,
       data: memoryBook,
     });
-  } catch (error: any) {
-    if (error.message === 'Book not found') {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg === 'Book not found') {
       return res.status(404).json({
         success: false,
         error: {

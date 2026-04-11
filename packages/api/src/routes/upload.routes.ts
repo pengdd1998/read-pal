@@ -109,7 +109,7 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
 
     // Process content
     let content = '';
-    let chapters: any[] = [];
+    let chapters: { id: string; title: string; content: string; startIndex: number; endIndex: number; order: number }[] = [];
 
     try {
       if (fileType === 'epub') {

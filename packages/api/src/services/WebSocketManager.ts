@@ -15,7 +15,7 @@ import { verifyToken } from '../utils/auth';
 
 export interface StreamMessage {
   type: 'token' | 'agent_start' | 'agent_end' | 'complete' | 'error' | 'heartbeat';
-  data?: any;
+  data?: unknown;
   timestamp: number;
 }
 
@@ -208,7 +208,7 @@ export class WebSocketManager {
   /**
    * Broadcast full completion with final content
    */
-  notifyComplete(clientId: string, content: string, metadata?: any): void {
+  notifyComplete(clientId: string, content: string, metadata?: Record<string, unknown>): void {
     this.send(clientId, {
       type: 'complete',
       data: { content, metadata },

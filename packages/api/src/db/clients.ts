@@ -106,6 +106,7 @@ export async function createDatabaseClients(config: EnvironmentConfig): Promise<
       }
     },
     pinecone: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       upsert: async (index: string, vectors: any[]) => {
         const indexClient = pinecone.index(index);
         await indexClient.upsert(vectors);
@@ -117,6 +118,7 @@ export async function createDatabaseClients(config: EnvironmentConfig): Promise<
           topK,
           includeMetadata: true
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return queryResponse.matches?.map((match: any) => ({
           id: match.id,
           score: match.score,
@@ -134,8 +136,8 @@ export async function createDatabaseClients(config: EnvironmentConfig): Promise<
 /**
  * Close all database connections
  */
-export async function closeDatabaseClients(clients: any): Promise<void> {
+export async function closeDatabaseClients(clients: { postgres: { query?: (sql: string) => Promise<void> }; redis: { disconnect: () => Promise<void> }; pinecone?: unknown; neo4j?: { close?: () => Promise<void> } | null }): Promise<void> {
   await clients.postgres.query?.('END'); // Close pool
   await clients.redis.disconnect();
-  await clients.neo4j.close?.();
+  await clients.neo4j?.close?.();
 }

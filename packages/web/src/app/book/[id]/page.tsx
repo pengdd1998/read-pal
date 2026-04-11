@@ -39,12 +39,12 @@ export default function BookDetailPage() {
       try {
         const res = await api.get<BookData>(`/api/books/${bookId}`);
         if (res.success && res.data) {
-          setBook(res.data as unknown as BookData);
+          setBook(res.data);
         }
 
-        const annRes = await api.get<any[]>(`/api/annotations?bookId=${bookId}&limit=1000`);
+        const annRes = await api.get<{ type: string }[]>(`/api/annotations?bookId=${bookId}&limit=1000`);
         if (annRes.success && annRes.data) {
-          const annotations = annRes.data as unknown as any[];
+          const annotations = annRes.data;
           setAnnotationStats({
             highlights: annotations.filter((a) => a.type === 'highlight').length,
             notes: annotations.filter((a) => a.type === 'note').length,

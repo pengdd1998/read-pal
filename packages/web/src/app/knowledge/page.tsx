@@ -51,6 +51,15 @@ function getNodeSize(type: string) {
 
 const STAT_ITEMS = ['Concepts', 'Connections', 'Books', 'Themes'] as const;
 
+interface AnnotationItem {
+  bookId?: string;
+  book_id?: string;
+  type: string;
+  content: string;
+  color?: string;
+  note?: string;
+}
+
 export default function KnowledgePage() {
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
@@ -65,14 +74,14 @@ export default function KnowledgePage() {
 
     // Load annotations as the data source for knowledge visualization
     Promise.all([
-      api.get<any[]>('/api/annotations', { limit: 100 }),
-      api.get<any[]>('/api/books'),
+      api.get<AnnotationItem[]>('/api/annotations', { limit: 100 }),
+      api.get<{ id: string; title?: string }[]>('/api/books'),
     ])
       .then(([annotationsRes, booksRes]) => {
         if (cancelled) return;
 
-        const annotations = (annotationsRes.data as unknown as any[]) || [];
-        const books = (booksRes.data as unknown as any[]) || [];
+        const annotations = annotationsRes.data || [];
+        const books = booksRes.data || [];
 
         if (annotations.length === 0) {
           setLoading(false);
@@ -80,12 +89,12 @@ export default function KnowledgePage() {
         }
 
         // Build book lookup
-        const bookMap = new Map(books.map((b: any) => [b.id, b.title || 'Untitled']));
+        const bookMap = new Map(books.map((b) => [b.id, b.title || 'Untitled']));
 
         // Group annotations by book
         const bookGroups = new Map<string, { title: string; count: number; types: Set<string> }>();
         for (const a of annotations) {
-          const bookId = a.bookId || a.book_id;
+          const bookId = a.bookId || a.book_id || '';
           const existing = bookGroups.get(bookId) || { title: bookMap.get(bookId) || 'Unknown', count: 0, types: new Set() };
           existing.count++;
           existing.types.add(a.type);
@@ -112,7 +121,7 @@ export default function KnowledgePage() {
         for (const a of annotations) {
           if (a.color) {
             const existing = colorGroups.get(a.color) || { books: new Set(), count: 0 };
-            existing.books.add(a.bookId || a.book_id);
+            existing.books.add(a.bookId || a.book_id || '');
             existing.count++;
             colorGroups.set(a.color, existing);
           }
