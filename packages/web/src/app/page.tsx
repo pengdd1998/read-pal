@@ -202,6 +202,36 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Features Grid */}
+      <section className="max-w-5xl mx-auto px-4 py-20">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
+            Everything You Need
+          </h2>
+          <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">
+            Built for people who actually read, not just collect books.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-5">
+          {[
+            { icon: '\uD83D\uDCD6', title: 'Beautiful Reader', desc: 'EPUB reader with themes, fonts, and a reading experience designed for focus.' },
+            { icon: '\uD83E\uDD16', title: '5 AI Agents', desc: 'Companion, Research, Coach, Synthesis, and your personal Reading Friend.' },
+            { icon: '\uD83D\uDCA1', title: 'Smart Highlights', desc: 'Highlight passages and add notes. AI connects ideas across all your books.' },
+            { icon: '\uD83D\uDD78\uFE0F', title: 'Knowledge Graph', desc: 'See how concepts connect across everything you\'ve read, visualized beautifully.' },
+            { icon: '\uD83D\uDD25', title: 'Reading Streaks', desc: 'Track your daily reading habit. Streaks, stats, and activity heatmaps.' },
+            { icon: '\uD83D\uDCD3', title: 'Memory Books', desc: 'Beautiful compilations of your reading journeys with AI-extracted insights.' },
+          ].map((f) => (
+            <div key={f.title} className="flex items-start gap-4 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-shadow">
+              <span className="text-3xl flex-shrink-0">{f.icon}</span>
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-1">{f.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="relative overflow-hidden bg-gradient-to-br from-navy-700 via-navy-800 to-navy-900 dark:from-navy-900 dark:via-gray-950 dark:to-navy-900 py-24 noise-overlay">
         <div className="hero-orb hero-orb-1 opacity-30" />
