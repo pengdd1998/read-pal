@@ -20,6 +20,7 @@ export default function LibraryPage() {
   const [suggestions, setSuggestions] = useState<FreeBook[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [importing, setImporting] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<{ books: FreeBook[] }>('/api/discovery/free-books')
@@ -31,6 +32,23 @@ export default function LibraryPage() {
       .catch(() => { toast('Failed to load book suggestions', 'error'); })
       .finally(() => setLoadingSuggestions(false));
   }, []);
+
+  const handleSeedSample = async () => {
+    setImporting('sample');
+    try {
+      const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
+      if (res.success && res.data) {
+        toast('Sample book added to your library!', 'success');
+        window.dispatchEvent(new CustomEvent('library-refresh'));
+      } else {
+        toast(res.error?.message || 'Failed to add book', 'error');
+      }
+    } catch {
+      toast('Failed to add book. Please try again.', 'error');
+    } finally {
+      setImporting(null);
+    }
+  };
 
   const filteredSuggestions = searchQuery.trim()
     ? suggestions.filter((b) =>
@@ -136,18 +154,29 @@ export default function LibraryPage() {
               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Free Books to Explore</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">Classic works from Project Gutenberg</p>
             </div>
-            <Link href="/search" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
-              Browse all
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSeedSample}
+                disabled={importing === 'sample'}
+                className="text-sm font-medium px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
+              >
+                {importing === 'sample' ? 'Adding...' : 'Quick Start'}
+              </button>
+              <Link href="/search" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                Browse all
+              </Link>
+            </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {filteredSuggestions.map((book) => (
               <div key={book.title} className="group">
-                <div className="w-full aspect-[2/3] rounded-xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-shadow border border-gray-200/50 dark:border-gray-800/50">
+                <Link href={`/search?q=${encodeURIComponent(book.title)}`}
+                  className="w-full aspect-[2/3] rounded-xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-all border border-gray-200/50 dark:border-gray-800/50 block"
+                >
                   <span className="text-3xl mb-2">{'\uD83D\uDCD6'}</span>
                   <p className="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{book.title}</p>
                   <p className="text-[10px] text-gray-400 mt-1">{book.author}</p>
-                </div>
+                </Link>
                 {book.subjects && book.subjects.length > 0 && (
                   <div className="mt-1.5 text-center">
                     <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{book.subjects[0]}</span>
