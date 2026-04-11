@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Sign In',
-  description: 'Sign in to your read-pal account to continue your reading journey.',
+  title: 'Sign In — Continue Your Reading Journey',
+  description:
+    'Sign in to read-pal to continue reading with your AI companion. Your books, highlights, and conversations are waiting.',
   openGraph: {
-    title: 'Sign In | read-pal',
-    description: 'Sign in to your read-pal account to continue your reading journey.',
+    title: 'Continue Reading — read-pal',
+    description:
+      'Your AI reading friend is waiting. Sign in to pick up where you left off.',
   },
 };
 

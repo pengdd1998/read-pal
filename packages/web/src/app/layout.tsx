@@ -63,21 +63,12 @@ export const metadata: Metadata = {
     title: 'read-pal — Your AI Reading Companion',
     description:
       'Transform passive reading into active, social, and memorable learning with AI companions that read with you, explain concepts, and build your knowledge graph.',
-    images: [
-      {
-        url: `${APP_URL}/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: 'read-pal — A friend who reads with you',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'read-pal — Your AI Reading Companion',
     description:
       'Transform passive reading into active, social, and memorable learning with AI companions.',
-    images: [`${APP_URL}/og-image.png`],
   },
   robots: {
     index: true,
@@ -93,11 +84,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: APP_URL,
   },
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-  },
 };
+
 
 export default function RootLayout({
   children,
@@ -108,6 +96,45 @@ export default function RootLayout({
     <html lang="en" className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'SoftwareApplication',
+                  name: 'read-pal',
+                  description: 'AI reading companion that reads with you, explains concepts, and builds your knowledge graph.',
+                  applicationCategory: 'EducationApplication',
+                  operatingSystem: 'Web',
+                  url: APP_URL,
+                  offers: {
+                    '@type': 'Offer',
+                    price: '0',
+                    priceCurrency: 'USD',
+                    description: 'Free to start reading with your AI companion',
+                  },
+                  featureList: [
+                    'AI reading companion with 5 unique personalities',
+                    'Smart highlights and annotations',
+                    'Knowledge graph visualization',
+                    'Memory book generation',
+                    'Reading streaks and achievements',
+                    'Cross-book insight connections',
+                  ],
+                },
+                {
+                  '@type': 'Organization',
+                  name: 'read-pal',
+                  url: APP_URL,
+                  logo: `${APP_URL}/icon.svg`,
+                  sameAs: [],
+                },
+              ],
+            }),
+          }}
+        />
       </head>
       <body className="font-sans antialiased">
         <AuthProvider>

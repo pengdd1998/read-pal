@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'read-pal — A Friend Who Reads With You',
+  title: 'read-pal — AI Reading Companion | Read Smarter, Remember More',
   description:
-    'read-pal is your AI reading companion. Upload any book, read alongside an intelligent friend who asks questions, explains concepts, and helps you remember every insight. Free to start.',
+    'Meet your AI reading friend. Upload any EPUB and read alongside an intelligent companion who explains concepts, asks questions, and helps you remember every insight. Free to start.',
   openGraph: {
     title: 'read-pal — A Friend Who Reads With You',
     description:
