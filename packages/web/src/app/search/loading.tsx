@@ -1,0 +1,22 @@
+export default function SearchLoading() {
+  return (
+    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-32 animate-pulse" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-64 mt-2 animate-pulse" />
+      </div>
+      <div className="h-14 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse mb-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 animate-pulse">
+            <div className="w-10 h-14 rounded-lg bg-gray-200 dark:bg-gray-700" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
