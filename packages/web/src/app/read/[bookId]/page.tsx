@@ -1130,10 +1130,10 @@ export default function ReadPage() {
         </div>
       )}
 
-      {/* Keyboard shortcuts help button */}
+      {/* Keyboard shortcuts help button — desktop only */}
       <button
         onClick={() => setShowShortcutsHelp(true)}
-        className="fixed bottom-5 right-5 z-20 w-10 h-10 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700 shadow-sm transition-all active:scale-95"
+        className="hidden sm:flex fixed bottom-5 right-5 z-20 w-10 h-10 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700 shadow-sm transition-all active:scale-95 items-center justify-center"
         aria-label="Keyboard shortcuts help"
       >
         <span className="text-sm font-bold">?</span>

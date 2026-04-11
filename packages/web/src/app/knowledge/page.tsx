@@ -184,6 +184,8 @@ export default function KnowledgePage() {
   ];
 
   const isEmpty = !loading && !error && nodes.length === 0;
+  const bookCount = nodes.filter((n) => n.type === 'book').length;
+  const isSparse = !isEmpty && bookCount < 3;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -234,6 +236,21 @@ export default function KnowledgePage() {
                   <div className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400">{STAT_ITEMS[i]}</div>
                 </div>
               ))}
+        </div>
+      )}
+
+      {/* Sparse data notice — encourage more reading before graph is useful */}
+      {isSparse && !loading && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-start gap-3">
+          <span className="text-2xl flex-shrink-0">{'\uD83D\uDCA1'}</span>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              Your graph is growing
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 leading-relaxed">
+              Connections become more meaningful with more books. Read {3 - bookCount} more book{3 - bookCount !== 1 ? 's' : ''} to unlock richer cross-book themes and insights.
+            </p>
+          </div>
         </div>
       )}
 

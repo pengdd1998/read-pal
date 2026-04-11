@@ -536,6 +536,12 @@
 .animate-slide-up { animation: slide-up-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-slide-up-delayed { animation: slide-up-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
 
+@keyframes slide-up-mobile {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up-mobile { animation: slide-up-mobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
 /* ============================================================================
    Reduced Motion
    ============================================================================ */
