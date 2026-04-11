@@ -8,6 +8,7 @@ import { AnnotationsSidebar } from '@/components/reading/AnnotationsSidebar';
 import { BookmarkToggle } from '@/components/reading/BookmarkToggle';
 import { CompanionChat, type CompanionChatHandle } from '@/components/reading/CompanionChat';
 import { ReadingBackground } from '@/components/reading/ReadingBackground';
+import { InterventionToast } from '@/components/reading/InterventionToast';
 import { useTextSelection } from '@/hooks/useTextSelection';
 import { useAnnotationHighlights } from '@/hooks/useAnnotationHighlights';
 import { api } from '@/lib/api';
@@ -928,6 +929,17 @@ export default function ReadPage() {
         author={book?.author || ''}
         chapterContent={chapterContent}
       />
+
+      {/* Intervention toast */}
+      {!loading && book && (
+        <InterventionToast
+          bookId={bookId}
+          currentPage={currentChapter}
+          totalPages={chapters.length}
+          sessionDuration={Math.round((Date.now() - sessionStartRef.current) / 1000)}
+          highlightCount={annotations.filter((a) => a.type === 'highlight').length}
+        />
+      )}
 
       {/* Book completion celebration */}
       {showCompletion && book && (
