@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
 import { BookCard } from './BookCard';
@@ -87,8 +87,14 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
     setBooks((prev) => [newBook, ...prev]);
   };
 
-  const handleDeleteBook = (id: string) => {
-    setBooks((prev) => prev.filter((b) => b.id !== id));
+  const handleDeleteBook = async (id: string) => {
+    const prev = books;
+    setBooks((bs) => bs.filter((b) => b.id !== id));
+    try {
+      await api.delete(`/api/books/${id}`);
+    } catch {
+      setBooks(prev); // rollback on failure
+    }
   };
 
   const handleSeedSample = async () => {
@@ -109,7 +115,7 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
   };
 
   // Client-side filter & sort (works with loaded books; no extra API calls)
-  const filteredBooks = sortBooks(
+  const filteredBooks = useMemo(() => sortBooks(
     books.filter((book) => {
       const matchesStatus = statusFilter === 'all' || book.status === statusFilter;
       if (!matchesStatus) return false;
@@ -124,7 +130,7 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
       return true;
     }),
     sortOption,
-  );
+  ), [books, statusFilter, searchQuery, sortOption]);
 
   const handleTagsChange = useCallback((id: string, newTags: string[]) => {
     setBooks((prev) => prev.map((b) => (b.id === id ? { ...b, tags: newTags } : b)));
