@@ -58,6 +58,46 @@ const STEPS = [
   },
 ];
 
+const FAQS = [
+  {
+    q: 'What is an AI reading companion?',
+    a: 'An AI reading companion is an intelligent assistant that reads alongside you. It explains concepts in context, asks thoughtful questions about what you\'re reading, highlights connections across books, and helps you remember key insights — like a friend who\'s always read the same book.',
+  },
+  {
+    q: 'How do I remember what I read?',
+    a: 'read-pal helps you retain more through active reading techniques: smart highlights with AI-powered notes, a personal knowledge graph that connects ideas across books, spaced repetition prompts from your reading friend, and beautiful memory books that compile your journey.',
+  },
+  {
+    q: 'Is read-pal free to use?',
+    a: 'Yes! read-pal has a free tier that lets you upload EPUB books, chat with your AI reading companion, create highlights and annotations, and track your reading streaks. No credit card required to get started.',
+  },
+  {
+    q: 'What book formats does read-pal support?',
+    a: 'read-pal currently supports EPUB files. Upload any EPUB and the AI companion instantly gets to know the content, ready to discuss, explain, and explore ideas with you. More formats are coming soon.',
+  },
+  {
+    q: 'How is read-pal different from Kindle or Readwise?',
+    a: 'Unlike passive e-readers (Kindle) or highlight collectors (Readwise), read-pal is an active reading partner. Its AI agents chat with you in real-time, explain passages in context, ask questions that deepen understanding, and build a knowledge graph connecting everything you\'ve read.',
+  },
+  {
+    q: 'Can I share my book highlights?',
+    a: 'Yes! read-pal lets you turn your favorite passages into beautiful quote cards that you can share on social media. You can also export all your highlights and annotations as Markdown or JSON.',
+  },
+];
+
+const FAQ_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.a,
+    },
+  })),
+};
+
 export default function HomePage() {
   return (
     <div className="min-h-[80vh]">
@@ -230,6 +270,29 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="max-w-3xl mx-auto px-4 py-20">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
+            Frequently Asked Questions
+          </h2>
+        </div>
+        <div className="space-y-6">
+          {FAQS.map((faq) => (
+            <div key={faq.q} className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+              <h3 className="font-bold text-gray-900 dark:text-white mb-2">{faq.q}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{faq.a}</p>
+            </div>
+          ))}
+        </div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(FAQ_SCHEMA),
+          }}
+        />
       </section>
 
       {/* CTA */}
