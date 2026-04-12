@@ -9,6 +9,8 @@ import { Book } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { rateLimiter } from '../middleware/rateLimiter';
 import { Op } from 'sequelize';
+import { SemanticSearch } from '../services/SemanticSearch';
+import { getPinecone } from '../db';
 
 const router: Router = Router();
 
@@ -57,6 +59,74 @@ router.get('/search', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), a
     res.status(500).json({
       success: false,
       error: { code: 'SEARCH_ERROR', message: 'Failed to search library' },
+    });
+  }
+});
+
+/**
+ * GET /api/discovery/semantic
+ * Semantic search across indexed book content using Pinecone vector search.
+ * Falls back gracefully when Pinecone is not configured.
+ */
+router.get('/semantic', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res) => {
+  try {
+    const { q, bookId, topK = '10', minScore = '0.3' } = req.query;
+
+    if (!q || typeof q !== 'string' || q.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_INPUT', message: 'Query parameter "q" is required' },
+      });
+    }
+
+    if (q.length > 200) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_INPUT', message: 'Search query must be under 200 characters' },
+      });
+    }
+
+    // Graceful fallback when Pinecone is not configured
+    if (!getPinecone()) {
+      return res.json({ success: true, data: [], meta: { provider: 'none', reason: 'Pinecone not configured' } });
+    }
+
+    const semanticSearch = new SemanticSearch();
+    const results = await semanticSearch.search(req.userId!, q, {
+      bookId: typeof bookId === 'string' ? bookId : undefined,
+      topK: Math.min(parseInt(topK as string, 10) || 10, 50),
+      minScore: parseFloat(minScore as string) || 0.3,
+      includeText: true,
+    });
+
+    // Enrich results with book titles
+    const bookIds = [...new Set(results.map((r) => r.bookId))];
+    const books = bookIds.length > 0
+      ? await Book.findAll({ where: { id: { [Op.in]: bookIds } }, attributes: ['id', 'title', 'author'] })
+      : [];
+    const bookMap = new Map(books.map((b) => [b.id, { title: b.title, author: b.author }]));
+
+    const enriched = results.map((r) => {
+      const book = bookMap.get(r.bookId);
+      return {
+        id: r.id,
+        score: r.score,
+        bookId: r.bookId,
+        bookTitle: book?.title ?? 'Unknown',
+        bookAuthor: book?.author ?? '',
+        chapterId: r.chapterId,
+        chapterTitle: r.chapterTitle,
+        chunkIndex: r.chunkIndex,
+        text: r.text,
+      };
+    });
+
+    res.json({ success: true, data: enriched, meta: { provider: 'pinecone', total: enriched.length } });
+  } catch (error) {
+    console.error('Error in semantic search:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SEMANTIC_SEARCH_ERROR', message: 'Semantic search failed' },
     });
   }
 });

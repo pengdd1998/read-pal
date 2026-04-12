@@ -19,6 +19,37 @@ const BCRYPT_ROUNDS = 12;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 72; // bcrypt limit
 
+// In-memory failed login tracking (resets on server restart)
+const failedLoginAttempts = new Map<string, { count: number; lockedUntil: number }>();
+const MAX_FAILED_ATTEMPTS = 10;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+function checkLoginLockout(email: string): { locked: boolean; remainingMs: number } {
+  const entry = failedLoginAttempts.get(email);
+  if (!entry) return { locked: false, remainingMs: 0 };
+  if (entry.lockedUntil && Date.now() < entry.lockedUntil) {
+    return { locked: true, remainingMs: entry.lockedUntil - Date.now() };
+  }
+  if (entry.lockedUntil && Date.now() >= entry.lockedUntil) {
+    failedLoginAttempts.delete(email);
+    return { locked: false, remainingMs: 0 };
+  }
+  return { locked: false, remainingMs: 0 };
+}
+
+function recordFailedLogin(email: string): void {
+  const entry = failedLoginAttempts.get(email) || { count: 0, lockedUntil: 0 };
+  entry.count++;
+  if (entry.count >= MAX_FAILED_ATTEMPTS) {
+    entry.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+  }
+  failedLoginAttempts.set(email, entry);
+}
+
+function clearFailedLogins(email: string): void {
+  failedLoginAttempts.delete(email);
+}
+
 /**
  * POST /api/auth/login
  * Login with email and password
@@ -34,6 +65,19 @@ router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), async (req, res
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Email and password are required',
+        },
+      });
+    }
+
+    // Check account lockout
+    const lockout = checkLoginLockout(email);
+    if (lockout.locked) {
+      const minutesLeft = Math.ceil(lockout.remainingMs / 60000);
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'ACCOUNT_LOCKED',
+          message: `Account temporarily locked. Try again in ${minutesLeft} minutes.`,
         },
       });
     }
@@ -54,6 +98,7 @@ router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), async (req, res
     // Verify password against stored hash
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatch) {
+      recordFailedLogin(email);
       return res.status(401).json({
         success: false,
         error: {
@@ -65,6 +110,7 @@ router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), async (req, res
 
     // Generate JWT token
     const token = generateToken(user.id);
+    clearFailedLogins(email);
 
     res.json({
       success: true,

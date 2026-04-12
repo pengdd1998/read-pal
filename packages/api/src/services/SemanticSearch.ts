@@ -523,7 +523,18 @@ export class SemanticSearch {
    *     similarity results.
    */
   async generateEmbedding(text: string): Promise<number[]> {
-    // --- Attempt real embedding via OpenAI ---
+    // --- Attempt real embedding via GLM (primary) ---
+    if (process.env.GLM_API_KEY) {
+      try {
+        return await this.generateGLMEmbedding(text);
+      } catch (error) {
+        this.logger.warn('GLM embedding generation failed, trying OpenAI fallback', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // --- Attempt real embedding via OpenAI (secondary) ---
     if (process.env.OPENAI_API_KEY) {
       try {
         return await this.generateOpenAIEmbedding(text);
@@ -537,13 +548,48 @@ export class SemanticSearch {
     // --- Fallback: hash-based pseudo-vector ---
     if (!this._hashFallbackWarned) {
       this.logger.warn(
-        'OPENAI_API_KEY not set – using hash-based pseudo-embeddings. ' +
-        'Set OPENAI_API_KEY for real semantic search.',
+        'Neither GLM_API_KEY nor OPENAI_API_KEY is set – using hash-based pseudo-embeddings. ' +
+        'Set GLM_API_KEY for real semantic search.',
       );
       this._hashFallbackWarned = true;
     }
 
     return this.generateHashEmbedding(text);
+  }
+
+  /**
+   * Call GLM (Zhipu AI) embedding API to produce a real semantic vector.
+   * Uses embedding-3 model via the OpenAI-compatible endpoint.
+   */
+  private async generateGLMEmbedding(text: string): Promise<number[]> {
+    const baseUrl = process.env.GLM_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4';
+    const response = await fetch(`${baseUrl}/embeddings`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(30_000),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GLM_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'embedding-3',
+        input: text.slice(0, 8192),
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new Error(
+        `GLM embedding API returned ${response.status}: ${body.slice(0, 200)}`,
+      );
+    }
+
+    const data = await response.json() as OpenAIEmbeddingResponse;
+
+    if (!data.data?.[0]?.embedding) {
+      throw new Error('GLM embedding response missing expected data');
+    }
+
+    return data.data[0].embedding;
   }
 
   /**
