@@ -7,9 +7,10 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 360px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #faf8f5; }
-    .header { background: linear-gradient(135deg, #f59e0b, #14b8a6); padding: 16px; color: white; }
-    .header h1 { font-size: 18px; font-weight: 700; }
-    .header p { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+    .header { background: linear-gradient(135deg, #f59e0b, #14b8a6); padding: 16px; color: white; display: flex; align-items: center; gap: 10px; }
+    .header-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+    .header-text h1 { font-size: 16px; font-weight: 700; }
+    .header-text p { font-size: 11px; opacity: 0.85; margin-top: 1px; }
     .content { padding: 12px; }
     .section { margin-bottom: 12px; }
     .section h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 6px; }
@@ -20,48 +21,80 @@
     .btn-primary { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
     .btn-primary:hover { transform: scale(1.02); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-success { background: #10b981; color: white; }
     .btn-secondary { background: white; color: #1e3a5f; border: 1px solid #e5e7eb; }
     .btn-secondary:hover { background: #fef3c7; }
+    .btn-danger { background: white; color: #ef4444; border: 1px solid #fecaca; font-size: 12px; padding: 6px; }
+    .btn-danger:hover { background: #fef2f2; }
     .input { width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; outline: none; transition: border-color 0.15s; }
     .input:focus { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1); }
-    .status { padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; }
+    .status { padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
     .status-success { background: #d1fae5; color: #065f46; }
     .status-error { background: #fee2e2; color: #991b1b; }
     .status-info { background: #fef3c7; color: #92400e; }
     .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes checkIn { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    .check-icon { animation: checkIn 0.3s ease-out; color: #10b981; font-size: 16px; }
     .divider { height: 1px; background: #e5e7eb; margin: 12px 0; }
     .recent-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
     .recent-item:last-child { border-bottom: none; }
-    .recent-dot { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; }
-    .recent-item span { font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .recent-dot.article { background: #f59e0b; }
+    .recent-dot.page { background: #14b8a6; }
+    .recent-info { flex: 1; min-width: 0; }
+    .recent-title { font-size: 12px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .recent-meta { font-size: 10px; color: #9ca3af; }
+    .empty-state { text-align: center; padding: 16px 8px; color: #9ca3af; font-size: 12px; }
+    .empty-state .empty-icon { font-size: 24px; margin-bottom: 6px; }
+    .settings-row { margin-bottom: 10px; }
+    .settings-row label { display: block; font-size: 11px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    .connection-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px; border-radius: 10px; }
+    .connection-badge.ok { background: #d1fae5; color: #065f46; }
+    .connection-badge.err { background: #fee2e2; color: #991b1b; }
+    .connection-badge .dot { width: 5px; height: 5px; border-radius: 50%; }
+    .connection-badge.ok .dot { background: #10b981; }
+    .connection-badge.err .dot { background: #ef4444; }
+    .footer-row { display: flex; gap: 6px; margin-top: 10px; }
+    .footer-row .btn { flex: 1; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>read-pal</h1>
-    <p>Your AI reading companion</p>
+    <div class="header-icon">R</div>
+    <div class="header-text">
+      <h1>read-pal</h1>
+      <p>AI reading companion</p>
+    </div>
   </div>
   <div class="content" id="app">
     <!-- Settings view (shown when not configured) -->
     <div id="settings-view" style="display:none">
       <div class="section">
-        <h2>Connect to read-pal</h2>
+        <h2>Connect to your server</h2>
         <div class="card">
           <p>Enter your read-pal server URL and API token to start saving articles.</p>
         </div>
-        <input type="url" id="server-url" class="input" placeholder="https://your-readpal-server.com" style="margin-bottom:8px" />
-        <input type="text" id="api-token" class="input" placeholder="Your API token" />
-        <div style="margin-top:10px">
-          <button id="save-settings" class="btn btn-primary">Save Settings</button>
+        <div class="settings-row">
+          <label for="server-url">Server URL</label>
+          <input type="url" id="server-url" class="input" placeholder="https://your-readpal-server.com" />
         </div>
+        <div class="settings-row">
+          <label for="api-token">API Token</label>
+          <input type="password" id="api-token" class="input" placeholder="Your API token" />
+        </div>
+        <button id="save-settings" class="btn btn-primary">Connect</button>
+        <div id="settings-status" style="display:none"></div>
       </div>
     </div>
 
     <!-- Main view (shown when configured) -->
     <div id="main-view" style="display:none">
       <div class="section">
-        <h2>Current Page</h2>
+        <h2 style="display:flex;align-items:center;justify-content:space-between;">
+          Current Page
+          <span id="connection-badge" class="connection-badge ok"><span class="dot"></span>Connected</span>
+        </h2>
         <div class="card">
           <h3 id="page-title">Loading...</h3>
           <p id="page-url" style="font-size:11px;color:#9ca3af;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
@@ -73,9 +106,39 @@
       <div class="divider"></div>
 
       <div class="section">
-        <h2>Quick Actions</h2>
-        <button id="open-reader" class="btn btn-secondary" style="margin-bottom:6px">Open read-pal</button>
+        <h2>Recently Saved</h2>
+        <div id="recent-saves" class="card">
+          <div class="empty-state">
+            <div class="empty-icon">📚</div>
+            <div>No saved articles yet</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-row">
+        <button id="open-reader" class="btn btn-secondary">Open read-pal</button>
         <button id="open-settings" class="btn btn-secondary">Settings</button>
+      </div>
+    </div>
+
+    <!-- Edit settings view -->
+    <div id="edit-settings-view" style="display:none">
+      <div class="section">
+        <h2>Settings</h2>
+        <div class="settings-row">
+          <label for="edit-server-url">Server URL</label>
+          <input type="url" id="edit-server-url" class="input" placeholder="https://your-readpal-server.com" />
+        </div>
+        <div class="settings-row">
+          <label for="edit-api-token">API Token</label>
+          <input type="password" id="edit-api-token" class="input" placeholder="Your API token" />
+        </div>
+        <button id="update-settings" class="btn btn-primary">Update</button>
+        <div id="edit-settings-status" style="display:none"></div>
+        <div class="divider"></div>
+        <button id="disconnect" class="btn btn-danger">Disconnect</button>
+        <div class="divider"></div>
+        <button id="back-to-main" class="btn btn-secondary">Back</button>
       </div>
     </div>
   </div>

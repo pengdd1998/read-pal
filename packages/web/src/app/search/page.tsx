@@ -54,7 +54,9 @@ export default function SearchPage() {
           setRecentBooks(Array.isArray(data) ? data.slice(0, 6) : []);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        /* Recent books load failure — non-critical, page still works */
+      });
   }, []);
 
   useEffect(() => {
