@@ -235,6 +235,99 @@
     transition: background-color 0.2s ease;
     cursor: pointer;
   }
+
+  /* Technical content styles — code blocks, tables, images */
+  .reader-content pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.875em;
+    line-height: 1.6;
+    tab-size: 4;
+  }
+
+  .reader-content pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  .reader-content code {
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.875em;
+    background: rgba(217, 119, 6, 0.1);
+    padding: 0.15em 0.4em;
+    border-radius: 0.25rem;
+    color: #b45309;
+  }
+
+  .dark .reader-content code {
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+  }
+
+  .reader-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.9em;
+  }
+
+  .reader-content th,
+  .reader-content td {
+    border: 1px solid #ddd3c5;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+
+  .dark .reader-content th,
+  .dark .reader-content td {
+    border-color: #374151;
+  }
+
+  .reader-content th {
+    background: #f9f5f0;
+    font-weight: 600;
+  }
+
+  .dark .reader-content th {
+    background: #1f2937;
+  }
+
+  .reader-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1rem auto;
+    display: block;
+  }
+
+  .reader-content figure {
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  .reader-content figcaption {
+    font-size: 0.85em;
+    color: #8a7b68;
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+
+  .dark .reader-content figcaption {
+    color: #6b7a8d;
+  }
+
+  .reader-content svg {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 @layer components {

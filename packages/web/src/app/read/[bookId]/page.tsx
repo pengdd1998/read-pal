@@ -190,7 +190,8 @@ export default function ReadPage() {
   }, [currentChapter]);
 
   // Derive current chapter content from chapters array
-  const chapterContent = chapters[currentChapter]?.content || '';
+  // Prefer rawContent (sanitized HTML with preserved formatting) over content (plain text)
+  const chapterContent = chapters[currentChapter]?.rawContent || chapters[currentChapter]?.content || '';
   const chapterTitle = chapters[currentChapter]?.title || book?.title || '';
 
   // --- Settings persistence ---
