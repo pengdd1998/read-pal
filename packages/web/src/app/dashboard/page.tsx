@@ -51,6 +51,15 @@ function SkeletonPulse({ className = '' }: { className?: string }) {
   return <div className={`bg-gray-100 dark:bg-gray-800 rounded animate-pulse ${className}`} />;
 }
 
+function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 6) return 'Happy late-night reading';
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  if (hour < 21) return 'Good evening';
+  return 'Happy night reading';
+}
+
 function formatLastRead(lastRead: string): string {
   try {
     const date = new Date(lastRead);
@@ -118,7 +127,7 @@ export default function DashboardPage() {
       {/* Welcome */}
       <div className="mb-8 animate-fade-in">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-          {!hasData && !loading ? 'Welcome to read-pal' : 'Welcome back'}
+          {!hasData && !loading ? `${getTimeGreeting()}` : 'Welcome back'}
         </h1>
         <p className="text-gray-500 mt-2 text-sm sm:text-base">
           {loading ? (
@@ -128,6 +137,8 @@ export default function DashboardPage() {
               <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse animate-streak-glow" />
               You&apos;re on a <strong className="text-amber-600 dark:text-amber-400">{streak}-day</strong> reading streak
             </span>
+          ) : !hasData ? (
+            'Upload a book to get started with your reading companion.'
           ) : (
             'What will you read today?'
           )}
@@ -145,28 +156,49 @@ export default function DashboardPage() {
       {!hasData && !loading ? (
         <div className="animate-fade-in">
           <div className="card text-center py-12 sm:py-16 mb-6">
-            <div className="text-6xl mb-4 opacity-60">{'\uD83D\uDCDA'}</div>
+            <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center">
+              <span className="text-4xl">{'\uD83D\uDCDA'}</span>
+            </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Your next adventure awaits
+              Ready for your first book?
             </h2>
             <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-              Add a book to your library and start reading with your AI companion.
+              Upload an EPUB or try a sample book. Your AI companion will be there to discuss, explain, and celebrate insights with you.
             </p>
             <div className="flex items-center justify-center gap-3">
               <Link
                 href="/library"
                 className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200"
               >
-                Start reading
+                Upload a book
               </Link>
               <button
                 onClick={handleSeedSample}
                 disabled={seeding}
                 className="btn hover:scale-105 active:scale-95 transition-transform duration-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {seeding ? 'Loading...' : 'Try a sample book'}
+                {seeding ? 'Adding...' : 'Try a sample book'}
               </button>
             </div>
+          </div>
+
+          {/* Quick feature preview for new users */}
+          <div className="grid grid-cols-3 gap-3 mt-6">
+            {[
+              { icon: '\uD83D\uDCD6', title: 'Read', desc: 'Beautiful reader with themes and fonts', href: '/library' },
+              { icon: '\uD83E\uDD16', title: 'Chat', desc: 'Ask questions as you read', href: '/friend' },
+              { icon: '\uD83D\uDCA1', title: 'Remember', desc: 'Highlights become knowledge', href: '/knowledge' },
+            ].map((f) => (
+              <Link
+                key={f.title}
+                href={f.href}
+                className="card text-center group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 py-5"
+              >
+                <span className="text-2xl block mb-2">{f.icon}</span>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{f.title}</h3>
+                <p className="text-xs text-gray-400 mt-1">{f.desc}</p>
+              </Link>
+            ))}
           </div>
         </div>
       ) : (
