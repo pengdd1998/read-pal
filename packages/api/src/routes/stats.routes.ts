@@ -298,17 +298,14 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
 
     const totalPages = Math.round(Number(totalPagesResult) || 0);
 
-    // pagesRead: prefer session data; fallback to sum of (progress * totalPages) per book
+    // pagesRead: prefer session data; fallback to SQL aggregation
     let pagesRead = Math.round(Number(sessionPagesRead) || 0);
-    if (pagesRead === 0 && recentBooks.length > 0) {
-      // Fetch all books to compute from progress
-      const allBooks = await Book.findAll({
-        where: { userId },
-        attributes: ['progress', 'totalPages'],
-      });
-      pagesRead = allBooks.reduce((sum, book) => {
-        return sum + Math.round((Number(book.progress) / 100) * book.totalPages);
-      }, 0);
+    if (pagesRead === 0) {
+      const [aggResult] = await sequelize.query<{ pages_read: string }>(
+        'SELECT COALESCE(SUM(ROUND((progress / 100.0) * "totalPages")), 0)::int AS pages_read FROM books WHERE "userId" = ?',
+        { replacements: [userId], type: QueryTypes.SELECT }
+      );
+      pagesRead = parseInt(aggResult?.pages_read || '0', 10);
     }
 
     const totalMinutes = Math.round((Number(totalMinutesResult) || 0) / 60);
