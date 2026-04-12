@@ -9,7 +9,7 @@ interface QuoteCardProps {
   onClose: () => void;
 }
 
-type CardTheme = 'warm' | 'dark';
+export type CardTheme = 'warm' | 'dark';
 
 const THEMES: Record<CardTheme, {
   label: string;
@@ -64,7 +64,7 @@ const THEMES: Record<CardTheme, {
   },
 };
 
-function wrapText(
+export function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
   maxWidth: number,
@@ -89,7 +89,7 @@ function wrapText(
   return lines;
 }
 
-function renderCardToCanvas(
+export function renderCardToCanvas(
   canvas: HTMLCanvasElement,
   text: string,
   bookTitle: string,
