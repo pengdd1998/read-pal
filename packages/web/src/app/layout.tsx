@@ -64,12 +64,21 @@ export const metadata: Metadata = {
     title: 'read-pal — Your AI Reading Companion',
     description:
       'Transform passive reading into active, social, and memorable learning with AI companions that read with you, explain concepts, and build your knowledge graph.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'read-pal — AI Reading Companion',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'read-pal — Your AI Reading Companion',
     description:
       'Transform passive reading into active, social, and memorable learning with AI companions.',
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,
@@ -84,6 +93,9 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: APP_URL,
+  },
+  icons: {
+    icon: '/icon.svg',
   },
 };
 
