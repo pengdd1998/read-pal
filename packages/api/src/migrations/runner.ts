@@ -7,11 +7,16 @@
  */
 
 import { sequelize } from '../db';
-import { DataTypes, QueryInterface } from 'sequelize';
+import { DataTypes, QueryInterface, QueryTypes } from 'sequelize';
+
+interface MigrationRow {
+  id: string;
+  exists?: boolean;
+}
 
 const logger = {
-  info: (msg: string, ...args: any[]) => console.log(`[migrate] ${msg}`, ...args),
-  error: (msg: string, ...args: any[]) => console.error(`[migrate] ${msg}`, ...args),
+  info: (msg: string, ...args: unknown[]) => console.log(`[migrate] ${msg}`, ...args),
+  error: (msg: string, ...args: unknown[]) => console.error(`[migrate] ${msg}`, ...args),
 };
 
 interface Migration {
@@ -34,7 +39,8 @@ async function ensureMigrationTable(qi: QueryInterface): Promise<void> {
     )`
   );
 
-  const exists = (results as any[])[0]?.exists;
+  const rows = results as MigrationRow[];
+  const exists = rows[0]?.exists;
   if (!exists) {
     await qi.createTable('schema_migrations', {
       id: {
@@ -58,7 +64,7 @@ async function getAppliedMigrations(qi: QueryInterface): Promise<string[]> {
   const [results] = await qi.sequelize.query(
     'SELECT id FROM schema_migrations ORDER BY id'
   );
-  return (results as any[]).map((r: any) => r.id);
+  return (results as MigrationRow[]).map((r) => r.id);
 }
 
 /**
@@ -100,8 +106,9 @@ export async function runMigrations(): Promise<void> {
 
       const duration = Date.now() - startTime;
       logger.info(`Migration ${migration.id} completed in ${duration}ms`);
-    } catch (error: any) {
-      logger.error(`Migration ${migration.id} failed: ${error.message}`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error(`Migration ${migration.id} failed: ${msg}`);
       throw error;
     }
   }
