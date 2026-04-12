@@ -92,9 +92,10 @@ export async function runMigrations(): Promise<void> {
       logger.info(`Running migration: ${migration.id}`);
       await migration.up(qi);
 
-      // Record successful migration
+      // Record successful migration (parameterized to prevent SQL injection)
       await qi.sequelize.query(
-        `INSERT INTO schema_migrations (id, applied_at) VALUES ('${migration.id}', NOW())`
+        'INSERT INTO schema_migrations (id, applied_at) VALUES (?, NOW())',
+        { replacements: [migration.id] }
       );
 
       const duration = Date.now() - startTime;
@@ -132,8 +133,10 @@ export async function rollbackMigration(): Promise<void> {
   logger.info(`Rolling back migration: ${migration.id}`);
   await migration.down(qi);
 
+  // Parameterized to prevent SQL injection
   await qi.sequelize.query(
-    `DELETE FROM schema_migrations WHERE id = '${migration.id}'`
+    'DELETE FROM schema_migrations WHERE id = ?',
+    { replacements: [migration.id] }
   );
 
   logger.info(`Migration ${migration.id} rolled back successfully`);
