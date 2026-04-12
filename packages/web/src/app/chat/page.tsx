@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import { API_BASE_URL } from '@/lib/api';
+import { renderSimpleMarkdown } from '@/lib/markdown';
 
 type AgentType = 'companion' | 'research' | 'coach' | 'synthesis' | 'friend';
 type FriendPersona = 'sage' | 'penny' | 'alex' | 'quinn' | 'sam';
@@ -60,16 +61,6 @@ const SUGGESTIONS: Record<AgentType, string[]> = {
 };
 
 /** Simple markdown renderer for AI responses. Output is sanitized through DOMPurify. */
-function renderSimpleMarkdown(text: string): string {
-  let html = text;
-  html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-200 dark:bg-gray-900 rounded p-2 my-1 overflow-x-auto text-xs"><code>$1</code></pre>');
-  html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-900 px-1 rounded text-xs">$1</code>');
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
-  html = html.replace(/\n/g, '<br />');
-  return DOMPurify.sanitize(html);
-}
-
 function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }

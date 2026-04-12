@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardR
 import DOMPurify from 'dompurify';
 import { api, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { renderSimpleMarkdown } from '@/lib/markdown';
 
 interface Message {
   id: string;
@@ -93,16 +94,6 @@ function consumeSSEStream(
   })();
 
   return controller;
-}
-
-function renderSimpleMarkdown(text: string): string {
-  let html = text;
-  html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-200 dark:bg-gray-900 rounded p-2 my-1 overflow-x-auto text-xs"><code>$1</code></pre>');
-  html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-900 px-1 rounded text-xs">$1</code>');
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
-  html = html.replace(/\n/g, '<br />');
-  return html;
 }
 
 export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent }, ref) {
