@@ -77,16 +77,65 @@ export function ReaderView({
   }, []);
 
   // Reset scroll position on chapter change + animate
+  // Also persists scroll position so returning readers don't lose their place
   const [chapterKey, setChapterKey] = useState(0);
+
+  // Save scroll position before chapter changes or component unmounts
+  const scrollKey = `scroll-${bookId}-ch${currentPage}`;
+  const saveScrollPosition = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const maxScroll = scrollHeight - clientHeight;
+    if (maxScroll > 0) {
+      try { localStorage.setItem(scrollKey, String(scrollTop / maxScroll)); } catch { /* ignore */ }
+    }
+  }, [scrollKey]);
+
+  // Save on unmount and visibility change, and periodically during reading
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveScrollPosition();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Periodic save every 10s while reading
+    const periodicSave = setInterval(saveScrollPosition, 10_000);
+    return () => {
+      saveScrollPosition();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(periodicSave);
+    };
+  }, [saveScrollPosition]);
+
+  useEffect(() => {
+    // Save previous chapter's scroll position before switching
+    saveScrollPosition();
     setChapterKey((k) => k + 1);
     requestAnimationFrame(() => {
       if (containerRef.current) {
+        // Try to restore saved scroll position for this chapter
+        try {
+          const saved = localStorage.getItem(`scroll-${bookId}-ch${currentPage}`);
+          if (saved) {
+            const fraction = parseFloat(saved);
+            if (fraction > 0 && containerRef.current) {
+              // Wait for content to render before restoring scroll
+              requestAnimationFrame(() => {
+                if (containerRef.current) {
+                  const { scrollHeight, clientHeight } = containerRef.current;
+                  containerRef.current.scrollTop = fraction * (scrollHeight - clientHeight);
+                  setScrollProgress(fraction);
+                }
+              });
+              return;
+            }
+          }
+        } catch { /* ignore */ }
         containerRef.current.scrollTop = 0;
         setScrollProgress(0);
       }
     });
-  }, [chapterContent]);
+  }, [chapterContent, bookId, currentPage, saveScrollPosition]);
 
   // --- Navigation (direct chapter navigation) ---
   const goNextPage = useCallback(() => {
