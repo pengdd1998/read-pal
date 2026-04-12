@@ -95,7 +95,9 @@ export default function FriendPage() {
       .then((res) => {
         if (res.success && res.data) setSettings(res.data as unknown as FriendSettings);
       })
-      .catch(() => {})
+      .catch(() => {
+        /* Settings load failure — proceed with defaults */
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -165,17 +167,25 @@ export default function FriendPage() {
   };
 
   const handlePersonaChange = async (id: string) => {
+    const prev = settings?.friendPersona;
+    setSettings((s) => s ? { ...s, friendPersona: id } : s);
     try {
       const res = await api.patch('/api/settings', { friendPersona: id });
-      if (res.success) setSettings((prev) => prev ? { ...prev, friendPersona: id } : prev);
-    } catch {}
+      if (!res.success) setSettings((s) => s ? { ...s, friendPersona: prev || s.friendPersona } : s);
+    } catch {
+      setSettings((s) => s ? { ...s, friendPersona: prev || s.friendPersona } : s);
+    }
   };
 
   const handleFrequencyChange = async (value: string) => {
+    const prev = settings?.friendFrequency;
+    setSettings((s) => s ? { ...s, friendFrequency: value } : s);
     try {
       const res = await api.patch('/api/settings', { friendFrequency: value });
-      if (res.success) setSettings((prev) => prev ? { ...prev, friendFrequency: value } : prev);
-    } catch {}
+      if (!res.success) setSettings((s) => s ? { ...s, friendFrequency: prev || s.friendFrequency } : s);
+    } catch {
+      setSettings((s) => s ? { ...s, friendFrequency: prev || s.friendFrequency } : s);
+    }
   };
 
   if (loading) {

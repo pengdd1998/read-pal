@@ -5,6 +5,8 @@
  * by the popup.
  */
 
+export {};
+
 interface ExtractedContent {
   title: string;
   author: string;

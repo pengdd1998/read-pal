@@ -4,6 +4,8 @@
  * Handles extension lifecycle events and context menu actions.
  */
 
+export {};
+
 // Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus?.create({

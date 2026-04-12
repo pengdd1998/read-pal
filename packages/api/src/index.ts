@@ -3,6 +3,7 @@
 // ============================================================================
 
 import express from 'express';
+import { createAgentWrapper } from './agents/agentWrapper';
 import 'dotenv/config';
 
 import { initializeMiddleware, errorHandler, notFoundHandler } from './middleware/middleware';
@@ -171,101 +172,6 @@ const logger: Logger = {
     }
   },
 };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function createAgentWrapper(name: string, displayName: string, agentInstance: any): IAgent {
-  return {
-    name,
-    displayName,
-    version: '1.0.0',
-    purpose: displayName,
-    responsibilities: [],
-    model: DEFAULT_MODEL,
-    systemPrompt: '',
-    tools: [],
-    memoryType: 'session',
-    interventionStyle: 'reactive',
-    execute: async (request: AgentRequest): Promise<AgentResponse> => {
-      const startTime = Date.now();
-      try {
-        // Extract the query from the request input
-        const input = (request.input as Record<string, unknown>) || {};
-        const query = (input.query || input.message || '') as string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let result: any;
-
-        // Each agent has a different method signature - adapt accordingly
-        switch (name) {
-          case 'companion':
-          case 'coach':
-            // CompanionAgent/CoachAgent.chat(userId, message, context)
-            result = await agentInstance.chat(request.userId, query, request.context);
-            break;
-          case 'research': {
-            // ResearchAgent.execute(userId, message, action, context)
-            const action = (request.action === 'chat' ? 'deep_dive' : request.action || 'deep_dive') as string;
-            result = await agentInstance.execute(request.userId, query, action, request.context);
-            break;
-          }
-          case 'synthesis':
-            // SynthesisAgent.execute(request) - already uses AgentRequest
-            result = await agentInstance.execute(request);
-            break;
-          case 'friend':
-            // FriendAgent.chat(userId, message, context)
-            result = await agentInstance.chat(request.userId, query, request.context);
-            break;
-          default:
-            // Fallback for future agents
-            if (typeof agentInstance.execute === 'function') {
-              result = await agentInstance.execute(request);
-            } else if (typeof agentInstance.chat === 'function') {
-              result = await agentInstance.chat(request.userId, query, request.context);
-            } else {
-              throw new Error(`Agent ${name} has no compatible method`);
-            }
-        }
-
-        // Extract response content - agents return different shapes:
-        // Companion/Coach/Research: { response: string }
-        // Friend: { response: string, persona, emotion }
-        // Synthesis: { content: string, success: boolean }
-        const content = result?.response || result?.content || result?.message || '';
-
-        return {
-          content,
-          success: true,
-          metadata: {
-            agentName: name,
-            tokensUsed: result?.metadata?.tokensUsed || result?.tokensUsed || 0,
-            cost: result?.metadata?.cost || result?.cost || 0,
-            duration: Date.now() - startTime,
-            modelUsed: result?.metadata?.modelUsed || result?.modelUsed || DEFAULT_MODEL,
-          },
-        };
-      } catch (error: unknown) {
-        const errMsg = error instanceof Error ? error.message : 'Unknown error';
-        logger.error(`Agent ${name} execution failed`, { error: errMsg });
-        return {
-          content: 'I encountered an error processing your request. Please try again.',
-          success: false,
-          metadata: {
-            agentName: name,
-            tokensUsed: 0,
-            cost: 0,
-            duration: Date.now() - startTime,
-            modelUsed: DEFAULT_MODEL,
-          },
-          error: {
-            code: 'AGENT_ERROR',
-            message: errMsg,
-            recoverable: true,
-          },
-        };
-      }
-    },
-  };
-}
 
 let orchestrator: AgentOrchestrator | null = null;
 
@@ -454,3 +360,4 @@ if (require.main === module) {
 
 export default app;
 export { config };
+export { createAgentWrapper } from './agents/agentWrapper';

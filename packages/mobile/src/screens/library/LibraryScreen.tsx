@@ -7,6 +7,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  Image,
   StyleSheet,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
@@ -130,9 +131,17 @@ export function LibraryScreen({ navigation }: any) {
         }
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.bookCard} onPress={() => openBook(item)}>
-            <View style={styles.coverPlaceholder}>
-              <Text style={styles.coverTitle} numberOfLines={3}>{item.title}</Text>
-            </View>
+            {item.coverUrl ? (
+              <Image
+                source={{ uri: item.coverUrl }}
+                style={styles.coverImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.coverPlaceholder}>
+                <Text style={styles.coverTitle} numberOfLines={3}>{item.title}</Text>
+              </View>
+            )}
             <Text style={styles.bookTitle} numberOfLines={2}>{item.title}</Text>
             <Text style={styles.bookAuthor} numberOfLines={1}>{item.author}</Text>
             {item.status === 'reading' && (
@@ -178,6 +187,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.sm,
+  },
+  coverImage: {
+    aspectRatio: 2 / 3,
+    width: '100%',
+    backgroundColor: Colors.gray200,
   },
   coverTitle: { ...Typography.body, color: Colors.gray600, textAlign: 'center' },
   bookTitle: {

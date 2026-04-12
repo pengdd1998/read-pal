@@ -33,6 +33,7 @@ export default function BookDetailPage() {
   const [book, setBook] = useState<BookData | null>(null);
   const [annotationStats, setAnnotationStats] = useState<AnnotationStats>({ highlights: 0, notes: 0, bookmarks: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -40,6 +41,8 @@ export default function BookDetailPage() {
         const res = await api.get<BookData>(`/api/books/${bookId}`);
         if (res.success && res.data) {
           setBook(res.data);
+        } else {
+          setError('Book not found.');
         }
 
         const annRes = await api.get<{ type: string }[]>(`/api/annotations?bookId=${bookId}&limit=1000`);
@@ -51,7 +54,9 @@ export default function BookDetailPage() {
             bookmarks: annotations.filter((a) => a.type === 'bookmark').length,
           });
         }
-      } catch {}
+      } catch {
+        setError('Failed to load book. Please try again.');
+      }
       setLoading(false);
     })();
   }, [bookId]);
@@ -101,8 +106,11 @@ export default function BookDetailPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center animate-scale-in">
-          <p className="text-lg font-semibold mb-4">Book not found</p>
-          <Link href="/library" className="btn btn-primary">Back to Library</Link>
+          <p className="text-lg font-semibold mb-2">{error || 'Book not found'}</p>
+          <div className="flex gap-3 justify-center mt-4">
+            <button onClick={() => window.location.reload()} className="btn btn-secondary">Retry</button>
+            <Link href="/library" className="btn btn-primary">Back to Library</Link>
+          </div>
         </div>
       </div>
     );
@@ -124,6 +132,13 @@ export default function BookDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
+      {/* Error banner */}
+      {error && (
+        <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center justify-between animate-scale-in">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="ml-2 text-red-400 hover:text-red-600">&times;</button>
+        </div>
+      )}
       {/* Back */}
       <div className="mb-8 animate-slide-up">
         <button
@@ -237,7 +252,7 @@ export default function BookDetailPage() {
                 a.download = `annotations-${book.title.replace(/\s+/g, '-')}.md`;
                 a.click();
                 URL.revokeObjectURL(url);
-              } catch { /* silent */ }
+              } catch { setError('Failed to export annotations.'); }
             }}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
@@ -261,7 +276,7 @@ export default function BookDetailPage() {
                 a.download = `annotations-${book.title.replace(/\s+/g, '-')}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
-              } catch { /* silent */ }
+              } catch { setError('Failed to export annotations.'); }
             }}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >

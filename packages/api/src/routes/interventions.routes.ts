@@ -7,7 +7,7 @@
  */
 
 import { Router } from 'express';
-import { ReadingSession, Book } from '../models';
+import { ReadingSession, Book, InterventionFeedback } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { InterventionService, ReadingContext } from '../services/InterventionService';
 
@@ -58,16 +58,46 @@ router.post('/check', authenticate, async (req: AuthRequest, res) => {
 // POST /api/interventions/feedback - User feedback on intervention
 router.post('/feedback', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { interventionType, helpful, dismissed } = req.body;
+    const { interventionType, helpful, dismissed, bookId, context } = req.body;
 
-    // Store feedback for future intervention tuning
-    // For now, just acknowledge
-    console.log('Intervention feedback:', { userId: req.userId, interventionType, helpful, dismissed });
+    await InterventionFeedback.create({
+      userId: req.userId!,
+      bookId: bookId || null,
+      interventionType: interventionType || 'unknown',
+      helpful: !!helpful,
+      dismissed: !!dismissed,
+      context: context || null,
+    });
 
     res.json({ success: true, data: { received: true } });
   } catch (error) {
     console.error('Error recording feedback:', error);
     res.status(500).json({ success: false, error: { code: 'FEEDBACK_ERROR', message: 'Failed to record feedback' } });
+  }
+});
+
+// GET /api/interventions/feedback-stats - Aggregated feedback stats for tuning
+router.get('/feedback-stats', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const feedback = await InterventionFeedback.findAll({
+      where: { userId: req.userId },
+      order: [['createdAt', 'DESC']],
+      limit: 100,
+    });
+
+    const byType: Record<string, { total: number; helpful: number; dismissed: number }> = {};
+    for (const f of feedback) {
+      const t = f.interventionType;
+      if (!byType[t]) byType[t] = { total: 0, helpful: 0, dismissed: 0 };
+      byType[t].total++;
+      if (f.helpful) byType[t].helpful++;
+      if (f.dismissed) byType[t].dismissed++;
+    }
+
+    res.json({ success: true, data: { totalFeedback: feedback.length, byType } });
+  } catch (error) {
+    console.error('Error fetching feedback stats:', error);
+    res.status(500).json({ success: false, error: { code: 'FEEDBACK_ERROR', message: 'Failed to fetch feedback stats' } });
   }
 });
 
