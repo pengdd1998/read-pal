@@ -7,6 +7,8 @@ import { AnnotationCard } from './AnnotationCard';
 interface AnnotationsSidebarProps {
   annotations: Annotation[];
   bookId: string;
+  bookTitle?: string;
+  author?: string;
   isOpen: boolean;
   onClose: () => void;
   onDeleteAnnotation: (id: string) => void;
@@ -26,6 +28,8 @@ const TABS: { key: FilterTab; label: string }[] = [
 export function AnnotationsSidebar({
   annotations,
   bookId,
+  bookTitle,
+  author,
   isOpen,
   onClose,
   onDeleteAnnotation,
@@ -208,6 +212,8 @@ export function AnnotationsSidebar({
               <AnnotationCard
                 key={annotation.id}
                 annotation={annotation}
+                bookTitle={bookTitle}
+                author={author}
                 onDelete={() => onDeleteAnnotation(annotation.id)}
                 onUpdate={(updated) => onUpdateAnnotation(updated)}
                 onClick={() => onScrollToAnnotation(annotation)}

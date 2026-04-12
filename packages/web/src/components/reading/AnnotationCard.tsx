@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { api } from '@/lib/api';
+import { renderCardToCanvas } from './QuoteCard';
+import type { CardTheme } from './QuoteCard';
 
 const TYPE_CONFIG = {
   highlight: { icon: '\u{1F58D}', label: 'Highlight', defaultColor: '#FFEB3B' },
@@ -14,16 +16,85 @@ const COLORS = ['#FFEB3B', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#F44336'
 
 interface AnnotationCardProps {
   annotation: Annotation;
+  bookTitle?: string;
+  author?: string;
   onDelete: () => void;
   onUpdate: (updated: Annotation) => void;
   onClick: () => void;
 }
 
-export function AnnotationCard({ annotation, onDelete, onUpdate, onClick }: AnnotationCardProps) {
+export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpdate, onClick }: AnnotationCardProps) {
   const [editing, setEditing] = useState(false);
   const [editNote, setEditNote] = useState(annotation.note || '');
   const [editColor, setEditColor] = useState(annotation.color || '');
   const [saving, setSaving] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  const canShareAsImage = annotation.type === 'highlight' || annotation.type === 'note';
+  const quoteText = annotation.content || '';
+
+  const handleShareAsImage = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!quoteText || sharing) return;
+    setSharing(true);
+
+    try {
+      const canvas = document.createElement('canvas');
+      renderCardToCanvas(
+        canvas,
+        quoteText,
+        bookTitle || 'Unknown Book',
+        author || 'Unknown Author',
+        'warm' as CardTheme,
+      );
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) { setSharing(false); return; }
+
+        const file = new File([blob], 'read-pal-quote.png', { type: 'image/png' });
+
+        // Try Web Share API with file (mobile)
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `${bookTitle || 'Book'} — read-pal`,
+              text: `"${quoteText}" — ${author || ''}`,
+            });
+          } catch (err) {
+            // User cancelled share sheet — not an error
+            if ((err as DOMException).name !== 'AbortError') {
+              // Fallback: download
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'read-pal-quote.png';
+              a.click();
+              URL.revokeObjectURL(url);
+            }
+          }
+        } else {
+          // Desktop fallback: try clipboard, then download
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob }),
+            ]);
+          } catch {
+            // Final fallback: download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'read-pal-quote.png';
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        }
+        setSharing(false);
+      }, 'image/png');
+    } catch {
+      setSharing(false);
+    }
+  }, [quoteText, bookTitle, author, sharing]);
 
   const config = TYPE_CONFIG[annotation.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.highlight;
   const borderColor = editing ? editColor : (annotation.color || config.defaultColor);
@@ -126,6 +197,19 @@ export function AnnotationCard({ annotation, onDelete, onUpdate, onClick }: Anno
           {config.icon} {config.label}
         </span>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {canShareAsImage && (
+            <button
+              onClick={handleShareAsImage}
+              disabled={sharing}
+              className="p-1 rounded text-gray-400 hover:text-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50"
+              aria-label="Share as image"
+              title="Share as quote card image"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={startEdit}
             className="p-1 rounded text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all"
