@@ -26,9 +26,9 @@ const PERSONAS: Record<string, { name: string; emoji: string; personality: strin
 
 const QUICK_PROMPTS = [
   'What should I read next?',
-  'Help me understand a concept',
-  'I\'m feeling stuck today',
-  'Tell me something interesting',
+  'Explain a concept from my reading',
+  'Help me get back into reading',
+  'What connections did you find in my books?',
 ];
 
 function uid(): string {
@@ -231,7 +231,8 @@ export default function FriendPage() {
         <div className="animate-fade-in space-y-4 mb-4">
           {/* Persona selector */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-            <h2 className="font-semibold text-sm mb-3">Choose Your Companion</h2>
+            <h2 className="font-semibold text-sm mb-1">Choose Your Companion</h2>
+            <p className="text-xs text-gray-400 mb-3">Your friend learns your style over time</p>
             <div className="grid grid-cols-1 gap-1.5">
               {Object.entries(PERSONAS).map(([id, p]) => {
                 const isSelected = settings?.friendPersona === id;
@@ -263,7 +264,8 @@ export default function FriendPage() {
 
           {/* Interaction frequency */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-            <h2 className="font-semibold text-sm mb-3">Interaction Style</h2>
+            <h2 className="font-semibold text-sm mb-1">Interaction Style</h2>
+            <p className="text-xs text-gray-400 mb-3">How often should your companion speak up?</p>
             <div className="grid grid-cols-3 gap-2">
               {([
                 ['minimal', 'Listener', 'I wait for you'],
@@ -296,7 +298,8 @@ export default function FriendPage() {
         <div className="flex-1 overflow-y-auto space-y-3 mb-3 min-h-[200px]">
           {messages.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 italic">&ldquo;{persona.greeting}&rdquo;</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 italic">&ldquo;{persona.greeting}&rdquo;</p>
+              <p className="text-xs text-gray-400 mb-4">Ask anything, or pick a question below</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {QUICK_PROMPTS.map((prompt) => (
                   <button

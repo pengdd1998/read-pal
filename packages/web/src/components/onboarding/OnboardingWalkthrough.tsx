@@ -5,53 +5,24 @@ import Link from 'next/link';
 
 const STORAGE_KEY = 'read-pal-onboarding-complete';
 
-interface Step {
-  emoji: string;
-  title: string;
-  description: string;
-}
+const PERSONAS = [
+  { id: 'sage', name: 'Sage', emoji: '\uD83E\uDD89', personality: 'Thoughtful & patient', desc: 'Asks deep questions that make you think.' },
+  { id: 'penny', name: 'Penny', emoji: '\u2B50', personality: 'Warm & curious', desc: 'Gets excited about ideas and connections.' },
+  { id: 'alex', name: 'Alex', emoji: '\uD83D\uDD0D', personality: 'Sharp & challenging', desc: 'Pushes your thinking in new directions.' },
+  { id: 'quinn', name: 'Quinn', emoji: '\uD83C\uDF0A', personality: 'Quiet & wise', desc: 'Speaks only when it matters most.' },
+  { id: 'sam', name: 'Sam', emoji: '\uD83C\uDFAF', personality: 'Practical & focused', desc: 'Helps you get the most from every page.' },
+] as const;
 
-const STEPS: Step[] = [
-  {
-    emoji: '\uD83D\uDCD6',
-    title: 'Welcome to read-pal',
-    description:
-      'Your AI reading companion that transforms passive reading into an active, social, and memorable learning journey. Discover insights, build knowledge, and make every page count.',
-  },
-  {
-    emoji: '\uD83D\uDCE4',
-    title: 'Your Library',
-    description:
-      'Upload EPUB or PDF books to your personal library. Organize your collection, track your reading progress, and pick up right where you left off. Sample books are available to get you started.',
-  },
-  {
-    emoji: '\uD83D\uDCD7',
-    title: 'Reading Experience',
-    description:
-      'Enjoy a beautifully crafted reading interface with customizable themes, fonts, and layouts. Highlight passages, add notes, and bookmark your favorite moments as you read.',
-  },
-  {
-    emoji: '\uD83E\uDD16',
-    title: 'AI Companion',
-    description:
-      'Chat with intelligent AI agents while you read. Five specialized agents provide explanations, research, coaching, synthesis, and a reading friend that grows with you over time.',
-  },
-  {
-    emoji: '\uD83D\uDE80',
-    title: 'Ready to Read!',
-    description:
-      'Your journey starts now. Head to your library, pick a book, and let read-pal enhance every page. Happy reading!',
-  },
-];
+type Step = 'welcome' | 'companion' | 'ready';
 
 export function OnboardingWalkthrough() {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [step, setStep] = useState<Step>('welcome');
   const [mounted, setMounted] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
-  const [slideDirection, setSlideDirection] = useState<'none' | 'left' | 'right'>('none');
-  const [animating, setAnimating] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<string>('penny');
+  const [saving, setSaving] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
 
-  // Auto-detect: show if onboarding not yet completed
   useEffect(() => {
     try {
       const completed = localStorage.getItem(STORAGE_KEY);
@@ -62,7 +33,7 @@ export function OnboardingWalkthrough() {
         });
       }
     } catch {
-      // localStorage unavailable, don't show
+      // localStorage unavailable
     }
   }, []);
 
@@ -70,63 +41,50 @@ export function OnboardingWalkthrough() {
     try {
       localStorage.setItem(STORAGE_KEY, 'true');
     } catch {
-      // localStorage unavailable, ignore
+      // ignore
     }
     setOverlayVisible(false);
     setTimeout(() => {
       setMounted(false);
-      setCurrentStep(0);
     }, 300);
   }, []);
 
-  const goToStep = useCallback(
-    (nextStep: number) => {
-      if (animating || nextStep === currentStep) return;
-      setSlideDirection(nextStep > currentStep ? 'left' : 'right');
-      setAnimating(true);
+  const goTo = useCallback((next: Step) => {
+    setTransitioning(true);
+    setTimeout(() => {
+      setStep(next);
+      setTransitioning(false);
+    }, 150);
+  }, []);
 
-      setTimeout(() => {
-        setCurrentStep(nextStep);
-        setSlideDirection('none');
-        setTimeout(() => setAnimating(false), 300);
-      }, 150);
-    },
-    [animating, currentStep],
-  );
-
-  const handleNext = useCallback(() => {
-    if (currentStep < STEPS.length - 1) {
-      goToStep(currentStep + 1);
-    } else {
-      complete();
+  const handleFinish = useCallback(async () => {
+    // Save persona preference
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ friendPersona: selectedPersona }),
+      });
+    } catch {
+      // Non-blocking — persona can be changed later
     }
-  }, [currentStep, goToStep, complete]);
-
-  const handleBack = useCallback(() => {
-    if (currentStep > 0) {
-      goToStep(currentStep - 1);
-    }
-  }, [currentStep, goToStep]);
-
-  const handleSkip = useCallback(() => {
     complete();
-  }, [complete]);
+  }, [selectedPersona, complete]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!mounted) return;
-      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+      if (e.key === 'Escape') {
         e.preventDefault();
-        handleNext();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        handleBack();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        handleSkip();
+        complete();
       }
     },
-    [mounted, handleNext, handleBack, handleSkip],
+    [mounted, complete],
   );
 
   useEffect(() => {
@@ -138,17 +96,8 @@ export function OnboardingWalkthrough() {
 
   if (!mounted) return null;
 
-  const step = STEPS[currentStep];
-  const isLastStep = currentStep === STEPS.length - 1;
-  const progress = ((currentStep + 1) / STEPS.length) * 100;
-
-  // Slide animation classes
-  const contentSlideClass =
-    slideDirection === 'left'
-      ? 'opacity-0 -translate-x-8'
-      : slideDirection === 'right'
-        ? 'opacity-0 translate-x-8'
-        : 'opacity-100 translate-x-0';
+  const fadeClass = transitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100';
+  const persona = PERSONAS.find((p) => p.id === selectedPersona) ?? PERSONAS[1];
 
   return (
     <div
@@ -157,141 +106,168 @@ export function OnboardingWalkthrough() {
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label="Onboarding walkthrough"
+      aria-label="Welcome to read-pal"
     >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
           overlayVisible ? 'opacity-100' : 'opacity-0'
         }`}
-        onClick={handleSkip}
+        onClick={complete}
       />
 
       {/* Card */}
       <div
-        className={`relative w-full max-w-md mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ease-out ${
+        className={`relative w-full max-w-lg mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ease-out ${
           overlayVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Progress bar */}
-        <div className="h-1 bg-gray-100 dark:bg-gray-800">
-          <div
-            className="h-full bg-amber-500 transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        {/* Skip */}
+        <button
+          onClick={complete}
+          className="absolute top-4 right-4 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
+        >
+          Skip
+        </button>
 
-        {/* Skip button */}
-        {!isLastStep && (
-          <button
-            onClick={handleSkip}
-            className="absolute top-4 right-4 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200 z-10"
-          >
-            Skip
-          </button>
-        )}
-
-        {/* Step content */}
-        <div className="px-8 pt-10 pb-6">
-          {/* Step counter */}
-          <div className="text-center text-[10px] font-semibold text-amber-500/70 uppercase tracking-widest mb-4">
-            Step {currentStep + 1} of {STEPS.length}
-          </div>
-          <div
-            className={`text-center transition-all duration-300 ease-out ${contentSlideClass}`}
-          >
-            {/* Emoji */}
-            <div className="text-5xl mb-5" role="img" aria-hidden="true">
-              {step.emoji}
+        {/* Content */}
+        <div className={`px-8 pt-10 pb-8 transition-all duration-300 ease-out ${fadeClass}`}>
+          {/* ── Step 1: Welcome ── */}
+          {step === 'welcome' && (
+            <div className="text-center">
+              <div className="text-6xl mb-6">{'\uD83D\uDCDA'}</div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                Welcome to read-pal
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm mx-auto mb-8">
+                Your AI reading companion. Upload any book, highlight passages, and chat with a friend who reads alongside you.
+              </p>
+              <button
+                onClick={() => goTo('companion')}
+                className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98]"
+              >
+                Let&apos;s go
+              </button>
             </div>
+          )}
 
-            {/* Title */}
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-              {step.title}
-            </h2>
+          {/* ── Step 2: Choose Companion ── */}
+          {step === 'companion' && (
+            <div>
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Pick your reading companion
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Each one has their own style. You can change this anytime.
+                </p>
+              </div>
 
-            {/* Description */}
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm mx-auto">
-              {step.description}
-            </p>
-          </div>
+              <div className="grid grid-cols-1 gap-2 mb-6">
+                {PERSONAS.map((p) => {
+                  const isSelected = selectedPersona === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedPersona(p.id)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-left ${
+                        isSelected
+                          ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/15 ring-1 ring-amber-400/30'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                      }`}
+                    >
+                      <span className="text-2xl">{p.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-gray-900 dark:text-white">{p.name}</span>
+                          <span className="text-xs text-gray-400">{p.personality}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{p.desc}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => goTo('welcome')}
+                  className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => goTo('ready')}
+                  className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98]"
+                >
+                  Continue with {persona.name}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 3: Ready ── */}
+          {step === 'ready' && (
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center shadow-sm">
+                <span className="text-4xl">{persona.emoji}</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                {persona.name} is ready to read with you
+              </h2>
+              <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">
+                Head to your library to upload a book or try a sample. {persona.name} will be right there with you.
+              </p>
+              <div className="flex flex-col gap-3 max-w-xs mx-auto">
+                <Link
+                  href="/library"
+                  onClick={handleFinish}
+                  className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] text-center"
+                >
+                  Go to Library
+                </Link>
+                <button
+                  onClick={complete}
+                  disabled={saving}
+                  className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  {saving ? 'Saving...' : 'Skip for now'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Navigation */}
-        <div className="px-8 pb-8">
-          {/* Buttons */}
-          <div className="flex items-center justify-between gap-3">
-            {/* Back button */}
-            {currentStep > 0 ? (
-              <button
-                onClick={handleBack}
-                disabled={animating}
-                className="px-4 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 disabled:opacity-50"
-              >
-                Back
-              </button>
-            ) : (
-              <div />
-            )}
+        {/* Step indicator */}
+        <div className="px-8 pb-6 flex items-center justify-center gap-2">
+          {(['welcome', 'companion', 'ready'] as Step[]).map((s, i) => {
+            const steps: Step[] = ['welcome', 'companion', 'ready'];
+            const currentIndex = steps.indexOf(step);
+            const thisIndex = i;
+            const isCompleted = thisIndex < currentIndex;
+            const isCurrent = thisIndex === currentIndex;
 
-            {/* Next / Start Reading button */}
-            {isLastStep ? (
-              <Link
-                href="/library"
-                onClick={complete}
-                className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98]"
-              >
-                Start Reading!
-              </Link>
-            ) : (
-              <button
-                onClick={handleNext}
-                disabled={animating}
-                className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] disabled:opacity-50 disabled:hover:shadow-none"
-              >
-                Next
-              </button>
-            )}
-          </div>
-
-          {/* Step indicator dots */}
-          <div className="flex items-center justify-center gap-2 mt-6">
-            {STEPS.map((_, index) => {
-              const isCompleted = index < currentStep;
-              const isCurrent = index === currentStep;
-
-              if (isCompleted) {
-                return (
-                  <button
-                    key={index}
-                    onClick={() => goToStep(index)}
-                    className="w-2 h-2 rounded-full bg-amber-500/50 transition-all duration-300 hover:bg-amber-500"
-                    aria-label={`Go to step ${index + 1} (completed)`}
-                  />
-                );
-              }
-
-              if (isCurrent) {
-                return (
-                  <div
-                    key={index}
-                    className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-500/30 transition-all duration-300"
-                    aria-label={`Step ${index + 1} (current)`}
-                    aria-current="step"
-                  />
-                );
-              }
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => goToStep(index)}
-                  className="w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700 ring-2 ring-gray-200 dark:ring-gray-700 transition-all duration-300 hover:bg-amber-300 dark:hover:bg-amber-700 hover:ring-amber-300/50 dark:hover:ring-amber-700/50"
-                  aria-label={`Go to step ${index + 1}`}
-                />
-              );
-            })}
-          </div>
+            return (
+              <div
+                key={s}
+                className={`rounded-full transition-all duration-300 ${
+                  isCurrent
+                    ? 'w-6 h-2 bg-amber-500'
+                    : isCompleted
+                      ? 'w-2 h-2 bg-amber-400'
+                      : 'w-2 h-2 bg-gray-200 dark:bg-gray-700'
+                }`}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
