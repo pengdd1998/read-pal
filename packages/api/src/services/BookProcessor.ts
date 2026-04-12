@@ -53,6 +53,7 @@ export class BookProcessor {
                 id: `${bookId}-ch-${chapters.length}`,
                 title: item.title || `Chapter ${chapters.length + 1}`,
                 content: cleanText,
+                rawContent: this.sanitizeHTML(text),
                 startIndex: fullContent.length,
                 endIndex: fullContent.length + cleanText.length,
                 order: chapters.length,
@@ -181,6 +182,33 @@ export class BookProcessor {
       .trim();
 
     return text;
+  }
+
+  /**
+   * Sanitize HTML for safe rendering while preserving technical formatting.
+   * Removes dangerous elements (scripts, styles, event handlers) but keeps
+   * structural elements: pre, code, table, img, svg, figure, blockquote,
+   * headings, lists, links, strong, em, etc.
+   */
+  private sanitizeHTML(html: string): string {
+    // Remove script and style blocks entirely
+    let sanitized = html
+      .replace(/<script[^>]*>.*?<\/script>/gis, '')
+      .replace(/<style[^>]*>.*?<\/style>/gis, '');
+
+    // Remove event handlers (onclick, onload, onerror, etc.)
+    sanitized = sanitized.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
+
+    // Remove javascript: URLs
+    sanitized = sanitized.replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, 'href="#"');
+
+    // Normalize self-closing img tags
+    sanitized = sanitized.replace(/<img([^>]*?)(?!\/)>/gi, '<img$1 />');
+
+    // Clean up excessive whitespace but preserve structure
+    sanitized = sanitized.replace(/\s+/g, ' ').replace(/>\s+</g, '><').trim();
+
+    return sanitized;
   }
 
   /**

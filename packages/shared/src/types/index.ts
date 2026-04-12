@@ -65,6 +65,7 @@ export interface Chapter {
   id: string;
   title: string;
   content: string;
+  rawContent?: string;
   startIndex: number;
   endIndex: number;
   order: number;
