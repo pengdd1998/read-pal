@@ -33,6 +33,8 @@ export default function RegisterPage() {
       } catch {
         // Non-blocking — user can still use the app
       }
+      // Mark onboarding complete so dashboard walkthrough doesn't fire
+      localStorage.setItem('read-pal-onboarding-complete', 'true');
       router.push('/welcome');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Registration failed';
