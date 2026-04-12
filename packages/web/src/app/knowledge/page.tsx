@@ -142,12 +142,41 @@ export default function KnowledgePage() {
   useEffect(() => {
     let cancelled = false;
 
-    // Load annotations as the data source for knowledge visualization
-    Promise.all([
-      api.get<AnnotationItem[]>('/api/annotations', { limit: 100 }),
-      api.get<{ id: string; title?: string }[]>('/api/books'),
-    ])
-      .then(([annotationsRes, booksRes]) => {
+    async function loadKnowledgeData() {
+      try {
+        // Step 1: Try backend knowledge graph API (Neo4j-powered)
+        const [graphRes, conceptsRes, themesRes] = await Promise.all([
+          api.get<{ neo4jAvailable: boolean; nodes: GraphNode[]; edges: GraphEdge[] }>('/api/knowledge/graph').catch(() => ({ success: false, data: null as unknown })),
+          api.get<{ neo4jAvailable: boolean; concepts: { id: string; name: string; type: string; bookIds?: string[] }[] }>('/api/knowledge/concepts').catch(() => ({ success: false, data: null as unknown })),
+          api.get<{ neo4jAvailable: boolean; themes: { theme: string; books: string[]; connections: number; strength: number }[] }>('/api/knowledge/themes').catch(() => ({ success: false, data: null as unknown })),
+        ]);
+
+        // If Neo4j is available and returned data, use it directly
+        const graphData = (graphRes as { success?: boolean; data?: unknown }).data as { neo4jAvailable?: boolean; nodes?: GraphNode[]; edges?: GraphEdge[] } | null;
+        const conceptsData = (conceptsRes as { success?: boolean; data?: unknown }).data as { neo4jAvailable?: boolean; concepts?: { id: string; name: string; type: string; bookIds?: string[] }[] } | null;
+        const themesData = (themesRes as { success?: boolean; data?: unknown }).data as { neo4jAvailable?: boolean; themes?: { theme: string; books: string[]; connections: number; strength: number }[] } | null;
+
+        if (graphData?.neo4jAvailable && graphData.nodes && graphData.nodes.length > 0) {
+          if (cancelled) return;
+          const positionedNodes = graphData.nodes.map((n, i) => ({
+            ...n,
+            x: n.x ?? getNodePosition(i, graphData.nodes!.length).x,
+            y: n.y ?? getNodePosition(i, graphData.nodes!.length).y,
+          }));
+          setNodes(positionedNodes);
+          setEdges(graphData.edges || []);
+          setThemes(themesData?.themes || []);
+          setLayoutNodes(forceDirectedLayout(positionedNodes, graphData.edges || []));
+          setLoading(false);
+          return;
+        }
+
+        // Step 2: Fallback — derive graph from annotations + concepts
+        const [annotationsRes, booksRes] = await Promise.all([
+          api.get<AnnotationItem[]>('/api/annotations', { limit: 100 }),
+          api.get<{ id: string; title?: string }[]>('/api/books'),
+        ]);
+
         if (cancelled) return;
 
         const annotations = annotationsRes.data || [];
@@ -184,6 +213,24 @@ export default function KnowledgePage() {
             ...getNodePosition(idx, bookGroups.size),
           });
           idx++;
+        }
+
+        // Add concept nodes from knowledge graph if available
+        if (conceptsData?.concepts) {
+          for (const concept of conceptsData.concepts) {
+            graphNodes.push({
+              id: concept.id || `concept-${idx}`,
+              label: concept.name,
+              type: 'concept',
+              ...getNodePosition(idx, bookGroups.size + conceptsData.concepts.length),
+            });
+            if (concept.bookIds) {
+              for (const bookId of concept.bookIds) {
+                graphEdges.push({ source: concept.id || `concept-${idx}`, target: bookId, type: 'related to' });
+              }
+            }
+            idx++;
+          }
         }
 
         // Extract color-based themes from highlights
@@ -232,18 +279,28 @@ export default function KnowledgePage() {
           }
         }
 
+        // Use backend themes if available and richer
+        const finalThemes = themesData?.themes && themesData.themes.length > 0
+          ? themesData.themes.map((t) => ({
+              theme: t.theme,
+              books: t.books,
+              connections: t.connections,
+              strength: t.strength,
+            }))
+          : crossBookThemes;
+
         setNodes(graphNodes);
         setEdges(graphEdges);
-        setThemes(crossBookThemes);
+        setThemes(finalThemes);
         setLayoutNodes(forceDirectedLayout(graphNodes, graphEdges));
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setError('Failed to load knowledge data. Please try again later.');
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    }
 
+    loadKnowledgeData();
     return () => { cancelled = true; };
   }, []);
 

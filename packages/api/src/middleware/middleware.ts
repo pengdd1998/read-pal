@@ -23,8 +23,28 @@ export function initializeMiddleware(
   // Compression
   app.use(compression());
 
-  // Security headers
-  app.use(helmet());
+  // Security headers with enhanced configuration
+  app.use(helmet({
+    contentSecurityPolicy: config.nodeEnv === 'production' ? {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", "ws:", "wss:"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    } : false,
+    crossOriginEmbedderPolicy: false,
+    hsts: config.nodeEnv === 'production' ? {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    } : false,
+  }));
 
   // CORS
   app.use(cors({
