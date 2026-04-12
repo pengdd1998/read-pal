@@ -321,15 +321,20 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       {/* Chat Panel */}
       {isOpen && (
         <>
-          {/* Backdrop on mobile */}
+          {/* Mobile: semi-transparent backdrop covering top portion */}
           <div
-            className="fixed inset-0 bg-black/30 z-40 md:hidden"
+            className="fixed inset-0 z-40 md:hidden bg-black/10"
             onClick={() => setIsOpen(false)}
           />
 
+          {/* Mobile: bottom sheet (55vh) — Desktop: full-height sidebar (400px) */}
           <div
-            className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col animate-slide-in-right"
+            className="fixed right-0 bottom-0 h-[55vh] w-full md:top-0 md:bottom-0 md:h-full md:w-[400px] bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right"
           >
+            {/* Mobile drag handle */}
+            <div className="flex justify-center pt-2 pb-1 md:hidden">
+              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+            </div>
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/50 dark:border-amber-900/30">
               <div className="flex items-center gap-2.5">

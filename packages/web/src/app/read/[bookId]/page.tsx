@@ -87,7 +87,7 @@ function loadReaderSettings(bookId: string) {
   }
 }
 
-function saveReaderSettings(bookId: string, settings: { fontSize: number; theme: string }) {
+function saveReaderSettings(bookId: string, settings: { fontSize: number; theme: string; quietMode?: boolean }) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(`${SETTINGS_KEY_PREFIX}-${bookId}`, JSON.stringify(settings));
@@ -138,6 +138,7 @@ export default function ReadPage() {
   const [chapterFade, setChapterFade] = useState<'in' | 'out'>('in');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
+  const [quietMode, setQuietMode] = useState(false);
   const sessionStartRef = useRef<number>(Date.now());
   const [sessionElapsed, setSessionElapsed] = useState(0);
 
@@ -200,14 +201,15 @@ export default function ReadPage() {
       if (saved.theme === 'light' || saved.theme === 'dark' || saved.theme === 'sepia') {
         setTheme(saved.theme);
       }
+      if (typeof saved.quietMode === 'boolean') setQuietMode(saved.quietMode);
     }
   }, [bookId]);
 
   useEffect(() => {
     if (!loading) {
-      saveReaderSettings(bookId, { fontSize, theme });
+      saveReaderSettings(bookId, { fontSize, theme, quietMode });
     }
-  }, [bookId, fontSize, theme, loading]);
+  }, [bookId, fontSize, theme, quietMode, loading]);
 
   // Track when user makes first selection
   useEffect(() => {
@@ -743,6 +745,22 @@ export default function ReadPage() {
 
           <div className="w-px h-6 bg-amber-200/50 dark:bg-amber-900/30 mx-1 hidden sm:block" />
 
+          {/* Quiet mode toggle — desktop */}
+          <button
+            onClick={() => setQuietMode((v) => !v)}
+            className={`hidden sm:flex p-2 rounded-lg text-xs font-medium transition-colors items-center gap-1 ${
+              quietMode
+                ? 'text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/30'
+                : 'text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30'
+            }`}
+            title={quietMode ? 'Quiet mode on — click to show interruptions' : 'Enable quiet mode — hide interruptions'}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+          </button>
+
           {/* In-book search */}
           <button
             onClick={() => setSearchOpen(!searchOpen)}
@@ -991,8 +1009,8 @@ export default function ReadPage() {
         chapterContent={chapterContent}
       />
 
-      {/* Intervention toast */}
-      {!loading && book && (
+      {/* Intervention toast — hidden in quiet mode */}
+      {!loading && book && !quietMode && (
         <InterventionToast
           bookId={bookId}
           currentPage={currentChapter}
@@ -1153,6 +1171,26 @@ export default function ReadPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Quiet mode */}
+            <div className="flex items-center justify-between mt-5">
+              <div>
+                <span className="text-sm text-gray-600 dark:text-gray-300">Quiet Mode</span>
+                <p className="text-[10px] text-gray-400 mt-0.5">Hide interruptions &amp; coaching</p>
+              </div>
+              <button
+                onClick={() => setQuietMode((v) => !v)}
+                className={`relative w-11 h-6 rounded-full transition-colors ${
+                  quietMode ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+                role="switch"
+                aria-checked={quietMode}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  quietMode ? 'translate-x-5' : ''
+                }`} />
+              </button>
             </div>
           </div>
         </div>
