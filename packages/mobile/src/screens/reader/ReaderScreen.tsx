@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -94,6 +94,45 @@ export function ReaderScreen({ route }: ReaderProps) {
   const [pendingAnnotationType, setPendingAnnotationType] = useState<'highlight' | 'note'>('highlight');
   const [showAnnotations, setShowAnnotations] = useState(false);
 
+  // Reading session tracking
+  const sessionIdRef = useRef<string | null>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sessionPagesRef = useRef(0);
+
+  // Start reading session
+  useEffect(() => {
+    let cancelled = false;
+    api.post<{ id: string }>('/api/reading-sessions/start', { bookId })
+      .then((res) => {
+        if (!cancelled && res.success && res.data) {
+          const data = res.data as unknown as { id: string };
+          sessionIdRef.current = data.id;
+
+          // Heartbeat every 30 seconds
+          heartbeatRef.current = setInterval(() => {
+            if (sessionIdRef.current) {
+              api.patch(`/api/reading-sessions/${sessionIdRef.current}/heartbeat`, {
+                pagesRead: sessionPagesRef.current,
+              }).catch(() => {});
+            }
+          }, 30000);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+      // End session on unmount
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      if (sessionIdRef.current) {
+        api.post(`/api/reading-sessions/${sessionIdRef.current}/end`, {
+          pagesRead: sessionPagesRef.current,
+        }).catch(() => {});
+        sessionIdRef.current = null;
+      }
+    };
+  }, [bookId]);
+
   useEffect(() => {
     async function loadContent() {
       try {
@@ -136,6 +175,7 @@ export function ReaderScreen({ route }: ReaderProps) {
       if (!book || totalPages === 0) return;
       const newProgress = page / totalPages;
       setProgress(newProgress);
+      sessionPagesRef.current = page;
       try {
         await api.patch(API_ROUTES.BOOK_UPDATE(bookId), {
           currentPage: page,
