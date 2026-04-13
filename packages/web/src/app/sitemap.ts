@@ -13,16 +13,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
+      url: `${APP_URL}/register`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: `${APP_URL}/login`,
       lastModified,
       changeFrequency: 'monthly',
       priority: 0.4,
     },
     {
-      url: `${APP_URL}/register`,
+      url: `${APP_URL}/forgot-password`,
+      lastModified,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${APP_URL}/discovery`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${APP_URL}/chat`,
       lastModified,
       changeFrequency: 'monthly',
-      priority: 0.4,
+      priority: 0.6,
     },
   ];
 }
