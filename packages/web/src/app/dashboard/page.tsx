@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
-import { OnboardingWalkthrough } from '@/components/onboarding/OnboardingWalkthrough';
-import { ShareReadingCard } from '@/components/share/ReadingShareCard';
-import StreakCalendar from '@/components/dashboard/StreakCalendar';
 import { useToast } from '@/components/Toast';
+
+// Lazy-load heavy dashboard components
+const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false });
+const ShareReadingCard = dynamic(() => import('@/components/share/ReadingShareCard').then((m) => ({ default: m.ShareReadingCard })), { ssr: false });
+const StreakCalendar = dynamic(() => import('@/components/dashboard/StreakCalendar'), { ssr: false });
 
 interface DashboardStats {
   booksRead: number;

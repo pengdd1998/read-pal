@@ -2,18 +2,22 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ReaderView } from '@/components/reading/ReaderView';
+import dynamic from 'next/dynamic';
 import { useToast } from '@/components/Toast';
-import { SelectionToolbar } from '@/components/reading/SelectionToolbar';
-import { AnnotationsSidebar } from '@/components/reading/AnnotationsSidebar';
-import { BookmarkToggle } from '@/components/reading/BookmarkToggle';
-import { CompanionChat, type CompanionChatHandle } from '@/components/reading/CompanionChat';
-import { ReadingBackground } from '@/components/reading/ReadingBackground';
-import { InterventionToast } from '@/components/reading/InterventionToast';
 import { useTextSelection } from '@/hooks/useTextSelection';
 import { useAnnotationHighlights } from '@/hooks/useAnnotationHighlights';
 import { api } from '@/lib/api';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
+import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
+
+// Lazy-load heavy reading components — they're only needed on this page
+const ReaderView = dynamic(() => import('@/components/reading/ReaderView').then((m) => ({ default: m.ReaderView })), { ssr: false });
+const CompanionChat = dynamic(() => import('@/components/reading/CompanionChat').then((m) => ({ default: m.CompanionChat })), { ssr: false });
+const SelectionToolbar = dynamic(() => import('@/components/reading/SelectionToolbar').then((m) => ({ default: m.SelectionToolbar })), { ssr: false });
+const AnnotationsSidebar = dynamic(() => import('@/components/reading/AnnotationsSidebar').then((m) => ({ default: m.AnnotationsSidebar })), { ssr: false });
+const ReadingBackground = dynamic(() => import('@/components/reading/ReadingBackground').then((m) => ({ default: m.ReadingBackground })), { ssr: false });
+const InterventionToast = dynamic(() => import('@/components/reading/InterventionToast').then((m) => ({ default: m.InterventionToast })), { ssr: false });
+const BookmarkToggle = dynamic(() => import('@/components/reading/BookmarkToggle').then((m) => ({ default: m.BookmarkToggle })), { ssr: false });
 
 const SETTINGS_KEY_PREFIX = 'reader-settings';
 

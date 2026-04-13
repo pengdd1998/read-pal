@@ -150,9 +150,11 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     setIsOpen(true);
   }, []);
 
-  // Helper to send a message via SSE streaming
-  const sendStreamMessage = useCallback(async (msg: string) => {
+  // Helper to send a message via SSE streaming with automatic retry
+  const sendStreamMessage = useCallback(async (msg: string, retryCount = 0) => {
     const assistantMsgId = uid();
+    const MAX_RETRIES = 2;
+
     setMessages((prev) => [
       ...prev,
       { id: uid(), role: 'user', content: msg, timestamp: Date.now() },
@@ -162,59 +164,85 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     setConnecting(true);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/agents/chat/stream`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          message: msg,
-          context: {
-            bookId,
-            currentPage,
-            totalPages: totalPages ?? 0,
-            bookTitle: bookTitle ?? '',
-            author: author ?? '',
-            chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '',
-          },
-        }),
-      });
 
-      if (!response.ok) {
-        let errorMsg = `Server error (${response.status})`;
-        try { const errData = await response.json() as { error?: { message?: string } }; errorMsg = errData.error?.message || errorMsg; } catch { /* use default */ }
-        setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Error: ${errorMsg}`, streaming: false } : m));
+    const attemptStream = async (attempt: number): Promise<void> => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/agents/chat/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            message: msg,
+            context: {
+              bookId,
+              currentPage,
+              totalPages: totalPages ?? 0,
+              bookTitle: bookTitle ?? '',
+              author: author ?? '',
+              chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '',
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          // Retry on 5xx or 429, not on 4xx client errors
+          if ((response.status >= 500 || response.status === 429) && attempt < MAX_RETRIES) {
+            const delay = Math.pow(2, attempt) * 1000;
+            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Retrying in ${delay / 1000}s...` } : m));
+            await new Promise((r) => setTimeout(r, delay));
+            return attemptStream(attempt + 1);
+          }
+          let errorMsg = `Server error (${response.status})`;
+          try { const errData = await response.json() as { error?: { message?: string } }; errorMsg = errData.error?.message || errorMsg; } catch { /* use default */ }
+          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Error: ${errorMsg}`, streaming: false } : m));
+          setLoading(false);
+          setConnecting(false);
+          return;
+        }
+
+        setConnecting(false);
+        abortRef.current = consumeSSEStream(
+          response,
+          (tokenChunk: string) => {
+            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content + tokenChunk } : m));
+          },
+          () => {
+            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, streaming: false, content: m.content || "Sorry, I couldn't generate a response." } : m));
+            setLoading(false);
+            setConnecting(false);
+            abortRef.current = null;
+          },
+          (errMsg: string) => {
+            // Retry on stream errors
+            if (attempt < MAX_RETRIES) {
+              const delay = Math.pow(2, attempt) * 1000;
+              setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Connection lost. Retrying in ${delay / 1000}s...` } : m));
+              setTimeout(() => attemptStream(attempt + 1), delay);
+              return;
+            }
+            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content || `Failed: ${errMsg}`, streaming: false } : m));
+            setLoading(false);
+            setConnecting(false);
+            abortRef.current = null;
+          },
+        );
+      } catch {
+        // Network error — retry with backoff
+        if (attempt < MAX_RETRIES) {
+          const delay = Math.pow(2, attempt) * 1000;
+          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Network error. Retrying in ${delay / 1000}s...` } : m));
+          await new Promise((r) => setTimeout(r, delay));
+          return attemptStream(attempt + 1);
+        }
+        setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: 'Failed to connect to the AI companion. Please check your connection and try again.', streaming: false } : m));
         setLoading(false);
         setConnecting(false);
-        return;
       }
+    };
 
-      setConnecting(false);
-      abortRef.current = consumeSSEStream(
-        response,
-        (tokenChunk: string) => {
-          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content + tokenChunk } : m));
-        },
-        () => {
-          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, streaming: false, content: m.content || "Sorry, I couldn't generate a response." } : m));
-          setLoading(false);
-          setConnecting(false);
-          abortRef.current = null;
-        },
-        (errMsg: string) => {
-          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content || `Failed: ${errMsg}`, streaming: false } : m));
-          setLoading(false);
-          setConnecting(false);
-          abortRef.current = null;
-        },
-      );
-    } catch {
-      setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: 'Failed to connect to the AI companion. Please check your connection.', streaming: false } : m));
-      setLoading(false);
-      setConnecting(false);
-    }
+    await attemptStream(retryCount);
   }, [bookId, currentPage, totalPages, bookTitle, author, chapterContent]);
 
   // Auto-send pending message after chat opens

@@ -51,6 +51,8 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
         ? user.settings
         : {};
 
+    // Cache settings for 30s — they rarely change and are read frequently
+    res.set('Cache-Control', 'private, max-age=30');
     res.json({
       success: true,
       data: { ...DEFAULT_SETTINGS, ...userSettings },
