@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
+import { formatRelativeTime } from '@/lib/date';
 import { useToast } from '@/components/Toast';
 
 // Lazy-load heavy dashboard components
@@ -76,6 +77,9 @@ function SkeletonPulse({ className = '' }: { className?: string }) {
   return <div className={`bg-gray-100 dark:bg-gray-800 rounded animate-pulse ${className}`} />;
 }
 
+// Alias for readability in this context
+const formatLastRead = formatRelativeTime;
+
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 6) return 'Happy late-night reading';
@@ -83,24 +87,6 @@ function getTimeGreeting(): string {
   if (hour < 17) return 'Good afternoon';
   if (hour < 21) return 'Good evening';
   return 'Happy night reading';
-}
-
-function formatLastRead(lastRead: string): string {
-  try {
-    const date = new Date(lastRead);
-    if (isNaN(date.getTime())) return lastRead;
-    const diffMs = Date.now() - date.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    if (diffMin < 1) return 'Just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return `${diffHr}h ago`;
-    const diffDay = Math.floor(diffHr / 24);
-    if (diffDay < 7) return `${diffDay}d ago`;
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  } catch {
-    return lastRead;
-  }
 }
 
 function DashboardChallenges() {

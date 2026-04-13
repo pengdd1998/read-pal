@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
+import { formatRelativeTime } from '@/lib/date';
 
 interface Notification {
   id: string;

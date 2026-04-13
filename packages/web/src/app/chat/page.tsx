@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import DOMPurify from 'dompurify';
 import { API_BASE_URL } from '@/lib/api';
 import { renderSimpleMarkdown } from '@/lib/markdown';
 
@@ -60,7 +59,18 @@ const SUGGESTIONS: Record<AgentType, string[]> = {
   ],
 };
 
-/** Simple markdown renderer for AI responses. Output is sanitized through DOMPurify. */
+/** DOMPurify loaded on demand — keeps it out of the initial bundle for non-chat pages */
+let _dp: typeof import('dompurify').default | null = null;
+async function safeSanitize(html: string): Promise<string> {
+  if (!_dp) { const m = await import('dompurify'); _dp = m.default; }
+  return _dp.sanitize(html);
+}
+/** Sync wrapper using cached DOMPurify, with HTML fallback */
+function sanitizeSync(html: string): string {
+  if (_dp) return _dp.sanitize(html);
+  return html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+}
+
 function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -152,6 +162,9 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Preload DOMPurify on mount so sanitizeSync works immediately
+  useEffect(() => { if (!_dp) import('dompurify').then((m) => { _dp = m.default; }); }, []);
 
   // Abort any in-flight stream when the component unmounts
   useEffect(() => {
@@ -401,7 +414,7 @@ export default function ChatPage() {
                   {msg.role === 'assistant' ? (
                     <div
                       className="text-sm prose-sm prose-p:my-1 prose-pre:my-1"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderSimpleMarkdown(msg.content)) }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeSync(renderSimpleMarkdown(msg.content)) }}
                     />
                   ) : (
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
