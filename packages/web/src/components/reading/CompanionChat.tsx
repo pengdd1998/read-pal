@@ -251,7 +251,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       const msg = pendingMessageRef.current;
       pendingMessageRef.current = null;
       setInput(msg);
-      setTimeout(() => sendStreamMessage(msg), 100);
+      const timer = setTimeout(() => sendStreamMessage(msg), 100);
+      return () => clearTimeout(timer);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, sendStreamMessage]);

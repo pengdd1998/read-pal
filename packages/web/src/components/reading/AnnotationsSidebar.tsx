@@ -41,6 +41,7 @@ export function AnnotationsSidebar({
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleExport = async (format: 'markdown' | 'json') => {
+    let url: string | undefined;
     try {
       setExporting(true);
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
@@ -50,15 +51,15 @@ export function AnnotationsSidebar({
       });
       if (!res.ok) return;
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `annotations-${bookId}.${format === 'json' ? 'json' : 'md'}`;
       a.click();
-      URL.revokeObjectURL(url);
     } catch {
       // Silently fail
     } finally {
+      if (url) URL.revokeObjectURL(url);
       setExporting(false);
     }
   };
