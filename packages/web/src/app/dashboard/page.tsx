@@ -290,7 +290,7 @@ export default function DashboardPage() {
   const currentBook = recentBooks.length > 0 ? recentBooks[0] : null;
   const activeBooks = recentBooks.filter((b) => b.progress > 0 && b.progress < 100).slice(0, 3);
   const streak = stats?.readingStreak ?? 0;
-  const hasData = !loading && stats !== null && (stats.booksRead > 0 || stats.pagesRead > 0);
+  const hasData = !loading && (recentBooks.length > 0 || (stats !== null && (stats.booksRead > 0 || stats.pagesRead > 0)));
 
   const handleSeedSample = async () => {
     try {
