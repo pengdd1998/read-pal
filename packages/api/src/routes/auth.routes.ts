@@ -370,4 +370,34 @@ router.post('/refresh', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * DELETE /api/auth/account
+ * Delete user account and all associated data
+ */
+router.delete('/account', authenticate, rateLimiter({ windowMs: 60000, max: 3 }), async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
+      return;
+    }
+
+    // Delete user — cascading deletes handle related data
+    await User.destroy({ where: { id: userId } });
+
+    console.log(`[auth] Account deleted: ${userId}`);
+
+    res.json({
+      success: true,
+      data: { message: 'Account deleted successfully' },
+    });
+  } catch (error) {
+    console.error('Account deletion error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'DELETE_FAILED', message: 'Failed to delete account' },
+    });
+  }
+});
+
 export default router;
