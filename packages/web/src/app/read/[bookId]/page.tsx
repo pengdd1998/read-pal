@@ -393,16 +393,19 @@ export default function ReadPage() {
       try {
         setLoading(true);
 
-        const result = await api.get<{
-          book: Book;
-          chapters: Chapter[];
-          content: string;
-        }>(`/api/upload/books/${bookId}/content`);
+        const [bookResult, annotationsResult] = await Promise.all([
+          api.get<{
+            book: Book;
+            chapters: Chapter[];
+            content: string;
+          }>(`/api/upload/books/${bookId}/content`),
+          api.get<Annotation[]>('/api/annotations', { bookId }).catch(() => null),
+        ]);
 
         if (cancelled) return;
 
-        if (result.success && result.data) {
-          const data = result.data as unknown as {
+        if (bookResult.success && bookResult.data) {
+          const data = bookResult.data as unknown as {
             book: Book;
             chapters: Chapter[];
             content: string;
@@ -410,11 +413,13 @@ export default function ReadPage() {
           setBook(data.book);
           setChapters(data.chapters ?? []);
           setCurrentChapter(data.book.currentPage || 0);
-
-          // Load annotations
-          loadAnnotations();
         } else {
-          setError(result.error?.message || 'Failed to load book');
+          setError(bookResult.error?.message || 'Failed to load book');
+        }
+
+        if (annotationsResult?.success && annotationsResult.data) {
+          const annData = annotationsResult.data as unknown as Annotation[];
+          setAnnotations(Array.isArray(annData) ? annData : []);
         }
       } catch {
         if (!cancelled) setError('Failed to connect to server');
@@ -425,7 +430,7 @@ export default function ReadPage() {
 
     loadBookContent();
     return () => { cancelled = true; };
-  }, [bookId, loadAnnotations]);
+  }, [bookId]);
 
   const handleChapterChange = useCallback(async (chapterIndex: number) => {
     if (chapterIndex === currentChapter) return;

@@ -214,6 +214,7 @@ next-env.d.ts
 # Compiled TypeScript output (source is .ts)
 packages/api/src/**/*.js
 packages/api/src/**/*.d.ts
+!packages/api/src/types/*.d.ts
 packages/api/src/**/*.js.map
 packages/api/tests/**/*.js
 packages/api/tests/**/*.d.ts
