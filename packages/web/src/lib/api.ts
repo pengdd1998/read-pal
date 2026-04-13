@@ -11,6 +11,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 class ApiClient {
   private client: AxiosInstance;
+  private cache = new Map<string, { data: unknown; expiry: number }>();
+  private static DEFAULT_TTL = 30_000; // 30 seconds
 
   constructor() {
     this.client = axios.create({
@@ -54,28 +56,58 @@ class ApiClient {
     );
   }
 
+  /** Invalidate cache entries matching a prefix (e.g., '/api/settings' clears '/api/settings*') */
+  invalidateCache(prefix?: string): void {
+    if (!prefix) { this.cache.clear(); return; }
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(prefix)) this.cache.delete(key);
+    }
+  }
+
   async get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
+    const cacheKey = `${url}:${JSON.stringify(params ?? {})}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached && cached.expiry > Date.now()) {
+      return cached.data as ApiResponse<T>;
+    }
     const response = await this.client.get<ApiResponse<T>>(url, { params });
+    // Cache successful GET responses for settings/library-type endpoints
+    if (response.data.success && (
+      url.includes('/api/settings') ||
+      url.includes('/api/stats/dashboard') ||
+      url.includes('/api/agents/history')
+    )) {
+      this.cache.set(cacheKey, { data: response.data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
+    }
     return response.data;
   }
 
   async post<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const response = await this.client.post<ApiResponse<T>>(url, data);
+    // Invalidate relevant caches on mutations
+    this.invalidateCache('/api/settings');
+    this.invalidateCache('/api/stats');
     return response.data;
   }
 
   async put<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const response = await this.client.put<ApiResponse<T>>(url, data);
+    this.invalidateCache('/api/settings');
+    this.invalidateCache('/api/stats');
     return response.data;
   }
 
   async patch<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const response = await this.client.patch<ApiResponse<T>>(url, data);
+    this.invalidateCache('/api/settings');
+    this.invalidateCache('/api/stats');
     return response.data;
   }
 
   async delete<T>(url: string): Promise<ApiResponse<T>> {
     const response = await this.client.delete<ApiResponse<T>>(url);
+    this.invalidateCache('/api/settings');
+    this.invalidateCache('/api/stats');
     return response.data;
   }
 
