@@ -9,6 +9,7 @@ import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { ReaderScreen } from '../screens/reader/ReaderScreen';
 import { ChatScreen } from '../screens/chat/ChatScreen';
+import { FriendScreen } from '../screens/friend/FriendScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 type AuthStackParamList = {
@@ -19,6 +20,7 @@ type AuthStackParamList = {
 type MainTabParamList = {
   Library: undefined;
   Chat: undefined;
+  Friend: undefined;
   Profile: { setAuth: (token: string | null) => void };
 };
 
@@ -76,6 +78,11 @@ function MainNavigator({ setAuth }: MainNavigatorProps) {
         name="Chat"
         component={ChatScreen}
         options={{ title: 'Chat', tabBarLabel: 'Chat' }}
+      />
+      <Tab.Screen
+        name="Friend"
+        component={FriendScreen}
+        options={{ title: 'Reading Friend', tabBarLabel: 'Friend' }}
       />
       <Tab.Screen
         name="Profile"

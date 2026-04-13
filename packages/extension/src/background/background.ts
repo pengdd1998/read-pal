@@ -1,7 +1,8 @@
 /**
  * read-pal Extension — Background Service Worker
  *
- * Handles extension lifecycle events and context menu actions.
+ * Handles extension lifecycle events, context menu actions,
+ * and annotation saves from the content script.
  */
 
 export {};
@@ -20,7 +21,6 @@ chrome.contextMenus?.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === 'save-to-readpal') {
     const settings = await getSettings();
     if (!settings) {
-      // Open popup for setup
       chrome.action?.openPopup?.();
       return;
     }
@@ -53,6 +53,45 @@ chrome.contextMenus?.onClicked.addListener(async (info, tab) => {
     }
   }
 });
+
+// Handle messages from content script
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.action === 'saveAnnotation') {
+    handleAnnotationSave(message.data);
+    sendResponse({ success: true });
+  }
+  return true;
+});
+
+async function handleAnnotationSave(data: {
+  type: 'highlight' | 'note' | 'bookmark';
+  content: string;
+  note?: string;
+  url?: string;
+  title?: string;
+}): Promise<void> {
+  const settings = await getSettings();
+  if (!settings) return;
+
+  try {
+    await fetch(`${settings.serverUrl}/api/annotations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings.apiToken}`,
+      },
+      body: JSON.stringify({
+        type: data.type,
+        content: data.content,
+        note: data.note,
+        sourceUrl: data.url,
+        sourceTitle: data.title,
+      }),
+    });
+  } catch {
+    // Queue for retry (not implemented — fire and forget for now)
+  }
+}
 
 interface Settings {
   serverUrl: string;

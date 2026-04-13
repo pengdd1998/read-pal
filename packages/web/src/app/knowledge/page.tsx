@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 
@@ -105,6 +105,83 @@ function forceDirectedLayout(
   return positioned;
 }
 
+function circularLayout(nodes: GraphNode[]): GraphNode[] {
+  if (nodes.length < 2) return nodes;
+  return nodes.map((n, i) => {
+    const angle = (2 * Math.PI * i) / nodes.length - Math.PI / 2;
+    return {
+      ...n,
+      x: 50 + 38 * Math.cos(angle),
+      y: 50 + 38 * Math.sin(angle),
+    };
+  });
+}
+
+function hierarchicalLayout(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
+  if (nodes.length < 2) return nodes;
+
+  // Find root nodes (book nodes or nodes with no incoming edges)
+  const targetIds = new Set(edges.map((e) => e.target));
+  const roots = nodes.filter((n) => !targetIds.has(n.id));
+  const nonRoots = nodes.filter((n) => targetIds.has(n.id));
+
+  const layers: GraphNode[][] = [];
+  if (roots.length > 0) {
+    layers.push(roots);
+  } else {
+    layers.push([nodes[0]]);
+  }
+
+  // BFS to assign layers
+  const assigned = new Set(layers[0].map((n) => n.id));
+  let remaining = nonRoots.filter((n) => !assigned.has(n.id));
+
+  while (remaining.length > 0 && layers.length < 10) {
+    const nextLayer = remaining.filter((n) => {
+      return edges.some(
+        (e) => (e.target === n.id && assigned.has(e.source)) ||
+               (e.source === n.id && assigned.has(e.target))
+      );
+    });
+
+    if (nextLayer.length === 0) {
+      // Place remaining nodes in the last layer
+      layers.push(remaining);
+      break;
+    }
+
+    layers.push(nextLayer);
+    nextLayer.forEach((n) => assigned.add(n.id));
+    remaining = remaining.filter((n) => !assigned.has(n.id));
+  }
+
+  const totalLayers = layers.length;
+  const result: GraphNode[] = [];
+
+  for (let layerIdx = 0; layerIdx < totalLayers; layerIdx++) {
+    const layer = layers[layerIdx];
+    const y = 10 + (80 * layerIdx) / Math.max(1, totalLayers - 1);
+    for (let i = 0; i < layer.length; i++) {
+      const x = 10 + (80 * i) / Math.max(1, layer.length - 1);
+      result.push({ ...layer[i], x: layer.length === 1 ? 50 : x, y });
+    }
+  }
+
+  return result;
+}
+
+function applyLayout(nodes: GraphNode[], edges: GraphEdge[], mode: string): GraphNode[] {
+  switch (mode) {
+    case 'circular':
+      return circularLayout(nodes);
+    case 'hierarchical':
+      return hierarchicalLayout(nodes, edges);
+    case 'force':
+    default:
+      return forceDirectedLayout(nodes, edges);
+  }
+}
+
 function getNodeColor(type: string) {
   if (type === 'book') return '#d97706';
   if (type === 'theme') return '#14b8a6';
@@ -134,6 +211,7 @@ export default function KnowledgePage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'graph' | 'list' | 'themes'>('list');
+  const [layoutMode, setLayoutMode] = useState<'force' | 'circular' | 'hierarchical'>('force');
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [hoverNode, setHoverNode] = useState<string | null>(null);
@@ -166,7 +244,7 @@ export default function KnowledgePage() {
           setNodes(positionedNodes);
           setEdges(graphData.edges || []);
           setThemes(themesData?.themes || []);
-          setLayoutNodes(forceDirectedLayout(positionedNodes, graphData.edges || []));
+          setLayoutNodes(applyLayout(positionedNodes, graphData.edges || [], "force"));
           setLoading(false);
           return;
         }
@@ -292,7 +370,7 @@ export default function KnowledgePage() {
         setNodes(graphNodes);
         setEdges(graphEdges);
         setThemes(finalThemes);
-        setLayoutNodes(forceDirectedLayout(graphNodes, graphEdges));
+        setLayoutNodes(applyLayout(graphNodes, graphEdges, "force"));
       } catch {
         if (!cancelled) setError('Failed to load knowledge data. Please try again later.');
       } finally {
@@ -302,6 +380,50 @@ export default function KnowledgePage() {
 
     loadKnowledgeData();
     return () => { cancelled = true; };
+  }, []);
+
+  // Re-apply layout when mode changes
+  useEffect(() => {
+    if (nodes.length > 0) {
+      setLayoutNodes(applyLayout(nodes, edges, layoutMode));
+    }
+  }, [layoutMode, nodes, edges]);
+
+  // SVG export
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const exportSVG = useCallback(() => {
+    if (!svgRef.current) return;
+    const svgData = new XMLSerializer().serializeToString(svgRef.current);
+    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'knowledge-graph.svg';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const exportPNG = useCallback(() => {
+    if (!svgRef.current) return;
+    const svgData = new XMLSerializer().serializeToString(svgRef.current);
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 800;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 1200, 800);
+      ctx.drawImage(img, 0, 0, 1200, 800);
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'knowledge-graph.png';
+      a.click();
+    };
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
   }, []);
 
   const statValues = [
@@ -324,7 +446,7 @@ export default function KnowledgePage() {
           <p className="text-sm sm:text-base text-[#5c5c5c] dark:text-gray-400 mt-1">Your reading knowledge, connected and visualized</p>
         </div>
         {!isEmpty && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             {(['graph', 'list', 'themes'] as const).map((mode) => (
               <button
                 key={mode}
@@ -338,6 +460,39 @@ export default function KnowledgePage() {
                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
               </button>
             ))}
+            {viewMode === 'graph' && (
+              <>
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+                {(['force', 'circular', 'hierarchical'] as const).map((lm) => (
+                  <button
+                    key={lm}
+                    onClick={() => setLayoutMode(lm)}
+                    className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+                      layoutMode === lm
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-teal-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {lm === 'force' ? 'Force' : lm === 'circular' ? 'Circle' : 'Tree'}
+                  </button>
+                ))}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+                <button
+                  onClick={exportSVG}
+                  className="px-2 py-1.5 rounded text-xs font-medium bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
+                  title="Export as SVG"
+                >
+                  SVG
+                </button>
+                <button
+                  onClick={exportPNG}
+                  className="px-2 py-1.5 rounded text-xs font-medium bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
+                  title="Export as PNG"
+                >
+                  PNG
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -418,7 +573,7 @@ export default function KnowledgePage() {
             </div>
           ) : (
             <>
-              <svg width="100%" height="100%" className="overflow-visible" style={{ transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`, transformOrigin: 'center center', transition: 'transform 0.1s ease-out' }}>
+              <svg ref={svgRef} width="100%" height="100%" className="overflow-visible" style={{ transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`, transformOrigin: 'center center', transition: 'transform 0.1s ease-out' }}>
                 {/* Connection count badge per node */}
                 {(() => {
                   const displayNodes = layoutNodes.length > 0 ? layoutNodes : nodes;
