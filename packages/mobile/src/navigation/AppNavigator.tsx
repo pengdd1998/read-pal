@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Colors, Typography } from '../lib/theme';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
+import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { ReaderScreen } from '../screens/reader/ReaderScreen';
 import { ChatScreen } from '../screens/chat/ChatScreen';
@@ -18,6 +19,7 @@ import { BookDetailScreen } from '../screens/book-detail/BookDetailScreen';
 type AuthStackParamList = {
   Login: { setAuth: (token: string | null) => void };
   Register: { setAuth: (token: string | null) => void };
+  ForgotPassword: undefined;
 };
 
 type MainTabParamList = {
@@ -53,6 +55,7 @@ function AuthNavigator({ setAuth }: AuthNavigatorProps) {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} initialParams={{ setAuth }} />
       <AuthStack.Screen name="Register" component={RegisterScreen} initialParams={{ setAuth }} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: true, title: 'Reset Password' }} />
     </AuthStack.Navigator>
   );
 }

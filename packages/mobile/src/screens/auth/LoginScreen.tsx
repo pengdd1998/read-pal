@@ -93,6 +93,11 @@ export function LoginScreen({ navigation, route }: LoginScreenProps) {
           Don&apos;t have an account? Sign Up
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={{ marginTop: Spacing.sm }}>
+        <Text style={{ ...Typography.bodySmall, color: Colors.textSecondary }}>
+          Forgot password?
+        </Text>
+      </TouchableOpacity>
     </KeyboardAvoidingView>
   );
 }
