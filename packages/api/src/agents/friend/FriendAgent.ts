@@ -13,6 +13,7 @@
 
 import type { ReadingFriendPersona } from '../../types';
 import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
+import { FriendConversation, FriendRelationship } from '../../models/FriendConversation';
 
 // ============================================================================
 // Types
@@ -181,9 +182,13 @@ export class FriendAgent {
         messages,
       });
 
-      // Update conversation history
+      // Update conversation history (in-memory + DB)
       this.pushMessage(userId, 'user', message);
       this.pushMessage(userId, 'assistant', responseText);
+      this.persistMessages(userId, persona, [
+        { role: 'user', content: message },
+        { role: 'assistant', content: responseText, emotion: this.detectEmotion(responseText) },
+      ], context);
 
       return {
         response: responseText,
@@ -285,10 +290,20 @@ export class FriendAgent {
   }
 
   /**
-   * Set the persona for a given user.
+   * Set the persona for a given user (in-memory + DB).
    */
   setPersona(userId: string, persona: ReadingFriendPersona): void {
     this.userPersonas.set(userId, persona);
+    FriendRelationship.upsert({
+      userId,
+      persona,
+      booksReadTogether: 0,
+      sharedMoments: [],
+      totalMessages: 0,
+      lastInteractionAt: new Date(),
+    }).catch((err) => {
+      console.error('Failed to persist persona:', err);
+    });
   }
 
   /**
@@ -320,10 +335,13 @@ export class FriendAgent {
   }
 
   /**
-   * Clear conversation history for a user.
+   * Clear conversation history for a user (in-memory + DB).
    */
   clearHistory(userId: string): void {
     this.conversations.delete(userId);
+    FriendConversation.destroy({ where: { userId } }).catch((err) => {
+      console.error('Failed to clear friend history:', err);
+    });
   }
 
   /**
@@ -448,6 +466,7 @@ You're checking in with the reader. Keep it brief — 1-2 sentences. Think of it
 
   /**
    * Get or create conversation history for a user.
+   * Loads from in-memory cache first; falls back to DB on cold start.
    */
   private getConversation(userId: string): FriendMessage[] {
     let history = this.conversations.get(userId);
@@ -456,6 +475,30 @@ You're checking in with the reader. Keep it brief — 1-2 sentences. Think of it
       this.conversations.set(userId, history);
     }
     return history;
+  }
+
+  /**
+   * Load recent conversation history from DB into memory.
+   */
+  async loadHistory(userId: string): Promise<void> {
+    try {
+      const rows = await FriendConversation.findAll({
+        where: { userId },
+        order: [['createdAt', 'DESC']],
+        limit: 20,
+      });
+      const messages: FriendMessage[] = rows
+        .reverse()
+        .map((r) => ({
+          role: r.role,
+          content: r.content,
+          timestamp: r.createdAt,
+          emotion: r.emotion,
+        }));
+      this.conversations.set(userId, messages);
+    } catch {
+      // DB not available, continue with empty in-memory
+    }
   }
 
   /**
@@ -472,7 +515,49 @@ You're checking in with the reader. Keep it brief — 1-2 sentences. Think of it
   }
 
   /**
+   * Persist messages to database (fire-and-forget).
+   */
+  private persistMessages(
+    userId: string,
+    persona: ReadingFriendPersona,
+    messages: Array<{ role: string; content: string; emotion?: string }>,
+    context?: FriendContext
+  ): void {
+    FriendConversation.bulkCreate(
+      messages.map((m) => ({
+        userId,
+        persona,
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        emotion: m.emotion || undefined,
+        context: context || undefined,
+      }))
+    ).catch((err) => {
+      console.error('Failed to persist friend messages:', err);
+    });
+
+    // Update relationship metadata
+    FriendRelationship.upsert({
+      userId,
+      persona,
+      booksReadTogether: 0,
+      sharedMoments: [],
+      totalMessages: this.sequelize.literal('total_messages + ' + messages.length) as any,
+      lastInteractionAt: new Date(),
+    }).catch((err) => {
+      console.error('Failed to update friend relationship:', err);
+    });
+  }
+
+  private get sequelize() {
+    // Lazy import to avoid circular dependency issues at test time
+    const { sequelize } = require('../../db');
+    return sequelize;
+  }
+
+  /**
    * Get relationship data for a user.
+   * Falls back to in-memory if DB unavailable.
    */
   private getRelationshipData(userId: string): { booksReadTogether: number; sharedMoments: string[] } {
     let data = this.userRelationshipData.get(userId);
@@ -481,6 +566,24 @@ You're checking in with the reader. Keep it brief — 1-2 sentences. Think of it
       this.userRelationshipData.set(userId, data);
     }
     return data;
+  }
+
+  /**
+   * Load relationship data from database.
+   */
+  async loadRelationship(userId: string): Promise<void> {
+    try {
+      const row = await FriendRelationship.findOne({ where: { userId } });
+      if (row) {
+        this.userPersonas.set(userId, row.persona as ReadingFriendPersona);
+        this.userRelationshipData.set(userId, {
+          booksReadTogether: row.booksReadTogether,
+          sharedMoments: (row.sharedMoments as unknown as string[]) || [],
+        });
+      }
+    } catch {
+      // DB not available, continue with defaults
+    }
   }
 
   /**

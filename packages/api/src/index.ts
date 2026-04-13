@@ -33,6 +33,7 @@ import { ResearchAgent } from './agents/research/ResearchAgent';
 import { CoachAgent } from './agents/coach/CoachAgent';
 import { SynthesisAgent } from './agents/synthesis/SynthesisAgent';
 import { FriendAgent } from './agents/friend/FriendAgent';
+import { FriendConversation, FriendRelationship } from './models/FriendConversation';
 import { AgentOrchestrator, OrchestratorConfig } from './agents/orchestrator/AgentOrchestrator';
 
 // Database

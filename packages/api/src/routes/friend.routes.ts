@@ -12,6 +12,7 @@ import { Router, type Response } from 'express';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import type { ReadingFriendPersona } from '../types';
 import { User } from '../models';
+import { FriendConversation, FriendRelationship } from '../models/FriendConversation';
 import { chatCompletionStream } from '../services/llmClient';
 
 const router: Router = Router();
@@ -408,6 +409,148 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
         code: 'FRIEND_UPDATE_ERROR',
         message: 'Failed to update friend preferences',
       },
+    });
+  }
+});
+
+// ============================================================================
+// History & Memory Endpoints
+// ============================================================================
+
+/**
+ * GET /api/friend/history
+ * Get paginated conversation history for the authenticated user.
+ *
+ * Query: ?page=1&limit=50&persona=sage
+ */
+router.get('/history', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+    const persona = req.query.persona as ReadingFriendPersona | undefined;
+    const offset = (page - 1) * limit;
+
+    const where: Record<string, unknown> = { userId: req.userId! };
+    if (persona) {
+      const validPersonas: ReadingFriendPersona[] = ['sage', 'penny', 'alex', 'quinn', 'sam'];
+      if (!validPersonas.includes(persona)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_INPUT', message: `persona must be one of: ${validPersonas.join(', ')}` },
+        });
+      }
+      where.persona = persona;
+    }
+
+    const { rows, count } = await FriendConversation.findAndCountAll({
+      where,
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      attributes: ['id', 'persona', 'role', 'content', 'emotion', 'createdAt'],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        messages: rows.reverse(),
+        total: count,
+        page,
+        limit,
+        hasMore: offset + rows.length < count,
+      },
+    });
+  } catch (error) {
+    console.error('Friend history error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'FRIEND_HISTORY_ERROR', message: 'Failed to load history' },
+    });
+  }
+});
+
+/**
+ * DELETE /api/friend/history
+ * Clear all conversation history for the authenticated user.
+ */
+router.delete('/history', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const friendAgent = req.app.get('friendAgent');
+    if (friendAgent) {
+      friendAgent.clearHistory(req.userId!);
+    }
+
+    const deleted = await FriendConversation.destroy({ where: { userId: req.userId! } });
+
+    res.json({
+      success: true,
+      data: { deleted },
+    });
+  } catch (error) {
+    console.error('Friend clear history error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'FRIEND_CLEAR_ERROR', message: 'Failed to clear history' },
+    });
+  }
+});
+
+/**
+ * GET /api/friend/relationship
+ * Get the relationship data for the authenticated user.
+ * Includes: persona, books read together, shared moments, total messages.
+ */
+router.get('/relationship', authenticate, async (req: AuthRequest, res) => {
+  try {
+    let relationship = await FriendRelationship.findOne({ where: { userId: req.userId! } });
+
+    if (!relationship) {
+      // Create initial relationship record
+      relationship = await FriendRelationship.create({
+        userId: req.userId!,
+        persona: 'sage',
+        booksReadTogether: 0,
+        sharedMoments: [],
+        totalMessages: 0,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: relationship,
+    });
+  } catch (error) {
+    console.error('Friend relationship error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'FRIEND_RELATIONSHIP_ERROR', message: 'Failed to load relationship' },
+    });
+  }
+});
+
+/**
+ * GET /api/friend/personas
+ * Get all available persona definitions.
+ */
+router.get('/personas', authenticate, async (_req: AuthRequest, res) => {
+  try {
+    const friendAgent = _req.app.get('friendAgent');
+    if (!friendAgent) {
+      return res.status(503).json({
+        success: false,
+        error: { code: 'SERVICE_UNAVAILABLE', message: 'Reading Friend is not available' },
+      });
+    }
+
+    res.json({
+      success: true,
+      data: friendAgent.getAllPersonas(),
+    });
+  } catch (error) {
+    console.error('Friend personas error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'FRIEND_PERSONAS_ERROR', message: 'Failed to load personas' },
     });
   }
 });
