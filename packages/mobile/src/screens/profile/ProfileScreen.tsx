@@ -58,6 +58,26 @@ interface SessionData {
   pagesRead: number;
 }
 
+interface ChallengeItem {
+  id: string;
+  title: string;
+  description: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  target: number;
+  unit: string;
+  icon: string;
+  progress: number;
+  completed: boolean;
+  percentage: number;
+}
+
+interface RecommendationItem {
+  title: string;
+  author: string;
+  genre: string;
+  reason: string;
+}
+
 interface ProfileProps {
   navigation: any;
   setAuth: (token: string | null) => void;
@@ -76,15 +96,19 @@ export function ProfileScreen({ setAuth }: ProfileProps) {
   });
   const [weeklyActivity, setWeeklyActivity] = useState<Array<{ day: string; pages: number; minutes: number }>>([]);
   const [recentSessions, setRecentSessions] = useState<SessionData[]>([]);
+  const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProfile() {
       try {
-        const [userRes, statsRes, sessionsRes] = await Promise.all([
+        const [userRes, statsRes, sessionsRes, challengesRes, recsRes] = await Promise.all([
           api.get<UserProfile>(API_ROUTES.AUTH_ME),
           api.get<DashboardResponse>(API_ROUTES.STATS_DASHBOARD),
           api.get<SessionData[]>('/api/reading-sessions?limit=7').catch(() => ({ success: false, data: null })),
+          api.get<{ challenges: ChallengeItem[] }>('/api/challenges').catch(() => ({ success: false, data: null })),
+          api.get<{ recommendations: RecommendationItem[] }>('/api/recommendations').catch(() => ({ success: false, data: null })),
         ]);
         if (userRes.success && userRes.data) setUser(userRes.data as unknown as UserProfile);
         if (statsRes.success && statsRes.data) {
@@ -94,6 +118,14 @@ export function ProfileScreen({ setAuth }: ProfileProps) {
         }
         if (sessionsRes.success && sessionsRes.data) {
           setRecentSessions((sessionsRes.data as unknown as SessionData[]) || []);
+        }
+        if (challengesRes.success && challengesRes.data) {
+          const d = challengesRes.data as unknown as { challenges: ChallengeItem[] };
+          setChallenges(d.challenges ?? []);
+        }
+        if (recsRes.success && recsRes.data) {
+          const d = recsRes.data as unknown as { recommendations: RecommendationItem[] };
+          setRecommendations(d.recommendations ?? []);
         }
       } catch {
         // Profile load failure
@@ -231,6 +263,51 @@ export function ProfileScreen({ setAuth }: ProfileProps) {
         </View>
       </View>
 
+      {/* Active Challenges */}
+      {challenges.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Challenges</Text>
+          {challenges.filter((c) => !c.completed).slice(0, 3).map((c) => (
+            <View key={c.id} style={styles.challengeRow}>
+              <Text style={styles.challengeIcon}>{c.icon}</Text>
+              <View style={styles.challengeInfo}>
+                <Text style={styles.challengeTitle}>{c.title}</Text>
+                <View style={styles.challengeBar}>
+                  <View style={[styles.challengeFill, { width: `${c.percentage}%` }]} />
+                </View>
+                <Text style={styles.challengeProgress}>{c.progress}/{c.target} {c.unit}</Text>
+              </View>
+            </View>
+          ))}
+          {challenges.filter((c) => c.completed).length > 0 && (
+            <Text style={styles.completedCount}>
+              {challenges.filter((c) => c.completed).length} completed
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Recommendations */}
+      {recommendations.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recommended for You</Text>
+          {recommendations.slice(0, 3).map((r, i) => (
+            <View key={i} style={styles.recRow}>
+              <View style={styles.recCover}>
+                <Text style={styles.recCoverEmoji}>{'\uD83D\uDCD6'}</Text>
+              </View>
+              <View style={styles.recInfo}>
+                <Text style={styles.recTitle} numberOfLines={1}>{r.title}</Text>
+                <Text style={styles.recAuthor} numberOfLines={1}>{r.author}</Text>
+              </View>
+              <View style={styles.recGenre}>
+                <Text style={styles.recGenreText}>{r.genre}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
       <TouchableOpacity style={defaultStyles.button} onPress={handleLogout}>
         <Text style={defaultStyles.buttonText}>Log Out</Text>
       </TouchableOpacity>
@@ -355,4 +432,78 @@ const styles = StyleSheet.create({
   badgeEmoji: { fontSize: 24, marginBottom: 2 },
   badgeEmojiLocked: { opacity: 0.5 },
   badgeLabel: { fontSize: 9, color: Colors.textSecondary, textAlign: 'center' },
+  challengeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  challengeIcon: { fontSize: 22 },
+  challengeInfo: { flex: 1 },
+  challengeTitle: {
+    ...Typography.caption,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: 3,
+  },
+  challengeBar: {
+    height: 4,
+    backgroundColor: Colors.gray100,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  challengeFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 2,
+  },
+  challengeProgress: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    marginTop: 2,
+  },
+  completedCount: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
+    textAlign: 'center',
+  },
+  recRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  recCover: {
+    width: 32,
+    height: 40,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.gray100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recCoverEmoji: { fontSize: 14 },
+  recInfo: { flex: 1 },
+  recTitle: {
+    ...Typography.bodySmall,
+    color: Colors.text,
+    fontWeight: '600',
+  },
+  recAuthor: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+  },
+  recGenre: {
+    backgroundColor: Colors.gray100,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  recGenreText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 9,
+  },
 });

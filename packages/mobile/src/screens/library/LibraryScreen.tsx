@@ -3,6 +3,7 @@ import {
   View,
   FlatList,
   Text,
+  TextInput,
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
@@ -34,6 +35,14 @@ export function LibraryScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredBooks = searchQuery.trim()
+    ? books.filter((b) =>
+        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.author.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : books;
 
   const fetchBooks = useCallback(async () => {
     try {
@@ -119,12 +128,23 @@ export function LibraryScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <FlatList
-        data={books}
+        data={filteredBooks}
         keyExtractor={(item) => item.id}
         numColumns={2}
         contentContainerStyle={styles.grid}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+        }
+        ListHeaderComponent={
+          <View style={styles.searchBar}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search books..."
+              placeholderTextColor={Colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
         }
         ListEmptyComponent={
           <View style={styles.centered}>
@@ -177,6 +197,20 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
   grid: { padding: Spacing.sm },
+  searchBar: {
+    paddingHorizontal: Spacing.xs,
+    paddingBottom: Spacing.sm,
+  },
+  searchInput: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    ...Typography.bodySmall,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   bookCard: {
     flex: 1,
     margin: Spacing.xs,

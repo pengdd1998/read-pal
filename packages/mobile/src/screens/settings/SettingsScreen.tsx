@@ -14,8 +14,8 @@ import { Colors, Spacing, Typography, BorderRadius } from '../../lib/theme';
 interface UserSettingsData {
   readingGoal: number;
   notificationsEnabled: boolean;
-  friendPersonality: 'sage' | 'penny' | 'alex' | 'quinn' | 'sam';
-  interventionFrequency: 'minimal' | 'normal' | 'frequent';
+  friendPersona: 'sage' | 'penny' | 'alex' | 'quinn' | 'sam';
+  friendFrequency: 'minimal' | 'normal' | 'frequent';
   theme: 'light' | 'dark' | 'system';
   fontSize: number;
 }
@@ -38,8 +38,8 @@ export function SettingsScreen() {
   const [settings, setSettings] = useState<UserSettingsData>({
     readingGoal: 4,
     notificationsEnabled: true,
-    friendPersonality: 'sage',
-    interventionFrequency: 'normal',
+    friendPersona: 'sage',
+    friendFrequency: 'normal',
     theme: 'system',
     fontSize: 16,
   });
@@ -65,7 +65,7 @@ export function SettingsScreen() {
     setSettings(newSettings);
     setSaving(true);
     try {
-      await api.put('/api/settings', newSettings);
+      await api.patch('/api/settings', newSettings);
     } catch {
       // Non-critical
     } finally {
@@ -119,8 +119,8 @@ export function SettingsScreen() {
         {PERSONALITIES.map((p) => (
           <TouchableOpacity
             key={p.value}
-            style={[styles.personalityCard, settings.friendPersonality === p.value && styles.personalityActive]}
-            onPress={() => saveSettings({ friendPersonality: p.value })}
+            style={[styles.personalityCard, settings.friendPersona === p.value && styles.personalityActive]}
+            onPress={() => saveSettings({ friendPersona: p.value })}
             activeOpacity={0.7}
           >
             <View style={styles.personalityRow}>
@@ -129,7 +129,7 @@ export function SettingsScreen() {
                 <Text style={styles.personalityLabel}>{p.label}</Text>
                 <Text style={styles.personalityDesc}>{p.desc}</Text>
               </View>
-              {settings.friendPersonality === p.value && (
+              {settings.friendPersona === p.value && (
                 <View style={styles.checkDot} />
               )}
             </View>
@@ -144,10 +144,10 @@ export function SettingsScreen() {
           {FREQUENCIES.map((f) => (
             <TouchableOpacity
               key={f.value}
-              style={[styles.freqBtn, settings.interventionFrequency === f.value && styles.freqActive]}
-              onPress={() => saveSettings({ interventionFrequency: f.value })}
+              style={[styles.freqBtn, settings.friendFrequency === f.value && styles.freqActive]}
+              onPress={() => saveSettings({ friendFrequency: f.value })}
             >
-              <Text style={[styles.freqText, settings.interventionFrequency === f.value && styles.freqTextActive]}>
+              <Text style={[styles.freqText, settings.friendFrequency === f.value && styles.freqTextActive]}>
                 {f.label}
               </Text>
             </TouchableOpacity>
