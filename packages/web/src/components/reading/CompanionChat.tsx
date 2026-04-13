@@ -287,6 +287,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   useEffect(() => {
     if (!isOpen || historyLoaded) return;
     let cancelled = false;
+    let greetTimer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
       try {
         const result = await api.get<Message[]>('/api/agents/history', { bookId, limit: 50 });
@@ -305,7 +306,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                 "Hey! Good to see you again. Let's continue.",
                 "You're back! I was thinking about our last discussion...",
               ];
-              setTimeout(() => {
+              greetTimer = setTimeout(() => {
                 if (!cancelled) {
                   setMessages((prev) => [...prev, {
                     id: uid(),
@@ -321,7 +322,10 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       } catch { toast('Failed to load chat history', 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
     };
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (greetTimer) clearTimeout(greetTimer);
+    };
   }, [isOpen, bookId, historyLoaded]);
 
   useEffect(() => { setHistoryLoaded(false); setMessages([]); }, [bookId]);

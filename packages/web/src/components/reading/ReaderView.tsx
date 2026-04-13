@@ -145,7 +145,9 @@ export function ReaderView({
     // Save previous chapter's scroll position before switching
     saveScrollPosition();
     setChapterKey((k) => k + 1);
-    requestAnimationFrame(() => {
+    let outerRaf: number | undefined;
+    let innerRaf: number | undefined;
+    outerRaf = requestAnimationFrame(() => {
       if (containerRef.current) {
         // Try to restore saved scroll position for this chapter
         try {
@@ -154,7 +156,7 @@ export function ReaderView({
             const fraction = parseFloat(saved);
             if (fraction > 0 && containerRef.current) {
               // Wait for content to render before restoring scroll
-              requestAnimationFrame(() => {
+              innerRaf = requestAnimationFrame(() => {
                 if (containerRef.current) {
                   const { scrollHeight, clientHeight } = containerRef.current;
                   containerRef.current.scrollTop = fraction * (scrollHeight - clientHeight);
@@ -169,6 +171,10 @@ export function ReaderView({
         setScrollProgress(0);
       }
     });
+    return () => {
+      if (outerRaf) cancelAnimationFrame(outerRaf);
+      if (innerRaf) cancelAnimationFrame(innerRaf);
+    };
   }, [chapterContent, bookId, currentPage, saveScrollPosition]);
 
   // --- Navigation (direct chapter navigation) ---

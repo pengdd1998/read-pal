@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 
 const STORAGE_KEY = 'read-pal-onboarding-complete';
@@ -22,6 +22,12 @@ export function OnboardingWalkthrough() {
   const [selectedPersona, setSelectedPersona] = useState<string>('penny');
   const [saving, setSaving] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up pending timers on unmount
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
 
   useEffect(() => {
     try {
@@ -44,16 +50,20 @@ export function OnboardingWalkthrough() {
       // ignore
     }
     setOverlayVisible(false);
-    setTimeout(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
       setMounted(false);
+      timerRef.current = null;
     }, 300);
   }, []);
 
   const goTo = useCallback((next: Step) => {
     setTransitioning(true);
-    setTimeout(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
       setStep(next);
       setTransitioning(false);
+      timerRef.current = null;
     }, 150);
   }, []);
 

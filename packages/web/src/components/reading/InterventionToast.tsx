@@ -54,6 +54,7 @@ export function InterventionToast({
   useEffect(() => {
     const CHECK_INTERVAL = 60_000; // Check every 60s
     const MIN_SESSION_TIME = 30_000; // Don't check in first 30s
+    let dismissTimer: ReturnType<typeof setTimeout> | undefined;
 
     const timer = setInterval(async () => {
       const now = Date.now();
@@ -79,7 +80,8 @@ export function InterventionToast({
             setVisible(true);
             // Auto-dismiss after 8 seconds for low priority
             if (data.priority === 'low') {
-              setTimeout(() => setVisible(false), 8000);
+              if (dismissTimer) clearTimeout(dismissTimer);
+              dismissTimer = setTimeout(() => setVisible(false), 8000);
             }
           }
         }
@@ -88,7 +90,10 @@ export function InterventionToast({
       }
     }, CHECK_INTERVAL);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (dismissTimer) clearTimeout(dismissTimer);
+    };
   }, [bookId, currentPage, totalPages, sessionDuration, highlightCount, dismissed]);
 
   const handleDismiss = useCallback(() => {

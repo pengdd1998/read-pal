@@ -371,8 +371,8 @@ export default function ReadPage() {
       if (pct >= m && !shownMilestones.current.has(m)) {
         shownMilestones.current.add(m);
         setMilestone(`${m}%`);
-        setTimeout(() => setMilestone(null), 3000);
-        break;
+        const t = setTimeout(() => setMilestone(null), 3000);
+        return () => clearTimeout(t);
       }
     }
   }, [currentChapter, chapters.length, loading]);
