@@ -128,8 +128,10 @@ function hierarchicalLayout(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[]
   const layers: GraphNode[][] = [];
   if (roots.length > 0) {
     layers.push(roots);
-  } else {
+  } else if (nodes.length > 0) {
     layers.push([nodes[0]]);
+  } else {
+    return [];
   }
 
   // BFS to assign layers

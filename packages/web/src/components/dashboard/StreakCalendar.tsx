@@ -203,7 +203,7 @@ export default function StreakCalendar() {
     }
 
     // Determine the day-of-week offset for the first day (0=Sun .. 6=Sat)
-    const firstDow = parseISODate(allDays[0].date).getDay();
+    const firstDow = allDays.length > 0 ? parseISODate(allDays[0].date).getDay() : 0;
 
     // Build rows: each row represents one week (Sun-Sat)
     const rows: (CalendarDay | null)[][] = [];

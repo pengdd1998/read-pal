@@ -116,7 +116,7 @@ export function ShareReadingCard() {
                 <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                   <div
                     className="bg-amber-500 rounded-full h-2 transition-all duration-500"
-                    style={{ width: `${card.currentlyReading.progress}%` }}
+                    style={{ width: `${Math.min(100, Math.max(0, card.currentlyReading.progress))}%` }}
                   />
                 </div>
                 <div className="text-[10px] text-gray-400 mt-1">{card.currentlyReading.progress}% complete</div>
