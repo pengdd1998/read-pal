@@ -49,6 +49,38 @@ export const API_ROUTES = {
   MEMORY_BOOKS: '/api/memory-books',
   MEMORY_BOOK_DETAIL: (id: string) => `/api/memory-books/${id}`,
   MEMORY_BOOK_GENERATE: (id: string) => `/api/memory-books/${id}/generate`,
+
+  // Notifications
+  NOTIFICATIONS: '/api/notifications',
+  NOTIFICATIONS_UNREAD: '/api/notifications/unread-count',
+  NOTIFICATION_DETAIL: (id: string) => `/api/notifications/${id}/read`,
+  NOTIFICATIONS_MARK_ALL_READ: '/api/notifications/mark-all-read',
+
+  // Recommendations
+  RECOMMENDATIONS: '/api/recommendations',
+
+  // Challenges
+  CHALLENGES: '/api/challenges',
+
+  // Settings
+  SETTINGS: '/api/settings',
+
+  // Reading Sessions
+  READING_SESSIONS: '/api/reading-sessions',
+  READING_SESSION_START: '/api/reading-sessions/start',
+  READING_SESSION_HEARTBEAT: (id: string) => `/api/reading-sessions/${id}/heartbeat`,
+  READING_SESSION_END: (id: string) => `/api/reading-sessions/${id}/end`,
+
+  // Auth (additional)
+  AUTH_FORGOT_PASSWORD: '/api/auth/forgot-password',
+
+  // Stats (additional)
+  STATS_CALENDAR: '/api/stats/reading-calendar',
+
+  // Friend (additional)
+  FRIEND_HISTORY: '/api/friend/history',
+  FRIEND_RELATIONSHIP: '/api/friend/relationship',
+  FRIEND_PERSONAS: '/api/friend/personas',
 } as const;
 
 export const READING_FRIENDS = {

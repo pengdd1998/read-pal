@@ -11,6 +11,7 @@ import { ReaderScreen } from '../screens/reader/ReaderScreen';
 import { ChatScreen } from '../screens/chat/ChatScreen';
 import { FriendScreen } from '../screens/friend/FriendScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 
 type AuthStackParamList = {
   Login: { setAuth: (token: string | null) => void };
@@ -21,6 +22,7 @@ type MainTabParamList = {
   Library: undefined;
   Chat: undefined;
   Friend: undefined;
+  Notifications: undefined;
   Profile: { setAuth: (token: string | null) => void };
 };
 
@@ -83,6 +85,11 @@ function MainNavigator({ setAuth }: MainNavigatorProps) {
         name="Friend"
         component={FriendScreen}
         options={{ title: 'Reading Friend', tabBarLabel: 'Friend' }}
+      />
+      <Tab.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ title: 'Notifications', tabBarLabel: 'Alerts' }}
       />
       <Tab.Screen
         name="Profile"
