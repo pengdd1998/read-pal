@@ -39,6 +39,27 @@ interface AgentInsight {
   message: string;
 }
 
+interface ChallengeItem {
+  id: string;
+  title: string;
+  description: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  target: number;
+  unit: string;
+  icon: string;
+  progress: number;
+  completed: boolean;
+  percentage: number;
+}
+
+interface RecommendationItem {
+  title: string;
+  author: string;
+  genre: string;
+  reason: string;
+  relevance: number;
+}
+
 const INSIGHTS_POOL: AgentInsight[] = [
   { agent: 'Companion', icon: '\uD83D\uDCD6', message: 'What surprised you most in your last reading session?' },
   { agent: 'Research', icon: '\uD83D\uDD2C', message: 'Try connecting what you just read to something you already know.' },
@@ -76,6 +97,122 @@ function formatLastRead(lastRead: string): string {
   } catch {
     return lastRead;
   }
+}
+
+function DashboardChallenges() {
+  const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get<{ challenges: ChallengeItem[] }>('/api/challenges')
+      .then((res) => {
+        if (!cancelled && res.data) {
+          const d = res.data as unknown as { challenges: ChallengeItem[] };
+          setChallenges(d.challenges ?? []);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="card">
+        <SkeletonPulse className="h-4 w-32 mb-3" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => <SkeletonPulse key={i} className="h-8 w-full" />)}
+        </div>
+      </div>
+    );
+  }
+
+  const active = challenges.filter((c) => !c.completed).slice(0, 4);
+  if (active.length === 0) return null;
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Challenges</h3>
+        <span className="text-[10px] text-gray-400">{challenges.filter((c) => c.completed).length}/{challenges.length} done</span>
+      </div>
+      <div className="space-y-3">
+        {active.map((c) => (
+          <div key={c.id}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                <span>{c.icon}</span>
+                <span className="font-medium">{c.title}</span>
+              </span>
+              <span className="text-[10px] text-gray-400 tabular-nums">{c.progress}/{c.target} {c.unit}</span>
+            </div>
+            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
+              <div
+                className={`rounded-full h-1.5 transition-all duration-500 ${c.completed ? 'bg-green-500' : 'bg-primary-500'}`}
+                style={{ width: `${Math.min(100, c.percentage)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DashboardRecommendations() {
+  const [recs, setRecs] = useState<RecommendationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get<{ recommendations: RecommendationItem[] }>('/api/recommendations')
+      .then((res) => {
+        if (!cancelled && res.data) {
+          const d = res.data as unknown as { recommendations: RecommendationItem[] };
+          setRecs(d.recommendations ?? []);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="card">
+        <SkeletonPulse className="h-4 w-36 mb-3" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => <SkeletonPulse key={i} className="h-10 w-full" />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (recs.length === 0) return null;
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Recommended</h3>
+        <Link href="/discovery" className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline">See all</Link>
+      </div>
+      <div className="space-y-2">
+        {recs.slice(0, 3).map((r, i) => (
+          <div key={i} className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <div className="w-8 h-10 rounded bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs">{'\uD83D\uDCD6'}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{r.title}</p>
+              <p className="text-[10px] text-gray-400 truncate">{r.author}</p>
+            </div>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 whitespace-nowrap">{r.genre}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -353,6 +490,14 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Challenges & Recommendations ── */}
+      {hasData && !loading && (
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
+          <DashboardChallenges />
+          <DashboardRecommendations />
         </div>
       )}
 
