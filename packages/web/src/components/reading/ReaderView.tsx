@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, type RefObject } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, type RefObject } from 'react';
 import DOMPurify from 'dompurify';
 
 // DOMPurify configuration that preserves technical formatting tags
@@ -77,6 +77,12 @@ export function ReaderView({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
   const chapterMenuRef = useRef<HTMLDivElement>(null);
+
+  // Memoize sanitized content to avoid re-sanitizing on every render
+  const sanitizedContent = useMemo(
+    () => DOMPurify.sanitize(chapterContent, PURIFY_CONFIG),
+    [chapterContent],
+  );
 
   // Sync with external TOC control
   useEffect(() => {
@@ -321,7 +327,7 @@ export function ReaderView({
 
           <div
             className="prose prose-lg max-w-none dark:prose-invert reader-content"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(chapterContent, PURIFY_CONFIG) }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
 
           {/* End-of-chapter marker */}
