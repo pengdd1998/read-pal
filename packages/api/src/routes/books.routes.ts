@@ -39,6 +39,8 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     });
     const total = await Book.count({ where: { userId: req.userId } });
 
+    // Cache book list for 30s — changes infrequently
+    res.set('Cache-Control', 'private, max-age=30');
     res.json({
       success: true,
       data: books,

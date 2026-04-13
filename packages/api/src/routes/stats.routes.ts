@@ -187,6 +187,8 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
       }
     }
 
+    // Cache calendar for 120s — only changes once per day of reading
+    res.set('Cache-Control', 'private, max-age=120');
     res.json({
       success: true,
       data: {
@@ -397,6 +399,8 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
       };
     });
 
+    // Cache dashboard for 60s — it's expensive (12+ queries) and called on every page load
+    res.set('Cache-Control', 'private, max-age=60');
     res.json({
       success: true,
       data: {

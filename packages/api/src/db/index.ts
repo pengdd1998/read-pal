@@ -18,6 +18,8 @@ export const sequelize = new Sequelize({
   pool: {
     min: parseInt(process.env.DB_POOL_MIN || '2', 10),
     max: parseInt(process.env.DB_POOL_MAX || '10', 10),
+    acquire: 30000, // 30s timeout waiting for connection
+    idle: 10000,    // 10s before idle connection is released
   },
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
 });

@@ -87,6 +87,9 @@ export function initializeMiddleware(
     res.setHeader('X-Request-ID', req.id);
     next();
   });
+
+  // ETag support — enables 304 Not Modified for unchanged data
+  app.set('etag', 'weak');
 }
 
 // ============================================================================
