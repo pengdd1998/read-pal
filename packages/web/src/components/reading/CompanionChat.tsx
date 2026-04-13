@@ -105,6 +105,10 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const [connecting, setConnecting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [isFirstChat] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('read-pal-chat-opened');
+  });
   const [friendName, setFriendName] = useState<string>(DEFAULT_PERSONA.name);
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -129,6 +133,22 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       setIsOpen(true);
     },
   }), []);
+
+  // Auto-open chat for first-time readers after a brief delay (the "aha moment")
+  useEffect(() => {
+    if (!isFirstChat || !bookId) return;
+    const timer = setTimeout(() => {
+      setIsOpen(true);
+      localStorage.setItem('read-pal-chat-opened', 'true');
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [isFirstChat, bookId]);
+
+  // Mark chat as opened when user manually opens it
+  const handleOpenChat = useCallback(() => {
+    localStorage.setItem('read-pal-chat-opened', 'true');
+    setIsOpen(true);
+  }, []);
 
   // Helper to send a message via SSE streaming
   const sendStreamMessage = useCallback(async (msg: string) => {
@@ -302,20 +322,30 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
   return (
     <>
-      {/* Fixed chat button — bottom-right, simple tap to open */}
+      {/* Fixed chat button — bottom-right, labeled and discoverable for first-time users */}
       {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-xl"
-          style={{
-            background: 'linear-gradient(135deg, #14b8a6, #10b981)',
-          }}
-          aria-label="Open AI reading companion"
-        >
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </button>
+        <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+          {/* First-time tooltip */}
+          {isFirstChat && (
+            <div className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[180px]">
+              Chat with {friendName} about what you&apos;re reading
+            </div>
+          )}
+          <button
+            onClick={handleOpenChat}
+            className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-xl relative ${
+              isFirstChat ? 'animate-pulse' : ''
+            }`}
+            style={{
+              background: 'linear-gradient(135deg, #14b8a6, #10b981)',
+            }}
+            aria-label={`Chat with ${friendName}, your reading companion`}
+          >
+            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </button>
+        </div>
       )}
 
       {/* Chat Panel */}
