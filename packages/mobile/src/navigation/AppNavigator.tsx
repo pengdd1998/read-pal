@@ -12,6 +12,8 @@ import { ChatScreen } from '../screens/chat/ChatScreen';
 import { FriendScreen } from '../screens/friend/FriendScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
+import { SettingsScreen } from '../screens/settings/SettingsScreen';
+import { BookDetailScreen } from '../screens/book-detail/BookDetailScreen';
 
 type AuthStackParamList = {
   Login: { setAuth: (token: string | null) => void };
@@ -24,10 +26,12 @@ type MainTabParamList = {
   Friend: undefined;
   Notifications: undefined;
   Profile: { setAuth: (token: string | null) => void };
+  Settings: undefined;
 };
 
 type ReaderStackParamList = {
   Reader: { bookId: string; title: string };
+  BookDetail: { bookId: string };
 };
 
 export type RootStackParamList = {
@@ -92,6 +96,11 @@ function MainNavigator({ setAuth }: MainNavigatorProps) {
         options={{ title: 'Notifications', tabBarLabel: 'Alerts' }}
       />
       <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings', tabBarLabel: 'Settings' }}
+      />
+      <Tab.Screen
         name="Profile"
         children={({ navigation }) => (
           <ProfileScreen navigation={navigation} setAuth={setAuth} />
@@ -121,6 +130,12 @@ export function AppNavigator({ isAuthenticated, setAuth }: AppNavigatorProps) {
               options={{ headerShown: true, headerTintColor: Colors.text, headerTitleStyle: { ...Typography.h3, color: Colors.text } }}
             >
               {({ route, navigation }) => <ReaderScreen route={route as any} navigation={navigation} />}
+            </Stack.Screen>
+            <Stack.Screen
+              name="BookDetail"
+              options={{ headerShown: true, headerTintColor: Colors.text, headerTitleStyle: { ...Typography.h3, color: Colors.text }, title: 'Book Details' }}
+            >
+              {({ route, navigation }) => <BookDetailScreen route={route as any} navigation={navigation} />}
             </Stack.Screen>
           </>
         ) : (

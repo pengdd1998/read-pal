@@ -98,6 +98,10 @@ export function LibraryScreen({ navigation }: any) {
     navigation.getParent()?.navigate('Reader', { bookId: item.id, title: item.title });
   }
 
+  function openBookDetail(item: BookItem) {
+    navigation.getParent()?.navigate('BookDetail', { bookId: item.id });
+  }
+
   /** Normalise progress to 0-1 range for display. */
   function displayProgress(value: number): number {
     if (value > 1) return value / 100;
@@ -130,7 +134,7 @@ export function LibraryScreen({ navigation }: any) {
           </View>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.bookCard} onPress={() => openBook(item)}>
+          <TouchableOpacity style={styles.bookCard} onPress={() => openBook(item)} onLongPress={() => openBookDetail(item)}>
             {item.coverUrl ? (
               <Image
                 source={{ uri: item.coverUrl }}
