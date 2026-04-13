@@ -202,3 +202,61 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     totalPages: number;
   };
 }
+
+// Notification Types
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'reading_reminder' | 'streak_alert' | 'streak_milestone' | 'friend_message' | 'book_completed' | 'goal_progress';
+  title: string;
+  body: string;
+  data?: Record<string, unknown>;
+  read: boolean;
+  createdAt: Date;
+}
+
+// Challenge Types
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  target: number;
+  unit: string;
+  icon: string;
+  progress: number;
+  completed: boolean;
+  percentage: number;
+}
+
+// Recommendation Types
+export interface BookRecommendation {
+  title: string;
+  author: string;
+  genre: string;
+  reason: string;
+  relevance: number;
+}
+
+// Friend Conversation Types
+export interface FriendConversationMessage {
+  id: string;
+  userId: string;
+  persona: string;
+  role: 'user' | 'assistant';
+  content: string;
+  emotion?: string;
+  context?: Record<string, unknown>;
+  createdAt: Date;
+}
+
+export interface FriendRelationshipData {
+  id: string;
+  userId: string;
+  persona: string;
+  booksReadTogether: number;
+  sharedMoments: string[];
+  totalMessages: number;
+  lastInteractionAt?: Date;
+}
+

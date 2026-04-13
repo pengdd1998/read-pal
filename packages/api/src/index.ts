@@ -27,6 +27,8 @@ import readingSessionsRoutes from './routes/reading-sessions.routes';
 import moodRoutes from './routes/mood.routes';
 import shareRoutes from './routes/share.routes';
 import notificationsRoutes from './routes/notifications.routes';
+import recommendationsRoutes from './routes/recommendations.routes';
+import challengesRoutes from './routes/challenges.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -280,6 +282,8 @@ app.use('/api/reading-sessions', readingSessionsRoutes);
 app.use('/api/agents/mood', moodRoutes);
 app.use('/api/share', shareRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
+app.use('/api/challenges', challengesRoutes);
 
 // ============================================================================
 // Error Handling

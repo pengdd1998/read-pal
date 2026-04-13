@@ -182,6 +182,71 @@ export function notifyBookCompleted(userId: string, bookTitle: string): void {
 }
 
 /**
+ * Generate friend insight notifications — personalized reading suggestions.
+ */
+export async function generateFriendInsights(): Promise<number> {
+  const users = await User.findAll({
+    where: { settings: { friendMessages: { [Op.ne]: false } } as any },
+    attributes: ['id', 'name', 'settings'],
+    limit: 100,
+  });
+
+  let sent = 0;
+
+  for (const user of users) {
+    const firstName = (user.name || 'Reader').split(' ')[0];
+    const notifications = getOrCreateUserNotifications(user.id);
+
+    // Check if already sent an insight this week
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentInsight = notifications.find(
+      (n) => n.type === 'friend_message' && new Date(n.createdAt) > oneWeekAgo,
+    );
+    if (recentInsight) continue;
+
+    // Generate a personalized insight based on reading activity
+    const recentBooks = await Book.findAll({
+      where: { userId: user.id, status: { [Op.in]: ['reading', 'completed'] } },
+      order: [['lastReadAt', 'DESC NULLS LAST']],
+      limit: 3,
+      attributes: ['title', 'author', 'progress'],
+    });
+
+    let insight: string;
+    if (recentBooks.length > 0) {
+      const bookTitles = recentBooks.map((b) => b.title);
+      const insights = [
+        `${firstName}, you've been reading about some fascinating topics. Have you tried connecting the ideas from "${bookTitles[0]}" to other books in your library?`,
+        `Hey ${firstName}! I noticed you've been spending time with "${bookTitles[0]}". Have you considered taking notes on the key arguments? It really helps retention.`,
+        `${firstName}, your reading journey with "${bookTitles[0]}" is inspiring. Sometimes re-reading a chapter with fresh eyes reveals new insights.`,
+        `Did you know, ${firstName}, that discussing what you read helps solidify understanding? Try telling someone about what you learned from "${bookTitles[0]}".`,
+      ];
+      insight = insights[Math.floor(Math.random() * insights.length)];
+    } else {
+      const insights = [
+        `${firstName}, picking up a book is the hardest part. Once you start, you'll wonder why you waited!`,
+        `Hey ${firstName}, did you know that reading just 20 minutes a day adds up to about 30 books a year? Small habits, big results.`,
+        `${firstName}, the best book to read is the one you'll actually read. Start with something that excites you.`,
+      ];
+      insight = insights[Math.floor(Math.random() * insights.length)];
+    }
+
+    notifications.push({
+      id: `friend-${Date.now()}-${user.id}`,
+      userId: user.id,
+      type: 'friend_message',
+      title: 'From your Reading Friend',
+      body: insight,
+      read: false,
+      createdAt: new Date(),
+    });
+    sent++;
+  }
+
+  return sent;
+}
+
+/**
  * Get notifications for a user, sorted by date (newest first).
  */
 export function getUserNotifications(
