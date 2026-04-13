@@ -7,7 +7,7 @@
  */
 
 import { sequelize } from '../db';
-import { DataTypes, QueryInterface, QueryTypes } from 'sequelize';
+import { DataTypes, QueryInterface } from 'sequelize';
 
 interface MigrationRow {
   id: string;

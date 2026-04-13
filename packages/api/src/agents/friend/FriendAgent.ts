@@ -542,7 +542,7 @@ You're checking in with the reader. Keep it brief — 1-2 sentences. Think of it
       persona,
       booksReadTogether: 0,
       sharedMoments: [],
-      totalMessages: this.sequelize.literal('total_messages + ' + messages.length) as any,
+      totalMessages: this.sequelize.literal('total_messages + ' + messages.length) as unknown as number,
       lastInteractionAt: new Date(),
     }).catch((err) => {
       console.error('Failed to update friend relationship:', err);

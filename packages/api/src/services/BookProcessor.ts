@@ -281,12 +281,12 @@ export class BookProcessor {
       epub.on('error', () => resolve({}));
 
       epub.on('end', () => {
-        const contents = (epub as any).contents || [];
+        const contents = (epub as unknown as { contents?: unknown[] }).contents || [];
         const meta = epub.metadata || {};
 
         // Extract ISBN from EPUB identifiers
         let isbn: string | undefined;
-        const identifiers = (epub as any).metadata?.identifiers as Array<{ id?: string; value?: string }> | undefined;
+        const identifiers = (epub as unknown as { metadata?: { identifiers?: Array<{ id?: string; value?: string }> } }).metadata?.identifiers;
         if (Array.isArray(identifiers)) {
           const isbnEntry = identifiers.find((id) =>
             id.id?.toLowerCase().includes('isbn') || id.value?.match(/^[\d-]{10,17}$/),

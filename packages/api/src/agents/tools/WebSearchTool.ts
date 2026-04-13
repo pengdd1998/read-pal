@@ -41,8 +41,6 @@ export class WebSearchTool extends BaseTool {
     required: ['query']
   };
 
-  private readonly searchBaseUrl = 'https://api.duckduckgo.com/';
-
   /**
    * Execute web search
    */

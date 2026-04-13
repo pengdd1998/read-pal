@@ -15,13 +15,8 @@
 
 import type {
   AgentContext,
-  AgentError,
   AgentRequest,
   AgentResponse,
-  AgentResponseMetadata,
-  BookReference,
-  ITool,
-  ToolContext,
 } from '../../types';
 import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import { BaseTool } from '../tools/BaseTool';

@@ -16,7 +16,6 @@ import { rateLimiter } from '../middleware/rateLimiter';
 const router: Router = Router();
 
 const BCRYPT_ROUNDS = 12;
-const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 72; // bcrypt limit
 
 // In-memory failed login tracking (resets on server restart)

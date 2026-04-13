@@ -5,7 +5,7 @@
  * and friend messages. Stores notifications in DB and pushes via WebSocket.
  */
 
-import { Op } from 'sequelize';
+import { Op, type WhereOptions } from 'sequelize';
 import { User, Book, ReadingSession, sequelize } from '../models';
 
 // ---------------------------------------------------------------------------
@@ -63,7 +63,7 @@ function getOrCreateUserNotifications(userId: string): Notification[] {
  */
 export async function generateReadingReminders(): Promise<number> {
   const users = await User.findAll({
-    where: { settings: { notificationsEnabled: true } as any },
+    where: { settings: { notificationsEnabled: true } } as unknown as WhereOptions,
     attributes: ['id', 'name', 'settings'],
   });
 
@@ -122,7 +122,7 @@ export async function generateStreakAlerts(): Promise<number> {
   let sent = 0;
 
   for (const user of users) {
-    const prefs = getPreferences(user.settings as any);
+    const prefs = getPreferences(user.settings as Record<string, unknown>);
     if (!prefs.streakAlerts) continue;
 
     // Calculate streak
@@ -186,7 +186,7 @@ export function notifyBookCompleted(userId: string, bookTitle: string): void {
  */
 export async function generateFriendInsights(): Promise<number> {
   const users = await User.findAll({
-    where: { settings: { friendMessages: { [Op.ne]: false } } as any },
+    where: { settings: { friendMessages: { [Op.ne]: false } } } as unknown as WhereOptions,
     attributes: ['id', 'name', 'settings'],
     limit: 100,
   });
