@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { OnboardingWalkthrough } from '@/components/onboarding/OnboardingWalkthrough';
 import { ShareReadingCard } from '@/components/share/ReadingShareCard';
 import StreakCalendar from '@/components/dashboard/StreakCalendar';
+import { useToast } from '@/components/Toast';
 
 interface DashboardStats {
   booksRead: number;
@@ -267,6 +268,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const { toast } = useToast();
+  const celebratedMilestones = useRef<Set<number>>(new Set());
 
   const insightOfDay = INSIGHTS_POOL[new Date().getDate() % INSIGHTS_POOL.length];
 
@@ -291,6 +294,22 @@ export default function DashboardPage() {
   const activeBooks = recentBooks.filter((b) => b.progress > 0 && b.progress < 100).slice(0, 3);
   const streak = stats?.readingStreak ?? 0;
   const hasData = !loading && (recentBooks.length > 0 || (stats !== null && (stats.booksRead > 0 || stats.pagesRead > 0)));
+
+  // Streak milestone celebrations
+  useEffect(() => {
+    if (loading || streak === 0) return;
+    const milestones: Record<number, string> = {
+      3: '3-day reading streak! You\'re building a habit.',
+      7: 'One week of reading! Amazing consistency.',
+      14: 'Two weeks strong! Reading is part of your routine now.',
+      30: 'One month of reading! You\'re a true reader.',
+    };
+    const msg = milestones[streak];
+    if (msg && !celebratedMilestones.current.has(streak)) {
+      celebratedMilestones.current.add(streak);
+      toast(msg, 'success', 5000);
+    }
+  }, [streak, loading, toast]);
 
   const handleSeedSample = async () => {
     try {
@@ -414,7 +433,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
                         {book.coverUrl ? (
-                          <img src={book.coverUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                          <img src={book.coverUrl} alt={`Cover of ${book.title}`} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <span className="text-white text-xl">{'\uD83D\uDCD6'}</span>
                         )}
@@ -462,7 +481,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
                     {currentBook.coverUrl ? (
-                      <img src={currentBook.coverUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                      <img src={currentBook.coverUrl} alt={`Cover of ${currentBook.title}`} className="w-full h-full object-cover rounded-lg" />
                     ) : (
                       <span className="text-white text-xl">{'\uD83D\uDCD6'}</span>
                     )}

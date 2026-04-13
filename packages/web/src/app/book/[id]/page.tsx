@@ -157,7 +157,7 @@ export default function BookDetailPage() {
         {/* Cover */}
         <div className="w-28 h-40 rounded-xl bg-gradient-to-br from-primary-400/30 to-primary-600/70 flex-shrink-0 overflow-hidden shadow-md">
           {book.coverUrl ? (
-            <img src={book.coverUrl} alt="" className="w-full h-full object-cover" />
+            <img src={book.coverUrl} alt={`Cover of ${book.title}`} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <span className="text-4xl opacity-60">{'\uD83D\uDCD6'}</span>

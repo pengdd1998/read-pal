@@ -487,6 +487,44 @@ export default function SettingsPage() {
                 Sign Out
               </button>
             </div>
+            <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
+              <details className="group">
+                <summary className="cursor-pointer text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors list-none flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete account
+                </summary>
+                <div className="mt-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30">
+                  <p className="text-xs text-red-600 dark:text-red-400 mb-3">
+                    This will permanently delete your account and all your data, including books, highlights, and reading history. This cannot be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+                        try {
+                          const token = localStorage.getItem('auth_token');
+                          const res = await fetch('/api/auth/account', {
+                            method: 'DELETE',
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          if (res.ok) {
+                            localStorage.removeItem('auth_token');
+                            window.location.href = '/';
+                          }
+                        } catch {
+                          // Silently fail
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+                    >
+                      Delete my account
+                    </button>
+                  </div>
+                </div>
+              </details>
+            </div>
           </div>
         </div>
       </section>

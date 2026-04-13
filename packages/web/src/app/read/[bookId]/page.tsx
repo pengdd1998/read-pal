@@ -684,9 +684,10 @@ export default function ReadPage() {
 
           <div className="min-w-0">
             <h1 className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
-            {book.author && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{book.author}</p>
-            )}
+            <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+              {book.author && `${book.author} · `}
+              Ch. {currentChapter + 1} of {chapters.length}
+            </p>
           </div>
           {/* Session timer */}
           <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 ml-2 flex-shrink-0">
@@ -823,6 +824,14 @@ export default function ReadPage() {
             )}
           </button>
         </div>
+      </div>
+
+      {/* Reading progress bar — thin amber bar showing how far through the book */}
+      <div className="h-1 bg-gray-100 dark:bg-gray-800">
+        <div
+          className="h-full bg-gradient-to-r from-amber-400 to-teal-500 transition-all duration-500 ease-out"
+          style={{ width: `${chapters.length > 0 ? ((currentChapter + 1) / chapters.length) * 100 : 0}%` }}
+        />
       </div>
 
       {/* In-book search overlay */}
@@ -1204,13 +1213,14 @@ export default function ReadPage() {
         </div>
       )}
 
-      {/* Keyboard shortcuts help button — desktop only */}
+      {/* Keyboard shortcuts help button — desktop only, with first-visit pulse */}
       <button
         onClick={() => setShowShortcutsHelp(true)}
-        className="hidden sm:flex fixed bottom-5 right-5 z-20 w-10 h-10 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700 shadow-sm transition-all active:scale-95 items-center justify-center"
+        className="hidden sm:flex fixed bottom-5 right-5 z-20 w-10 h-10 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700 shadow-sm transition-all active:scale-95 items-center justify-center group"
         aria-label="Keyboard shortcuts help"
+        title="Keyboard shortcuts (?)"
       >
-        <span className="text-sm font-bold">?</span>
+        <span className="text-sm font-bold group-hover:text-amber-500 transition-colors">?</span>
       </button>
 
       {/* Keyboard shortcuts help modal */}

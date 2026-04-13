@@ -66,7 +66,7 @@ export const metadata: Metadata = {
       'Transform passive reading into active, social, and memorable learning with AI companions that read with you, explain concepts, and build your knowledge graph.',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'read-pal — AI Reading Companion',
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     title: 'read-pal — Your AI Reading Companion',
     description:
       'Transform passive reading into active, social, and memorable learning with AI companions.',
-    images: ['/og-image.png'],
+    images: ['/og-image.svg'],
   },
   robots: {
     index: true,
@@ -96,7 +96,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/icon.svg',
+    apple: '/icon.svg',
   },
+  manifest: '/manifest.json',
 };
 
 
@@ -109,6 +111,7 @@ export default function RootLayout({
     <html lang="en" className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        <meta name="theme-color" content="#d97706" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
