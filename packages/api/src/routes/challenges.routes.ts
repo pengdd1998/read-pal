@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { Op, fn, col } from 'sequelize';
-import { Book, ReadingSession, sequelize } from '../models';
+import { Book, ReadingSession } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 
 const router: Router = Router();

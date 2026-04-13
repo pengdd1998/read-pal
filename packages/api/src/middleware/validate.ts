@@ -30,8 +30,8 @@ export const validate = (validations: ValidationChain[]) => {
 
 interface ValidationRule {
   type: 'required' | 'email' | 'minLength' | 'maxLength' | 'in' | 'isInt';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value?: any;
+  /** number for minLength/maxLength, string[] for 'in' */
+  value?: number | string[];
   message: string;
 }
 
@@ -75,7 +75,7 @@ export function customValidate(validations: ValidationDefinition[]) {
         if (
           rule.type === 'minLength' &&
           value &&
-          String(value).length < (rule.value || 0)
+          String(value).length < (typeof rule.value === 'number' ? rule.value : 0)
         ) {
           errors.push({
             field,
@@ -87,7 +87,7 @@ export function customValidate(validations: ValidationDefinition[]) {
         if (
           rule.type === 'maxLength' &&
           value &&
-          String(value).length > (rule.value || Infinity)
+          String(value).length > (typeof rule.value === 'number' ? rule.value : Infinity)
         ) {
           errors.push({
             field,
@@ -99,13 +99,14 @@ export function customValidate(validations: ValidationDefinition[]) {
         if (
           rule.type === 'in' &&
           value &&
-          !rule.value?.includes(value)
+          Array.isArray(rule.value) &&
+          !rule.value.includes(String(value))
         ) {
           errors.push({
             field,
             message:
               rule.message ||
-              `${field} must be one of: ${rule.value?.join(', ')}`,
+              `${field} must be one of: ${rule.value.join(', ')}`,
           });
         }
         if (

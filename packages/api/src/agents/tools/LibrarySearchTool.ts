@@ -386,7 +386,7 @@ export class LibrarySearchTool extends BaseTool {
           id: document.id,
           title: document.title,
           author: document.author,
-          type: document.type as any,
+          type: document.type,
           metadata: document.metadata
         },
         score: match.score,
