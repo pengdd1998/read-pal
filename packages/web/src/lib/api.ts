@@ -12,6 +12,7 @@
 
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
+import { queueMutation } from '@/lib/offline-queue';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -234,27 +235,77 @@ class ApiClient {
   }
 
   async post<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data });
-    this.invalidateAfterMutation(url);
-    return result;
+    try {
+      const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data });
+      this.invalidateAfterMutation(url);
+      return result;
+    } catch (err) {
+      if (this.isOfflineError(err)) {
+        return this.queueOfflineResponse<T>(url, 'POST', data);
+      }
+      throw err;
+    }
   }
 
   async put<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    const result = await this.requestWithRetry<ApiResponse<T>>('put', url, { data });
-    this.invalidateAfterMutation(url);
-    return result;
+    try {
+      const result = await this.requestWithRetry<ApiResponse<T>>('put', url, { data });
+      this.invalidateAfterMutation(url);
+      return result;
+    } catch (err) {
+      if (this.isOfflineError(err)) {
+        return this.queueOfflineResponse<T>(url, 'PUT', data);
+      }
+      throw err;
+    }
   }
 
   async patch<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    const result = await this.requestWithRetry<ApiResponse<T>>('patch', url, { data });
-    this.invalidateAfterMutation(url);
-    return result;
+    try {
+      const result = await this.requestWithRetry<ApiResponse<T>>('patch', url, { data });
+      this.invalidateAfterMutation(url);
+      return result;
+    } catch (err) {
+      if (this.isOfflineError(err)) {
+        return this.queueOfflineResponse<T>(url, 'PATCH', data);
+      }
+      throw err;
+    }
   }
 
   async delete<T>(url: string): Promise<ApiResponse<T>> {
-    const result = await this.requestWithRetry<ApiResponse<T>>('delete', url);
-    this.invalidateAfterMutation(url);
-    return result;
+    try {
+      const result = await this.requestWithRetry<ApiResponse<T>>('delete', url);
+      this.invalidateAfterMutation(url);
+      return result;
+    } catch (err) {
+      if (this.isOfflineError(err)) {
+        return this.queueOfflineResponse<T>(url, 'DELETE');
+      }
+      throw err;
+    }
+  }
+
+  /** Check if an error is due to being offline */
+  private isOfflineError(err: unknown): boolean {
+    if (typeof window !== 'undefined' && !navigator.onLine) return true;
+    const axiosErr = err as AxiosError;
+    return !axiosErr.response; // No response = network error
+  }
+
+  /** Return a queued response that the caller can treat as success */
+  private async queueOfflineResponse<T>(url: string, method: string, data?: unknown): Promise<ApiResponse<T>> {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      await queueMutation(url, method, data, headers);
+    }
+    return {
+      success: true,
+      data: undefined as unknown as T,
+      error: undefined,
+    };
   }
 
   /** Upload a file (FormData) to a given endpoint, with optional progress callback. Retries on network/5xx. */

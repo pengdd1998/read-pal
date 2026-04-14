@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { cacheBookForOffline } from '@/lib/offline-queue';
 
 interface BookCardProps {
   id: string;
@@ -43,8 +44,61 @@ export function BookCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [cachingOffline, setCachingOffline] = useState(false);
+  const [cachedOffline, setCachedOffline] = useState(false);
   const router = useRouter();
   const cfg = STATUS_CONFIG[status];
+
+  // Check if book is cached for offline
+  useEffect(() => {
+    checkOfflineCache();
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function checkOfflineCache() {
+    try {
+      const db = await openOfflineDB();
+      if (!db.objectStoreNames.contains('bookContent')) return;
+      const tx = db.transaction('bookContent', 'readonly');
+      const store = tx.objectStore('bookContent');
+      const result = await new Promise<any>((resolve) => {
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      if (result && result.chaptersCached > 0) {
+        setCachedOffline(true);
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function handleCacheOffline(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (cachingOffline || cachedOffline) return;
+    setCachingOffline(true);
+    try {
+      // First, get the book's chapters
+      const res = await api.get<{ chapters: Array<{ id: string }> }>(`/api/books/${id}/chapters`);
+      if (res.success && res.data?.chapters) {
+        await cacheBookForOffline(id, res.data.chapters);
+        setCachedOffline(true);
+      }
+    } catch { /* ignore */ }
+    setCachingOffline(false);
+  }
+
+  function openOfflineDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('readpal-offline', 2);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('mutations')) db.createObjectStore('mutations', { keyPath: 'timestamp' });
+        if (!db.objectStoreNames.contains('bookContent')) db.createObjectStore('bookContent', { keyPath: 'bookId' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -114,6 +168,29 @@ export function BookCard({
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
+          </button>
+
+          {/* Offline cache button */}
+          <button
+            onClick={handleCacheOffline}
+            aria-label={cachedOffline ? 'Available offline' : 'Save for offline reading'}
+            className={`absolute bottom-2 left-2 p-1.5 rounded-lg transition-all duration-200 ${
+              cachedOffline
+                ? 'bg-emerald-500/80 text-white opacity-100'
+                : cachingOffline
+                  ? 'bg-amber-500/80 text-white opacity-100 animate-pulse'
+                  : 'bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50'
+            }`}
+          >
+            {cachedOffline ? (
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            )}
           </button>
 
           {/* Delete button - shows on hover */}

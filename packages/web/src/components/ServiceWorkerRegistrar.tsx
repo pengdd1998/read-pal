@@ -8,10 +8,8 @@ export function ServiceWorkerRegistrar() {
 
   const handleUpdate = useCallback(() => {
     if (registration?.waiting) {
-      // Tell the waiting service worker to activate immediately
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
-    // Reload the page to activate the new service worker
     window.location.reload();
   }, [registration]);
 
@@ -23,20 +21,17 @@ export function ServiceWorkerRegistrar() {
       .then((reg) => {
         setRegistration(reg);
 
-        // If there's already a waiting worker, an update is available right away
         if (reg.waiting) {
           setUpdateAvailable(true);
           return;
         }
 
-        // Listen for new service workers being installed
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           if (!newWorker) return;
 
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version installed and an old SW is controlling the page
               setUpdateAvailable(true);
             }
           });
@@ -44,9 +39,7 @@ export function ServiceWorkerRegistrar() {
 
         // Check for updates when the tab gains focus
         const onFocus = () => {
-          reg.update().catch(() => {
-            // Update check failed — non-critical
-          });
+          reg.update().catch(() => {});
         };
         window.addEventListener('focus', onFocus);
 
@@ -54,19 +47,32 @@ export function ServiceWorkerRegistrar() {
           window.removeEventListener('focus', onFocus);
         };
       })
-      .catch(() => {
-        // SW registration failed — non-critical
-      });
+      .catch(() => {});
 
-    // Listen for the controlling service worker changing (after SKIP_WAITING)
     const onControllerChange = () => {
-      // The new SW has taken control — reload to use fresh assets
       window.location.reload();
     };
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
 
+    // Listen for SW messages (book cached, sync results)
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'BOOK_CACHED') {
+        // Dispatch for any interested components
+        window.dispatchEvent(new CustomEvent('book-cached', {
+          detail: event.data,
+        }));
+      }
+      if (event.data?.type === 'SYNC_COMPLETE') {
+        window.dispatchEvent(new CustomEvent('offline-sync-complete', {
+          detail: event.data,
+        }));
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+
     return () => {
       navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      navigator.serviceWorker.removeEventListener('message', onMessage);
     };
   }, []);
 
