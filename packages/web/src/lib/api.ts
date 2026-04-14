@@ -11,8 +11,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 class ApiClient {
   private client: AxiosInstance;
-  private cache = new Map<string, { data: unknown; expiry: number }>();
+  private cache = new Map<string, { data: unknown; expiry: number; stale?: boolean }>();
   private static DEFAULT_TTL = 30_000; // 30 seconds
+  private static STALE_TTL = 300_000; // 5 minutes — serve stale while revalidating
 
   constructor() {
     this.client = axios.create({
@@ -64,29 +65,60 @@ class ApiClient {
     }
   }
 
+  /** Check if a URL should be cached client-side */
+  private isCacheable(url: string): boolean {
+    return url.includes('/api/settings') ||
+      url.includes('/api/stats/dashboard') ||
+      url.includes('/api/stats/reading-calendar') ||
+      url.includes('/api/agents/history') ||
+      url.includes('/api/books?') ||
+      url.includes('/api/recommendations') ||
+      url.includes('/api/challenges');
+  }
+
   async get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const cacheKey = `${url}:${JSON.stringify(params ?? {})}`;
     const cached = this.cache.get(cacheKey);
-    if (cached && cached.expiry > Date.now()) {
-      return cached.data as ApiResponse<T>;
+
+    if (cached) {
+      const now = Date.now();
+      if (cached.expiry > now) {
+        // Fresh cache — return immediately
+        return cached.data as ApiResponse<T>;
+      }
+      if (cached.expiry + ApiClient.STALE_TTL > now) {
+        // Stale-while-revalidate: return stale data, refresh in background
+        this.refreshInBackground(cacheKey, url, params);
+        return cached.data as ApiResponse<T>;
+      }
     }
+
+    // No cache or fully expired — fetch fresh
     const response = await this.client.get<ApiResponse<T>>(url, { params });
-    // Cache successful GET responses for settings/library-type endpoints
-    if (response.data.success && (
-      url.includes('/api/settings') ||
-      url.includes('/api/stats/dashboard') ||
-      url.includes('/api/agents/history')
-    )) {
+    if (response.data.success && this.isCacheable(url)) {
       this.cache.set(cacheKey, { data: response.data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
     }
     return response.data;
   }
 
+  /** Background revalidation — updates cache without blocking UI */
+  private refreshInBackground<T>(cacheKey: string, url: string, params?: Record<string, unknown>): void {
+    this.client.get<ApiResponse<T>>(url, { params }).then((response) => {
+      if (response.data.success) {
+        this.cache.set(cacheKey, { data: response.data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
+      }
+    }).catch(() => {
+      // Background refresh failed — stale data remains usable
+    });
+  }
+
   async post<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const response = await this.client.post<ApiResponse<T>>(url, data);
-    // Invalidate relevant caches on mutations
     this.invalidateCache('/api/settings');
     this.invalidateCache('/api/stats');
+    this.invalidateCache('/api/books');
+    this.invalidateCache('/api/recommendations');
+    this.invalidateCache('/api/challenges');
     return response.data;
   }
 
@@ -94,6 +126,7 @@ class ApiClient {
     const response = await this.client.put<ApiResponse<T>>(url, data);
     this.invalidateCache('/api/settings');
     this.invalidateCache('/api/stats');
+    this.invalidateCache('/api/books');
     return response.data;
   }
 
@@ -101,6 +134,7 @@ class ApiClient {
     const response = await this.client.patch<ApiResponse<T>>(url, data);
     this.invalidateCache('/api/settings');
     this.invalidateCache('/api/stats');
+    this.invalidateCache('/api/books');
     return response.data;
   }
 
@@ -108,6 +142,8 @@ class ApiClient {
     const response = await this.client.delete<ApiResponse<T>>(url);
     this.invalidateCache('/api/settings');
     this.invalidateCache('/api/stats');
+    this.invalidateCache('/api/books');
+    this.invalidateCache('/api/annotations');
     return response.data;
   }
 

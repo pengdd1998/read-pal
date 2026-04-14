@@ -3,6 +3,7 @@ import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata } from 'next/font/google
 import { AuthProvider } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -155,6 +156,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <AuthProvider>
           <ErrorBoundary>
+            <ServiceWorkerRegistrar />
             <AppShell>{children}</AppShell>
           </ErrorBoundary>
         </AuthProvider>
