@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
@@ -89,7 +89,22 @@ function getTimeGreeting(): string {
   return 'Happy night reading';
 }
 
-function DashboardChallenges() {
+// Static milestones map — never changes, hoisted to module scope
+const STREAK_MILESTONES: Record<number, string> = {
+  3: '3-day reading streak! You\'re building a habit.',
+  7: 'One week of reading! Amazing consistency.',
+  14: 'Two weeks strong! Reading is part of your routine now.',
+  30: 'One month of reading! You\'re a true reader.',
+};
+
+// Static feature preview data — hoisted to avoid re-creation per render
+const FEATURE_PREVIEW = [
+  { icon: '\uD83D\uDCD6', title: 'Read', desc: 'Beautiful reader with themes and fonts', href: '/library' },
+  { icon: '\uD83E\uDD16', title: 'AI Agents', desc: 'Ask questions and explore topics', href: '/chat' },
+  { icon: '\uD83D\uDCA1', title: 'Remember', desc: 'Highlights become knowledge', href: '/knowledge' },
+] as const;
+
+const DashboardChallenges = memo(function DashboardChallenges() {
   const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -118,14 +133,15 @@ function DashboardChallenges() {
     );
   }
 
-  const active = challenges.filter((c) => !c.completed).slice(0, 4);
+  const active = useMemo(() => challenges.filter((c) => !c.completed).slice(0, 4), [challenges]);
+  const completedCount = useMemo(() => challenges.filter((c) => c.completed).length, [challenges]);
   if (active.length === 0) return null;
 
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Challenges</h3>
-        <span className="text-[10px] text-gray-400">{challenges.filter((c) => c.completed).length}/{challenges.length} done</span>
+        <span className="text-[10px] text-gray-400">{completedCount}/{challenges.length} done</span>
       </div>
       <div className="space-y-3">
         {active.map((c) => (
@@ -148,11 +164,12 @@ function DashboardChallenges() {
       </div>
     </div>
   );
-}
+});
 
-function DashboardRecommendations() {
+const DashboardRecommendations = memo(function DashboardRecommendations() {
   const [recs, setRecs] = useState<RecommendationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const topRecs = useMemo(() => recs.slice(0, 3), [recs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -188,7 +205,7 @@ function DashboardRecommendations() {
         <Link href="/discovery" className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline">See all</Link>
       </div>
       <div className="space-y-2">
-        {recs.slice(0, 3).map((r, i) => (
+        {topRecs.map((r, i) => (
           <div key={i} className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
             <div className="w-8 h-10 rounded bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center flex-shrink-0">
               <span className="text-xs">{'\uD83D\uDCD6'}</span>
@@ -203,9 +220,9 @@ function DashboardRecommendations() {
       </div>
     </div>
   );
-}
+});
 
-function ReadingGoalsWidget() {
+const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
   const [goals, setGoals] = useState<{ goal: number; completed: number; onTrack: boolean; dailyGoalMinutes: number; todayMinutes: number; dailyOnTrack: boolean } | null>(null);
 
   useEffect(() => {
@@ -250,7 +267,7 @@ function ReadingGoalsWidget() {
       </div>
     </div>
   );
-}
+});
 
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -280,20 +297,20 @@ export default function DashboardPage() {
   const stats = dashboardData?.stats ?? null;
   const recentBooks = dashboardData?.recentBooks ?? [];
   const currentBook = recentBooks.length > 0 ? recentBooks[0] : null;
-  const activeBooks = recentBooks.filter((b) => b.progress > 0 && b.progress < 100).slice(0, 3);
+  const activeBooks = useMemo(
+    () => recentBooks.filter((b) => b.progress > 0 && b.progress < 100).slice(0, 3),
+    [recentBooks],
+  );
   const streak = stats?.readingStreak ?? 0;
-  const hasData = !loading && (recentBooks.length > 0 || (stats !== null && (stats.booksRead > 0 || stats.pagesRead > 0)));
+  const hasData = useMemo(
+    () => !loading && (recentBooks.length > 0 || (stats !== null && (stats.booksRead > 0 || stats.pagesRead > 0))),
+    [loading, recentBooks, stats],
+  );
 
-  // Streak milestone celebrations
+  // Streak milestone celebrations — uses hoisted STREAK_MILESTONES
   useEffect(() => {
     if (loading || streak === 0) return;
-    const milestones: Record<number, string> = {
-      3: '3-day reading streak! You\'re building a habit.',
-      7: 'One week of reading! Amazing consistency.',
-      14: 'Two weeks strong! Reading is part of your routine now.',
-      30: 'One month of reading! You\'re a true reader.',
-    };
-    const msg = milestones[streak];
+    const msg = STREAK_MILESTONES[streak];
     if (msg && !celebratedMilestones.current.has(streak)) {
       celebratedMilestones.current.add(streak);
       toast(msg, 'success', 5000);
@@ -376,11 +393,7 @@ export default function DashboardPage() {
 
           {/* Quick feature preview for new users */}
           <div className="grid grid-cols-3 gap-3 mt-6">
-            {[
-              { icon: '\uD83D\uDCD6', title: 'Read', desc: 'Beautiful reader with themes and fonts', href: '/library' },
-              { icon: '\uD83E\uDD16', title: 'AI Agents', desc: 'Ask questions and explore topics', href: '/chat' },
-              { icon: '\uD83D\uDCA1', title: 'Remember', desc: 'Highlights become knowledge', href: '/knowledge' },
-            ].map((f) => (
+            {FEATURE_PREVIEW.map((f) => (
               <Link
                 key={f.title}
                 href={f.href}

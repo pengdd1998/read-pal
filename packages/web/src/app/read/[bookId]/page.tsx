@@ -21,6 +21,19 @@ const BookmarkToggle = dynamic(() => import('@/components/reading/BookmarkToggle
 
 const SETTINGS_KEY_PREFIX = 'reader-settings';
 
+// Static theme maps — never change, so hoist to module scope
+const THEME_CLASSES = {
+  light: 'bg-[#fefdfb] text-gray-900',
+  dark: 'bg-[#0f1419] text-gray-100',
+  sepia: 'bg-[#f8f4ec] text-amber-900',
+} as const;
+
+const HEADER_BG_CLASSES = {
+  light: 'bg-[#fdfbf7]/95 border-amber-200/50',
+  dark: 'bg-[#1a1f26]/95 border-amber-900/30',
+  sepia: 'bg-[#f5f0e6]/95 border-amber-300/50',
+} as const;
+
 /** Subtle selection hint that auto-dismisses after a few seconds. */
 function SelectionHint({ onDismiss }: { onDismiss: () => void }) {
   useEffect(() => {
@@ -545,6 +558,36 @@ export default function ReadPage() {
     [annotations, currentChapter],
   );
 
+  // Memoized search results — prevents expensive chapter scanning on every render
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return chapters
+      .map((ch, i) => {
+        const titleMatch = (ch.title || '').toLowerCase().includes(q);
+        const contentLower = (ch.content || '').toLowerCase();
+        const contentMatch = contentLower.includes(q);
+        if (!titleMatch && !contentMatch) return null;
+        let snippet = '';
+        if (contentMatch) {
+          const idx = contentLower.indexOf(q);
+          const start = Math.max(0, idx - 40);
+          const end = Math.min(ch.content!.length, idx + q.length + 40);
+          snippet = (start > 0 ? '...' : '') +
+            ch.content!.slice(start, end) +
+            (end < ch.content!.length ? '...' : '');
+        }
+        return { index: i, title: ch.title || `Chapter ${i + 1}`, snippet, titleMatch };
+      })
+      .filter(Boolean) as { index: number; title: string; snippet: string; titleMatch: boolean }[];
+  }, [searchQuery, chapters]);
+
+  // Memoized chapter title list for ReaderView (prevents array alloc on every render)
+  const chapterTitles = useMemo(
+    () => chapters.map((ch) => ({ title: ch.title })),
+    [chapters],
+  );
+
   const handleToggleBookmark = async () => {
     if (isBookmarked) {
       const bookmark = annotations.find(
@@ -613,19 +656,32 @@ export default function ReadPage() {
     }
   }, []);
 
-  // Warm bookish design - paper backgrounds
-  const themeClasses = {
-    light: 'bg-[#fefdfb] text-gray-900',
-    dark: 'bg-[#0f1419] text-gray-100',
-    sepia: 'bg-[#f8f4ec] text-amber-900',
-  };
+  // Back button — shows session summary or navigates to library
+  const handleBack = useCallback(() => {
+    const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000);
+    if (elapsed > 30) {
+      setSessionSummary({ duration: elapsed, chaptersRead: currentChapter + 1 });
+    } else {
+      router.push('/library');
+    }
+  }, [currentChapter, router]);
 
-  // Warm cream tones for headers
-  const headerBgClasses = {
-    light: 'bg-[#fdfbf7]/95 border-amber-200/50',
-    dark: 'bg-[#1a1f26]/95 border-amber-900/30',
-    sepia: 'bg-[#f5f0e6]/95 border-amber-300/50',
-  };
+  // Toggle reader controls with auto-hide timer
+  const handleToggleControls = useCallback(() => {
+    setShowControls((v) => {
+      if (!v) resetAutoHideTimer();
+      return !v;
+    });
+  }, [resetAutoHideTimer]);
+
+  // Update annotation handler — stable reference for sidebar
+  const handleUpdateAnnotation = useCallback((updated: Annotation) => {
+    setAnnotations((prev) =>
+      prev.map((a) => (a.id === updated.id ? updated : a)),
+    );
+  }, []);
+
+  // Theme maps are hoisted to module scope (THEME_CLASSES, HEADER_BG_CLASSES)
 
   if (loading) {
     return (
@@ -663,21 +719,14 @@ export default function ReadPage() {
 
       {/* Top bar — slides in/out with controls - warm bookish design */}
       <div
-        className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${headerBgClasses[theme]} transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none absolute'
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
           {/* Back arrow - shows session summary before leaving */}
           <button
-            onClick={() => {
-              const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000);
-              if (elapsed > 30) {
-                setSessionSummary({ duration: elapsed, chaptersRead: currentChapter + 1 });
-              } else {
-                router.push('/library');
-              }
-            }}
+            onClick={handleBack}
             className="flex items-center justify-center w-10 h-10 -ml-1 rounded-xl text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors"
             aria-label="Back to library"
           >
@@ -859,14 +908,8 @@ export default function ReadPage() {
                   autoFocus
                 />
                 <span className="text-xs text-gray-400">
-                  {searchQuery.trim().length >= 2
-                    ? `${chapters.filter((ch) => {
-                        const q = searchQuery.toLowerCase();
-                        return (
-                          (ch.title || '').toLowerCase().includes(q) ||
-                          (ch.content || '').toLowerCase().includes(q)
-                        );
-                      }).length} chapters`
+                  {searchResults.length > 0
+                    ? `${searchResults.length} chapters`
                     : ''}
                 </span>
                 <button
@@ -881,32 +924,8 @@ export default function ReadPage() {
 
               {searchQuery.trim().length >= 2 && (
                 <div className="max-h-64 overflow-y-auto border-t border-gray-100 dark:border-gray-800">
-                  {(() => {
-                    const q = searchQuery.toLowerCase();
-                    const results = chapters
-                      .map((ch, i) => {
-                        const titleMatch = (ch.title || '').toLowerCase().includes(q);
-                        const contentLower = (ch.content || '').toLowerCase();
-                        const contentMatch = contentLower.includes(q);
-                        if (!titleMatch && !contentMatch) return null;
-
-                        // Extract snippet around first match
-                        let snippet = '';
-                        if (contentMatch) {
-                          const idx = contentLower.indexOf(q);
-                          const start = Math.max(0, idx - 40);
-                          const end = Math.min(ch.content!.length, idx + q.length + 40);
-                          snippet = (start > 0 ? '...' : '') +
-                            ch.content!.slice(start, end) +
-                            (end < ch.content!.length ? '...' : '');
-                        }
-
-                        return { index: i, title: ch.title || `Chapter ${i + 1}`, snippet, titleMatch };
-                      })
-                      .filter(Boolean) as { index: number; title: string; snippet: string; titleMatch: boolean }[];
-
-                    return results.length > 0 ? (
-                      results.map((r) => (
+                  {searchResults.length > 0 ? (
+                    searchResults.map((r) => (
                         <button
                           key={r.index}
                           onClick={() => {
@@ -940,8 +959,7 @@ export default function ReadPage() {
                       <div className="px-4 py-6 text-center text-sm text-gray-400">
                         No results for &ldquo;{searchQuery}&rdquo;
                       </div>
-                    );
-                  })()}
+                    )}
                 </div>
               )}
             </div>
@@ -951,25 +969,20 @@ export default function ReadPage() {
 
       {/* Main content area - takes remaining space */}
       <div className={`flex-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:mr-[360px]' : ''}`}>
-        <div className={`h-full ${themeClasses[theme]} transition-colors duration-200 ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
+        <div className={`h-full ${THEME_CLASSES[theme]} transition-colors duration-200 ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
           <ReaderView
             bookId={bookId}
             chapterContent={chapterContent}
             chapterTitle={chapters[currentChapter]?.title || book.title}
             currentPage={currentChapter}
             totalPages={chapters.length || 1}
-            chapters={chapters.map((ch) => ({ title: ch.title }))}
+            chapters={chapterTitles}
             onPageChange={handleChapterChange}
             contentRef={contentRef}
             fontSize={fontSize}
             theme={theme}
             showControls={showControls}
-            onToggleControls={() => {
-              setShowControls((v) => {
-                if (!v) resetAutoHideTimer();
-                return !v;
-              });
-            }}
+            onToggleControls={handleToggleControls}
             highlightMode={highlightMode}
             highlightCount={highlightCount}
             bookmarkCount={bookmarkCount}
@@ -1011,11 +1024,7 @@ export default function ReadPage() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onDeleteAnnotation={handleDeleteAnnotation}
-        onUpdateAnnotation={(updated) => {
-          setAnnotations((prev) =>
-            prev.map((a) => (a.id === updated.id ? updated : a)),
-          );
-        }}
+        onUpdateAnnotation={handleUpdateAnnotation}
         onScrollToAnnotation={handleScrollToAnnotation}
       />
 

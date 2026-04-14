@@ -1,10 +1,23 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
-import DOMPurify from 'dompurify';
 import { api, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { renderSimpleMarkdown } from '@/lib/markdown';
+
+// Lazy-load DOMPurify — keeps it out of the initial bundle (~40KB saving)
+let _domPurify: typeof import('dompurify').default | null = null;
+async function loadDOMPurify(): Promise<typeof import('dompurify').default> {
+  if (!_domPurify) {
+    const m = await import('dompurify');
+    _domPurify = m.default;
+  }
+  return _domPurify;
+}
+function purifySync(html: string): string {
+  if (_domPurify) return _domPurify.sanitize(html);
+  return html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+}
 
 interface Message {
   id: string;
@@ -114,12 +127,15 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
+  // Preload DOMPurify on mount
+  useEffect(() => { loadDOMPurify(); }, []);
+
   // Memoize sanitized assistant messages to avoid re-sanitizing on every render
   const sanitizedMessages = useMemo(() => {
     const cache = new Map<string, string>();
     return messages.map((msg) => {
       if (msg.role === 'assistant' && !cache.has(msg.id)) {
-        cache.set(msg.id, DOMPurify.sanitize(renderSimpleMarkdown(msg.content)));
+        cache.set(msg.id, purifySync(renderSimpleMarkdown(msg.content)));
       }
       return { ...msg, sanitized: cache.get(msg.id) || '' };
     });

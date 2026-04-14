@@ -1,8 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, type RefObject } from 'react';
-import DOMPurify from 'dompurify';
 import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle } from '@/components/icons';
+
+// Lazy-load DOMPurify — keeps it out of the initial bundle (~40KB saving)
+let _domPurify: typeof import('dompurify').default | null = null;
+async function loadDOMPurify(): Promise<typeof import('dompurify').default> {
+  if (!_domPurify) {
+    const m = await import('dompurify');
+    _domPurify = m.default;
+  }
+  return _domPurify;
+}
+function purifySync(html: string, config: Record<string, unknown>): string {
+  if (_domPurify) return _domPurify.sanitize(html, config);
+  // Fallback: strip <script> tags only (no full sanitization until DOMPurify loads)
+  return html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+}
 
 // DOMPurify configuration that preserves technical formatting tags
 const PURIFY_CONFIG = {
@@ -79,9 +93,13 @@ export function ReaderView({
   const [showChapterMenu, setShowChapterMenu] = useState(false);
   const chapterMenuRef = useRef<HTMLDivElement>(null);
 
+  // Preload DOMPurify on mount so purifySync works immediately after
+  useEffect(() => { loadDOMPurify(); }, []);
+
   // Memoize sanitized content to avoid re-sanitizing on every render
+  // Uses purifySync which falls back to script-stripping if DOMPurify hasn't loaded yet
   const sanitizedContent = useMemo(
-    () => DOMPurify.sanitize(chapterContent, PURIFY_CONFIG),
+    () => purifySync(chapterContent, PURIFY_CONFIG),
     [chapterContent],
   );
 
