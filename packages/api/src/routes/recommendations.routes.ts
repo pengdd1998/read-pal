@@ -126,7 +126,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     // Get user's books
     const books = await Book.findAll({
       where: { userId },
-      attributes: ['id', 'title', 'author', 'genre', 'tags', 'status', 'progress'],
+      attributes: ['id', 'title', 'author', 'tags', 'status', 'progress'],
       order: [['lastReadAt', 'DESC NULLS LAST']],
       limit: 20,
     });
@@ -143,10 +143,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     const userGenres = new Set<string>();
     for (const book of books) {
       const bookData = book.get({ plain: true }) as Record<string, any>;
-      if (bookData.genre) {
-        userGenres.add(bookData.genre);
-      }
-      // Also extract from title + tags
+      // Extract genres from title + tags
       const textSource = `${bookData.title} ${bookData.author} ${(bookData.tags || []).join(' ')}`;
       const extracted = extractGenres(textSource);
       extracted.forEach((g) => userGenres.add(g));
