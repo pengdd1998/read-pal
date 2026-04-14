@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, type RefObject } from 'react';
 import DOMPurify from 'dompurify';
+import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle } from '@/components/icons';
 
 // DOMPurify configuration that preserves technical formatting tags
 const PURIFY_CONFIG = {
@@ -369,9 +370,7 @@ export function ReaderView({
             disabled={currentPage === 0}
             className="flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-xl text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95 min-w-[60px] sm:min-w-[80px]"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeft />
             <span className="hidden sm:inline">Prev</span>
           </button>
 
@@ -414,12 +413,9 @@ export function ReaderView({
                   )}
                 </div>
               )}
-              <svg
+              <ChevronDown
                 className={`w-3 h-3 opacity-40 mt-0.5 transition-transform ${showChapterMenu ? 'rotate-180' : ''}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              />
             </button>
 
             {/* Dropdown / bottom sheet */}
@@ -486,9 +482,7 @@ export function ReaderView({
                         </span>
                         {isCurrent && (
                           <span className="flex-shrink-0 ml-auto">
-                            <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
+                            <CheckCircle className="w-4 h-4 text-amber-500" />
                           </span>
                         )}
                       </button>
@@ -505,9 +499,7 @@ export function ReaderView({
             className="flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-xl text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95 min-w-[60px] sm:min-w-[80px] justify-end"
           >
             <span className="hidden sm:inline">Next</span>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+            <ChevronRight />
           </button>
         </div>
       </footer>
