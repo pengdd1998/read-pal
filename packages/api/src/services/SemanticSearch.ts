@@ -7,7 +7,7 @@
  */
 
 import { getPinecone } from '../db';
-import { Pinecone, type RecordMetadata } from '@pinecone-database/pinecone';
+import { Pinecone } from '@pinecone-database/pinecone';
 import type { Logger } from '../types';
 
 // ============================================================================
