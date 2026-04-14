@@ -1,6 +1,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models';
+import { isTokenRevoked } from '../utils/auth';
 
 // ============================================================================
 // Types
@@ -60,6 +61,16 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
       return;
     }
     const decoded = jwt.verify(token, secret) as JWTPayload;
+
+    // Check token blacklist (revoked tokens from logout)
+    const jti = decoded.jti;
+    if (jti && await isTokenRevoked(jti)) {
+      res.status(401).json({
+        success: false,
+        error: { code: 'TOKEN_REVOKED', message: 'Token has been revoked' },
+      });
+      return;
+    }
 
     // Attach user to request
     const userId = decoded.userId || decoded.sub || '';
@@ -131,7 +142,8 @@ export function optionalAuthenticate(req: AuthRequest, res: Response, next: Next
       const token = authHeader.substring(7);
       const secret = process.env.JWT_SECRET;
     if (!secret) {
-      res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Server configuration error' } });
+      // Missing secret — skip auth silently
+      next();
       return;
     }
       const decoded = jwt.verify(token, secret) as JWTPayload;
@@ -182,6 +194,7 @@ export function requirePermission(permission: string) {
 interface JWTPayload {
   userId?: string; // from generateToken
   sub?: string;    // alternative user ID field
+  jti?: string;    // unique token ID for blacklist
   email?: string;
   name?: string;
   iat?: number;

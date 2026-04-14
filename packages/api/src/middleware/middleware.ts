@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import compression from 'compression';
 import crypto from 'crypto';
 import { EnvironmentConfig } from '../types';
+import { dedup } from './dedup';
 
 // ============================================================================
 // Middleware
@@ -49,7 +50,14 @@ export function initializeMiddleware(
   // CORS
   app.use(cors({
     origin: config.nodeEnv === 'production'
-      ? config.cors?.origins || ['https://readpal.com']
+      ? (() => {
+          // In production, CORS origins MUST be explicitly configured
+          if (config.cors?.origins && config.cors.origins.length > 0) {
+            return config.cors.origins;
+          }
+          console.warn('[SECURITY] No CORS_ORIGINS configured for production. Denying all cross-origin requests.');
+          return false; // Deny all origins if not configured
+        })()
       : ['http://localhost:3000', 'http://localhost:19006'],
     credentials: true
   }));
@@ -68,6 +76,9 @@ export function initializeMiddleware(
       message: 'Too many requests from this IP, please try again later.'
     }));
   }
+
+  // Request deduplication for concurrent identical GET requests
+  app.use(dedup());
 
   // Request logging
   app.use((req: Request, res: Response, next: NextFunction) => {
@@ -109,17 +120,22 @@ export function errorHandler(
   err: ApiError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   const statusCode = err.statusCode || 500;
   const code = err.code || 'INTERNAL_ERROR';
-  const message = err.message || 'An unexpected error occurred';
+  // Never expose internal error messages to clients
+  const message = statusCode < 500
+    ? (err.message || 'Request failed')
+    : 'An unexpected error occurred';
 
+  // Log full error details server-side only
   console.error('API Error:', {
     requestId: req.id,
-    error: err,
+    error: err.message,
+    stack: err.stack,
     path: req.path,
-    method: req.method
+    method: req.method,
   });
 
   res.status(statusCode).json({
@@ -127,7 +143,6 @@ export function errorHandler(
     error: {
       code,
       message,
-      ...(process.env.NODE_ENV === 'development' && { details: err.details })
     },
     metadata: {
       timestamp: new Date().toISOString(),
@@ -140,16 +155,16 @@ export function errorHandler(
 /**
  * 404 handler
  */
-export function notFoundHandler(req: Request, res: Response): void {
+export function notFoundHandler(_req: Request, res: Response): void {
   res.status(404).json({
     success: false,
     error: {
       code: 'NOT_FOUND',
-      message: `Cannot ${req.method} ${req.path}`
+      message: 'Resource not found'
     },
     metadata: {
       timestamp: new Date().toISOString(),
-      requestId: req.id,
+      requestId: _req.id,
       version: process.env.API_VERSION || '1.0.0'
     }
   });

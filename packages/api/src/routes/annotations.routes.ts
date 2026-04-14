@@ -8,9 +8,27 @@ import { Annotation } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
-import { Op } from 'sequelize';
+import { etag } from '../middleware/cache';
+import { Op, QueryTypes } from 'sequelize';
+import { sequelize } from '../models';
 
 const router: Router = Router();
+
+/**
+ * Escape markdown special characters in user content to prevent
+ * injection when the exported markdown is rendered.
+ */
+function escapeMarkdown(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/\*/g, '\\*')
+    .replace(/_/g, '\\_')
+    .replace(/`/g, '\\`')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
 /**
  * GET /api/annotations
@@ -39,13 +57,12 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
       };
     }
 
-    const annotations = await Annotation.findAll({
+    const { rows: annotations, count: total } = await Annotation.findAndCountAll({
       where,
       order: [['createdAt', 'DESC']],
       limit,
       offset,
     });
-    const total = await Annotation.count({ where });
 
     res.json({
       success: true,
@@ -70,6 +87,42 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 });
 
 /**
+ * GET /api/annotations/tags
+ * Get all unique tags for the authenticated user with counts
+ */
+router.get('/tags', authenticate, etag(120), async (req: AuthRequest, res) => {
+  try {
+    const { bookId } = req.query;
+
+    // Use PostgreSQL unnest + GROUP BY for efficient server-side tag counting
+    // instead of fetching all annotations into JS memory
+    let whereClause = 'WHERE "userId" = $1 AND tags IS NOT NULL';
+    const binds: unknown[] = [req.userId];
+    if (bookId) {
+      whereClause += ' AND "bookId" = $2';
+      binds.push(bookId);
+    }
+
+    const tags = await sequelize.query<{ tag: string; count: string }>(
+      `SELECT unnest(tags) AS tag, COUNT(*)::int AS count
+       FROM annotations
+       ${whereClause}
+       GROUP BY unnest(tags)
+       ORDER BY count DESC`,
+      { bind: binds, type: QueryTypes.SELECT },
+    );
+
+    res.json({ success: true, data: tags.map((r) => ({ name: r.tag, count: r.count })) });
+  } catch (error) {
+    console.error('Error fetching annotation tags:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'TAGS_FETCH_ERROR', message: 'Failed to fetch tags' },
+    });
+  }
+});
+
+/**
  * GET /api/annotations/search
  * Search annotations by text content (server-side filtering)
  */
@@ -78,7 +131,7 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
     const { q, bookId, type } = req.query;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
 
-    if (!q || typeof q !== 'string' || q.trim().length < 1) {
+    if (!q || typeof q !== 'string' || q.trim().length < 1 || q.trim().length > 200) {
       return res.json({ success: true, data: [] });
     }
 
@@ -106,6 +159,87 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
     res.status(500).json({
       success: false,
       error: { code: 'ANNOTATIONS_SEARCH_ERROR', message: 'Failed to search annotations' },
+    });
+  }
+});
+
+/**
+ * GET /api/annotations/export
+ * Export annotations for a book as Markdown or JSON
+ * NOTE: Must be defined before /:id to avoid route capture
+ */
+router.get('/export', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { bookId, format } = req.query;
+
+    if (!bookId || typeof bookId !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'bookId query parameter is required' },
+      });
+    }
+
+    const annotations = await Annotation.findAll({
+      where: { userId: req.userId, bookId },
+      order: [['createdAt', 'ASC']],
+    });
+
+    const fmt = (format as string) || 'markdown';
+
+    if (fmt === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.json"`);
+      return res.json(annotations);
+    }
+
+    // Markdown export
+    const lines: string[] = [`# Annotations`, ``, `_Exported ${new Date().toLocaleDateString()}_`, ``];
+
+    const highlights = annotations.filter((a) => a.type === 'highlight');
+    const notes = annotations.filter((a) => a.type === 'note');
+    const bookmarks = annotations.filter((a) => a.type === 'bookmark');
+
+    if (highlights.length > 0) {
+      lines.push(`## Highlights (${highlights.length})`, ``);
+      for (const h of highlights) {
+        lines.push(`> ${escapeMarkdown(h.content).replace(/\n/g, '\n> ')}`);
+        if (h.note) lines.push(``, `**Note:** ${escapeMarkdown(h.note)}`);
+        if (h.color) lines.push(``, `_Color: ${h.color}_`);
+        lines.push(``);
+      }
+    }
+
+    if (notes.length > 0) {
+      lines.push(`## Notes (${notes.length})`, ``);
+      for (const n of notes) {
+        lines.push(`### ${escapeMarkdown(n.content.slice(0, 60))}${n.content.length > 60 ? '...' : ''}`);
+        if (n.note) lines.push(``, escapeMarkdown(n.note));
+        lines.push(``);
+      }
+    }
+
+    if (bookmarks.length > 0) {
+      lines.push(`## Bookmarks (${bookmarks.length})`, ``);
+      for (const b of bookmarks) {
+        const loc = b.location?.pageNumber ? ` (p. ${b.location.pageNumber})` : '';
+        lines.push(`- ${escapeMarkdown(b.content)}${loc}`);
+      }
+      lines.push(``);
+    }
+
+    if (annotations.length === 0) {
+      lines.push(`_No annotations yet._`);
+    }
+
+    const md = lines.join('\n');
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.md"`);
+    res.send(md);
+  } catch (error) {
+    console.error('Error exporting annotations:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'EXPORT_ERROR', message: 'Failed to export annotations' },
     });
   }
 });
@@ -162,6 +296,8 @@ router.post(
     body('type').isIn(['highlight', 'note', 'bookmark']).withMessage('type must be highlight, note, or bookmark'),
     body('content').isLength({ max: 10000 }).withMessage('content is required and must be at most 10000 characters'),
     body('location').optional().isObject().withMessage('location must be an object'),
+    body('tags').optional().isArray().withMessage('tags must be an array'),
+    body('tags.*').optional().isString().trim().isLength({ max: 50 }).withMessage('each tag must be a string under 50 characters'),
   ]),
   async (req: AuthRequest, res) => {
   try {
@@ -314,86 +450,6 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
         code: 'ANNOTATION_DELETE_ERROR',
         message: 'Failed to delete annotation',
       },
-    });
-  }
-});
-
-/**
- * GET /api/annotations/export
- * Export annotations for a book as Markdown or JSON
- */
-router.get('/export', authenticate, async (req: AuthRequest, res) => {
-  try {
-    const { bookId, format } = req.query;
-
-    if (!bookId || typeof bookId !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'bookId query parameter is required' },
-      });
-    }
-
-    const annotations = await Annotation.findAll({
-      where: { userId: req.userId, bookId },
-      order: [['createdAt', 'ASC']],
-    });
-
-    const fmt = (format as string) || 'markdown';
-
-    if (fmt === 'json') {
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.json"`);
-      return res.json(annotations);
-    }
-
-    // Markdown export
-    const lines: string[] = [`# Annotations`, ``, `_Exported ${new Date().toLocaleDateString()}_`, ``];
-
-    const highlights = annotations.filter((a) => a.type === 'highlight');
-    const notes = annotations.filter((a) => a.type === 'note');
-    const bookmarks = annotations.filter((a) => a.type === 'bookmark');
-
-    if (highlights.length > 0) {
-      lines.push(`## Highlights (${highlights.length})`, ``);
-      for (const h of highlights) {
-        lines.push(`> ${h.content.replace(/\n/g, '\n> ')}`);
-        if (h.note) lines.push(``, `**Note:** ${h.note}`);
-        if (h.color) lines.push(``, `_Color: ${h.color}_`);
-        lines.push(``);
-      }
-    }
-
-    if (notes.length > 0) {
-      lines.push(`## Notes (${notes.length})`, ``);
-      for (const n of notes) {
-        lines.push(`### ${n.content.slice(0, 60)}${n.content.length > 60 ? '...' : ''}`);
-        if (n.note) lines.push(``, n.note);
-        lines.push(``);
-      }
-    }
-
-    if (bookmarks.length > 0) {
-      lines.push(`## Bookmarks (${bookmarks.length})`, ``);
-      for (const b of bookmarks) {
-        const loc = b.location?.pageNumber ? ` (p. ${b.location.pageNumber})` : '';
-        lines.push(`- ${b.content}${loc}`);
-      }
-      lines.push(``);
-    }
-
-    if (annotations.length === 0) {
-      lines.push(`_No annotations yet._`);
-    }
-
-    const md = lines.join('\n');
-    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.md"`);
-    res.send(md);
-  } catch (error) {
-    console.error('Error exporting annotations:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: 'EXPORT_ERROR', message: 'Failed to export annotations' },
     });
   }
 });

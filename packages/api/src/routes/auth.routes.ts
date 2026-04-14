@@ -7,8 +7,9 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { User } from '../models';
-import { generateToken } from '../utils/auth';
+import { generateToken, revokeToken } from '../utils/auth';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
@@ -334,23 +335,53 @@ router.post('/forgot-password', rateLimiter({ windowMs: 60000, max: 5 }), async 
 
 /**
  * POST /api/auth/logout
- * Logout user (invalidate token)
+ * Logout user — revokes the current JWT token.
  */
-router.post('/logout', async (_req, res) => {
-  // With JWT, logout is handled client-side by removing the token
-  // For additional security, we could add the token to a blacklist in Redis
-  res.json({
-    success: true,
-    data: { message: 'Logged out successfully' },
-  });
+router.post('/logout', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const secret = process.env.JWT_SECRET;
+      if (secret) {
+        const decoded = jwt.verify(token, secret) as { jti?: string; exp?: number };
+        if (decoded.jti && decoded.exp) {
+          await revokeToken(decoded.jti, decoded.exp);
+        }
+      }
+    }
+    res.json({
+      success: true,
+      data: { message: 'Logged out successfully' },
+    });
+  } catch {
+    // Token may be invalid/expired — still return success for idempotent logout
+    res.json({
+      success: true,
+      data: { message: 'Logged out successfully' },
+    });
+  }
 });
 
 /**
  * POST /api/auth/refresh
- * Refresh authentication token
+ * Refresh authentication token — revokes the old token and issues a new one.
  */
 router.post('/refresh', authenticate, async (req: AuthRequest, res) => {
   try {
+    // Revoke old token
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      const oldToken = authHeader.substring(7);
+      const secret = process.env.JWT_SECRET;
+      if (secret) {
+        const decoded = jwt.verify(oldToken, secret) as { jti?: string; exp?: number };
+        if (decoded.jti && decoded.exp) {
+          await revokeToken(decoded.jti, decoded.exp);
+        }
+      }
+    }
+
     // Generate new token
     const token = generateToken(req.userId!);
 

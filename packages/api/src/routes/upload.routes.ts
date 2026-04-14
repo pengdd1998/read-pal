@@ -11,6 +11,7 @@ import { BookProcessor } from '../services/BookProcessor';
 import { ContentProcessor } from '../services/ContentProcessor';
 import { SemanticSearch } from '../services/SemanticSearch';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router: Router = Router();
 const processor = new BookProcessor();
@@ -23,14 +24,13 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     const allowedTypes = [
       'application/epub+zip',
       'application/pdf',
-      'application/octet-stream', // EPUB often has this type
     ];
 
-    // Also check file extension
+    // Check file extension
     const ext = path.extname(file.originalname).toLowerCase();
     const allowedExts = ['.epub', '.pdf'];
 
@@ -43,10 +43,32 @@ const upload = multer({
 });
 
 /**
+ * Validate file magic bytes to ensure the file content matches the extension.
+ * - PDF: starts with %PDF
+ * - EPUB: starts with PK (ZIP archive, since EPUB is ZIP-based)
+ */
+function validateMagicBytes(buffer: Buffer, fileType: string): boolean {
+  if (buffer.length < 4) return false;
+
+  if (fileType === 'pdf') {
+    // PDF files start with %PDF
+    return buffer[0] === 0x25 && buffer[1] === 0x50 &&
+           buffer[2] === 0x44 && buffer[3] === 0x46;
+  }
+
+  if (fileType === 'epub') {
+    // EPUB files are ZIP archives starting with PK (0x50 0x4B)
+    return buffer[0] === 0x50 && buffer[1] === 0x4B;
+  }
+
+  return false;
+}
+
+/**
  * POST /api/upload
  * Upload and process a book file
  */
-router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, res) => {
+router.post('/', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), upload.single('file'), async (req: AuthRequest, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -65,6 +87,17 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
     // Determine file type
     const ext = path.extname(file.originalname).toLowerCase();
     const fileType = ext === '.epub' ? 'epub' : 'pdf';
+
+    // Validate magic bytes to prevent disguised files
+    if (!validateMagicBytes(file.buffer, fileType)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_FILE',
+          message: `File content does not match expected ${fileType.toUpperCase()} format`,
+        },
+      });
+    }
 
     // Create temp file path (sanitize filename to prevent path traversal)
     const uploadDir = path.join(process.cwd(), 'uploads');
@@ -194,7 +227,7 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
       success: false,
       error: {
         code: 'UPLOAD_ERROR',
-        message: error instanceof Error ? error.message : 'Failed to upload file',
+        message: 'Failed to upload file',
       },
     });
   }
