@@ -5,13 +5,20 @@ import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';
 import { QuoteCard } from './QuoteCard';
 
+const QUICK_TAGS = [
+  { id: 'discuss', label: 'Discuss', emoji: '\u{1F4AC}' },
+  { id: 'important', label: 'Key', emoji: '\u{2B50}' },
+  { id: 'question', label: 'Question', emoji: '\u{2753}' },
+  { id: 'key-idea', label: 'Idea', emoji: '\u{1F4A1}' },
+];
+
 interface SelectionToolbarProps {
   text: string;
   rect: DOMRect | null;
   range: Range | null;
   bookTitle?: string;
   author?: string;
-  onHighlight: (text: string, color: string) => void;
+  onHighlight: (text: string, color: string, tags?: string[]) => void;
   onNote: (text: string, note: string) => void;
   onDismiss: () => void;
   onAskAI?: (text: string) => void;
@@ -32,6 +39,8 @@ export function SelectionToolbar({
   const [copied, setCopied] = useState(false);
   const [highlightToast, setHighlightToast] = useState(false);
   const [showQuoteCard, setShowQuoteCard] = useState(false);
+  const [showTagPicker, setShowTagPicker] = useState(false);
+  const [pendingTag, setPendingTag] = useState<string | null>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   if (!rect || rect.width === 0) return null;
@@ -66,9 +75,22 @@ export function SelectionToolbar({
   }, [text, onDismiss]);
 
   const handleHighlight = useCallback(
-    (color: string) => {
-      onHighlight(text, color);
+    (color: string, tags?: string[]) => {
+      onHighlight(text, color, tags);
       setHighlightToast(true);
+      setPendingTag(null);
+      setShowTagPicker(false);
+      setTimeout(() => setHighlightToast(false), 1200);
+    },
+    [text, onHighlight],
+  );
+
+  const handleTagAndHighlight = useCallback(
+    (color: string, tag: string) => {
+      onHighlight(text, color, [tag]);
+      setHighlightToast(true);
+      setPendingTag(null);
+      setShowTagPicker(false);
       setTimeout(() => setHighlightToast(false), 1200);
     },
     [text, onHighlight],
@@ -129,7 +151,7 @@ export function SelectionToolbar({
                 className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
                 aria-label="Add note"
               >
-                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -148,13 +170,30 @@ export function SelectionToolbar({
               </button>
 
               <button
+                onClick={() => setShowTagPicker(!showTagPicker)}
+                className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
+                  showTagPicker ? 'text-amber-600 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400'
+                }`}
+                aria-label="Tag and highlight"
+              >
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                  showTagPicker ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'
+                }`}>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-medium">Tag</span>
+              </button>
+
+              <button
                 onClick={handleCopy}
                 className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
                   copied ? 'text-emerald-500' : 'text-gray-600 dark:text-gray-400'
                 }`}
                 aria-label="Copy text"
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${copied ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${copied ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
                   {copied ? (
                     <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -173,7 +212,7 @@ export function SelectionToolbar({
                 className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
                 aria-label="Share as quote card"
               >
-                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
@@ -201,6 +240,25 @@ export function SelectionToolbar({
                 </button>
               )}
             </div>
+
+            {/* Tag picker — mobile */}
+            {showTagPicker && (
+              <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">Quick tag + highlight</p>
+                <div className="flex flex-wrap gap-2">
+                  {QUICK_TAGS.map((qt) => (
+                    <button
+                      key={qt.id}
+                      onClick={() => handleTagAndHighlight(ANNOTATION_COLORS[0], qt.id)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 active:scale-95 transition-all hover:border-amber-300 dark:hover:border-amber-700"
+                    >
+                      <span>{qt.emoji}</span>
+                      {qt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -263,6 +321,24 @@ export function SelectionToolbar({
 
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
 
+          {/* Tag */}
+          <button
+            onClick={() => setShowTagPicker(!showTagPicker)}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              showTagPicker
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+            aria-label="Tag and highlight"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            <span>Tag</span>
+          </button>
+
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
+
           {/* Copy */}
           <button
             onClick={handleCopy}
@@ -316,6 +392,25 @@ export function SelectionToolbar({
             </button>
           )}
         </div>
+
+        {/* Tag picker popup — desktop */}
+        {showTagPicker && (
+          <div className="absolute top-full mt-2 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 min-w-[220px] z-10 animate-bounce-in">
+            <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">Quick tag + highlight</p>
+            <div className="flex flex-wrap gap-1.5">
+              {QUICK_TAGS.map((qt) => (
+                <button
+                  key={qt.id}
+                  onClick={() => handleTagAndHighlight(ANNOTATION_COLORS[0], qt.id)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-95 transition-all"
+                >
+                  <span>{qt.emoji}</span>
+                  {qt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Highlight toast */}
         {highlightToast && (

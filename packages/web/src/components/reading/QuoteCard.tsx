@@ -437,7 +437,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
             {/* Close */}
             <button
               onClick={onClose}
-              className="flex items-center justify-center w-9 h-9 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 border border-white/5 transition-all duration-200 active:scale-95"
+              className="flex items-center justify-center w-11 h-11 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 border border-white/5 transition-all duration-200 active:scale-95"
               aria-label="Close"
             >
               <svg

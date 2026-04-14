@@ -342,7 +342,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       cancelled = true;
       if (greetTimer) clearTimeout(greetTimer);
     };
-  }, [isOpen, bookId, historyLoaded]);
+  }, [isOpen, bookId, historyLoaded, toast]);
 
   useEffect(() => { setHistoryLoaded(false); setMessages([]); }, [bookId]);
 
@@ -408,7 +408,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
           {/* Mobile: bottom sheet (55vh) — Desktop: full-height sidebar (400px) */}
           <div
-            className="fixed right-0 bottom-0 h-[55vh] w-full md:top-0 md:bottom-0 md:h-full md:w-[400px] bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right"
+            className="fixed right-0 bottom-0 h-[55vh] w-full md:top-0 md:bottom-0 md:h-full md:w-[400px] bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right overscroll-contain"
           >
             {/* Mobile drag handle */}
             <div className="flex justify-center pt-2 pb-1 md:hidden">
@@ -437,7 +437,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             </div>
 
             {/* Messages */}
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div ref={chatContainerRef} role="log" aria-label="Chat messages" aria-live="polite" className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && !loading ? (
                 <div className="text-center text-amber-700/60 dark:text-amber-300/50 py-10">
                   <div className="text-3xl mb-3">{friendEmoji}</div>

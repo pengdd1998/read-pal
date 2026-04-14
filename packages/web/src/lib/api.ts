@@ -2,16 +2,36 @@
  * API Client Configuration
  *
  * SSR-safe: all browser APIs (localStorage, window) are guarded.
+ *
+ * Features:
+ * - Automatic retry with exponential backoff for network / 5xx / 429 errors
+ * - Stale-while-revalidate cache for GET requests
+ * - Auth token injection and 401 redirect
+ * - Request deduplication for concurrent identical GETs
  */
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1_000;
+const RETRYABLE_METHODS = new Set(['get', 'head', 'options']);
+
+function isRetryableStatus(status?: number): boolean {
+  if (!status) return false;
+  return status === 429 || (status >= 500 && status < 600);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 class ApiClient {
   private client: AxiosInstance;
   private cache = new Map<string, { data: unknown; expiry: number; stale?: boolean }>();
+  private inFlightRequests = new Map<string, Promise<unknown>>();
   private static DEFAULT_TTL = 30_000; // 30 seconds
   private static STALE_TTL = 300_000; // 5 minutes — serve stale while revalidating
 
@@ -57,6 +77,48 @@ class ApiClient {
     );
   }
 
+  /**
+   * Execute an axios request with automatic retry for idempotent methods.
+   * Retries on: network errors (no response), HTTP 429, and 5xx.
+   * Uses exponential backoff with jitter: 1s → 2s → 4s.
+   */
+  private async requestWithRetry<T>(
+    method: 'get' | 'post' | 'put' | 'patch' | 'delete',
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    const canRetry = RETRYABLE_METHODS.has(method);
+    let lastError: unknown;
+
+    const attempts = canRetry ? MAX_RETRIES : 1;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        const response = await this.client.request<T>({ ...config, method, url });
+        return response.data;
+      } catch (err: unknown) {
+        lastError = err;
+        const axiosErr = err as AxiosError;
+
+        // Only retry on network errors or retryable status codes for idempotent methods
+        const isNetworkError = !axiosErr.response;
+        const status = axiosErr.response?.status;
+        const shouldRetry = canRetry && (isNetworkError || isRetryableStatus(status));
+
+        if (!shouldRetry || attempt >= attempts) {
+          break;
+        }
+
+        // Exponential backoff with jitter
+        const baseDelay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
+        const jitter = Math.random() * baseDelay * 0.3;
+        await sleep(baseDelay + jitter);
+      }
+    }
+
+    throw lastError;
+  }
+
   /** Invalidate cache entries matching a prefix (e.g., '/api/settings' clears '/api/settings*') */
   invalidateCache(prefix?: string): void {
     if (!prefix) { this.cache.clear(); return; }
@@ -93,77 +155,99 @@ class ApiClient {
       }
     }
 
-    // No cache or fully expired — fetch fresh
-    const response = await this.client.get<ApiResponse<T>>(url, { params });
-    if (response.data.success && this.isCacheable(url)) {
-      this.cache.set(cacheKey, { data: response.data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
-    }
-    return response.data;
+    // Deduplicate concurrent identical requests
+    const inFlight = this.inFlightRequests.get(cacheKey) as Promise<ApiResponse<T>> | undefined;
+    if (inFlight) return inFlight;
+
+    const requestPromise = this.requestWithRetry<ApiResponse<T>>('get', url, { params })
+      .then((data) => {
+        if (data.success && this.isCacheable(url)) {
+          this.cache.set(cacheKey, { data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
+        }
+        return data;
+      })
+      .finally(() => {
+        this.inFlightRequests.delete(cacheKey);
+      });
+
+    this.inFlightRequests.set(cacheKey, requestPromise);
+    return requestPromise;
   }
 
-  /** Background revalidation — updates cache without blocking UI */
+  /** Background revalidation — updates cache without blocking UI, with retry */
   private refreshInBackground<T>(cacheKey: string, url: string, params?: Record<string, unknown>): void {
-    this.client.get<ApiResponse<T>>(url, { params }).then((response) => {
-      if (response.data.success) {
-        this.cache.set(cacheKey, { data: response.data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
-      }
-    }).catch(() => {
-      // Background refresh failed — stale data remains usable
-    });
+    this.requestWithRetry<ApiResponse<T>>('get', url, { params })
+      .then((data) => {
+        if (data.success) {
+          this.cache.set(cacheKey, { data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
+        }
+      })
+      .catch(() => {
+        // Background refresh failed — stale data remains usable
+      });
   }
 
   async post<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    const response = await this.client.post<ApiResponse<T>>(url, data);
+    const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data });
     this.invalidateCache('/api/settings');
     this.invalidateCache('/api/stats');
     this.invalidateCache('/api/books');
     this.invalidateCache('/api/recommendations');
     this.invalidateCache('/api/challenges');
-    return response.data;
+    return result;
   }
 
   async put<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    const response = await this.client.put<ApiResponse<T>>(url, data);
+    const result = await this.requestWithRetry<ApiResponse<T>>('put', url, { data });
     this.invalidateCache('/api/settings');
     this.invalidateCache('/api/stats');
     this.invalidateCache('/api/books');
-    return response.data;
+    return result;
   }
 
   async patch<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    const response = await this.client.patch<ApiResponse<T>>(url, data);
+    const result = await this.requestWithRetry<ApiResponse<T>>('patch', url, { data });
     this.invalidateCache('/api/settings');
     this.invalidateCache('/api/stats');
     this.invalidateCache('/api/books');
-    return response.data;
+    return result;
   }
 
   async delete<T>(url: string): Promise<ApiResponse<T>> {
-    const response = await this.client.delete<ApiResponse<T>>(url);
+    const result = await this.requestWithRetry<ApiResponse<T>>('delete', url);
     this.invalidateCache('/api/settings');
     this.invalidateCache('/api/stats');
     this.invalidateCache('/api/books');
     this.invalidateCache('/api/annotations');
-    return response.data;
+    return result;
   }
 
-  /** Upload a file (FormData) to a given endpoint, with optional progress callback */
+  /** Upload a file (FormData) to a given endpoint, with optional progress callback. Retries on network/5xx. */
   async upload<T>(
     url: string,
     formData: FormData,
     onProgress?: (percent: number) => void,
   ): Promise<ApiResponse<T>> {
-    const response = await this.client.post<ApiResponse<T>>(url, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      onUploadProgress: (e) => {
-        if (e.total && onProgress) {
-          onProgress(Math.round((e.loaded / e.total) * 100));
-        }
-      },
-    });
-    return response.data;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await this.client.post<ApiResponse<T>>(url, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (e) => {
+            if (e.total && onProgress) {
+              onProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          },
+        });
+        return response.data;
+      } catch (err) {
+        lastError = err;
+        const status = (err as AxiosError).response?.status;
+        if (!isRetryableStatus(status) && status) break; // Only retry on network or 5xx
+        if (attempt < 2) await sleep(BASE_DELAY_MS);
+      }
+    }
+    throw lastError;
   }
 }
 

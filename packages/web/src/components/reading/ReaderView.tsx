@@ -295,12 +295,12 @@ export function ReaderView({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showChapterMenu]);
+  }, [showChapterMenu, closeChapterMenu]);
 
   // Close chapter menu when controls are hidden
   useEffect(() => {
     if (!showControls) closeChapterMenu();
-  }, [showControls]);
+  }, [showControls, closeChapterMenu]);
 
   // Overall book progress
   const overallProgress = totalPages > 1

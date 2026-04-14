@@ -6,7 +6,10 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ToastProvider } from '@/components/Toast';
+import { PageTransition } from '@/components/PageTransition';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { OfflineBanner } from '@/components/ui';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -32,6 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isOnline } = useOnlineStatus();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
@@ -181,7 +185,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <main id="main-content" className="flex-1 pb-16 md:pb-0" tabIndex={-1}>
         <ErrorBoundary>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <PageTransition>{children}</PageTransition>
+          </ToastProvider>
         </ErrorBoundary>
       </main>
 
@@ -212,6 +218,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </nav>
       )}
+
+      {/* Offline Banner */}
+      {!isOnline && <OfflineBanner />}
 
       {/* Footer */}
       <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-8 sm:py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">

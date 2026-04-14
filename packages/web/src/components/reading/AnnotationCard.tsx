@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { api } from '@/lib/api';
 import { renderCardToCanvas } from './QuoteCard';
@@ -13,6 +13,8 @@ const TYPE_CONFIG = {
 } as const;
 
 const COLORS = ['#FFEB3B', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#F44336'];
+
+const PRESET_TAGS = ['discuss', 'important', 'question', 'key-idea', 'surprising', 'disagree', 'quote', 'follow-up'];
 
 interface AnnotationCardProps {
   annotation: Annotation;
@@ -27,8 +29,11 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
   const [editing, setEditing] = useState(false);
   const [editNote, setEditNote] = useState(annotation.note || '');
   const [editColor, setEditColor] = useState(annotation.color || '');
+  const [editTags, setEditTags] = useState<string[]>(annotation.tags || []);
+  const [tagInput, setTagInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const tagInputRef = useRef<HTMLInputElement>(null);
 
   const canShareAsImage = annotation.type === 'highlight' || annotation.type === 'note';
   const quoteText = annotation.content || '';
@@ -105,6 +110,9 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
       const updates: Record<string, unknown> = {};
       if (editNote !== (annotation.note || '')) updates.note = editNote;
       if (editColor !== (annotation.color || '')) updates.color = editColor;
+      const sortedEdit = [...editTags].sort();
+      const sortedOrig = [...(annotation.tags || [])].sort();
+      if (sortedEdit.join(',') !== sortedOrig.join(',')) updates.tags = editTags;
 
       if (Object.keys(updates).length > 0) {
         const res = await api.patch<Annotation>(
@@ -126,8 +134,35 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
     e.stopPropagation();
     setEditNote(annotation.note || '');
     setEditColor(annotation.color || '');
+    setEditTags(annotation.tags || []);
+    setTagInput('');
     setEditing(true);
   };
+
+  const addTag = (tag: string) => {
+    const t = tag.trim().toLowerCase();
+    if (t && !editTags.includes(t) && editTags.length < 10) {
+      setEditTags([...editTags, t]);
+    }
+    setTagInput('');
+  };
+
+  const removeTag = (tag: string) => {
+    setEditTags(editTags.filter((t) => t !== tag));
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      addTag(tagInput);
+    } else if (e.key === 'Backspace' && !tagInput && editTags.length > 0) {
+      setEditTags(editTags.slice(0, -1));
+    }
+  };
+
+  const filteredPresets = PRESET_TAGS.filter(
+    (t) => !editTags.includes(t) && t.includes(tagInput.toLowerCase()),
+  );
 
   if (editing) {
     return (
@@ -142,10 +177,10 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
             <button
               key={c}
               onClick={() => setEditColor(c)}
-              className={`w-5 h-5 rounded-full border-2 transition-transform ${
+              className={`w-6 h-6 rounded-full border-2 transition-transform ${
                 editColor === c ? 'scale-125 border-gray-800 dark:border-white' : 'border-transparent hover:scale-110'
               }`}
-              style={{ backgroundColor: c }}
+              style={{ backgroundColor: c, minWidth: 24, minHeight: 24 }}
             />
           ))}
         </div>
@@ -164,6 +199,65 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
           rows={2}
           autoFocus
         />
+
+        {/* Tags editor */}
+        <div className="mt-2">
+          <div className="flex flex-wrap gap-1 mb-1.5">
+            {editTags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+              >
+                #{tag}
+                <button
+                  onClick={() => removeTag(tag)}
+                  className="hover:text-red-500 transition-colors"
+                  aria-label={`Remove tag ${tag}`}
+                >
+                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="relative">
+            <input
+              ref={tagInputRef}
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleTagKeyDown}
+              placeholder={editTags.length === 0 ? 'Add tags (e.g. discuss, important)...' : 'Add tag...'}
+              className="w-full px-2.5 py-1 rounded-md bg-white dark:bg-gray-700/50 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400"
+            />
+            {tagInput && filteredPresets.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-sm z-10 max-h-24 overflow-y-auto">
+                {filteredPresets.map((preset) => (
+                  <button
+                    key={preset}
+                    onMouseDown={(e) => { e.preventDefault(); addTag(preset); }}
+                    className="w-full px-2.5 py-1 text-left text-xs text-gray-600 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                  >
+                    #{preset}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {editTags.length === 0 && !tagInput && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {PRESET_TAGS.slice(0, 4).map((preset) => (
+                <button
+                  key={preset}
+                  onClick={() => addTag(preset)}
+                  className="px-1.5 py-0.5 rounded text-[10px] text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-gray-200 dark:border-gray-700"
+                >
+                  +{preset}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Save / Cancel */}
         <div className="flex items-center gap-2 mt-2">
@@ -243,6 +337,28 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
       {annotation.note && (
         <div className="mt-2 px-2.5 py-1.5 rounded-md bg-white dark:bg-gray-700/50 text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
           {annotation.note}
+        </div>
+      )}
+
+      {/* Tags */}
+      {annotation.tags && annotation.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {annotation.tags.map((tag) => (
+            <span
+              key={tag}
+              className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                tag === 'discuss'
+                  ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+                  : tag === 'important'
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                  : tag === 'question'
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              #{tag}
+            </span>
+          ))}
         </div>
       )}
 
