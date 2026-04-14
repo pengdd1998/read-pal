@@ -15,7 +15,7 @@ while true; do
   ITERATION=$((ITERATION + 1))
   echo "[auto-compact] #${ITERATION} Triggering /compact at $(date '+%H:%M:%S')..."
 
-  # Send /compact + Enter to the frontmost iTerm2 terminal
+  # Send /compact to the frontmost iTerm2 terminal
   osascript -e '
     tell application "iTerm2"
       activate
@@ -27,5 +27,20 @@ while true; do
     end tell
   '
 
-  echo "[auto-compact] Sent. Next in ${INTERVAL}m."
+  # Wait for /compact to finish processing
+  sleep 5
+
+  # Send continue so Claude resumes work after compacting
+  osascript -e '
+    tell application "iTerm2"
+      activate
+      tell current window
+        tell current session of current tab
+          write text "continue"
+        end tell
+      end tell
+    end tell
+  '
+
+  echo "[auto-compact] Sent /compact + continue. Next in ${INTERVAL}m."
 done
