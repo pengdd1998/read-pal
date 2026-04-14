@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
+import { useToast } from '@/components/Toast';
 
 interface AnnotationsSidebarProps {
   annotations: Annotation[];
@@ -36,6 +37,7 @@ export function AnnotationsSidebar({
   onUpdateAnnotation,
   onScrollToAnnotation,
 }: AnnotationsSidebarProps) {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,7 +51,7 @@ export function AnnotationsSidebar({
       const res = await fetch(`${baseUrl}/api/annotations/export?bookId=${bookId}&format=${format}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return;
+      if (!res.ok) { toast('Export failed. Please try again.', 'error'); return; }
       const blob = await res.blob();
       url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -57,7 +59,7 @@ export function AnnotationsSidebar({
       a.download = `annotations-${bookId}.${format === 'json' ? 'json' : 'md'}`;
       a.click();
     } catch {
-      // Silently fail
+      toast('Export failed. Please try again.', 'error');
     } finally {
       if (url) URL.revokeObjectURL(url);
       setExporting(false);

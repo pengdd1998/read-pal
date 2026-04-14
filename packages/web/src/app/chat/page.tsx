@@ -99,7 +99,7 @@ function consumeSSEStream(
 
   const processChunk = (chunk: string): void => {
     buffer += chunk;
-    const lines = buffer.split('\n');
+    const lines = buffer.split(/\r?\n/);
     // Keep the last (potentially incomplete) line in the buffer
     buffer = lines.pop() || '';
 

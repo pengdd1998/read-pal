@@ -65,7 +65,7 @@ function consumeSSEStream(
 
   const processChunk = (chunk: string): void => {
     buffer += chunk;
-    const lines = buffer.split('\n');
+    const lines = buffer.split(/\r?\n/);
     buffer = lines.pop() || '';
     for (const line of lines) {
       const trimmed = line.trim();
