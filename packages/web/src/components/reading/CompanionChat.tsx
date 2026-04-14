@@ -280,7 +280,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       try {
         const result = await api.get<{ friendPersona?: string }>('/api/settings');
         if (!cancelled && result.success && result.data) {
-          const data = result.data as unknown as { friendPersona?: string };
+          const data = result.data;
           const persona = FRIEND_PERSONAS[data.friendPersona ?? ''] ?? DEFAULT_PERSONA;
           setFriendName(persona.name);
           setFriendEmoji(persona.emoji);
@@ -308,7 +308,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       try {
         const result = await api.get<Message[]>('/api/agents/history', { bookId, limit: 50 });
         if (!cancelled && result.success && result.data) {
-          const raw = result.data as unknown as Message[];
+          const raw = result.data;
           if (Array.isArray(raw) && raw.length > 0) {
             const history = raw.map((m) => ({ id: m.id || uid(), role: m.role, content: m.content, timestamp: m.timestamp || Date.now() }));
             setMessages(history);

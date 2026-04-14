@@ -65,10 +65,10 @@ export default function StatsPage() {
     ])
       .then(([dashRes, sessRes]) => {
         if (dashRes.success && dashRes.data) {
-          setData(dashRes.data as unknown as DashboardData);
+          setData(dashRes.data);
         }
         if (sessRes.success && sessRes.data) {
-          const sessData = sessRes.data as unknown as SessionData[];
+          const sessData = sessRes.data;
           setSessions(Array.isArray(sessData) ? sessData.slice(0, 30) : []);
         }
       })

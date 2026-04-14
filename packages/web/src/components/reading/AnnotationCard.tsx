@@ -50,7 +50,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
         quoteText,
         bookTitle || 'Unknown Book',
         author || 'Unknown Author',
-        'warm' as CardTheme,
+        'warm',
       );
 
       canvas.toBlob(async (blob) => {
@@ -120,7 +120,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
           updates,
         );
         if (res.success && res.data) {
-          onUpdate(res.data as unknown as Annotation);
+          onUpdate(res.data);
         }
       }
       setEditing(false);

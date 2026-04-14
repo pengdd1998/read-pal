@@ -60,7 +60,7 @@ if (process.env.NODE_ENV !== 'test') {
   try {
     validateApiKey();
   } catch (err) {
-    console.error(`[llmClient] ${(err as Error).message}`);
+    console.error(`[llmClient] ${err instanceof Error ? err.message : String(err)}`);
     // Do not crash — log loudly so the operator sees it. Actual calls will
     // throw a clear error via validateApiKey() at call-time.
   }
@@ -174,12 +174,12 @@ export async function chatCompletion(params: ChatCompletionParams): Promise<stri
       if (isAbort) {
         lastError = new LLMClientError(
           `Request timed out after ${DEFAULT_TIMEOUT_MS}ms (attempt ${attempt}/${MAX_RETRIES})`,
-          { statusCode: 408, retryable: true, attempt, cause: err as Error },
+          { statusCode: 408, retryable: true, attempt, cause: err instanceof Error ? err : new Error(String(err)) },
         );
       } else if (isRetryable(statusCode)) {
         lastError = new LLMClientError(
           `API returned ${statusCode} (attempt ${attempt}/${MAX_RETRIES}): ${openaiErr.message}`,
-          { statusCode, retryable: true, attempt, cause: err as Error },
+          { statusCode, retryable: true, attempt, cause: err instanceof Error ? err : new Error(String(err)) },
         );
       } else {
         // Non-retryable — log once for auth errors to avoid spam, then throw
@@ -197,7 +197,7 @@ export async function chatCompletion(params: ChatCompletionParams): Promise<stri
         }
         throw new LLMClientError(
           `API error ${statusCode ?? 'unknown'}: ${openaiErr.message}`,
-          { statusCode, retryable: false, attempt, cause: err as Error },
+          { statusCode, retryable: false, attempt, cause: err instanceof Error ? err : new Error(String(err)) },
         );
       }
 

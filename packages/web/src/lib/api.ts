@@ -99,11 +99,11 @@ class ApiClient {
         return response.data;
       } catch (err: unknown) {
         lastError = err;
-        const axiosErr = err as AxiosError;
+        const axiosErr = axios.isAxiosError(err) ? err : null;
 
         // Only retry on network errors or retryable status codes for idempotent methods
-        const isNetworkError = !axiosErr.response;
-        const status = axiosErr.response?.status;
+        const isNetworkError = axiosErr ? !axiosErr.response : true;
+        const status = axiosErr?.response?.status;
         const shouldRetry = canRetry && (isNetworkError || isRetryableStatus(status));
 
         if (!shouldRetry || attempt >= attempts) {
@@ -289,8 +289,8 @@ class ApiClient {
   /** Check if an error is due to being offline */
   private isOfflineError(err: unknown): boolean {
     if (typeof window !== 'undefined' && !navigator.onLine) return true;
-    const axiosErr = err as AxiosError;
-    return !axiosErr.response; // No response = network error
+    if (axios.isAxiosError(err)) return !err.response;
+    return true; // Non-axios errors are assumed network-level
   }
 
   /** Return a queued response that the caller can treat as success */

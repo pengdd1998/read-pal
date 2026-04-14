@@ -24,9 +24,14 @@ interface AgentResult {
   };
 }
 
+/** Minimal interface that all agent instances satisfy */
+interface AgentInstance {
+  chat?(userId: string, query: string, context?: unknown): Promise<AgentResult>;
+  execute?(...args: unknown[]): Promise<AgentResult>;
+}
+
 // Agent instances have heterogeneous interfaces (chat vs execute with different args).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createAgentWrapper(name: string, displayName: string, agentInstance: any): IAgent {
+export function createAgentWrapper(name: string, displayName: string, agentInstance: AgentInstance): IAgent {
   return {
     name,
     displayName,
@@ -43,29 +48,29 @@ export function createAgentWrapper(name: string, displayName: string, agentInsta
       try {
         const input = (request.input as Record<string, unknown>) || {};
         const query = (input.query || input.message || '') as string;
-        const result: AgentResult = {};
+        let result: AgentResult = {};
 
         switch (name) {
           case 'companion':
           case 'coach':
-            Object.assign(result, await agentInstance.chat(request.userId, query, request.context));
+            result = (await agentInstance.chat!(request.userId, query, request.context)) ?? result;
             break;
           case 'research': {
             const action = (request.action === 'chat' ? 'deep_dive' : request.action || 'deep_dive') as string;
-            Object.assign(result, await agentInstance.execute(request.userId, query, action, request.context));
+            result = (await agentInstance.execute!(request.userId, query, action, request.context)) ?? result;
             break;
           }
           case 'synthesis':
-            Object.assign(result, await agentInstance.execute(request));
+            result = (await agentInstance.execute!(request)) ?? result;
             break;
           case 'friend':
-            Object.assign(result, await agentInstance.chat(request.userId, query, request.context));
+            result = (await agentInstance.chat!(request.userId, query, request.context)) ?? result;
             break;
           default:
-            if (typeof agentInstance.execute === 'function') {
-              Object.assign(result, await agentInstance.execute(request));
-            } else if (typeof agentInstance.chat === 'function') {
-              Object.assign(result, await agentInstance.chat(request.userId, query, request.context));
+            if (agentInstance.execute) {
+              result = (await agentInstance.execute(request)) ?? result;
+            } else if (agentInstance.chat) {
+              result = (await agentInstance.chat(request.userId, query, request.context)) ?? result;
             } else {
               throw new Error(`Agent ${name} has no compatible method`);
             }

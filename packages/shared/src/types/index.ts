@@ -130,7 +130,7 @@ export interface Memory {
   userId: string;
   type: 'user_preference' | 'reading_context' | 'conversation_history' | 'knowledge_connection';
   key: string;
-  value: any;
+  value: unknown;
   createdAt: Date;
   updatedAt: Date;
   expiresAt?: Date;
@@ -179,13 +179,13 @@ export interface FriendMemory {
 }
 
 // API Request/Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
   meta?: {
     page?: number;

@@ -71,10 +71,10 @@ export default function MemoryBooksPage() {
     ])
       .then(([mbRes, booksRes]) => {
         if (mbRes.success && mbRes.data) {
-          setMemoryBooks(mbRes.data as unknown as MemoryBook[]);
+          setMemoryBooks(mbRes.data);
         }
         if (booksRes.success && booksRes.data) {
-          setBooks((booksRes.data as unknown as Book[]).filter((b) => b.progress > 10));
+          setBooks((booksRes.data).filter((b) => b.progress > 10));
         }
       })
       .catch(() => setError('Failed to load data'))
@@ -88,7 +88,7 @@ export default function MemoryBooksPage() {
         format: 'scrapbook',
       });
       if (res.success && res.data) {
-        const newBook = res.data as unknown as MemoryBook;
+        const newBook = res.data;
         setMemoryBooks((prev) => {
           const idx = prev.findIndex((mb) => mb.bookId === bookId);
           if (idx >= 0) {
@@ -111,7 +111,7 @@ export default function MemoryBooksPage() {
     try {
       const res = await api.get<MemoryBook>(`/api/memory-books/${bookId}`);
       if (res.success && res.data) {
-        setSelectedBook(res.data as unknown as MemoryBook);
+        setSelectedBook(res.data);
       }
     } catch {
       setError('Failed to load memory book');

@@ -205,7 +205,7 @@ export default function ReadPage() {
     try {
       const result = await api.get<Annotation[]>('/api/annotations', { bookId });
       if (result.success && result.data) {
-        const data = result.data as unknown as Annotation[];
+        const data = result.data;
         setAnnotations(Array.isArray(data) ? data : []);
       }
     } catch (err) {
@@ -233,7 +233,8 @@ export default function ReadPage() {
       });
 
       if (result.success && result.data) {
-        setAnnotations((prev) => [...prev, result.data as unknown as Annotation]);
+        const annotation = result.data;
+        setAnnotations((prev) => [...prev, annotation]);
       }
     } catch (err) {
       console.error('Failed to add highlight:', err);
@@ -255,7 +256,8 @@ export default function ReadPage() {
       });
 
       if (result.success && result.data) {
-        setAnnotations((prev) => [...prev, result.data as unknown as Annotation]);
+        const annotation = result.data;
+        setAnnotations((prev) => [...prev, annotation]);
       }
     } catch (err) {
       console.error('Failed to add note:', err);
@@ -304,7 +306,8 @@ export default function ReadPage() {
           location: { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: { start: 0, end: 0 } },
         });
         if (result.success && result.data) {
-          setAnnotations((prev) => [...prev, result.data as unknown as Annotation]);
+          const annotation = result.data;
+          setAnnotations((prev) => [...prev, annotation]);
         }
       } catch (err) {
         console.error('Failed to add bookmark:', err);
@@ -369,7 +372,7 @@ export default function ReadPage() {
         ]);
         if (cancelled) return;
         if (bookResult.success && bookResult.data) {
-          const data = bookResult.data as unknown as { book: Book; chapters: Chapter[]; content: string };
+          const data = bookResult.data;
           setBook(data.book);
           setChapters(data.chapters ?? []);
           setCurrentChapter(data.book.currentPage || 0);
@@ -377,7 +380,7 @@ export default function ReadPage() {
           setError(bookResult.error?.message || 'Failed to load book');
         }
         if (annotationsResult?.success && annotationsResult.data) {
-          const annData = annotationsResult.data as unknown as Annotation[];
+          const annData = annotationsResult.data;
           setAnnotations(Array.isArray(annData) ? annData : []);
         }
       } catch {

@@ -16,7 +16,7 @@ export default function WelcomePage() {
       try {
         const res = await api.get<Book[]>('/api/books');
         if (res.success && res.data) {
-          const books = (res.data as unknown as Book[]) || [];
+          const books = (res.data) || [];
           // Find the sample book
           const sample = books.find(
             (b) => b.title?.includes('Art of Reading') || b.author === 'read-pal',
@@ -159,7 +159,7 @@ export default function WelcomePage() {
                     try {
                       const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
                       if (res.success && res.data) {
-                        const data = res.data as unknown as { book: { id: string } };
+                        const data = res.data;
                         router.push(`/read/${data.book.id}`);
                       }
                     } catch {

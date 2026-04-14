@@ -113,7 +113,7 @@ const DashboardChallenges = memo(function DashboardChallenges() {
     api.get<{ challenges: ChallengeItem[] }>('/api/challenges')
       .then((res) => {
         if (!cancelled && res.data) {
-          const d = res.data as unknown as { challenges: ChallengeItem[] };
+          const d = res.data;
           setChallenges(d.challenges ?? []);
         }
       })
@@ -176,7 +176,7 @@ const DashboardRecommendations = memo(function DashboardRecommendations() {
     api.get<{ recommendations: RecommendationItem[] }>('/api/recommendations')
       .then((res) => {
         if (!cancelled && res.data) {
-          const d = res.data as unknown as { recommendations: RecommendationItem[] };
+          const d = res.data;
           setRecs(d.recommendations ?? []);
         }
       })
@@ -229,7 +229,7 @@ const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
     let cancelled = false;
     api.get<typeof goals>('/api/settings/reading-goals')
       .then((res) => {
-        if (!cancelled && res.data) setGoals(res.data as unknown as typeof goals);
+        if (!cancelled && res.data) setGoals(res.data);
       })
       .catch(() => {})
       .finally();
@@ -283,7 +283,7 @@ export default function DashboardPage() {
     let cancelled = false;
     api.get<DashboardData>('/api/stats/dashboard')
       .then((res) => {
-        if (!cancelled) setDashboardData((res.data as unknown as DashboardData) ?? null);
+        if (!cancelled) setDashboardData((res.data) ?? null);
       })
       .catch(() => {
         if (!cancelled) setError('Failed to load dashboard data. Please try again later.');

@@ -67,7 +67,7 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
       const response = await api.get<Book[]>('/api/books');
 
       if (response.success && response.data) {
-        const data = response.data as unknown as Book[];
+        const data = response.data;
         setBooks(Array.isArray(data) ? data : []);
       } else {
         setError(response.error?.message || 'Failed to load library');
@@ -102,7 +102,7 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
       setSeeding(true);
       const res = await api.post<{ book: Book }>('/api/books/seed-sample');
       if (res.success && res.data) {
-        const data = res.data as unknown as { book: Book };
+        const data = res.data;
         if (data.book) {
           setBooks((prev) => [data.book, ...prev]);
         }

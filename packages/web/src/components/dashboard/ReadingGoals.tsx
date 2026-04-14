@@ -98,8 +98,8 @@ export function ReadingGoals() {
     try {
       const res = await api.get<ReadingGoalsData>('/api/settings/reading-goals');
       if (res.success && res.data) {
-        setData(res.data as unknown as ReadingGoalsData);
-        setPendingMinutes((res.data as unknown as ReadingGoalsData).dailyGoalMinutes);
+        setData(res.data);
+        setPendingMinutes((res.data).dailyGoalMinutes);
       }
     } catch {
       setError('Failed to load reading goals');

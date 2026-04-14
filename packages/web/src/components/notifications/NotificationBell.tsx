@@ -66,10 +66,10 @@ export function NotificationBell() {
         api.get<{ count: number }>('/api/notifications/unread-count'),
       ]);
       if (notifRes.success && notifRes.data) {
-        setNotifications(notifRes.data as unknown as Notification[]);
+        setNotifications(notifRes.data);
       }
       if (countRes.success && countRes.data) {
-        setUnreadCount((countRes.data as unknown as { count: number }).count);
+        setUnreadCount(countRes.data.count);
       }
     } catch {
       // Notifications are non-critical

@@ -34,7 +34,7 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       );
 
       if (result.success && result.data) {
-        const data = result.data as unknown as { book: Book };
+        const data = result.data;
         setUploadProgress(100);
         setSuccess(true);
         setTimeout(() => {

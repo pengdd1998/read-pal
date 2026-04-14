@@ -48,14 +48,14 @@ export default function SettingsPage() {
     try {
       const res = await api.get<UserSettings>('/api/settings');
       if (res.success && res.data) {
-        setSettings(res.data as unknown as UserSettings);
+        setSettings(res.data);
       } else {
         setError('Failed to load settings');
       }
       // Load user profile
       const meRes = await api.get<{ user: { name: string; email: string } }>('/api/auth/me');
       if (meRes.success && meRes.data) {
-        const d = meRes.data as unknown as { user: { name: string; email: string } };
+        const d = meRes.data;
         setUserName(d.user?.name || '');
         setUserEmail(d.user?.email || '');
       }
@@ -73,7 +73,7 @@ export default function SettingsPage() {
     try {
       const res = await api.patch<UserSettings>('/api/settings', updates as Record<string, unknown>);
       if (res.success && res.data) {
-        setSettings(res.data as unknown as UserSettings);
+        setSettings(res.data);
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       } else {

@@ -5,7 +5,7 @@
 import { Pool } from 'pg';
 import Redis from 'ioredis';
 import neo4j from 'neo4j-driver';
-import { Pinecone } from '@pinecone-database/pinecone';
+import { Pinecone, type RecordMetadata } from '@pinecone-database/pinecone';
 import type { EnvironmentConfig } from '../types';
 
 // ============================================================================
@@ -106,10 +106,10 @@ export async function createDatabaseClients(config: EnvironmentConfig): Promise<
       }
     },
     pinecone: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      upsert: async (index: string, vectors: any[]) => {
+      upsert: async (index: string, vectors: unknown[]) => {
         const indexClient = pinecone.index(index);
-        await indexClient.upsert(vectors);
+        // Pinecone upsert requires objects with id and values; cast from generic storage format
+        await indexClient.upsert(vectors as Array<{ id: string; values: number[]; metadata?: RecordMetadata }>);
       },
       query: async (index: string, vector: number[], topK: number) => {
         const indexClient = pinecone.index(index);
@@ -118,10 +118,9 @@ export async function createDatabaseClients(config: EnvironmentConfig): Promise<
           topK,
           includeMetadata: true
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return queryResponse.matches?.map((match: any) => ({
-          id: match.id,
-          score: match.score,
+        return queryResponse.matches?.map((match) => ({
+          id: match.id ?? '',
+          score: match.score ?? 0,
           metadata: match.metadata
         }));
       },

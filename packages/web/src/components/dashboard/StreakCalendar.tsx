@@ -147,7 +147,7 @@ export default function StreakCalendar() {
       .get<ReadingCalendarData>('/api/stats/reading-calendar')
       .then((res) => {
         if (!cancelled && res.success && res.data) {
-          setData(res.data as unknown as ReadingCalendarData);
+          setData(res.data);
         }
       })
       .catch(() => {

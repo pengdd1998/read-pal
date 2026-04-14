@@ -93,7 +93,7 @@ export default function FriendPage() {
   useEffect(() => {
     api.get<FriendSettings>('/api/settings')
       .then((res) => {
-        if (res.success && res.data) setSettings(res.data as unknown as FriendSettings);
+        if (res.success && res.data) setSettings(res.data);
       })
       .catch(() => {
         /* Settings load failure — proceed with defaults */

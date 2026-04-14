@@ -8,7 +8,7 @@ interface FreeBook {
   id: string;
   title: string;
   author: string;
-  language: string;
+  language?: string;
   pages: number;
 }
 
@@ -50,7 +50,7 @@ export default function DiscoveryPage() {
       .then(([recsRes, fbRes]) => {
         if (cancelled) return;
         if (recsRes.success && recsRes.data) {
-          setRecs(recsRes.data as unknown as RecommendationData);
+          setRecs(recsRes.data);
         }
         if (fbRes.success && fbRes.data) {
           const data = fbRes.data as unknown;
@@ -258,7 +258,7 @@ export default function DiscoveryPage() {
                       <p className="text-xs text-gray-500 mt-0.5">{fb.author} &middot; {fb.pages} pages</p>
                     </div>
                     <button
-                      onClick={() => handleImport(fb as unknown as FreeBook)}
+                      onClick={() => handleImport(fb)}
                       disabled={importing === fb.id || importedIds.has(fb.id)}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500 hover:bg-emerald-600 text-white transition-colors disabled:opacity-50"
                     >

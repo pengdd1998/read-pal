@@ -64,7 +64,7 @@ export function InterventionToast({
       lastCheckRef.current = now;
 
       try {
-        const res = await api.post<{ type: string; message: string; priority: string; action?: string }>('/api/interventions/check', {
+        const res = await api.post<Intervention>('/api/interventions/check', {
           bookId,
           currentPage,
           totalPages,
@@ -74,7 +74,7 @@ export function InterventionToast({
         });
 
         if (res.success && res.data) {
-          const data = res.data as unknown as Intervention;
+          const data = res.data;
           if (data && data.message && !dismissedRef.current.has(data.type)) {
             setIntervention(data);
             setVisible(true);

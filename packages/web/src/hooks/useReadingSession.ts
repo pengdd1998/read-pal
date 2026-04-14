@@ -35,7 +35,7 @@ export function useReadingSession({
       try {
         const result = await api.post<{ id: string }>('/api/reading-sessions/start', { bookId });
         if (result.success && result.data && !cancelled) {
-          const data = result.data as unknown as { id: string };
+          const data = result.data;
           sessionIdRef.current = data.id;
 
           // Heartbeat every 30s to keep session alive and track progress

@@ -31,7 +31,7 @@ export function ShareReadingCard() {
     try {
       const res = await api.get<ReadingCardData>('/api/share/reading-card');
       if (res.success && res.data) {
-        setCard(res.data as unknown as ReadingCardData);
+        setCard(res.data);
       }
     } catch {
       // silent

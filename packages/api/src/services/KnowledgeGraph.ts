@@ -208,7 +208,7 @@ export class KnowledgeGraphService {
       return this.hydrateConcept(record.get('c'));
     } catch (error) {
       this.logger.error('Failed to add concept', { userId, bookId, concept, error });
-      throw new Error(`Failed to add concept: ${(error as Error).message}`);
+      throw new Error(`Failed to add concept: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }
@@ -292,7 +292,7 @@ export class KnowledgeGraphService {
         relationshipType,
         error,
       });
-      throw new Error(`Failed to add relationship: ${(error as Error).message}`);
+      throw new Error(`Failed to add relationship: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }
@@ -319,7 +319,7 @@ export class KnowledgeGraphService {
       return result.records.map((rec: Neo4jRecord) => this.hydrateConcept(rec.get('c')));
     } catch (error) {
       this.logger.error('Failed to get concepts', { userId, bookId, error });
-      throw new Error(`Failed to get concepts: ${(error as Error).message}`);
+      throw new Error(`Failed to get concepts: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }
@@ -359,7 +359,7 @@ export class KnowledgeGraphService {
       return result.records.map((rec: Neo4jRecord) => this.hydrateConcept(rec.get('related')));
     } catch (error) {
       this.logger.error('Failed to get related concepts', { userId, conceptId, depth, error });
-      throw new Error(`Failed to get related concepts: ${(error as Error).message}`);
+      throw new Error(`Failed to get related concepts: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }
@@ -424,7 +424,7 @@ export class KnowledgeGraphService {
         bookId2,
         error,
       });
-      throw new Error(`Failed to find connections: ${(error as Error).message}`);
+      throw new Error(`Failed to find connections: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }
@@ -481,7 +481,7 @@ export class KnowledgeGraphService {
       return { nodes, edges };
     } catch (error) {
       this.logger.error('Failed to build graph visualization', { userId, error });
-      throw new Error(`Failed to build graph visualization: ${(error as Error).message}`);
+      throw new Error(`Failed to build graph visualization: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }
@@ -534,7 +534,7 @@ export class KnowledgeGraphService {
       }));
     } catch (error) {
       this.logger.error('Failed to search concepts', { userId, query, error });
-      throw new Error(`Failed to search concepts: ${(error as Error).message}`);
+      throw new Error(`Failed to search concepts: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }
@@ -584,7 +584,7 @@ export class KnowledgeGraphService {
       });
     } catch (error) {
       this.logger.error('Failed to get cross-book themes', { userId, error });
-      throw new Error(`Failed to get cross-book themes: ${(error as Error).message}`);
+      throw new Error(`Failed to get cross-book themes: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }
@@ -613,7 +613,7 @@ export class KnowledgeGraphService {
       return deleted > 0;
     } catch (error) {
       this.logger.error('Failed to remove concept', { userId, conceptId, error });
-      throw new Error(`Failed to remove concept: ${(error as Error).message}`);
+      throw new Error(`Failed to remove concept: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       await session.close();
     }

@@ -50,7 +50,7 @@ export default function SearchPage() {
     api.get<Book[]>('/api/books')
       .then((res) => {
         if (res.success && res.data) {
-          const data = res.data as unknown as Book[];
+          const data = res.data;
           setRecentBooks(Array.isArray(data) ? data.slice(0, 6) : []);
         }
       })
@@ -88,7 +88,7 @@ export default function SearchPage() {
         }
 
         if (annRes.success && annRes.data) {
-          setHighlights((annRes.data as unknown as { id: string; content: string; note?: string; type: string; bookId: string; createdAt: string }[])
+          setHighlights((annRes.data )
             .map((a) => ({
               id: a.id,
               content: a.content || a.note || '',
