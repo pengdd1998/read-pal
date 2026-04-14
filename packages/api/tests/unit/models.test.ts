@@ -16,6 +16,14 @@ describe('User Model', () => {
       email: 'test@example.com',
       name: 'Test User',
       password: 'hashedpassword',
+      settings: {
+        theme: 'system',
+        fontSize: 16,
+        fontFamily: 'serif',
+        readingGoal: 30,
+        dailyReadingMinutes: 0,
+        notificationsEnabled: true,
+      },
     };
 
     (User.create as jest.Mock).mockResolvedValue({
