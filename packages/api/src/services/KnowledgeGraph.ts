@@ -14,7 +14,7 @@ import { Logger } from '../types';
 // ---------------------------------------------------------------------------
 
 /** Represents a single concept node in the knowledge graph. */
-export interface Concept {
+interface Concept {
   id: string;
   userId: string;
   bookId: string;
@@ -27,7 +27,7 @@ export interface Concept {
 }
 
 /** Represents a directed relationship between two concepts. */
-export interface ConceptRelationship {
+interface ConceptRelationship {
   id: string;
   fromConceptId: string;
   toConceptId: string;
@@ -38,7 +38,7 @@ export interface ConceptRelationship {
 }
 
 /** Supported relationship types between concepts. */
-export type RelationshipType =
+type RelationshipType =
   | 'RELATED_TO'
   | 'PREREQUISITE_OF'
   | 'PART_OF'
@@ -49,7 +49,7 @@ export type RelationshipType =
   | 'SYNONYM_OF';
 
 /** A node formatted for graph visualization clients. */
-export interface VisualizationNode {
+interface VisualizationNode {
   id: string;
   label: string;
   bookId: string;
@@ -59,7 +59,7 @@ export interface VisualizationNode {
 }
 
 /** An edge formatted for graph visualization clients. */
-export interface VisualizationEdge {
+interface VisualizationEdge {
   source: string;
   target: string;
   label: string;
@@ -67,13 +67,13 @@ export interface VisualizationEdge {
 }
 
 /** Complete graph payload for frontend visualization. */
-export interface GraphVisualization {
+interface GraphVisualization {
   nodes: VisualizationNode[];
   edges: VisualizationEdge[];
 }
 
 /** A theme that spans multiple books. */
-export interface CrossBookTheme {
+interface CrossBookTheme {
   concept: string;
   conceptId: string;
   bookIds: string[];
@@ -83,7 +83,7 @@ export interface CrossBookTheme {
 }
 
 /** Result of finding connections between two books. */
-export interface BookConnection {
+interface BookConnection {
   conceptA: { id: string; name: string };
   conceptB: { id: string; name: string };
   relationship: string;
@@ -92,7 +92,7 @@ export interface BookConnection {
 }
 
 /** Search hit returned by `searchConcepts`. */
-export interface ConceptSearchResult {
+interface ConceptSearchResult {
   id: string;
   name: string;
   description?: string;

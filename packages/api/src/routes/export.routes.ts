@@ -7,6 +7,7 @@
 import { Router, Response } from 'express';
 import { Book, Annotation, ReadingSession, User } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router: Router = Router();
 
@@ -14,7 +15,7 @@ const router: Router = Router();
  * GET /api/export
  * Export all user data as JSON
  */
-router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/', authenticate, rateLimiter({ windowMs: 60000, max: 5 }), async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId!;
 

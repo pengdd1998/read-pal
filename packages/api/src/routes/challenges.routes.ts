@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { Op, fn, col } from 'sequelize';
 import { Book, ReadingSession } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router: Router = Router();
 
@@ -42,7 +43,7 @@ const ACTIVE_CHALLENGES: Challenge[] = [
  * GET /api/challenges
  * Get active challenges with user's current progress
  */
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
     const now = new Date();

@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { Book, ReadingSession, Annotation } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router: Router = Router();
 
@@ -16,7 +17,7 @@ const router: Router = Router();
  * Returns a structured reading progress card that can be rendered
  * as a shareable image or embedded card.
  */
-router.get('/reading-card', authenticate, async (req: AuthRequest, res) => {
+router.get('/reading-card', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
 
@@ -76,7 +77,7 @@ router.get('/reading-card', authenticate, async (req: AuthRequest, res) => {
  *
  * Returns a shareable summary for a specific book.
  */
-router.get('/book/:id', authenticate, async (req: AuthRequest, res) => {
+router.get('/book/:id', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const book = await Book.findOne({
       where: { id: req.params.id, userId: req.userId },

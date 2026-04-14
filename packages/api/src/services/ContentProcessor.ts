@@ -14,7 +14,7 @@ import { createHash } from 'crypto';
 // Types
 // ============================================================================
 
-export interface ProcessedContent {
+interface ProcessedContent {
   bookId: string;
   title: string;
   author: string;
@@ -25,7 +25,7 @@ export interface ProcessedContent {
   metadata: BookMetadata;
 }
 
-export interface TextChunk {
+interface TextChunk {
   id: string;
   bookId: string;
   content: string;
@@ -38,7 +38,7 @@ export interface TextChunk {
   metadata: ChunkMetadata;
 }
 
-export interface ChunkMetadata {
+interface ChunkMetadata {
   chapterIndex: number;
   sectionIndex: number;
   isChapterStart: boolean;
@@ -47,7 +47,7 @@ export interface ChunkMetadata {
   readabilityScore: number;
 }
 
-export interface ExtractedConcept {
+interface ExtractedConcept {
   text: string;
   type: 'term' | 'name' | 'place' | 'idea' | 'theory' | 'framework';
   confidence: number;
@@ -56,7 +56,7 @@ export interface ExtractedConcept {
   context: string;
 }
 
-export interface BookMetadata {
+interface BookMetadata {
   title?: string;
   author?: string;
   publisher?: string;
@@ -69,7 +69,7 @@ export interface BookMetadata {
   description?: string;
 }
 
-export interface ProcessingOptions {
+interface ProcessingOptions {
   chunkSize: number;           // target words per chunk
   chunkOverlap: number;        // overlapping words between chunks
   extractConcepts: boolean;
