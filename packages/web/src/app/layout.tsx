@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
+import { NetworkStatus } from '@/components/NetworkStatus';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -157,6 +158,7 @@ export default function RootLayout({
         <AuthProvider>
           <ErrorBoundary>
             <ServiceWorkerRegistrar />
+            <NetworkStatus />
             <AppShell>{children}</AppShell>
           </ErrorBoundary>
         </AuthProvider>
