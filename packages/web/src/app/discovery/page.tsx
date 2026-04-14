@@ -269,12 +269,25 @@ export default function DiscoveryPage() {
 
           {/* Empty recommendations */}
           {recs && allRecs.length === 0 && recs.freeBookSuggestions.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <span className="text-2xl">{'\uD83D\uDD0D'}</span>
+            <div className="text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center">
+                <span className="text-3xl">{'\uD83C\uDF0D'}</span>
               </div>
-              <p className="text-gray-500 dark:text-gray-400 mb-1">Read more books to get personalized recommendations</p>
-              <p className="text-sm text-gray-400">We&apos;ll suggest books based on your reading patterns</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Discover your next favorite book
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto leading-relaxed">
+                As you read more, we&apos;ll recommend books based on your favorite authors, genres, and reading patterns.
+              </p>
+              <Link
+                href="/library"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                Add a book to get started
+              </Link>
             </div>
           )}
         </div>
@@ -319,9 +332,22 @@ export default function DiscoveryPage() {
             ))}
           </div>
 
-          {filteredFreeBooks.length === 0 && (
+          {filteredFreeBooks.length === 0 && freeBooksSearch && (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">No free books match your search</p>
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-gray-500 dark:text-gray-400 mb-1">
+                No classics match &quot;{freeBooksSearch}&quot;
+              </p>
+              <button
+                onClick={() => setFreeBooksSearch('')}
+                className="text-sm text-amber-600 dark:text-amber-400 hover:underline"
+              >
+                Clear search
+              </button>
             </div>
           )}
         </div>

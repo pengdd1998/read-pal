@@ -275,7 +275,7 @@ export default function ChatPage() {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId
-            ? { ...m, content: 'Failed to connect to the AI. Please check your connection.', streaming: false }
+            ? { ...m, content: 'Couldn\'t reach the AI. Check your connection and try again.', streaming: false }
             : m,
         ),
       );
