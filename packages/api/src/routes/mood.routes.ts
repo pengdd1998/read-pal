@@ -134,11 +134,22 @@ router.post('/scene', authenticate, async (req: AuthRequest, res) => {
       });
     }
 
-    // Step 1: Extract visual scene prompt
-    const imagePrompt = await extractScenePrompt(snippet);
+    // Step 1: Extract visual scene prompt (with timeout)
+    const scenePromise = extractScenePrompt(snippet);
+    const imagePrompt = await Promise.race([
+      scenePromise,
+      new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('Scene prompt timeout')), 15_000),
+      ),
+    ]);
 
-    // Step 2: Generate image via CogView
-    const imageUrl = await generateImage(imagePrompt);
+    // Step 2: Generate image via CogView (with timeout)
+    const imageUrl = await Promise.race([
+      generateImage(imagePrompt),
+      new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('Image generation timeout')), 30_000),
+      ),
+    ]);
 
     // Cache it
     sceneCache.set(cacheKey, { url: imageUrl, timestamp: Date.now() });
@@ -158,12 +169,14 @@ router.post('/scene', authenticate, async (req: AuthRequest, res) => {
       cached: false,
     });
   } catch (error) {
-    console.error('Scene generation error:', error);
-    res.status(500).json({
+    const msg = error instanceof Error ? error.message : 'Scene generation failed';
+    const isRateLimit = msg.includes('429') || msg.includes('rate') || msg.includes('频率');
+    console.error('Scene generation error:', msg);
+    res.status(isRateLimit ? 429 : 500).json({
       success: false,
       error: {
-        code: 'SCENE_GENERATION_ERROR',
-        message: error instanceof Error ? error.message : 'Scene generation failed',
+        code: isRateLimit ? 'RATE_LIMITED' : 'SCENE_GENERATION_ERROR',
+        message: isRateLimit ? 'AI service busy — try again shortly' : msg,
       },
     });
   }
