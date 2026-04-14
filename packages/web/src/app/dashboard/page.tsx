@@ -411,7 +411,7 @@ export default function DashboardPage() {
         <div className="space-y-5 animate-fade-in">
           {/* Card 1: Current Reading — supports multiple active books */}
           <div>
-            <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-3">
               {activeBooks.length > 1 ? 'Currently Reading' : 'Current Reading'}
             </h2>
             {loading ? (

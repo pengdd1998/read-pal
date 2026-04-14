@@ -128,6 +128,10 @@ export function AnnotationsSidebar({
         <div
           className="fixed inset-0 bg-black/30 animate-fade-in z-30"
           onClick={onClose}
+          onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+          tabIndex={-1}
+          role="button"
+          aria-label="Close annotations"
         />
       )}
 

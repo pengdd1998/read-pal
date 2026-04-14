@@ -66,7 +66,14 @@ function ShortcutsHelp({ onClose }: { onClose: () => void }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      tabIndex={-1}
+      role="button"
+      aria-label="Close dialog"
+    >
       <div
         className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm p-5 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
@@ -93,7 +100,7 @@ function ShortcutsHelp({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
-        <p className="mt-4 text-[10px] text-gray-400 text-center">Swipe left/right on mobile to navigate chapters</p>
+        <p className="mt-4 text-[10px] text-gray-500 dark:text-gray-400 text-center">Swipe left/right on mobile to navigate chapters</p>
       </div>
     </div>
   );
@@ -479,11 +486,11 @@ export default function ReadPage() {
           </button>
           <div className="min-w-0">
             <h1 className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
-            <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+            <p className="text-xs text-gray-500 dark:text-gray-500 truncate">
               {book.author && `${book.author} · `}Ch. {currentChapter + 1} of {chapters.length}
             </p>
           </div>
-          <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 ml-2 flex-shrink-0">
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500 ml-2 flex-shrink-0">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>

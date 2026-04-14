@@ -22,8 +22,9 @@ const OFFLINE_URL = '/offline';
 // Static assets to pre-cache on install
 const PRECACHE_URLS = [
   '/',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/icon.svg',
+  '/icon-192.png',
   '/offline',
 ];
 
@@ -230,6 +231,13 @@ function openDB() {
     req.onerror = () => reject(req.error);
   });
 }
+
+// Listen for messages from the page (e.g., SKIP_WAITING to activate new SW)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 // Background sync — retry queued mutations when back online
 self.addEventListener('sync', (event) => {

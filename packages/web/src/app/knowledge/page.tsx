@@ -218,6 +218,7 @@ export default function KnowledgePage() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [hoverNode, setHoverNode] = useState<string | null>(null);
   const [layoutNodes, setLayoutNodes] = useState<GraphNode[]>([]);
+  const [computingLayout, setComputingLayout] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -246,7 +247,7 @@ export default function KnowledgePage() {
           setNodes(positionedNodes);
           setEdges(graphData.edges || []);
           setThemes(themesData?.themes || []);
-          setLayoutNodes(applyLayout(positionedNodes, graphData.edges || [], "force"));
+          // Layout will be computed in separate useEffect
           setLoading(false);
           return;
         }
@@ -372,7 +373,7 @@ export default function KnowledgePage() {
         setNodes(graphNodes);
         setEdges(graphEdges);
         setThemes(finalThemes);
-        setLayoutNodes(applyLayout(graphNodes, graphEdges, "force"));
+        // Layout will be computed in separate useEffect
       } catch {
         if (!cancelled) setError('Failed to load knowledge data. Please try again later.');
       } finally {
@@ -384,10 +385,15 @@ export default function KnowledgePage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Re-apply layout when mode changes
+  // Re-apply layout when mode changes — deferred to avoid blocking initial render
   useEffect(() => {
     if (nodes.length > 0) {
-      setLayoutNodes(applyLayout(nodes, edges, layoutMode));
+      setComputingLayout(true);
+      const rafId = requestAnimationFrame(() => {
+        setLayoutNodes(applyLayout(nodes, edges, layoutMode));
+        setComputingLayout(false);
+      });
+      return () => cancelAnimationFrame(rafId);
     }
   }, [layoutMode, nodes, edges]);
 
@@ -483,6 +489,7 @@ export default function KnowledgePage() {
                   onClick={exportSVG}
                   className="px-1.5 py-1 sm:px-2 sm:py-1.5 rounded text-[10px] sm:text-xs font-medium bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
                   title="Export as SVG"
+                  aria-label="Export as SVG"
                 >
                   SVG
                 </button>
@@ -490,6 +497,7 @@ export default function KnowledgePage() {
                   onClick={exportPNG}
                   className="px-1.5 py-1 sm:px-2 sm:py-1.5 rounded text-[10px] sm:text-xs font-medium bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
                   title="Export as PNG"
+                  aria-label="Export as PNG"
                 >
                   PNG
                 </button>
@@ -572,6 +580,10 @@ export default function KnowledgePage() {
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-pulse text-gray-400">Loading graph...</div>
+            </div>
+          ) : computingLayout ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-pulse text-gray-400">Computing layout...</div>
             </div>
           ) : (
             <>

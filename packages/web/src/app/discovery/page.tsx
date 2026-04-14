@@ -167,7 +167,7 @@ export default function DiscoveryPage() {
           {/* Stalled books */}
           {recs?.stalledRecommendations && recs.stalledRecommendations.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Continue Reading</h2>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Continue Reading</h2>
               <div className="space-y-2">
                 {recs.stalledRecommendations.map((book) => (
                   <Link key={book.id} href={`/read/${book.id}`}
@@ -198,7 +198,7 @@ export default function DiscoveryPage() {
           {/* Unread books */}
           {recs?.unreadRecommendations && recs.unreadRecommendations.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Start Something New</h2>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Start Something New</h2>
               <div className="space-y-2">
                 {recs.unreadRecommendations.map((book) => (
                   <Link key={book.id} href={`/read/${book.id}`}
@@ -221,7 +221,7 @@ export default function DiscoveryPage() {
           {/* Author recommendations */}
           {recs?.authorRecommendations && recs.authorRecommendations.length > 0 && recs.topAuthors.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 More from {recs.topAuthors.slice(0, 2).join(', ')}
               </h2>
               <div className="space-y-2">
@@ -246,7 +246,7 @@ export default function DiscoveryPage() {
           {/* Free book suggestions from recommendations API */}
           {recs?.freeBookSuggestions && recs.freeBookSuggestions.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Free Classics You Might Like</h2>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Free Classics You Might Like</h2>
               <div className="space-y-2">
                 {recs.freeBookSuggestions.map((fb) => (
                   <div key={fb.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-3">

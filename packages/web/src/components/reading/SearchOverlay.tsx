@@ -51,7 +51,14 @@ export function SearchOverlay({
   }, [searchQuery, chapters]);
 
   return (
-    <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      tabIndex={-1}
+      role="button"
+      aria-label="Close search"
+    >
       <div
         className="absolute top-16 left-1/2 -translate-x-1/2 w-full max-w-lg px-4"
         onClick={(e) => e.stopPropagation()}

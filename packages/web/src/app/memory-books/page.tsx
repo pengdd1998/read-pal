@@ -175,7 +175,7 @@ export default function MemoryBooksPage() {
         {/* Insights */}
         {selectedBook.insights.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Key Insights</h2>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Key Insights</h2>
             <div className="space-y-3">
               {selectedBook.insights.map((insight, i) => (
                 <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -202,7 +202,7 @@ export default function MemoryBooksPage() {
         {/* Moments Timeline */}
         {selectedBook.moments.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Reading Journey</h2>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Reading Journey</h2>
             <div className="relative pl-6 border-l-2 border-amber-200 dark:border-amber-800 space-y-4">
               {selectedBook.moments.map((moment, i) => (
                 <div key={i} className="relative">
@@ -273,7 +273,7 @@ export default function MemoryBooksPage() {
       {/* Existing memory books */}
       {!loading && memoryBooks.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Your Memory Books</h2>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Your Memory Books</h2>
           <div className="space-y-3">
             {memoryBooks.map((mb) => (
               <button
@@ -312,7 +312,7 @@ export default function MemoryBooksPage() {
       {/* Generate new */}
       {!loading && eligibleBooks.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Generate New</h2>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Generate New</h2>
           <div className="space-y-2">
             {eligibleBooks.map((book) => (
               <div key={book.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">

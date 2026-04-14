@@ -50,6 +50,12 @@ cd packages/api && pnpm build 2>&1 | tail -2
 echo "[$(date '+%Y-%d %H:%M:%S')] Building Web..."
 cd ../web && export NEXT_PUBLIC_API_URL= && pnpm build 2>&1 | tail -5
 
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Copying static assets..."
+mkdir -p packages/web/.next/standalone/packages/web/public
+cp packages/web/public/* packages/web/.next/standalone/packages/web/public/
+mkdir -p packages/web/.next/standalone/packages/web/.next
+cp -r packages/web/.next/static packages/web/.next/standalone/packages/web/.next/
+
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Restarting services..."
 pm2 delete all 2>/dev/null || true
 sleep 1

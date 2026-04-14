@@ -98,7 +98,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/icon.svg',
-    apple: '/icon.svg',
+    apple: '/icon-192.png',
   },
   manifest: '/manifest.json',
 };
