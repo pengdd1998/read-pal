@@ -160,6 +160,8 @@ router.get('/:id', authenticate, etag(30), async (req: AuthRequest, res) => {
       });
     }
 
+    // Cache book detail for 5 minutes — rarely changes
+    res.set('Cache-Control', 'private, max-age=300');
     res.json({
       success: true,
       data: book,

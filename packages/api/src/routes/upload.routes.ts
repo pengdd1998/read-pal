@@ -272,6 +272,8 @@ router.get('/books/:bookId/content', authenticate, async (req: AuthRequest, res)
       });
     }
 
+    // Content never changes after upload — cache for 1 hour
+    res.set('Cache-Control', 'private, max-age=3600');
     res.json({
       success: true,
       data: {

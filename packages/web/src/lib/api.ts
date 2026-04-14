@@ -32,7 +32,6 @@ class ApiClient {
   private client: AxiosInstance;
   private cache = new Map<string, { data: unknown; expiry: number; stale?: boolean }>();
   private inFlightRequests = new Map<string, Promise<unknown>>();
-  private static DEFAULT_TTL = 30_000; // 30 seconds
   private static STALE_TTL = 300_000; // 5 minutes — serve stale while revalidating
   private static MAX_CACHE_SIZE = 200;
 
@@ -146,31 +145,57 @@ class ApiClient {
     }
   }
 
-  /** Check if a URL should be cached client-side */
-  private isCacheable(url: string): boolean {
-    return url.includes('/api/settings') ||
-      url.includes('/api/stats/dashboard') ||
-      url.includes('/api/stats/reading-calendar') ||
-      url.includes('/api/agents/history') ||
-      url.includes('/api/books?') ||
-      url.includes('/api/recommendations') ||
-      url.includes('/api/challenges');
+  /** Invalidate cache entries related to a specific data change */
+  private invalidateAfterMutation(url: string): void {
+    // Clear all stats when books/annotations/sessions change
+    if (url.includes('/api/books') || url.includes('/api/annotations') || url.includes('/api/reading-sessions')) {
+      this.invalidateCache('/api/stats');
+      this.invalidateCache('/api/challenges');
+      this.invalidateCache('/api/recommendations');
+    }
+    // Clear specific data
+    const prefixes = url.split('/').slice(0, 4).join('/'); // e.g., /api/books or /api/annotations
+    this.invalidateCache(prefixes);
+    // Settings changes
+    if (url.includes('/api/settings')) {
+      this.invalidateCache('/api/settings');
+      this.invalidateCache('/api/stats');
+    }
+  }
+
+  /** Return per-endpoint cache TTL in ms (0 = not cacheable) */
+  private getCacheTTL(url: string): number {
+    if (url.match(/\/api\/books\/[^?]/) && !url.includes('?')) return 300_000;      // Single book detail: 5 min
+    if (url.includes('/content')) return 3_600_000;                                    // Chapter content: 1 hour
+    if (url.includes('/api/settings')) return 60_000;                                   // Settings: 1 min
+    if (url.includes('/api/stats/dashboard')) return 30_000;                           // Dashboard: 30s
+    if (url.includes('/api/stats/reading-calendar')) return 60_000;                    // Calendar: 1 min
+    if (url.includes('/api/stats')) return 30_000;                                     // Other stats: 30s
+    if (url.includes('/api/annotations/tags')) return 120_000;                         // Tags: 2 min
+    if (url.includes('/api/annotations')) return 15_000;                               // Annotations: 15s
+    if (url.includes('/api/reading-sessions')) return 15_000;                          // Sessions: 15s
+    if (url.includes('/api/agents/history')) return 60_000;                            // Chat history: 1 min
+    if (url.includes('/api/challenges')) return 300_000;                               // Challenges: 5 min
+    if (url.includes('/api/recommendations')) return 300_000;                          // Recommendations: 5 min
+    if (url.includes('/api/books')) return 30_000;                                     // Book list: 30s
+    if (url.includes('/api/discovery')) return 60_000;                                 // Discovery: 1 min
+    if (url.includes('/api/friend/status')) return 60_000;                             // Friend status: 1 min
+    return 0; // Not cacheable
   }
 
   async get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
+    const ttl = this.getCacheTTL(url);
     this.pruneStaleEntries();
     const cacheKey = `${url}:${JSON.stringify(params ?? {})}`;
     const cached = this.cache.get(cacheKey);
 
-    if (cached) {
+    if (cached && ttl > 0) {
       const now = Date.now();
       if (cached.expiry > now) {
-        // Fresh cache — return immediately
         return cached.data as ApiResponse<T>;
       }
       if (cached.expiry + ApiClient.STALE_TTL > now) {
-        // Stale-while-revalidate: return stale data, refresh in background
-        this.refreshInBackground(cacheKey, url, params);
+        this.refreshInBackground(cacheKey, url, params, ttl);
         return cached.data as ApiResponse<T>;
       }
     }
@@ -181,8 +206,8 @@ class ApiClient {
 
     const requestPromise = this.requestWithRetry<ApiResponse<T>>('get', url, { params })
       .then((data) => {
-        if (data.success && this.isCacheable(url)) {
-          this.cache.set(cacheKey, { data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
+        if (data.success && ttl > 0) {
+          this.cache.set(cacheKey, { data, expiry: Date.now() + ttl });
         }
         return data;
       })
@@ -195,11 +220,12 @@ class ApiClient {
   }
 
   /** Background revalidation — updates cache without blocking UI, with retry */
-  private refreshInBackground<T>(cacheKey: string, url: string, params?: Record<string, unknown>): void {
+  private refreshInBackground<T>(cacheKey: string, url: string, params?: Record<string, unknown>, ttl?: number): void {
     this.requestWithRetry<ApiResponse<T>>('get', url, { params })
       .then((data) => {
         if (data.success) {
-          this.cache.set(cacheKey, { data, expiry: Date.now() + ApiClient.DEFAULT_TTL });
+          const cacheTtl = ttl ?? this.getCacheTTL(url);
+          this.cache.set(cacheKey, { data, expiry: Date.now() + cacheTtl });
         }
       })
       .catch(() => {
@@ -209,36 +235,25 @@ class ApiClient {
 
   async post<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data });
-    this.invalidateCache('/api/settings');
-    this.invalidateCache('/api/stats');
-    this.invalidateCache('/api/books');
-    this.invalidateCache('/api/recommendations');
-    this.invalidateCache('/api/challenges');
+    this.invalidateAfterMutation(url);
     return result;
   }
 
   async put<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const result = await this.requestWithRetry<ApiResponse<T>>('put', url, { data });
-    this.invalidateCache('/api/settings');
-    this.invalidateCache('/api/stats');
-    this.invalidateCache('/api/books');
+    this.invalidateAfterMutation(url);
     return result;
   }
 
   async patch<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const result = await this.requestWithRetry<ApiResponse<T>>('patch', url, { data });
-    this.invalidateCache('/api/settings');
-    this.invalidateCache('/api/stats');
-    this.invalidateCache('/api/books');
+    this.invalidateAfterMutation(url);
     return result;
   }
 
   async delete<T>(url: string): Promise<ApiResponse<T>> {
     const result = await this.requestWithRetry<ApiResponse<T>>('delete', url);
-    this.invalidateCache('/api/settings');
-    this.invalidateCache('/api/stats');
-    this.invalidateCache('/api/books');
-    this.invalidateCache('/api/annotations');
+    this.invalidateAfterMutation(url);
     return result;
   }
 
@@ -259,6 +274,7 @@ class ApiClient {
             }
           },
         });
+        this.invalidateAfterMutation('/api/books');
         return response.data;
       } catch (err) {
         lastError = err;

@@ -79,7 +79,7 @@ self.addEventListener('fetch', (event) => {
   if (isStaticAsset(url.pathname)) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
   } else if (isApiRequest(url.pathname)) {
-    event.respondWith(networkFirstWithCache(request, API_CACHE, 60));
+    event.respondWith(networkFirstWithCache(request, API_CACHE, getApiCacheTTL(url.pathname)));
   } else if (isImageRequest(url.pathname)) {
     event.respondWith(cacheFirst(request, IMAGE_CACHE));
   } else {
@@ -107,7 +107,23 @@ async function cacheFirst(request, cacheName) {
   }
 }
 
-/** Network-first: try network, fall back to cache, optionally revalidate */
+/** Determine API cache duration (seconds) based on URL path */
+function getApiCacheTTL(pathname) {
+  // Chapter content never changes — cache for 24 hours
+  if (pathname.includes('/content')) return 86400;
+  // Book detail rarely changes — cache for 5 minutes
+  if (pathname.match(/\/api\/books\/[^/]+$/)) return 300;
+  // Tags rarely change
+  if (pathname.includes('/annotations/tags')) return 120;
+  // Settings — short cache
+  if (pathname.includes('/api/settings')) return 60;
+  // Dashboard stats — short cache
+  if (pathname.includes('/api/stats')) return 30;
+  // Other API — 30s default
+  return 30;
+}
+
+/** Network-first: try network, fall back to cache with age validation */
 async function networkFirstWithCache(request, cacheName, maxAgeSeconds = 30) {
   try {
     const response = await fetch(request);
@@ -119,7 +135,18 @@ async function networkFirstWithCache(request, cacheName, maxAgeSeconds = 30) {
   } catch {
     // Network failed — try cache
     const cached = await caches.match(request);
-    if (cached) return cached;
+    if (cached) {
+      // Check if cached response is too old
+      const dateHeader = cached.headers.get('date');
+      if (dateHeader) {
+        const cacheAge = (Date.now() - new Date(dateHeader).getTime()) / 1000;
+        if (cacheAge < maxAgeSeconds * 2) { // Allow up to 2x the TTL for offline
+          return cached;
+        }
+      } else {
+        return cached; // No date header — use anyway when offline
+      }
+    }
     return new Response(
       JSON.stringify({ success: false, error: { code: 'OFFLINE', message: 'You are offline' } }),
       { headers: { 'Content-Type': 'application/json' }, status: 503 }
