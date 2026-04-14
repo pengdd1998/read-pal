@@ -378,7 +378,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-3 gap-3 mt-6">
             {[
               { icon: '\uD83D\uDCD6', title: 'Read', desc: 'Beautiful reader with themes and fonts', href: '/library' },
-              { icon: '\uD83E\uDD16', title: 'Chat', desc: 'Ask questions as you read', href: '/friend' },
+              { icon: '\uD83E\uDD16', title: 'AI Agents', desc: 'Ask questions and explore topics', href: '/chat' },
               { icon: '\uD83D\uDCA1', title: 'Remember', desc: 'Highlights become knowledge', href: '/knowledge' },
             ].map((f) => (
               <Link

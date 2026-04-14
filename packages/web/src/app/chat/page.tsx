@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
 import { renderSimpleMarkdown } from '@/lib/markdown';
 
-type AgentType = 'companion' | 'research' | 'coach' | 'synthesis' | 'friend';
-type FriendPersona = 'sage' | 'penny' | 'alex' | 'quinn' | 'sam';
+type AgentType = 'companion' | 'research' | 'coach' | 'synthesis';
 
 interface Message {
   id: string;
@@ -20,15 +20,6 @@ const AGENTS: { id: AgentType; name: string; emoji: string; desc: string }[] = [
   { id: 'research', name: 'Research', emoji: '\uD83D\uDD2C', desc: 'Deep-dives into topics and fact-checks' },
   { id: 'coach', name: 'Coach', emoji: '\uD83C\uDFAF', desc: 'Improves reading skills with exercises' },
   { id: 'synthesis', name: 'Synthesis', emoji: '\uD83E\uDDE0', desc: 'Connects ideas across your library' },
-  { id: 'friend', name: 'Friend', emoji: '\uD83E\uDD1D', desc: 'Your personal reading companion' },
-];
-
-const FRIEND_PERSONAS: { id: FriendPersona; name: string; emoji: string; desc: string }[] = [
-  { id: 'sage', name: 'Sage', emoji: '\uD83E\uDDD9', desc: 'Wise, patient, asks deep questions' },
-  { id: 'penny', name: 'Penny', emoji: '\uD83C\uDF1F', desc: 'Enthusiastic explorer' },
-  { id: 'alex', name: 'Alex', emoji: '\u26A1', desc: 'Gentle challenger' },
-  { id: 'quinn', name: 'Quinn', emoji: '\uD83C\uDF19', desc: 'Quiet companion' },
-  { id: 'sam', name: 'Sam', emoji: '\uD83D\uDCDA', desc: 'Study buddy' },
 ];
 
 const SUGGESTIONS: Record<AgentType, string[]> = {
@@ -51,11 +42,6 @@ const SUGGESTIONS: Record<AgentType, string[]> = {
     'Find connections between books I\'ve read',
     'What themes appear across my library?',
     'Create a knowledge summary of my reading',
-  ],
-  friend: [
-    'What do you think about what I\'m reading?',
-    'I\'m feeling stuck on this chapter',
-    'Tell me something interesting about this topic',
   ],
 };
 
@@ -151,7 +137,6 @@ function consumeSSEStream(
 
 export default function ChatPage() {
   const [selectedAgent, setSelectedAgent] = useState<AgentType>('companion');
-  const [selectedPersona, setSelectedPersona] = useState<FriendPersona>('sage');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -200,13 +185,9 @@ export default function ChatPage() {
       { id: assistantMsgId, role: 'assistant', content: '', agent: selectedAgent, streaming: true },
     ]);
 
-    const endpoint = selectedAgent === 'friend'
-      ? `${API_BASE_URL}/api/friend/chat/stream`
-      : `${API_BASE_URL}/api/agents/chat/stream`;
+    const endpoint = `${API_BASE_URL}/api/agents/chat/stream`;
 
-    const body = selectedAgent === 'friend'
-      ? { message, context: { persona: selectedPersona } }
-      : { message, agent: selectedAgent };
+    const body = { message, agent: selectedAgent };
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -315,14 +296,14 @@ export default function ChatPage() {
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">AI Chat</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">AI Agents</h1>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          Chat with your AI agents about anything -- no book required.
+          Ask questions, explore topics, and build knowledge — even without a book open.
         </p>
       </div>
 
       {/* Agent Selector */}
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6">
         {AGENTS.map((agent) => (
           <button
             key={agent.id}
@@ -340,29 +321,24 @@ export default function ChatPage() {
         ))}
       </div>
 
-      {/* Persona Selector -- only when Friend is selected */}
-      {selectedAgent === 'friend' && (
-        <div className="mb-6">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Choose a persona:</p>
-          <div className="flex flex-wrap gap-2">
-            {FRIEND_PERSONAS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedPersona(p.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
-                  selectedPersona === p.id
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                <span>{p.emoji}</span>
-                <span className="font-medium">{p.name}</span>
-                <span className="text-xs opacity-60 hidden sm:inline">-- {p.desc}</span>
-              </button>
-            ))}
-          </div>
+      {/* Link to Reading Friend page */}
+      <Link
+        href="/friend"
+        className="flex items-center gap-2 px-3 py-2 mb-6 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors group"
+      >
+        <span className="text-lg">{'\uD83E\uDD1D'}</span>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-medium text-amber-800 dark:text-amber-200 group-hover:text-amber-900 dark:group-hover:text-amber-100">
+            Looking for your Reading Friend?
+          </span>
+          <p className="text-xs text-amber-600/70 dark:text-amber-400/60">
+            Chat with your personalized companion who learns your style over time.
+          </p>
         </div>
-      )}
+        <svg className="w-4 h-4 text-amber-400 group-hover:text-amber-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
 
       {/* Chat Area */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -370,7 +346,7 @@ export default function ChatPage() {
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center gap-2">
             <span className="text-xl">{currentAgent.emoji}</span>
-            <span className="font-medium text-gray-900 dark:text-white">{currentAgent.name} Agent</span>
+            <span className="font-medium text-gray-900 dark:text-white">{currentAgent.name}</span>
           </div>
         </div>
 
@@ -380,13 +356,12 @@ export default function ChatPage() {
             <div className="text-center py-12">
               <div className="text-5xl mb-4">{currentAgent.emoji}</div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Chat with {currentAgent.name}
+                {currentAgent.name}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                {currentAgent.desc}
+                {currentAgent.desc}. Pick a question to get started:
               </p>
               <div className="space-y-2 max-w-md mx-auto">
-                <p className="text-xs font-medium text-gray-400">Try asking:</p>
                 {SUGGESTIONS[selectedAgent].map((s, i) => (
                   <button
                     key={i}

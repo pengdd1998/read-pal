@@ -203,12 +203,18 @@ export default function FriendPage() {
   return (
     <div className="max-w-2xl mx-auto px-3 sm:px-6 py-6 sm:py-8 flex flex-col" style={{ minHeight: 'calc(100vh - 4rem)' }}>
       {/* Back */}
-      <div className="mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
           Dashboard
+        </Link>
+        <Link href="/chat" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          AI Agents
         </Link>
       </div>
 
@@ -309,7 +315,7 @@ export default function FriendPage() {
           {messages.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 italic">&ldquo;{persona.greeting}&rdquo;</p>
-              <p className="text-xs text-gray-400 mb-4">Ask anything, or pick a question below</p>
+              <p className="text-xs text-gray-400 mb-4">Your personal reading companion. Ask anything, or pick a question below.</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {QUICK_PROMPTS.map((prompt) => (
                   <button
