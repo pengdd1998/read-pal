@@ -2,6 +2,12 @@
   "name": "@read-pal/web",
   "version": "1.0.0",
   "private": true,
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

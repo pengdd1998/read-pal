@@ -91,7 +91,7 @@
     orphans: 3;
     widows: 3;
     word-spacing: 0.02em;
-    hanging-punctuation: first last;
+    hanging-punctuation: first last; /* Safari/Firefox: graceful no-op if unsupported */
   }
 
   @media (min-width: 640px) {
