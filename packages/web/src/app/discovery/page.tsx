@@ -42,11 +42,13 @@ export default function DiscoveryPage() {
   const [importedIds, setImportedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    let cancelled = false;
     Promise.all([
       api.get<RecommendationData>('/api/discovery/recommendations'),
       api.get<{ data: FreeBook[] }>('/api/discovery/free-books'),
     ])
       .then(([recsRes, fbRes]) => {
+        if (cancelled) return;
         if (recsRes.success && recsRes.data) {
           setRecs(recsRes.data as unknown as RecommendationData);
         }
@@ -55,8 +57,9 @@ export default function DiscoveryPage() {
           setFreeBooks(Array.isArray(data) ? data : (data as { data: FreeBook[] }).data || []);
         }
       })
-      .catch(() => setError('Failed to load discovery data'))
-      .finally(() => setLoading(false));
+      .catch(() => { if (!cancelled) setError('Failed to load discovery data'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, []);
 
   const handleImport = async (book: FreeBook) => {

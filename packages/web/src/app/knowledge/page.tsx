@@ -440,9 +440,9 @@ export default function KnowledgePage() {
   const isSparse = !isEmpty && bookCount < 3;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col gap-4 mb-6 sm:mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#1e3a5f] dark:text-white">Knowledge Graph</h1>
           <p className="text-sm sm:text-base text-[#5c5c5c] dark:text-gray-400 mt-1">Your reading knowledge, connected and visualized</p>
@@ -453,7 +453,7 @@ export default function KnowledgePage() {
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                   viewMode === mode
                     ? 'bg-amber-600 text-white'
                     : 'bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-gray-700'
@@ -464,12 +464,12 @@ export default function KnowledgePage() {
             ))}
             {viewMode === 'graph' && (
               <>
-                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+                <div className="w-px h-5 sm:h-6 bg-gray-300 dark:bg-gray-600 mx-0.5" />
                 {(['force', 'circular', 'hierarchical'] as const).map((lm) => (
                   <button
                     key={lm}
                     onClick={() => setLayoutMode(lm)}
-                    className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+                    className={`px-1.5 py-1 sm:px-2 sm:py-1.5 rounded text-[10px] sm:text-xs font-medium transition-colors ${
                       layoutMode === lm
                         ? 'bg-teal-600 text-white'
                         : 'bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-teal-50 dark:hover:bg-gray-700'
@@ -478,17 +478,17 @@ export default function KnowledgePage() {
                     {lm === 'force' ? 'Force' : lm === 'circular' ? 'Circle' : 'Tree'}
                   </button>
                 ))}
-                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+                <div className="w-px h-5 sm:h-6 bg-gray-300 dark:bg-gray-600 mx-0.5" />
                 <button
                   onClick={exportSVG}
-                  className="px-2 py-1.5 rounded text-xs font-medium bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
+                  className="px-1.5 py-1 sm:px-2 sm:py-1.5 rounded text-[10px] sm:text-xs font-medium bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
                   title="Export as SVG"
                 >
                   SVG
                 </button>
                 <button
                   onClick={exportPNG}
-                  className="px-2 py-1.5 rounded text-xs font-medium bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
+                  className="px-1.5 py-1 sm:px-2 sm:py-1.5 rounded text-[10px] sm:text-xs font-medium bg-[#f0e9e0] dark:bg-gray-800 text-[#5c5c5c] dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
                   title="Export as PNG"
                 >
                   PNG
@@ -507,7 +507,7 @@ export default function KnowledgePage() {
 
       {/* Stats */}
       {!isEmpty && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
           {loading
             ? STAT_ITEMS.map((label) => (
                 <div key={label} className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 p-4 text-center animate-pulse">
@@ -516,7 +516,7 @@ export default function KnowledgePage() {
                 </div>
               ))
             : statValues.map((val, i) => (
-                <div key={STAT_ITEMS[i]} className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 p-3 sm:p-4 text-center">
+                <div key={STAT_ITEMS[i]} className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 p-2 sm:p-4 text-center">
                   <div className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">{val}</div>
                   <div className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400">{STAT_ITEMS[i]}</div>
                 </div>
@@ -568,7 +568,7 @@ export default function KnowledgePage() {
 
       {/* Graph View */}
       {!isEmpty && viewMode === 'graph' && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 relative overflow-hidden" style={{ height: '500px' }}>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-[#f0e9e0] dark:border-gray-800 relative overflow-hidden" style={{ height: 'clamp(300px, 60vh, 500px)' }}>
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-pulse text-gray-400">Loading graph...</div>
@@ -667,22 +667,22 @@ export default function KnowledgePage() {
                 })()}
               </svg>
               {/* Zoom controls */}
-              <div className="absolute top-4 right-4 flex flex-col gap-1.5">
+              <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex flex-col gap-1 sm:gap-1.5">
                 <button
                   onClick={() => setZoom((z) => Math.min(3, z + 0.2))}
-                  className="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center justify-center text-lg font-bold shadow-sm"
+                  className="w-11 h-11 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 active:scale-95 flex items-center justify-center text-sm sm:text-lg font-bold shadow-sm transition-transform"
                 >
                   +
                 </button>
                 <button
                   onClick={() => setZoom((z) => Math.max(0.4, z - 0.2))}
-                  className="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center justify-center text-lg font-bold shadow-sm"
+                  className="w-11 h-11 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 active:scale-95 flex items-center justify-center text-sm sm:text-lg font-bold shadow-sm transition-transform"
                 >
                   -
                 </button>
                 <button
                   onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
-                  className="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm"
+                  className="w-11 h-11 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 active:scale-95 flex items-center justify-center shadow-sm transition-transform"
                   title="Reset view"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

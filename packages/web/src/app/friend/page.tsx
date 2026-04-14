@@ -256,7 +256,7 @@ export default function FriendPage() {
                   <button
                     key={id}
                     onClick={() => handlePersonaChange(id)}
-                    className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-200 ${
+                    className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-200 active:scale-[0.98] ${
                       isSelected
                         ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/10'
                         : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -282,7 +282,7 @@ export default function FriendPage() {
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <h2 className="font-semibold text-sm mb-1">Interaction Style</h2>
             <p className="text-xs text-gray-400 mb-3">How often should your companion speak up?</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {([
                 ['minimal', 'Listener', 'I wait for you'],
                 ['normal', 'Balanced', 'I nudge when helpful'],
@@ -291,7 +291,7 @@ export default function FriendPage() {
                 <button
                   key={value}
                   onClick={() => handleFrequencyChange(value)}
-                  className={`py-2 px-2 rounded-lg text-center transition-all duration-200 border ${
+                  className={`py-2 px-2 rounded-lg text-center transition-all duration-200 active:scale-[0.98] border ${
                     settings?.friendFrequency === value
                       ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700'
                       : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
@@ -321,7 +321,7 @@ export default function FriendPage() {
                   <button
                     key={prompt}
                     onClick={() => handleSend(prompt)}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 active:scale-95 transition-all duration-150"
                   >
                     {prompt}
                   </button>
@@ -366,7 +366,7 @@ export default function FriendPage() {
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || sending}
-            className="px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            className="px-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" />

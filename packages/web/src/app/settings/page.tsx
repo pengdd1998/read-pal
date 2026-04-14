@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { api } from '@/lib/api';
+import { api, API_BASE_URL } from '@/lib/api';
 
 interface UserSettings {
   theme: string;
@@ -174,7 +174,7 @@ export default function SettingsPage() {
       <section className="mb-6 animate-slide-up stagger-1">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/40 dark:to-amber-800/40 flex items-center justify-center">
-            <svg className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-[1.125rem] h-[1.125rem] text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
             </svg>
           </div>
@@ -190,7 +190,8 @@ export default function SettingsPage() {
                   key={t}
                   onClick={() => saveSettings({ theme: t })}
                   disabled={saving}
-                  className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                  aria-pressed={settings.theme === t}
+                  className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 active:scale-[0.98] border ${
                     settings.theme === t
                       ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 shadow-xs'
                       : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
@@ -205,12 +206,13 @@ export default function SettingsPage() {
           {/* Font Size */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium">Font Size</label>
+              <label htmlFor="font-size-slider" className="text-sm font-medium">Font Size</label>
               <span className="text-xs px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 font-medium">
                 {settings.fontSize}px
               </span>
             </div>
             <input
+              id="font-size-slider"
               type="range"
               min="12"
               max="32"
@@ -238,7 +240,8 @@ export default function SettingsPage() {
                   key={f}
                   onClick={() => saveSettings({ fontFamily: f })}
                   disabled={saving}
-                  className={`py-2.5 px-3 rounded-xl text-sm transition-all duration-200 border ${
+                  aria-pressed={settings.fontFamily === f}
+                  className={`py-2.5 px-3 rounded-xl text-sm transition-all duration-200 active:scale-[0.98] border ${
                     settings.fontFamily === f
                       ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 shadow-xs font-medium'
                       : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
@@ -257,7 +260,7 @@ export default function SettingsPage() {
       <section className="mb-6 animate-slide-up stagger-2">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/40 dark:to-emerald-900/40 flex items-center justify-center">
-            <svg className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-[1.125rem] h-[1.125rem] text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
@@ -273,7 +276,8 @@ export default function SettingsPage() {
                     key={n}
                     onClick={() => saveSettings({ readingGoal: n })}
                     disabled={saving}
-                    className={`w-10 h-10 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                    aria-pressed={settings.readingGoal === n}
+                    className={`w-10 h-10 rounded-xl text-sm font-medium transition-all duration-200 active:scale-[0.98] border ${
                       settings.readingGoal === n
                         ? 'bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 shadow-xs'
                         : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
@@ -285,27 +289,6 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-
-          {/* Notifications */}
-          <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm font-medium">Reading Reminders</label>
-                <p className="text-xs text-gray-400 mt-0.5">Get nudged to read daily</p>
-              </div>
-              <button
-                onClick={() => saveSettings({ notificationsEnabled: !settings.notificationsEnabled })}
-                disabled={saving}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-                  settings.notificationsEnabled ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                  settings.notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -313,7 +296,7 @@ export default function SettingsPage() {
       <section className="mb-6 animate-slide-up stagger-2">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 flex items-center justify-center">
-            <svg className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-[1.125rem] h-[1.125rem] text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
           </div>
@@ -329,6 +312,8 @@ export default function SettingsPage() {
             <button
               onClick={() => saveSettings({ notificationsEnabled: !settings.notificationsEnabled })}
               disabled={saving}
+              role="switch"
+              aria-checked={settings.notificationsEnabled}
               className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
                 settings.notificationsEnabled ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
               }`}
@@ -349,11 +334,13 @@ export default function SettingsPage() {
               <button
                 onClick={() => saveSettings({ streakAlerts: !settings.streakAlerts })}
                 disabled={saving}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                role="switch"
+                aria-checked={settings.streakAlerts !== false}
+                className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
                   (settings.streakAlerts !== false) ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                <span className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
                   (settings.streakAlerts !== false) ? 'translate-x-5' : 'translate-x-0'
                 }`} />
               </button>
@@ -370,11 +357,13 @@ export default function SettingsPage() {
               <button
                 onClick={() => saveSettings({ friendMessages: !settings.friendMessages })}
                 disabled={saving}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                role="switch"
+                aria-checked={settings.friendMessages !== false}
+                className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
                   (settings.friendMessages !== false) ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                <span className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
                   (settings.friendMessages !== false) ? 'translate-x-5' : 'translate-x-0'
                 }`} />
               </button>
@@ -401,7 +390,7 @@ export default function SettingsPage() {
                   key={p.id}
                   onClick={() => saveSettings({ friendPersona: p.id })}
                   disabled={saving}
-                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 ${
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 active:scale-[0.98] ${
                     settings.friendPersona === p.id
                       ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/10'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-gray-50/50 dark:bg-gray-800/50'
@@ -437,7 +426,7 @@ export default function SettingsPage() {
                   key={value}
                   onClick={() => saveSettings({ friendFrequency: value })}
                   disabled={saving}
-                  className={`py-3 px-2 rounded-xl text-center transition-all duration-200 border ${
+                  className={`py-3 px-2 rounded-xl text-center transition-all duration-200 active:scale-[0.98] border ${
                     settings.friendFrequency === value
                       ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 shadow-xs'
                       : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
@@ -505,7 +494,7 @@ export default function SettingsPage() {
                         if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
                         try {
                           const token = localStorage.getItem('auth_token');
-                          const res = await fetch('/api/auth/account', {
+                          const res = await fetch(`${API_BASE_URL}/api/auth/account`, {
                             method: 'DELETE',
                             headers: { Authorization: `Bearer ${token}` },
                           });

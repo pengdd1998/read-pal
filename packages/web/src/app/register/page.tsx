@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
-import { LoadingSpinner, ErrorAlert } from '@/components/ui';
+import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/ui';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -37,8 +37,7 @@ export default function RegisterPage() {
       // Route to welcome page — onboarding walkthrough will fire on dashboard
       router.push('/welcome');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Registration failed';
-      setError(msg);
+      setError(getUserFriendlyError(err));
     } finally {
       setLoading(false);
     }
@@ -46,7 +45,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
+      <div className="max-w-md w-full animate-fade-in">
         <div className="card p-8">
           {/* Header */}
           <div className="text-center mb-8">

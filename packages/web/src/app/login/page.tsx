@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
-import { LoadingSpinner, ErrorAlert } from '@/components/ui';
+import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/ui';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,8 +24,7 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Invalid email or password';
-      setError(msg);
+      setError(getUserFriendlyError(err));
     } finally {
       setLoading(false);
     }
@@ -80,6 +79,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     {showPassword ? (

@@ -168,7 +168,7 @@ export default function ChatPage() {
     setConnecting(false);
   }, []);
 
-  const handleSend = async (text?: string): Promise<void> => {
+  const handleSend = useCallback(async (text?: string): Promise<void> => {
     const message = text || input.trim();
     if (!message || loading) return;
 
@@ -282,7 +282,7 @@ export default function ChatPage() {
       setLoading(false);
       setConnecting(false);
     }
-  };
+  }, [input, loading, selectedAgent]);
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -308,7 +308,7 @@ export default function ChatPage() {
           <button
             key={agent.id}
             onClick={() => setSelectedAgent(agent.id)}
-            className={`p-2.5 sm:p-3 rounded-xl border-2 text-left transition-all ${
+            className={`p-2.5 sm:p-3 rounded-xl border-2 text-left transition-all duration-200 active:scale-[0.98] ${
               selectedAgent === agent.id
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
@@ -366,7 +366,7 @@ export default function ChatPage() {
                   <button
                     key={i}
                     onClick={() => handleSend(s)}
-                    className="block w-full text-left text-sm p-3 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="block w-full text-left text-sm p-3 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-[0.98] transition-all duration-150"
                   >
                     {s}
                   </button>
