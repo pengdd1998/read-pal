@@ -29,7 +29,8 @@ type ActivityLevel = 'none' | 'low' | 'medium' | 'high';
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
 function parseISODate(iso: string): Date {
-  const [year, month, day] = iso.split('-').map(Number);
+  const parts = iso.split('-').map(Number);
+  const [year, month, day] = parts.length === 3 ? parts : [2026, 1, 1];
   return new Date(year, month - 1, day);
 }
 
