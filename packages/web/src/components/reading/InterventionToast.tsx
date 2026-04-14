@@ -41,7 +41,7 @@ export function InterventionToast({
 }: InterventionToastProps) {
   const [intervention, setIntervention] = useState<Intervention | null>(null);
   const [visible, setVisible] = useState(false);
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const dismissedRef = useRef<Set<string>>(new Set());
   const lastCheckRef = useRef(0);
   const pageChangeCountRef = useRef(0);
 
@@ -75,7 +75,7 @@ export function InterventionToast({
 
         if (res.success && res.data) {
           const data = res.data as unknown as Intervention;
-          if (data && data.message && !dismissed.has(data.type)) {
+          if (data && data.message && !dismissedRef.current.has(data.type)) {
             setIntervention(data);
             setVisible(true);
             // Auto-dismiss after 8 seconds for low priority
@@ -94,11 +94,11 @@ export function InterventionToast({
       clearInterval(timer);
       if (dismissTimer) clearTimeout(dismissTimer);
     };
-  }, [bookId, currentPage, totalPages, sessionDuration, highlightCount, dismissed]);
+  }, [bookId, currentPage, totalPages, sessionDuration, highlightCount]);
 
   const handleDismiss = useCallback(() => {
     if (intervention) {
-      setDismissed((prev) => new Set(prev).add(intervention.type));
+      dismissedRef.current = new Set(dismissedRef.current).add(intervention.type);
     }
     setVisible(false);
     // Record dismissal feedback

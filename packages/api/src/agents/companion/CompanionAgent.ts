@@ -13,6 +13,7 @@ import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
 import { WebSearchTool } from '../tools/WebSearchTool';
+import { sanitizePromptInput } from '../../utils/promptSanitizer';
 
 interface CompanionAgentConfig {
   model?: string;
@@ -214,7 +215,7 @@ Remember: You are an AI assistant helping someone read and learn. Be helpful, co
       const contextParts: string[] = [];
 
       if (context.selectedText) {
-        contextParts.push(`Selected text: "${context.selectedText}"`);
+        contextParts.push(`Selected text: "${sanitizePromptInput(context.selectedText, 'Selected Text')}"`);
       }
 
       if (context.currentPage !== undefined) {

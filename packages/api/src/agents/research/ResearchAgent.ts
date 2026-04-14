@@ -13,6 +13,7 @@ import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
 import { WebSearchTool } from '../tools/WebSearchTool';
+import { sanitizePromptInput, wrapUserContent } from '../../utils/promptSanitizer';
 
 // ============================================================================
 // Configuration
@@ -580,11 +581,11 @@ Remember: You are a research specialist helping someone learn deeply about what 
       const contextParts: string[] = [];
 
       if (context.bookTitle) {
-        contextParts.push(`Book: "${context.bookTitle}" by ${context.bookAuthor || 'Unknown'}`);
+        contextParts.push(`Book: "${sanitizePromptInput(context.bookTitle, 'Book Title')}" by ${context.bookAuthor ? sanitizePromptInput(context.bookAuthor, 'Author') : 'Unknown'}`);
       }
 
       if (context.selectedText) {
-        contextParts.push(`Selected text: "${context.selectedText}"`);
+        contextParts.push(`Selected text: "${sanitizePromptInput(context.selectedText, 'Selected Text')}"`);
       }
 
       if (context.currentPage !== undefined) {
@@ -592,7 +593,7 @@ Remember: You are a research specialist helping someone learn deeply about what 
       }
 
       if (context.chapterTitle) {
-        contextParts.push(`Chapter: ${context.chapterTitle}`);
+        contextParts.push(`Chapter: ${sanitizePromptInput(context.chapterTitle, 'Chapter Title')}`);
       }
 
       if (context.researchDepth) {
@@ -607,8 +608,8 @@ Remember: You are a research specialist helping someone learn deeply about what 
     // Add action type
     parts.push(`[Research Type: ${this.formatAction(action)}]`);
 
-    // Add the actual message
-    parts.push(message);
+    // Add the actual message (sanitized)
+    parts.push(wrapUserContent(sanitizePromptInput(message, 'User Query'), 'Query'));
 
     // Append tool results
     const toolData = this.formatToolResults(toolResults);

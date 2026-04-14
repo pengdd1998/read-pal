@@ -21,6 +21,7 @@ import type {
 import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
+import { sanitizePromptInput, wrapUserContent } from '../../utils/promptSanitizer';
 
 // ============================================================================
 // Configuration
@@ -790,12 +791,14 @@ Remember: You are an AI assistant helping someone understand how ideas connect a
       this.conversationHistory.set(userId, history);
     }
 
+    const safePrompt = sanitizePromptInput(prompt, 'Synthesis Query');
+
     const messages = [
       ...history.map((msg) => ({
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
       })),
-      { role: 'user' as const, content: prompt },
+      { role: 'user' as const, content: wrapUserContent(safePrompt, 'Synthesis Query') },
     ];
 
     const responseText = await chatCompletion({
@@ -1094,7 +1097,7 @@ Remember: You are an AI assistant helping someone understand how ideas connect a
     const parts: string[] = [];
 
     if (context.currentBook) {
-      parts.push(`Currently reading: "${context.currentBook.title}" by ${context.currentBook.author}`);
+      parts.push(`Currently reading: "${sanitizePromptInput(context.currentBook.title, 'Book Title')}" by ${sanitizePromptInput(context.currentBook.author, 'Author')}`);
     }
 
     if (context.userUnderstandingLevel) {

@@ -7,6 +7,7 @@ import { AgentOrchestrator } from '../agents/orchestrator/AgentOrchestrator';
 import { WebSocketManager } from '../services/WebSocketManager';
 import { ChatMessage } from '../models/ChatMessage';
 import { chatCompletionStream } from '../services/llmClient';
+import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
 import type { StreamClient } from '../services/WebSocketManager';
 import type { OrchestratorResponse } from '../agents/orchestrator/AgentOrchestrator';
 import type { IAgent } from '../types';
@@ -50,11 +51,12 @@ router.post(
     }
 
     // Build reading context for the AI so it knows what the user is reading
-    let enrichedQuery = message;
+    const safeMessage = sanitizePromptInput(message, 'User Message');
+    let enrichedQuery = safeMessage;
     if (context) {
       const readingParts: string[] = [];
       if (context.bookTitle) {
-        readingParts.push(`Book: "${context.bookTitle}"${context.author ? ` by ${context.author}` : ''}`);
+        readingParts.push(`Book: "${sanitizePromptInput(String(context.bookTitle), 'Book Title')}"${context.author ? ` by ${sanitizePromptInput(String(context.author), 'Author')}` : ''}`);
       }
       if (context.currentPage !== undefined) {
         const pageDisplay = context.currentPage + 1;
@@ -63,18 +65,21 @@ router.post(
         );
       }
       if (context.chapterContent) {
-        // Strip any residual HTML and truncate for token budget
-        const plainText = String(context.chapterContent)
-          .replace(/<[^>]*>/g, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .slice(0, 3000);
+        // Strip any residual HTML and sanitize for prompt safety
+        const plainText = sanitizePromptInput(
+          String(context.chapterContent)
+            .replace(/<[^>]*>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 3000),
+          'Chapter Content',
+        );
         if (plainText) {
-          readingParts.push(`Current chapter content:\n${plainText}`);
+          readingParts.push(wrapUserContent(plainText, 'Chapter'));
         }
       }
       if (readingParts.length > 0) {
-        enrichedQuery = `[Reading Context]\n${readingParts.join('\n')}\n\n[User Question]\n${message}`;
+        enrichedQuery = `[Reading Context]\n${readingParts.join('\n')}\n\n[User Question]\n${safeMessage}`;
       }
     }
 
@@ -207,27 +212,31 @@ router.post(
     }
 
     // Build enriched query with reading context
-    let enrichedQuery = message;
+    const safeMessage = sanitizePromptInput(message, 'User Message');
+    let enrichedQuery = safeMessage;
     if (context) {
       const readingParts: string[] = [];
       if (context.bookTitle) {
-        readingParts.push(`Book: "${context.bookTitle}"${context.author ? ` by ${context.author}` : ''}`);
+        readingParts.push(`Book: "${sanitizePromptInput(String(context.bookTitle), 'Book Title')}"${context.author ? ` by ${sanitizePromptInput(String(context.author), 'Author')}` : ''}`);
       }
       if (context.currentPage !== undefined) {
         readingParts.push(`Location: page ${context.currentPage + 1}${context.totalPages ? ` of ${context.totalPages}` : ''}`);
       }
       if (context.chapterContent) {
-        const plainText = String(context.chapterContent)
-          .replace(/<[^>]*>/g, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .slice(0, 3000);
+        const plainText = sanitizePromptInput(
+          String(context.chapterContent)
+            .replace(/<[^>]*>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 3000),
+          'Chapter Content',
+        );
         if (plainText) {
-          readingParts.push(`Current chapter content:\n${plainText}`);
+          readingParts.push(wrapUserContent(plainText, 'Chapter'));
         }
       }
       if (readingParts.length > 0) {
-        enrichedQuery = `[Reading Context]\n${readingParts.join('\n')}\n\n[User Question]\n${message}`;
+        enrichedQuery = `[Reading Context]\n${readingParts.join('\n')}\n\n[User Question]\n${safeMessage}`;
       }
     }
 
@@ -357,7 +366,7 @@ router.post('/explain', authenticate, agentRateLimiter, async (req: AuthRequest,
     const response: OrchestratorResponse = await orchestrator.process({
       userId: req.user!.id,
       sessionId: (req.session as { id?: string })?.id || req.id!,
-      query: `Explain "${term}"${context ? ` in context: ${context}` : ''}`,
+      query: `Explain "${sanitizePromptInput(term, 'Term')}"${context ? ` in context: ${sanitizePromptInput(String(context), 'Context')}` : ''}`,
       options: { agent: 'companion' }
     });
 
@@ -422,7 +431,7 @@ router.post('/summarize', authenticate, agentRateLimiter, async (req: AuthReques
     const response: OrchestratorResponse = await orchestrator.process({
       userId: req.user!.id,
       sessionId: (req.session as { id?: string })?.id || req.id!,
-      query: `Summarize this text with ${detail} detail: ${text}`,
+      query: `Summarize this text with ${detail} detail: ${wrapUserContent(sanitizePromptInput(text, 'Text to Summarize'), 'Text')}`,
       options: { agent: 'companion' }
     });
 

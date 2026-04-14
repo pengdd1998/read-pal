@@ -13,6 +13,7 @@ import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
+import { sanitizePromptInput, wrapUserContent } from '../../utils/promptSanitizer';
 
 // ============================================================================
 // Configuration & Internal Types
@@ -306,7 +307,7 @@ Requirements:
 
 Text:
 """
-${text.substring(0, 4000)}
+${sanitizePromptInput(text.substring(0, 4000), 'Text for Questions')}
 """
 
 Respond in this exact JSON format (no markdown, no code fences):
@@ -377,7 +378,7 @@ For each word:
 
 Text:
 """
-${text.substring(0, 4000)}
+${sanitizePromptInput(text.substring(0, 4000), 'Text for Vocabulary')}
 """
 
 Respond in this exact JSON format (no markdown, no code fences):
@@ -854,13 +855,13 @@ Respond in this exact JSON format (no markdown, no code fences):
   }
 
   private buildUserMessage(message: string, context?: CoachContext): string {
-    let result = message;
+    let result = sanitizePromptInput(message, 'User Message');
 
     if (context) {
       const parts: string[] = [];
 
       if (context.selectedText) {
-        parts.push(`Selected text: "${context.selectedText}"`);
+        parts.push(`Selected text: "${sanitizePromptInput(context.selectedText, 'Selected Text')}"`);
       }
 
       if (context.currentPage !== undefined) {
@@ -880,7 +881,7 @@ Respond in this exact JSON format (no markdown, no code fences):
       }
 
       if (parts.length > 0) {
-        result = `[Context: ${parts.join(', ')}]\n\n${message}`;
+        result = `[Context: ${parts.join(', ')}]\n\n${result}`;
       }
     }
 

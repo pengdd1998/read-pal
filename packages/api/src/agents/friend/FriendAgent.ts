@@ -14,6 +14,7 @@
 import type { ReadingFriendPersona } from '../../types';
 import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import { FriendConversation, FriendRelationship } from '../../models/FriendConversation';
+import { sanitizePromptInput, wrapUserContent } from '../../utils/promptSanitizer';
 
 // ============================================================================
 // Types
@@ -163,6 +164,7 @@ export class FriendAgent {
 
       const systemPrompt = this.buildSystemPrompt(persona, relationship, context, 'chat');
 
+      const safeMessage = sanitizePromptInput(message, 'User Message');
       const messages = [
         ...history.map((msg) => ({
           role: msg.role as 'user' | 'assistant',
@@ -170,7 +172,7 @@ export class FriendAgent {
         })),
         {
           role: 'user' as const,
-          content: this.enrichMessage(message, context),
+          content: this.enrichMessage(safeMessage, context),
         },
       ];
 
@@ -220,7 +222,8 @@ export class FriendAgent {
 
       const systemPrompt = this.buildSystemPrompt(persona, relationship, context, 'react');
 
-      const userMessage = `[The reader just encountered this passage while reading${context?.bookTitle ? ` "${context.bookTitle}"` : ''}${context?.currentPage ? ` (page ${context.currentPage})` : ''}]:\n\n"${text}"\n\n[Give a SHORT reaction — 1-2 sentences max. React as if you're sitting next to them, reading along. Be natural and spontaneous.]`;
+      const safeText = sanitizePromptInput(text, 'Passage');
+      const userMessage = `[The reader just encountered this passage while reading${context?.bookTitle ? ` "${sanitizePromptInput(context.bookTitle, 'Book Title')}"` : ''}${context?.currentPage ? ` (page ${context.currentPage})` : ''}]:\n\n${wrapUserContent(safeText, 'Passage')}\n\n[Give a SHORT reaction — 1-2 sentences max. React as if you're sitting next to them, reading along. Be natural and spontaneous.]`;
 
       const responseText = await chatCompletion({
         model: this.config.model,
@@ -369,8 +372,8 @@ export class FriendAgent {
     let contextSection = '';
     if (context) {
       const parts: string[] = [];
-      if (context.bookTitle) parts.push(`Currently reading: "${context.bookTitle}"`);
-      if (context.chapterTitle) parts.push(`Chapter: "${context.chapterTitle}"`);
+      if (context.bookTitle) parts.push(`Currently reading: "${sanitizePromptInput(String(context.bookTitle), 'Book Title')}"`);
+      if (context.chapterTitle) parts.push(`Chapter: "${sanitizePromptInput(String(context.chapterTitle), 'Chapter Title')}"`);
       if (context.currentPage) parts.push(`Page: ${context.currentPage}`);
       if (context.readingSpeed) parts.push(`Reading speed: ${context.readingSpeed} wpm`);
       if (context.timeSinceLastInteraction) {
@@ -450,11 +453,11 @@ You're checking in with the reader. Keep it brief — 1-2 sentences. Think of it
     const parts: string[] = [];
 
     if (context.selectedText) {
-      parts.push(`[Selected text: "${context.selectedText}"]`);
+      parts.push(`[Selected text: "${sanitizePromptInput(context.selectedText, 'Selected Text')}"]`);
     }
 
     if (context.bookTitle) {
-      parts.push(`[Reading: "${context.bookTitle}"${context.currentPage ? `, page ${context.currentPage}` : ''}]`);
+      parts.push(`[Reading: "${sanitizePromptInput(context.bookTitle, 'Book Title')}"${context.currentPage ? `, page ${context.currentPage}` : ''}]`);
     }
 
     if (parts.length > 0) {

@@ -14,6 +14,7 @@ import type { ReadingFriendPersona } from '../types';
 import { User } from '../models';
 import { FriendConversation, FriendRelationship } from '../models/FriendConversation';
 import { chatCompletionStream } from '../services/llmClient';
+import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
 
 const router: Router = Router();
 
@@ -112,7 +113,8 @@ router.post('/chat', authenticate, async (req: AuthRequest, res) => {
 
     await syncPersonaFromSettings(req.userId!, friendAgent);
 
-    const result = await friendAgent.chat(req.userId!, message, context);
+    const safeMessage = sanitizePromptInput(message, 'User Message');
+    const result = await friendAgent.chat(req.userId!, safeMessage, context);
 
     res.json({
       success: true,
@@ -178,8 +180,8 @@ router.post('/chat/stream', authenticate, async (req: AuthRequest, res: Response
   let contextSection = '';
   if (context) {
     const parts: string[] = [];
-    if (context.bookTitle) parts.push(`Currently reading: "${context.bookTitle}"`);
-    if (context.chapterTitle) parts.push(`Chapter: "${context.chapterTitle}"`);
+    if (context.bookTitle) parts.push(`Currently reading: "${sanitizePromptInput(String(context.bookTitle), 'Book Title')}"`);
+    if (context.chapterTitle) parts.push(`Chapter: "${sanitizePromptInput(String(context.chapterTitle), 'Chapter Title')}"`);
     if (context.currentPage) parts.push(`Page: ${context.currentPage}`);
     if (parts.length > 0) {
       contextSection = `\n## Current Reading Context\n${parts.join('\n')}`;
@@ -235,7 +237,7 @@ ${contextSection}
     // event-loop is still writing the connected event.
     const stream = chatCompletionStream({
       system: systemPrompt,
-      messages: [{ role: 'user', content: message }],
+      messages: [{ role: 'user', content: sanitizePromptInput(message, 'User Message') }],
       eagerStart: true,
     });
 
@@ -296,7 +298,8 @@ router.post('/react', authenticate, async (req: AuthRequest, res) => {
 
     await syncPersonaFromSettings(req.userId!, friendAgent);
 
-    const result = await friendAgent.react(req.userId!, text, context);
+    const safeText = sanitizePromptInput(text, 'Passage Text');
+    const result = await friendAgent.react(req.userId!, safeText, context);
 
     res.json({
       success: true,

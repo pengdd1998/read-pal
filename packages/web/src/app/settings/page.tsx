@@ -33,6 +33,13 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail] = useState('');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Clear debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     loadSettings();
   }, []);

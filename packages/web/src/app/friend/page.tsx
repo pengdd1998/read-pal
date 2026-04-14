@@ -101,6 +101,13 @@ export default function FriendPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Abort SSE stream on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

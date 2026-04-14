@@ -34,6 +34,7 @@ class ApiClient {
   private inFlightRequests = new Map<string, Promise<unknown>>();
   private static DEFAULT_TTL = 30_000; // 30 seconds
   private static STALE_TTL = 300_000; // 5 minutes — serve stale while revalidating
+  private static MAX_CACHE_SIZE = 200;
 
   constructor() {
     this.client = axios.create({
@@ -119,6 +120,24 @@ class ApiClient {
     throw lastError;
   }
 
+  /** Remove expired entries and enforce max cache size */
+  private pruneStaleEntries(): void {
+    const now = Date.now();
+    // Remove expired entries
+    for (const [key, entry] of this.cache) {
+      if (now > entry.expiry + ApiClient.STALE_TTL) {
+        this.cache.delete(key);
+      }
+    }
+    // If still over max, remove oldest entries
+    if (this.cache.size > ApiClient.MAX_CACHE_SIZE) {
+      const keysToDelete = Array.from(this.cache.keys()).slice(0, this.cache.size - ApiClient.MAX_CACHE_SIZE);
+      for (const key of keysToDelete) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
   /** Invalidate cache entries matching a prefix (e.g., '/api/settings' clears '/api/settings*') */
   invalidateCache(prefix?: string): void {
     if (!prefix) { this.cache.clear(); return; }
@@ -139,6 +158,7 @@ class ApiClient {
   }
 
   async get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
+    this.pruneStaleEntries();
     const cacheKey = `${url}:${JSON.stringify(params ?? {})}`;
     const cached = this.cache.get(cacheKey);
 

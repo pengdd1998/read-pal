@@ -1,41 +1,91 @@
 'use client';
 
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useRef, useCallback, type RefObject } from 'react';
 import type { Annotation } from '@read-pal/shared';
 
 const MARK_CLASS = 'highlight-mark';
 const DATA_ATTR = 'data-annotation-id';
 
+/** Stored entry tracking a DOM mark element tied to an annotation. */
+interface MarkEntry {
+  element: HTMLElement;
+  annotation: Annotation;
+}
+
 /**
  * Renders annotation highlights as <mark> elements in the DOM.
- * Walks text nodes and wraps character ranges matching annotation locations.
- * Cleans up previous marks on each re-run.
+ *
+ * Performance strategy:
+ * - Keeps a Map of annotation-id -> mark element so we can diff changes.
+ * - Theme-only changes simply update CSS on existing marks (no DOM rebuild).
+ * - Added/removed annotations only touch their specific marks.
+ * - Heavy DOM work (page change, full annotation set change) is spread across
+ *   requestAnimationFrame batches to avoid blocking the main thread.
  */
 export function useAnnotationHighlights(
   containerRef: RefObject<HTMLElement | null>,
   annotations: Annotation[],
   currentPageIndex: number,
   theme: 'light' | 'dark' | 'sepia' = 'light',
-) {
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+): void {
+  // ── Stable refs that survive across renders ──────────────────────────
+  const marksMapRef = useRef<Map<string, MarkEntry>>(new Map());
+  const prevThemeRef = useRef(theme);
+  const prevPageRef = useRef(currentPageIndex);
+  const prevAnnotationsRef = useRef<Annotation[]>([]);
 
-    // Remove previous highlight marks
+  // ── Helper: compute style for a mark based on annotation + theme ─────
+  const applyMarkStyle = useCallback(
+    (mark: HTMLElement, annotation: Annotation, currentTheme: string) => {
+      const color = annotation.color || '#FFEB3B';
+      mark.style.backgroundColor = hexToRgba(
+        color,
+        currentTheme === 'dark' ? 0.35 : 0.45,
+      );
+      mark.style.borderBottom = annotation.note
+        ? `2px solid ${color}`
+        : 'none';
+    },
+    [],
+  );
+
+  // ── Helper: completely remove all marks from the DOM and clear the map ──
+  const clearAllMarks = useCallback((container: HTMLElement) => {
     container.querySelectorAll(`.${MARK_CLASS}`).forEach((el) => {
       const parent = el.parentNode;
       if (parent) {
-        // Replace <mark> with its text content
         while (el.firstChild) {
           parent.insertBefore(el.firstChild, el);
         }
         parent.removeChild(el);
-        // Normalize merges adjacent text nodes
         parent.normalize();
       }
     });
+    marksMapRef.current.clear();
+  }, []);
 
-    // Filter annotations for current page that have selection offsets
+  // ── Effect 1: Theme-only update (fast path, no DOM rebuild) ──────────
+  useEffect(() => {
+    if (prevThemeRef.current === theme) return;
+
+    const alpha = theme === 'dark' ? 0.35 : 0.45;
+    marksMapRef.current.forEach((entry) => {
+      const color = entry.annotation.color || '#FFEB3B';
+      entry.element.style.backgroundColor = hexToRgba(color, alpha);
+    });
+
+    prevThemeRef.current = theme;
+  }, [theme]);
+
+  // ── Effect 2: Annotation / page changes (diff + batched rebuild) ─────
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const pageChanged = prevPageRef.current !== currentPageIndex;
+    const prevAnnotations = prevAnnotationsRef.current;
+
+    // Build a lookup of annotations relevant to this page
     const pageAnnotations = annotations.filter(
       (a) =>
         a.type !== 'bookmark' &&
@@ -45,53 +95,143 @@ export function useAnnotationHighlights(
         typeof a.location.selection.end === 'number',
     );
 
-    if (pageAnnotations.length === 0) return;
+    const currentPageIds = new Set(pageAnnotations.map((a) => a.id));
 
-    // Sort by start offset descending so we apply from end to start
-    // (this prevents offsets from shifting as we insert marks)
-    const sorted = [...pageAnnotations].sort(
-      (a, b) => (b.location?.selection?.start ?? 0) - (a.location?.selection?.start ?? 0),
-    );
+    // ── Fast path: nothing to render, just clear stale marks ──────────
+    if (pageAnnotations.length === 0 && marksMapRef.current.size === 0) {
+      prevPageRef.current = currentPageIndex;
+      prevAnnotationsRef.current = annotations;
+      return;
+    }
 
-    for (const annotation of sorted) {
-      const start = annotation.location!.selection!.start;
-      const end = annotation.location!.selection!.end;
-
-      // Walk text nodes to find the character range
-      const result = findTextOffset(container, start, end - start);
-      if (!result) continue;
-
-      const { startNode, startOffset, endNode, endOffset } = result;
-
-      try {
-        const range = document.createRange();
-        range.setStart(startNode, startOffset);
-        range.setEnd(endNode, endOffset);
-
-        const mark = document.createElement('mark');
-        mark.className = MARK_CLASS;
-        mark.setAttribute(DATA_ATTR, annotation.id);
-        mark.style.cursor = 'pointer';
-
-        // Compute background color with transparency for readability
-        const color = annotation.color || '#FFEB3B';
-        mark.style.backgroundColor = hexToRgba(color, theme === 'dark' ? 0.35 : 0.45);
-        mark.style.borderRadius = '2px';
-        mark.style.padding = '1px 0';
-        mark.style.transition = 'background-color 0.2s ease';
-
-        // Add note indicator if annotation has a note
-        if (annotation.note) {
-          mark.style.borderBottom = `2px solid ${color}`;
+    // ── If the page changed, nuke everything and rebuild from scratch ──
+    // (offsets are page-relative so all marks are invalid after page flip)
+    if (pageChanged) {
+      clearAllMarks(container);
+      marksMapRef.current = new Map();
+    } else {
+      // ── Diff: remove marks for deleted annotations ──────────────────
+      for (const [id, entry] of marksMapRef.current) {
+        if (!currentPageIds.has(id)) {
+          const parent = entry.element.parentNode;
+          if (parent) {
+            while (entry.element.firstChild) {
+              parent.insertBefore(entry.element.firstChild, entry.element);
+            }
+            parent.removeChild(entry.element);
+            parent.normalize();
+          }
+          marksMapRef.current.delete(id);
         }
-
-        range.surroundContents(mark);
-      } catch {
-        // surroundContents can fail if range crosses element boundaries
-        // Fallback: skip this annotation
       }
     }
-  }, [containerRef, annotations, currentPageIndex, theme]);
+
+    // ── Determine which annotations need a fresh mark created ──────────
+    const toCreate: Annotation[] = [];
+    for (const ann of pageAnnotations) {
+      if (!marksMapRef.current.has(ann.id)) {
+        toCreate.push(ann);
+      } else {
+        // Annotation still exists — check if style-affecting fields changed
+        const existing = marksMapRef.current.get(ann.id)!;
+        if (
+          existing.annotation.color !== ann.color ||
+          existing.annotation.note !== ann.note
+        ) {
+          applyMarkStyle(existing.element, ann, theme);
+          existing.annotation = ann;
+        }
+      }
+    }
+
+    prevPageRef.current = currentPageIndex;
+    prevAnnotationsRef.current = annotations;
+
+    if (toCreate.length === 0) return;
+
+    // ── Sort descending by start offset so we insert end-to-start ──────
+    const sorted = toCreate.sort(
+      (a, b) =>
+        (b.location?.selection?.start ?? 0) - (a.location?.selection?.start ?? 0),
+    );
+
+    // ── Batch DOM insertions via rAF to keep the main thread responsive ──
+    const BATCH_SIZE = 10;
+    let index = 0;
+
+    function processBatch() {
+      // Guard: container may have been unmounted between rAF frames
+      const currentContainer = containerRef.current;
+      if (!currentContainer) return;
+
+      const end = Math.min(index + BATCH_SIZE, sorted.length);
+      for (; index < end; index++) {
+        const annotation = sorted[index];
+        createMark(currentContainer, annotation, theme, marksMapRef.current, applyMarkStyle);
+      }
+      if (index < sorted.length) {
+        requestAnimationFrame(processBatch);
+      }
+    }
+
+    // For small counts, do them synchronously to avoid visual flicker.
+    // The rAF batching only matters for large annotation sets (50+).
+    if (sorted.length <= BATCH_SIZE) {
+      for (const annotation of sorted) {
+        createMark(container, annotation, theme, marksMapRef.current, applyMarkStyle);
+      }
+    } else {
+      requestAnimationFrame(processBatch);
+    }
+  }, [containerRef, annotations, currentPageIndex, theme, clearAllMarks, applyMarkStyle]);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Pure helpers (not hooks, safe to extract)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Create a single <mark> element for an annotation and insert it into the
+ * container DOM. Returns the mark element or null if it could not be placed.
+ */
+function createMark(
+  container: HTMLElement,
+  annotation: Annotation,
+  currentTheme: string,
+  marksMap: Map<string, MarkEntry>,
+  applyStyle: (mark: HTMLElement, ann: Annotation, theme: string) => void,
+): HTMLElement | null {
+  const start = annotation.location!.selection!.start;
+  const end = annotation.location!.selection!.end;
+
+  const result = findTextOffset(container, start, end - start);
+  if (!result) return null;
+
+  const { startNode, startOffset, endNode, endOffset } = result;
+
+  try {
+    const range = document.createRange();
+    range.setStart(startNode, startOffset);
+    range.setEnd(endNode, endOffset);
+
+    const mark = document.createElement('mark');
+    mark.className = MARK_CLASS;
+    mark.setAttribute(DATA_ATTR, annotation.id);
+    mark.style.cursor = 'pointer';
+    mark.style.borderRadius = '2px';
+    mark.style.padding = '1px 0';
+    mark.style.transition = 'background-color 0.2s ease';
+
+    applyStyle(mark, annotation, currentTheme);
+
+    range.surroundContents(mark);
+
+    marksMap.set(annotation.id, { element: mark, annotation });
+    return mark;
+  } catch {
+    // surroundContents fails when range crosses element boundaries — skip.
+    return null;
+  }
 }
 
 /**
