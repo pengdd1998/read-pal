@@ -4,10 +4,12 @@
 
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { Book, Document } from '../models';
+import { Book, Document, sequelize } from '../models';
+import { QueryTypes } from 'sequelize';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
+import { etag } from '../middleware/cache';
 
 const router: Router = Router();
 
@@ -31,13 +33,12 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     const rawOrder = (req.query.order as string) || 'desc';
     const order: 'ASC' | 'DESC' = rawOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
-    const books = await Book.findAll({
+    const { rows: books, count: total } = await Book.findAndCountAll({
       where: { userId: req.userId },
       order: [[sortField, order]],
       limit,
       offset,
     });
-    const total = await Book.count({ where: { userId: req.userId } });
 
     // Cache book list for 30s — changes infrequently
     res.set('Cache-Control', 'private, max-age=30');
@@ -69,21 +70,19 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
  */
 router.get('/tags', authenticate, async (req: AuthRequest, res) => {
   try {
-    const books = await Book.findAll({
-      where: { userId: req.userId },
-      attributes: ['tags'],
-    });
-
-    const tagSet = new Set<string>();
-    for (const book of books) {
-      for (const tag of (book.tags || [])) {
-        tagSet.add(tag);
-      }
-    }
+    // Use PostgreSQL unnest + DISTINCT for efficient server-side tag extraction
+    // instead of fetching all books into JS memory
+    const result = await sequelize.query<{ tag: string }>(
+      `SELECT DISTINCT unnest(tags) AS tag
+       FROM books
+       WHERE "userId" = $1 AND tags IS NOT NULL
+       ORDER BY tag`,
+      { bind: [req.userId], type: QueryTypes.SELECT },
+    );
 
     res.json({
       success: true,
-      data: Array.from(tagSet).sort(),
+      data: result.map((r) => r.tag),
     });
   } catch (error) {
     console.error('Error fetching tags:', error);
@@ -142,7 +141,7 @@ router.put('/:id/tags', authenticate, async (req: AuthRequest, res) => {
  * GET /api/books/:id
  * Get a specific book
  */
-router.get('/:id', authenticate, async (req: AuthRequest, res) => {
+router.get('/:id', authenticate, etag(30), async (req: AuthRequest, res) => {
   try {
     const book = await Book.findOne({
       where: {

@@ -216,7 +216,8 @@ ${contextSection}
 - Keep your personality consistent.
 - If you don't know something, say so honestly.`;
 
-  // SSE headers
+  // SSE headers — sent IMMEDIATELY so the client connection is open before
+  // we do any work.  The client sees 200 and can listen for events right away.
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -225,10 +226,17 @@ ${contextSection}
   });
   res.flushHeaders();
 
+  // Lightweight "connected" event so the front-end knows the stream is alive
+  // while the LLM handshake is still in progress.
+  res.write('data: {"type":"connected"}\n\n');
+
   try {
+    // eagerStart: true — begin the HTTP handshake to GLM *now* while the
+    // event-loop is still writing the connected event.
     const stream = chatCompletionStream({
       system: systemPrompt,
       messages: [{ role: 'user', content: message }],
+      eagerStart: true,
     });
 
     for await (const token of stream) {

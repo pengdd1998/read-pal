@@ -70,8 +70,8 @@ function requirePrivateNetwork(req: Request, res: Response, next: NextFunction):
  * @access  Public
  */
 router.get('/', async (_req, res) => {
-  // Cache health for 10s — avoids hammering on monitoring
-  res.set('Cache-Control', 'public, max-age=10');
+  // Cache health for 30s — avoids hammering on monitoring
+  res.set('Cache-Control', 'public, max-age=30');
   const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),

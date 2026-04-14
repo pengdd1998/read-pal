@@ -231,23 +231,30 @@ router.post(
       }
     }
 
-    // SSE headers
+    // SSE headers — sent IMMEDIATELY so the client connection is open before
+    // we do any work.  This is the single biggest TTFT win: the client sees
+    // the 200 status and can start listening for events right away.
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
     });
-
-    // Flush headers immediately so the client sees the connection open
     res.flushHeaders();
+
+    // Send a lightweight "connected" event so the front-end knows the stream
+    // is alive while the LLM handshake is still in progress.
+    res.write('data: {"type":"connected"}\n\n');
 
     const systemPrompt = AGENT_SYSTEM_PROMPTS[agent] || AGENT_SYSTEM_PROMPTS.companion;
 
     try {
+      // eagerStart: true — begin the HTTP handshake to GLM *now* while the
+      // event-loop is still processing middleware / writing the connected event.
       const stream = chatCompletionStream({
         system: systemPrompt,
         messages: [{ role: 'user', content: enrichedQuery }],
+        eagerStart: true,
       });
 
       for await (const token of stream) {

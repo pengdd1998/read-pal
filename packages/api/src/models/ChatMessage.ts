@@ -64,6 +64,7 @@ ChatMessage.init(
     indexes: [
       { fields: ['userId', 'bookId'] },
       { fields: ['userId', 'createdAt'] },
+      { fields: ['userId', 'bookId', 'createdAt'] },
     ],
   },
 );

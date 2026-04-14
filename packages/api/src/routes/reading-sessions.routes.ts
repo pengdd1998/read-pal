@@ -202,14 +202,12 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
     const offset = (page - 1) * limit;
 
-    const sessions = await ReadingSession.findAll({
+    const { rows: sessions, count: total } = await ReadingSession.findAndCountAll({
       where: { userId: req.userId },
       order: [['startedAt', 'DESC']],
       limit,
       offset,
     });
-
-    const total = await ReadingSession.count({ where: { userId: req.userId } });
 
     res.json({
       success: true,

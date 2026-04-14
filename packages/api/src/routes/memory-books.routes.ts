@@ -18,11 +18,21 @@ const router: Router = Router();
  */
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
-    const memoryBooks = await memoryBookService.listMemoryBooks(req.userId!);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const offset = (page - 1) * limit;
+
+    const { rows: memoryBooks, count: total } = await memoryBookService.listMemoryBooks(req.userId!, { limit, offset });
 
     res.json({
       success: true,
       data: memoryBooks,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Error listing memory books:', error);

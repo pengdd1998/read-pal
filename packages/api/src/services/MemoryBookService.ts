@@ -63,23 +63,22 @@ export class MemoryBookService {
     userId: string,
     options: GenerateOptions = {},
   ): Promise<MemoryBook> {
-    // 1. Verify the book exists and belongs to the user
-    const book = await Book.findOne({ where: { id: bookId, userId } });
+    // 1–3. Fetch book, annotations, and sessions in parallel
+    const [book, annotations, sessions] = await Promise.all([
+      Book.findOne({ where: { id: bookId, userId } }),
+      Annotation.findAll({
+        where: { bookId, userId },
+        order: [['createdAt', 'ASC']],
+      }),
+      ReadingSession.findAll({
+        where: { bookId, userId },
+        order: [['startedAt', 'ASC']],
+      }),
+    ]);
+
     if (!book) {
       throw new Error('Book not found');
     }
-
-    // 2. Fetch annotations
-    const annotations = await Annotation.findAll({
-      where: { bookId, userId },
-      order: [['createdAt', 'ASC']],
-    });
-
-    // 3. Fetch reading sessions
-    const sessions = await ReadingSession.findAll({
-      where: { bookId, userId },
-      order: [['startedAt', 'ASC']],
-    });
 
     // 4. Compute stats from sessions
     const stats = this.computeStats(annotations, sessions);
@@ -129,12 +128,17 @@ export class MemoryBookService {
   /**
    * List all Memory Books for a user, newest first.
    */
-  async listMemoryBooks(userId: string): Promise<MemoryBook[]> {
-    return MemoryBook.findAll({
+  async listMemoryBooks(userId: string, options?: { limit?: number; offset?: number }): Promise<{ rows: MemoryBook[]; count: number }> {
+    const limit = Math.min(options?.limit || 50, 100);
+    const offset = options?.offset || 0;
+    const { rows, count } = await MemoryBook.findAndCountAll({
       where: { userId },
       order: [['generatedAt', 'DESC']],
       include: [{ model: Book, as: 'book', attributes: ['id', 'title', 'author', 'coverUrl'] }],
+      limit,
+      offset,
     });
+    return { rows, count };
   }
 
   /**
@@ -203,11 +207,20 @@ export class MemoryBookService {
       // Dynamically import to avoid hard Redis dependency at module level
       const { redisClient } = await import('../db');
       const pattern = `agent:conversation:${userId}:${bookId}:*`;
-      const keys = await redisClient.keys(pattern);
+      const keys: string[] = [];
+      let cursor = '0';
+      do {
+        const [nextCursor, batch] = await redisClient.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = nextCursor;
+        keys.push(...batch);
+      } while (cursor !== '0');
+      const batchKeys = keys.slice(0, 50);
 
-      for (const key of keys.slice(0, 50)) {
-        const raw = await redisClient.get(key);
-        if (raw) {
+      if (batchKeys.length > 0) {
+        // Batch fetch via mget — avoids N+1 network round-trips
+        const values = await redisClient.mget(...batchKeys);
+        for (const raw of values) {
+          if (!raw) continue;
           try {
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {

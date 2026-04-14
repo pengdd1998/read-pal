@@ -108,7 +108,7 @@ Annotation.init(
       { fields: ['userId'] },
       { fields: ['bookId'] },
       { fields: ['type'] },
-      { fields: ['tags'] },
+      { fields: ['tags'], using: 'GIN' },
     ],
   }
 );

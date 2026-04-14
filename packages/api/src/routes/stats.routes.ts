@@ -8,6 +8,8 @@ import { Router } from 'express';
 import { Op, QueryTypes, fn, col, literal } from 'sequelize';
 import { Book, Annotation, ReadingSession, ChatMessage, MemoryBook, sequelize } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { redisClient } from '../db';
+import { etag } from '../middleware/cache';
 
 const router: Router = Router();
 
@@ -212,33 +214,53 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
  *
  * Returns all aggregated reading stats needed by the dashboard page.
  */
-router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
+router.get('/dashboard', authenticate, etag(60), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
 
-    // --- Parallel queries --------------------------------------------------
+    // --- Try Redis cache first (60s TTL) ---
+    const cacheKey = `stats:dashboard:${userId}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        res.set('Cache-Control', 'private, max-age=60');
+        res.set('X-Cache', 'HIT');
+        return res.json(JSON.parse(cached));
+      }
+    } catch { /* Redis unavailable, compute fresh */ }
 
-    const [
-      completedBooks,
-      totalPagesResult,
-      recentBooks,
-      booksByStatus,
-      sessionPagesRead,
-      sessionWeeklyActivity,
-      totalMinutesResult,
-      streak,
-      conceptCount,
-      connectionCount,
-      chatMessageCount,
-      memoryBookCount,
-    ] = await Promise.all([
-      // 1. Total books in library
-      Book.count({ where: { userId } }),
+    // --- Consolidated stats query (replaces 6 separate count/sum queries) ---
+    const [statsRow] = await sequelize.query<{
+      total_books: string;
+      total_pages: string;
+      session_pages_read: string;
+      total_duration_seconds: string;
+      concepts_count: string;
+      connections_count: string;
+      chat_count: string;
+      memory_book_count: string;
+      unread_count: string;
+      reading_count: string;
+      completed_count: string;
+    }>(
+      `SELECT
+         (SELECT COUNT(*)::int FROM books WHERE "userId" = $1) AS total_books,
+         (SELECT COALESCE(SUM("totalPages"), 0)::int FROM books WHERE "userId" = $1) AS total_pages,
+         (SELECT COALESCE(SUM("pagesRead"), 0)::int FROM reading_sessions WHERE "userId" = $1) AS session_pages_read,
+         (SELECT COALESCE(SUM("duration"), 0)::int FROM reading_sessions WHERE "userId" = $1) AS total_duration_seconds,
+         (SELECT COUNT(*)::int FROM annotations WHERE "userId" = $1 AND type IN ('note', 'highlight')) AS concepts_count,
+         (SELECT COUNT(*)::int FROM annotations WHERE "userId" = $1) AS connections_count,
+         (SELECT COUNT(*)::int FROM chat_messages WHERE "userId" = $1) AS chat_count,
+         (SELECT COUNT(*)::int FROM memory_books WHERE "userId" = $1) AS memory_book_count,
+         (SELECT COUNT(*)::int FROM books WHERE "userId" = $1 AND status = 'unread') AS unread_count,
+         (SELECT COUNT(*)::int FROM books WHERE "userId" = $1 AND status = 'reading') AS reading_count,
+         (SELECT COUNT(*)::int FROM books WHERE "userId" = $1 AND status = 'completed') AS completed_count`,
+      { bind: [userId], type: QueryTypes.SELECT },
+    );
 
-      // 2. Sum of totalPages across all books
-      Book.sum('totalPages', { where: { userId } }) as Promise<number>,
-
-      // 3. Recent books (last 5 by addedAt — include all books, not just read ones)
+    // --- Remaining parallel queries (data that can't be consolidated) ---
+    const [recentBooks, sessionWeeklyActivity, streak] = await Promise.all([
+      // Recent books (last 5)
       Book.findAll({
         where: { userId },
         order: [['lastReadAt', 'DESC NULLS LAST'], ['addedAt', 'DESC']],
@@ -246,18 +268,7 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
         attributes: ['id', 'title', 'author', 'progress', 'totalPages', 'lastReadAt', 'coverUrl', 'status', 'addedAt'],
       }),
 
-      // 4. Books by status
-      Book.findAll({
-        where: { userId },
-        attributes: ['status', [fn('COUNT', col('id')), 'count']],
-        group: ['status'],
-        raw: true,
-      }),
-
-      // 5. Total pages read from ReadingSessions
-      ReadingSession.sum('pagesRead', { where: { userId } }) as Promise<number>,
-
-      // 6. Weekly activity from ReadingSessions (last 7 days)
+      // Weekly activity (last 7 days)
       sequelize.query<{
         day: string;
         pages: string;
@@ -275,42 +286,25 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
         { bind: [userId], type: QueryTypes.SELECT },
       ),
 
-      // 7. Total reading time in minutes (duration is stored in seconds)
-      ReadingSession.sum('duration', { where: { userId } }) as Promise<number>,
-
-      // 8. Reading streak (with fallback to book.lastReadAt)
+      // Reading streak
       calculateStreak(userId),
-
-      // 9. Concepts learned: count of annotations with type 'note' or 'highlight'
-      Annotation.count({
-        where: { userId, type: { [Op.in]: ['note', 'highlight'] } },
-      }),
-
-      // 10. Connections: total count of all annotations
-      Annotation.count({ where: { userId } }),
-
-      // 11. Chat message count
-      ChatMessage.count({ where: { userId } }),
-
-      // 12. Memory book count
-      MemoryBook.count({ where: { userId } }),
     ]);
 
     // --- Format response ---------------------------------------------------
 
-    const totalPages = Math.round(Number(totalPagesResult) || 0);
+    const totalPages = parseInt(statsRow.total_pages, 10) || 0;
 
     // pagesRead: prefer session data; fallback to SQL aggregation
-    let pagesRead = Math.round(Number(sessionPagesRead) || 0);
+    let pagesRead = parseInt(statsRow.session_pages_read, 10) || 0;
     if (pagesRead === 0) {
       const [aggResult] = await sequelize.query<{ pages_read: string }>(
-        'SELECT COALESCE(SUM(ROUND((progress / 100.0) * "totalPages")), 0)::int AS pages_read FROM books WHERE "userId" = ?',
-        { replacements: [userId], type: QueryTypes.SELECT }
+        'SELECT COALESCE(SUM(ROUND((progress / 100.0) * "totalPages")), 0)::int AS pages_read FROM books WHERE "userId" = $1',
+        { bind: [userId], type: QueryTypes.SELECT },
       );
       pagesRead = parseInt(aggResult?.pages_read || '0', 10);
     }
 
-    const totalMinutes = Math.round((Number(totalMinutesResult) || 0) / 60);
+    const totalMinutes = Math.round((parseInt(statsRow.total_duration_seconds, 10) || 0) / 60);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     const totalTimeStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
@@ -367,11 +361,12 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
       }
     }
 
-    // Books by status map
-    const statusMap: Record<string, number> = { unread: 0, reading: 0, completed: 0 };
-    for (const row of booksByStatus as unknown as { status: string; count: string }[]) {
-      statusMap[row.status] = parseInt(String(row.count), 10) || 0;
-    }
+    // Books by status map — from consolidated query
+    const statusMap: Record<string, number> = {
+      unread: parseInt(statsRow.unread_count, 10) || 0,
+      reading: parseInt(statsRow.reading_count, 10) || 0,
+      completed: parseInt(statsRow.completed_count, 10) || 0,
+    };
 
     // Recent books formatted for frontend
     const recentBooksFormatted = recentBooks.map((book) => {
@@ -399,27 +394,35 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res) => {
       };
     });
 
-    // Cache dashboard for 60s — it's expensive (12+ queries) and called on every page load
-    res.set('Cache-Control', 'private, max-age=60');
-    res.json({
+    // Cache dashboard for 60s — now ~4 queries instead of 12+
+    const responseData = {
       success: true,
       data: {
         stats: {
-          booksRead: completedBooks, // total books in library
+          booksRead: parseInt(statsRow.total_books, 10) || 0,
           totalPages,
           pagesRead,
           readingStreak: streak,
           totalTime: totalTimeStr,
-          conceptsLearned: conceptCount,
-          connections: connectionCount,
-          chatMessageCount: chatMessageCount || 0,
-          memoryBookCount: memoryBookCount || 0,
+          conceptsLearned: parseInt(statsRow.concepts_count, 10) || 0,
+          connections: parseInt(statsRow.connections_count, 10) || 0,
+          chatMessageCount: parseInt(statsRow.chat_count, 10) || 0,
+          memoryBookCount: parseInt(statsRow.memory_book_count, 10) || 0,
         },
         recentBooks: recentBooksFormatted,
         weeklyActivity: activity,
         booksByStatus: statusMap,
       },
-    });
+    };
+
+    // Store in Redis with 60s TTL
+    try {
+      await redisClient.setex(cacheKey, 60, JSON.stringify(responseData));
+    } catch { /* Redis unavailable, skip cache */ }
+
+    res.set('Cache-Control', 'private, max-age=60');
+    res.set('X-Cache', 'MISS');
+    res.json(responseData);
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     res.status(500).json({

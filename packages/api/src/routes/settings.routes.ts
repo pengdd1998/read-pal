@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { Op } from 'sequelize';
 import { User, Book, ReadingSession } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { etag } from '../middleware/cache';
 
 const router: Router = Router();
 
@@ -36,7 +37,7 @@ const DEFAULT_SETTINGS = {
  *
  * Returns the authenticated user's settings, merged with defaults.
  */
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, etag(60), async (req: AuthRequest, res) => {
   try {
     const user = await User.findByPk(req.userId);
     if (!user) {

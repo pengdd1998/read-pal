@@ -224,9 +224,15 @@ export async function chatCompletion(params: ChatCompletionParams): Promise<stri
  * Returns an AsyncIterable of string tokens, each yielded as soon as the
  * upstream GLM/OpenAI-compatible API emits it.
  *
+ * The stream request is initiated lazily on the first `next()` call (or
+ * eagerly when `eagerStart` is true) so that callers can set up SSE headers
+ * *before* the API connection is established, minimising perceived TTFT.
+ *
  * Does NOT retry on stream errors – the caller can decide to restart.
  */
-export async function* chatCompletionStream(params: ChatCompletionParams): AsyncGenerator<string> {
+export function chatCompletionStream(
+  params: ChatCompletionParams & { eagerStart?: boolean },
+): AsyncGenerator<string> {
   validateApiKey();
 
   const model = params.model || DEFAULT_MODEL;
@@ -237,25 +243,49 @@ export async function* chatCompletionStream(params: ChatCompletionParams): Async
 
   log('info', 'Starting streaming chat completion', { model, messageCount: params.messages.length });
 
-  const stream = await client.chat.completions.create(
-    {
-      model,
-      messages: apiMessages,
-      max_tokens: params.maxTokens || 2048,
-      temperature: params.temperature ?? 0.7,
-      stream: true,
-    },
-    { timeout: DEFAULT_TIMEOUT_MS },
-  );
+  // Kick off the API call immediately when eagerStart is requested.
+  // This way the HTTP handshake to GLM begins while the caller is still
+  // writing SSE headers / sending the "connected" event.
+  let streamPromise: Promise<AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>> | null =
+    params.eagerStart
+      ? client.chat.completions.create(
+          {
+            model,
+            messages: apiMessages,
+            max_tokens: params.maxTokens || 2048,
+            temperature: params.temperature ?? 0.7,
+            stream: true,
+          },
+          { timeout: DEFAULT_TIMEOUT_MS },
+        )
+      : null;
 
-  for await (const chunk of stream) {
-    const token = chunk.choices[0]?.delta?.content;
-    if (token) {
-      yield token;
+  async function* generate(): AsyncGenerator<string> {
+    // If the stream wasn't eagerly started, start it now.
+    const stream = streamPromise
+      ? await streamPromise
+      : await client.chat.completions.create(
+          {
+            model,
+            messages: apiMessages,
+            max_tokens: params.maxTokens || 2048,
+            temperature: params.temperature ?? 0.7,
+            stream: true,
+          },
+          { timeout: DEFAULT_TIMEOUT_MS },
+        );
+
+    for await (const chunk of stream) {
+      const token = chunk.choices[0]?.delta?.content;
+      if (token) {
+        yield token;
+      }
     }
+
+    log('info', 'Streaming chat completion finished', { model });
   }
 
-  log('info', 'Streaming chat completion finished', { model });
+  return generate();
 }
 
 export default client;
