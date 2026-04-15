@@ -4,20 +4,10 @@ import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardR
 import { api, API_BASE_URL } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { renderSimpleMarkdown } from '@/lib/markdown';
-
-// Lazy-load DOMPurify — keeps it out of the initial bundle (~40KB saving)
-let _domPurify: typeof import('dompurify').default | null = null;
-async function loadDOMPurify(): Promise<typeof import('dompurify').default> {
-  if (!_domPurify) {
-    const m = await import('dompurify');
-    _domPurify = m.default;
-  }
-  return _domPurify;
-}
-function purifySync(html: string): string {
-  if (_domPurify) return _domPurify.sanitize(html);
-  return html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-}
+import { consumeSSEStream } from '@/lib/sse';
+import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
+import { generateId } from '@read-pal/shared';
+import { authFetch } from '@/lib/auth-fetch';
 
 interface Message {
   id: string;
@@ -55,60 +45,6 @@ const FRIEND_PERSONAS: Record<string, FriendPersona> = {
 
 const DEFAULT_PERSONA: FriendPersona = { name: 'Penny', emoji: '\u2B50' };
 
-function uid(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-/**
- * Consume an SSE stream, calling onToken for each chunk.
- * Returns an AbortController so the caller can cancel.
- */
-function consumeSSEStream(
-  response: Response,
-  onToken: (token: string) => void,
-  onDone: () => void,
-  onError: (err: string) => void,
-): AbortController {
-  const controller = new AbortController();
-  const reader = response.body?.getReader();
-  if (!reader) { onError('No response body'); return controller; }
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  const processChunk = (chunk: string): void => {
-    buffer += chunk;
-    const lines = buffer.split(/\r?\n/);
-    buffer = lines.pop() || '';
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith('data: ')) continue;
-      const payload = trimmed.slice(6);
-      if (payload === '[DONE]') { onDone(); return; }
-      try {
-        const parsed = JSON.parse(payload) as { token?: string; error?: string };
-        if (parsed.error) { onError(parsed.error); return; }
-        if (parsed.token) onToken(parsed.token);
-      } catch { /* ignore malformed JSON */ }
-    }
-  };
-
-  (async () => {
-    try {
-      while (!controller.signal.aborted) {
-        const result = await reader.read();
-        if (result.done) break;
-        processChunk(decoder.decode(result.value, { stream: true }));
-      }
-      onDone();
-    } catch (err) {
-      if (!controller.signal.aborted) onError(err instanceof Error ? err.message : 'Stream failed');
-    } finally { reader.releaseLock(); }
-  })();
-
-  return controller;
-}
-
 export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent }, ref) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -128,7 +64,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Preload DOMPurify on mount
-  useEffect(() => { loadDOMPurify(); }, []);
+  useEffect(() => { preloadDOMPurify(); }, []);
 
   // Memoize sanitized assistant messages to avoid re-sanitizing on every render
   const sanitizedMessages = useMemo(() => {
@@ -168,27 +104,21 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
   // Helper to send a message via SSE streaming with automatic retry
   const sendStreamMessage = useCallback(async (msg: string, retryCount = 0) => {
-    const assistantMsgId = uid();
+    const assistantMsgId = generateId();
     const MAX_RETRIES = 2;
 
     setMessages((prev) => [
       ...prev,
-      { id: uid(), role: 'user', content: msg, timestamp: Date.now() },
+      { id: generateId(), role: 'user', content: msg, timestamp: Date.now() },
       { id: assistantMsgId, role: 'assistant', content: '', timestamp: Date.now(), streaming: true },
     ]);
     setLoading(true);
     setConnecting(true);
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-
     const attemptStream = async (attempt: number): Promise<void> => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/agents/chat/stream`, {
+        const response = await authFetch(`${API_BASE_URL}/api/agents/chat/stream`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
           body: JSON.stringify({
             message: msg,
             context: {
@@ -310,7 +240,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         if (!cancelled && result.success && result.data) {
           const raw = result.data;
           if (Array.isArray(raw) && raw.length > 0) {
-            const history = raw.map((m) => ({ id: m.id || uid(), role: m.role, content: m.content, timestamp: m.timestamp || Date.now() }));
+            const history = raw.map((m) => ({ id: m.id || generateId(), role: m.role, content: m.content, timestamp: m.timestamp || Date.now() }));
             setMessages(history);
 
             // Add a contextual greeting after loading history
@@ -325,7 +255,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
               greetTimer = setTimeout(() => {
                 if (!cancelled) {
                   setMessages((prev) => [...prev, {
-                    id: uid(),
+                    id: generateId(),
                     role: 'assistant' as const,
                     content: greetings[Math.floor(Math.random() * greetings.length)],
                     timestamp: Date.now(),

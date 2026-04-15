@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api, API_BASE_URL } from '@/lib/api';
+import { authFetch } from '@/lib/auth-fetch';
 
 interface UserSettings {
   theme: string;
@@ -500,10 +501,8 @@ export default function SettingsPage() {
                       onClick={async () => {
                         if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
                         try {
-                          const token = localStorage.getItem('auth_token');
-                          const res = await fetch(`${API_BASE_URL}/api/auth/account`, {
+                          const res = await authFetch(`${API_BASE_URL}/api/auth/account`, {
                             method: 'DELETE',
-                            headers: { Authorization: `Bearer ${token}` },
                           });
                           if (res.ok) {
                             localStorage.removeItem('auth_token');

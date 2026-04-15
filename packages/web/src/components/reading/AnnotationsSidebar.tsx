@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
 import { useToast } from '@/components/Toast';
+import { getAuthToken } from '@/lib/auth-fetch';
 
 interface AnnotationsSidebarProps {
   annotations: Annotation[];
@@ -49,9 +50,8 @@ export function AnnotationsSidebar({
     try {
       setExporting(true);
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
       const res = await fetch(`${baseUrl}/api/annotations/export?bookId=${bookId}&format=${format}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
       if (!res.ok) { toast('Export failed. Please try again.', 'error'); return; }
       const blob = await res.blob();

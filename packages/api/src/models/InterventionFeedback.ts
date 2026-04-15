@@ -42,11 +42,13 @@ InterventionFeedback.init(
       type: DataTypes.UUID,
       allowNull: false,
       references: { model: 'users', key: 'id' },
+      onDelete: 'CASCADE',
     },
     bookId: {
       type: DataTypes.UUID,
       allowNull: true,
       references: { model: 'books', key: 'id' },
+      onDelete: 'SET NULL',
     },
     interventionType: {
       type: DataTypes.STRING(50),

@@ -101,6 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {/* Dark mode toggle */}
                   <button
                     onClick={() => {
+                      if (typeof window === 'undefined') return;
                       const isDark = document.documentElement.classList.toggle('dark');
                       localStorage.setItem('theme', isDark ? 'dark' : 'light');
                     }}

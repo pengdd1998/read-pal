@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+import { notFound } from '../utils/errors';
 import { Book, ReadingSession, Annotation } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { rateLimiter } from '../middleware/rateLimiter';
@@ -84,10 +85,7 @@ router.get('/book/:id', authenticate, rateLimiter({ windowMs: 60000, max: 30 }),
     });
 
     if (!book) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'BOOK_NOT_FOUND', message: 'Book not found' },
-      });
+      return notFound(res, 'Book');
     }
 
     const annotations = await Annotation.findAll({

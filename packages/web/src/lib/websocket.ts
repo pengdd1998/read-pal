@@ -9,6 +9,8 @@
  *  - Offline message queue flushed on reconnect
  */
 
+import { getAuthToken } from '@/lib/auth-fetch';
+
 type WebSocketMessage = {
   type: 'agent_start' | 'agent_complete' | 'token_start' | 'token' | 'error' | 'connected' | 'disconnected';
   agentName?: string;
@@ -168,7 +170,7 @@ class WebSocketClient {
       if (this.disposed) return;
 
       // Refresh token from storage before reconnecting
-      const freshToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const freshToken = getAuthToken();
       if (freshToken) {
         this.token = freshToken;
       }

@@ -10,6 +10,8 @@ import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
 import { etag } from '../middleware/cache';
+import { parsePagination } from '../utils/pagination';
+import { notFound } from '../utils/errors';
 
 const router: Router = Router();
 
@@ -22,9 +24,7 @@ type SortField = (typeof ALLOWED_SORT_FIELDS)[number];
 
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePagination(req);
 
     const rawSort = (req.query.sort as string) || 'addedAt';
     const sortField: SortField = (ALLOWED_SORT_FIELDS as readonly string[]).includes(rawSort)
@@ -104,10 +104,7 @@ router.put('/:id/tags', authenticate, async (req: AuthRequest, res) => {
     });
 
     if (!book) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'BOOK_NOT_FOUND', message: 'Book not found' },
-      });
+      return notFound(res, 'Book');
     }
 
     const { tags } = req.body;
@@ -151,13 +148,7 @@ router.get('/:id', authenticate, etag(30), async (req: AuthRequest, res) => {
     });
 
     if (!book) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'BOOK_NOT_FOUND',
-          message: 'Book not found',
-        },
-      });
+      return notFound(res, 'Book');
     }
 
     // Cache book detail for 5 minutes — rarely changes
@@ -240,13 +231,7 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
     });
 
     if (!book) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'BOOK_NOT_FOUND',
-          message: 'Book not found',
-        },
-      });
+      return notFound(res, 'Book');
     }
 
     const { currentPage, status, title, author, metadata } = req.body;
@@ -351,13 +336,7 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
     });
 
     if (!book) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'BOOK_NOT_FOUND',
-          message: 'Book not found',
-        },
-      });
+      return notFound(res, 'Book');
     }
 
     await book.destroy();

@@ -11,6 +11,8 @@ import { rateLimiter } from '../middleware/rateLimiter';
 import { etag } from '../middleware/cache';
 import { Op, QueryTypes } from 'sequelize';
 import { sequelize } from '../models';
+import { parsePagination } from '../utils/pagination';
+import { notFound } from '../utils/errors';
 
 const router: Router = Router();
 
@@ -37,9 +39,7 @@ function escapeMarkdown(text: string): string {
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
     const { bookId, type, tags } = req.query;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePagination(req, 50);
 
     const where: Record<string, unknown> = { userId: req.userId };
 
@@ -258,13 +258,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res) => {
     });
 
     if (!annotation) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'ANNOTATION_NOT_FOUND',
-          message: 'Annotation not found',
-        },
-      });
+      return notFound(res, 'Annotation');
     }
 
     res.json({
@@ -344,13 +338,7 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
     });
 
     if (!annotation) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'ANNOTATION_NOT_FOUND',
-          message: 'Annotation not found',
-        },
-      });
+      return notFound(res, 'Annotation');
     }
 
     const { content, note, color, tags } = req.body;
@@ -427,13 +415,7 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
     });
 
     if (!annotation) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'ANNOTATION_NOT_FOUND',
-          message: 'Annotation not found',
-        },
-      });
+      return notFound(res, 'Annotation');
     }
 
     await annotation.destroy();

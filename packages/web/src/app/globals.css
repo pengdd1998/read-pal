@@ -58,6 +58,8 @@
     background-color: var(--surface-0);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent iOS Safari pull-to-refresh rubber-band on non-scrollable pages */
+    overscroll-behavior: none;
   }
 
   /* Focus ring — warm amber */
@@ -87,6 +89,7 @@
     line-height: 1.85;
     font-size: 1.125rem;
     color: inherit;
+    -webkit-user-select: text;
     user-select: text;
     orphans: 3;
     widows: 3;
@@ -103,6 +106,7 @@
   .reading-mode p {
     margin-bottom: 1.35rem;
     text-align: justify;
+    -webkit-hyphens: auto;
     hyphens: auto;
     text-indent: 0;
   }
@@ -643,6 +647,21 @@
 /* ============================================================================
    Reduced Motion
    ============================================================================ */
+
+/* Fallback for browsers without backdrop-filter support (older Safari, Firefox < 103).
+   Without this, semi-transparent backgrounds with backdrop-blur become invisible. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+  }
+  .dark .backdrop-blur-sm,
+  .dark .backdrop-blur-md,
+  .dark .backdrop-blur-lg {
+    background-color: rgba(17, 24, 39, 0.95) !important;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

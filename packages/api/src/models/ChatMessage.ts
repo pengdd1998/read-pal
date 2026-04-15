@@ -37,10 +37,20 @@ ChatMessage.init(
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
     },
     bookId: {
       type: DataTypes.UUID,
       allowNull: false,
+      references: {
+        model: 'books',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
     },
     role: {
       type: DataTypes.STRING(10),

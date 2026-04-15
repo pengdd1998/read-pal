@@ -63,7 +63,6 @@ User.init(
     passwordHash: {
       type: DataTypes.STRING,
       allowNull: true,
-      field: 'password_hash',
     },
     avatar: {
       type: DataTypes.STRING,

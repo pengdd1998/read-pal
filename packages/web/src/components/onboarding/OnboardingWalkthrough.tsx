@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Check } from '@/components/icons';
+import { authFetch } from '@/lib/auth-fetch';
 
 const STORAGE_KEY = 'read-pal-onboarding-complete';
 
@@ -72,13 +73,8 @@ export function OnboardingWalkthrough() {
     // Save persona preference
     setSaving(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      await fetch('/api/settings', {
+      await authFetch('/api/settings', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({ friendPersona: selectedPersona }),
       });
     } catch {

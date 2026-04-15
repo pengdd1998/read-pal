@@ -6,6 +6,7 @@
 import EPub from 'epub';
 import pdf from 'pdf-parse';
 import { Document, Chapter } from '../models';
+import { decodeHTMLEntities } from '@read-pal/shared';
 
 export class BookProcessor {
   /**
@@ -131,13 +132,13 @@ export class BookProcessor {
     // Preserve code blocks — convert <pre><code> to indented text
     text = text.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, (_match, content: string) => {
       const inner = content.replace(/<code[^>]*>|<\/code>/gi, '').replace(/<br\s*\/?>/gi, '\n');
-      const decoded = this.decodeEntities(inner);
+      const decoded = decodeHTMLEntities(inner);
       return '\n' + decoded.split('\n').map((line: string) => '    ' + line).join('\n') + '\n';
     });
 
     // Preserve inline code
     text = text.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, (_match, content: string) => {
-      return '`' + this.decodeEntities(content) + '`';
+      return '`' + decodeHTMLEntities(content) + '`';
     });
 
     // Preserve tables — simple text rendering
@@ -211,20 +212,6 @@ export class BookProcessor {
     return sanitized;
   }
 
-  /**
-   * Decode common HTML entities
-   */
-  private decodeEntities(text: string): string {
-    return text
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&apos;/g, "'")
-      .replace(/&#x27;/g, "'")
-      .replace(/&nbsp;/g, ' ');
-  }
 
   /**
    * Save processed content to database

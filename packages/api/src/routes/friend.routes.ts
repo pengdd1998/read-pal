@@ -15,6 +15,7 @@ import { User } from '../models';
 import { FriendConversation, FriendRelationship } from '../models/FriendConversation';
 import { chatCompletionStream } from '../services/llmClient';
 import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
+import { parsePagination } from '../utils/pagination';
 
 const router: Router = Router();
 
@@ -436,10 +437,8 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
  */
 router.get('/history', authenticate, async (req: AuthRequest, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+    const { page, limit, offset } = parsePagination(req, 50);
     const persona = req.query.persona as ReadingFriendPersona | undefined;
-    const offset = (page - 1) * limit;
 
     const where: Record<string, unknown> = { userId: req.userId! };
     if (persona) {

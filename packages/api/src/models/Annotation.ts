@@ -58,6 +58,7 @@ Annotation.init(
         model: 'users',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     bookId: {
       type: DataTypes.UUID,
@@ -66,6 +67,7 @@ Annotation.init(
         model: 'books',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     type: {
       type: DataTypes.ENUM('highlight', 'note', 'bookmark'),

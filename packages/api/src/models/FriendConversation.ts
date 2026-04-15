@@ -47,6 +47,11 @@ FriendConversation.init(
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
     },
     persona: {
       type: DataTypes.STRING(20),
@@ -135,6 +140,11 @@ FriendRelationship.init(
       type: DataTypes.UUID,
       allowNull: false,
       unique: true,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
     },
     persona: {
       type: DataTypes.STRING(20),

@@ -9,6 +9,8 @@ import { Router } from 'express';
 import { MemoryBook, Book } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { memoryBookService } from '../services/MemoryBookService';
+import { parsePagination } from '../utils/pagination';
+import { notFound } from '../utils/errors';
 
 const router: Router = Router();
 
@@ -18,9 +20,7 @@ const router: Router = Router();
  */
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePagination(req, 50);
 
     const { rows: memoryBooks, count: total } = await memoryBookService.listMemoryBooks(req.userId!, { limit, offset });
 
@@ -58,13 +58,7 @@ router.get('/:bookId', authenticate, async (req: AuthRequest, res) => {
     );
 
     if (!memoryBook) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'MEMORY_BOOK_NOT_FOUND',
-          message: 'Memory book not found',
-        },
-      });
+      return notFound(res, 'Memory book');
     }
 
     res.json({
@@ -104,13 +98,7 @@ router.post('/:bookId/generate', authenticate, async (req: AuthRequest, res) => 
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
     if (msg === 'Book not found') {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'BOOK_NOT_FOUND',
-          message: 'Book not found',
-        },
-      });
+      return notFound(res, 'Book');
     }
 
     console.error('Error generating memory book:', error);
@@ -136,13 +124,7 @@ router.delete('/:bookId', authenticate, async (req: AuthRequest, res) => {
     );
 
     if (!deleted) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'MEMORY_BOOK_NOT_FOUND',
-          message: 'Memory book not found',
-        },
-      });
+      return notFound(res, 'Memory book');
     }
 
     res.json({

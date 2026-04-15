@@ -22,6 +22,9 @@ export const sequelize = new Sequelize({
     idle: 10000,    // 10s before idle connection is released
   },
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  define: {
+    underscored: true, // camelCase model attrs → snake_case DB columns
+  },
 });
 
 // Neo4j

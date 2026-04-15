@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { authFetch } from '@/lib/auth-fetch';
 import { api } from '@/lib/api';
 
 interface BookData {
@@ -240,10 +241,7 @@ export default function BookDetailPage() {
           <button
             onClick={async () => {
               try {
-                const token = localStorage.getItem('auth_token');
-                const res = await fetch(`/api/annotations/export?bookId=${bookId}&format=markdown`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                });
+                const res = await authFetch(`/api/annotations/export?bookId=${bookId}&format=markdown`);
                 const text = await res.text();
                 const blob = new Blob([text], { type: 'text/markdown' });
                 const url = URL.createObjectURL(blob);
@@ -264,10 +262,7 @@ export default function BookDetailPage() {
           <button
             onClick={async () => {
               try {
-                const token = localStorage.getItem('auth_token');
-                const res = await fetch(`/api/annotations/export?bookId=${bookId}&format=json`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                });
+                const res = await authFetch(`/api/annotations/export?bookId=${bookId}&format=json`);
                 const text = await res.text();
                 const blob = new Blob([text], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);

@@ -16,12 +16,10 @@ build/
 out/
 .turbo/
 
-# Environment variables
+# Environment variables — ALL .env files except examples
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # Logs
 logs/
@@ -53,8 +51,9 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
-# Debug
+# Debug & build artifacts
 *.tsbuildinfo
+*.d.ts.map
 
 # Temporary files
 tmp/
@@ -65,20 +64,19 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
+*.sqlite-shm
+*.sqlite-wal
+*.sql
+*.dump
 
 # Cache
 .cache/
 .parcel-cache/
 .eslintcache
 .stylelintcache
-
-# Optional npm cache directory
 .npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
 .node_repl_history
 
 # Output of 'npm pack'
@@ -87,21 +85,51 @@ temp/
 # Yarn Integrity
 .yarn-integrity
 
-# dotenv environment variable files
-.env.development.local
-.env.test.local
-.env.production.local
-
-# vercel
+# Vercel
 .vercel
 
-# typescript
-*.tsbuildinfo
+# Docker
+docker-compose.override.yml
 
-# Claude Code - personal overrides (not committed)
+# Local development
+.local/
+local/
+
+# Secrets and credentials
+*.key
+*.pem
+*.cert
+credentials.json
+credentials.*
+secrets/
+.secrets
+private/
+
+# Backup files
+*.bak
+*.backup
+*.local.*
+
+# Session data
+sessions/
+session/
+*.session
+
+# Personal notes
+notes/
+NOTES.md
+todo.md
+TODO.md
+
+# User uploads (if storing locally)
+uploads/
+user-files/
+
+# Claude Code - configuration and agents
+.claude/
 CLAUDE.local.md
-.claude/settings.local.json
-.claude/memory/
+CLAUDE.md
+setup-github.sh
 
 # Playwright
 .playwright-mcp/
@@ -111,96 +139,12 @@ test-results/
 # AWS
 .aws-sam/
 
-# Docker
-docker-compose.override.yml
-
-# Local development
-.local/
-local/
-
-# Build artifacts
-*.tsbuildinfo
-*.d.ts.map
-
-# Environment secrets
-*.key
-*.pem
-*.cert
-credentials.json
-
-# User uploads (if storing locally)
-uploads/
-user-files/
-
-# Database dumps
-*.sql
-*.dump
-
-# Backup files
-*.bak
-*.backup
-
-# Claude Code - configuration and agents
-.claude/
-CLAUDE.local.md
-setup-github.sh
-# Claude Code - project instructions
-CLAUDE.md
-CLAUDE.local.md
-
-# Protect this .gitignore file itself from being tracked
-.gitignore
-
-# Private information and sensitive data
-*.key
-*.pem
-*.cert
-credentials.json
-credentials.*
-secrets/
-.secrets
-private/
-*.env.local
-*.env.production
-*.env.staging
-*.env.development.local
-
-# Personal notes
-notes/
-NOTES.md
-todo.md
-TODO.md
-
-# Local database files
-*.db-shm
-*.db-wal
-*.sqlite-shm
-*.sqlite-wal
-
-# IDE specific workspace settings
-.vscode/settings.json
-.idea/workspace.xml
-*.sublime-workspace
-
-# Backup files with sensitive data
-*.backup
-*.bak
-*.local.*
-
-# Logs with potential sensitive info
-logs/*.log
-*.log.*
-
-# Session data
-sessions/
-session/
-*.session
-
-# Cache with potential sensitive data
-.cache/*.cache
-
 # Agent daemon — stays local, not for public repo
 packages/agent-daemon/
+
+# Local review / audit docs with potentially sensitive content
+docs/*review*
+docs/*audit*
 
 # Agent configs and reports — stays local
 .agents/

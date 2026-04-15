@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface QuoteCardProps {
   text: string;
@@ -226,12 +227,10 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
 
   const handleCopy = useCallback(async () => {
     const formatted = `\u201C${text}\u201D\n\u2014 ${author}, ${bookTitle}`;
-    try {
-      await navigator.clipboard.writeText(formatted);
+    const ok = await copyToClipboard(formatted);
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback
     }
   }, [text, author, bookTitle]);
 

@@ -7,6 +7,8 @@ import { body } from 'express-validator';
 import { ReadingSession, Book } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { parsePagination } from '../utils/pagination';
+import { notFound } from '../utils/errors';
 
 const router: Router = Router();
 
@@ -27,13 +29,7 @@ router.post(
       // Verify book belongs to user
       const book = await Book.findOne({ where: { id: bookId, userId: req.userId } });
       if (!book) {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: 'BOOK_NOT_FOUND',
-            message: 'Book not found',
-          },
-        });
+        return notFound(res, 'Book');
       }
 
       // End any active sessions for this user
@@ -85,13 +81,7 @@ router.post('/:id/end', authenticate, async (req: AuthRequest, res) => {
     });
 
     if (!session) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'SESSION_NOT_FOUND',
-          message: 'Active session not found',
-        },
-      });
+      return notFound(res, 'Active session');
     }
 
     const endedAt = new Date();
@@ -146,13 +136,7 @@ router.patch('/:id/heartbeat', authenticate, async (req: AuthRequest, res) => {
     });
 
     if (!session) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'SESSION_NOT_FOUND',
-          message: 'Active session not found',
-        },
-      });
+      return notFound(res, 'Active session');
     }
 
     const currentDuration = Math.round(
@@ -198,9 +182,7 @@ router.patch('/:id/heartbeat', authenticate, async (req: AuthRequest, res) => {
  */
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePagination(req);
 
     const { rows: sessions, count: total } = await ReadingSession.findAndCountAll({
       where: { userId: req.userId },

@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+import { notFound } from '../utils/errors';
 import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -232,13 +233,7 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
     const user = await User.findByPk(req.userId);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: 'User not found',
-        },
-      });
+      return notFound(res, 'User');
     }
 
     res.json({
@@ -273,13 +268,7 @@ router.patch('/me', authenticate, async (req: AuthRequest, res) => {
     const user = await User.findByPk(req.userId);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: 'User not found',
-        },
-      });
+      return notFound(res, 'User');
     }
 
     const { name, avatar, settings } = req.body;

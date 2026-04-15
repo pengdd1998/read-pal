@@ -4,6 +4,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
 import { renderSimpleMarkdown } from '@/lib/markdown';
+import { consumeSSEStream } from '@/lib/sse';
+import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
+import { generateId } from '@read-pal/shared';
+import { authFetch } from '@/lib/auth-fetch';
 
 type AgentType = 'companion' | 'research' | 'coach' | 'synthesis';
 
@@ -45,96 +49,6 @@ const SUGGESTIONS: Record<AgentType, string[]> = {
   ],
 };
 
-/** DOMPurify loaded on demand — keeps it out of the initial bundle for non-chat pages */
-let _dp: typeof import('dompurify').default | null = null;
-async function safeSanitize(html: string): Promise<string> {
-  if (!_dp) { const m = await import('dompurify'); _dp = m.default; }
-  return _dp.sanitize(html);
-}
-/** Sync wrapper using cached DOMPurify, with HTML fallback */
-function sanitizeSync(html: string): string {
-  if (_dp) return _dp.sanitize(html);
-  return html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-}
-
-function uid(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-/**
- * Consume an SSE stream from the backend, calling `onToken` for each token
- * chunk and `onDone` when the stream completes. Returns an AbortController
- * so the caller can cancel.
- */
-function consumeSSEStream(
-  response: Response,
-  onToken: (token: string) => void,
-  onDone: () => void,
-  onError: (err: string) => void,
-): AbortController {
-  const controller = new AbortController();
-  const reader = response.body?.getReader();
-
-  if (!reader) {
-    onError('No response body');
-    return controller;
-  }
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  const processChunk = (chunk: string): void => {
-    buffer += chunk;
-    const lines = buffer.split(/\r?\n/);
-    // Keep the last (potentially incomplete) line in the buffer
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith('data: ')) continue;
-
-      const payload = trimmed.slice(6); // strip "data: "
-      if (payload === '[DONE]') {
-        onDone();
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(payload) as { token?: string; error?: string };
-        if (parsed.error) {
-          onError(parsed.error);
-          return;
-        }
-        if (parsed.token) {
-          onToken(parsed.token);
-        }
-      } catch {
-        // Ignore malformed JSON lines
-      }
-    }
-  };
-
-  (async () => {
-    try {
-      while (!controller.signal.aborted) {
-        const result = await reader.read();
-        if (result.done) break;
-        processChunk(decoder.decode(result.value, { stream: true }));
-      }
-      // If stream ended without [DONE], still finalize
-      onDone();
-    } catch (err) {
-      if (!controller.signal.aborted) {
-        onError(err instanceof Error ? err.message : 'Stream read failed');
-      }
-    } finally {
-      reader.releaseLock();
-    }
-  })();
-
-  return controller;
-}
-
 export default function ChatPage() {
   const [selectedAgent, setSelectedAgent] = useState<AgentType>('companion');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -148,8 +62,8 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Preload DOMPurify on mount so sanitizeSync works immediately
-  useEffect(() => { if (!_dp) import('dompurify').then((m) => { _dp = m.default; }); }, []);
+  // Preload DOMPurify on mount so purifySync works immediately
+  useEffect(() => { preloadDOMPurify(); }, []);
 
   // Abort any in-flight stream when the component unmounts
   useEffect(() => {
@@ -176,8 +90,8 @@ export default function ChatPage() {
     setLoading(true);
     setConnecting(true);
 
-    const userMsgId = uid();
-    const assistantMsgId = uid();
+    const userMsgId = generateId();
+    const assistantMsgId = generateId();
 
     setMessages((prev) => [
       ...prev,
@@ -190,14 +104,8 @@ export default function ChatPage() {
     const body = { message, agent: selectedAgent };
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-
-      const response = await fetch(endpoint, {
+      const response = await authFetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify(body),
       });
 
@@ -389,7 +297,7 @@ export default function ChatPage() {
                   {msg.role === 'assistant' ? (
                     <div
                       className="text-sm prose-sm prose-p:my-1 prose-pre:my-1"
-                      dangerouslySetInnerHTML={{ __html: sanitizeSync(renderSimpleMarkdown(msg.content)) }}
+                      dangerouslySetInnerHTML={{ __html: purifySync(renderSimpleMarkdown(msg.content)) }}
                     />
                   ) : (
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>

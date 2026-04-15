@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface ReadingCardData {
   user: { name: string };
@@ -49,12 +50,10 @@ export function ShareReadingCard() {
     : '';
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(shareText);
+    const ok = await copyToClipboard(shareText);
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback: select text
     }
   };
 

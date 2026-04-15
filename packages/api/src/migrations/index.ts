@@ -10,6 +10,7 @@ import { registerMigration, runMigrations, rollbackMigration, getMigrationStatus
 // Import migration definitions
 import * as m001 from './001_initial_schema';
 import * as m002 from './002_performance_indexes';
+import * as m003 from './003_missing_tables';
 
 // Register migrations in order
 registerMigration({
@@ -22,6 +23,12 @@ registerMigration({
   id: '002_performance_indexes',
   up: m002.up,
   down: m002.down,
+});
+
+registerMigration({
+  id: '003_missing_tables',
+  up: m003.up,
+  down: m003.down,
 });
 
 // Re-export migration functions

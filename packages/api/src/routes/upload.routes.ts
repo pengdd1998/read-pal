@@ -3,6 +3,7 @@
  */
 
 import { Router } from 'express';
+import { notFound } from '../utils/errors';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
@@ -248,13 +249,7 @@ router.get('/books/:bookId/content', authenticate, async (req: AuthRequest, res)
     });
 
     if (!book) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'BOOK_NOT_FOUND',
-          message: 'Book not found',
-        },
-      });
+      return notFound(res, 'Book');
     }
 
     // Get document
@@ -263,13 +258,7 @@ router.get('/books/:bookId/content', authenticate, async (req: AuthRequest, res)
     });
 
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'CONTENT_NOT_FOUND',
-          message: 'Book content not found',
-        },
-      });
+      return notFound(res, 'Book content');
     }
 
     // Content never changes after upload — cache for 1 hour

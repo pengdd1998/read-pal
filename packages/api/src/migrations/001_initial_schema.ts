@@ -1,18 +1,20 @@
 /**
  * Migration 001: Initial Database Schema
  *
- * Creates all tables for read-pal:
+ * Creates core tables for read-pal:
  * - users
  * - books
- * - documents (chapters)
+ * - documents (parsed book content)
  * - annotations
  * - reading_sessions
+ *
+ * Column names use snake_case (matching Sequelize `underscored: true`).
  */
 
 import { QueryInterface, DataTypes } from 'sequelize';
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
-  // Users table
+  // ── Users ──────────────────────────────────────────────────────────────────
   await queryInterface.createTable('users', {
     id: {
       type: DataTypes.UUID,
@@ -20,25 +22,32 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
       primaryKey: true,
     },
     email: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
       unique: true,
     },
     name: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
     },
     password_hash: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: true,
     },
-    avatar_url: {
-      type: DataTypes.TEXT,
+    avatar: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
-    reading_preferences: {
+    settings: {
       type: DataTypes.JSONB,
-      allowNull: true,
+      allowNull: false,
+      defaultValue: {
+        theme: 'system',
+        fontSize: 16,
+        fontFamily: 'Inter',
+        readingGoal: 2,
+        notificationsEnabled: true,
+      },
     },
     created_at: {
       type: DataTypes.DATE,
@@ -57,7 +66,7 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     unique: true,
   });
 
-  // Books table
+  // ── Books ──────────────────────────────────────────────────────────────────
   await queryInterface.createTable('books', {
     id: {
       type: DataTypes.UUID,
@@ -67,54 +76,73 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     user_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
+      references: { model: 'users', key: 'id' },
       onDelete: 'CASCADE',
     },
     title: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.STRING,
       allowNull: false,
     },
     author: {
-      type: DataTypes.STRING(500),
-      allowNull: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
-    file_path: {
-      type: DataTypes.TEXT,
+    cover_url: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
     file_type: {
       type: DataTypes.ENUM('epub', 'pdf'),
-      allowNull: true,
+      allowNull: false,
     },
-    cover_url: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
+    file_size: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
     },
     total_pages: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
+      defaultValue: 0,
     },
     current_page: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    progress: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: false,
       defaultValue: 0,
     },
     status: {
       type: DataTypes.ENUM('unread', 'reading', 'completed'),
+      allowNull: false,
       defaultValue: 'unread',
     },
-    metadata: {
-      type: DataTypes.JSONB,
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+      defaultValue: [],
+    },
+    added_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    started_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    completed_at: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
     last_read_at: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    metadata: {
+      type: DataTypes.JSONB,
       allowNull: true,
     },
     created_at: {
@@ -131,8 +159,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
 
   await queryInterface.addIndex('books', ['user_id'], { name: 'books_user_id_idx' });
   await queryInterface.addIndex('books', ['status'], { name: 'books_status_idx' });
+  await queryInterface.addIndex('books', ['file_type'], { name: 'books_file_type_idx' });
+  await queryInterface.addIndex('books', ['user_id', 'status'], { name: 'books_user_status_idx' });
+  await queryInterface.addIndex('books', ['tags'], { name: 'books_tags_gin', using: 'GIN' });
 
-  // Documents table (book content/chapters)
+  // ── Documents (parsed book content) ────────────────────────────────────────
   await queryInterface.createTable('documents', {
     id: {
       type: DataTypes.UUID,
@@ -142,31 +173,23 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     book_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: {
-        model: 'books',
-        key: 'id',
-      },
+      references: { model: 'books', key: 'id' },
       onDelete: 'CASCADE',
     },
-    chapter_index: {
-      type: DataTypes.INTEGER,
+    user_id: {
+      type: DataTypes.UUID,
       allowNull: false,
-    },
-    title: {
-      type: DataTypes.STRING(500),
-      allowNull: true,
+      references: { model: 'users', key: 'id' },
+      onDelete: 'CASCADE',
     },
     content: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    word_count: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    metadata: {
+    chapters: {
       type: DataTypes.JSONB,
-      allowNull: true,
+      allowNull: false,
+      defaultValue: [],
     },
     created_at: {
       type: DataTypes.DATE,
@@ -181,8 +204,9 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   });
 
   await queryInterface.addIndex('documents', ['book_id'], { name: 'documents_book_id_idx' });
+  await queryInterface.addIndex('documents', ['user_id'], { name: 'documents_user_id_idx' });
 
-  // Annotations table
+  // ── Annotations ────────────────────────────────────────────────────────────
   await queryInterface.createTable('annotations', {
     id: {
       type: DataTypes.UUID,
@@ -192,51 +216,37 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     user_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
+      references: { model: 'users', key: 'id' },
       onDelete: 'CASCADE',
     },
     book_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: {
-        model: 'books',
-        key: 'id',
-      },
+      references: { model: 'books', key: 'id' },
       onDelete: 'CASCADE',
     },
     type: {
       type: DataTypes.ENUM('highlight', 'note', 'bookmark'),
       allowNull: false,
     },
-    content: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    selected_text: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    color: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-    },
     location: {
       type: DataTypes.JSONB,
+      allowNull: false,
+    },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    color: {
+      type: DataTypes.STRING(7),
+      allowNull: true,
+    },
+    note: {
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     tags: {
       type: DataTypes.ARRAY(DataTypes.STRING),
-      defaultValue: [],
-    },
-    chapter_index: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    page_number: {
-      type: DataTypes.INTEGER,
       allowNull: true,
     },
     created_at: {
@@ -254,8 +264,9 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('annotations', ['user_id'], { name: 'annotations_user_id_idx' });
   await queryInterface.addIndex('annotations', ['book_id'], { name: 'annotations_book_id_idx' });
   await queryInterface.addIndex('annotations', ['type'], { name: 'annotations_type_idx' });
+  await queryInterface.addIndex('annotations', ['tags'], { name: 'annotations_tags_gin', using: 'GIN' });
 
-  // Reading Sessions table
+  // ── Reading Sessions ───────────────────────────────────────────────────────
   await queryInterface.createTable('reading_sessions', {
     id: {
       type: DataTypes.UUID,
@@ -265,40 +276,14 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     user_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
+      references: { model: 'users', key: 'id' },
       onDelete: 'CASCADE',
     },
     book_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: {
-        model: 'books',
-        key: 'id',
-      },
+      references: { model: 'books', key: 'id' },
       onDelete: 'CASCADE',
-    },
-    start_page: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    end_page: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    duration_seconds: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    words_read: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    notes: {
-      type: DataTypes.TEXT,
-      allowNull: true,
     },
     started_at: {
       type: DataTypes.DATE,
@@ -308,6 +293,31 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
     ended_at: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    duration: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    pages_read: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    highlights: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    notes: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     created_at: {
       type: DataTypes.DATE,
@@ -324,6 +334,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('reading_sessions', ['user_id'], { name: 'reading_sessions_user_id_idx' });
   await queryInterface.addIndex('reading_sessions', ['book_id'], { name: 'reading_sessions_book_id_idx' });
   await queryInterface.addIndex('reading_sessions', ['started_at'], { name: 'reading_sessions_started_at_idx' });
+  await queryInterface.addIndex('reading_sessions', ['user_id', 'is_active'], { name: 'reading_sessions_user_active_idx' });
+  await queryInterface.addIndex('reading_sessions', ['user_id', 'book_id'], { name: 'reading_sessions_user_book_idx' });
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

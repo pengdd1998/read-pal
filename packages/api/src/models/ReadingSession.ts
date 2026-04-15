@@ -51,6 +51,7 @@ ReadingSession.init(
         model: 'users',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     bookId: {
       type: DataTypes.UUID,
@@ -59,6 +60,7 @@ ReadingSession.init(
         model: 'books',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     startedAt: {
       type: DataTypes.DATE,

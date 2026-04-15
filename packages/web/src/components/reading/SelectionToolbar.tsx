@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';
 import { QuoteCard } from './QuoteCard';
+import { copyToClipboard } from '@/lib/clipboard';
 
 const QUICK_TAGS = [
   { id: 'discuss', label: 'Discuss', emoji: '\u{1F4AC}' },
@@ -62,15 +63,13 @@ export function SelectionToolbar({
   );
 
   const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(text);
+    const ok = await copyToClipboard(text);
+    if (ok) {
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
         onDismiss();
       }, 1200);
-    } catch {
-      // Fallback or ignore
     }
   }, [text, onDismiss]);
 

@@ -63,6 +63,7 @@ Book.init(
         model: 'users',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     title: {
       type: DataTypes.STRING,

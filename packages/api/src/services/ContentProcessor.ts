@@ -9,6 +9,7 @@
 import EPub from 'epub';
 import pdf from 'pdf-parse';
 import { createHash } from 'crypto';
+import { decodeHTMLEntities } from '@read-pal/shared';
 
 // ============================================================================
 // Types
@@ -424,19 +425,15 @@ export class ContentProcessor {
   // ============================================================================
 
   private cleanHTML(html: string): string {
-    return html
-      .replace(/<script[^>]*>.*?<\/script>/gis, '')
-      .replace(/<style[^>]*>.*?<\/style>/gis, '')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n\n')
-      .replace(/<\/h[1-6]>/gi, '\n\n')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#\d+;/g, '')
+    return decodeHTMLEntities(
+      html
+        .replace(/<script[^>]*>.*?<\/script>/gis, '')
+        .replace(/<style[^>]*>.*?<\/style>/gis, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<[^>]+>/g, ''),
+    )
       .replace(/\s+/g, ' ')
       .trim();
   }

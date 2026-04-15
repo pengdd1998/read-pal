@@ -2,21 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, type RefObject } from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle } from '@/components/icons';
-
-// Lazy-load DOMPurify — keeps it out of the initial bundle (~40KB saving)
-let _domPurify: typeof import('dompurify').default | null = null;
-async function loadDOMPurify(): Promise<typeof import('dompurify').default> {
-  if (!_domPurify) {
-    const m = await import('dompurify');
-    _domPurify = m.default;
-  }
-  return _domPurify;
-}
-function purifySync(html: string, config: Record<string, unknown>): string {
-  if (_domPurify) return _domPurify.sanitize(html, config);
-  // Fallback: strip <script> tags only (no full sanitization until DOMPurify loads)
-  return html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-}
+import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
 
 // DOMPurify configuration that preserves technical formatting tags
 const PURIFY_CONFIG = {
@@ -94,7 +80,7 @@ export function ReaderView({
   const chapterMenuRef = useRef<HTMLDivElement>(null);
 
   // Preload DOMPurify on mount so purifySync works immediately after
-  useEffect(() => { loadDOMPurify(); }, []);
+  useEffect(() => { preloadDOMPurify(); }, []);
 
   // Memoize sanitized content to avoid re-sanitizing on every render
   // Uses purifySync which falls back to script-stripping if DOMPurify hasn't loaded yet
@@ -324,7 +310,7 @@ export function ReaderView({
       <div
         ref={containerRef}
         className="flex-1 overflow-y-auto min-h-0"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        style={{ overscrollBehavior: 'contain' } as React.CSSProperties}
         onScroll={updateScrollProgress}
       >
         <article
@@ -454,7 +440,7 @@ export function ReaderView({
                         ? 'bg-[#f5f0e6] border-amber-300/60'
                         : 'bg-white border-amber-200/60'
                   }`}
-                  style={{ WebkitOverflowScrolling: 'touch' }}
+                  style={{ overscrollBehavior: 'contain' } as React.CSSProperties}
                 >
                   {/* Header */}
                   <div className={`sticky top-0 px-3 py-2 text-xs font-semibold uppercase tracking-wider border-b ${

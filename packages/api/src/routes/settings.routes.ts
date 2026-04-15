@@ -6,6 +6,7 @@
  */
 
 import { Router } from 'express';
+import { notFound } from '../utils/errors';
 import { Op } from 'sequelize';
 import { User, Book, ReadingSession } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
@@ -41,10 +42,7 @@ router.get('/', authenticate, etag(60), async (req: AuthRequest, res) => {
   try {
     const user = await User.findByPk(req.userId);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'USER_NOT_FOUND', message: 'User not found' },
-      });
+      return notFound(res, 'User');
     }
 
     const userSettings =
@@ -77,10 +75,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
   try {
     const user = await User.findByPk(req.userId);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'USER_NOT_FOUND', message: 'User not found' },
-      });
+      return notFound(res, 'User');
     }
 
     const allowedFields = [

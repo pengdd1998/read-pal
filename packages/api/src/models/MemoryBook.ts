@@ -94,6 +94,7 @@ MemoryBook.init(
         model: 'users',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     bookId: {
       type: DataTypes.UUID,
@@ -102,6 +103,7 @@ MemoryBook.init(
         model: 'books',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     title: {
       type: DataTypes.STRING,

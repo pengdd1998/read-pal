@@ -51,6 +51,7 @@ Document.init(
         model: 'books',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     userId: {
       type: DataTypes.UUID,
@@ -59,6 +60,7 @@ Document.init(
         model: 'users',
         key: 'id',
       },
+      onDelete: 'CASCADE',
     },
     content: {
       type: DataTypes.TEXT,

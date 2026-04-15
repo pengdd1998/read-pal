@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { getAuthToken } from '@/lib/auth-fetch';
 
 interface SyncResult {
   succeeded: number;
@@ -55,7 +56,7 @@ export function NetworkStatus() {
 
       for (const item of items) {
         try {
-          const token = localStorage.getItem('auth_token');
+          const token = getAuthToken();
           const headers = { ...item.headers };
           if (token) headers['Authorization'] = `Bearer ${token}`;
 

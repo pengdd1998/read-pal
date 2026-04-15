@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { api, API_BASE_URL } from '@/lib/api';
+import { consumeSSEStream } from '@/lib/sse';
+import { generateId } from '@read-pal/shared';
+import { authFetch } from '@/lib/auth-fetch';
 
 interface FriendSettings {
   friendPersona: string;
@@ -30,54 +33,6 @@ const QUICK_PROMPTS = [
   'Help me get back into reading',
   'What connections did you find in my books?',
 ];
-
-function uid(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function consumeSSEStream(
-  response: Response,
-  onToken: (token: string) => void,
-  onDone: () => void,
-  onError: (err: string) => void,
-): AbortController {
-  const controller = new AbortController();
-  const reader = response.body?.getReader();
-  if (!reader) { onError('No response body'); return controller; }
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  const processChunk = (chunk: string) => {
-    buffer += chunk;
-    const lines = buffer.split(/\r?\n/);
-    buffer = lines.pop() || '';
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith('data: ')) continue;
-      const payload = trimmed.slice(6);
-      if (payload === '[DONE]') { onDone(); return; }
-      try {
-        const parsed = JSON.parse(payload) as { token?: string; error?: string };
-        if (parsed.error) { onError(parsed.error); return; }
-        if (parsed.token) onToken(parsed.token);
-      } catch { /* skip */ }
-    }
-  };
-
-  (async () => {
-    try {
-      while (!controller.signal.aborted) {
-        const result = await reader.read();
-        if (result.done) break;
-        processChunk(decoder.decode(result.value, { stream: true }));
-      }
-      onDone();
-    } catch { onDone(); }
-  })();
-
-  return controller;
-}
 
 export default function FriendPage() {
   const [settings, setSettings] = useState<FriendSettings | null>(null);
@@ -121,18 +76,13 @@ export default function FriendPage() {
     setInput('');
     setSending(true);
 
-    const userMsg: ChatMessage = { id: uid(), role: 'user', content: msg };
-    const assistantId = uid();
+    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: msg };
+    const assistantId = generateId();
     setMessages((prev) => [...prev, userMsg, { id: assistantId, role: 'assistant', content: '', streaming: true }]);
 
     try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch(`${API_BASE_URL}/api/friend/chat/stream`, {
+      const res = await authFetch(`${API_BASE_URL}/api/friend/chat/stream`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({ message: msg }),
       });
 

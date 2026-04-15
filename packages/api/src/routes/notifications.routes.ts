@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+import { notFound } from '../utils/errors';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import {
   getUserNotifications,
@@ -63,10 +64,7 @@ router.patch('/:id/read', authenticate, async (req: AuthRequest, res) => {
   try {
     const found = markNotificationRead(req.userId!, req.params.id);
     if (!found) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Notification not found' },
-      });
+      return notFound(res, 'Notification');
     }
     res.json({ success: true });
   } catch (error) {
