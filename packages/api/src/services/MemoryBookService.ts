@@ -9,20 +9,22 @@
  * reading data and produce a narrative that feels like a cherished memento.
  */
 
-import { Annotation, Book, MemoryBook, ReadingSession } from '../models';
+import { Annotation, Book, MemoryBook, ReadingSession, ChatMessage } from '../models';
 import type {
   MemoryBookInsight,
   MemoryBookMoment,
   MemoryBookStats,
 } from '../models/MemoryBook';
 import { chatCompletion } from './llmClient';
+import { PersonalBookEnricher } from './PersonalBookEnricher';
+import { renderPersonalBook } from './PersonalBookRenderer';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface GenerateOptions {
-  format?: 'scrapbook' | 'journal' | 'timeline' | 'podcast';
+  format?: 'scrapbook' | 'journal' | 'timeline' | 'podcast' | 'personal_book';
 }
 
 interface AgentConversationMessage {
@@ -38,9 +40,11 @@ interface AgentConversationMessage {
 
 export class MemoryBookService {
   private llmAvailable: boolean;
+  private enricher: PersonalBookEnricher;
 
   constructor() {
     this.llmAvailable = !!process.env.GLM_API_KEY;
+    this.enricher = new PersonalBookEnricher();
   }
 
   // -----------------------------------------------------------------------
@@ -61,6 +65,13 @@ export class MemoryBookService {
     userId: string,
     options: GenerateOptions = {},
   ): Promise<MemoryBook> {
+    const format = options.format ?? 'scrapbook';
+
+    // Personal Book has its own pipeline
+    if (format === 'personal_book') {
+      return this.generatePersonalBook(bookId, userId);
+    }
+
     // 1–3. Fetch book, annotations, and sessions in parallel
     // Safety cap: limit annotations/sessions to prevent unbounded fetches
     const MAX_ANNOTATIONS = 5000;
@@ -98,7 +109,7 @@ export class MemoryBookService {
     );
 
     // 7. Upsert the MemoryBook record
-    const format = options.format ?? 'scrapbook';
+    const memFormat = options.format ?? 'scrapbook';
 
     const [memoryBook] = await MemoryBook.upsert(
       {
@@ -106,10 +117,106 @@ export class MemoryBookService {
         userId,
         bookId,
         title: title ?? `Memory Book: ${book.title}`,
-        format,
+        format: memFormat,
         moments,
         insights,
         stats,
+        sections: [],
+        htmlContent: null,
+        generatedAt: new Date(),
+      },
+      { returning: true },
+    );
+
+    return memoryBook;
+  }
+
+  /**
+   * Generate a Personal Reading Book — the enriched, book-like document.
+   *
+   * Pipeline: collect data → enrich via 3 AI calls → render HTML → store.
+   */
+  private async generatePersonalBook(
+    bookId: string,
+    userId: string,
+  ): Promise<MemoryBook> {
+    // 1. Fetch all raw data in parallel
+    const [book, annotations, sessions, chatMsgs, otherBooks] = await Promise.all([
+      Book.findOne({ where: { id: bookId, userId } }),
+      Annotation.findAll({
+        where: { bookId, userId },
+        order: [['createdAt', 'ASC']],
+        limit: 5000,
+      }),
+      ReadingSession.findAll({
+        where: { bookId, userId },
+        order: [['startedAt', 'ASC']],
+        limit: 1000,
+      }),
+      ChatMessage.findAll({
+        where: { bookId, userId },
+        order: [['createdAt', 'ASC']],
+        limit: 2000,
+      }),
+      Book.findAll({
+        where: { userId, id: { [require('sequelize').Op.ne]: bookId } },
+        attributes: ['title', 'author'],
+        limit: 50,
+      }),
+    ]);
+
+    if (!book) {
+      throw new Error('Book not found');
+    }
+
+    // 2. Also try Redis conversations (merge with DB chat messages)
+    const redisMsgs = await this.fetchAgentConversations(bookId, userId);
+    const allChatMessages = [
+      ...chatMsgs.map((m) => ({ role: m.role, content: m.content, timestamp: m.createdAt })),
+      ...redisMsgs.map((m) => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
+    ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    // 3. Enrich via AI
+    const enriched = await this.enricher.enrich(
+      book,
+      annotations,
+      sessions,
+      allChatMessages,
+      otherBooks.map((b) => ({ title: b.title, author: b.author || '' })),
+    );
+
+    // 4. Render HTML
+    const readerName = ''; // TODO: look up from User model if needed
+    const { html, sections } = renderPersonalBook(
+      book.title,
+      book.author || '',
+      book.coverUrl || null,
+      readerName,
+      enriched,
+    );
+
+    // 5. Compute stats
+    const stats = this.computeStats(annotations, sessions);
+
+    // 6. Upsert
+    const [memoryBook] = await MemoryBook.upsert(
+      {
+        id: await this.getExistingId(bookId, userId),
+        userId,
+        bookId,
+        title: enriched.cover.subtitle
+          ? `${book.title}: ${enriched.cover.subtitle}`
+          : `Personal Reading Book: ${book.title}`,
+        format: 'personal_book',
+        moments: [],
+        insights: enriched.synthesis.insights.map((i) => ({
+          theme: i.theme,
+          description: i.description,
+          relatedConcepts: [],
+        })),
+        stats,
+        sections,
+        htmlContent: html,
         generatedAt: new Date(),
       },
       { returning: true },

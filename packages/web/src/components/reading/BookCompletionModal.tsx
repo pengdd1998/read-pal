@@ -1,6 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+
 interface BookCompletionModalProps {
+  bookId: string;
   bookTitle: string;
   totalHighlights: number;
   totalNotes: number;
@@ -9,12 +14,29 @@ interface BookCompletionModalProps {
 }
 
 export function BookCompletionModal({
+  bookId,
   bookTitle,
   totalHighlights,
   totalNotes,
   totalChapters,
   onClose,
 }: BookCompletionModalProps) {
+  const router = useRouter();
+  const [generating, setGenerating] = useState(false);
+  const [showPersonalBookCTA, setShowPersonalBookCTA] = useState(true);
+
+  const handleGeneratePersonalBook = async () => {
+    setGenerating(true);
+    try {
+      await api.post(`/api/memory-books/${bookId}/generate`, {
+        format: 'personal_book',
+      });
+      router.push(`/memory-books/${bookId}`);
+    } catch {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div
       role="dialog"
@@ -46,9 +68,29 @@ export function BookCompletionModal({
           </div>
         </div>
 
+        {showPersonalBookCTA && (totalHighlights > 0 || totalNotes > 0) && (
+          <button
+            onClick={handleGeneratePersonalBook}
+            disabled={generating}
+            className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all shadow-md disabled:opacity-60 mb-3"
+          >
+            {generating ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Creating Your Personal Book...
+              </span>
+            ) : (
+              'Create Your Personal Reading Book'
+            )}
+          </button>
+        )}
+
         <button
           onClick={onClose}
-          className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+          className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           Amazing! Keep Exploring
         </button>

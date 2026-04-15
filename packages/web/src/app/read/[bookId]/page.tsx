@@ -723,6 +723,7 @@ export default function ReadPage() {
       {/* Book completion */}
       {showCompletion && book && (
         <BookCompletionModal
+          bookId={book.id}
           bookTitle={book.title}
           totalHighlights={totalHighlights}
           totalNotes={totalNotes}

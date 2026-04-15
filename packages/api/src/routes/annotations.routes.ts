@@ -251,10 +251,7 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
 
     const book = await Book.findByPk(bookId);
     if (!book) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Book not found' },
-      });
+      return notFound(res, 'book');
     }
 
     const result = await exportAnnotations(

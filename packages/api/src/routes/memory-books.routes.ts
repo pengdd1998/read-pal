@@ -78,6 +78,35 @@ router.get('/:bookId', authenticate, async (req: AuthRequest, res) => {
 });
 
 /**
+ * GET /api/memory-books/:bookId/html
+ * Get the rendered HTML for a Personal Reading Book
+ */
+router.get('/:bookId/html', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const memoryBook = await memoryBookService.getMemoryBook(
+      req.params.bookId,
+      req.userId!,
+    );
+
+    if (!memoryBook || !memoryBook.htmlContent) {
+      return notFound(res, 'Personal reading book');
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(memoryBook.htmlContent);
+  } catch (error) {
+    console.error('Error fetching personal book HTML:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'PERSONAL_BOOK_HTML_ERROR',
+        message: 'Failed to fetch personal book',
+      },
+    });
+  }
+});
+
+/**
  * POST /api/memory-books/:bookId/generate
  * Trigger generation of a memory book for a specific book
  */

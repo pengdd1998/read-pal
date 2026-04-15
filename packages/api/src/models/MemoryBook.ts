@@ -35,6 +35,15 @@ export interface MemoryBookStats {
   connectionsMade: number;
 }
 
+/** One section/chapter of a Personal Reading Book */
+export interface PersonalBookSection {
+  id: string;
+  title: string;
+  type: 'cover' | 'journey' | 'highlights' | 'notes' | 'conversations' | 'insights' | 'forward';
+  content: string; // rendered HTML for this section
+  data?: Record<string, unknown>; // structured data for re-rendering
+}
+
 // ---------------------------------------------------------------------------
 // Model attributes
 // ---------------------------------------------------------------------------
@@ -44,10 +53,12 @@ interface MemoryBookAttributes {
   userId: string;
   bookId: string;
   title: string;
-  format: 'scrapbook' | 'journal' | 'timeline' | 'podcast';
+  format: 'scrapbook' | 'journal' | 'timeline' | 'podcast' | 'personal_book';
   moments: MemoryBookMoment[];
   insights: MemoryBookInsight[];
   stats: MemoryBookStats;
+  sections: PersonalBookSection[];
+  htmlContent: string | null;
   generatedAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -71,10 +82,12 @@ export class MemoryBook
   public userId!: string;
   public bookId!: string;
   public title!: string;
-  public format!: 'scrapbook' | 'journal' | 'timeline' | 'podcast';
+  public format!: 'scrapbook' | 'journal' | 'timeline' | 'podcast' | 'personal_book';
   public moments!: MemoryBookMoment[];
   public insights!: MemoryBookInsight[];
   public stats!: MemoryBookStats;
+  public sections!: PersonalBookSection[];
+  public htmlContent!: string | null;
   public generatedAt!: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -110,7 +123,7 @@ MemoryBook.init(
       allowNull: false,
     },
     format: {
-      type: DataTypes.ENUM('scrapbook', 'journal', 'timeline', 'podcast'),
+      type: DataTypes.ENUM('scrapbook', 'journal', 'timeline', 'podcast', 'personal_book'),
       allowNull: false,
       defaultValue: 'scrapbook',
     },
@@ -135,6 +148,15 @@ MemoryBook.init(
         conceptsDiscovered: 0,
         connectionsMade: 0,
       },
+    },
+    sections: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+    },
+    htmlContent: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     generatedAt: {
       type: DataTypes.DATE,

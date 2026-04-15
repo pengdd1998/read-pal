@@ -52,5 +52,5 @@ FriendRelationship.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 export { User, Book, Annotation, ReadingSession, Document, MemoryBook, ChatMessage, InterventionFeedback, FriendConversation, FriendRelationship };
 export type { Chapter } from './Document';
-export type { MemoryBookMoment, MemoryBookInsight, MemoryBookStats } from './MemoryBook';
+export type { MemoryBookMoment, MemoryBookInsight, MemoryBookStats, PersonalBookSection } from './MemoryBook';
 export { sequelize };
