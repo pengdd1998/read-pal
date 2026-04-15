@@ -13,7 +13,7 @@ import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
 import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
-import { sanitizePromptInput, wrapUserContent } from '../../utils/promptSanitizer';
+import { sanitizePromptInput } from '../../utils/promptSanitizer';
 
 // ============================================================================
 // Configuration & Internal Types

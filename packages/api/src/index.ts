@@ -7,7 +7,7 @@ import { createAgentWrapper } from './agents/agentWrapper';
 import 'dotenv/config';
 
 import { initializeMiddleware, errorHandler, notFoundHandler } from './middleware/middleware';
-import { IAgent, AgentRequest, AgentResponse, Logger } from './types';
+import { IAgent, Logger } from './types';
 
 // Routes
 import healthRoutes from './routes/health.routes';
@@ -37,7 +37,6 @@ import { ResearchAgent } from './agents/research/ResearchAgent';
 import { CoachAgent } from './agents/coach/CoachAgent';
 import { SynthesisAgent } from './agents/synthesis/SynthesisAgent';
 import { FriendAgent } from './agents/friend/FriendAgent';
-import { FriendConversation, FriendRelationship } from './models/FriendConversation';
 import { AgentOrchestrator, OrchestratorConfig } from './agents/orchestrator/AgentOrchestrator';
 
 // Database

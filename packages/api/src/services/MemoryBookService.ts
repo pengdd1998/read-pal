@@ -9,8 +9,6 @@
  * reading data and produce a narrative that feels like a cherished memento.
  */
 
-import { Op, QueryTypes } from 'sequelize';
-import { sequelize } from '../db';
 import { Annotation, Book, MemoryBook, ReadingSession } from '../models';
 import type {
   MemoryBookInsight,

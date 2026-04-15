@@ -6,7 +6,7 @@
  * intrusive notification system.
  */
 
-import { ReadingSession, Book } from '../models';
+import { ReadingSession } from '../models';
 
 export interface ReadingContext {
   userId: string;

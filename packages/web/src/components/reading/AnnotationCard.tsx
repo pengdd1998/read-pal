@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { api } from '@/lib/api';
 import { renderCardToCanvas } from './QuoteCard';
-import type { CardTheme } from './QuoteCard';
 
 const TYPE_CONFIG = {
   highlight: { icon: '\u{1F58D}', label: 'Highlight', defaultColor: '#FFEB3B' },

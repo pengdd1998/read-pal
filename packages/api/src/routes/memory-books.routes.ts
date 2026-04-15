@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import { MemoryBook, Book } from '../models';
+import { Book } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { memoryBookService } from '../services/MemoryBookService';
 import { parsePagination } from '../utils/pagination';

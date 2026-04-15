@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { Op, QueryTypes, fn, col, literal } from 'sequelize';
-import { Book, Annotation, ReadingSession, ChatMessage, MemoryBook, sequelize } from '../models';
+import { Book, ReadingSession, sequelize } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { redisClient } from '../db';
 import { etag } from '../middleware/cache';

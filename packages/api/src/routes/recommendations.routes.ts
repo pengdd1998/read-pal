@@ -5,8 +5,8 @@
  */
 
 import { Router } from 'express';
-import { Op, col, literal } from 'sequelize';
-import { Book, Annotation, ReadingSession } from '../models';
+import { Op } from 'sequelize';
+import { Book, Annotation } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 
 const router: Router = Router();

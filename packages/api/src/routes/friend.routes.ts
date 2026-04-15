@@ -14,7 +14,7 @@ import type { ReadingFriendPersona } from '../types';
 import { User } from '../models';
 import { FriendConversation, FriendRelationship } from '../models/FriendConversation';
 import { chatCompletionStream } from '../services/llmClient';
-import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
+import { sanitizePromptInput } from '../utils/promptSanitizer';
 import { parsePagination } from '../utils/pagination';
 
 const router: Router = Router();
