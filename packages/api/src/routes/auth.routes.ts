@@ -10,7 +10,7 @@ import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models';
-import { generateToken, revokeToken } from '../utils/auth';
+import { generateToken, revokeToken, getJwtSecret } from '../utils/auth';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
@@ -346,12 +346,9 @@ router.post('/logout', async (req, res) => {
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const secret = process.env.JWT_SECRET;
-      if (secret) {
-        const decoded = jwt.verify(token, secret) as { jti?: string; exp?: number };
-        if (decoded.jti && decoded.exp) {
-          await revokeToken(decoded.jti, decoded.exp);
-        }
+      const decoded = jwt.verify(token, getJwtSecret()) as { jti?: string; exp?: number };
+      if (decoded.jti && decoded.exp) {
+        await revokeToken(decoded.jti, decoded.exp);
       }
     }
     res.json({
@@ -377,12 +374,9 @@ router.post('/refresh', authenticate, async (req: AuthRequest, res) => {
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const oldToken = authHeader.substring(7);
-      const secret = process.env.JWT_SECRET;
-      if (secret) {
-        const decoded = jwt.verify(oldToken, secret) as { jti?: string; exp?: number };
-        if (decoded.jti && decoded.exp) {
-          await revokeToken(decoded.jti, decoded.exp);
-        }
+      const decoded = jwt.verify(oldToken, getJwtSecret()) as { jti?: string; exp?: number };
+      if (decoded.jti && decoded.exp) {
+        await revokeToken(decoded.jti, decoded.exp);
       }
     }
 

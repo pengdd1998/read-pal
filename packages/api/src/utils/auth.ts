@@ -22,7 +22,7 @@ let redisEverConnected = false;
  * Get JWT secret — throws at import time if not configured.
  * This ensures the server cannot start without a proper secret.
  */
-function getJwtSecret(): string {
+export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('FATAL: JWT_SECRET environment variable is required. Set it before starting the server.');

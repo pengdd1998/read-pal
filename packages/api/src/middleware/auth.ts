@@ -1,7 +1,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models';
-import { isTokenRevoked } from '../utils/auth';
+import { getJwtSecret, isTokenRevoked } from '../utils/auth';
 
 // ============================================================================
 // Types
@@ -54,13 +54,8 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    // Verify token
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Server configuration error' } });
-      return;
-    }
-    const decoded = jwt.verify(token, secret) as JWTPayload;
+    // Verify token using validated secret (throws at startup if missing)
+    const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
 
     // Check token blacklist (revoked tokens from logout)
     const jti = decoded.jti;
@@ -140,13 +135,7 @@ export function optionalAuthenticate(req: AuthRequest, res: Response, next: Next
 
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      // Missing secret — skip auth silently
-      next();
-      return;
-    }
-      const decoded = jwt.verify(token, secret) as JWTPayload;
+      const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
 
       const userId = decoded.userId || decoded.sub || '';
       req.userId = userId;
