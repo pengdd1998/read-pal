@@ -14,41 +14,56 @@ import { generateToken, revokeToken } from '../utils/auth';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
+import { redisClient } from '../db';
 
 const router: Router = Router();
 
 const BCRYPT_ROUNDS = 12;
 const MAX_PASSWORD_LENGTH = 72; // bcrypt limit
 
-// In-memory failed login tracking (resets on server restart)
-const failedLoginAttempts = new Map<string, { count: number; lockedUntil: number }>();
+const LOGIN_LOCKOUT_PREFIX = 'auth:lockout:';
 const MAX_FAILED_ATTEMPTS = 10;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
-function checkLoginLockout(email: string): { locked: boolean; remainingMs: number } {
-  const entry = failedLoginAttempts.get(email);
-  if (!entry) return { locked: false, remainingMs: 0 };
-  if (entry.lockedUntil && Date.now() < entry.lockedUntil) {
-    return { locked: true, remainingMs: entry.lockedUntil - Date.now() };
-  }
-  if (entry.lockedUntil && Date.now() >= entry.lockedUntil) {
-    failedLoginAttempts.delete(email);
+async function checkLoginLockout(email: string): Promise<{ locked: boolean; remainingMs: number }> {
+  try {
+    const data = await redisClient.get(`${LOGIN_LOCKOUT_PREFIX}${email}`);
+    if (!data) return { locked: false, remainingMs: 0 };
+    const entry = JSON.parse(data) as { count: number; lockedUntil: number };
+    if (entry.lockedUntil && Date.now() < entry.lockedUntil) {
+      return { locked: true, remainingMs: entry.lockedUntil - Date.now() };
+    }
+    await redisClient.del(`${LOGIN_LOCKOUT_PREFIX}${email}`);
+    return { locked: false, remainingMs: 0 };
+  } catch {
     return { locked: false, remainingMs: 0 };
   }
-  return { locked: false, remainingMs: 0 };
 }
 
-function recordFailedLogin(email: string): void {
-  const entry = failedLoginAttempts.get(email) || { count: 0, lockedUntil: 0 };
-  entry.count++;
-  if (entry.count >= MAX_FAILED_ATTEMPTS) {
-    entry.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+async function recordFailedLogin(email: string): Promise<void> {
+  try {
+    const key = `${LOGIN_LOCKOUT_PREFIX}${email}`;
+    const data = await redisClient.get(key);
+    const entry = data
+      ? (JSON.parse(data) as { count: number; lockedUntil: number })
+      : { count: 0, lockedUntil: 0 };
+    entry.count++;
+    if (entry.count >= MAX_FAILED_ATTEMPTS) {
+      entry.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+    }
+    // Auto-expire after lockout duration plus buffer
+    await redisClient.set(key, JSON.stringify(entry), 'PX', LOCKOUT_DURATION_MS + 60_000);
+  } catch {
+    // Redis unavailable — can't track, but don't block login
   }
-  failedLoginAttempts.set(email, entry);
 }
 
-function clearFailedLogins(email: string): void {
-  failedLoginAttempts.delete(email);
+async function clearFailedLogins(email: string): Promise<void> {
+  try {
+    await redisClient.del(`${LOGIN_LOCKOUT_PREFIX}${email}`);
+  } catch {
+    // Ignore Redis errors
+  }
 }
 
 /**
@@ -71,7 +86,7 @@ router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), async (req, res
     }
 
     // Check account lockout
-    const lockout = checkLoginLockout(email);
+    const lockout = await checkLoginLockout(email);
     if (lockout.locked) {
       const minutesLeft = Math.ceil(lockout.remainingMs / 60000);
       return res.status(429).json({
@@ -99,7 +114,7 @@ router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), async (req, res
     // Verify password against stored hash
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatch) {
-      recordFailedLogin(email);
+      await recordFailedLogin(email);
       return res.status(401).json({
         success: false,
         error: {
@@ -111,7 +126,7 @@ router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), async (req, res
 
     // Generate JWT token
     const token = generateToken(user.id);
-    clearFailedLogins(email);
+    await clearFailedLogins(email);
 
     res.json({
       success: true,

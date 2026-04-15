@@ -15,11 +15,8 @@ const MAX_IN_MEMORY_BLACKLIST = 10_000;
 /** In-memory fallback for when Redis is unavailable */
 const inMemoryBlacklist = new Set<string>();
 
-/** Timestamp of last successful Redis contact */
-let redisLastOk = Date.now();
-
-/** Grace period: if Redis has been down longer than this, fail-open to avoid locking out all users */
-const REDIS_DOWN_THRESHOLD = 60_000; // 60 seconds
+/** Whether Redis has been successfully contacted during this server instance */
+let redisEverConnected = false;
 
 /**
  * Get JWT secret — throws at import time if not configured.
@@ -29,6 +26,9 @@ function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('FATAL: JWT_SECRET environment variable is required. Set it before starting the server.');
+  }
+  if (secret.length < 32) {
+    throw new Error('FATAL: JWT_SECRET must be at least 32 characters long.');
   }
   return secret;
 }
@@ -72,18 +72,17 @@ export function verifyToken(token: string): TokenPayload | null {
  * Check if a token's jti has been blacklisted (e.g. after logout).
  * Returns true if the token is revoked.
  *
- * Strategy:
+ * Strategy (fail-closed):
  *  1. Check Redis — if reachable, authoritative answer.
- *  2. If Redis is down, check the in-memory fallback set.
- *  3. If Redis was recently healthy (< 60s ago) but is now unreachable, the
- *     in-memory set is likely accurate — accept tokens not in the set.
- *  4. If Redis has been down for a prolonged period, fail-open to avoid
- *     locking out every user.
+ *  2. If Redis is down and was previously connected, the in-memory set
+ *     contains every revocation since server start — trust it.
+ *  3. If Redis was never connected during this server instance, we have
+ *     zero blacklist data — fail-closed and reject the token.
  */
 export async function isTokenRevoked(jti: string): Promise<boolean> {
   try {
     const exists = await redisClient.exists(`${TOKEN_BLACKLIST_PREFIX}${jti}`);
-    redisLastOk = Date.now();
+    redisEverConnected = true;
     if (exists === 1) {
       inMemoryBlacklist.add(jti);
       return true;
@@ -95,15 +94,14 @@ export async function isTokenRevoked(jti: string): Promise<boolean> {
       return true;
     }
 
-    // If Redis went down recently, the in-memory set is still reliable;
-    // if it has been down a long time, fail-open so users aren't locked out.
-    const timeSinceRedisOk = Date.now() - redisLastOk;
-    if (timeSinceRedisOk > REDIS_DOWN_THRESHOLD) {
-      // Redis has been down for a long time — fail open
-      return false;
+    // If Redis was never connected, we have no blacklist data — fail-closed.
+    // The in-memory set is empty and we can't know what's in Redis.
+    if (!redisEverConnected) {
+      return true; // Reject — safer to deny than to accept unknown tokens
     }
 
-    // Redis just went down — the in-memory set is our best source of truth
+    // Redis was connected before (so the in-memory set captured all revocations
+    // during this server instance). Token not in set → not revoked.
     return false;
   }
 }
@@ -128,7 +126,7 @@ export async function revokeToken(jti: string, expiresAtSeconds: number): Promis
   try {
     const ttl = Math.max(expiresAtSeconds - Math.floor(Date.now() / 1000), 1);
     await redisClient.setex(`${TOKEN_BLACKLIST_PREFIX}${jti}`, ttl, '1');
-    redisLastOk = Date.now();
+    redisEverConnected = true;
   } catch {
     // Redis unavailable — in-memory fallback already updated above
   }
