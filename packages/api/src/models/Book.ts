@@ -145,10 +145,10 @@ Book.init(
     tableName: 'books',
     timestamps: true,
     indexes: [
-      { fields: ['userId'] },
+      { fields: ['user_id'] },
       { fields: ['status'] },
-      { fields: ['fileType'] },
-      { fields: ['userId', 'status'] },
+      { fields: ['file_type'] },
+      { fields: ['user_id', 'status'] },
       { fields: ['tags'], using: 'GIN' },
     ],
   }

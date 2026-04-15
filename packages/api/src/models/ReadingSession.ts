@@ -110,11 +110,11 @@ ReadingSession.init(
     tableName: 'reading_sessions',
     timestamps: true,
     indexes: [
-      { fields: ['userId'] },
-      { fields: ['bookId'] },
-      { fields: ['startedAt'] },
-      { fields: ['userId', 'isActive'] },
-      { fields: ['userId', 'bookId'] },
+      { fields: ['user_id'] },
+      { fields: ['book_id'] },
+      { fields: ['started_at'] },
+      { fields: ['user_id', 'is_active'] },
+      { fields: ['user_id', 'book_id'] },
     ],
   }
 );

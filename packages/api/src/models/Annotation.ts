@@ -107,8 +107,8 @@ Annotation.init(
     tableName: 'annotations',
     timestamps: true,
     indexes: [
-      { fields: ['userId'] },
-      { fields: ['bookId'] },
+      { fields: ['user_id'] },
+      { fields: ['book_id'] },
       { fields: ['type'] },
       { fields: ['tags'], using: 'GIN' },
     ],
