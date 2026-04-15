@@ -83,39 +83,6 @@ export const API_ROUTES = {
   FRIEND_PERSONAS: '/api/friend/personas',
 } as const;
 
-export const READING_FRIENDS = {
-  sage: {
-    name: 'Sage',
-    personality: 'thoughtful and reflective',
-    tone: 'wise but not arrogant',
-    speechPattern: 'asks probing questions',
-  },
-  penny: {
-    name: 'Penny',
-    personality: 'enthusiastic and curious',
-    tone: 'excited about learning',
-    speechPattern: 'expressive with exclamations',
-  },
-  alex: {
-    name: 'Alex',
-    personality: 'challenging and skeptical',
-    tone: 'intellectually provocative',
-    speechPattern: 'asks difficult questions',
-  },
-  quinn: {
-    name: 'Quinn',
-    personality: 'calm and minimalist',
-    tone: 'quiet but insightful',
-    speechPattern: 'speaks rarely but meaningfully',
-  },
-  sam: {
-    name: 'Sam',
-    personality: 'practical and goal-oriented',
-    tone: 'encouraging and focused',
-    speechPattern: 'action-oriented suggestions',
-  },
-} as const;
-
 export const ANNOTATION_COLORS = [
   '#FFEB3B', // Yellow
   '#FF9800', // Orange
@@ -124,13 +91,6 @@ export const ANNOTATION_COLORS = [
   '#9C27B0', // Purple
   '#F44336', // Red
 ] as const;
-
-export const SUPPORTED_FILE_TYPES = [
-  'application/epub+zip',
-  'application/pdf',
-] as const;
-
-export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 export const PAGINATION = {
   DEFAULT_LIMIT: 20,

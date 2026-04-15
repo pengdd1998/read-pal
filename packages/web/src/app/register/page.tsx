@@ -41,20 +41,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
+    <main className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="max-w-md w-full animate-fade-in">
         <div className="card p-8">
           {/* Header */}
-          <div className="text-center mb-8">
+          <header className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <span className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white text-sm font-bold">r</span>
+              <span className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white text-sm font-bold" aria-hidden="true">r</span>
               <span className="text-xl font-bold text-gray-900 dark:text-white">read-pal</span>
             </Link>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create your account</h1>
-            <p className="text-sm text-gray-500 mt-1">Start your reading journey today</p>
-          </div>
+            <p className="text-sm text-gray-600 mt-1 dark:text-gray-400">Start your reading journey today</p>
+          </header>
 
-          <form onSubmit={handleRegister} className="space-y-5">
+          <form onSubmit={handleRegister} className="space-y-5" aria-label="Registration form">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Name</label>
               <input
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
               />
               {password.length > 0 && password.length < 8 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Password must be at least 8 characters</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1" role="alert">Password must be at least 8 characters</p>
               )}
             </div>
 
@@ -115,7 +115,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
             <Link href="/login" className="text-primary-600 dark:text-primary-400 font-medium hover:underline">
               Sign in
@@ -123,6 +123,6 @@ export default function RegisterPage() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

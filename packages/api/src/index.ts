@@ -233,12 +233,18 @@ async function initializeAgents(): Promise<void> {
 
 async function syncDatabase(): Promise<void> {
   try {
-    const force = config.nodeEnv === 'development';
-    if (config.nodeEnv === 'production' && force) {
-      throw new Error('Cannot force sync in production');
+    if (config.nodeEnv === 'production') {
+      // In production, only sync if tables don't exist — never alter
+      // to avoid duplicate indexes and schema drift
+      await sequelize.sync();
+      logger.info('Database synced (production — create-only)');
+    } else {
+      // In development, force sync to keep schema in sync with models
+      // but only when explicitly requested via FORCE_SYNC env var
+      const force = process.env.FORCE_SYNC === 'true';
+      await sequelize.sync({ force });
+      logger.info('Database synced (development)', { force });
     }
-    await sequelize.sync({ force, alter: !force });
-    logger.info('Database synced successfully', { force, alter: !force });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Database sync failed', { error: errMsg });

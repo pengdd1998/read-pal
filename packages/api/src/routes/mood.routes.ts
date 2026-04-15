@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { createHash } from 'crypto';
 import { chatCompletion, GLM_BASE_URL } from '../services/llmClient';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router: Router = Router();
 
@@ -73,7 +74,7 @@ async function generateImage(prompt: string): Promise<string> {
 // POST /api/agents/mood
 // ============================================================================
 
-router.post('/', authenticate, async (req: AuthRequest, res) => {
+router.post('/', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const { text } = req.body as { text?: string };
 
@@ -81,6 +82,13 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
       return res.status(400).json({
         success: false,
         error: { code: 'INVALID_INPUT', message: 'text is required' },
+      });
+    }
+
+    if (text.length > 10000) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_INPUT', message: 'text must be under 10,000 characters' },
       });
     }
 
@@ -109,7 +117,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 // POST /api/agents/scene
 // ============================================================================
 
-router.post('/scene', authenticate, async (req: AuthRequest, res) => {
+router.post('/scene', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async (req: AuthRequest, res) => {
   try {
     const { text } = req.body as { text?: string };
 
@@ -176,7 +184,7 @@ router.post('/scene', authenticate, async (req: AuthRequest, res) => {
       success: false,
       error: {
         code: isRateLimit ? 'RATE_LIMITED' : 'SCENE_GENERATION_ERROR',
-        message: isRateLimit ? 'AI service busy — try again shortly' : msg,
+        message: isRateLimit ? 'AI service busy — try again shortly' : 'Failed to generate scene image',
       },
     });
   }

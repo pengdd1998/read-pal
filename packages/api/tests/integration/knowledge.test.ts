@@ -20,14 +20,30 @@ jest.mock('../../src/db', () => ({
     authenticate: jest.fn().mockResolvedValue(undefined),
     sync: jest.fn().mockResolvedValue(undefined),
     getQueryInterface: jest.fn().mockReturnValue({ createTable: jest.fn(), dropTable: jest.fn() }),
+    query: jest.fn().mockResolvedValue([]),
   },
-  redisClient: { ping: jest.fn().mockResolvedValue('PONG') },
+  redisClient: { ping: jest.fn().mockResolvedValue('PONG'), exists: jest.fn().mockResolvedValue(0), incr: jest.fn().mockResolvedValue(1), pexpire: jest.fn().mockResolvedValue(1), pttl: jest.fn().mockResolvedValue(-1) },
   neo4jDriver: null,
   getPinecone: jest.fn().mockReturnValue(null),
 }));
 
+jest.mock('../../src/models', () => ({
+  User: { findByPk: jest.fn(), findOne: jest.fn(), create: jest.fn(), update: jest.fn() },
+  Book: { findOne: jest.fn(), findAll: jest.fn(), findAndCountAll: jest.fn(), create: jest.fn(), update: jest.fn(), count: jest.fn() },
+  Annotation: { findOne: jest.fn(), findAll: jest.fn(), findAndCountAll: jest.fn(), create: jest.fn(), count: jest.fn() },
+  ReadingSession: { findOne: jest.fn(), findAll: jest.fn(), findAndCountAll: jest.fn(), create: jest.fn(), update: jest.fn(), count: jest.fn(), sum: jest.fn() },
+  Document: {},
+  MemoryBook: {},
+  InterventionFeedback: {},
+  FriendConversation: {},
+  FriendRelationship: {},
+  ChatMessage: { findAll: jest.fn().mockResolvedValue([]), bulkCreate: jest.fn().mockResolvedValue([]) },
+  sequelize: { sync: jest.fn(), authenticate: jest.fn(), close: jest.fn(), query: jest.fn() },
+}));
+
 import knowledgeRoutes from '../../src/routes/knowledge.routes';
 import { generateToken } from '../../src/utils/auth';
+import { User } from '../../src/models';
 
 const app = express();
 app.use(express.json());
@@ -40,6 +56,9 @@ describe('Knowledge API', () => {
   beforeEach(() => {
     token = generateToken(testUserId);
     jest.clearAllMocks();
+    (User.findByPk as jest.Mock).mockResolvedValue({
+      id: testUserId, email: 'test@test.com', name: 'Test User', settings: {},
+    });
   });
 
   describe('GET /api/knowledge/graph', () => {

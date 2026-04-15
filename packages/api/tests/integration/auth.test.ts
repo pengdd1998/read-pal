@@ -25,7 +25,7 @@ jest.mock('../../src/db', () => ({
     sync: jest.fn().mockResolvedValue(undefined),
     getQueryInterface: jest.fn().mockReturnValue({ createTable: jest.fn(), dropTable: jest.fn() }),
   },
-  redisClient: { ping: jest.fn().mockResolvedValue('PONG') },
+  redisClient: { ping: jest.fn().mockResolvedValue('PONG'), exists: jest.fn().mockResolvedValue(0), incr: jest.fn().mockResolvedValue(1), pexpire: jest.fn().mockResolvedValue(1), pttl: jest.fn().mockResolvedValue(-1) },
   neo4jDriver: null,
   getPinecone: jest.fn().mockReturnValue(null),
 }));

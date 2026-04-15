@@ -25,29 +25,3 @@ export function formatRelativeTime(dateStr: string): string {
     return dateStr;
   }
 }
-
-/**
- * Format a date string as "Month Day" (e.g., "Apr 13").
- */
-export function formatShortDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  } catch {
-    return dateStr;
-  }
-}
-
-/**
- * Format a date string as "Month Day, Year" (e.g., "April 13, 2026").
- */
-export function formatLongDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-  } catch {
-    return dateStr;
-  }
-}

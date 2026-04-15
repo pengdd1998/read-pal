@@ -7,9 +7,6 @@
  */
 export type LLMModel = string;
 
-/** @deprecated Use LLMModel instead */
-export type ClaudeModel = LLMModel;
-
 /**
  * Model selection strategy
  */
@@ -147,7 +144,12 @@ export interface ToolContext {
   userId: string;
   sessionId: string;
   agentName: string;
-  db: DatabaseClients;
+  db: {
+    postgres: { query<T>(text: string, params?: unknown[]): Promise<T[]> };
+    redis: { get(key: string): Promise<string | null>; set(key: string, value: string, ttl?: number): Promise<void>; del(key: string): Promise<void> };
+    pinecone: { query(index: string, vector: number[], topK: number): Promise<Match[]> };
+    neo4j: { run(query: string, params?: Record<string, unknown>): Promise<Neo4jQueryResult> };
+  };
   logger: Logger;
 }
 
@@ -318,16 +320,6 @@ export type NotificationType =
 // ============================================================================
 
 /**
- * Database clients
- */
-export interface DatabaseClients {
-  postgres: PostgreSQLClient;
-  redis: RedisClient;
-  pinecone: PineconeClient;
-  neo4j: Neo4jClient;
-}
-
-/**
  * User entity
  */
 export interface User {
@@ -366,7 +358,14 @@ export interface ReadingSession {
   startTime: Date;
   endTime?: Date;
   progress: ReadingProgress;
-  interactions: Interaction[];
+  interactions: Array<{
+    id: string;
+    type: string;
+    location: BookLocation;
+    content: string;
+    metadata?: Record<string, unknown>;
+    timestamp: Date;
+  }>;
   createdAt: Date;
 }
 
@@ -379,30 +378,6 @@ export interface ReadingProgress {
   percentage: number;
   lastLocation: BookLocation;
 }
-
-/**
- * Interaction (annotation, highlight, etc.)
- */
-export interface Interaction {
-  id: string;
-  sessionId: string;
-  type: InteractionType;
-  location: BookLocation;
-  content: string;
-  metadata?: Record<string, unknown>;
-  timestamp: Date;
-}
-
-/**
- * Interaction types
- */
-export type InteractionType =
-  | 'highlight'
-  | 'note'
-  | 'bookmark'
-  | 'conversation'
-  | 'realization'
-  | 'confusion';
 
 // ============================================================================
 // API Types
@@ -434,19 +409,6 @@ export interface ResponseMetadata {
   timestamp: string;
   requestId: string;
   version: string;
-}
-
-/**
- * Paginated response
- */
-export interface PaginatedResponse<T> {
-  items: T[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-    hasMore: boolean;
-  };
 }
 
 // ============================================================================
@@ -591,32 +553,8 @@ export interface Logger {
 }
 
 /**
- * Database client interfaces (simplified)
+ * Database client helper types
  */
-export interface PostgreSQLClient {
-  query<T>(text: string, params?: unknown[]): Promise<T[]>;
-  transaction<T>(callback: (client: PostgreSQLClient) => Promise<T>): Promise<T>;
-}
-
-export interface RedisClient {
-  get(key: string): Promise<string | null>;
-  set(key: string, value: string, ttl?: number): Promise<void>;
-  del(key: string): Promise<void>;
-  incr(key: string): Promise<number>;
-  expire(key: string, seconds: number): Promise<void>;
-}
-
-export interface PineconeClient {
-  upsert(index: string, vectors: Vector[]): Promise<void>;
-  query(index: string, vector: number[], topK: number): Promise<Match[]>;
-  delete(index: string, ids: string[]): Promise<void>;
-}
-
-export interface Neo4jClient {
-  run(query: string, params?: Record<string, unknown>): Promise<Neo4jQueryResult>;
-  close(): Promise<void>;
-}
-
 export interface Vector {
   id: string;
   values: number[];
@@ -707,12 +645,3 @@ export interface EnvironmentConfig {
 // ============================================================================
 // Export all types
 // ============================================================================
-
-export type * from './agent-types';
-export type * from './tool-types';
-export type * from './domain-types';
-export type * from './database-types';
-export type * from './api-types';
-export type * from './friend-types';
-export type * from './utility-types';
-export type * from './environment-types';

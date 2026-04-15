@@ -202,7 +202,7 @@ export default function ChatPage() {
   const currentAgent = AGENTS.find((a) => a.id === selectedAgent)!;
 
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <main className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 animate-fade-in">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">AI Agents</h1>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
@@ -356,6 +356,6 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

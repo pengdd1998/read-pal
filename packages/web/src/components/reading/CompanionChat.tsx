@@ -455,6 +455,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                   <button
                     onClick={handleSend}
                     disabled={!input.trim()}
+                    aria-label="Send message"
                     className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 shadow-soft disabled:opacity-50"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

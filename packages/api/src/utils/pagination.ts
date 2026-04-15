@@ -8,7 +8,7 @@
 import { Request } from 'express';
 import { PAGINATION } from '@read-pal/shared';
 
-export interface PaginationParams {
+interface PaginationParams {
   page: number;
   limit: number;
   offset: number;

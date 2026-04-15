@@ -54,11 +54,3 @@ export { User, Book, Annotation, ReadingSession, Document, MemoryBook, ChatMessa
 export type { Chapter } from './Document';
 export type { MemoryBookMoment, MemoryBookInsight, MemoryBookStats } from './MemoryBook';
 export { sequelize };
-
-// Sync function for development
-export async function syncDatabase(force = false) {
-  if (process.env.NODE_ENV === 'production' && force) {
-    throw new Error('Cannot force sync in production');
-  }
-  await sequelize.sync({ force, alter: !force });
-}

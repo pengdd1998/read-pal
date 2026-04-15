@@ -123,7 +123,7 @@ export function InterventionToast({
   if (!visible || !intervention) return null;
 
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 max-w-sm w-full px-4 animate-fade-in">
+    <div role="status" aria-live="polite" className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 max-w-sm w-full px-4 animate-fade-in">
       <div className={`bg-white dark:bg-gray-900 rounded-xl border-2 ${INTERVENTION_COLORS[intervention.priority] || INTERVENTION_COLORS.low} shadow-lg p-4`}>
         <div className="flex items-start gap-3">
           <span className="text-xl flex-shrink-0">{INTERVENTION_ICONS[intervention.type] || '\uD83D\uDCA1'}</span>

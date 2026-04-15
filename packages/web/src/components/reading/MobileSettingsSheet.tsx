@@ -21,8 +21,12 @@ export function MobileSettingsSheet({
 }: MobileSettingsSheetProps) {
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Reading settings"
       className="fixed inset-0 z-40 sm:hidden bg-black/30 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
       <div
         className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl p-5 animate-scale-in overscroll-contain"

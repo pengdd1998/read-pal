@@ -162,7 +162,7 @@ export function BookCard({
           {/* Info button - links to detail page */}
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/book/${id}`); }}
-            className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50 transition-all duration-200"
+            className="absolute bottom-1 right-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50 transition-all duration-200"
             aria-label="Book details"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -174,7 +174,7 @@ export function BookCard({
           <button
             onClick={handleCacheOffline}
             aria-label={cachedOffline ? 'Available offline' : 'Save for offline reading'}
-            className={`absolute bottom-2 left-2 p-1.5 rounded-lg transition-all duration-200 ${
+            className={`absolute bottom-1 left-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all duration-200 ${
               cachedOffline
                 ? 'bg-emerald-500/80 text-white opacity-100'
                 : cachingOffline

@@ -31,19 +31,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
+    <main className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="max-w-sm w-full animate-fade-in">
         {/* Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex w-12 h-12 rounded-xl bg-primary-600 items-center justify-center text-white text-xl font-bold mb-4 shadow-soft">
+        <header className="text-center mb-8">
+          <div className="inline-flex w-12 h-12 rounded-xl bg-primary-600 items-center justify-center text-white text-xl font-bold mb-4 shadow-soft" aria-hidden="true">
             r
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome back</h1>
-          <p className="text-sm text-gray-500 mt-1">Sign in to continue reading</p>
-        </div>
+          <p className="text-sm text-gray-600 mt-1 dark:text-gray-400">Sign in to continue reading</p>
+        </header>
 
         <div className="card shadow-soft">
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-5" aria-label="Login form">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Email
@@ -122,13 +122,13 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           Don&apos;t have an account?{' '}
           <Link href="/register" className="text-primary-600 dark:text-primary-400 font-medium hover:underline">
             Sign up free
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

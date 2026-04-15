@@ -142,7 +142,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-fade-in">
+    <main className="max-w-2xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-fade-in">
       {/* Header */}
       <div className="mb-6 sm:mb-8 animate-slide-up">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
@@ -151,7 +151,7 @@ export default function SettingsPage() {
 
       {/* Saving indicator */}
       {(saving || saved) && (
-        <div className={`mb-6 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium animate-slide-up transition-all ${
+        <div role="status" aria-live="polite" className={`mb-6 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium animate-slide-up transition-all ${
           saved
             ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
             : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
@@ -173,7 +173,7 @@ export default function SettingsPage() {
       )}
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up">
+        <div role="alert" className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up">
           {error}
         </div>
       )}
@@ -233,7 +233,7 @@ export default function SettingsPage() {
               className="w-full accent-amber-500"
               disabled={saving}
             />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
               <span>A</span>
               <span className="text-lg">A</span>
             </div>
@@ -315,7 +315,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <label className="text-sm font-medium">Reading Reminders</label>
-              <p className="text-xs text-gray-400 mt-0.5">Daily nudge when you haven&apos;t read</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Daily nudge when you haven&apos;t read</p>
             </div>
             <button
               onClick={() => saveSettings({ notificationsEnabled: !settings.notificationsEnabled })}
@@ -337,7 +337,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-sm font-medium">Streak Milestones</label>
-                <p className="text-xs text-gray-400 mt-0.5">Celebrate 3, 7, 30-day streaks</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Celebrate 3, 7, 30-day streaks</p>
               </div>
               <button
                 onClick={() => saveSettings({ streakAlerts: !settings.streakAlerts })}
@@ -360,7 +360,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-sm font-medium">Friend Messages</label>
-                <p className="text-xs text-gray-400 mt-0.5">Your reading friend&apos;s insights and tips</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Your reading friend&apos;s insights and tips</p>
               </div>
               <button
                 onClick={() => saveSettings({ friendMessages: !settings.friendMessages })}
@@ -443,7 +443,7 @@ export default function SettingsPage() {
                   <div className={`text-sm font-medium ${settings.friendFrequency === value ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400'}`}>
                     {label}
                   </div>
-                  <div className="text-xs text-gray-400 mt-0.5">{desc}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{desc}</div>
                 </button>
               ))}
             </div>
@@ -462,13 +462,13 @@ export default function SettingsPage() {
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Name</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Name</label>
               <div className="px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm border border-gray-200 dark:border-gray-700">
                 {userName || 'Not set'}
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Email</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Email</label>
               <div className="px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm border border-gray-200 dark:border-gray-700">
                 {userEmail || 'Not set'}
               </div>
@@ -486,7 +486,7 @@ export default function SettingsPage() {
             </div>
             <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
               <details className="group">
-                <summary className="cursor-pointer text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors list-none flex items-center gap-1.5">
+                <summary className="cursor-pointer text-xs text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors list-none flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -536,6 +536,6 @@ export default function SettingsPage() {
           Back to Dashboard
         </a>
       </div>
-    </div>
+    </main>
   );
 }

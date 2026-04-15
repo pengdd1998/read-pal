@@ -97,9 +97,9 @@ export default function DiscoveryPage() {
     : [];
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+    <main className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8 animate-fade-in">
       {/* Header */}
-      <div className="mb-6 sm:mb-8">
+      <div className="mb-6 sm:mb-8 animate-slide-up">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Discover</h1>
         <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
           Personalized recommendations and free classic books
@@ -113,7 +113,7 @@ export default function DiscoveryPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 animate-slide-up stagger-1">
         {(['recommendations', 'freebooks'] as const).map((t) => (
           <button
             key={t}
@@ -148,7 +148,7 @@ export default function DiscoveryPage() {
         <div className="space-y-8">
           {/* Stats */}
           {recs && (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 animate-slide-up stagger-2">
               <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-xl p-3 text-center">
                 <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{recs.stats.booksCompleted}</div>
                 <div className="text-xs text-gray-500">Completed</div>
@@ -166,12 +166,12 @@ export default function DiscoveryPage() {
 
           {/* Stalled books */}
           {recs?.stalledRecommendations && recs.stalledRecommendations.length > 0 && (
-            <div>
+            <div className="animate-slide-up stagger-3">
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Continue Reading</h2>
               <div className="space-y-2">
-                {recs.stalledRecommendations.map((book) => (
+                {recs.stalledRecommendations.map((book, i) => (
                   <Link key={book.id} href={`/read/${book.id}`}
-                    className="block bg-amber-50/50 dark:bg-amber-900/10 rounded-xl border border-amber-200/50 dark:border-amber-800/30 p-4 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-200">
+                    className={`stagger-${Math.min(i + 1, 6)} animate-slide-up block bg-amber-50/50 dark:bg-amber-900/10 rounded-xl border border-amber-200/50 dark:border-amber-800/30 p-4 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-200`}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-400/30 to-amber-600/50 flex items-center justify-center flex-shrink-0">
                         <span className="text-lg">{'\uD83D\uDCD6'}</span>
@@ -197,12 +197,12 @@ export default function DiscoveryPage() {
 
           {/* Unread books */}
           {recs?.unreadRecommendations && recs.unreadRecommendations.length > 0 && (
-            <div>
+            <div className="animate-slide-up stagger-4">
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Start Something New</h2>
               <div className="space-y-2">
-                {recs.unreadRecommendations.map((book) => (
+                {recs.unreadRecommendations.map((book, i) => (
                   <Link key={book.id} href={`/read/${book.id}`}
-                    className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200">
+                    className={`stagger-${Math.min(i + 1, 6)} animate-slide-up block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200`}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-teal-400/30 to-teal-600/50 flex items-center justify-center flex-shrink-0">
                         <span className="text-lg">{'\uD83D\uDCD5'}</span>
@@ -220,14 +220,14 @@ export default function DiscoveryPage() {
 
           {/* Author recommendations */}
           {recs?.authorRecommendations && recs.authorRecommendations.length > 0 && recs.topAuthors.length > 0 && (
-            <div>
+            <div className="animate-slide-up stagger-5">
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                 More from {recs.topAuthors.slice(0, 2).join(', ')}
               </h2>
               <div className="space-y-2">
-                {recs.authorRecommendations.map((book) => (
+                {recs.authorRecommendations.map((book, i) => (
                   <Link key={book.id} href={`/read/${book.id}`}
-                    className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200">
+                    className={`stagger-${Math.min(i + 1, 6)} animate-slide-up block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200`}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-violet-400/30 to-violet-600/50 flex items-center justify-center flex-shrink-0">
                         <span className="text-lg">{'\uD83D\uDCD3'}</span>
@@ -245,11 +245,11 @@ export default function DiscoveryPage() {
 
           {/* Free book suggestions from recommendations API */}
           {recs?.freeBookSuggestions && recs.freeBookSuggestions.length > 0 && (
-            <div>
+            <div className="animate-slide-up stagger-6">
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Free Classics You Might Like</h2>
               <div className="space-y-2">
-                {recs.freeBookSuggestions.map((fb) => (
-                  <div key={fb.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-3">
+                {recs.freeBookSuggestions.map((fb, i) => (
+                  <div key={fb.id} className={`stagger-${Math.min(i + 1, 6)} animate-slide-up bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-3`}>
                     <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-emerald-400/30 to-emerald-600/50 flex items-center justify-center flex-shrink-0">
                       <span className="text-lg">{'\uD83C\uDF1F'}</span>
                     </div>
@@ -260,7 +260,7 @@ export default function DiscoveryPage() {
                     <button
                       onClick={() => handleImport(fb)}
                       disabled={importing === fb.id || importedIds.has(fb.id)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500 hover:bg-emerald-600 text-white transition-colors disabled:opacity-50"
+                      className="px-4 py-2.5 rounded-lg text-xs font-medium bg-emerald-500 hover:bg-emerald-600 text-white transition-colors disabled:opacity-50"
                     >
                       {importedIds.has(fb.id) ? 'Added' : importing === fb.id ? 'Adding...' : 'Add'}
                     </button>
@@ -315,8 +315,8 @@ export default function DiscoveryPage() {
 
           {/* Books grid */}
           <div className="space-y-2">
-            {filteredFreeBooks.map((book) => (
-              <div key={book.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4 hover:shadow-sm transition-shadow">
+            {filteredFreeBooks.map((book, i) => (
+              <div key={book.id} className={`stagger-${Math.min(i + 1, 6)} animate-slide-up bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4 hover:shadow-sm transition-shadow`}>
                 <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-emerald-400/30 to-teal-600/50 flex items-center justify-center flex-shrink-0">
                   <span className="text-lg">{'\uD83D\uDCD6'}</span>
                 </div>
@@ -365,6 +365,6 @@ export default function DiscoveryPage() {
           Back to Dashboard
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

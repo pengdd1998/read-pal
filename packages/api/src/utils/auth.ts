@@ -33,7 +33,7 @@ export function getJwtSecret(): string {
   return secret;
 }
 
-export interface TokenPayload {
+interface TokenPayload {
   userId: string;
   jti: string;
 }

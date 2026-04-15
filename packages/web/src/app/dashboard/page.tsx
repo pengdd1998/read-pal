@@ -332,7 +332,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-10">
+    <main className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-10">
       {/* Welcome */}
       <div className="mb-8 animate-fade-in">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
@@ -393,11 +393,11 @@ export default function DashboardPage() {
 
           {/* Quick feature preview for new users */}
           <div className="grid grid-cols-3 gap-3 mt-6">
-            {FEATURE_PREVIEW.map((f) => (
+            {FEATURE_PREVIEW.map((f, fi) => (
               <Link
                 key={f.title}
                 href={f.href}
-                className="card text-center group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 py-5"
+                className={`stagger-${fi + 1} animate-slide-up card text-center group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 py-5`}
               >
                 <span className="text-2xl block mb-2">{f.icon}</span>
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{f.title}</h3>
@@ -654,6 +654,6 @@ export default function DashboardPage() {
 
       {/* Onboarding walkthrough for new users */}
       <OnboardingWalkthrough />
-    </div>
+    </main>
   );
 }

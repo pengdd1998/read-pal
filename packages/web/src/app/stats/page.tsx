@@ -85,7 +85,7 @@ export default function StatsPage() {
   const totalPages = sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
       {/* Back */}
       <div className="mb-6">
         <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
@@ -133,8 +133,8 @@ export default function StatsPage() {
               { label: 'Pages', value: stats?.pagesRead || totalPages || 0, icon: '\uD83D\uDCC4', color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/10' },
               { label: 'Streak', value: `${stats?.readingStreak || 0}d`, icon: '\uD83D\uDD25', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/10' },
               { label: 'Time', value: stats?.totalTime || formatTime(Math.round(totalMinutes / 60)), icon: '\u23F1\uFE0F', color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/10' },
-            ].map((item) => (
-              <div key={item.label} className={`${item.bg} rounded-xl p-4 text-center`}>
+            ].map((item, i) => (
+              <div key={item.label} className={`stagger-${i + 1} animate-slide-up ${item.bg} rounded-xl p-4 text-center`}>
                 <span className="text-2xl">{item.icon}</span>
                 <div className={`text-2xl font-bold ${item.color} mt-1`}>{item.value}</div>
                 <div className="text-xs text-gray-500 mt-0.5">{item.label}</div>
@@ -394,6 +394,6 @@ export default function StatsPage() {
           )}
         </div>
       )}
-    </div>
+    </main>
   );
 }

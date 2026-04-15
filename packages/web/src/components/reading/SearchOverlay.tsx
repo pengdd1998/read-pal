@@ -82,6 +82,7 @@ export function SearchOverlay({
             </span>
             <button
               onClick={() => { onQueryChange(''); onClose(); }}
+              aria-label="Close search"
               className="p-2 -m-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

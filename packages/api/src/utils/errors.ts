@@ -38,12 +38,3 @@ export function serverError(res: Response, code: string, message: string): Respo
   return res.status(500).json({ success: false, error: { code, message } });
 }
 
-/**
- * Send a 503 Service Unavailable response.
- */
-export function serviceUnavailable(res: Response, service: string): Response<ApiError> {
-  return res.status(503).json({
-    success: false,
-    error: { code: 'SERVICE_UNAVAILABLE', message: `${service} is not available. Please check your configuration.` },
-  });
-}

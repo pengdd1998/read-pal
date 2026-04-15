@@ -14,7 +14,7 @@ export function LoadingSpinner({ className = 'w-4 h-4' }: { className?: string }
 export function ErrorAlert({ message }: { message: string }) {
   if (!message) return null;
   return (
-    <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm animate-scale-in">
+    <div role="alert" className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm animate-scale-in">
       {message}
     </div>
   );

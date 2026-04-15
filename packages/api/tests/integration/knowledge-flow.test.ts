@@ -33,7 +33,7 @@ jest.mock('../../src/db', () => ({
     getQueryInterface: jest.fn().mockReturnValue({ createTable: jest.fn(), dropTable: jest.fn() }),
     query: jest.fn().mockResolvedValue([]),
   },
-  redisClient: { ping: jest.fn().mockResolvedValue('PONG') },
+  redisClient: { ping: jest.fn().mockResolvedValue('PONG'), exists: jest.fn().mockResolvedValue(0) },
   neo4jDriver: null,
   getPinecone: jest.fn().mockReturnValue(null),
 }));
@@ -85,6 +85,7 @@ jest.mock('../../src/models', () => ({
   Annotation: {
     findOne: jest.fn(),
     findAll: jest.fn(),
+    findAndCountAll: jest.fn(),
     create: jest.fn(),
     count: jest.fn(),
   },
@@ -208,11 +209,14 @@ describe('Knowledge & Highlights Flow Integration', () => {
   // ---------------------------------------------------------------
   describe('Step 2: Fetch annotations', () => {
     it('should list all annotations across books', async () => {
-      (Annotation.findAll as jest.Mock).mockResolvedValue([
-        { id: 'ann-k1', type: 'highlight', content: 'System 1...', bookId: bookId1, color: '#FFEB3B' },
-        { id: 'ann-k2', type: 'note', content: 'The author argues...', bookId: bookId1, note: 'Connection...' },
-        { id: 'ann-k3', type: 'highlight', content: 'The universe...', bookId: bookId2, color: '#90CAF9' },
-      ]);
+      (Annotation.findAndCountAll as jest.Mock).mockResolvedValue({
+        rows: [
+          { id: 'ann-k1', type: 'highlight', content: 'System 1...', bookId: bookId1, color: '#FFEB3B' },
+          { id: 'ann-k2', type: 'note', content: 'The author argues...', bookId: bookId1, note: 'Connection...' },
+          { id: 'ann-k3', type: 'highlight', content: 'The universe...', bookId: bookId2, color: '#90CAF9' },
+        ],
+        count: 3,
+      });
 
       const res = await request(app)
         .get('/api/annotations')
@@ -224,10 +228,13 @@ describe('Knowledge & Highlights Flow Integration', () => {
     });
 
     it('should list annotations filtered by book', async () => {
-      (Annotation.findAll as jest.Mock).mockResolvedValue([
-        { id: 'ann-k1', type: 'highlight', content: 'System 1...', bookId: bookId1 },
-        { id: 'ann-k2', type: 'note', content: 'The author argues...', bookId: bookId1 },
-      ]);
+      (Annotation.findAndCountAll as jest.Mock).mockResolvedValue({
+        rows: [
+          { id: 'ann-k1', type: 'highlight', content: 'System 1...', bookId: bookId1 },
+          { id: 'ann-k2', type: 'note', content: 'The author argues...', bookId: bookId1 },
+        ],
+        count: 2,
+      });
 
       const res = await request(app)
         .get('/api/annotations')

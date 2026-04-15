@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       const isDark = document.documentElement.classList.toggle('dark');
                       localStorage.setItem('theme', isDark ? 'dark' : 'light');
                     }}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
                     aria-label="Toggle dark mode"
                   >
                     <svg className="w-4 h-4 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

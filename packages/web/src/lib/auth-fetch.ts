@@ -13,7 +13,7 @@ export function getAuthToken(): string | null {
 }
 
 /** Create headers with Content-Type and optional Bearer token. */
-export function authHeaders(extra?: Record<string, string>): Record<string, string> {
+function authHeaders(extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   const token = getAuthToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;

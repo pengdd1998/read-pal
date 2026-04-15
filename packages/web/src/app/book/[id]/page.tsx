@@ -132,7 +132,7 @@ export default function BookDetailPage() {
   const totalAnnotations = annotationStats.highlights + annotationStats.notes + annotationStats.bookmarks;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
+    <main className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
       {/* Error banner */}
       {error && (
         <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center justify-between animate-scale-in">
@@ -298,6 +298,6 @@ export default function BookDetailPage() {
           Library
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

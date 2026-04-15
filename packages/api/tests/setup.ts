@@ -6,7 +6,7 @@
  */
 
 // Set required environment variables before any module loads
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-for-testing';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-for-testing-min-32-chars-long';
 
 // Mock Sequelize
 jest.mock('../src/db', () => ({
