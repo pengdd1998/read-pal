@@ -111,6 +111,9 @@ Annotation.init(
       { fields: ['book_id'] },
       { fields: ['type'] },
       { fields: ['tags'], using: 'GIN' },
+      // Composite indexes for common query patterns
+      { fields: ['user_id', 'book_id'] },
+      { fields: ['user_id', 'book_id', 'created_at'] },
     ],
   }
 );

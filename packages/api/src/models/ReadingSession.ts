@@ -115,6 +115,8 @@ ReadingSession.init(
       { fields: ['started_at'] },
       { fields: ['user_id', 'is_active'] },
       { fields: ['user_id', 'book_id'] },
+      // Covers DATE(started_at) GROUP BY queries for calendar/streak
+      { fields: ['user_id', 'started_at'] },
     ],
   }
 );

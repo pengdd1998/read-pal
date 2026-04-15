@@ -6,7 +6,7 @@ import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
 import { AgentOrchestrator } from '../agents/orchestrator/AgentOrchestrator';
 import { WebSocketManager } from '../services/WebSocketManager';
 import { ChatMessage } from '../models/ChatMessage';
-import { chatCompletionStream } from '../services/llmClient';
+import { chatCompletion, chatCompletionStream } from '../services/llmClient';
 import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
 import type { StreamClient } from '../services/WebSocketManager';
 import type { OrchestratorResponse } from '../agents/orchestrator/AgentOrchestrator';
@@ -495,5 +495,75 @@ router.get('/', authenticate, async (req, res) => {
     });
   }
 });
+
+/**
+ * @route   POST /api/agents/discussion-questions
+ * @desc    Generate discussion questions from annotations
+ * @access  Private
+ */
+router.post(
+  '/discussion-questions',
+  authenticate,
+  agentRateLimiter,
+  validate([
+    body('bookTitle').isString().isLength({ max: 500 }).withMessage('bookTitle is required'),
+    body('author').isString().isLength({ max: 500 }).withMessage('author is required'),
+    body('annotations').isArray({ min: 1, max: 100 }).withMessage('annotations must be a non-empty array'),
+  ]),
+  async (req: AuthRequest, res) => {
+    try {
+      const { bookTitle, author, annotations } = req.body;
+
+      const excerpts = (annotations as Array<{ content: string }>)
+        .slice(0, 15)
+        .map((a) => a.content)
+        .join('\n---\n');
+
+      const prompt = `Generate 6 thought-provoking discussion questions for a book club reading "${sanitizePromptInput(bookTitle, 'Book Title')}" by ${sanitizePromptInput(author, 'Author')}.
+
+Key passages highlighted by the reader:
+${wrapUserContent(excerpts, 'Excerpts')}
+
+Return ONLY a JSON array of 6 question strings. No explanation, no markdown, no code fences.`;
+
+      const systemPrompt = 'You are a book club discussion facilitator. Generate thought-provoking, open-ended discussion questions that encourage deep analysis of themes, characters, and ideas. Return valid JSON only.';
+
+      const raw = await chatCompletion({
+        system: systemPrompt,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        maxTokens: 600,
+      });
+
+      let questions: string[];
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          questions = parsed.slice(0, 6).map(String);
+        } else {
+          questions = [];
+        }
+      } catch {
+        // Fallback: parse numbered lines
+        questions = raw
+          .split('\n')
+          .filter((l) => l.trim().match(/^\d+\./))
+          .map((l) => l.replace(/^\d+\.\s*/, '').trim())
+          .slice(0, 6);
+      }
+
+      return res.json({ success: true, data: { questions } });
+    } catch (error) {
+      console.error('Discussion questions error:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'DISCUSSION_QUESTIONS_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to generate discussion questions',
+        },
+      });
+    }
+  },
+);
 
 export default router;

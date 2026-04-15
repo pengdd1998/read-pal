@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Check } from '@/components/icons';
 import { authFetch } from '@/lib/auth-fetch';
 
@@ -17,7 +17,13 @@ const PERSONAS = [
 
 type Step = 'welcome' | 'companion' | 'ready';
 
+/**
+ * Lightweight onboarding for users who land on the dashboard directly
+ * (e.g., returning users on a new device). If the user has already
+ * completed the welcome page flow, this is skipped entirely.
+ */
 export function OnboardingWalkthrough() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>('welcome');
   const [mounted, setMounted] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
@@ -83,6 +89,12 @@ export function OnboardingWalkthrough() {
     complete();
   }, [selectedPersona, complete]);
 
+  // Redirect to the full welcome page for a complete onboarding experience
+  const goToWelcome = useCallback(() => {
+    complete();
+    router.push('/welcome');
+  }, [complete, router]);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!mounted) return;
@@ -140,7 +152,7 @@ export function OnboardingWalkthrough() {
 
         {/* Content */}
         <div className={`px-8 pt-10 pb-8 transition-all duration-300 ease-out ${fadeClass}`}>
-          {/* ── Step 1: Welcome ── */}
+          {/* Step 1: Welcome */}
           {step === 'welcome' && (
             <div className="text-center">
               <div className="text-6xl mb-6">{'\uD83D\uDCDA'}</div>
@@ -159,7 +171,7 @@ export function OnboardingWalkthrough() {
             </div>
           )}
 
-          {/* ── Step 2: Choose Companion ── */}
+          {/* Step 2: Choose Companion */}
           {step === 'companion' && (
             <div>
               <div className="text-center mb-6">
@@ -219,7 +231,7 @@ export function OnboardingWalkthrough() {
             </div>
           )}
 
-          {/* ── Step 3: Ready ── */}
+          {/* Step 3: Ready */}
           {step === 'ready' && (
             <div className="text-center">
               <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center shadow-sm">
@@ -232,15 +244,14 @@ export function OnboardingWalkthrough() {
                 Head to your library to upload a book or try a sample. {persona.name} will be right there with you.
               </p>
               <div className="flex flex-col gap-3 max-w-xs mx-auto">
-                <Link
-                  href="/library"
-                  onClick={handleFinish}
+                <button
+                  onClick={goToWelcome}
                   className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] text-center"
                 >
-                  Go to Library
-                </Link>
+                  Get Started
+                </button>
                 <button
-                  onClick={complete}
+                  onClick={handleFinish}
                   disabled={saving}
                   className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >

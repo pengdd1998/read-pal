@@ -62,15 +62,20 @@ export class MemoryBookService {
     options: GenerateOptions = {},
   ): Promise<MemoryBook> {
     // 1–3. Fetch book, annotations, and sessions in parallel
+    // Safety cap: limit annotations/sessions to prevent unbounded fetches
+    const MAX_ANNOTATIONS = 5000;
+    const MAX_SESSIONS = 1000;
     const [book, annotations, sessions] = await Promise.all([
       Book.findOne({ where: { id: bookId, userId } }),
       Annotation.findAll({
         where: { bookId, userId },
         order: [['createdAt', 'ASC']],
+        limit: MAX_ANNOTATIONS,
       }),
       ReadingSession.findAll({
         where: { bookId, userId },
         order: [['startedAt', 'ASC']],
+        limit: MAX_SESSIONS,
       }),
     ]);
 

@@ -301,16 +301,17 @@ export class KnowledgeGraphService {
   /**
    * Retrieve concepts for a user, optionally filtered by book.
    */
-  async getConcepts(userId: string, bookId?: string): Promise<Concept[]> {
+  async getConcepts(userId: string, bookId?: string, limit: number = 200): Promise<Concept[]> {
     if (!this.isAvailable()) return [];
     const session = this.openSession();
 
     try {
+      const safeLimit = Math.min(Math.max(limit, 1), 500);
       const query = bookId
-        ? 'MATCH (c:Concept {userId: $userId, bookId: $bookId}) RETURN c ORDER BY c.createdAt DESC'
-        : 'MATCH (c:Concept {userId: $userId}) RETURN c ORDER BY c.createdAt DESC';
+        ? 'MATCH (c:Concept {userId: $userId, bookId: $bookId}) RETURN c ORDER BY c.createdAt DESC LIMIT $limit'
+        : 'MATCH (c:Concept {userId: $userId}) RETURN c ORDER BY c.createdAt DESC LIMIT $limit';
 
-      const params: Record<string, unknown> = { userId };
+      const params: Record<string, unknown> = { userId, limit: safeLimit };
       if (bookId) {
         params.bookId = bookId;
       }
@@ -335,6 +336,7 @@ export class KnowledgeGraphService {
     userId: string,
     conceptId: string,
     depth: number = 1,
+    limit: number = 100,
   ): Promise<Concept[]> {
     if (!this.isAvailable()) return [];
 
@@ -342,6 +344,7 @@ export class KnowledgeGraphService {
       throw new Error('Depth must be between 1 and 5.');
     }
 
+    const safeLimit = Math.min(Math.max(limit, 1), 500);
     const session = this.openSession();
 
     try {
@@ -352,8 +355,9 @@ export class KnowledgeGraphService {
         WHERE related.id <> $conceptId
         RETURN DISTINCT related
         ORDER BY related.createdAt DESC
+        LIMIT $limit
         `,
-        { userId, conceptId },
+        { userId, conceptId, limit: safeLimit },
       );
 
       return result.records.map((rec: Neo4jRecord) => this.hydrateConcept(rec.get('related')));
@@ -434,12 +438,14 @@ export class KnowledgeGraphService {
    * Build a graph payload (nodes + edges) suitable for visualization on the
    * frontend (e.g. D3.js, Cytoscape, or Vis.js).
    */
-  async getGraphVisualization(userId: string): Promise<GraphVisualization> {
+  async getGraphVisualization(userId: string, maxNodes: number = 200): Promise<GraphVisualization> {
     if (!this.isAvailable()) return { nodes: [], edges: [] };
     const session = this.openSession();
 
     try {
-      // Fetch all concept nodes for the user with their degree
+      const safeMaxNodes = Math.min(Math.max(maxNodes, 10), 500);
+
+      // Fetch top-N concept nodes for the user with their degree
       const nodeResult = await session.run(
         `
         MATCH (c:Concept {userId: $userId})
@@ -447,8 +453,9 @@ export class KnowledgeGraphService {
         WITH c, count(r) AS degree
         RETURN c, degree
         ORDER BY degree DESC
+        LIMIT $maxNodes
         `,
-        { userId },
+        { userId, maxNodes: safeMaxNodes },
       );
 
       const nodes: VisualizationNode[] = nodeResult.records.map((rec: Neo4jRecord) => {
@@ -461,15 +468,20 @@ export class KnowledgeGraphService {
         };
       });
 
-      // Fetch all relationships between those concepts
-      const edgeResult = await session.run(
-        `
-        MATCH (a:Concept {userId: $userId})-[r]->(b:Concept {userId: $userId})
-        RETURN a.id AS source, b.id AS target, type(r) AS label,
-               coalesce(r.strength, 0.5) AS weight
-        `,
-        { userId },
-      );
+      // Fetch relationships only between the returned node IDs
+      const nodeIds = nodes.map((n) => n.id);
+      const edgeResult = nodeIds.length > 0
+        ? await session.run(
+            `
+            MATCH (a:Concept {userId: $userId})-[r]->(b:Concept {userId: $userId})
+            WHERE a.id IN $nodeIds AND b.id IN $nodeIds
+            RETURN a.id AS source, b.id AS target, type(r) AS label,
+                   coalesce(r.strength, 0.5) AS weight
+            LIMIT $maxEdges
+            `,
+            { userId, nodeIds, maxEdges: safeMaxNodes * 5 },
+          )
+        : { records: [] };
 
       const edges: VisualizationEdge[] = edgeResult.records.map((rec: Neo4jRecord) => ({
         source: rec.get('source') as string,

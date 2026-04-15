@@ -25,6 +25,7 @@ const SessionSummaryModal = dynamic(() => import('@/components/reading/SessionSu
 const BookCompletionModal = dynamic(() => import('@/components/reading/BookCompletionModal').then((m) => ({ default: m.BookCompletionModal })), { ssr: false });
 const MobileSettingsSheet = dynamic(() => import('@/components/reading/MobileSettingsSheet').then((m) => ({ default: m.MobileSettingsSheet })), { ssr: false });
 const SearchOverlay = dynamic(() => import('@/components/reading/SearchOverlay').then((m) => ({ default: m.SearchOverlay })), { ssr: false });
+const SynthesisPanel = dynamic(() => import('@/components/reading/SynthesisPanel').then((m) => ({ default: m.SynthesisPanel })), { ssr: false });
 
 // Static theme maps — never change, so hoist to module scope
 const THEME_CLASSES = {
@@ -39,20 +40,31 @@ const HEADER_BG_CLASSES = {
   sepia: 'bg-[#f5f0e6]/95 border-amber-300/50',
 } as const;
 
-/** Subtle selection hint that auto-dismisses after a few seconds. */
+/**
+ * Subtle selection hint for new readers.
+ * For first-time users (no localStorage flag), the hint stays until dismissed or used.
+ * After the user has used text selection once, it only shows for 3s as a gentle reminder.
+ */
 function SelectionHint({ onDismiss }: { onDismiss: () => void }) {
+  const isReturningUser = typeof window !== 'undefined' && localStorage.getItem('read-pal-selection-used') === 'true';
+
   useEffect(() => {
-    const t = setTimeout(onDismiss, 10000);
-    return () => clearTimeout(t);
-  }, [onDismiss]);
+    // Returning users: auto-dismiss after 3s. First-time users: stays until dismissed.
+    if (isReturningUser) {
+      const t = setTimeout(onDismiss, 3000);
+      return () => clearTimeout(t);
+    }
+  }, [onDismiss, isReturningUser]);
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20 animate-fade-in" style={{ animation: 'fade-in 0.5s 1.5s forwards' }}>
-      <div className="px-4 py-2 rounded-xl bg-amber-600/80 text-white text-sm backdrop-blur-sm shadow-lg flex items-center gap-2 pointer-events-auto">
+      <div className={`px-4 py-2 rounded-xl text-white text-sm backdrop-blur-sm shadow-lg flex items-center gap-2 pointer-events-auto ${
+        isReturningUser ? 'bg-amber-600/60' : 'bg-amber-600/80'
+      }`}>
         <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
         </svg>
-        <span>Select any text to highlight, add notes, or ask AI</span>
+        <span>{isReturningUser ? 'Tip: Select text to interact' : 'Select any text to highlight, add notes, or ask AI'}</span>
         <button onClick={onDismiss} className="ml-1 opacity-60 hover:opacity-100 transition-opacity" aria-label="Dismiss">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -140,7 +152,11 @@ export default function ReadPage() {
   const [error, setError] = useState('');
   const [bgEnabled, setBgEnabled] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [hasMadeSelection, setHasMadeSelection] = useState(false);
+  const [synthesisOpen, setSynthesisOpen] = useState(false);
+  const [hasMadeSelection, setHasMadeSelection] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('read-pal-selection-used') === 'true';
+  });
   const [showControls, setShowControls] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -197,7 +213,10 @@ export default function ReadPage() {
 
   // Track when user makes first selection
   useEffect(() => {
-    if (!selection.isCollapsed && !hasMadeSelection) setHasMadeSelection(true);
+    if (!selection.isCollapsed && !hasMadeSelection) {
+      setHasMadeSelection(true);
+      try { localStorage.setItem('read-pal-selection-used', 'true'); } catch { /* ignore */ }
+    }
   }, [selection.isCollapsed, hasMadeSelection]);
 
   // Auto-highlight when highlight mode is active
@@ -580,6 +599,14 @@ export default function ReadPage() {
               <span className="px-1.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-xs font-semibold">{annotations.length}</span>
             )}
           </button>
+
+          {/* Synthesis panel toggle */}
+          <button onClick={() => setSynthesisOpen(!synthesisOpen)} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors ${synthesisOpen ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' : 'text-gray-600 dark:text-gray-300 hover:bg-teal-100/50 dark:hover:bg-teal-900/30 hover:text-teal-700 dark:hover:text-teal-300'}`} aria-label="Toggle synthesis panel">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
+            <span className="hidden sm:inline">Synthesize</span>
+          </button>
         </div>
       </div>
 
@@ -601,7 +628,7 @@ export default function ReadPage() {
       )}
 
       {/* Main content */}
-      <div className={`flex-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:mr-[360px]' : ''}`}>
+      <div className={`flex-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:mr-[360px]' : ''} ${synthesisOpen ? 'md:ml-[400px]' : ''}`}>
         <div className={`h-full ${THEME_CLASSES[theme]} transition-colors duration-200 ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
           <ReaderView
             bookId={bookId}
@@ -652,11 +679,23 @@ export default function ReadPage() {
         bookId={bookId}
         bookTitle={book?.title}
         author={book?.author}
+        totalPages={book?.totalPages}
+        currentPage={book?.currentPage}
+        progress={book?.progress}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onDeleteAnnotation={handleDeleteAnnotation}
         onUpdateAnnotation={handleUpdateAnnotation}
         onScrollToAnnotation={handleScrollToAnnotation}
+      />
+
+      {/* Synthesis panel */}
+      <SynthesisPanel
+        bookId={bookId}
+        bookTitle={book?.title}
+        author={book?.author}
+        isOpen={synthesisOpen}
+        onClose={() => setSynthesisOpen(false)}
       />
 
       {/* Companion chat */}

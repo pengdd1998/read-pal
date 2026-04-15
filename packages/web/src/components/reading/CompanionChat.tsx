@@ -87,14 +87,25 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   }), []);
 
   // Auto-open chat for first-time readers after a brief delay (the "aha moment")
+  // and inject a warm contextual greeting
   useEffect(() => {
     if (!isFirstChat || !bookId) return;
     const timer = setTimeout(() => {
       setIsOpen(true);
       localStorage.setItem('read-pal-chat-opened', 'true');
+
+      // Show a contextual welcome greeting for first-time users
+      const bookRef = bookTitle ? ` for "${bookTitle}"` : '';
+      const greeting = `Hi there! I'm ${friendName}, your reading companion${bookRef}. I'll be here while you read — ask me anything about the text, or try selecting a passage to get started!`;
+      setMessages([{
+        id: generateId(),
+        role: 'assistant' as const,
+        content: greeting,
+        timestamp: Date.now(),
+      }]);
     }, 2500);
     return () => clearTimeout(timer);
-  }, [isFirstChat, bookId]);
+  }, [isFirstChat, bookId, bookTitle, friendName]);
 
   // Mark chat as opened when user manually opens it
   const handleOpenChat = useCallback(() => {
@@ -378,11 +389,18 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                     Ask anything about what you&apos;re reading
                   </p>
                   <div className="text-left space-y-2 max-w-xs mx-auto">
-                    {[
-                      "What's the main idea of this chapter?",
-                      'Help me understand this passage better',
-                      'What should I pay attention to next?',
-                    ].map((q) => (
+                    {(bookTitle
+                      ? [
+                          `What should I know before starting "${bookTitle}"?`,
+                          'Summarize this chapter so far',
+                          'What questions should I ask while reading this?',
+                        ]
+                      : [
+                          "What's the main idea of this chapter?",
+                          'Help me understand this passage better',
+                          'What should I pay attention to next?',
+                        ]
+                    ).map((q) => (
                       <button
                         key={q}
                         onClick={() => setInput(q)}

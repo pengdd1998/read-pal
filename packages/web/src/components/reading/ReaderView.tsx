@@ -333,6 +333,7 @@ export function ReaderView({
             }
           }}
           className="reading-mode select-text animate-chapter-fade"
+          data-theme={theme}
           style={{
             fontSize: `${fontSize}px`,
           }}

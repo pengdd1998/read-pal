@@ -10,7 +10,7 @@ import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models';
-import { generateToken, revokeToken, getJwtSecret } from '../utils/auth';
+import { generateToken, revokeToken, getJwtSecret, isTokenRevoked } from '../utils/auth';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
@@ -162,7 +162,7 @@ router.post(
   rateLimiter({ windowMs: 60000, max: 5 }),
   validate([
     body('email').isEmail().withMessage('A valid email is required'),
-    body('password').isLength({ min: 8, max: 128 }).withMessage('Password must be between 8 and 128 characters'),
+    body('password').isLength({ min: 8, max: 72 }).withMessage('Password must be between 8 and 72 characters'),
     body('name').trim().isLength({ min: 1, max: 100 }).withMessage('Name is required and must be at most 100 characters'),
   ]),
   async (req, res) => {
@@ -340,13 +340,14 @@ router.post('/forgot-password', rateLimiter({ windowMs: 60000, max: 5 }), async 
 /**
  * POST /api/auth/logout
  * Logout user — revokes the current JWT token.
+ * Requires authentication to prevent arbitrary token revocation.
  */
-router.post('/logout', async (req, res) => {
+router.post('/logout', authenticate, async (req: AuthRequest, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const decoded = jwt.verify(token, getJwtSecret()) as { jti?: string; exp?: number };
+      const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as { jti?: string; exp?: number };
       if (decoded.jti && decoded.exp) {
         await revokeToken(decoded.jti, decoded.exp);
       }
@@ -368,13 +369,19 @@ router.post('/logout', async (req, res) => {
  * POST /api/auth/refresh
  * Refresh authentication token — revokes the old token and issues a new one.
  */
-router.post('/refresh', authenticate, async (req: AuthRequest, res) => {
+router.post('/refresh', rateLimiter({ windowMs: 60000, max: 5 }), authenticate, async (req: AuthRequest, res) => {
   try {
-    // Revoke old token
+    // Revoke old token — but first verify it hasn't already been revoked
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const oldToken = authHeader.substring(7);
-      const decoded = jwt.verify(oldToken, getJwtSecret()) as { jti?: string; exp?: number };
+      const decoded = jwt.verify(oldToken, getJwtSecret(), { algorithms: ['HS256'] }) as { jti?: string; exp?: number };
+      if (decoded.jti && await isTokenRevoked(decoded.jti)) {
+        return res.status(401).json({
+          success: false,
+          error: { code: 'TOKEN_REVOKED', message: 'Token has already been revoked' },
+        });
+      }
       if (decoded.jti && decoded.exp) {
         await revokeToken(decoded.jti, decoded.exp);
       }

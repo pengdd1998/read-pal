@@ -150,6 +150,9 @@ Book.init(
       { fields: ['file_type'] },
       { fields: ['user_id', 'status'] },
       { fields: ['tags'], using: 'GIN' },
+      // Composite indexes for common ORDER BY patterns
+      { fields: ['user_id', 'last_read_at'] },
+      { fields: ['user_id', 'added_at'] },
     ],
   }
 );

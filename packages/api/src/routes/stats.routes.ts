@@ -111,6 +111,17 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
 
+    // --- Try Redis cache first (120s TTL) ---
+    const cacheKey = `stats:calendar:${userId}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        res.set('Cache-Control', 'private, max-age=120');
+        res.set('X-Cache', 'HIT');
+        return res.json(JSON.parse(cached));
+      }
+    } catch { /* Redis unavailable, compute fresh */ }
+
     const rows = await sequelize.query<{
       date: string;
       pages: string;
@@ -190,8 +201,7 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
     }
 
     // Cache calendar for 120s — only changes once per day of reading
-    res.set('Cache-Control', 'private, max-age=120');
-    res.json({
+    const responseData = {
       success: true,
       data: {
         calendar,
@@ -199,7 +209,16 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
         longestStreak,
         totalDaysActive: calendar.filter((d) => d.pages > 0 || d.minutes > 0).length,
       },
-    });
+    };
+
+    // Store in Redis with 120s TTL
+    try {
+      await redisClient.setex(cacheKey, 120, JSON.stringify(responseData));
+    } catch { /* Redis unavailable, skip cache */ }
+
+    res.set('Cache-Control', 'private, max-age=120');
+    res.set('X-Cache', 'MISS');
+    res.json(responseData);
   } catch (error) {
     console.error('Error fetching reading calendar:', error);
     res.status(500).json({
@@ -342,6 +361,7 @@ router.get('/dashboard', authenticate, etag(60), async (req: AuthRequest, res) =
           },
         },
         attributes: ['lastReadAt', 'progress', 'totalPages'],
+        limit: 50,
       });
 
       // Group by day

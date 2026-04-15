@@ -30,6 +30,7 @@ import notificationsRoutes from './routes/notifications.routes';
 import recommendationsRoutes from './routes/recommendations.routes';
 import challengesRoutes from './routes/challenges.routes';
 import exportRoutes from './routes/export.routes';
+import synthesisRoutes from './routes/synthesis.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -292,6 +293,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/recommendations', recommendationsRoutes);
 app.use('/api/challenges', challengesRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/synthesis', synthesisRoutes);
 
 // ============================================================================
 // Error Handling

@@ -372,7 +372,7 @@ router.post(
 
       // Prevent duplicate — check if user already has the sample book
       const existing = await Book.findOne({
-        where: { userId, title: 'The Art of Reading (Sample)' },
+        where: { userId, title: "Alice's Adventures in Wonderland (Sample)" },
       });
       if (existing) {
         return res.json({
@@ -395,27 +395,27 @@ router.post(
       const chapters = [
         {
           id: 'sample-ch1',
-          title: 'Chapter 1: Why We Read',
-          content: `<h1>Chapter 1: Why We Read</h1>
-<p>We read to understand. We read to feel. We read to become someone we were not before we opened the book. Reading is one of the most profound acts of transformation available to us — a quiet, private revolution that takes place in the space between the page and the mind.</p>
+          title: 'Chapter 1: Down the Rabbit Hole',
+          content: `<h1>Chapter 1: Down the Rabbit Hole</h1>
+<p>Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do: once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it, <em>"and what is the use of a book,"</em> thought Alice <em>"without pictures or conversations?"</em></p>
 
-<p>The philosopher <strong>Seneca</strong> once wrote: "We should hunt out the helpful pieces of teaching, and learn them by heart. This is the path to wisdom." Every book we read offers us this opportunity — not merely to consume information, but to be changed by it.</p>
+<p>So she was considering in her own mind (as well as she could, for the hot day made her feel very sleepy and stupid), whether the pleasure of making a daisy-chain would be worth the trouble of getting up and picking the daisies, when suddenly a <strong>White Rabbit</strong> with pink eyes ran close by her.</p>
 
-<h2>The Three Pillars of Reading</h2>
+<p>There was nothing so VERY remarkable in that; nor did Alice think it so VERY much out of the way to hear the Rabbit say to itself, <em>"Oh dear\! Oh dear\! I shall be late\!"</em> (when she thought it over afterwards, it occurred to her that she ought to have wondered at this, but at the time it all seemed quite natural); but when the Rabbit actually <strong>took a watch out of its waistcoat-pocket</strong>, and looked at it, and then hurried on, Alice started to her feet, for it flashed across her mind that she had never before seen a rabbit with either a waistcoat-pocket, or a watch to take out of it, and burning with curiosity, she ran across the field after it, and fortunately was just in time to see it pop down a large rabbit-hole under the hedge.</p>
 
-<p>There are three fundamental reasons we return to books again and again:</p>
+<p>In another moment down went Alice after it, never once considering how in the world she was to get out again.</p>
 
-<ol>
-<li><strong>Knowledge</strong> — Books are the most concentrated form of human knowledge ever devised. A single volume can contain the distilled wisdom of a lifetime of experience.</li>
-<li><strong>Empathy</strong> — Through reading, we inhabit other minds. We see the world through different eyes. This is not a metaphor; neuroscience shows that reading fiction activates the same brain regions involved in real social understanding.</li>
-<li><strong>Transcendence</strong> — Great writing lifts us beyond our immediate circumstances. It reminds us that our struggles are not unique, that others have walked similar paths and found meaning in the journey.</li>
-</ol>
+<h2>Falling Down</h2>
 
-<p>When we read actively — underlining passages, asking questions, debating the author — we engage in a conversation that transcends time. The author speaks across decades or centuries, and we respond with our own experience and understanding.</p>
+<p>The rabbit-hole went straight on like a tunnel for some way, and then dipped suddenly down, so suddenly that Alice had not a moment to think about stopping herself before she found herself falling down a very deep well.</p>
 
-<blockquote><p>"A reader lives a thousand lives before he dies. The man who never reads lives only one." — George R.R. Martin</p></blockquote>
+<p>Either the well was very deep, or she fell very slowly, for she had plenty of time as she went down to look about her and to wonder what was going to happen next. First, she tried to look down and make out what she was coming to, but it was too dark to see anything; then she looked at the sides of the well, and noticed that they were filled with cupboards and book-shelves; here and there she saw maps and pictures hung upon pegs. She took down a jar from one of the shelves as she passed; it was labelled <em>"ORANGE MARMALADE"</em>, but to her great disappointment it was empty: she did not like to drop the jar for fear of killing somebody, so managed to put it into one of the cupboards as she fell past it.</p>
 
-<p>This book is a companion for your reading journey. As you explore its pages, try highlighting passages that resonate with you, adding notes to capture your thoughts, and asking questions about anything that sparks your curiosity.</p>`,
+<blockquote><p>"Well\!" thought Alice to herself, "After a fall like this, I shall think nothing of tumbling down stairs\! How brave they'll all think me at home\! Why, I wouldn't say anything about it, even if I fell off the top of the house\!" (Which was very likely true.)</p></blockquote>
+
+<p>Down, down, down. Would the fall NEVER come to an end\! <em>"I wonder how many miles I've fallen by this time?"</em> she said aloud. <em>"I must be getting somewhere near the centre of the earth. Let me see: that would be four thousand miles down, I think."</em></p>
+
+<p><strong>Try selecting this text to highlight it or ask your AI companion about it\!</strong></p>`,
 
           startIndex: 0,
           endIndex: 1500,
@@ -423,43 +423,24 @@ router.post(
         },
         {
           id: 'sample-ch2',
-          title: 'Chapter 2: The Art of Active Reading',
-          content: `<h1>Chapter 2: The Art of Active Reading</h1>
+          title: 'Chapter 2: The Pool of Tears',
+          content: `<h1>Chapter 2: The Pool of Tears</h1>
 
-<p>Most people read passively — their eyes move across the page, but their mind is elsewhere. Active reading is different. It is a deliberate practice of engaging with the text, questioning it, and making it your own.</p>
+<p>"Curiouser and curiouser\!" cried Alice (she was so much surprised, that for the moment she quite forgot how to speak good English). "Now I'm opening out like the largest telescope that ever was\! Good-bye, feet\!"</p>
 
-<h2>The SQ3R Method</h2>
+<p>First, however, she waited for a few minutes to see if she was going to shrink any further: she felt a little nervous about this; <em>"for it might end, you know,"</em> said Alice to herself, <em>"in my going out altogether, like a candle. I wonder what I should be like then?"</em> And she tried to fancy what the flame of a candle is like after the candle is blown out, for she could not remember ever having seen such a thing.</p>
 
-<p>One of the most effective reading strategies was developed by <strong>Francis P. Robinson</strong> in 1946. Called SQ3R, it stands for:</p>
+<h2>Advice from a Caterpillar</h2>
 
-<ul>
-<li><strong>Survey</strong> — Skim the material first. Read headings, summaries, and any highlighted terms to build a mental map of what's coming.</li>
-<li><strong>Question</strong> — Turn headings into questions. Instead of "The French Revolution," ask yourself "What caused the French Revolution?"</li>
-<li><strong>Read</strong> — Now read carefully, looking for answers to your questions.</li>
-<li><strong>Recite</strong> — After each section, pause and try to recall the main points in your own words.</li>
-<li><strong>Review</strong> — After finishing, go back over your notes and highlights to reinforce what you've learned.</li>
-</ul>
+<p>After a while she remembered that she still held the pieces of mushroom in her hands, and she set to work very carefully, nibbling first at one and then at the other, and growing sometimes taller and sometimes shorter, until she had succeeded in bringing herself down to her usual height.</p>
 
-<h2>Why Highlights Matter</h2>
+<p>It was so long since she had been anything near the right size, that it felt quite strange at first; but she got used to it in a few minutes, and began talking to herself, as usual. <em>"Come, there's half my plan done now\! How puzzling all these changes are\! I'm never sure what I'm going to be, from one minute to another."</em></p>
 
-<p>Research from <strong>Cognitive Science</strong> shows that the act of selecting text to highlight creates a "generation effect" — you remember highlighted content 30-50% better than content you simply read. This is because the decision process forces deeper processing.</p>
+<blockquote><p>"Who are YOU?" said the Caterpillar.
 
-<p>But not all highlighting is equal. The most effective approach is to highlight sparingly — aim for no more than 10-15% of a page. When you highlight everything, you highlight nothing.</p>
+This was not an encouraging opening for a conversation. Alice replied, rather shyly, "I — I hardly know, sir, just at present — at least I know who I WAS when I got up this morning, but I think I must have been changed several times since then."</p></blockquote>
 
-<h2>The Power of Marginalia</h2>
-
-<p>Writing notes in the margins (or in a digital annotation system) is one of the most powerful learning techniques available. When you write a note, you:</p>
-
-<ol>
-<li>Force yourself to summarize the idea in your own words</li>
-<li>Create a personal connection to the material</li>
-<li>Build a searchable record of your thinking</li>
-<li>Engage multiple cognitive systems (reading, thinking, writing)</li>
-</ol>
-
-<blockquote><p>"The marking of books is necessary for two reasons. First, it keeps you awake. Second, reading, if it is active, is thinking, and thinking tends to express itself in words." — Mortimer Adler</p></blockquote>
-
-<p>Try it now: select a passage in this chapter that resonates with you and add a note explaining why it caught your attention.</p>`,
+<p><strong>Select any passage to highlight it, add a note, or ask your AI companion to explain it\!</strong></p>`,
 
           startIndex: 1500,
           endIndex: 3000,
@@ -467,39 +448,36 @@ router.post(
         },
         {
           id: 'sample-ch3',
-          title: 'Chapter 3: Building Your Knowledge Network',
-          content: `<h1>Chapter 3: Building Your Knowledge Network</h1>
+          title: 'Chapter 3: A Mad Tea-Party',
+          content: `<h1>Chapter 3: A Mad Tea-Party</h1>
 
-<p>Every book you read is a node in your personal knowledge network. When you read actively and reflect on connections between different works, you are not just accumulating facts — you are building a web of understanding that grows more valuable over time.</p>
+<p>There was a table set out under a tree in front of the house, and the <strong>March Hare</strong> and the <strong>Hatter</strong> were having tea at it: a <strong>Dormouse</strong> was sitting between them, fast asleep, and the other two were using it as a cushion, resting their elbows on it, and talking over its head.</p>
 
-<h2>The Zettelkasten Method</h2>
+<p><em>"Very uncomfortable for the Dormouse,"</em> thought Alice; <em>"only, as it's asleep, I suppose it doesn't mind."</em></p>
 
-<p>The German sociologist <strong>Niklas Luhmann</strong> was one of the most prolific scholars of the 20th century, publishing over 70 books and 400 articles. His secret was a note-taking system he called <em>Zettelkasten</em> (slip-box).</p>
+<p>The table was a large one, but the three were all crowded together at one corner of it: <em>"No room\! No room\!"</em> they cried out when they saw Alice coming. <em>"There's PLENTY of room\!"</em> said Alice indignantly, and she sat down in a large arm-chair at one end of the table.</p>
 
-<p>The core principles are simple:</p>
+<h2>"Why is a raven like a writing-desk?"</h2>
 
-<ul>
-<li><strong>Atomic notes</strong> — Each note captures a single idea</li>
-<li><strong>Linking</strong> — Notes are connected to related notes, forming a web</li>
-<li><strong>Your own words</strong> — Never copy-paste; always rephrase</li>
-<li><strong>Regular review</strong> — Revisit and refine your notes over time</li>
-</ul>
+<p>"Have some wine," the March Hare said in an encouraging tone.</p>
 
-<h2>Connecting Ideas Across Books</h2>
+<p>Alice looked all round the table, but there was nothing on it but tea. "I don't see any wine," she remarked.</p>
 
-<p>One of the most powerful features of reading with an AI companion is the ability to discover connections you might miss. When you read about "cognitive biases" in a psychology book, then encounter "heuristics" in an economics text, the AI can help you see how these concepts relate.</p>
+<p>"There isn't any," said the March Hare.</p>
 
-<p>These connections form a <strong>knowledge graph</strong> — a map of your intellectual journey that reveals patterns and insights invisible from any single book.</p>
+<p>"Then it wasn't very civil of you to offer it," said Alice angrily.</p>
 
-<h2>The Compounding Returns of Reading</h2>
+<p>"It wasn't very civil of you to sit down without being invited," said the March Hare.</p>
 
-<p>Here is the beautiful truth about reading: the more you read, the more valuable each new book becomes. This is because each new book doesn't just add to your knowledge — it multiplies it.</p>
+<blockquote><p>"Why is a raven like a writing-desk?"
 
-<p>Consider this: when you read your first book about economics, everything is new. By your fifth economics book, you begin to see patterns. By your tenth, you can predict arguments before they appear. Your knowledge compounds like interest in a bank account.</p>
+"Come, we shall have some fun now\!" thought Alice. "I'm glad they've begun asking riddles. — I believe I can guess that," she added aloud.
 
-<blockquote><p>"In the case of good books, the point is not to see how many of them you can get through, but rather how many can get through to you." — Mortimer J. Adler</p></blockquote>
+"Do you mean that you think you can find out the answer to it?" said the March Hare.</p></blockquote>
 
-<p>Congratulations on starting your reading journey with read-pal. As you add more books and engage with the AI companions, your knowledge network will grow richer and more interconnected. Happy reading!</p>`,
+<p>This is one of the most famous riddles in literature — and Lewis Carroll never intended for it to have an answer\! It's a perfect example of the <strong>nonsense logic</strong> that runs through Wonderland. Try asking your AI companion what they think about this riddle\!</p>
+
+<p><strong>You've finished the sample chapters\! Upload your own books to continue your reading journey with read-pal.</strong></p>`,
 
           startIndex: 3000,
           endIndex: 4500,
@@ -512,8 +490,8 @@ router.post(
       // Create book record
       const book = await Book.create({
         userId,
-        title: 'The Art of Reading (Sample)',
-        author: 'read-pal',
+        title: "Alice's Adventures in Wonderland (Sample)",
+        author: 'Lewis Carroll',
         fileType: 'epub',
         fileSize: fullContent.length,
         totalPages: chapters.length,
@@ -543,7 +521,7 @@ router.post(
             status: book.status,
             progress: book.progress,
           },
-          message: 'Sample book added to your library!',
+          message: 'Sample book added to your library\!',
         },
       });
     } catch (error) {

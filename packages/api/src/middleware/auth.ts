@@ -55,7 +55,7 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
     }
 
     // Verify token using validated secret (throws at startup if missing)
-    const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
+    const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as JWTPayload;
 
     // Check token blacklist (revoked tokens from logout)
     const jti = decoded.jti;
@@ -135,7 +135,7 @@ export function optionalAuthenticate(req: AuthRequest, res: Response, next: Next
 
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
+      const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as JWTPayload;
 
       const userId = decoded.userId || decoded.sub || '';
       req.userId = userId;

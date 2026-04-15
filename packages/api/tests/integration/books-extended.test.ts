@@ -411,8 +411,8 @@ describe('Books API — Extended', () => {
       (Book.create as jest.Mock).mockResolvedValue({
         id: 'sample-book-id',
         userId: testUserId,
-        title: 'The Art of Reading (Sample)',
-        author: 'read-pal',
+        title: "Alice's Adventures in Wonderland (Sample)",
+        author: 'Lewis Carroll',
         fileType: 'epub',
         totalPages: 3,
         status: 'unread',
@@ -426,7 +426,7 @@ describe('Books API — Extended', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.book.title).toBe('The Art of Reading (Sample)');
+      expect(response.body.data.book.title).toBe("Alice's Adventures in Wonderland (Sample)");
       expect(Book.create).toHaveBeenCalled();
       expect(Document.create).toHaveBeenCalled();
     });
@@ -434,8 +434,8 @@ describe('Books API — Extended', () => {
     it('should return existing sample book if already seeded', async () => {
       const existingBook = {
         id: 'existing-sample',
-        title: 'The Art of Reading (Sample)',
-        author: 'read-pal',
+        title: "Alice's Adventures in Wonderland (Sample)",
+        author: 'Lewis Carroll',
         fileType: 'epub',
         totalPages: 3,
         status: 'unread',

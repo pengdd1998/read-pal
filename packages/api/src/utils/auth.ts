@@ -49,6 +49,7 @@ export function generateToken(userId: string): string {
     },
     getJwtSecret(),
     {
+      algorithm: 'HS256',
       expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
     },
   );
@@ -60,7 +61,7 @@ export function generateToken(userId: string): string {
  */
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as TokenPayload;
+    const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as TokenPayload;
     return decoded;
   } catch {
     // Do not log token verification failures — prevents info leakage in logs

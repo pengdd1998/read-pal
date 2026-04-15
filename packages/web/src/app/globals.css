@@ -310,30 +310,30 @@
   .dark .reader-content .token.variable { color: #fbbf24; }
 
   /* Sepia theme overrides — warmer, muted tones */
-  .bg-\[\\#faf6f0\] .reader-content .token.comment,
-  .bg-\[\\#faf6f0\] .reader-content .token.prolog,
-  .bg-\[\\#faf6f0\] .reader-content .token.doctype,
-  .bg-\[\\#faf6f0\] .reader-content .token.cdata { color: #92816b; font-style: italic; }
-  .bg-\[\\#faf6f0\] .reader-content .token.punctuation { color: #92816b; }
-  .bg-\[\\#faf6f0\] .reader-content .token.property,
-  .bg-\[\\#faf6f0\] .reader-content .token.tag,
-  .bg-\[\\#faf6f0\] .reader-content .token.boolean,
-  .bg-\[\\#faf6f0\] .reader-content .token.number,
-  .bg-\[\\#faf6f0\] .reader-content .token.constant,
-  .bg-\[\\#faf6f0\] .reader-content .token.symbol { color: #0e7490; }
-  .bg-\[\\#faf6f0\] .reader-content .token.selector,
-  .bg-\[\\#faf6f0\] .reader-content .token.attr-name,
-  .bg-\[\\#faf6f0\] .reader-content .token.string,
-  .bg-\[\\#faf6f0\] .reader-content .token.char,
-  .bg-\[\\#faf6f0\] .reader-content .token.builtin { color: #15803d; }
-  .bg-\[\\#faf6f0\] .reader-content .token.atrule,
-  .bg-\[\\#faf6f0\] .reader-content .token.attr-value,
-  .bg-\[\\#faf6f0\] .reader-content .token.keyword { color: #7e22ce; }
-  .bg-\[\\#faf6f0\] .reader-content .token.function,
-  .bg-\[\\#faf6f0\] .reader-content .token.class-name { color: #1d4ed8; }
-  .bg-\[\\#faf6f0\] .reader-content .token.regex,
-  .bg-\[\\#faf6f0\] .reader-content .token.important,
-  .bg-\[\\#faf6f0\] .reader-content .token.variable { color: #b45309; }
+  [data-theme="sepia"] .reader-content .token.comment,
+  [data-theme="sepia"] .reader-content .token.prolog,
+  [data-theme="sepia"] .reader-content .token.doctype,
+  [data-theme="sepia"] .reader-content .token.cdata { color: #92816b; font-style: italic; }
+  [data-theme="sepia"] .reader-content .token.punctuation { color: #92816b; }
+  [data-theme="sepia"] .reader-content .token.property,
+  [data-theme="sepia"] .reader-content .token.tag,
+  [data-theme="sepia"] .reader-content .token.boolean,
+  [data-theme="sepia"] .reader-content .token.number,
+  [data-theme="sepia"] .reader-content .token.constant,
+  [data-theme="sepia"] .reader-content .token.symbol { color: #0e7490; }
+  [data-theme="sepia"] .reader-content .token.selector,
+  [data-theme="sepia"] .reader-content .token.attr-name,
+  [data-theme="sepia"] .reader-content .token.string,
+  [data-theme="sepia"] .reader-content .token.char,
+  [data-theme="sepia"] .reader-content .token.builtin { color: #15803d; }
+  [data-theme="sepia"] .reader-content .token.atrule,
+  [data-theme="sepia"] .reader-content .token.attr-value,
+  [data-theme="sepia"] .reader-content .token.keyword { color: #7e22ce; }
+  [data-theme="sepia"] .reader-content .token.function,
+  [data-theme="sepia"] .reader-content .token.class-name { color: #1d4ed8; }
+  [data-theme="sepia"] .reader-content .token.regex,
+  [data-theme="sepia"] .reader-content .token.important,
+  [data-theme="sepia"] .reader-content .token.variable { color: #b45309; }
 
   .reader-content pre {
     background: #1e293b;
@@ -346,16 +346,50 @@
     font-size: 0.875em;
     line-height: 1.6;
     tab-size: 4;
+    font-variant-ligatures: contextual;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Dark theme — code block slightly lighter than surrounding background */
+  [data-theme="dark"] .reader-content pre {
+    background: #0d1117;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Sepia theme — code block with warm dark background */
+  [data-theme="sepia"] .reader-content pre {
+    background: #2c2418;
+    border-color: rgba(217, 119, 6, 0.15);
   }
 
   /* Copy button for code blocks */
   .reader-content pre {
     position: relative;
   }
-  .reader-content pre .code-copy-btn {
+
+  /* Code block header — language label + copy button */
+  .reader-content pre .code-header {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 1;
+  }
+
+  .reader-content pre .code-lang-label {
+    font-family: var(--font-mono), 'Fira Code', 'Consolas', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .reader-content pre .code-copy-btn {
     background: rgba(255,255,255,0.1);
     border: none;
     border-radius: 0.375rem;
@@ -367,8 +401,12 @@
     transition: opacity 0.2s;
     font-family: var(--font-mono), 'Fira Code', monospace;
   }
-  .reader-content pre:hover .code-copy-btn {
+  .reader-content pre:hover .code-header {
     opacity: 1;
+  }
+  .reader-content pre .code-header {
+    opacity: 0;
+    transition: opacity 0.2s;
   }
   .reader-content pre .code-copy-btn:hover {
     background: rgba(255,255,255,0.2);

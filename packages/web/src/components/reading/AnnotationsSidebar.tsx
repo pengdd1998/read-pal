@@ -4,12 +4,16 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
 import { ExportPreviewModal } from './ExportPreviewModal';
+import { ShareDialog } from './ShareDialog';
 
 interface AnnotationsSidebarProps {
   annotations: Annotation[];
   bookId: string;
   bookTitle?: string;
   author?: string;
+  totalPages?: number;
+  currentPage?: number;
+  progress?: number;
   isOpen: boolean;
   onClose: () => void;
   onDeleteAnnotation: (id: string) => void;
@@ -31,6 +35,9 @@ export function AnnotationsSidebar({
   bookId,
   bookTitle,
   author,
+  totalPages,
+  currentPage,
+  progress,
   isOpen,
   onClose,
   onDeleteAnnotation,
@@ -39,6 +46,7 @@ export function AnnotationsSidebar({
 }: AnnotationsSidebarProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -48,12 +56,13 @@ export function AnnotationsSidebar({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showExportModal) setShowExportModal(false);
+        else if (showShareDialog) setShowShareDialog(false);
         else onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, showExportModal]);
+  }, [isOpen, onClose, showExportModal, showShareDialog]);
 
   const filtered = (activeTab === 'all'
     ? annotations
@@ -135,16 +144,28 @@ export function AnnotationsSidebar({
             </svg>
           </button>
           {annotations.length > 0 && (
-            <button
-              aria-label="Export annotations"
-              onClick={() => setShowExportModal(true)}
-              className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-              title="Export annotations"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-            </button>
+            <>
+              <button
+                aria-label="Share & export"
+                onClick={() => setShowShareDialog(true)}
+                className="p-2 rounded-lg text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                title="Share & export"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </button>
+              <button
+                aria-label="Export annotations"
+                onClick={() => setShowExportModal(true)}
+                className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                title="Export annotations"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+            </>
           )}
         </div>
 
@@ -266,6 +287,20 @@ export function AnnotationsSidebar({
           bookId={bookId}
           bookTitle={bookTitle}
           onClose={() => setShowExportModal(false)}
+        />
+      )}
+
+      {/* Share & export dialog */}
+      {showShareDialog && (
+        <ShareDialog
+          annotations={annotations}
+          bookId={bookId}
+          bookTitle={bookTitle}
+          author={author}
+          totalPages={totalPages}
+          currentPage={currentPage}
+          progress={progress}
+          onClose={() => setShowShareDialog(false)}
         />
       )}
     </>
