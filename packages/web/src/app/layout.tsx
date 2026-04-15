@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata } from 'next/font/google';
+import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata, Fira_Code } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -28,6 +28,12 @@ const sourceSerif = Source_Serif_4({
 const literata = Literata({
   subsets: ['latin'],
   variable: '--font-reading',
+  display: 'swap',
+});
+
+const firaCode = Fira_Code({
+  subsets: ['latin'],
+  variable: '--font-mono',
   display: 'swap',
 });
 
@@ -110,7 +116,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable} ${firaCode.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <meta name="theme-color" content="#d97706" />

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, type RefObject } from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle } from '@/components/icons';
 import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
+import { highlightCodeBlocks, preloadPrism } from '@/lib/syntax-highlight';
 
 // DOMPurify configuration that preserves technical formatting tags
 const PURIFY_CONFIG = {
@@ -80,7 +81,10 @@ export function ReaderView({
   const chapterMenuRef = useRef<HTMLDivElement>(null);
 
   // Preload DOMPurify on mount so purifySync works immediately after
-  useEffect(() => { preloadDOMPurify(); }, []);
+  useEffect(() => { preloadDOMPurify(); preloadPrism(); }, []);
+
+  // Ref to the article element for code highlighting
+  const articleRef = useRef<HTMLElement | null>(null);
 
   // Memoize sanitized content to avoid re-sanitizing on every render
   // Uses purifySync which falls back to script-stripping if DOMPurify hasn't loaded yet
@@ -118,6 +122,13 @@ export function ReaderView({
   // Reset scroll position on chapter change + animate
   // Also persists scroll position so returning readers don't lose their place
   const [chapterKey, setChapterKey] = useState(0);
+
+  // Apply Prism.js syntax highlighting to code blocks after content renders
+  useEffect(() => {
+    const el = articleRef.current;
+    if (!el) return;
+    highlightCodeBlocks(el).catch(() => { /* non-critical — graceful degradation */ });
+  }, [sanitizedContent, chapterKey]);
 
   // Save scroll position before chapter changes or component unmounts
   const scrollKey = `scroll-${bookId}-ch${currentPage}`;
@@ -316,6 +327,7 @@ export function ReaderView({
         <article
           key={chapterKey}
           ref={(el) => {
+            articleRef.current = el;
             if (contentRef) {
               (contentRef as React.MutableRefObject<HTMLElement | null>).current = el;
             }

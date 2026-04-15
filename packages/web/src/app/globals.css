@@ -241,6 +241,93 @@
   }
 
   /* Technical content styles — code blocks, tables, images */
+
+  /* --- Prism.js syntax highlighting (theme-aware) --- */
+
+  /* Light theme token colors */
+  .reader-content .token.comment,
+  .reader-content .token.prolog,
+  .reader-content .token.doctype,
+  .reader-content .token.cdata { color: #6b7280; font-style: italic; }
+  .reader-content .token.punctuation { color: #6b7280; }
+  .reader-content .token.property,
+  .reader-content .token.tag,
+  .reader-content .token.boolean,
+  .reader-content .token.number,
+  .reader-content .token.constant,
+  .reader-content .token.symbol { color: #0891b2; }
+  .reader-content .token.selector,
+  .reader-content .token.attr-name,
+  .reader-content .token.string,
+  .reader-content .token.char,
+  .reader-content .token.builtin { color: #16a34a; }
+  .reader-content .token.operator,
+  .reader-content .token.entity,
+  .reader-content .token.url { color: #0d9488; }
+  .reader-content .token.atrule,
+  .reader-content .token.attr-value,
+  .reader-content .token.keyword { color: #7c3aed; }
+  .reader-content .token.function,
+  .reader-content .token.class-name { color: #2563eb; }
+  .reader-content .token.regex,
+  .reader-content .token.important,
+  .reader-content .token.variable { color: #d97706; }
+
+  /* Dark theme overrides */
+  .dark .reader-content .token.comment,
+  .dark .reader-content .token.prolog,
+  .dark .reader-content .token.doctype,
+  .dark .reader-content .token.cdata { color: #64748b; }
+  .dark .reader-content .token.punctuation { color: #94a3b8; }
+  .dark .reader-content .token.property,
+  .dark .reader-content .token.tag,
+  .dark .reader-content .token.boolean,
+  .dark .reader-content .token.number,
+  .dark .reader-content .token.constant,
+  .dark .reader-content .token.symbol { color: #22d3ee; }
+  .dark .reader-content .token.selector,
+  .dark .reader-content .token.attr-name,
+  .dark .reader-content .token.string,
+  .dark .reader-content .token.char,
+  .dark .reader-content .token.builtin { color: #4ade80; }
+  .dark .reader-content .token.operator,
+  .dark .reader-content .token.entity,
+  .dark .reader-content .token.url { color: #2dd4bf; }
+  .dark .reader-content .token.atrule,
+  .dark .reader-content .token.attr-value,
+  .dark .reader-content .token.keyword { color: #a78bfa; }
+  .dark .reader-content .token.function,
+  .dark .reader-content .token.class-name { color: #60a5fa; }
+  .dark .reader-content .token.regex,
+  .dark .reader-content .token.important,
+  .dark .reader-content .token.variable { color: #fbbf24; }
+
+  /* Sepia theme overrides — warmer, muted tones */
+  .bg-\[\\#faf6f0\] .reader-content .token.comment,
+  .bg-\[\\#faf6f0\] .reader-content .token.prolog,
+  .bg-\[\\#faf6f0\] .reader-content .token.doctype,
+  .bg-\[\\#faf6f0\] .reader-content .token.cdata { color: #92816b; font-style: italic; }
+  .bg-\[\\#faf6f0\] .reader-content .token.punctuation { color: #92816b; }
+  .bg-\[\\#faf6f0\] .reader-content .token.property,
+  .bg-\[\\#faf6f0\] .reader-content .token.tag,
+  .bg-\[\\#faf6f0\] .reader-content .token.boolean,
+  .bg-\[\\#faf6f0\] .reader-content .token.number,
+  .bg-\[\\#faf6f0\] .reader-content .token.constant,
+  .bg-\[\\#faf6f0\] .reader-content .token.symbol { color: #0e7490; }
+  .bg-\[\\#faf6f0\] .reader-content .token.selector,
+  .bg-\[\\#faf6f0\] .reader-content .token.attr-name,
+  .bg-\[\\#faf6f0\] .reader-content .token.string,
+  .bg-\[\\#faf6f0\] .reader-content .token.char,
+  .bg-\[\\#faf6f0\] .reader-content .token.builtin { color: #15803d; }
+  .bg-\[\\#faf6f0\] .reader-content .token.atrule,
+  .bg-\[\\#faf6f0\] .reader-content .token.attr-value,
+  .bg-\[\\#faf6f0\] .reader-content .token.keyword { color: #7e22ce; }
+  .bg-\[\\#faf6f0\] .reader-content .token.function,
+  .bg-\[\\#faf6f0\] .reader-content .token.class-name { color: #1d4ed8; }
+  .bg-\[\\#faf6f0\] .reader-content .token.regex,
+  .bg-\[\\#faf6f0\] .reader-content .token.important,
+  .bg-\[\\#faf6f0\] .reader-content .token.variable { color: #b45309; }
+
   .reader-content pre {
     background: #1e293b;
     color: #e2e8f0;
@@ -248,10 +335,37 @@
     padding: 1rem 1.25rem;
     overflow-x: auto;
     margin: 1.5rem 0;
-    font-family: 'Fira Code', 'Consolas', monospace;
+    font-family: var(--font-mono), 'Fira Code', 'Consolas', monospace;
     font-size: 0.875em;
     line-height: 1.6;
     tab-size: 4;
+  }
+
+  /* Copy button for code blocks */
+  .reader-content pre {
+    position: relative;
+  }
+  .reader-content pre .code-copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-family: var(--font-mono), 'Fira Code', monospace;
+  }
+  .reader-content pre:hover .code-copy-btn {
+    opacity: 1;
+  }
+  .reader-content pre .code-copy-btn:hover {
+    background: rgba(255,255,255,0.2);
+    color: #e2e8f0;
   }
 
   .reader-content pre code {
@@ -263,7 +377,7 @@
   }
 
   .reader-content code {
-    font-family: 'Fira Code', 'Consolas', monospace;
+    font-family: var(--font-mono), 'Fira Code', 'Consolas', monospace;
     font-size: 0.875em;
     background: rgba(217, 119, 6, 0.1);
     padding: 0.15em 0.4em;
