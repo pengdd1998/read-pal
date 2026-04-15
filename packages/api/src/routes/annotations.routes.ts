@@ -13,6 +13,8 @@ import { Op, QueryTypes } from 'sequelize';
 import { sequelize } from '../models';
 import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
+import { exportAnnotations, type ExportFormat } from '../services/ExportService';
+import { Book } from '../models';
 
 const router: Router = Router();
 
@@ -179,12 +181,13 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
       });
     }
 
+    const fmt = (format as string) || 'markdown';
+
+    // Legacy formats: json and markdown remain inline
     const annotations = await Annotation.findAll({
       where: { userId: req.userId, bookId },
       order: [['createdAt', 'ASC']],
     });
-
-    const fmt = (format as string) || 'markdown';
 
     if (fmt === 'json') {
       res.setHeader('Content-Type', 'application/json');
@@ -192,49 +195,85 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
       return res.json(annotations);
     }
 
-    // Markdown export
-    const lines: string[] = [`# Annotations`, ``, `_Exported ${new Date().toLocaleDateString()}_`, ``];
+    if (fmt === 'markdown') {
+      const lines: string[] = [`# Annotations`, ``, `_Exported ${new Date().toLocaleDateString()}_`, ``];
 
-    const highlights = annotations.filter((a) => a.type === 'highlight');
-    const notes = annotations.filter((a) => a.type === 'note');
-    const bookmarks = annotations.filter((a) => a.type === 'bookmark');
+      const highlights = annotations.filter((a) => a.type === 'highlight');
+      const notes = annotations.filter((a) => a.type === 'note');
+      const bookmarks = annotations.filter((a) => a.type === 'bookmark');
 
-    if (highlights.length > 0) {
-      lines.push(`## Highlights (${highlights.length})`, ``);
-      for (const h of highlights) {
-        lines.push(`> ${escapeMarkdown(h.content).replace(/\n/g, '\n> ')}`);
-        if (h.note) lines.push(``, `**Note:** ${escapeMarkdown(h.note)}`);
-        if (h.color) lines.push(``, `_Color: ${h.color}_`);
+      if (highlights.length > 0) {
+        lines.push(`## Highlights (${highlights.length})`, ``);
+        for (const h of highlights) {
+          lines.push(`> ${escapeMarkdown(h.content).replace(/\n/g, '\n> ')}`);
+          if (h.note) lines.push(``, `**Note:** ${escapeMarkdown(h.note)}`);
+          if (h.color) lines.push(``, `_Color: ${h.color}_`);
+          lines.push(``);
+        }
+      }
+
+      if (notes.length > 0) {
+        lines.push(`## Notes (${notes.length})`, ``);
+        for (const n of notes) {
+          lines.push(`### ${escapeMarkdown(n.content.slice(0, 60))}${n.content.length > 60 ? '...' : ''}`);
+          if (n.note) lines.push(``, escapeMarkdown(n.note));
+          lines.push(``);
+        }
+      }
+
+      if (bookmarks.length > 0) {
+        lines.push(`## Bookmarks (${bookmarks.length})`, ``);
+        for (const b of bookmarks) {
+          const loc = b.location?.pageNumber ? ` (p. ${b.location.pageNumber})` : '';
+          lines.push(`- ${escapeMarkdown(b.content)}${loc}`);
+        }
         lines.push(``);
       }
-    }
 
-    if (notes.length > 0) {
-      lines.push(`## Notes (${notes.length})`, ``);
-      for (const n of notes) {
-        lines.push(`### ${escapeMarkdown(n.content.slice(0, 60))}${n.content.length > 60 ? '...' : ''}`);
-        if (n.note) lines.push(``, escapeMarkdown(n.note));
-        lines.push(``);
+      if (annotations.length === 0) {
+        lines.push(`_No annotations yet._`);
       }
+
+      const md = lines.join('\n');
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.md"`);
+      return res.send(md);
     }
 
-    if (bookmarks.length > 0) {
-      lines.push(`## Bookmarks (${bookmarks.length})`, ``);
-      for (const b of bookmarks) {
-        const loc = b.location?.pageNumber ? ` (p. ${b.location.pageNumber})` : '';
-        lines.push(`- ${escapeMarkdown(b.content)}${loc}`);
-      }
-      lines.push(``);
+    // New formats: delegate to ExportService (requires book metadata)
+    const validFormats: ExportFormat[] = ['bookclub', 'bibtex', 'apa', 'mla', 'chicago', 'research'];
+    if (!validFormats.includes(fmt as ExportFormat)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: `Unsupported format "${fmt}". Supported: markdown, json, ${validFormats.join(', ')}` },
+      });
     }
 
-    if (annotations.length === 0) {
-      lines.push(`_No annotations yet._`);
+    const book = await Book.findByPk(bookId);
+    if (!book) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Book not found' },
+      });
     }
 
-    const md = lines.join('\n');
-    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.md"`);
-    res.send(md);
+    const result = await exportAnnotations(
+      fmt as ExportFormat,
+      { title: book.title, author: book.author, metadata: book.metadata },
+      annotations.map((a) => ({
+        type: a.type,
+        content: a.content,
+        note: a.note || undefined,
+        color: a.color || undefined,
+        tags: a.tags || undefined,
+        location: a.location as Record<string, unknown> | undefined,
+        createdAt: a.createdAt,
+      })),
+    );
+
+    res.setHeader('Content-Type', result.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.send(result.content);
   } catch (error) {
     console.error('Error exporting annotations:', error);
     res.status(500).json({

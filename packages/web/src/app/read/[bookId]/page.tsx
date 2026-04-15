@@ -42,14 +42,22 @@ const HEADER_BG_CLASSES = {
 /** Subtle selection hint that auto-dismisses after a few seconds. */
 function SelectionHint({ onDismiss }: { onDismiss: () => void }) {
   useEffect(() => {
-    const t = setTimeout(onDismiss, 6000);
+    const t = setTimeout(onDismiss, 10000);
     return () => clearTimeout(t);
   }, [onDismiss]);
 
   return (
-    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in opacity-0" style={{ animation: 'fade-in 0.5s 1s forwards, fade-in 0.5s 5s reverse forwards' }}>
-      <div className="px-3 py-1.5 rounded-full bg-amber-600/70 text-white text-xs backdrop-blur-sm">
-        Select text to highlight or add notes
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20 animate-fade-in" style={{ animation: 'fade-in 0.5s 1.5s forwards' }}>
+      <div className="px-4 py-2 rounded-xl bg-amber-600/80 text-white text-sm backdrop-blur-sm shadow-lg flex items-center gap-2 pointer-events-auto">
+        <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+        </svg>
+        <span>Select any text to highlight, add notes, or ask AI</span>
+        <button onClick={onDismiss} className="ml-1 opacity-60 hover:opacity-100 transition-opacity" aria-label="Dismiss">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
     </div>
   );

@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
-import { useToast } from '@/components/Toast';
-import { getAuthToken } from '@/lib/auth-fetch';
+import { ExportPreviewModal } from './ExportPreviewModal';
 
 interface AnnotationsSidebarProps {
   annotations: Annotation[];
@@ -38,48 +37,23 @@ export function AnnotationsSidebar({
   onUpdateAnnotation,
   onScrollToAnnotation,
 }: AnnotationsSidebarProps) {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
-  const [exporting, setExporting] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
-  const handleExport = async (format: 'markdown' | 'json') => {
-    let url: string | undefined;
-    try {
-      setExporting(true);
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${baseUrl}/api/annotations/export?bookId=${bookId}&format=${format}`, {
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
-      });
-      if (!res.ok) { toast('Export failed. Please try again.', 'error'); return; }
-      const blob = await res.blob();
-      url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `annotations-${bookId}.${format === 'json' ? 'json' : 'md'}`;
-      a.click();
-    } catch {
-      toast('Export failed. Please try again.', 'error');
-    } finally {
-      if (url) URL.revokeObjectURL(url);
-      setExporting(false);
-    }
-  };
 
   // Escape key to close
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showExportMenu) setShowExportMenu(false);
+        if (showExportModal) setShowExportModal(false);
         else onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, showExportMenu]);
+  }, [isOpen, onClose, showExportModal]);
 
   const filtered = (activeTab === 'all'
     ? annotations
@@ -161,39 +135,16 @@ export function AnnotationsSidebar({
             </svg>
           </button>
           {annotations.length > 0 && (
-            <div className="relative">
-              <button
-                disabled={exporting}
-                aria-label="Export annotations"
-                aria-haspopup="true"
-                onClick={() => setShowExportMenu(!showExportMenu)}
-                className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title="Export annotations"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </button>
-              {showExportMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 animate-scale-in">
-                    <button
-                      onClick={() => { handleExport('markdown'); setShowExportMenu(false); }}
-                      className="w-full px-4 py-3 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg active:bg-gray-100 dark:active:bg-gray-700 transition-colors min-h-[44px]"
-                    >
-                      Export as Markdown
-                    </button>
-                    <button
-                      onClick={() => { handleExport('json'); setShowExportMenu(false); }}
-                      className="w-full px-4 py-3 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-lg active:bg-gray-100 dark:active:bg-gray-700 transition-colors min-h-[44px]"
-                    >
-                      Export as JSON
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <button
+              aria-label="Export annotations"
+              onClick={() => setShowExportModal(true)}
+              className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+              title="Export annotations"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
           )}
         </div>
 
@@ -308,6 +259,15 @@ export function AnnotationsSidebar({
           )}
         </div>
       </div>
+
+      {/* Export modal */}
+      {showExportModal && (
+        <ExportPreviewModal
+          bookId={bookId}
+          bookTitle={bookTitle}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
     </>
   );
 }
