@@ -39,7 +39,8 @@ import { SynthesisAgent } from './agents/synthesis/SynthesisAgent';
 import { FriendAgent } from './agents/friend/FriendAgent';
 import { AgentOrchestrator, OrchestratorConfig } from './agents/orchestrator/AgentOrchestrator';
 
-// Database
+// Database & Models (import models to register them with Sequelize before sync)
+import './models';
 import { sequelize, initPinecone } from './db';
 import { DEFAULT_MODEL } from './services/llmClient';
 
