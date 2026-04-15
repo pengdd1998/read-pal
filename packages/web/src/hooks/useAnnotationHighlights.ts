@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback, type RefObject } from 'react';
+import { useEffect, useRef, useCallback, useMemo, type RefObject } from 'react';
 import type { Annotation } from '@read-pal/shared';
 
 const MARK_CLASS = 'highlight-mark';
@@ -16,11 +16,10 @@ interface MarkEntry {
  * Renders annotation highlights as <mark> elements in the DOM.
  *
  * Performance strategy:
- * - Keeps a Map of annotation-id -> mark element so we can diff changes.
+ * - Separate effects for page change (full rebuild) vs annotation delta (incremental).
  * - Theme-only changes simply update CSS on existing marks (no DOM rebuild).
- * - Added/removed annotations only touch their specific marks.
- * - Heavy DOM work (page change, full annotation set change) is spread across
- *   requestAnimationFrame batches to avoid blocking the main thread.
+ * - Annotation additions/removals only touch their specific marks.
+ * - Heavy DOM work is spread across requestAnimationFrame batches.
  */
 export function useAnnotationHighlights(
   containerRef: RefObject<HTMLElement | null>,
@@ -32,7 +31,26 @@ export function useAnnotationHighlights(
   const marksMapRef = useRef<Map<string, MarkEntry>>(new Map());
   const prevThemeRef = useRef(theme);
   const prevPageRef = useRef(currentPageIndex);
-  const prevAnnotationsRef = useRef<Annotation[]>([]);
+
+  // ── Memoized page-filtered annotations (stable reference via useMemo) ──
+  const pageAnnotations = useMemo(
+    () =>
+      annotations.filter(
+        (a) =>
+          a.type !== 'bookmark' &&
+          a.location?.pageIndex === currentPageIndex &&
+          a.location?.selection &&
+          typeof a.location.selection.start === 'number' &&
+          typeof a.location.selection.end === 'number',
+      ),
+    [annotations, currentPageIndex],
+  );
+
+  // Stable ID set for quick membership checks
+  const pageAnnotationIds = useMemo(
+    () => new Set(pageAnnotations.map((a) => a.id)),
+    [pageAnnotations],
+  );
 
   // ── Helper: compute style for a mark based on annotation + theme ─────
   const applyMarkStyle = useCallback(
@@ -77,56 +95,57 @@ export function useAnnotationHighlights(
     prevThemeRef.current = theme;
   }, [theme]);
 
-  // ── Effect 2: Annotation / page changes (diff + batched rebuild) ─────
+  // ── Effect 2: Page change — full nuke-and-rebuild ────────────────────
+  // Separated from annotation delta so page flips don't re-run diff logic.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    if (prevPageRef.current === currentPageIndex) return;
 
-    const pageChanged = prevPageRef.current !== currentPageIndex;
-    const prevAnnotations = prevAnnotationsRef.current;
+    // Page changed — offsets are page-relative so all marks are invalid
+    clearAllMarks(container);
+    prevPageRef.current = currentPageIndex;
 
-    // Build a lookup of annotations relevant to this page
-    const pageAnnotations = annotations.filter(
-      (a) =>
-        a.type !== 'bookmark' &&
-        a.location?.pageIndex === currentPageIndex &&
-        a.location?.selection &&
-        typeof a.location.selection.start === 'number' &&
-        typeof a.location.selection.end === 'number',
+    // Rebuild marks for the new page (pageAnnotations already filtered by memo)
+    if (pageAnnotations.length === 0) return;
+
+    const sorted = [...pageAnnotations].sort(
+      (a, b) =>
+        (b.location?.selection?.start ?? 0) - (a.location?.selection?.start ?? 0),
     );
 
-    const currentPageIds = new Set(pageAnnotations.map((a) => a.id));
+    batchCreateMarks(containerRef, sorted, theme, marksMapRef, applyMarkStyle);
+  }, [containerRef, currentPageIndex, pageAnnotations, theme, clearAllMarks, applyMarkStyle]);
+
+  // ── Effect 3: Annotation delta — incremental add/remove/style ────────
+  // Only runs when pageAnnotations identity changes (new/removed/updated).
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    // Skip on page change — handled by Effect 2
+    if (prevPageRef.current !== currentPageIndex) return;
 
     // ── Fast path: nothing to render, just clear stale marks ──────────
     if (pageAnnotations.length === 0 && marksMapRef.current.size === 0) {
-      prevPageRef.current = currentPageIndex;
-      prevAnnotationsRef.current = annotations;
       return;
     }
 
-    // ── If the page changed, nuke everything and rebuild from scratch ──
-    // (offsets are page-relative so all marks are invalid after page flip)
-    if (pageChanged) {
-      clearAllMarks(container);
-      marksMapRef.current = new Map();
-    } else {
-      // ── Diff: remove marks for deleted annotations ──────────────────
-      for (const [id, entry] of marksMapRef.current) {
-        if (!currentPageIds.has(id)) {
-          const parent = entry.element.parentNode;
-          if (parent) {
-            while (entry.element.firstChild) {
-              parent.insertBefore(entry.element.firstChild, entry.element);
-            }
-            parent.removeChild(entry.element);
-            parent.normalize();
+    // ── Remove marks for deleted annotations ──────────────────────────
+    for (const [id, entry] of marksMapRef.current) {
+      if (!pageAnnotationIds.has(id)) {
+        const parent = entry.element.parentNode;
+        if (parent) {
+          while (entry.element.firstChild) {
+            parent.insertBefore(entry.element.firstChild, parent);
           }
-          marksMapRef.current.delete(id);
+          parent.removeChild(entry.element);
+          parent.normalize();
         }
+        marksMapRef.current.delete(id);
       }
     }
 
-    // ── Determine which annotations need a fresh mark created ──────────
+    // ── Determine which annotations need a fresh mark created ─────────
     const toCreate: Annotation[] = [];
     for (const ann of pageAnnotations) {
       if (!marksMapRef.current.has(ann.id)) {
@@ -144,9 +163,6 @@ export function useAnnotationHighlights(
       }
     }
 
-    prevPageRef.current = currentPageIndex;
-    prevAnnotationsRef.current = annotations;
-
     if (toCreate.length === 0) return;
 
     // ── Sort descending by start offset so we insert end-to-start ──────
@@ -155,40 +171,49 @@ export function useAnnotationHighlights(
         (b.location?.selection?.start ?? 0) - (a.location?.selection?.start ?? 0),
     );
 
-    // ── Batch DOM insertions via rAF to keep the main thread responsive ──
-    const BATCH_SIZE = 10;
-    let index = 0;
-
-    function processBatch() {
-      // Guard: container may have been unmounted between rAF frames
-      const currentContainer = containerRef.current;
-      if (!currentContainer) return;
-
-      const end = Math.min(index + BATCH_SIZE, sorted.length);
-      for (; index < end; index++) {
-        const annotation = sorted[index];
-        createMark(currentContainer, annotation, theme, marksMapRef.current, applyMarkStyle);
-      }
-      if (index < sorted.length) {
-        requestAnimationFrame(processBatch);
-      }
-    }
-
-    // For small counts, do them synchronously to avoid visual flicker.
-    // The rAF batching only matters for large annotation sets (50+).
-    if (sorted.length <= BATCH_SIZE) {
-      for (const annotation of sorted) {
-        createMark(container, annotation, theme, marksMapRef.current, applyMarkStyle);
-      }
-    } else {
-      requestAnimationFrame(processBatch);
-    }
-  }, [containerRef, annotations, currentPageIndex, theme, clearAllMarks, applyMarkStyle]);
+    batchCreateMarks(containerRef, sorted, theme, marksMapRef, applyMarkStyle);
+  }, [containerRef, pageAnnotations, pageAnnotationIds, currentPageIndex, theme, applyMarkStyle]);
 }
 
 // ────────────────────────────────────────────────────────────────────────────
 // Pure helpers (not hooks, safe to extract)
 // ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Create marks in batches via rAF for large sets, synchronously for small.
+ */
+function batchCreateMarks(
+  containerRef: RefObject<HTMLElement | null>,
+  sorted: Annotation[],
+  theme: string,
+  marksMap: React.MutableRefObject<Map<string, MarkEntry>>,
+  applyStyle: (mark: HTMLElement, ann: Annotation, theme: string) => void,
+): void {
+  const BATCH_SIZE = 8;
+
+  if (sorted.length <= BATCH_SIZE) {
+    const container = containerRef.current;
+    if (!container) return;
+    for (const annotation of sorted) {
+      createMark(container, annotation, theme, marksMap.current, applyStyle);
+    }
+    return;
+  }
+
+  let index = 0;
+  function processBatch() {
+    const container = containerRef.current;
+    if (!container) return;
+    const end = Math.min(index + BATCH_SIZE, sorted.length);
+    for (; index < end; index++) {
+      createMark(container, sorted[index], theme, marksMap.current, applyStyle);
+    }
+    if (index < sorted.length) {
+      requestAnimationFrame(processBatch);
+    }
+  }
+  requestAnimationFrame(processBatch);
+}
 
 /**
  * Create a single <mark> element for an annotation and insert it into the
