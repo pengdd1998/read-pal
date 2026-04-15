@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
 import { ExportPreviewModal } from './ExportPreviewModal';
-import { ShareDialog } from './ShareDialog';
+
+// ShareDialog is heavy (~400 lines + export utils) — only load when user clicks Share
+const ShareDialog = dynamic(() => import('./ShareDialog').then((m) => ({ default: m.ShareDialog })), {
+  ssr: false,
+});
 
 interface AnnotationsSidebarProps {
   annotations: Annotation[];

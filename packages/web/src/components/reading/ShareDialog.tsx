@@ -4,13 +4,6 @@ import { useState, useCallback, useRef } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { useToast } from '@/components/Toast';
-import {
-  generateDiscussionGuideHtml,
-  downloadDiscussionGuide,
-  printDiscussionGuide,
-  copyDiscussionGuide,
-  type DiscussionGuideOptions,
-} from '@/lib/export-discussion-guide';
 import { api, API_BASE_URL } from '@/lib/api';
 
 type ShareTab = 'quote' | 'discussion' | 'citation';
@@ -84,12 +77,15 @@ export function ShareDialog({
     }
   }, [highlights, bookTitle, author]);
 
-  // Generate the full discussion guide
+  // Generate the full discussion guide (lazy-load the export module)
   const handleGenerateGuide = useCallback(async () => {
     setGenerating(true);
     try {
       const generatedQuestions = await generateQuestions();
       setQuestions(generatedQuestions);
+
+      // Dynamic import — export-discussion-guide is ~10KB, only needed when generating
+      const { generateDiscussionGuideHtml } = await import('@/lib/export-discussion-guide');
 
       const html = generateDiscussionGuideHtml({
         book: {
@@ -145,6 +141,7 @@ export function ShareDialog({
 
   const handleCopyGuide = useCallback(async () => {
     if (!guideHtml) return;
+    const { copyDiscussionGuide } = await import('@/lib/export-discussion-guide');
     const ok = await copyDiscussionGuide(guideHtml);
     if (ok) {
       toast('Guide copied to clipboard', 'success');
@@ -153,14 +150,16 @@ export function ShareDialog({
     }
   }, [guideHtml, toast]);
 
-  const handleDownloadGuide = useCallback(() => {
+  const handleDownloadGuide = useCallback(async () => {
     if (!guideHtml) return;
+    const { downloadDiscussionGuide } = await import('@/lib/export-discussion-guide');
     downloadDiscussionGuide(guideHtml, bookTitle || 'book');
     toast('Guide downloaded', 'success');
   }, [guideHtml, bookTitle, toast]);
 
-  const handlePrintGuide = useCallback(() => {
+  const handlePrintGuide = useCallback(async () => {
     if (!guideHtml) return;
+    const { printDiscussionGuide } = await import('@/lib/export-discussion-guide');
     printDiscussionGuide(guideHtml);
   }, [guideHtml]);
 

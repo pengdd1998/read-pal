@@ -2,10 +2,23 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
-import { GraphView } from '@/components/knowledge/GraphView';
 import type { GraphNode, GraphEdge } from '@/components/knowledge/graphLayout';
 import { getNodePosition, getNodeColor } from '@/components/knowledge/graphLayout';
+
+// Lazy-load the heavy GraphView SVG component — only loads when user selects graph view
+const GraphView = dynamic(() => import('@/components/knowledge/GraphView').then((m) => ({ default: m.GraphView })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <p className="text-xs text-gray-400">Loading graph...</p>
+      </div>
+    </div>
+  ),
+});
 
 interface CrossBookTheme {
   theme: string;

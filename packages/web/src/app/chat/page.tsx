@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
 import { renderSimpleMarkdown } from '@/lib/markdown';
 import { consumeSSEStream } from '@/lib/sse';
-import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
+import { purifySync, loadDOMPurify } from '@/lib/dompurify';
 import { generateId } from '@read-pal/shared';
 import { authFetch } from '@/lib/auth-fetch';
 
@@ -62,8 +62,8 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Preload DOMPurify on mount so purifySync works immediately
-  useEffect(() => { preloadDOMPurify(); }, []);
+  // Load DOMPurify lazily — won't block initial page render
+  useEffect(() => { loadDOMPurify(); }, []);
 
   // Abort any in-flight stream when the component unmounts
   useEffect(() => {
