@@ -1,133 +1,87 @@
 # read-pal
 
-> AI agent-based reading companion with multi-agent architecture, real-time chat, and professional reading UX.
+> AI reading companion that captures your reading journey and turns it into a personal book.
+
+## What It Does
+
+Students and reading enthusiasts read with an AI partner. Every highlight, note, and AI discussion feeds into a **Personal Reading Book** — a unique, AI-enriched document generated when you finish reading.
+
+## Core Loop
+
+```
+Read → Highlight/Note/Ask AI → Everything is captured → Finish book → Get YOUR book
+```
 
 ## What's Built
 
-### Web Application (Next.js)
-- **Reading interface** with EPUB support, themes (light/dark/sepia), adjustable font size
-- **Chapter navigation** with progress tracking and smooth transitions
-- **Text selection toolbar** for highlights, notes, and copy
-- **Annotations sidebar** with bookmark support
-- **AI Companion Chat** — floating bubble with draggable positioning, real-time streaming
-- **Library management** — book grid, upload, dashboard stats
-- **Auth flow** — login/register with JWT
-
-### Backend API (Express + TypeScript)
-- **Multi-agent orchestrator** routing requests to specialized agents
-- **5 AI agents**: Companion, Research, Coach, Synthesis, Friend
-- **WebSocket** real-time streaming for agent responses
-- **Semantic search** with Pinecone vector embeddings
-- **Reading sessions** with heartbeat progress tracking
-- **Annotations API** — highlights, notes, bookmarks, with chapter locations
-
-### AI Engine
-- **GLM (Zhipu AI)** via OpenAI-compatible API (`glm-4.7-flash` default)
-- Originally designed for Claude Agent SDK; currently using GLM for cost efficiency
-- Multi-agent orchestration with parallel/sequential execution
-
-### Deployment
-- **Self-hosted** on Ubuntu server (REDACTED_IP)
-- PM2 process management (web on :3000, API on :3001)
-- Cron-based auto-deploy polling GitHub every 2 minutes
-- Next.js standalone output with API proxy via rewrites
+- **EPUB reader** with themes, font controls, chapter navigation
+- **AI companion chat** — context-aware, streams in real time (GLM-powered)
+- **Annotations** — highlights, notes, bookmarks with tags
+- **Personal Reading Book** — 6-chapter document weaving your journey (reading timeline, themed highlights, notes, AI conversations, insights, recommendations)
+- **Library & dashboard** — upload, browse, track reading streaks and stats
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | Next.js 14, TypeScript, TailwindCSS |
-| **Backend** | Express, TypeScript |
-| **AI** | GLM-4.7-flash (Zhipu AI, OpenAI-compatible) |
-| **Database** | PostgreSQL, Redis |
-| **Vector Search** | Pinecone |
-| **Build** | pnpm monorepo, Turborepo |
-| **Deploy** | PM2, cron-based CI/CD |
+| Frontend | Next.js 14, TypeScript, TailwindCSS |
+| Backend | Express, TypeScript |
+| AI | GLM-4.7-flash (Zhipu AI) |
+| Database | PostgreSQL, Redis |
+| Search | Pinecone (vectors) |
+| Build | pnpm monorepo |
+| Deploy | PM2 on self-hosted server |
 
 ## Project Structure
 
 ```
 read-pal/
 ├── packages/
-│   ├── api/              # Express API + AI agents
-│   │   └── src/
-│   │       ├── agents/   # Multi-agent system (orchestrator + 5 agents)
-│   │       ├── routes/   # REST endpoints
-│   │       ├── services/ # Business logic (WebSocket, LLM, semantic search)
-│   │       └── db/       # Database clients
-│   ├── web/              # Next.js web app
-│   │   └── src/
-│   │       ├── app/      # App router pages
-│   │       ├── components/ # React components (reading, library, dashboard)
-│   │       ├── hooks/    # Custom hooks (text selection, annotations)
-│   │       └── lib/      # API client, WebSocket client
-│   ├── shared/           # Shared TypeScript types and constants
-│   └── mobile/           # React Native scaffold (early stage)
-├── docs/                 # Project documentation
-├── .claude/              # Claude Code configuration
-│   ├── rules/            # Development rules
-│   ├── skills/           # Reusable workflows
-│   └── agents/           # Subagent personas
-└── .agents/skills/       # Frontend design skill library
+│   ├── api/       # Express API + AI agents
+│   ├── web/       # Next.js web app
+│   └── shared/    # Shared types and utilities
+├── docs/          # Documentation
+└── .claude/       # Claude Code config
 ```
 
 ## Getting Started
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Build shared package first
 pnpm --filter @read-pal/shared build
 
-# Start API (port 3001)
-pnpm --filter @read-pal/api dev
+# Dev
+pnpm --filter @read-pal/api dev      # port 3001
+pnpm --filter @read-pal/web dev      # port 3000
 
-# Start web app (port 3000)
-pnpm --filter @read-pal/web dev
-
-# Build for production
-pnpm --filter @read-pal/shared build
-pnpm --filter @read-pal/web build
+# Production build
 pnpm --filter @read-pal/api build
+NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build
 ```
 
 ## Environment Variables
 
-See `packages/api/.env.example` for required configuration:
+See `packages/api/.env.example`:
 
-- `DATABASE_URL` — PostgreSQL connection string
-- `REDIS_URL` — Redis connection
-- `GLM_API_KEY` — Zhipu AI API key
-- `JWT_SECRET` — Token signing secret
-- `PINECONE_API_KEY` — Pinecone vector search
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — PostgreSQL
+- `REDIS_URL` — Redis
+- `GLM_API_KEY` — Zhipu AI
+- `JWT_SECRET` — Auth
+- `PINECONE_API_KEY` — Vector search
 
-## Documentation
+## Deployment
 
-- [Executive Summary](./docs/executive-summary.md)
-- [Product Plan](./docs/product-plan.md)
-- [API Structure](./docs/api-structure-summary.md)
-- [Contributing](./docs/contributing.md)
+Self-hosted on Ubuntu server (REDACTED_IP) with PM2:
 
-## Roadmap
-
-### Phase 1: Foundation (Current) ✅
-- [x] Reading interface with EPUB support
-- [x] Multi-agent AI system (5 agents)
-- [x] Auth, library, annotations
-- [x] Real-time chat with streaming
-- [x] Self-hosted deployment
-
-### Phase 2: Polish & Mobile
-- [ ] React Native mobile app
-- [ ] Reading Friend personalities
-- [ ] Knowledge graph visualization
-- [ ] Browser extension
-
-### Phase 3: Scale
-- [ ] Collaborative reading
-- [ ] Memory book generation
-- [ ] Public launch
+```bash
+# On server
+cd REDACTED_DEPLOY_PATH
+git pull origin main
+pnpm --filter @read-pal/api build
+pm2 restart read-pal-api
+NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build
+pm2 restart read-pal-web
+```
 
 ## License
 
