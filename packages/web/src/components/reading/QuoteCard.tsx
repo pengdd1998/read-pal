@@ -225,15 +225,6 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
     }
   }, [text, bookTitle, author, theme]);
 
-  const handleCopy = useCallback(async () => {
-    const formatted = `\u201C${text}\u201D\n\u2014 ${author}, ${bookTitle}`;
-    const ok = await copyToClipboard(formatted);
-    if (ok) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }, [text, author, bookTitle]);
-
   const handleCopyImage = useCallback(async () => {
     const canvas = canvasRef.current ?? document.createElement('canvas');
     renderCardToCanvas(canvas, text, bookTitle, author, theme);
