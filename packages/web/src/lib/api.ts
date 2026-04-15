@@ -13,6 +13,7 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
 import { queueMutation } from '@/lib/offline-queue';
+import { getAuthToken } from '@/lib/auth-fetch';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -48,11 +49,9 @@ class ApiClient {
     // Request interceptor - attach auth token (browser only)
     this.client.interceptors.request.use(
       (config) => {
-        if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('auth_token');
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-          }
+        const token = getAuthToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
@@ -296,7 +295,7 @@ class ApiClient {
   /** Return a queued response that the caller can treat as success */
   private async queueOfflineResponse<T>(url: string, method: string, data?: unknown): Promise<ApiResponse<T>> {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
       await queueMutation(url, method, data, headers);

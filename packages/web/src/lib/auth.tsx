@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { api } from './api';
+import { getAuthToken } from './auth-fetch';
 
 /** Set a simple cookie so Next.js middleware can detect auth state */
 function setAuthCookie(token: string) {
@@ -40,8 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Load auth state from localStorage on mount
   useEffect(() => {
     try {
-      const savedToken = localStorage.getItem('auth_token');
-      const savedUser = localStorage.getItem('user');
+      const savedToken = getAuthToken();
+      const savedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
       if (savedToken && savedUser) {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));
