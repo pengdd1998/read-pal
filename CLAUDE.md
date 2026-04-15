@@ -97,12 +97,49 @@ pnpm --filter @read-pal/api test
 
 Self-hosted on Ubuntu server (REDACTED_IP) with PM2 standalone mode.
 
+### Deployment Rules
+- Always use **absolute paths** in deploy scripts, never relative paths
+- `NEXT_PUBLIC_*` env vars must be set **before** `next build`, not after
+- After any deployment, verify with `curl` health check on both services
+- SSH key: `~/.ssh/REDACTED_KEY`, server user: `ubuntu`
+- PM2 processes: `read-pal-api` (port 3001), `read-pal-web` (port 3000)
+- API working directory: `REDACTED_DEPLOY_PATH/packages/api` (absolute)
+- Web build: `NEXT_PUBLIC_API_URL=` (empty, uses Next.js rewrites)
+
+### Deploy Steps
 ```bash
-# On server
+# On server — copy-paste ready
 cd REDACTED_DEPLOY_PATH && git pull origin main
 cd packages/api && pnpm build && pm2 restart read-pal-api
 cd REDACTED_DEPLOY_PATH/packages/web && NEXT_PUBLIC_API_URL= pnpm build && pm2 restart read-pal-web
+# Verify
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/api/books  # expect 401
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3000             # expect 200
 ```
+
+### Database Migrations
+```bash
+# Run on server with correct env vars
+cd REDACTED_DEPLOY_PATH/packages/api
+DB_HOST=localhost DB_PORT=5432 DB_NAME=readpal DB_USER=readpal DB_PASSWORD=REDACTED_PASSWORD \
+  REDIS_URL='redis://:REDACTED_PASSWORD@localhost:6379' \
+  node -e "require('./dist/db').sequelize.getQueryInterface().addColumn(...)"
+```
+
+## Autonomous Work Mode
+
+- Do NOT ask clarifying questions when I say "build it" or "continue" — make reasonable decisions and deliver
+- Favor delivering working output over process updates or status reports
+- If an approach fails twice, **pivot immediately** to an alternative — don't retry the same strategy
+- When building, prefer self-contained solutions over multi-service architectures requiring npm install chains
+- Write intermediate results to disk frequently so work isn't lost on compaction
+
+## TypeScript Standards
+
+- Use strict TypeScript — no implicit `any` types
+- After renaming files or moving imports, always run `tsc --noEmit` to verify
+- Double-check import paths for typos before writing files
+- Prefer named exports for better refactoring safety
 
 ## Key Features
 
