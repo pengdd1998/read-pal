@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
 import { useToast } from '@/components/Toast';
@@ -114,12 +114,16 @@ export function AnnotationsSidebar({
     );
   };
 
-  const counts = {
-    all: annotations.length,
-    highlight: annotations.filter((a) => a.type === 'highlight').length,
-    note: annotations.filter((a) => a.type === 'note').length,
-    bookmark: annotations.filter((a) => a.type === 'bookmark').length,
-  };
+  const counts = useMemo(() => {
+    const c = { all: 0, highlight: 0, note: 0, bookmark: 0 };
+    for (const a of annotations) {
+      c.all++;
+      if (a.type === 'highlight' || a.type === 'note' || a.type === 'bookmark') {
+        c[a.type]++;
+      }
+    }
+    return c;
+  }, [annotations]);
 
   return (
     <>
