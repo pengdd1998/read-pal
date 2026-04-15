@@ -40,7 +40,7 @@ services:
       API_PORT: 3001
       DATABASE_URL: postgresql://readpal:${POSTGRES_PASSWORD:-REDACTED_PASSWORD}@postgres:5432/readpal
       REDIS_URL: redis://redis:6379
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GLM_API_KEY: ${GLM_API_KEY}
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
     depends_on:
       postgres:
