@@ -86,8 +86,8 @@ FriendConversation.init(
     timestamps: true,
     updatedAt: false,
     indexes: [
-      { fields: ['userId', 'createdAt'] },
-      { fields: ['userId', 'persona'] },
+      { fields: ['user_id', 'created_at'] },
+      { fields: ['user_id', 'persona'] },
     ],
   }
 );
@@ -185,7 +185,7 @@ FriendRelationship.init(
     tableName: 'friend_relationships',
     timestamps: true,
     indexes: [
-      { fields: ['userId'], unique: true },
+      { fields: ['user_id'], unique: true },
     ],
   }
 );

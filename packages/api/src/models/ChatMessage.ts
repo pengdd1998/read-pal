@@ -72,9 +72,9 @@ ChatMessage.init(
     timestamps: true,
     updatedAt: false,
     indexes: [
-      { fields: ['userId', 'bookId'] },
-      { fields: ['userId', 'createdAt'] },
-      { fields: ['userId', 'bookId', 'createdAt'] },
+      { fields: ['user_id', 'book_id'] },
+      { fields: ['user_id', 'created_at'] },
+      { fields: ['user_id', 'book_id', 'created_at'] },
     ],
   },
 );

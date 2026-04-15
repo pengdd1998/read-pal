@@ -155,11 +155,11 @@ MemoryBook.init(
     tableName: 'memory_books',
     timestamps: true,
     indexes: [
-      { fields: ['userId'] },
-      { fields: ['bookId'] },
+      { fields: ['user_id'] },
+      { fields: ['book_id'] },
       {
         unique: true,
-        fields: ['userId', 'bookId'],
+        fields: ['user_id', 'book_id'],
       },
     ],
   },

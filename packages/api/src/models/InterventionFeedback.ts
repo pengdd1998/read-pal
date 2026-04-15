@@ -78,10 +78,10 @@ InterventionFeedback.init(
     tableName: 'intervention_feedback',
     timestamps: false,
     indexes: [
-      { fields: ['userId'] },
-      { fields: ['interventionType'] },
+      { fields: ['user_id'] },
+      { fields: ['intervention_type'] },
       { fields: ['helpful'] },
-      { fields: ['createdAt'] },
+      { fields: ['created_at'] },
     ],
   }
 );

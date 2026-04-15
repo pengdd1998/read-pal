@@ -85,8 +85,8 @@ Document.init(
     tableName: 'documents',
     timestamps: true,
     indexes: [
-      { fields: ['bookId'] },
-      { fields: ['userId'] },
+      { fields: ['book_id'] },
+      { fields: ['user_id'] },
     ],
   }
 );
