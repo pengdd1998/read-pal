@@ -75,7 +75,7 @@ router.get('/tags', authenticate, async (req: AuthRequest, res) => {
     const result = await sequelize.query<{ tag: string }>(
       `SELECT DISTINCT unnest(tags) AS tag
        FROM books
-       WHERE "userId" = $1 AND tags IS NOT NULL
+       WHERE user_id = $1 AND tags IS NOT NULL
        ORDER BY tag`,
       { bind: [req.userId], type: QueryTypes.SELECT },
     );

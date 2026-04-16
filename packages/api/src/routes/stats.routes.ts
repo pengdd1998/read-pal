@@ -128,14 +128,14 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
       minutes: string;
     }>(
       `SELECT
-         DATE("startedAt")::text               AS date,
-         COALESCE(SUM("pagesRead"), 0)::int     AS pages,
-         COALESCE(SUM("duration") / 60, 0)::int AS minutes
+         DATE(started_at)::text                  AS date,
+         COALESCE(SUM(pages_read), 0)::int       AS pages,
+         COALESCE(SUM(duration) / 60, 0)::int    AS minutes
        FROM reading_sessions
-       WHERE "userId" = $1
-         AND "startedAt" >= NOW() - INTERVAL '30 days'
-       GROUP BY DATE("startedAt")
-       ORDER BY DATE("startedAt") ASC`,
+       WHERE user_id = $1
+         AND started_at >= NOW() - INTERVAL '30 days'
+       GROUP BY DATE(started_at)
+       ORDER BY DATE(started_at) ASC`,
       { bind: [userId], type: QueryTypes.SELECT },
     );
 
@@ -263,17 +263,17 @@ router.get('/dashboard', authenticate, etag(60), async (req: AuthRequest, res) =
       completed_count: string;
     }>(
       `SELECT
-         (SELECT COUNT(*)::int FROM books WHERE "userId" = $1) AS total_books,
-         (SELECT COALESCE(SUM("totalPages"), 0)::int FROM books WHERE "userId" = $1) AS total_pages,
-         (SELECT COALESCE(SUM("pagesRead"), 0)::int FROM reading_sessions WHERE "userId" = $1) AS session_pages_read,
-         (SELECT COALESCE(SUM("duration"), 0)::int FROM reading_sessions WHERE "userId" = $1) AS total_duration_seconds,
-         (SELECT COUNT(*)::int FROM annotations WHERE "userId" = $1 AND type IN ('note', 'highlight')) AS concepts_count,
-         (SELECT COUNT(*)::int FROM annotations WHERE "userId" = $1) AS connections_count,
-         (SELECT COUNT(*)::int FROM chat_messages WHERE "userId" = $1) AS chat_count,
-         (SELECT COUNT(*)::int FROM memory_books WHERE "userId" = $1) AS memory_book_count,
-         (SELECT COUNT(*)::int FROM books WHERE "userId" = $1 AND status = 'unread') AS unread_count,
-         (SELECT COUNT(*)::int FROM books WHERE "userId" = $1 AND status = 'reading') AS reading_count,
-         (SELECT COUNT(*)::int FROM books WHERE "userId" = $1 AND status = 'completed') AS completed_count`,
+         (SELECT COUNT(*)::int FROM books WHERE user_id = $1) AS total_books,
+         (SELECT COALESCE(SUM(total_pages), 0)::int FROM books WHERE user_id = $1) AS total_pages,
+         (SELECT COALESCE(SUM(pages_read), 0)::int FROM reading_sessions WHERE user_id = $1) AS session_pages_read,
+         (SELECT COALESCE(SUM(duration), 0)::int FROM reading_sessions WHERE user_id = $1) AS total_duration_seconds,
+         (SELECT COUNT(*)::int FROM annotations WHERE user_id = $1 AND type IN ('note', 'highlight')) AS concepts_count,
+         (SELECT COUNT(*)::int FROM annotations WHERE user_id = $1) AS connections_count,
+         (SELECT COUNT(*)::int FROM chat_messages WHERE user_id = $1) AS chat_count,
+         (SELECT COUNT(*)::int FROM memory_books WHERE user_id = $1) AS memory_book_count,
+         (SELECT COUNT(*)::int FROM books WHERE user_id = $1 AND status = 'unread') AS unread_count,
+         (SELECT COUNT(*)::int FROM books WHERE user_id = $1 AND status = 'reading') AS reading_count,
+         (SELECT COUNT(*)::int FROM books WHERE user_id = $1 AND status = 'completed') AS completed_count`,
       { bind: [userId], type: QueryTypes.SELECT },
     );
 
@@ -294,14 +294,14 @@ router.get('/dashboard', authenticate, etag(60), async (req: AuthRequest, res) =
         minutes: string;
       }>(
         `SELECT
-           TO_CHAR(DATE("startedAt"), 'Dy')      AS day,
-           COALESCE(SUM("pagesRead"), 0)::int     AS pages,
-           COALESCE(SUM("duration") / 60, 0)::int AS minutes
+           TO_CHAR(DATE(started_at), 'Dy')        AS day,
+           COALESCE(SUM(pages_read), 0)::int       AS pages,
+           COALESCE(SUM(duration) / 60, 0)::int    AS minutes
          FROM reading_sessions
-         WHERE "userId" = $1
-           AND "startedAt" >= NOW() - INTERVAL '7 days'
-         GROUP BY DATE("startedAt")
-         ORDER BY DATE("startedAt") ASC`,
+         WHERE user_id = $1
+           AND started_at >= NOW() - INTERVAL '7 days'
+         GROUP BY DATE(started_at)
+         ORDER BY DATE(started_at) ASC`,
         { bind: [userId], type: QueryTypes.SELECT },
       ),
 
@@ -317,7 +317,7 @@ router.get('/dashboard', authenticate, etag(60), async (req: AuthRequest, res) =
     let pagesRead = parseInt(statsRow.session_pages_read, 10) || 0;
     if (pagesRead === 0) {
       const [aggResult] = await sequelize.query<{ pages_read: string }>(
-        'SELECT COALESCE(SUM(ROUND((progress / 100.0) * "totalPages")), 0)::int AS pages_read FROM books WHERE "userId" = $1',
+        'SELECT COALESCE(SUM(ROUND((progress / 100.0) * total_pages)), 0)::int AS pages_read FROM books WHERE user_id = $1',
         { bind: [userId], type: QueryTypes.SELECT },
       );
       pagesRead = parseInt(aggResult?.pages_read || '0', 10);

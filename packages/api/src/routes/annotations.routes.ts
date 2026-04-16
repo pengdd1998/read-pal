@@ -98,10 +98,10 @@ router.get('/tags', authenticate, etag(120), async (req: AuthRequest, res) => {
 
     // Use PostgreSQL unnest + GROUP BY for efficient server-side tag counting
     // instead of fetching all annotations into JS memory
-    let whereClause = 'WHERE "userId" = $1 AND tags IS NOT NULL';
+    let whereClause = 'WHERE user_id = $1 AND tags IS NOT NULL';
     const binds: unknown[] = [req.userId];
     if (bookId) {
-      whereClause += ' AND "bookId" = $2';
+      whereClause += ' AND book_id = $2';
       binds.push(bookId);
     }
 
