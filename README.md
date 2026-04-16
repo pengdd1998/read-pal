@@ -71,11 +71,11 @@ See `packages/api/.env.example`:
 
 ## Deployment
 
-Self-hosted on Ubuntu server (REDACTED_IP) with PM2:
+Self-hosted with PM2 standalone mode:
 
 ```bash
-# On server
-cd REDACTED_DEPLOY_PATH
+# On your server
+cd /path/to/read-pal
 git pull origin main
 pnpm --filter @read-pal/api build
 pm2 restart read-pal-api
