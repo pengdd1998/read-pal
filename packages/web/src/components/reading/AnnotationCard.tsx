@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 import { renderCardToCanvas } from './QuoteCard';
 
 const TYPE_CONFIG = {
@@ -25,6 +26,7 @@ interface AnnotationCardProps {
 }
 
 export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpdate, onClick }: AnnotationCardProps) {
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [editNote, setEditNote] = useState(annotation.note || '');
   const [editColor, setEditColor] = useState(annotation.color || '');
@@ -124,7 +126,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
       }
       setEditing(false);
     } catch {
-      // Silently fail
+      toast('Failed to save annotation', 'error');
     }
     setSaving(false);
   };

@@ -87,6 +87,8 @@ export function GraphView({
         width="100%"
         height="100%"
         className="overflow-visible"
+        role="img"
+        aria-label={`Knowledge graph with ${nodes.length} nodes and ${edges.length} connections`}
         style={{
           transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
           transformOrigin: 'center center',

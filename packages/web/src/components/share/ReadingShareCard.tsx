@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { copyToClipboard } from '@/lib/clipboard';
+import { useToast } from '@/components/Toast';
 
 interface ReadingCardData {
   user: { name: string };
@@ -23,6 +24,7 @@ interface ReadingCardData {
 }
 
 export function ShareReadingCard() {
+  const { toast } = useToast();
   const [card, setCard] = useState<ReadingCardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -35,7 +37,7 @@ export function ShareReadingCard() {
         setCard(res.data);
       }
     } catch {
-      // silent
+      toast('Failed to generate reading card', 'error');
     } finally {
       setLoading(false);
     }
@@ -59,10 +61,16 @@ export function ShareReadingCard() {
 
   const handleNativeShare = async () => {
     if (navigator.share) {
-      await navigator.share({
-        title: 'My Reading Progress — read-pal',
-        text: shareText,
-      });
+      try {
+        await navigator.share({
+          title: 'My Reading Progress — read-pal',
+          text: shareText,
+        });
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          toast('Sharing failed', 'error');
+        }
+      }
     } else {
       handleCopy();
     }

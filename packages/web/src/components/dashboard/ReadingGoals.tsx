@@ -55,6 +55,8 @@ function ProgressRing({
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         className="transform -rotate-90"
+        role="img"
+        aria-label={`Daily goal: ${value} of ${max} minutes`}
       >
         {/* Background circle */}
         <circle

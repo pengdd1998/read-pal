@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api, API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
+import { useToast } from '@/components/Toast';
 
 interface UserSettings {
   theme: string;
@@ -25,6 +26,7 @@ const PERSONAS = [
 ];
 
 export default function SettingsPage() {
+  const { toast } = useToast();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -509,7 +511,7 @@ export default function SettingsPage() {
                             window.location.href = '/';
                           }
                         } catch {
-                          // Silently fail
+                          toast('Failed to delete account. Please try again.', 'error');
                         }
                       }}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
