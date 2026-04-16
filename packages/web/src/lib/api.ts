@@ -233,9 +233,9 @@ class ApiClient {
       });
   }
 
-  async post<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
+  async post<T>(url: string, data?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
-      const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data });
+      const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data, ...options });
       this.invalidateAfterMutation(url);
       return result;
     } catch (err) {

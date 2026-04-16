@@ -15,21 +15,25 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortRef = useRef(false);
+  const abortCtrlRef = useRef<AbortController | null>(null);
 
   const fetchScene = useCallback(async (text: string) => {
     if (!text || text.length < 50) return;
 
+    // Abort any in-flight request
+    abortCtrlRef.current?.abort();
+    const ctrl = new AbortController();
+    abortCtrlRef.current = ctrl;
+
     setLoading(true);
     setError(false);
-    abortRef.current = false;
 
     try {
       const result = await api.post<{
         imageUrl: string;
         prompt: string;
         cached: boolean;
-      }>('/api/agents/mood/scene', { text });
+      }>('/api/agents/mood/scene', { text }, { signal: ctrl.signal });
 
       const data = result.data as {
         imageUrl?: string;
@@ -37,17 +41,17 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
 
       const url = data?.imageUrl ?? null;
 
-      if (url && !abortRef.current) {
+      if (url && !ctrl.signal.aborted) {
         // Pre-load the image before displaying it
         const img = new Image();
         img.onload = () => {
-          if (!abortRef.current) {
+          if (!ctrl.signal.aborted) {
             setImageUrl(url);
             setLoading(false);
           }
         };
         img.onerror = () => {
-          if (!abortRef.current) {
+          if (!ctrl.signal.aborted) {
             setError(true);
             setLoading(false);
           }
@@ -56,8 +60,8 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
       } else {
         setLoading(false);
       }
-    } catch {
-      if (!abortRef.current) {
+    } catch (err) {
+      if (!ctrl.signal.aborted) {
         setError(true);
         setLoading(false);
       }
@@ -78,7 +82,7 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      abortRef.current = true;
+      abortCtrlRef.current?.abort();
     };
   }, [content, enabled, fetchScene]);
 

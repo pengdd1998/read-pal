@@ -85,8 +85,8 @@ export function InterventionToast({
             }
           }
         }
-      } catch {
-        // Non-critical
+      } catch (err) {
+        console.warn('Intervention check failed:', err);
       }
     }, CHECK_INTERVAL);
 

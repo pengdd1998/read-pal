@@ -312,7 +312,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
       <div className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm" />
 
       {/* Hidden canvas for rendering */}
-      <canvas ref={canvasRef} className="hidden" width={1200} height={630} />
+      <canvas ref={canvasRef} className="hidden" width={1200} height={630} aria-hidden="true" />
 
       {/* Modal */}
       <div className="relative z-10 w-full max-w-2xl animate-scale-in">
