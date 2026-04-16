@@ -53,7 +53,7 @@ export function SelectionToolbar({
   const gap = 12;
   const showBelow = rect.top < window.innerHeight * 0.3;
   const top = showBelow ? rect.bottom + gap : rect.top - toolbarHeight - gap;
-  const toolbarWidth = 420;
+  const toolbarWidth = Math.min(420, window.innerWidth - 16);
   const left = Math.max(
     8,
     Math.min(
@@ -292,7 +292,7 @@ export function SelectionToolbar({
         className="fixed z-50 animate-bounce-in"
         style={{ top, left }}
       >
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg max-w-[calc(100vw-16px)] overflow-x-auto">
           {/* Color dots */}
           {ANNOTATION_COLORS.map((color) => (
             <button

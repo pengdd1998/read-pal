@@ -466,7 +466,7 @@ export default function DashboardPage() {
         window.location.href = '/library';
       }
     } catch {
-      // Silently fail — user can still upload manually
+      toast('Failed to load sample book. You can upload one manually.', 'error');
     } finally {
       setSeeding(false);
     }

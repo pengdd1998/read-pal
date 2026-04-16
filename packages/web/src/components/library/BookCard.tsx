@@ -83,7 +83,9 @@ export function BookCard({
         await cacheBookForOffline(id, res.data.chapters);
         setCachedOffline(true);
       }
-    } catch { /* ignore */ }
+    } catch {
+      setCachedOffline(false);
+    }
     setCachingOffline(false);
   }
 
@@ -113,6 +115,7 @@ export function BookCard({
       onDelete?.(id);
     } catch {
       setConfirmDelete(false);
+      // Keep silent — user can retry
     }
   };
 
