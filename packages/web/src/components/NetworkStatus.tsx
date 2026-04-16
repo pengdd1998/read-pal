@@ -95,10 +95,15 @@ export function NetworkStatus() {
 
   useEffect(() => {
     setOffline(!navigator.onLine);
+    let syncTimer: ReturnType<typeof setTimeout> | undefined;
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
 
     const goOffline = () => {
       setOffline(true);
       setShowBanner(true);
+      // Clear any pending online timers
+      if (syncTimer) { clearTimeout(syncTimer); syncTimer = undefined; }
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = undefined; }
     };
 
     const goOnline = async () => {
@@ -108,11 +113,10 @@ export function NetworkStatus() {
       const count = await checkQueueCount();
       setQueuedCount(count);
       if (count > 0) {
-        // Small delay to let network stabilize
-        setTimeout(() => syncQueue(), 1000);
+        syncTimer = setTimeout(() => syncQueue(), 1000);
       }
       // Auto-hide "back online" after 4s
-      setTimeout(() => {
+      hideTimer = setTimeout(() => {
         setShowBanner(false);
         setLastSync(null);
       }, 4000);
@@ -131,6 +135,8 @@ export function NetworkStatus() {
     window.addEventListener('mutation-queued', onMutationQueued);
 
     return () => {
+      if (syncTimer) clearTimeout(syncTimer);
+      if (hideTimer) clearTimeout(hideTimer);
       window.removeEventListener('offline', goOffline);
       window.removeEventListener('online', goOnline);
       window.removeEventListener('mutation-queued', onMutationQueued);

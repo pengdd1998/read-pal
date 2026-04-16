@@ -157,7 +157,7 @@ router.patch('/:id/heartbeat', authenticate, async (req: AuthRequest, res) => {
           status: 'reading',
         },
         { where: { id: session.bookId, userId: req.userId } },
-      ).catch(() => {});
+      ).catch((err) => { console.error('Failed to update book progress during heartbeat:', err); });
     }
 
     res.json({

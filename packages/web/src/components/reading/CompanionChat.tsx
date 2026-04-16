@@ -273,7 +273,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             // Add a contextual greeting after loading history
             const lastMsg = history[history.length - 1];
             const isReturning = lastMsg && (Date.now() - lastMsg.timestamp > 30 * 60 * 1000); // 30 min gap
-            if (isReturning && lastMsg.role === 'user') {
+            if (isReturning && lastMsg?.role === 'user') {
               const greeting = genreTemplate.returnGreeting(friendName, bookTitle);
               greetTimer = setTimeout(() => {
                 if (!cancelled) {

@@ -269,7 +269,7 @@ export class BookProcessor {
     return new Promise((resolve, reject) => {
       const epub = new EPub(filePath);
 
-      epub.on('error', () => resolve({}));
+      epub.on('error', (err) => { console.warn('EPUB metadata extraction failed:', err); resolve({}); });
 
       epub.on('end', () => {
         const contents = (epub as unknown as { contents?: unknown[] }).contents || [];
