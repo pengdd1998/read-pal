@@ -249,6 +249,7 @@ export default function ReadPage() {
   const handleAddHighlight = useCallback(async (text: string, color: string, tags?: string[]) => {
     try {
       const chapter = chapters[currentChapter];
+      if (!chapter) return;
       const offsets = selection.range && contentRef.current
         ? computeOffsets(selection.range, contentRef.current)
         : { start: 0, end: text.length };
@@ -273,6 +274,7 @@ export default function ReadPage() {
   const handleAddNote = useCallback(async (text: string, note: string) => {
     try {
       const chapter = chapters[currentChapter];
+      if (!chapter) return;
       const offsets = selection.range && contentRef.current
         ? computeOffsets(selection.range, contentRef.current)
         : { start: 0, end: text.length };
@@ -294,7 +296,7 @@ export default function ReadPage() {
   }, [bookId, currentChapter, chapters, selection.range, toast, dismissSelection]);
 
   const handleChapterChange = useCallback(async (chapterIndex: number) => {
-    if (chapterIndex === currentChapter) return;
+    if (chapterIndex === currentChapter || chapterIndex < 0 || chapterIndex >= chapters.length) return;
     setChapterFade('out');
     await new Promise<void>((r) => setTimeout(r, 150));
     setCurrentChapter(chapterIndex);
