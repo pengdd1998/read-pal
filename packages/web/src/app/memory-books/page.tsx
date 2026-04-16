@@ -150,7 +150,7 @@ export default function MemoryBooksPage() {
               return (
                 <Link
                   key={mb.id}
-                  href={isPersonalBook ? `/memory-books/${mb.bookId}` : '#'}
+                  href={isPersonalBook ? `/memory-books/${mb.bookId}` : `/book/${mb.bookId}`}
                   className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200"
                 >
                   <div className="flex items-center gap-4">
@@ -170,13 +170,13 @@ export default function MemoryBooksPage() {
                           ? `${sectionCount} chapters`
                           : `${mb.moments?.length || 0} moments`}
                         {' \u00B7 '}
-                        {new Date(mb.createdAt).toLocaleDateString()}
+                        {mb.createdAt ? new Date(mb.createdAt).toLocaleDateString() : 'Unknown date'}
                       </p>
                       {mb.stats && (
                         <div className="flex gap-3 mt-2">
                           <span className="text-xs text-amber-600 dark:text-amber-400">{mb.stats.totalHighlights} highlights</span>
                           <span className="text-xs text-teal-600 dark:text-teal-400">{mb.stats.totalNotes} notes</span>
-                          {mb.stats.readingDuration > 0 && (
+                          {mb.stats.readingDuration && mb.stats.readingDuration > 0 && (
                             <span className="text-xs text-gray-400">{formatDuration(mb.stats.readingDuration)}</span>
                           )}
                         </div>

@@ -24,9 +24,11 @@ export function BookCompletionModal({
   const router = useRouter();
   const [generating, setGenerating] = useState(false);
   const [showPersonalBookCTA, setShowPersonalBookCTA] = useState(true);
+  const [genError, setGenError] = useState<string | null>(null);
 
   const handleGeneratePersonalBook = async () => {
     setGenerating(true);
+    setGenError(null);
     try {
       await api.post(`/api/memory-books/${bookId}/generate`, {
         format: 'personal_book',
@@ -34,6 +36,7 @@ export function BookCompletionModal({
       router.push(`/memory-books/${bookId}`);
     } catch {
       setGenerating(false);
+      setGenError('Failed to generate. Please try again.');
     }
   };
 
@@ -69,23 +72,28 @@ export function BookCompletionModal({
         </div>
 
         {showPersonalBookCTA && (totalHighlights > 0 || totalNotes > 0) && (
-          <button
-            onClick={handleGeneratePersonalBook}
-            disabled={generating}
-            className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all shadow-md disabled:opacity-60 mb-3"
-          >
-            {generating ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Creating Your Personal Book...
-              </span>
-            ) : (
-              'Create Your Personal Reading Book'
+          <>
+            <button
+              onClick={handleGeneratePersonalBook}
+              disabled={generating}
+              className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all shadow-md disabled:opacity-60 mb-3"
+            >
+              {generating ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Creating Your Personal Book...
+                </span>
+              ) : (
+                'Create Your Personal Reading Book'
+              )}
+            </button>
+            {genError && (
+              <p className="text-xs text-red-500 mb-3">{genError}</p>
             )}
-          </button>
+          </>
         )}
 
         <button

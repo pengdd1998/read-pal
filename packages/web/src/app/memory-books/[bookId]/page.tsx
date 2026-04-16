@@ -262,7 +262,7 @@ export default function PersonalBookPage() {
           <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white">{book.title}</h1>
             <p className="text-xs text-gray-400">
-              Generated {new Date(book.generatedAt).toLocaleDateString()}
+              Generated {book.generatedAt ? new Date(book.generatedAt).toLocaleDateString() : ''}
             </p>
           </div>
         </div>

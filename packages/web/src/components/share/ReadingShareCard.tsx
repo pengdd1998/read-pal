@@ -123,10 +123,10 @@ export function ShareReadingCard() {
             )}
 
             {/* Recent books */}
-            {card.recentBooks.length > 1 && (
+            {card.recentBooks && card.recentBooks.length > 1 && (
               <div className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Recently Read</div>
             )}
-            {card.recentBooks.slice(card.currentlyReading ? 1 : 0, 3).map((book) => (
+            {card.recentBooks && card.recentBooks.slice(card.currentlyReading ? 1 : 0, 3).map((book) => (
               <div key={book.title} className="flex items-center gap-2 py-1">
                 <div className="w-1 h-1 rounded-full bg-amber-400" />
                 <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{book.title}</span>
