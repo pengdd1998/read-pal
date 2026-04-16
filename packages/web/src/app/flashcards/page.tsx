@@ -223,8 +223,22 @@ export default function FlashcardsPage() {
           <span className="text-5xl block mb-4">{'\uD83D\uDCC7'}</span>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Cards Yet</h2>
           <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
-            Generate flashcards from your highlights and notes, then come back to review.
+            Flashcards are auto-generated from your highlights and notes while reading.
           </p>
+          <div className="flex flex-col gap-3 max-w-xs mx-auto mb-6 text-left">
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Open a book and highlight passages or add notes</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Go to Book Detail and tap &quot;Generate Flashcards&quot;</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Come back here to review with spaced repetition</p>
+            </div>
+          </div>
           <Link
             href="/library"
             className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200"
