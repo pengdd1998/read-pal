@@ -29,14 +29,13 @@ interface DeckInfo {
   due: number;
 }
 
-const RATING_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: 'Forgot', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
-  1: { label: 'Hard', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
-  2: { label: 'Difficult', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
-  3: { label: 'OK', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' },
-  4: { label: 'Good', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
-  5: { label: 'Easy', color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' },
-};
+// Anki-style 4 rating buttons mapped to SM-2 scale
+const RATINGS: { value: number; label: string; hint: string; color: string }[] = [
+  { value: 0, label: 'Again', hint: '1', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+  { value: 2, label: 'Hard', hint: '2', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
+  { value: 4, label: 'Good', hint: '3', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  { value: 5, label: 'Easy', hint: '4', color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' },
+];
 
 export default function FlashcardsPage() {
   const [mode, setMode] = useState<'decks' | 'review'>('decks');
@@ -90,6 +89,28 @@ export default function FlashcardsPage() {
     fetchDecks().finally(() => setLoading(false));
   }, [fetchDecks]);
 
+  // Keyboard shortcuts for review mode
+  useEffect(() => {
+    if (mode !== 'review' || !currentCard || reviewing) return;
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        setShowAnswer((prev) => !prev);
+      } else if (showAnswer) {
+        const keyMap: Record<string, number> = { '1': 0, '2': 2, '3': 4, '4': 5 };
+        if (keyMap[e.key] !== undefined) {
+          handleRate(keyMap[e.key]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [mode, currentCard, showAnswer, reviewing]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const startReview = async (bookId?: string | null) => {
     setFilterBookId(bookId ?? null);
     setMode('review');
@@ -97,6 +118,35 @@ export default function FlashcardsPage() {
     setCurrentIndex(0);
     setShowAnswer(false);
     await fetchCards(bookId);
+  };
+
+  // Swipe gesture state
+  const touchStart = useState<{ x: number; y: number } | null>(null)[0];
+  const setTouchStart = useState<{ x: number; y: number } | null>(null)[1];
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart || reviewing) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x;
+    const dy = e.changedTouches[0].clientY - touchStart.y;
+
+    // Only count horizontal swipes (dx > 2*dy)
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 2) {
+      setTouchStart(null);
+      return;
+    }
+
+    if (!showAnswer) {
+      // Swipe right to reveal
+      if (dx > 0) setShowAnswer(true);
+    } else {
+      // Swipe right = Good, swipe left = Again
+      handleRate(dx > 0 ? 4 : 0);
+    }
+    setTouchStart(null);
   };
 
   const handleRate = async (rating: number) => {
@@ -382,6 +432,8 @@ export default function FlashcardsPage() {
               showAnswer ? 'ring-2 ring-teal-300 dark:ring-teal-700' : ''
             }`}
             onClick={() => setShowAnswer(!showAnswer)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
             {/* Question */}
             <div className="text-center">
@@ -394,7 +446,7 @@ export default function FlashcardsPage() {
             </div>
 
             {!showAnswer && (
-              <p className="text-center text-xs text-gray-400 mt-6">Tap to reveal answer</p>
+              <p className="text-center text-xs text-gray-400 mt-6">Tap or swipe right to reveal</p>
             )}
           </div>
 
@@ -411,20 +463,18 @@ export default function FlashcardsPage() {
       {showAnswer && (
         <div className="animate-slide-up">
           <p className="text-xs text-gray-400 text-center mb-3">How well did you remember?</p>
-          <div className="grid grid-cols-3 gap-2">
-            {[0, 1, 2, 3, 4, 5].map((rating) => {
-              const { label, color } = RATING_LABELS[rating];
-              return (
-                <button
-                  key={rating}
-                  onClick={() => handleRate(rating)}
-                  disabled={reviewing}
-                  className={`px-2 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 ${color}`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-4 gap-2">
+            {RATINGS.map(({ value, label, hint, color }) => (
+              <button
+                key={value}
+                onClick={() => handleRate(value)}
+                disabled={reviewing}
+                className={`flex flex-col items-center gap-0.5 px-1 py-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 ${color}`}
+              >
+                <span>{label}</span>
+                <span className="text-[9px] opacity-50 font-mono">{hint}</span>
+              </button>
+            ))}
           </div>
         </div>
       )}
