@@ -5,10 +5,10 @@
  * using the existing Flashcard SM-2 system.
  */
 
-import { chatCompletion } from '@/services/llmClient';
-import { Annotation } from '@/models/Annotation';
-import { Flashcard } from '@/models/Flashcard';
-import { Book } from '@/models/Book';
+import { chatCompletion } from '../services/llmClient';
+import { Annotation } from '../models/Annotation';
+import { Flashcard } from '../models/Flashcard';
+import { Book } from '../models/Book';
 import { Op } from 'sequelize';
 
 // ---------------------------------------------------------------------------

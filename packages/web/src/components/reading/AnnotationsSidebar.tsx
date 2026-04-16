@@ -382,6 +382,7 @@ export function AnnotationsSidebar({
         <ExportPreviewModal
           bookId={bookId}
           bookTitle={bookTitle}
+          availableTags={uniqueTags}
           onClose={() => setShowExportModal(false)}
         />
       )}

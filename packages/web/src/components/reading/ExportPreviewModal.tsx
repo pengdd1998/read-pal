@@ -17,8 +17,8 @@ interface FormatOption {
 const FORMATS: FormatOption[] = [
   { value: 'markdown', label: 'Markdown', description: 'Standard formatted text', icon: 'M', category: 'basic' },
   { value: 'json', label: 'JSON', description: 'Raw structured data', icon: '{ }', category: 'basic' },
-  { value: 'bookclub', label: 'Book Club Guide', description: 'Highlights + AI discussion questions', icon: '📖', category: 'discussion' },
-  { value: 'research', label: 'Research Notes', description: 'Organized by tags and themes', icon: '🔬', category: 'research' },
+  { value: 'bookclub', label: 'Book Club Guide', description: 'Reading stats + chapter highlights + AI questions', icon: '📖', category: 'discussion' },
+  { value: 'research', label: 'Research Notes', description: 'Organized by tags with reading context', icon: '🔬', category: 'research' },
   { value: 'bibtex', label: 'BibTeX', description: 'LaTeX bibliography entry', icon: 'B', category: 'citation' },
   { value: 'apa', label: 'APA', description: 'APA 7th edition citation', icon: 'A', category: 'citation' },
   { value: 'mla', label: 'MLA', description: 'MLA 9th edition citation', icon: 'M', category: 'citation' },
@@ -32,24 +32,68 @@ const CATEGORIES = [
   { key: 'citation' as const, label: 'Citation' },
 ];
 
+const TYPE_OPTIONS = [
+  { value: 'highlight', label: 'Highlights', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' },
+  { value: 'note', label: 'Notes', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+  { value: 'bookmark', label: 'Bookmarks', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' },
+];
+
 interface ExportPreviewModalProps {
   bookId: string;
   bookTitle?: string;
+  availableTags?: string[];
   onClose: () => void;
 }
 
-export function ExportPreviewModal({ bookId, bookTitle, onClose }: ExportPreviewModalProps) {
+export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onClose }: ExportPreviewModalProps) {
   const [format, setFormat] = useState<ExportFormat>('bookclub');
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Filter state
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(['highlight', 'note', 'bookmark']));
+  const [selectedTag, setSelectedTag] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
+
   const { toast } = useToast();
   const backdropRef = useRef<HTMLDivElement>(null);
+
+  const isCitationFormat = ['bibtex', 'apa', 'mla', 'chicago'].includes(format);
+  const hasActiveFilters = selectedTypes.size < 3 || selectedTag !== '';
+
+  const buildExportUrl = () => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const params = new URLSearchParams({ bookId, format });
+    if (selectedTypes.size < 3) {
+      params.set('types', [...selectedTypes].join(','));
+    }
+    if (selectedTag) {
+      params.set('tags', selectedTag);
+    }
+    return `${baseUrl}/api/annotations/export?${params}`;
+  };
+
+  const toggleType = (type: string) => {
+    setSelectedTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        if (next.size > 1) next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
+
+  const clearFilters = () => {
+    setSelectedTypes(new Set(['highlight', 'note', 'bookmark']));
+    setSelectedTag('');
+  };
 
   const handlePreview = async () => {
     setLoading(true);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${baseUrl}/api/annotations/export?bookId=${bookId}&format=${format}`, {
+      const res = await fetch(buildExportUrl(), {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
       if (!res.ok) {
@@ -67,14 +111,12 @@ export function ExportPreviewModal({ bookId, bookTitle, onClose }: ExportPreview
 
   const handleDownload = async () => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${baseUrl}/api/annotations/export?bookId=${bookId}&format=${format}`, {
+      const res = await fetch(buildExportUrl(), {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
       if (!res.ok) { toast('Download failed', 'error'); return; }
       const blob = await res.blob();
 
-      // Get filename from Content-Disposition or generate
       const disposition = res.headers.get('Content-Disposition') || '';
       const match = disposition.match(/filename="?([^"]+)"?/);
       const filename = match ? match[1] : `export-${bookId}.${format === 'json' ? 'json' : 'txt'}`;
@@ -108,9 +150,16 @@ export function ExportPreviewModal({ bookId, bookTitle, onClose }: ExportPreview
       <div role="dialog" aria-modal="true" aria-label="Export Annotations" className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Export Annotations
-          </h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Export Annotations
+            </h3>
+            {bookTitle && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-xs">
+                {bookTitle}
+              </p>
+            )}
+          </div>
           <button
             onClick={onClose}
             aria-label="Close export dialog"
@@ -122,14 +171,9 @@ export function ExportPreviewModal({ bookId, bookTitle, onClose }: ExportPreview
           </button>
         </div>
 
-        {/* Format selection */}
+        {/* Format + Filter selection */}
         <div className="px-5 py-4 space-y-3 overflow-y-auto flex-1">
-          {bookTitle && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {bookTitle}
-            </p>
-          )}
-
+          {/* Format categories */}
           {CATEGORIES.map((cat) => {
             const items = FORMATS.filter((f) => f.category === cat.key);
             return (
@@ -156,6 +200,75 @@ export function ExportPreviewModal({ bookId, bookTitle, onClose }: ExportPreview
               </div>
             );
           })}
+
+          {/* Filter toggle (hidden for citation formats) */}
+          {!isCitationFormat && (
+            <div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 text-xs font-medium transition-colors ${
+                  hasActiveFilters
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <svg className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+                Filters {hasActiveFilters ? '(active)' : ''}
+              </button>
+
+              {showFilters && (
+                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
+                  {/* Type filters */}
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Include types</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {TYPE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => toggleType(opt.value)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                            selectedTypes.has(opt.value)
+                              ? opt.color + ' ring-1 ring-current/20'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tag filter */}
+                  {availableTags.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Filter by tag</p>
+                      <select
+                        value={selectedTag}
+                        onChange={(e) => { setSelectedTag(e.target.value); setPreview(null); }}
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
+                      >
+                        <option value="">All tags</option>
+                        {availableTags.map((tag) => (
+                          <option key={tag} value={tag}>{tag}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {hasActiveFilters && (
+                    <button
+                      onClick={() => { clearFilters(); setPreview(null); }}
+                      className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Preview area */}
           {preview && (

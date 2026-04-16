@@ -15,6 +15,7 @@ import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
 import { exportAnnotations, type ExportFormat } from '../services/ExportService';
 import { Book } from '../models';
+import { ReadingSession } from '../models';
 
 const router: Router = Router();
 
@@ -172,7 +173,7 @@ router.get('/search', authenticate, async (req: AuthRequest, res) => {
  */
 router.get('/export', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { bookId, format } = req.query;
+    const { bookId, format, types, tags, chapterIndex } = req.query;
 
     if (!bookId || typeof bookId !== 'string') {
       return res.status(400).json({
@@ -183,24 +184,42 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
 
     const fmt = (format as string) || 'markdown';
 
-    // Legacy formats: json and markdown remain inline
+    // Build filter conditions
+    const where: Record<string, unknown> = { userId: req.userId, bookId };
+    if (types && typeof types === 'string') {
+      const typeList = types.split(',').filter((t) => ['highlight', 'note', 'bookmark'].includes(t));
+      if (typeList.length > 0) where.type = { [Op.in]: typeList };
+    }
+    if (tags && typeof tags === 'string') {
+      where.tags = { [Op.overlap]: tags.split(',') };
+    }
+
+    // Fetch all matching annotations (chapter filter applied in JS since location is JSONB)
     const annotations = await Annotation.findAll({
-      where: { userId: req.userId, bookId },
+      where,
       order: [['createdAt', 'ASC']],
     });
+
+    // Filter by chapter index if specified
+    const filteredAnnotations = chapterIndex && typeof chapterIndex === 'string'
+      ? annotations.filter((a) => {
+          const loc = a.location as Record<string, unknown> | undefined;
+          return loc?.chapterIndex === Number(chapterIndex);
+        })
+      : annotations;
 
     if (fmt === 'json') {
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="annotations-${bookId}.json"`);
-      return res.json(annotations);
+      return res.json(filteredAnnotations);
     }
 
     if (fmt === 'markdown') {
       const lines: string[] = [`# Annotations`, ``, `_Exported ${new Date().toLocaleDateString()}_`, ``];
 
-      const highlights = annotations.filter((a) => a.type === 'highlight');
-      const notes = annotations.filter((a) => a.type === 'note');
-      const bookmarks = annotations.filter((a) => a.type === 'bookmark');
+      const highlights = filteredAnnotations.filter((a) => a.type === 'highlight');
+      const notes = filteredAnnotations.filter((a) => a.type === 'note');
+      const bookmarks = filteredAnnotations.filter((a) => a.type === 'bookmark');
 
       if (highlights.length > 0) {
         lines.push(`## Highlights (${highlights.length})`, ``);
@@ -230,8 +249,8 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
         lines.push(``);
       }
 
-      if (annotations.length === 0) {
-        lines.push(`_No annotations yet._`);
+      if (filteredAnnotations.length === 0) {
+        lines.push(`_No annotations match the selected filters._`);
       }
 
       const md = lines.join('\n');
@@ -254,10 +273,25 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
       return notFound(res, 'book');
     }
 
+    // Fetch reading sessions for stats
+    const sessions = await ReadingSession.findAll({
+      where: { userId: req.userId, bookId },
+      order: [['startedAt', 'ASC']],
+    });
+    const totalReadingTime = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+    const totalPagesRead = sessions.reduce((sum, s) => sum + (s.pagesRead || 0), 0);
+
     const result = await exportAnnotations(
       fmt as ExportFormat,
-      { title: book.title, author: book.author, metadata: book.metadata },
-      annotations.map((a) => ({
+      {
+        title: book.title,
+        author: book.author,
+        metadata: book.metadata,
+        totalPages: (book as any).totalPages,
+        currentPage: (book as any).currentPage,
+        progress: (book as any).progress,
+      },
+      filteredAnnotations.map((a) => ({
         type: a.type,
         content: a.content,
         note: a.note || undefined,
@@ -266,6 +300,13 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
         location: a.location as Record<string, unknown> | undefined,
         createdAt: a.createdAt,
       })),
+      {
+        sessionCount: sessions.length,
+        totalReadingTime,
+        totalPagesRead,
+        firstReadAt: sessions.length > 0 ? sessions[0].startedAt : undefined,
+        lastReadAt: sessions.length > 0 ? sessions[sessions.length - 1].startedAt : undefined,
+      },
     );
 
     res.setHeader('Content-Type', result.contentType);

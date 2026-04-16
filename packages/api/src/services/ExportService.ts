@@ -26,6 +26,17 @@ interface BookInfo {
   title: string;
   author: string;
   metadata?: Record<string, unknown>;
+  totalPages?: number;
+  currentPage?: number;
+  progress?: number;
+}
+
+export interface ReadingStats {
+  sessionCount: number;
+  totalReadingTime: number; // seconds
+  totalPagesRead: number;
+  firstReadAt?: Date;
+  lastReadAt?: Date;
 }
 
 export type ExportFormat = 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research';
@@ -76,6 +87,33 @@ function groupByTag(annotations: AnnotationData[]): Map<string, AnnotationData[]
   return map;
 }
 
+/** Group annotations by chapter index */
+function groupByChapter(annotations: AnnotationData[]): Map<number, AnnotationData[]> {
+  const map = new Map<number, AnnotationData[]>();
+  for (const a of annotations) {
+    const ch = a.location?.chapterIndex ?? -1;
+    const list = map.get(ch) || [];
+    list.push(a);
+    map.set(ch, list);
+  }
+  return map;
+}
+
+/** Format seconds into human-readable duration */
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
+
+/** Format a date for display */
+function formatDate(date?: Date): string {
+  if (!date) return 'N/A';
+  return new Date(date).toLocaleDateString();
+}
+
 // ---------------------------------------------------------------------------
 // Book Club Summary
 // ---------------------------------------------------------------------------
@@ -83,6 +121,7 @@ function groupByTag(annotations: AnnotationData[]): Map<string, AnnotationData[]
 async function generateBookClub(
   book: BookInfo,
   annotations: AnnotationData[],
+  stats?: ReadingStats,
 ): Promise<ExportResult> {
   const highlights = annotations.filter((a) => a.type === 'highlight');
   const notes = annotations.filter((a) => a.type === 'note');
@@ -99,6 +138,23 @@ async function generateBookClub(
     '',
   ];
 
+  // Reading stats section
+  if (stats && stats.sessionCount > 0) {
+    lines.push('## Reading Journey', '');
+    lines.push(`- **Reading sessions:** ${stats.sessionCount}`);
+    lines.push(`- **Total reading time:** ${formatDuration(stats.totalReadingTime)}`);
+    if (stats.totalPagesRead > 0) lines.push(`- **Pages read:** ${stats.totalPagesRead}`);
+    if (book.progress) lines.push(`- **Progress:** ${book.progress}%`);
+    if (book.totalPages) lines.push(`- **Book length:** ${book.totalPages} pages`);
+    if (stats.firstReadAt) lines.push(`- **Started:** ${formatDate(stats.firstReadAt)}`);
+    if (stats.lastReadAt) lines.push(`- **Last read:** ${formatDate(stats.lastReadAt)}`);
+    const avgPace = stats.totalReadingTime > 0 && stats.totalPagesRead > 0
+      ? Math.round(stats.totalReadingTime / stats.totalPagesRead)
+      : 0;
+    if (avgPace > 0) lines.push(`- **Average pace:** ~${avgPace}s per page`);
+    lines.push('');
+  }
+
   // Themes
   const tagGroups = groupByTag(annotations);
   if (tagGroups.size > 0) {
@@ -109,8 +165,33 @@ async function generateBookClub(
     lines.push('');
   }
 
-  // Top highlights
-  if (sortedHighlights.length > 0) {
+  // Chapter-by-chapter highlights
+  const chapterGroups = groupByChapter(annotations);
+  const hasChapters = [...chapterGroups.keys()].some((ch) => ch >= 0);
+  if (hasChapters) {
+    lines.push('## Chapter Highlights', '');
+    const sortedChapters = [...chapterGroups.entries()]
+      .filter(([ch]) => ch >= 0)
+      .sort(([a], [b]) => a - b);
+    for (const [ch, items] of sortedChapters) {
+      const chHighlights = items.filter((a) => a.type === 'highlight');
+      const chNotes = items.filter((a) => a.type === 'note');
+      lines.push(`### Chapter ${ch + 1} (${items.length} annotations)`, '');
+      for (const h of chHighlights.slice(0, 10)) {
+        const page = h.location?.pageNumber ? ` (p. ${h.location?.pageNumber})` : '';
+        lines.push(`> ${escapeMarkdown(h.content)}${page}`);
+        if (h.note) lines.push(`  — *${escapeMarkdown(h.note)}*`);
+      }
+      for (const n of chNotes.slice(0, 5)) {
+        lines.push(`📝 **${escapeMarkdown(n.content.slice(0, 80))}${n.content.length > 80 ? '...' : ''}`);
+        if (n.note) lines.push(`   ${escapeMarkdown(n.note)}`);
+      }
+      lines.push('');
+    }
+  }
+
+  // Top highlights (flat list when no chapters, or as a summary)
+  if (!hasChapters && sortedHighlights.length > 0) {
     lines.push(`## Key Highlights (${highlights.length})`, '');
     const top = sortedHighlights.slice(0, 20);
     for (const h of top) {
@@ -125,8 +206,9 @@ async function generateBookClub(
   }
 
   // Notes
-  if (notes.length > 0) {
-    lines.push(`## Notes (${notes.length})`, '');
+  if (notes.length > 0 && hasChapters) {
+    // Notes already shown per chapter, add summary
+    lines.push(`## Reader's Notes (${notes.length})`, '');
     for (const n of notes.slice(0, 15)) {
       lines.push(`### ${escapeMarkdown(n.content.slice(0, 80))}${n.content.length > 80 ? '...' : ''}`);
       if (n.note) lines.push('', escapeMarkdown(n.note));
@@ -148,7 +230,7 @@ async function generateBookClub(
   }
 
   if (annotations.length === 0) {
-    lines.push('_No annotations yet._');
+    lines.push('_No annotations match the selected filters._');
   }
 
   return {
@@ -256,7 +338,7 @@ function generateChicago(book: BookInfo, _annotations: AnnotationData[]): Export
 // Research Notes
 // ---------------------------------------------------------------------------
 
-function generateResearch(book: BookInfo, annotations: AnnotationData[]): ExportResult {
+function generateResearch(book: BookInfo, annotations: AnnotationData[], stats?: ReadingStats): ExportResult {
   const lines: string[] = [
     `# Research Notes: ${escapeMarkdown(book.title)}`,
     `**Author:** ${escapeMarkdown(book.author)}`,
@@ -266,6 +348,13 @@ function generateResearch(book: BookInfo, annotations: AnnotationData[]): Export
   if (meta.isbn) lines.push(`**ISBN:** ${meta.isbn}`);
   if (meta.publishYear) lines.push(`**Year:** ${meta.publishYear}`);
   if (meta.publisher) lines.push(`**Publisher:** ${meta.publisher}`);
+
+  // Reading stats
+  if (stats && stats.sessionCount > 0) {
+    lines.push('', `**Reading Time:** ${formatDuration(stats.totalReadingTime)} across ${stats.sessionCount} sessions`);
+    if (stats.totalPagesRead > 0) lines.push(`**Pages Read:** ${stats.totalPagesRead}`);
+    if (book.progress) lines.push(`**Progress:** ${book.progress}%`);
+  }
 
   lines.push('', `_Compiled ${new Date().toLocaleDateString()}_`, '');
 
@@ -322,10 +411,11 @@ export async function exportAnnotations(
   format: ExportFormat,
   book: BookInfo,
   annotations: AnnotationData[],
+  stats?: ReadingStats,
 ): Promise<ExportResult> {
   switch (format) {
     case 'bookclub':
-      return generateBookClub(book, annotations);
+      return generateBookClub(book, annotations, stats);
     case 'bibtex':
       return generateBibtex(book, annotations);
     case 'apa':
@@ -335,7 +425,7 @@ export async function exportAnnotations(
     case 'chicago':
       return generateChicago(book, annotations);
     case 'research':
-      return generateResearch(book, annotations);
+      return generateResearch(book, annotations, stats);
     default:
       throw new Error(`Unsupported export format: ${format}`);
   }
