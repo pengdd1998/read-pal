@@ -130,12 +130,16 @@ function ShortcutsHelp({ onClose }: { onClose: () => void }) {
  * Compute character offsets for a DOM Range relative to a container element.
  */
 function computeOffsets(range: Range, container: HTMLElement): { start: number; end: number } {
-  const preRange = document.createRange();
-  preRange.selectNodeContents(container);
-  preRange.setEnd(range.startContainer, range.startOffset);
-  const start = preRange.toString().length;
-  const end = start + range.toString().length;
-  return { start, end };
+  try {
+    const preRange = document.createRange();
+    preRange.selectNodeContents(container);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    const start = preRange.toString().length;
+    const end = start + range.toString().length;
+    return { start, end };
+  } catch {
+    return { start: 0, end: range.toString().length };
+  }
 }
 
 export default function ReadPage() {
