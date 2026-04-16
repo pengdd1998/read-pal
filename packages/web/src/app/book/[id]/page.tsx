@@ -73,7 +73,7 @@ export default function BookDetailPage() {
         // Check if personal book exists
         api.get<{ format: string }>(`/api/memory-books/${bookId}`)
           .then((res) => { if (res.success && res.data?.format === 'personal_book') setHasPersonalBook(true); })
-          .catch(() => {});
+          .catch(() => { /* no personal book yet */ });
       } catch {
         setError('Failed to load book. Please try again.');
       }
@@ -201,7 +201,7 @@ export default function BookDetailPage() {
       {/* Progress */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 mb-6 animate-slide-up stagger-2">
         <h2 className="font-semibold mb-4">Progress</h2>
-        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden mb-3">
+        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden mb-3" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100} aria-label={`Reading progress: ${progressPct}%`}>
           <div
             className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-500 transition-all duration-500"
             style={{ width: `${progressPct}%` }}
@@ -225,7 +225,7 @@ export default function BookDetailPage() {
           { label: 'Notes', value: annotationStats.notes, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/10' },
           { label: 'Bookmarks', value: annotationStats.bookmarks, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/10' },
         ].map((item) => (
-          <div key={item.label} className={`${item.bg} rounded-xl p-4 text-center`}>
+          <div key={item.label} className={`${item.bg} rounded-xl p-4 text-center`} aria-label={`${item.value} ${item.label.toLowerCase()}`}>
             <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
             <div className="text-xs text-gray-500 mt-1">{item.label}</div>
           </div>

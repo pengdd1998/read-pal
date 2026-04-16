@@ -389,7 +389,7 @@ export default function FlashcardsPage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {deck.coverUrl ? (
-                    <img src={deck.coverUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                    <img src={deck.coverUrl} alt={`Cover of ${deck.bookTitle}`} className="w-full h-full object-cover rounded-lg" />
                   ) : (
                     <span className="text-lg">{'\uD83D\uDCD6'}</span>
                   )}
@@ -479,6 +479,9 @@ export default function FlashcardsPage() {
             onClick={() => setShowAnswer(!showAnswer)}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            role="region"
+            aria-live="polite"
+            aria-label={showAnswer ? 'Answer' : 'Question'}
           >
             {/* Question */}
             <div className="text-center">
@@ -507,7 +510,7 @@ export default function FlashcardsPage() {
       {/* Rating buttons — shown after revealing answer */}
       {showAnswer && (
         <div className="animate-slide-up">
-          <p className="text-xs text-gray-400 text-center mb-3">How well did you remember?</p>
+          <p className="text-xs text-gray-400 text-center mb-3">How well did you remember? <span className="hidden sm:inline text-gray-300">(keys 1-4)</span></p>
           <div className="grid grid-cols-4 gap-2">
             {RATINGS.map(({ value, label, hint, color }) => (
               <button
