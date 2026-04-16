@@ -239,6 +239,7 @@ export class BookProcessor {
     publisher?: string;
     language?: string;
     description?: string;
+    genres?: string[];
     isbn?: string;
     publishedDate?: string;
     totalPages?: number;
@@ -250,7 +251,9 @@ export class BookProcessor {
   }
 
   /**
-   * Extract EPUB metadata from OPF package document
+   * Extract EPUB metadata from OPF package document.
+   * Genre/subjects are extracted from `<dc:subject>` elements and stored
+   * as `genres` so the genre-aware AI companion can use them.
    */
   private async extractEPUBMetadata(filePath: string): Promise<{
     title?: string;
@@ -258,6 +261,7 @@ export class BookProcessor {
     publisher?: string;
     language?: string;
     description?: string;
+    genres?: string[];
     isbn?: string;
     publishedDate?: string;
     totalPages?: number;
@@ -281,12 +285,24 @@ export class BookProcessor {
           if (isbnEntry) isbn = isbnEntry.value;
         }
 
+        // Extract genres from dc:subject — EPUBs may have a single string
+        // (comma or semicolon separated) or already be an array
+        let genres: string[] | undefined;
+        const rawSubject = meta.subject as string | string[] | undefined;
+        if (rawSubject) {
+          const subjects = Array.isArray(rawSubject)
+            ? rawSubject
+            : rawSubject.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+          if (subjects.length > 0) genres = subjects;
+        }
+
         resolve({
           title: (meta.title as string) || undefined,
           author: (meta.creator as string) || undefined,
           publisher: (meta.publisher as string) || undefined,
           language: (meta.language as string) || undefined,
-          description: (meta.description as string) || (meta.subject as string) || undefined,
+          description: (meta.description as string) || undefined,
+          genres,
           isbn,
           publishedDate: (meta.date as string) || undefined,
           totalPages: contents.length,

@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
 import { AgentOrchestrator } from '../agents/orchestrator/AgentOrchestrator';
 import { ChatMessage } from '../models/ChatMessage';
+import { Book } from '../models/Book';
 import { chatCompletion, chatCompletionStream } from '../services/llmClient';
 import { detectGenre, getGenreInstructions, type BookGenre } from '../services/genrePrompts';
 import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
@@ -52,6 +53,23 @@ router.post(
     // Build reading context for the AI so it knows what the user is reading
     const safeMessage = sanitizePromptInput(message, 'User Message');
     let enrichedQuery = safeMessage;
+
+    // Enrich context with stored book metadata (genres, description) if not provided
+    if (context?.bookId && (!context.genres || !context.bookDescription)) {
+      try {
+        const book = await Book.findByPk(context.bookId as string, {
+          attributes: ['metadata'],
+        });
+        if (book?.metadata) {
+          const meta = book.metadata as Record<string, unknown>;
+          if (!context.genres && meta.genre) context.genres = meta.genre;
+          if (!context.bookDescription && meta.description) {
+            context.bookDescription = meta.description;
+          }
+        }
+      } catch { /* non-critical — genre enrichment is optional */ }
+    }
+
     if (context) {
       const readingParts: string[] = [];
       if (context.bookTitle) {
@@ -197,6 +215,22 @@ router.post(
   ]),
   async (req: AuthRequest, res: Response) => {
     const { agent = 'companion', message, context } = req.body;
+
+    // Enrich context with stored book metadata if not provided by frontend
+    if (context?.bookId && (!context.genres || !context.bookDescription)) {
+      try {
+        const book = await Book.findByPk(context.bookId as string, {
+          attributes: ['metadata'],
+        });
+        if (book?.metadata) {
+          const meta = book.metadata as Record<string, unknown>;
+          if (!context.genres && meta.genre) context.genres = meta.genre;
+          if (!context.bookDescription && meta.description) {
+            context.bookDescription = meta.description;
+          }
+        }
+      } catch { /* non-critical */ }
+    }
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({

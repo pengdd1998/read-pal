@@ -126,6 +126,7 @@ router.post('/', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), upload
       if (extracted.publisher) metaFields.publisher = extracted.publisher;
       if (extracted.language) metaFields.language = extracted.language;
       if (extracted.description) metaFields.description = extracted.description;
+      if (extracted.genres && extracted.genres.length > 0) metaFields.genre = extracted.genres;
       if (extracted.isbn) metaFields.isbn = extracted.isbn;
       if (extracted.publishedDate) metaFields.publishedDate = extracted.publishedDate;
       if (Object.keys(metaFields).length > 0) {
