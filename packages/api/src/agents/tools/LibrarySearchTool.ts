@@ -205,11 +205,11 @@ export class LibrarySearchTool extends BaseTool {
     limit: number,
     filters?: LibrarySearchFilters,
   ): Promise<LibrarySearchResult[]> {
-    const conditions: string[] = ['"userId" = $1'];
+    const conditions: string[] = ['d.user_id = $1'];
     const params: unknown[] = [userId];
     let paramIdx = 2;
 
-    // Full-text search against title and content
+    // Full-text search against book title and document content
     const tsQuery = query
       .split(/\s+/)
       .filter((w) => w.length > 0)
@@ -217,34 +217,34 @@ export class LibrarySearchTool extends BaseTool {
       .join(' & ');
 
     conditions.push(
-      `(to_tsvector('english', coalesce(title, '')) @@ to_tsquery($${paramIdx}) OR ` +
-      `to_tsvector('english', coalesce(content, '')) @@ to_tsquery($${paramIdx}) OR ` +
-      `title ILIKE $${paramIdx + 1})`,
+      `(to_tsvector('english', coalesce(b.title, '')) @@ to_tsquery($${paramIdx}) OR ` +
+      `to_tsvector('english', coalesce(d.content, '')) @@ to_tsquery($${paramIdx}) OR ` +
+      `b.title ILIKE $${paramIdx + 1})`,
     );
     params.push(tsQuery, `%${query}%`);
     paramIdx += 2;
 
     // Apply optional filters
     if (filters?.documentType) {
-      conditions.push(`type = $${paramIdx}`);
+      conditions.push(`b.file_type = $${paramIdx}`);
       params.push(filters.documentType);
       paramIdx++;
     }
 
     if (filters?.dateRange?.start) {
-      conditions.push(`"createdAt" >= $${paramIdx}`);
+      conditions.push(`d.created_at >= $${paramIdx}`);
       params.push(filters.dateRange.start);
       paramIdx++;
     }
 
     if (filters?.dateRange?.end) {
-      conditions.push(`"createdAt" <= $${paramIdx}`);
+      conditions.push(`d.created_at <= $${paramIdx}`);
       params.push(filters.dateRange.end);
       paramIdx++;
     }
 
     if (filters?.tags && filters.tags.length > 0) {
-      conditions.push(`metadata->'tags' ?| $${paramIdx}`);
+      conditions.push(`b.tags ?| $${paramIdx}`);
       params.push(filters.tags);
       paramIdx++;
     }
@@ -252,14 +252,15 @@ export class LibrarySearchTool extends BaseTool {
     params.push(limit);
 
     const sql = `
-      SELECT id, title, author, type, metadata, "createdAt",
+      SELECT d.id, b.title, b.author, b.file_type AS type, b.metadata, d.created_at,
              ts_rank(
-               to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, '')),
+               to_tsvector('english', coalesce(b.title, '') || ' ' || coalesce(d.content, '')),
                to_tsquery($2)
              ) AS rank
-      FROM documents
+      FROM documents d
+      JOIN books b ON d.book_id = b.id
       WHERE ${conditions.join(' AND ')}
-      ORDER BY rank DESC, "createdAt" DESC
+      ORDER BY rank DESC, d.created_at DESC
       LIMIT $${paramIdx}
     `;
 
@@ -298,16 +299,16 @@ export class LibrarySearchTool extends BaseTool {
     limit: number,
     filters?: LibrarySearchFilters,
   ): Promise<LibrarySearchResult[]> {
-    const conditions: string[] = ['"userId" = $1'];
+    const conditions: string[] = ['d.user_id = $1'];
     const params: unknown[] = [userId];
     let paramIdx = 2;
 
-    conditions.push(`(title ILIKE $${paramIdx} OR content ILIKE $${paramIdx})`);
+    conditions.push(`(b.title ILIKE $${paramIdx} OR d.content ILIKE $${paramIdx})`);
     params.push(`%${query}%`);
     paramIdx++;
 
     if (filters?.documentType) {
-      conditions.push(`type = $${paramIdx}`);
+      conditions.push(`b.file_type = $${paramIdx}`);
       params.push(filters.documentType);
       paramIdx++;
     }
@@ -315,10 +316,11 @@ export class LibrarySearchTool extends BaseTool {
     params.push(limit);
 
     const sql = `
-      SELECT id, title, author, type, metadata, "createdAt"
-      FROM documents
+      SELECT d.id, b.title, b.author, b.file_type AS type, b.metadata, d.created_at
+      FROM documents d
+      JOIN books b ON d.book_id = b.id
       WHERE ${conditions.join(' AND ')}
-      ORDER BY "createdAt" DESC
+      ORDER BY d.created_at DESC
       LIMIT $${paramIdx}
     `;
 
@@ -349,11 +351,12 @@ export class LibrarySearchTool extends BaseTool {
     // Get document IDs from matches
     const documentIds = matches.map(m => m.id);
 
-    // Fetch documents from PostgreSQL
+    // Fetch documents from PostgreSQL (joined with books for metadata)
     const documents = await context.db.postgres.query<Document>(
-      `SELECT id, title, author, type, metadata, "createdAt"
-       FROM documents
-       WHERE "userId" = $1 AND id = ANY($2)
+      `SELECT d.id, b.title, b.author, b.file_type AS type, b.metadata, d.created_at
+       FROM documents d
+       JOIN books b ON d.book_id = b.id
+       WHERE d.user_id = $1 AND d.id = ANY($2)
        LIMIT $3`,
       [userId, documentIds, matches.length]
     );
