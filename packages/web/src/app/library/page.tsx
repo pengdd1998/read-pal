@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { LibraryGrid } from '@/components/library/LibraryGrid';
+import { CollectionsSidebar } from '@/components/library/CollectionsSidebar';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import type { Collection } from '@read-pal/shared';
 
 interface FreeBook {
   title: string;
@@ -21,6 +23,8 @@ export default function LibraryPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [importing, setImporting] = useState<string | null>(null);
+  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
+  const [collectionBookIds, setCollectionBookIds] = useState<string[] | null>(null);
 
   useEffect(() => {
     api.get<{ books: FreeBook[] }>('/api/discovery/free-books')
@@ -31,6 +35,24 @@ export default function LibraryPage() {
       })
       .catch(() => { toast('Failed to load book suggestions', 'error'); })
       .finally(() => setLoadingSuggestions(false));
+  }, []);
+
+  const handleSelectCollection = useCallback(async (id: string | null) => {
+    if (id === null) {
+      setActiveCollectionId(null);
+      setCollectionBookIds(null);
+      return;
+    }
+    setActiveCollectionId(id);
+    try {
+      const res = await api.get<Collection>(`/api/collections`);
+      if (res.success && Array.isArray(res.data)) {
+        const col = res.data.find((c) => c.id === id);
+        setCollectionBookIds(col?.bookIds || []);
+      }
+    } catch {
+      setCollectionBookIds([]);
+    }
   }, []);
 
   const handleSeedSample = async () => {
@@ -144,8 +166,27 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      <div className="animate-slide-up stagger-3">
-        <LibraryGrid viewMode={viewMode} />
+      <div className="animate-slide-up stagger-3 flex gap-6">
+        {/* Collections sidebar */}
+        <div className="hidden md:block w-56 shrink-0">
+          <CollectionsSidebar
+            activeCollectionId={activeCollectionId}
+            onSelectCollection={handleSelectCollection}
+          />
+        </div>
+
+        {/* Main grid */}
+        <div className="flex-1 min-w-0">
+          <LibraryGrid viewMode={viewMode} collectionBookIds={collectionBookIds} />
+        </div>
+      </div>
+
+      {/* Mobile collections - shown below main content */}
+      <div className="md:hidden mt-6">
+        <CollectionsSidebar
+          activeCollectionId={activeCollectionId}
+          onSelectCollection={handleSelectCollection}
+        />
       </div>
 
       {/* Free books to explore */}

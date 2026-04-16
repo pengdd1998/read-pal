@@ -367,6 +367,43 @@
     position: relative;
   }
 
+  /* Line number gutter */
+  .reader-content pre.has-line-numbers {
+    padding-left: 3.5rem;
+  }
+
+  .reader-content pre .line-numbers-gutter {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2.5rem;
+    padding: 1rem 0.5rem 1rem 0;
+    text-align: right;
+    font-family: var(--font-mono), 'Fira Code', 'Consolas', monospace;
+    font-size: 0.75em;
+    line-height: 1.6;
+    color: #475569;
+    user-select: none;
+    pointer-events: none;
+    overflow: hidden;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .reader-content pre .line-numbers-gutter span {
+    display: block;
+  }
+
+  [data-theme="dark"] .reader-content pre .line-numbers-gutter {
+    color: #3b4252;
+    border-right-color: rgba(255, 255, 255, 0.04);
+  }
+
+  [data-theme="sepia"] .reader-content pre .line-numbers-gutter {
+    color: #6b5a3e;
+    border-right-color: rgba(217, 119, 6, 0.12);
+  }
+
   /* Code block header — language label + copy button */
   .reader-content pre .code-header {
     position: absolute;

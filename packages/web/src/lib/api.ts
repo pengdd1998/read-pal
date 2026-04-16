@@ -65,12 +65,13 @@ class ApiClient {
         if (
           typeof window !== 'undefined' &&
           error.response?.status === 401 &&
+          !window.location.pathname.startsWith('/auth') &&
           !window.location.pathname.startsWith('/login') &&
           !window.location.pathname.startsWith('/register')
         ) {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          window.location.href = '/auth?mode=login';
         }
         return Promise.reject(error);
       },
@@ -152,6 +153,10 @@ class ApiClient {
       this.invalidateCache('/api/stats');
       this.invalidateCache('/api/challenges');
       this.invalidateCache('/api/recommendations');
+      this.invalidateCache('/api/collections');
+    }
+    if (url.includes('/api/collections')) {
+      this.invalidateCache('/api/collections');
     }
     // Clear specific data
     const prefixes = url.split('/').slice(0, 4).join('/'); // e.g., /api/books or /api/annotations

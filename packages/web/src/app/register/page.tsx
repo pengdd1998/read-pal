@@ -1,128 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { authFetch } from '@/lib/auth-fetch';
-import { useAuth } from '@/lib/auth';
-import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/ui';
 
+/**
+ * Redirect /register to the unified /auth page (register mode).
+ */
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  useEffect(() => {
+    router.replace('/auth?mode=register');
+  }, [router]);
 
-    try {
-      await register(name, email, password);
-      // Auto-seed a sample book for the magic first experience
-      try {
-        await authFetch((process.env.NEXT_PUBLIC_API_URL || '') + '/api/books/seed-sample', {
-          method: 'POST',
-        });
-      } catch {
-        // Non-blocking — user can still use the app
-      }
-      // Route to welcome page — onboarding walkthrough will fire on dashboard
-      router.push('/welcome');
-    } catch (err: unknown) {
-      setError(getUserFriendlyError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <main className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="max-w-md w-full animate-fade-in">
-        <div className="card p-8">
-          {/* Header */}
-          <header className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <span className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white text-sm font-bold" aria-hidden="true">r</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">read-pal</span>
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create your account</h1>
-            <p className="text-sm text-gray-600 mt-1 dark:text-gray-400">Start your reading journey today</p>
-          </header>
-
-          <form onSubmit={handleRegister} className="space-y-5" aria-label="Registration form">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Name</label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="input"
-                placeholder="Your name"
-                autoComplete="name"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="input"
-                placeholder="you@example.com"
-                autoComplete="email"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                className="input"
-                placeholder="Min. 8 characters"
-                autoComplete="new-password"
-              />
-              {password.length > 0 && password.length < 8 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1" role="alert">Password must be at least 8 characters</p>
-              )}
-            </div>
-
-            {error && <ErrorAlert message={error} />}
-
-            <button type="submit" disabled={loading} className="btn btn-primary w-full py-3 rounded-xl">
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <LoadingSpinner />
-                  Creating account...
-                </span>
-              ) : (
-                'Create Account'
-              )}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Already have an account?{' '}
-            <Link href="/login" className="text-primary-600 dark:text-primary-400 font-medium hover:underline">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
-    </main>
-  );
+  return null;
 }

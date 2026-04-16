@@ -238,6 +238,20 @@ export interface BookRecommendation {
   relevance: number;
 }
 
+// Collection Types
+export interface Collection {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  bookIds?: string[];
+  bookCount?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Friend Conversation Types
 export interface FriendConversationMessage {
   id: string;

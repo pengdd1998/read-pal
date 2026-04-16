@@ -92,6 +92,36 @@ const LANGUAGE_LABELS: Record<string, string> = {
 };
 
 /**
+ * Add a line-number gutter to a `<pre>` element.
+ * Counts lines from the `<code>` text content and inserts a left-side gutter.
+ * Idempotent — skips if a gutter is already present.
+ */
+function addLineNumbers(pre: HTMLPreElement): void {
+  if (pre.querySelector('.line-numbers-gutter')) return;
+
+  const code = pre.querySelector('code');
+  if (!code) return;
+
+  const text = code.textContent ?? '';
+  const lineCount = text.split('\n').length;
+  // Don't show gutter for single-line code
+  if (lineCount <= 1) return;
+
+  const gutter = document.createElement('span');
+  gutter.className = 'line-numbers-gutter';
+  gutter.setAttribute('aria-hidden', 'true');
+
+  for (let i = 1; i <= lineCount; i++) {
+    const span = document.createElement('span');
+    span.textContent = String(i);
+    gutter.appendChild(span);
+  }
+
+  pre.classList.add('has-line-numbers');
+  pre.insertBefore(gutter, pre.firstChild);
+}
+
+/**
  * Insert a copy-to-clipboard button into a `<pre>` element.
  * Idempotent — skips if a button is already present.
  */
@@ -156,6 +186,7 @@ export async function highlightCodeBlocks(rootElement: HTMLElement): Promise<voi
     const pre = el.parentElement;
     if (pre?.tagName === 'PRE') {
       const lang = detectLanguage(el);
+      addLineNumbers(pre as HTMLPreElement);
       addCopyButton(pre as HTMLPreElement, lang);
     }
   });
@@ -186,6 +217,7 @@ export async function highlightCodeBlocks(rootElement: HTMLElement): Promise<voi
     pre.classList.add('prism-highlighted');
 
     const lang = detectLanguage(code);
+    addLineNumbers(pre);
     addCopyButton(pre, lang);
   });
 }

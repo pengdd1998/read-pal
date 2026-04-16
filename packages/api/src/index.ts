@@ -33,6 +33,7 @@ import exportRoutes from './routes/export.routes';
 import synthesisRoutes from './routes/synthesis.routes';
 import flashcardsRoutes from './routes/flashcards.routes';
 import studyModeRoutes from './routes/study-mode.routes';
+import collectionsRoutes from './routes/collections.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -295,6 +296,7 @@ app.use('/api/export', exportRoutes);
 app.use('/api/synthesis', synthesisRoutes);
 app.use('/api/flashcards', flashcardsRoutes);
 app.use('/api/study-mode', studyModeRoutes);
+app.use('/api/collections', collectionsRoutes);
 
 // ============================================================================
 // Error Handling

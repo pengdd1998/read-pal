@@ -13,6 +13,7 @@ import { ChatMessage } from './ChatMessage';
 import { InterventionFeedback } from './InterventionFeedback';
 import { FriendConversation, FriendRelationship } from './FriendConversation';
 import { Flashcard } from './Flashcard';
+import { Collection } from './Collection';
 
 // Define associations
 User.hasMany(Book, { foreignKey: 'userId', as: 'books' });
@@ -57,7 +58,10 @@ Flashcard.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Book.hasMany(Flashcard, { foreignKey: 'bookId', as: 'flashcards' });
 Flashcard.belongsTo(Book, { foreignKey: 'bookId', as: 'book' });
 
-export { User, Book, Annotation, ReadingSession, Document, MemoryBook, ChatMessage, InterventionFeedback, FriendConversation, FriendRelationship, Flashcard };
+User.hasMany(Collection, { foreignKey: 'userId', as: 'collections' });
+Collection.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+export { User, Book, Annotation, ReadingSession, Document, MemoryBook, ChatMessage, InterventionFeedback, FriendConversation, FriendRelationship, Flashcard, Collection };
 export type { Chapter } from './Document';
 export type { MemoryBookMoment, MemoryBookInsight, MemoryBookStats, PersonalBookSection } from './MemoryBook';
 export { sequelize };

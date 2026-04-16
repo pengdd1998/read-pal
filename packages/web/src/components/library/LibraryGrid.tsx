@@ -8,6 +8,7 @@ import { BookUploader } from './BookUploader';
 
 interface LibraryGridProps {
   viewMode?: 'grid' | 'list';
+  collectionBookIds?: string[] | null;
 }
 
 type StatusFilter = 'all' | 'reading' | 'completed' | 'unread';
@@ -47,7 +48,7 @@ function sortBooks(bookList: Book[], sortOption: SortOption): Book[] {
   return sorted;
 }
 
-export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
+export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGridProps) {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -117,6 +118,9 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
   // Client-side filter & sort (works with loaded books; no extra API calls)
   const filteredBooks = useMemo(() => sortBooks(
     books.filter((book) => {
+      // Collection filter
+      if (collectionBookIds && !collectionBookIds.includes(book.id)) return false;
+
       const matchesStatus = statusFilter === 'all' || book.status === statusFilter;
       if (!matchesStatus) return false;
 
@@ -130,7 +134,7 @@ export function LibraryGrid({ viewMode = 'grid' }: LibraryGridProps) {
       return true;
     }),
     sortOption,
-  ), [books, statusFilter, searchQuery, sortOption]);
+  ), [books, statusFilter, searchQuery, sortOption, collectionBookIds]);
 
   const handleTagsChange = useCallback((id: string, newTags: string[]) => {
     setBooks((prev) => prev.map((b) => (b.id === id ? { ...b, tags: newTags } : b)));

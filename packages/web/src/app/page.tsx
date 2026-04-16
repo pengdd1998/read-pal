@@ -132,7 +132,7 @@ export default function HomePage() {
 
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up-delayed">
             <Link
-              href="/register"
+              href="/auth?mode=register"
               className="btn btn-primary btn-glow px-8 py-4 text-base rounded-2xl shadow-glow-amber"
             >
               Start Reading Free
@@ -141,7 +141,7 @@ export default function HomePage() {
               </svg>
             </Link>
             <Link
-              href="/login"
+              href="/auth?mode=login"
               className="btn btn-secondary px-8 py-4 text-base rounded-2xl"
             >
               Sign In
@@ -305,7 +305,7 @@ export default function HomePage() {
           <p className="text-gray-300 text-lg mb-10">
             Your next favorite book deserves a companion who cares about it as much as you do.
           </p>
-          <Link href="/register" className="btn btn-primary btn-glow px-10 py-4 text-base rounded-2xl shadow-glow-amber">
+          <Link href="/auth?mode=register" className="btn btn-primary btn-glow px-10 py-4 text-base rounded-2xl shadow-glow-amber">
             Get Started Free
           </Link>
           <p className="text-sm text-gray-400 mt-5">No credit card required. Free forever plan available.</p>

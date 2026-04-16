@@ -126,7 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </button>
                 </>
               ) : (
-                <Link href="/login" className="btn btn-secondary text-sm">
+                <Link href="/auth?mode=login" className="btn btn-secondary text-sm">
                   Sign In
                 </Link>
               )}

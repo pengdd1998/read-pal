@@ -22,9 +22,10 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
 
   if (!token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('next', pathname);
-    return NextResponse.redirect(loginUrl);
+    const authUrl = new URL('/auth', request.url);
+    authUrl.searchParams.set('mode', 'login');
+    authUrl.searchParams.set('next', pathname);
+    return NextResponse.redirect(authUrl);
   }
 
   return NextResponse.next();
