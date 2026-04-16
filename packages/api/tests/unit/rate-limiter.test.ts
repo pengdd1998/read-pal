@@ -12,10 +12,11 @@ function mockReq(ip = '127.0.0.1'): Request {
   return { ip } as unknown as Request;
 }
 
-function mockRes(): { res: Response; json: jest.Mock; status: jest.Mock } {
+function mockRes(): { res: Response; json: jest.Mock; status: jest.Mock; set: jest.Mock } {
   const json = jest.fn();
+  const set = jest.fn();
   const status = jest.fn().mockReturnValue({ json });
-  return { res: { status, json } as unknown as Response, json, status };
+  return { res: { status, json, set } as unknown as Response, json, status, set };
 }
 
 describe('rateLimiter (custom in-memory)', () => {

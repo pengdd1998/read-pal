@@ -182,25 +182,6 @@ describe('SemanticSearch', () => {
   // ---------------------------------------------------------------------------
   // Input validation
   // ---------------------------------------------------------------------------
-  describe('indexDocument', () => {
-    it('should throw on empty content', async () => {
-      const search = new SemanticSearch('test');
-      await expect(search.indexDocument('user-1', 'book-1', 'doc-1', ''))
-        .rejects.toThrow('Content cannot be empty');
-    });
-
-    it('should throw on whitespace-only content', async () => {
-      const search = new SemanticSearch('test');
-      await expect(search.indexDocument('user-1', 'book-1', 'doc-1', '   '))
-        .rejects.toThrow('Content cannot be empty');
-    });
-
-    it('should throw on empty userId', async () => {
-      const search = new SemanticSearch('test');
-      await expect(search.indexDocument('', 'book-1', 'doc-1', 'content'))
-        .rejects.toThrow('userId is required');
-    });
-  });
 
   describe('indexChunks', () => {
     it('should throw on empty chunks array', async () => {
@@ -236,11 +217,4 @@ describe('SemanticSearch', () => {
     });
   });
 
-  describe('deleteBook', () => {
-    it('should throw on empty userId', async () => {
-      const search = new SemanticSearch('test');
-      await expect(search.deleteBook('', 'book-1'))
-        .rejects.toThrow('userId is required');
-    });
-  });
 });

@@ -68,18 +68,23 @@ jest.mock('../src/models', () => {
   };
 });
 
-// Mock Anthropic SDK
-jest.mock('@anthropic-ai/sdk', () => ({
+// Mock OpenAI SDK (used by GLM via OpenAI-compatible API)
+jest.mock('openai', () => ({
   default: jest.fn().mockImplementation(() => ({
-    messages: {
-      create: jest.fn().mockResolvedValue({
-        id: 'msg_test',
-        type: 'message',
-        role: 'assistant',
-        content: [{ type: 'text', text: 'Test AI response' }],
-        model: 'claude-3-5-sonnet-20241022',
-        usage: { input_tokens: 10, output_tokens: 20 },
-      }),
+    chat: {
+      completions: {
+        create: jest.fn().mockResolvedValue({
+          id: 'chatcmpl-test',
+          object: 'chat.completion',
+          choices: [{
+            index: 0,
+            message: { role: 'assistant', content: 'Test AI response' },
+            finish_reason: 'stop',
+          }],
+          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
+          model: 'glm-4.7-flash',
+        }),
+      },
     },
   })),
 }));

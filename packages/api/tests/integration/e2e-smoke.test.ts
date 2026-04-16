@@ -3,7 +3,7 @@
  *
  * Exercises the full user flow: register → login → create book → read →
  * annotate → chat with agent → check dashboard → settings → discovery.
- * All API calls are tested against the real Express app with mocked DB/Anthropic.
+ * All API calls are tested against the real Express app with mocked DB/OpenAI (GLM).
  */
 
 import request from 'supertest';
@@ -34,17 +34,22 @@ jest.mock('../../src/db', () => ({
   getPinecone: jest.fn().mockReturnValue(null),
 }));
 
-jest.mock('@anthropic-ai/sdk', () => ({
+jest.mock('openai', () => ({
   default: jest.fn().mockImplementation(() => ({
-    messages: {
-      create: jest.fn().mockResolvedValue({
-        id: 'msg_test',
-        type: 'message',
-        role: 'assistant',
-        content: [{ type: 'text', text: 'Test response from Claude' }],
-        model: 'claude-3-5-sonnet',
-        usage: { input_tokens: 10, output_tokens: 20 },
-      }),
+    chat: {
+      completions: {
+        create: jest.fn().mockResolvedValue({
+          id: 'chatcmpl-test',
+          object: 'chat.completion',
+          choices: [{
+            index: 0,
+            message: { role: 'assistant', content: 'Test AI response' },
+            finish_reason: 'stop',
+          }],
+          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
+          model: 'glm-4.7-flash',
+        }),
+      },
     },
   })),
 }));
