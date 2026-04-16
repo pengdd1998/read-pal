@@ -347,6 +347,51 @@ export default function BookDetailPage() {
         </div>
       )}
 
+      {/* Flashcard Review */}
+      {totalAnnotations > 0 && (
+        <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/10 dark:to-emerald-900/10 rounded-2xl border border-teal-200/50 dark:border-teal-800/30 p-5 mb-6 animate-slide-up stagger-4">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-2xl">{'\uD83D\uDCC7'}</span>
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-white">Flashcard Review</h2>
+              <p className="text-xs text-gray-500">Generate flashcards from your highlights and review with spaced repetition</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={async () => {
+                try {
+                  const res = await api.post<{ generated: number }>(`/api/flashcards/generate`, {
+                    bookId,
+                    count: 5,
+                  });
+                  if (res.success && res.data) {
+                    window.location.href = '/flashcards';
+                  }
+                } catch {
+                  setError('Failed to generate flashcards.');
+                }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-teal-500 hover:bg-teal-600 text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Generate Flashcards
+            </button>
+            <Link
+              href="/flashcards"
+              className="inline-flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400 hover:underline"
+            >
+              Review due cards
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex gap-3 animate-slide-up stagger-4">
         <Link
