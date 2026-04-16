@@ -545,11 +545,11 @@ export default function ReadPage() {
             </button>
           </div>
 
-          {/* Desktop Font Size */}
-          <div className="hidden sm:flex items-center gap-1">
-            <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="px-2 py-1 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors" aria-label="Decrease font size">A-</button>
-            <span className="text-xs text-amber-600 dark:text-amber-400 min-w-[2rem] text-center font-medium">{fontSize}</span>
-            <button onClick={() => setFontSize(Math.min(32, fontSize + 2))} className="px-2 py-1 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors" aria-label="Increase font size">A+</button>
+          {/* Font Size — mobile + desktop */}
+          <div className="flex items-center gap-1">
+            <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2 sm:py-1 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors active:scale-95" aria-label="Decrease font size">A-</button>
+            <span className="text-xs text-amber-600 dark:text-amber-400 min-w-[1.5rem] text-center font-medium">{fontSize}</span>
+            <button onClick={() => setFontSize(Math.min(32, fontSize + 2))} className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2 sm:py-1 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors active:scale-95" aria-label="Increase font size">A+</button>
           </div>
 
           {/* Desktop Theme Toggle */}

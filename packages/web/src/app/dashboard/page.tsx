@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
@@ -113,20 +113,24 @@ const FEATURE_PREVIEW = [
 const DashboardChallenges = memo(function DashboardChallenges() {
   const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchChallenges = useCallback(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(false);
     api.get<{ challenges: ChallengeItem[] }>('/api/challenges')
       .then((res) => {
         if (!cancelled && res.data) {
-          const d = res.data;
-          setChallenges(d.challenges ?? []);
+          setChallenges(res.data.challenges ?? []);
         }
       })
-      .catch(() => {})
+      .catch(() => { if (!cancelled) setError(true); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => { return fetchChallenges(); }, [fetchChallenges]);
 
   if (loading) {
     return (
@@ -135,6 +139,15 @@ const DashboardChallenges = memo(function DashboardChallenges() {
         <div className="space-y-2">
           {[1, 2, 3].map((i) => <SkeletonPulse key={i} className="h-8 w-full" />)}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-4">
+        <p className="text-xs text-gray-400 mb-2">Failed to load challenges</p>
+        <button onClick={fetchChallenges} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">Retry</button>
       </div>
     );
   }
@@ -175,21 +188,25 @@ const DashboardChallenges = memo(function DashboardChallenges() {
 const DashboardRecommendations = memo(function DashboardRecommendations() {
   const [recs, setRecs] = useState<RecommendationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const topRecs = useMemo(() => recs.slice(0, 3), [recs]);
 
-  useEffect(() => {
+  const fetchRecs = useCallback(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(false);
     api.get<{ recommendations: RecommendationItem[] }>('/api/recommendations')
       .then((res) => {
         if (!cancelled && res.data) {
-          const d = res.data;
-          setRecs(d.recommendations ?? []);
+          setRecs(res.data.recommendations ?? []);
         }
       })
-      .catch(() => {})
+      .catch(() => { if (!cancelled) setError(true); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => { return fetchRecs(); }, [fetchRecs]);
 
   if (loading) {
     return (
@@ -198,6 +215,15 @@ const DashboardRecommendations = memo(function DashboardRecommendations() {
         <div className="space-y-2">
           {[1, 2, 3].map((i) => <SkeletonPulse key={i} className="h-10 w-full" />)}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-4">
+        <p className="text-xs text-gray-400 mb-2">Failed to load recommendations</p>
+        <button onClick={fetchRecs} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">Retry</button>
       </div>
     );
   }
@@ -230,17 +256,44 @@ const DashboardRecommendations = memo(function DashboardRecommendations() {
 
 const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
   const [goals, setGoals] = useState<{ goal: number; completed: number; onTrack: boolean; dailyGoalMinutes: number; todayMinutes: number; dailyOnTrack: boolean } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchGoals = useCallback(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(false);
     api.get<typeof goals>('/api/settings/reading-goals')
       .then((res) => {
         if (!cancelled && res.data) setGoals(res.data);
       })
-      .catch(() => {})
-      .finally();
+      .catch(() => { if (!cancelled) setError(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => { return fetchGoals(); }, [fetchGoals]);
+
+  if (loading) {
+    return (
+      <div className="card">
+        <SkeletonPulse className="h-4 w-28 mb-3" />
+        <div className="grid grid-cols-2 gap-3">
+          <SkeletonPulse className="h-16 w-full" />
+          <SkeletonPulse className="h-16 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-4">
+        <p className="text-xs text-gray-400 mb-2">Failed to load reading goals</p>
+        <button onClick={fetchGoals} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">Retry</button>
+      </div>
+    );
+  }
 
   if (!goals) return null;
 
@@ -277,17 +330,46 @@ const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
 
 const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
   const [stats, setStats] = useState<FlashcardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchStats = useCallback(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(false);
     api.get<{ stats: FlashcardStats }>('/api/flashcards/review?limit=1')
       .then((res) => {
         if (!cancelled && res.data) setStats(res.data.stats);
       })
-      .catch(() => {})
-      .finally();
+      .catch(() => { if (!cancelled) setError(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => { return fetchStats(); }, [fetchStats]);
+
+  if (loading) {
+    return (
+      <div className="card">
+        <div className="flex items-center gap-4">
+          <SkeletonPulse className="w-12 h-12 rounded-xl flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <SkeletonPulse className="h-4 w-32" />
+            <SkeletonPulse className="h-3 w-24" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-4">
+        <p className="text-xs text-gray-400 mb-2">Failed to load flashcard stats</p>
+        <button onClick={fetchStats} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">Retry</button>
+      </div>
+    );
+  }
 
   if (!stats || stats.total === 0) return null;
 
