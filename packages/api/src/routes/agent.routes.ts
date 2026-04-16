@@ -256,6 +256,7 @@ router.post(
     res.write('data: {"type":"connected"}\n\n');
 
     const systemPrompt = AGENT_SYSTEM_PROMPTS[agent] || AGENT_SYSTEM_PROMPTS.companion;
+    const bookId = context?.bookId as string | undefined;
 
     try {
       // eagerStart: true — begin the HTTP handshake to GLM *now* while the
@@ -266,11 +267,22 @@ router.post(
         eagerStart: true,
       });
 
+      // Accumulate tokens for persistence after stream ends
+      let fullResponse = '';
       for await (const token of stream) {
+        fullResponse += token;
         res.write(`data: ${JSON.stringify({ token })}\n\n`);
       }
 
       res.write('data: [DONE]\n\n');
+
+      // Save chat history to DB (non-blocking) for Personal Book pipeline
+      if (bookId && fullResponse.trim()) {
+        ChatMessage.bulkCreate([
+          { userId: req.user!.id, bookId, role: 'user', content: safeMessage },
+          { userId: req.user!.id, bookId, role: 'assistant', content: fullResponse },
+        ]).catch((err) => console.warn('Failed to save stream chat history:', (err as Error).message));
+      }
     } catch (error) {
       console.error('Agent chat stream error:', error);
       res.write(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'Stream failed' })}\n\n`);

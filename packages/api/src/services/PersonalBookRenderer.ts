@@ -628,6 +628,21 @@ body {
   text-align: center;
 }
 
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  body { padding: 0.5rem; }
+  .book { padding: 1.25rem 1rem; }
+  .cover { padding: 2.5rem 1rem 2rem; }
+  .cover-title { font-size: 1.6rem; }
+  .cover-author { font-size: 1rem; }
+  .cover-subtitle { font-size: 1.05rem; }
+  .chapter { padding: 1.5rem 0 1rem; }
+  .chapter-title { font-size: 1.2rem; }
+  .timeline { padding-left: 1rem; }
+  .milestone { padding-left: 1rem; }
+  .milestone-dot { left: -7px; width: 14px; height: 14px; }
+}
+
 /* ── Footer ────────────────────────────────────────────────────────────── */
 .book-footer {
   text-align: center;
