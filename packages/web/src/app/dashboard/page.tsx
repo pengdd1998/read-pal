@@ -65,6 +65,12 @@ interface RecommendationItem {
   relevance: number;
 }
 
+interface FlashcardStats {
+  total: number;
+  due: number;
+  reviewed: number;
+}
+
 const INSIGHTS_POOL: AgentInsight[] = [
   { agent: 'Companion', icon: '\uD83D\uDCD6', message: 'What surprised you most in your last reading session?' },
   { agent: 'Research', icon: '\uD83D\uDD2C', message: 'Try connecting what you just read to something you already know.' },
@@ -266,6 +272,59 @@ const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
         </div>
       </div>
     </div>
+  );
+});
+
+const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
+  const [stats, setStats] = useState<FlashcardStats | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get<{ stats: FlashcardStats }>('/api/flashcards/review?limit=1')
+      .then((res) => {
+        if (!cancelled && res.data) setStats(res.data.stats);
+      })
+      .catch(() => {})
+      .finally();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (!stats || stats.total === 0) return null;
+
+  return (
+    <Link
+      href="/flashcards"
+      className="block card group hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200"
+    >
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30 flex items-center justify-center flex-shrink-0">
+          <span className="text-2xl">{'\uD83D\uDCC7'}</span>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+            Flashcard Review
+          </h3>
+          <div className="flex items-center gap-3 mt-1">
+            {stats.due > 0 ? (
+              <>
+                <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{stats.due} due now</span>
+                <span className="text-xs text-gray-400">{stats.reviewed} reviewed</span>
+              </>
+            ) : (
+              <span className="text-xs text-gray-500">All caught up! Come back tomorrow.</span>
+            )}
+          </div>
+        </div>
+        {stats.due > 0 && (
+          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            Review
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        )}
+      </div>
+    </Link>
   );
 });
 
@@ -557,11 +616,12 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {[
               { label: 'Upload Book', href: '/library', icon: '\u{1F4C2}', color: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20' },
               { label: 'Memory Books', href: '/memory-books', icon: '\u{1F4D5}', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },
-              { label: 'Reading Stats', href: '/stats', icon: '\u{1F4CA}', color: 'from-teal-50 to-emerald-50 dark:from-teal-950/20 dark:to-emerald-950/20' },
+              { label: 'Flashcards', href: '/flashcards', icon: '\u{1F4C7}', color: 'from-teal-50 to-emerald-50 dark:from-teal-950/20 dark:to-emerald-950/20' },
+              { label: 'Reading Stats', href: '/stats', icon: '\u{1F4CA}', color: 'from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20' },
             ].map((action) => (
               <Link
                 key={action.label}
@@ -613,6 +673,13 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* ── Flashcard Review ── */}
+      {hasData && !loading && (
+        <div className="mt-5 animate-fade-in">
+          <FlashcardReviewWidget />
+        </div>
+      )}
+
       {/* ── Explore More: subtle links to advanced features ── */}
       {hasData && !loading && (
         <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800 animate-fade-in">
@@ -644,6 +711,15 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
               </svg>
               Reading Stats
+            </Link>
+            <Link
+              href="/flashcards"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6.878V6a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 004.5 9v.878m13.5-3A2.25 2.25 0 0119.5 9v.878m0 0a2.246 2.246 0 00-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0121 12v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6c0-1.243 1.007-2.25 2.25-2.25h13.5" />
+              </svg>
+              Flashcards
             </Link>
             <Link
               href="/settings"
