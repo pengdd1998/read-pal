@@ -166,7 +166,7 @@ export default function StatsPage() {
           {weekly.length > 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
               <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Weekly Activity</h2>
-              <div className="flex items-end gap-2 h-32">
+              <div className="flex items-end gap-2 h-32" role="img" aria-label="Weekly reading activity bar chart">
                 {weekly.map((day, i) => {
                   const maxPages = Math.max(...weekly.map((d) => d.pages), 1);
                   const height = Math.max(4, (day.pages / maxPages) * 100);
@@ -198,7 +198,7 @@ export default function StatsPage() {
                     : ''}
                 </span>
               </div>
-              <svg viewBox="0 0 300 80" className="w-full h-24" preserveAspectRatio="none">
+              <svg viewBox="0 0 300 80" className="w-full h-24" preserveAspectRatio="none" role="img" aria-label="Reading velocity trend chart">
                 {(() => {
                   const data = sessions.slice(0, 14).reverse();
                   const maxPages = Math.max(...data.map((s) => s.pagesRead), 1);
