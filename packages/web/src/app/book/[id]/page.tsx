@@ -47,6 +47,7 @@ export default function BookDetailPage() {
   const [hasPersonalBook, setHasPersonalBook] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -361,6 +362,7 @@ export default function BookDetailPage() {
             <button
               onClick={async () => {
                 try {
+                  setGeneratingFlashcards(true);
                   const res = await api.post<{ generated: number }>(`/api/flashcards/generate`, {
                     bookId,
                     count: 5,
@@ -370,14 +372,29 @@ export default function BookDetailPage() {
                   }
                 } catch {
                   setError('Failed to generate flashcards.');
+                } finally {
+                  setGeneratingFlashcards(false);
                 }
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-teal-500 hover:bg-teal-600 text-white transition-colors"
+              disabled={generatingFlashcards}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-teal-500 hover:bg-teal-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Generate Flashcards
+              {generatingFlashcards ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Generate Flashcards
+                </>
+              )}
             </button>
             <Link
               href="/flashcards"

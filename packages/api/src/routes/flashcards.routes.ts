@@ -12,6 +12,7 @@ import { validate } from '../middleware/validate';
 import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
 import { Flashcard, calculateSM2 } from '../models/Flashcard';
 import { Annotation } from '../models/Annotation';
+import { Book } from '../models/Book';
 import { chatCompletion } from '../services/llmClient';
 import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
 
@@ -189,6 +190,7 @@ router.get(
         where,
         order: [['nextReviewAt', 'ASC']],
         limit,
+        include: [{ model: Book, as: 'book', attributes: ['id', 'title', 'author'] }],
       });
 
       // Get stats
@@ -205,6 +207,7 @@ router.get(
             question: f.question,
             answer: f.answer,
             bookId: f.bookId,
+            bookTitle: (f as unknown as { book?: { title?: string } }).book?.title || '',
             repetitionCount: f.repetitionCount,
             nextReviewAt: f.nextReviewAt,
           })),
@@ -301,19 +304,23 @@ router.get(
   '/',
   authenticate,
   validate([
-    query('bookId').isUUID().withMessage('bookId is required'),
+    query('bookId').optional().isUUID(),
     query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
   ]),
   async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
-      const bookId = req.query.bookId as string;
+      const bookId = req.query.bookId as string | undefined;
       const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 100);
 
+      const where: Record<string, unknown> = { userId };
+      if (bookId) where.bookId = bookId;
+
       const flashcards = await Flashcard.findAll({
-        where: { userId, bookId },
+        where,
         order: [['createdAt', 'DESC']],
         limit,
+        include: [{ model: Book, as: 'book', attributes: ['id', 'title', 'author'] }],
       });
 
       return res.json({
@@ -322,6 +329,8 @@ router.get(
           id: f.id,
           question: f.question,
           answer: f.answer,
+          bookId: f.bookId,
+          bookTitle: (f as unknown as { book?: { title?: string } }).book?.title || '',
           annotationId: f.annotationId,
           repetitionCount: f.repetitionCount,
           easeFactor: f.easeFactor,
@@ -336,6 +345,72 @@ router.get(
       return res.status(500).json({
         success: false,
         error: { code: 'LIST_ERROR', message: 'Failed to list flashcards' },
+      });
+    }
+  },
+);
+
+/**
+ * @route   GET /api/flashcards/decks
+ * @desc    Get flashcard counts grouped by book (deck overview)
+ * @access  Private
+ */
+router.get(
+  '/decks',
+  authenticate,
+  async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+
+      const flashcards = await Flashcard.findAll({
+        where: { userId },
+        attributes: ['bookId', 'nextReviewAt'],
+        include: [{ model: Book, as: 'book', attributes: ['id', 'title', 'author', 'coverUrl'] }],
+      });
+
+      // Group by book
+      const deckMap = new Map<string, {
+        bookId: string;
+        bookTitle: string;
+        author: string;
+        coverUrl?: string;
+        total: number;
+        due: number;
+      }>();
+
+      for (const f of flashcards) {
+        const book = (f as unknown as { book?: { id?: string; title?: string; author?: string; coverUrl?: string } }).book;
+        const bId = f.bookId;
+        if (!deckMap.has(bId)) {
+          deckMap.set(bId, {
+            bookId: bId,
+            bookTitle: book?.title || 'Unknown Book',
+            author: book?.author || '',
+            coverUrl: book?.coverUrl,
+            total: 0,
+            due: 0,
+          });
+        }
+        const deck = deckMap.get(bId)!;
+        deck.total++;
+        if (new Date(f.nextReviewAt) <= new Date()) deck.due++;
+      }
+
+      const decks = Array.from(deckMap.values());
+
+      return res.json({
+        success: true,
+        data: {
+          decks,
+          totalCards: flashcards.length,
+          totalDue: flashcards.filter((f) => new Date(f.nextReviewAt) <= new Date()).length,
+        },
+      });
+    } catch (error) {
+      console.error('Flashcard decks error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'DECKS_ERROR', message: 'Failed to get flashcard decks' },
       });
     }
   },
