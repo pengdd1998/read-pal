@@ -50,6 +50,7 @@ export default function FlashcardsPage() {
   const [reviewing, setReviewing] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [filterBookId, setFilterBookId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const currentCard = cards[currentIndex] as FlashcardData | undefined;
 
@@ -62,7 +63,8 @@ export default function FlashcardsPage() {
         setDeckTotalDue(res.data.totalDue);
       }
     } catch {
-      // silent
+      setToast('Failed to load flashcard decks');
+      setTimeout(() => setToast(null), 3000);
     }
   }, []);
 
@@ -79,7 +81,8 @@ export default function FlashcardsPage() {
         if (res.data.flashcards.length === 0) setCompleted(true);
       }
     } catch {
-      // silent
+      setToast('Failed to load review cards');
+      setTimeout(() => setToast(null), 3000);
     }
     setLoading(false);
   }, []);
@@ -161,15 +164,25 @@ export default function FlashcardsPage() {
         setShowAnswer(false);
       }
     } catch {
-      // Stay on current card on error
+      setToast('Failed to save review — try again');
+      setTimeout(() => setToast(null), 3000);
     }
     setReviewing(false);
   };
 
+  // Toast notification
+  const toastEl = toast ? (
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-medium shadow-lg animate-fade-in">
+      {toast}
+    </div>
+  ) : null;
+
   // Loading state
   if (loading && mode === 'decks') {
     return (
-      <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+      <>
+        {toastEl}
+        <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
         <div className="mb-8">
           <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
         </div>
@@ -187,11 +200,14 @@ export default function FlashcardsPage() {
           ))}
         </div>
       </main>
+      </>
     );
   }
 
   if (loading && mode === 'review') {
     return (
+      <>
+      {toastEl}
       <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
         <div className="mb-8">
           <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
@@ -200,12 +216,15 @@ export default function FlashcardsPage() {
           <div className="h-48 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
         </div>
       </main>
+      </>
     );
   }
 
   // Empty state — no cards at all
   if (mode === 'decks' && decks.length === 0) {
     return (
+      <>
+      {toastEl}
       <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
         <div className="mb-6">
           <button
@@ -247,12 +266,15 @@ export default function FlashcardsPage() {
           </Link>
         </div>
       </main>
+      </>
     );
   }
 
   // Review completed
   if (mode === 'review' && completed) {
     return (
+      <>
+      {toastEl}
       <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
         <div className="card text-center py-16">
           <span className="text-5xl block mb-4">{'\uD83C\uDF89'}</span>
@@ -271,12 +293,15 @@ export default function FlashcardsPage() {
           </div>
         </div>
       </main>
+      </>
     );
   }
 
   // Review mode — no due cards
   if (mode === 'review' && cards.length === 0 && !completed) {
     return (
+      <>
+      {toastEl}
       <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
         <div className="card text-center py-16">
           <span className="text-5xl block mb-4">{'\u2705'}</span>
@@ -295,6 +320,7 @@ export default function FlashcardsPage() {
           </div>
         </div>
       </main>
+      </>
     );
   }
 
@@ -303,6 +329,8 @@ export default function FlashcardsPage() {
   // ═══════════════════════════════════════════════════════════════
   if (mode === 'decks') {
     return (
+      <>
+      {toastEl}
       <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -398,6 +426,7 @@ export default function FlashcardsPage() {
           ))}
         </div>
       </main>
+      </>
     );
   }
 
@@ -405,6 +434,8 @@ export default function FlashcardsPage() {
   // REVIEW MODE
   // ═══════════════════════════════════════════════════════════════
   return (
+    <>
+    {toastEl}
     <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -511,5 +542,6 @@ export default function FlashcardsPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

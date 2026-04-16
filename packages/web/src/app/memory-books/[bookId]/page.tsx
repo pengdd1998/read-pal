@@ -297,9 +297,33 @@ export default function PersonalBookPage() {
         </div>
       </div>
 
+      {/* Mobile section dropdown */}
+      {navSections.length > 0 && (
+        <div className="md:hidden mb-4">
+          <select
+            value={activeSection}
+            onChange={(e) => {
+              const idx = parseInt(e.target.value, 10);
+              setActiveSection(idx);
+              const section = navSections[idx - 1];
+              if (section && iframeRef.current?.contentWindow) {
+                iframeRef.current.contentWindow.postMessage({ type: 'scroll-to-section', sectionId: section.id }, '*');
+              }
+            }}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          >
+            {navSections.map((section, i) => (
+              <option key={section.id} value={i + 1}>
+                {section.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Main layout: sidebar + content */}
       <div className="flex gap-4">
-        {/* Sidebar navigation */}
+        {/* Sidebar navigation (desktop) */}
         {navSections.length > 0 && (
           <nav className="hidden md:block w-52 flex-shrink-0">
             <div className="sticky top-6 space-y-0.5">
@@ -307,7 +331,7 @@ export default function PersonalBookPage() {
                 <button
                   key={section.id}
                   onClick={() => {
-                    setActiveSection(i + 1); // +1 because cover is 0
+                    setActiveSection(i + 1);
                     if (iframeRef.current?.contentWindow) {
                       iframeRef.current.contentWindow.postMessage({ type: 'scroll-to-section', sectionId: section.id }, '*');
                     }
