@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server';
  * Auth state is tracked via an `auth_token` cookie set by the AuthProvider.
  */
 
-const PROTECTED_PREFIXES = ['/dashboard', '/library', '/read/', '/settings', '/knowledge', '/chat', '/search'];
+const PROTECTED_PREFIXES = ['/dashboard', '/library', '/read/', '/settings', '/memory-books', '/search'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

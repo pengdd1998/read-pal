@@ -33,10 +33,16 @@ export interface EnrichedJourney {
   paceComment: string;
 }
 
+export interface HighlightContent {
+  content: string;
+  note?: string;
+}
+
 export interface ThemeCluster {
   name: string;
   description: string;
   highlightIds: string[];
+  highlights: HighlightContent[];
 }
 
 export interface EnrichedHighlights {
@@ -254,6 +260,25 @@ Rules:
       milestones?: Array<{ label: string; date: string; detail?: string }>;
     }>(raw);
 
+    // Build annotation lookup by first 8 chars of ID for highlight resolution
+    const annotationLookup = new Map<string, { content: string; note?: string }>();
+    for (const a of annotations) {
+      annotationLookup.set(a.id.slice(0, 8), {
+        content: a.content || '',
+        note: a.note || undefined,
+      });
+    }
+
+    // Resolve theme highlight IDs to actual content
+    const resolvedThemes: ThemeCluster[] = (parsed?.themes || this.defaultThemes(highlights)).map((t) => ({
+      name: t.name,
+      description: t.description,
+      highlightIds: t.highlightIds,
+      highlights: t.highlightIds
+        .map((id) => annotationLookup.get(id))
+        .filter((h): h is { content: string; note?: string } => h != null && h.content.length > 0),
+    }));
+
     // Build notes list from raw data
     const notesEntries: NoteEntry[] = notesOnly.map((a) => ({
       chapterIndex: a.location?.chapterIndex ?? 0,
@@ -272,7 +297,7 @@ Rules:
         paceComment: parsed?.paceComment || '',
       },
       highlights: {
-        themes: parsed?.themes || this.defaultThemes(highlights),
+        themes: resolvedThemes,
       },
       notes: {
         notes: notesEntries,
@@ -515,6 +540,9 @@ Rules:
       name: 'All Highlights',
       description: 'All your highlighted passages',
       highlightIds: highlights.map((h) => h.id.slice(0, 8)),
+      highlights: highlights
+        .map((h) => ({ content: h.content || '', note: h.note || undefined }))
+        .filter((h) => h.content.length > 0),
     }];
   }
 }

@@ -9,7 +9,7 @@
  * reading data and produce a narrative that feels like a cherished memento.
  */
 
-import { Annotation, Book, MemoryBook, ReadingSession, ChatMessage } from '../models';
+import { Annotation, Book, MemoryBook, ReadingSession, ChatMessage, User } from '../models';
 import type {
   MemoryBookInsight,
   MemoryBookMoment,
@@ -141,8 +141,9 @@ export class MemoryBookService {
     userId: string,
   ): Promise<MemoryBook> {
     // 1. Fetch all raw data in parallel
-    const [book, annotations, sessions, chatMsgs, otherBooks] = await Promise.all([
+    const [book, user, annotations, sessions, chatMsgs, otherBooks] = await Promise.all([
       Book.findOne({ where: { id: bookId, userId } }),
+      User.findByPk(userId, { attributes: ['name'] }),
       Annotation.findAll({
         where: { bookId, userId },
         order: [['createdAt', 'ASC']],
@@ -186,7 +187,7 @@ export class MemoryBookService {
     );
 
     // 4. Render HTML
-    const readerName = ''; // TODO: look up from User model if needed
+    const readerName = user?.name || '';
     const { html, sections } = renderPersonalBook(
       book.title,
       book.author || '',

@@ -317,6 +317,14 @@ export function ReaderView({
         onToggleControls?.();
       }}
     >
+      {/* Thin chapter progress bar at top */}
+      <div className={`h-0.5 shrink-0 ${progressBg[theme]}`}>
+        <div
+          className={`h-0.5 ${progressFill[theme]} transition-all duration-300 ease-out`}
+          style={{ width: `${Math.round(scrollProgress * 100)}%` }}
+        />
+      </div>
+
       {/* Scrollable reading area */}
       <div
         ref={containerRef}

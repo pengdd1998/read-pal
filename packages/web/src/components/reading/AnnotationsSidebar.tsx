@@ -54,6 +54,8 @@ export function AnnotationsSidebar({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Escape key to close
   useEffect(() => {
@@ -102,6 +104,34 @@ export function AnnotationsSidebar({
     );
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(filtered.map((a) => a.id)));
+  };
+
+  const deselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  const bulkDelete = () => {
+    for (const id of selectedIds) onDeleteAnnotation(id);
+    setSelectedIds(new Set());
+    setBulkMode(false);
+  };
+
+  const exitBulkMode = () => {
+    setBulkMode(false);
+    setSelectedIds(new Set());
+  };
+
   const counts = useMemo(() => {
     const c = { all: 0, highlight: 0, note: 0, bookmark: 0 };
     for (const a of annotations) {
@@ -148,6 +178,21 @@ export function AnnotationsSidebar({
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+          {annotations.length > 0 && (
+            <button
+              onClick={() => setBulkMode((v) => !v)}
+              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
+                bulkMode
+                  ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20'
+                  : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+              }`}
+              title={bulkMode ? 'Cancel selection' : 'Select multiple'}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </button>
+          )}
           {annotations.length > 0 && (
             <>
               <button
@@ -253,6 +298,39 @@ export function AnnotationsSidebar({
           ))}
         </div>
 
+        {/* Bulk action bar */}
+        {bulkMode && (
+          <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200/50 dark:border-amber-900/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                {selectedIds.size} selected
+              </span>
+              <button
+                onClick={selectedIds.size === filtered.length ? deselectAll : selectAll}
+                className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline"
+              >
+                {selectedIds.size === filtered.length ? 'Deselect all' : 'Select all'}
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={bulkDelete}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors active:scale-95"
+                >
+                  Delete ({selectedIds.size})
+                </button>
+              )}
+              <button
+                onClick={exitBulkMode}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Annotations list */}
         <div role="tabpanel" className="flex-1 overflow-y-auto p-3 space-y-2">
           {filtered.length === 0 ? (
@@ -272,15 +350,28 @@ export function AnnotationsSidebar({
             </div>
           ) : (
             filtered.map((annotation) => (
-              <AnnotationCard
-                key={annotation.id}
-                annotation={annotation}
-                bookTitle={bookTitle}
-                author={author}
-                onDelete={() => onDeleteAnnotation(annotation.id)}
-                onUpdate={(updated) => onUpdateAnnotation(updated)}
-                onClick={() => onScrollToAnnotation(annotation)}
-              />
+              <div key={annotation.id} className="relative">
+                {bulkMode && (
+                  <div className="absolute top-3 left-2 z-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(annotation.id)}
+                      onChange={() => toggleSelect(annotation.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400 cursor-pointer"
+                    />
+                  </div>
+                )}
+                <div className={bulkMode ? 'pl-7' : ''}>
+                  <AnnotationCard
+                    annotation={annotation}
+                    bookTitle={bookTitle}
+                    author={author}
+                    onDelete={() => onDeleteAnnotation(annotation.id)}
+                    onUpdate={(updated) => onUpdateAnnotation(updated)}
+                    onClick={bulkMode ? () => toggleSelect(annotation.id) : () => onScrollToAnnotation(annotation)}
+                  />
+                </div>
+              </div>
             ))
           )}
         </div>

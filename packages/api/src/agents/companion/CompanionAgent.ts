@@ -28,9 +28,15 @@ interface CompanionMessage {
 
 interface CompanionContext {
   bookId?: string;
+  bookTitle?: string;
+  author?: string;
   currentPage?: number;
+  totalPages?: number;
   selectedText?: string;
+  chapterTitle?: string;
   userReadingLevel?: 'beginner' | 'intermediate' | 'advanced';
+  recentHighlights?: string[];
+  readingProgress?: number;
 }
 
 export class CompanionAgent {
@@ -63,38 +69,45 @@ export class CompanionAgent {
   /**
    * Get the system prompt for the Companion Agent
    */
-  private getSystemPrompt(): string {
-    return `You are a Companion Agent for read-pal, an AI reading companion application.
+  private getSystemPrompt(context?: CompanionContext): string {
+    const progressContext = context?.readingProgress !== undefined
+      ? `\n\n## Reading Progress\nThe reader is ${Math.round(context.readingProgress)}% through the book${context.totalPages ? ` (${context.currentPage !== undefined ? context.currentPage + 1 : '?'}/${context.totalPages} pages)` : ''}. ${context.readingProgress < 25 ? 'They are just getting started — be especially encouraging.' : context.readingProgress > 75 ? 'They are deep into the book — reference earlier themes when relevant.' : ''}`
+      : '';
+
+    const highlightsContext = context?.recentHighlights && context.recentHighlights.length > 0
+      ? `\n\n## What They've Highlighted\nThe reader found these passages noteworthy:\n${context.recentHighlights.slice(0, 5).map((h) => `- "${h.slice(0, 120)}"`).join('\n')}\nUse these to understand what resonates with them.`
+      : '';
+
+    return `You are a reading companion for read-pal, an AI-powered reading app.
 
 ## Your Purpose
-You help readers understand text in context by explaining difficult concepts, answering questions, and providing relevant background information.
+Help readers understand, engage with, and enjoy what they're reading. You are a knowledgeable friend who happens to be reading alongside them.
 
-## Your Responsibilities
-- Explain concepts clearly and concisely
-- Adapt explanations to the user's reading level
-- Use examples and analogies when helpful
-- Search the user's library for related content
-- Search the web when necessary for current information
-- Encourage curiosity and deeper understanding
+## How to Respond
+1. **Explain clearly** — Use simple analogies. Break complex ideas into steps.
+2. **Ask back** — After answering, ask a follow-up question. "Does that make sense?" or "What do you think the author means by that?"
+3. **Connect** — Reference earlier parts of the book when relevant.
+4. **Be concise** — Under 200 words unless they ask for more. They want to keep reading.
+5. **Admit uncertainty** — "I'm not sure about that" is better than guessing.
+
+## When They Select Text
+If they've selected specific text, focus your answer on that passage. Explain what it means, why it matters, or what the author is doing stylistically.
+
+## When They Ask Questions
+- Conceptual: Explain in plain language, then give an analogy
+- Factual: Answer directly, suggest where to learn more
+- Opinion: Share a perspective, ask for theirs
 
 ## Your Personality
-- Friendly but professional
-- Patient and supportive
-- Never condescending
-- Concise - respect that the user wants to keep reading
-- Admit when you don't know something
+- Warm, curious, never condescending
+- Excited about ideas but respectful of reading time
+- You love books but you're not pretentious about it
 
-## Available Tools
-You have access to the following tools:
+## Tools
 ${this.getToolDescriptions()}
+${progressContext}${highlightsContext}
 
-## Constraints
-- Keep responses under 200 words unless user asks for more detail
-- Don't interrupt reading flow unless necessary
-- Use tools only when they add clear value
-- Never make up information
-
-Remember: You are an AI assistant helping someone read and learn. Be helpful, concise, and respectful of their reading experience.`;
+Remember: Your job is to make reading more enjoyable and meaningful. Be a great reading partner.`;
   }
 
   /**
@@ -173,7 +186,7 @@ Remember: You are an AI assistant helping someone read and learn. Be helpful, co
         model: this.config.model,
         maxTokens: this.config.maxTokens,
         temperature: this.config.temperature,
-        system: this.getSystemPrompt(),
+        system: this.getSystemPrompt(context),
         messages,
       });
 
@@ -220,6 +233,14 @@ Remember: You are an AI assistant helping someone read and learn. Be helpful, co
 
       if (context.currentPage !== undefined) {
         contextParts.push(`Current page: ${context.currentPage + 1}`);
+      }
+
+      if (context.bookTitle) {
+        contextParts.push(`Book: "${context.bookTitle}" by ${context.author || 'unknown'}`);
+      }
+
+      if (context.chapterTitle) {
+        contextParts.push(`Chapter: ${context.chapterTitle}`);
       }
 
       if (context.userReadingLevel) {

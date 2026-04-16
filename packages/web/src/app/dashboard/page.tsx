@@ -100,8 +100,8 @@ const STREAK_MILESTONES: Record<number, string> = {
 // Static feature preview data — hoisted to avoid re-creation per render
 const FEATURE_PREVIEW = [
   { icon: '\uD83D\uDCD6', title: 'Read', desc: 'Beautiful reader with themes and fonts', href: '/library' },
-  { icon: '\uD83E\uDD16', title: 'AI Agents', desc: 'Ask questions and explore topics', href: '/chat' },
-  { icon: '\uD83D\uDCA1', title: 'Remember', desc: 'Highlights become knowledge', href: '/knowledge' },
+  { icon: '\uD83D\uDCDA', title: 'Memory Books', desc: 'Your reading journey captured forever', href: '/memory-books' },
+  { icon: '\uD83D\uDCCA', title: 'Stats', desc: 'Track your reading progress', href: '/stats' },
 ] as const;
 
 const DashboardChallenges = memo(function DashboardChallenges() {
@@ -202,7 +202,7 @@ const DashboardRecommendations = memo(function DashboardRecommendations() {
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Recommended</h3>
-        <Link href="/discovery" className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline">See all</Link>
+        <Link href="/search" className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline">See all</Link>
       </div>
       <div className="space-y-2">
         {topRecs.map((r, i) => (
@@ -529,9 +529,15 @@ export default function DashboardPage() {
           {/* Card 2: Reading Streak */}
           <div className="card flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-orange-500 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
-              </svg>
+              {streak >= 7 ? (
+                <span className="text-2xl">{'\uD83D\uDD25'}</span>
+              ) : streak >= 3 ? (
+                <span className="text-2xl">{'\u2B50'}</span>
+              ) : (
+                <svg className="w-6 h-6 text-orange-500 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+                </svg>
+              )}
             </div>
             <div className="flex-1">
               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 tabular-nums">
@@ -542,6 +548,30 @@ export default function DashboardPage() {
             {streak === 0 && !loading && (
               <p className="text-xs text-gray-400">Read today to start your streak</p>
             )}
+            {streak >= 3 && !loading && (
+              <div className="text-right">
+                <p className="text-xs text-orange-500 dark:text-orange-400 font-medium">Keep going!</p>
+                <p className="text-[10px] text-gray-400">Next: {streak < 7 ? '7' : streak < 14 ? '14' : streak < 30 ? '30' : '60'} days</p>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'Upload Book', href: '/library', icon: '\u{1F4C2}', color: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20' },
+              { label: 'Memory Books', href: '/memory-books', icon: '\u{1F4D5}', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },
+              { label: 'Reading Stats', href: '/stats', icon: '\u{1F4CA}', color: 'from-teal-50 to-emerald-50 dark:from-teal-950/20 dark:to-emerald-950/20' },
+            ].map((action) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className={`card flex flex-col items-center gap-2 py-4 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200 bg-gradient-to-br ${action.color}`}
+              >
+                <span className="text-xl">{action.icon}</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{action.label}</span>
+              </Link>
+            ))}
           </div>
 
           {/* Card 3: Quick Insight */}
@@ -598,29 +628,11 @@ export default function DashboardPage() {
               Library
             </Link>
             <Link
-              href="/knowledge"
+              href="/memory-books"
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-              Knowledge Graph
-            </Link>
-            <Link
-              href="/friend"
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              Reading Friend
-            </Link>
-            <Link
-              href="/memory-books"
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
               Memory Books
             </Link>

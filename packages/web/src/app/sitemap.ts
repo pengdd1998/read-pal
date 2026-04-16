@@ -31,16 +31,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
     {
-      url: `${APP_URL}/discovery`,
+      url: `${APP_URL}/memory-books`,
       lastModified,
       changeFrequency: 'weekly',
       priority: 0.8,
-    },
-    {
-      url: `${APP_URL}/chat`,
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.6,
     },
   ];
 }

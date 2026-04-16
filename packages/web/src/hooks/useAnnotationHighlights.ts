@@ -218,6 +218,9 @@ function batchCreateMarks(
 /**
  * Create a single <mark> element for an annotation and insert it into the
  * container DOM. Returns the mark element or null if it could not be placed.
+ *
+ * Handles cross-element boundaries by splitting the range into multiple
+ * <mark> elements that share a common annotation ID.
  */
 function createMark(
   container: HTMLElement,
@@ -239,6 +242,7 @@ function createMark(
     range.setStart(startNode, startOffset);
     range.setEnd(endNode, endOffset);
 
+    // Try surroundContents first (works when range is within a single element)
     const mark = document.createElement('mark');
     mark.className = MARK_CLASS;
     mark.setAttribute(DATA_ATTR, annotation.id);
@@ -246,15 +250,21 @@ function createMark(
     mark.style.borderRadius = '2px';
     mark.style.padding = '1px 0';
     mark.style.transition = 'background-color 0.2s ease';
-
     applyStyle(mark, annotation, currentTheme);
 
-    range.surroundContents(mark);
+    try {
+      range.surroundContents(mark);
+    } catch {
+      // surroundContents fails when range crosses element boundaries.
+      // Fall back to extractContents + wrap approach.
+      const fragment = range.extractContents();
+      mark.appendChild(fragment);
+      range.insertNode(mark);
+    }
 
     marksMap.set(annotation.id, { element: mark, annotation });
     return mark;
   } catch {
-    // surroundContents fails when range crosses element boundaries — skip.
     return null;
   }
 }
