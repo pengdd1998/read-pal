@@ -328,6 +328,7 @@ export default function ReadPage() {
           setAnnotations((prev) => prev.filter((a) => a.id !== bookmark.id));
         } catch (err) {
           console.error('Failed to remove bookmark:', err);
+          toast('Failed to remove bookmark', 'error');
         }
       }
     } else {
@@ -344,6 +345,7 @@ export default function ReadPage() {
         }
       } catch (err) {
         console.error('Failed to add bookmark:', err);
+        toast('Failed to add bookmark', 'error');
       }
     }
   }, [annotations, currentChapter, bookId, chapters]);

@@ -67,7 +67,9 @@ export function useReadingSession({
           pagesRead: finalChapter + 1,
           currentPage: finalChapter,
           totalPages: chaptersLength,
-        }).catch(() => {});
+        }).catch((err) => {
+          console.warn('Failed to end reading session:', err);
+        });
         sessionIdRef.current = null;
       }
     };
