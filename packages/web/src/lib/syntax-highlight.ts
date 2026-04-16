@@ -64,6 +64,42 @@ function detectLanguage(el: HTMLElement): string | null {
   return match ? match[1] : null;
 }
 
+/**
+ * Heuristic language detection from code content when no class hint is present.
+ * Uses pattern matching to identify common languages — falls back to 'clike' (C-like).
+ */
+function guessLanguage(text: string): string {
+  const t = text.trim();
+  if (!t) return 'clike';
+
+  // SQL — starts with SELECT/INSERT/UPDATE/DELETE/CREATE/ALTER/DROP/WITH
+  if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH\s+\w+\s+AS)\b/i.test(t)) return 'sql';
+  // JSON — starts with { or [
+  if (/^\s*[\{\[]/.test(t) && /"[^"]+"\s*:/.test(t)) return 'json';
+  // YAML — key: value at start, no semicolons
+  if (/^\s*\w[\w-]*\s*:\s*\S/m.test(t) && !/[{;]/.test(t) && /^\s*---/.test(t)) return 'yaml';
+  // Python — def/class/lambda, significant whitespace
+  if (/^\s*(def|class|import|from|lambda|if\s+__name__)\b/m.test(t)) return 'python';
+  // Bash/Shell — shebang or common shell patterns
+  if (/^#!\s*\/(bin|usr)\//.test(t) || /^\s*\$\s/.test(t) || /^\s*(echo|cd|mkdir|chmod|export|source)\b/m.test(t)) return 'bash';
+  // Go — func/package/import, := operator
+  if (/^\s*(func|package|import)\b/m.test(t) || /:=/.test(t)) return 'go';
+  // Rust — fn/let/mut/pub/use, ->  or =>  arrows
+  if (/^\s*(fn|let\s+mut|pub\s+fn|use\s+|impl\s+)/m.test(t)) return 'rust';
+  // Java — public/private/protected class/interface, System.out
+  if (/^\s*(public|private|protected)\s+(class|interface|static)/m.test(t) || /System\.(out|err)\./.test(t)) return 'java';
+  // TypeScript — type annotations with : and import/export
+  if (/\binterface\s+\w+/.test(t) || /:\s*(string|number|boolean|void)\b/.test(t)) return 'typescript';
+  // JavaScript — const/let/var, arrow functions, require()
+  if (/^\s*(const|let|var|function|export|import)\b/m.test(t) || /=>/.test(t) || /require\s*\(/.test(t)) return 'javascript';
+  // CSS — selectors and properties
+  if (/^\s*[.#@]?[\w-]+\s*\{/.test(t) || /\b(margin|padding|color|display|position)\s*:/.test(t)) return 'css';
+  // C/C++ — #include, printf, int main
+  if (/^\s*#include/.test(t) || /\bint\s+main\s*\(/.test(t)) return 'cpp';
+
+  return 'clike';
+}
+
 /** Human-readable names for common language identifiers. */
 const LANGUAGE_LABELS: Record<string, string> = {
   js: 'JavaScript',
@@ -177,8 +213,13 @@ export async function highlightCodeBlocks(rootElement: HTMLElement): Promise<voi
     // Skip if already highlighted
     if (el.classList.contains('prism-highlighted')) return;
 
-    // Preserve any existing language-* class from EPUB source
-    // If none exists, Prism will use a generic fallback
+    // If no language class, guess from content before highlighting
+    const existingLang = detectLanguage(el);
+    if (!existingLang) {
+      const guessed = guessLanguage(el.textContent ?? '');
+      el.classList.add(`language-${guessed}`);
+    }
+
     Prism.highlightElement(el);
     el.classList.add('prism-highlighted');
 
@@ -207,6 +248,10 @@ export async function highlightCodeBlocks(rootElement: HTMLElement): Promise<voi
     if (langClass) {
       code.classList.add(langClass);
       pre.classList.remove(langClass);
+    } else {
+      // No class hint — guess from content
+      const guessed = guessLanguage(pre.textContent ?? '');
+      code.classList.add(`language-${guessed}`);
     }
     code.textContent = pre.textContent;
     pre.textContent = '';
