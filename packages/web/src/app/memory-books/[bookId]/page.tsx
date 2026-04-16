@@ -128,11 +128,6 @@ export default function PersonalBookPage() {
     }
   }, [book]);
 
-  // Get iframe src — use data URI or direct HTML endpoint
-  const iframeSrc = book?.htmlContent
-    ? undefined // will use srcDoc
-    : undefined;
-
   // Filter sections for navigation (exclude cover)
   const navSections = book?.sections?.filter((s) => s.type !== 'cover') || [];
 

@@ -9,6 +9,7 @@
  * reading data and produce a narrative that feels like a cherished memento.
  */
 
+import { Op } from 'sequelize';
 import { Annotation, Book, MemoryBook, ReadingSession, ChatMessage, User } from '../models';
 import type {
   MemoryBookInsight,
@@ -160,7 +161,7 @@ export class MemoryBookService {
         limit: 2000,
       }),
       Book.findAll({
-        where: { userId, id: { [require('sequelize').Op.ne]: bookId } },
+        where: { userId, id: { [Op.ne]: bookId } },
         attributes: ['title', 'author'],
         limit: 50,
       }),

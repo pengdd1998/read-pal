@@ -22,7 +22,6 @@ interface MemoryBookSection {
 interface MemoryBook {
   id: string;
   bookId: string;
-  bookTitle?: string;
   title: string;
   format: string;
   sections: MemoryBookSection[];
@@ -31,6 +30,7 @@ interface MemoryBook {
   insights: Array<{ theme: string; description: string }>;
   stats: MemoryBookStats;
   createdAt: string;
+  book?: { id: string; title: string; author: string; coverUrl?: string };
 }
 
 interface Book {
@@ -163,7 +163,7 @@ export default function MemoryBooksPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                        {mb.bookTitle || mb.title}
+                        {mb.book?.title || mb.title}
                       </h3>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {isPersonalBook
