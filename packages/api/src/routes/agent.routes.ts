@@ -6,6 +6,7 @@ import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
 import { AgentOrchestrator } from '../agents/orchestrator/AgentOrchestrator';
 import { ChatMessage } from '../models/ChatMessage';
 import { chatCompletion, chatCompletionStream } from '../services/llmClient';
+import { detectGenre, getGenreInstructions, type BookGenre } from '../services/genrePrompts';
 import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
 import type { OrchestratorResponse } from '../agents/orchestrator/AgentOrchestrator';
 import type { IAgent } from '../types';
@@ -134,7 +135,7 @@ router.post(
 // System prompts for each agent type (used by the streaming endpoint)
 // ---------------------------------------------------------------------------
 
-const AGENT_SYSTEM_PROMPTS: Record<string, string> = {
+const BASE_AGENT_PROMPTS: Record<string, string> = {
   companion: `You are a Companion Agent for read-pal, an AI reading companion.
 You help readers understand text in context by explaining difficult concepts, answering questions, and providing relevant background information.
 Be friendly but professional, patient, supportive, and concise. Keep responses under 200 words unless asked for more detail.
@@ -152,6 +153,29 @@ Be encouraging, structured, and goal-oriented. Push the reader gently to grow.`,
 You connect ideas across the user's reading library, find themes, and create knowledge summaries.
 Be insightful, creative, and good at pattern recognition. Help the reader see the big picture.`,
 };
+
+/**
+ * Build the system prompt for a given agent type, appending genre-specific
+ * instructions when the context provides genre clues (for companion agent).
+ */
+function getAgentSystemPrompt(
+  agentType: string,
+  context?: Record<string, unknown>,
+): string {
+  const base = BASE_AGENT_PROMPTS[agentType] || BASE_AGENT_PROMPTS.companion;
+
+  // Only companion agent gets genre-aware prompts
+  if (agentType !== 'companion' || !context) return base;
+
+  const genres = context.genres as string[] | undefined;
+  const bookTitle = context.bookTitle as string | undefined;
+  const bookDescription = context.bookDescription as string | undefined;
+
+  const genre: BookGenre = detectGenre(genres, bookTitle, bookDescription);
+  const instructions = getGenreInstructions(genre);
+
+  return instructions ? `${base}\n\n${instructions}` : base;
+}
 
 /**
  * @route   POST /api/agents/chat/stream
@@ -225,7 +249,7 @@ router.post(
     // is alive while the LLM handshake is still in progress.
     res.write('data: {"type":"connected"}\n\n');
 
-    const systemPrompt = AGENT_SYSTEM_PROMPTS[agent] || AGENT_SYSTEM_PROMPTS.companion;
+    const systemPrompt = getAgentSystemPrompt(agent, context);
     const bookId = context?.bookId as string | undefined;
 
     try {

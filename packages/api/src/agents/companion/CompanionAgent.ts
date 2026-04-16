@@ -9,6 +9,7 @@
  */
 
 import { chatCompletion, DEFAULT_MODEL } from '../../services/llmClient';
+import { detectGenre, getGenreInstructions, type BookGenre } from '../../services/genrePrompts';
 import type { ToolContext } from '../../types';
 import { BaseTool } from '../tools/BaseTool';
 import { LibrarySearchTool } from '../tools/LibrarySearchTool';
@@ -37,6 +38,8 @@ interface CompanionContext {
   userReadingLevel?: 'beginner' | 'intermediate' | 'advanced';
   recentHighlights?: string[];
   readingProgress?: number;
+  genres?: string[];
+  bookDescription?: string;
 }
 
 export class CompanionAgent {
@@ -78,6 +81,10 @@ export class CompanionAgent {
       ? `\n\n## What They've Highlighted\nThe reader found these passages noteworthy:\n${context.recentHighlights.slice(0, 5).map((h) => `- "${h.slice(0, 120)}"`).join('\n')}\nUse these to understand what resonates with them.`
       : '';
 
+    // Genre-aware prompt additions
+    const genre: BookGenre = detectGenre(context?.genres, context?.bookTitle, context?.bookDescription);
+    const genreBlock = getGenreInstructions(genre);
+
     return `You are a reading companion for read-pal, an AI-powered reading app.
 
 ## Your Purpose
@@ -106,6 +113,7 @@ If they've selected specific text, focus your answer on that passage. Explain wh
 ## Tools
 ${this.getToolDescriptions()}
 ${progressContext}${highlightsContext}
+${genreBlock}
 
 Remember: Your job is to make reading more enjoyable and meaningful. Be a great reading partner.`;
   }

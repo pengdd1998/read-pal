@@ -153,6 +153,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
               bookTitle: bookTitle ?? '',
               author: author ?? '',
               chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '',
+              genres: genreMetadata,
+              bookDescription,
             },
           }),
         });
