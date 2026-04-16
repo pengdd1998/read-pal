@@ -75,7 +75,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared first (dependency for api & web)
-        if: matrix.package \!= 'shared'
+        if: matrix.package != 'shared'
         run: pnpm --filter @read-pal/shared build
 
       - name: Build ${{ matrix.package }}
