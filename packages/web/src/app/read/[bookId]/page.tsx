@@ -9,6 +9,7 @@ import { useAnnotationHighlights } from '@/hooks/useAnnotationHighlights';
 import { useReaderSettings } from '@/hooks/useReaderSettings';
 import { useReadingSession } from '@/hooks/useReadingSession';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useStudyMode } from '@/hooks/useStudyMode';
 import { api } from '@/lib/api';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
@@ -26,6 +27,7 @@ const BookCompletionModal = dynamic(() => import('@/components/reading/BookCompl
 const MobileSettingsSheet = dynamic(() => import('@/components/reading/MobileSettingsSheet').then((m) => ({ default: m.MobileSettingsSheet })), { ssr: false });
 const SearchOverlay = dynamic(() => import('@/components/reading/SearchOverlay').then((m) => ({ default: m.SearchOverlay })), { ssr: false });
 const SynthesisPanel = dynamic(() => import('@/components/reading/SynthesisPanel').then((m) => ({ default: m.SynthesisPanel })), { ssr: false });
+const StudyModePanel = dynamic(() => import('@/components/reading/StudyModePanel').then((m) => ({ default: m.StudyModePanel })), { ssr: false });
 
 // Static theme maps — never change, so hoist to module scope
 const THEME_CLASSES = {
@@ -171,8 +173,12 @@ export default function ReadPage() {
   const [chapterFade, setChapterFade] = useState<'in' | 'out'>('in');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const sessionStartRef = useRef<number>(Date.now());
   const [sessionElapsed, setSessionElapsed] = useState(0);
+
+  // Study mode
+  const studyMode = useStudyMode(bookId);
 
   // Extracted settings hook
   const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode } = useReaderSettings(bookId, loading);
@@ -428,6 +434,16 @@ export default function ReadPage() {
     return () => { cancelled = true; };
   }, [bookId]);
 
+  // Load study mode data when chapter changes
+  useEffect(() => {
+    if (!loading && chapters.length > 0 && studyMode.enabled) {
+      const ch = chapters[currentChapter];
+      const content = ch?.rawContent || ch?.content || '';
+      studyMode.loadChapterStudy(currentChapter, ch?.title || '', content);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChapter, loading, chapters.length, studyMode.enabled]);
+
   // Detect book completion
   useEffect(() => {
     if (!loading && chapters.length > 0 && currentChapter === chapters.length - 1) {
@@ -510,117 +526,161 @@ export default function ReadPage() {
     <div className="h-screen flex flex-col relative">
       <ReadingBackground content={chapterContent} enabled={bgEnabled} />
 
-      {/* Top bar */}
+      {/* Top bar — clean and minimal */}
       <div
         className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none absolute'
         }`}
       >
+        {/* Left: Back + Book info */}
         <div className="flex items-center gap-2 min-w-0">
-          <button onClick={handleBack} className="flex items-center justify-center w-11 h-11 -ml-1 rounded-xl text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors" aria-label="Back to library">
+          <button onClick={handleBack} className="flex items-center justify-center w-10 h-10 -ml-1 rounded-xl text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label="Back to library">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <div className="min-w-0">
             <h1 className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-500 truncate">
-              {book.author && `${book.author} · `}Ch. {currentChapter + 1} of {chapters.length}
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
+              {book.author && `${book.author} · `}Ch. {currentChapter + 1}/{chapters.length}
             </p>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500 ml-2 flex-shrink-0">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {Math.floor(sessionElapsed / 60)}:{String(sessionElapsed % 60).padStart(2, '0')}
           </div>
         </div>
 
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {/* Mobile settings button */}
-          <div className="flex sm:hidden items-center gap-0.5">
-            <button onClick={() => setShowMobileSettings(true)} className="flex items-center justify-center w-11 h-11 rounded-lg text-sm text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors active:scale-95" aria-label="Reading settings">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Font Size — mobile + desktop */}
-          <div className="flex items-center gap-1">
-            <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2 sm:py-1 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors active:scale-95" aria-label="Decrease font size">A-</button>
-            <span className="text-xs text-amber-600 dark:text-amber-400 min-w-[1.5rem] text-center font-medium">{fontSize}</span>
-            <button onClick={() => setFontSize(Math.min(32, fontSize + 2))} className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2 sm:py-1 rounded-lg text-xs text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors active:scale-95" aria-label="Increase font size">A+</button>
-          </div>
-
-          {/* Desktop Theme Toggle */}
-          <div className="hidden sm:flex gap-0.5">
-            {(['light', 'sepia', 'dark'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTheme(t)}
-                className={`px-2 py-1 rounded-lg text-xs transition-colors ${
-                  theme === t
-                    ? t === 'light' ? 'bg-amber-100 text-amber-800' : t === 'dark' ? 'bg-amber-900/50 text-amber-200' : 'bg-amber-200 text-amber-900'
-                    : 'text-gray-400 hover:text-amber-600 hover:bg-amber-100/50 dark:hover:bg-amber-900/30'
-                }`}
-                aria-label={`${t} theme`}
-              >
-                {t === 'light' ? '\u2600\uFE0F' : t === 'sepia' ? '\uD83D\uDCD6' : '\uD83C\uDF19'}
-              </button>
-            ))}
-          </div>
-
-          <div className="w-px h-6 bg-amber-200/50 dark:bg-amber-900/30 mx-1 hidden sm:block" />
-
-          {/* Quiet mode */}
-          <button onClick={() => setQuietMode((v) => !v)} className={`hidden sm:flex p-2 rounded-lg text-xs font-medium transition-colors items-center gap-1 ${quietMode ? 'text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/30' : 'text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30'}`} title={quietMode ? 'Quiet mode on' : 'Enable quiet mode'}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-            </svg>
-          </button>
-
+        {/* Right: Essential actions only */}
+        <div className="flex items-center gap-0.5 flex-shrink-0">
           {/* Search */}
-          <button onClick={() => setSearchOpen(!searchOpen)} className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors ${searchOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30'}`} aria-label="Search in book">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <button onClick={() => setSearchOpen(!searchOpen)} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors ${searchOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Search">
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-
-          {/* Background toggle */}
-          <button onClick={() => setBgEnabled(!bgEnabled)} className={`hidden sm:flex p-2 rounded-lg text-xs font-medium transition-colors items-center gap-1 ${bgEnabled ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30' : 'text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30'}`} title={bgEnabled ? 'Disable dynamic background' : 'Enable dynamic background'}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </button>
 
           <BookmarkToggle isBookmarked={isBookmarked} onToggle={handleToggleBookmark} />
 
-          {/* Annotations badge */}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors ${sidebarOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-600 dark:text-gray-300 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 hover:text-amber-700 dark:hover:text-amber-300'}`} aria-label="Toggle annotations sidebar">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          {/* Annotations */}
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors relative ${sidebarOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Annotations">
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
             {annotations.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-xs font-semibold">{annotations.length}</span>
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 flex items-center justify-center rounded-full bg-amber-500 text-white text-[9px] font-bold">{annotations.length}</span>
             )}
           </button>
 
-          {/* Synthesis panel toggle */}
-          <button onClick={() => setSynthesisOpen(!synthesisOpen)} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors ${synthesisOpen ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' : 'text-gray-600 dark:text-gray-300 hover:bg-teal-100/50 dark:hover:bg-teal-900/30 hover:text-teal-700 dark:hover:text-teal-300'}`} aria-label="Toggle synthesis panel">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          {/* Study mode toggle */}
+          <button onClick={studyMode.toggleStudyMode} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors ${studyMode.enabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Study mode" title="Study mode">
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </button>
+
+          {/* Synthesis */}
+          <button onClick={() => setSynthesisOpen(!synthesisOpen)} className={`w-10 h-10 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors ${synthesisOpen ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20'}`} aria-label="Synthesize">
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
             </svg>
-            <span className="hidden sm:inline">Synthesize</span>
           </button>
-        </div>
-      </div>
 
-      {/* Progress bar */}
-      <div className="h-1 bg-gray-100 dark:bg-gray-800">
-        <div className="h-full bg-gradient-to-r from-amber-400 to-teal-500 transition-all duration-500 ease-out" style={{ width: `${chapters.length > 0 ? ((currentChapter + 1) / chapters.length) * 100 : 0}%` }} />
+          {/* Settings dropdown trigger */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                // On mobile, use the full settings sheet
+                if (window.innerWidth < 640) {
+                  setShowMobileSettings(true);
+                } else {
+                  setShowSettingsMenu(!showSettingsMenu);
+                }
+              }}
+              className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors ${showSettingsMenu ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
+              aria-label="Settings"
+            >
+              <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+
+            {/* Desktop settings dropdown */}
+            {showSettingsMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowSettingsMenu(false)} />
+                <div className={`absolute right-0 top-full mt-1 z-50 w-64 rounded-xl shadow-xl border p-3 space-y-3 ${
+                  theme === 'dark' ? 'bg-gray-800 border-gray-700' : theme === 'sepia' ? 'bg-[#f5f0e6] border-amber-200' : 'bg-white border-gray-200'
+                }`}>
+                  {/* Font size */}
+                  <div>
+                    <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">Font Size</label>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setFontSize(Math.max(12, fontSize - 2))} className="w-8 h-8 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">A-</button>
+                      <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full relative">
+                        <div className="absolute left-0 top-0 h-full bg-amber-400 rounded-full" style={{ width: `${((fontSize - 12) / 20) * 100}%` }} />
+                      </div>
+                      <span className="text-xs font-mono text-amber-600 dark:text-amber-400 w-6 text-center">{fontSize}</span>
+                      <button onClick={() => setFontSize(Math.min(32, fontSize + 2))} className="w-8 h-8 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">A+</button>
+                    </div>
+                  </div>
+
+                  {/* Theme */}
+                  <div>
+                    <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">Theme</label>
+                    <div className="flex gap-1.5">
+                      {(['light', 'sepia', 'dark'] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setTheme(t)}
+                          className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                            theme === t
+                              ? t === 'light' ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300' : t === 'dark' ? 'bg-amber-900/50 text-amber-200 ring-1 ring-amber-700' : 'bg-amber-200 text-amber-900 ring-1 ring-amber-400'
+                              : 'text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
+                          }`}
+                        >
+                          {t === 'light' ? 'Light' : t === 'sepia' ? 'Sepia' : 'Dark'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Toggles row */}
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setQuietMode(!quietMode)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                        quietMode ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        {quietMode && <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />}
+                      </svg>
+                      Quiet
+                    </button>
+                    <button
+                      onClick={() => setBgEnabled(!bgEnabled)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                        bgEnabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      BG
+                    </button>
+                  </div>
+
+                  {/* Keyboard shortcuts link */}
+                  <button
+                    onClick={() => { setShowSettingsMenu(false); setShowShortcutsHelp(true); }}
+                    className="w-full py-2 rounded-lg text-xs text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  >
+                    Keyboard shortcuts (?)
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Search overlay */}
@@ -636,7 +696,7 @@ export default function ReadPage() {
       )}
 
       {/* Main content */}
-      <div className={`flex-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:mr-[360px]' : ''} ${synthesisOpen ? 'md:ml-[400px]' : ''}`}>
+      <div className={`flex-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:mr-[360px]' : ''} ${synthesisOpen ? 'md:ml-[400px]' : ''} ${studyMode.enabled ? 'md:mr-[320px]' : ''}`}>
         <div className={`h-full ${THEME_CLASSES[theme]} transition-colors duration-200 ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
           <ReaderView
             bookId={bookId}
@@ -706,6 +766,23 @@ export default function ReadPage() {
         onClose={() => setSynthesisOpen(false)}
       />
 
+      {/* Study mode panel */}
+      <div className={`fixed right-0 top-0 bottom-0 z-20 w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="h-full overflow-y-auto pt-14 px-3 pb-4">
+          <StudyModePanel
+            enabled={studyMode.enabled}
+            loading={studyMode.loading}
+            objectives={studyMode.objectives}
+            checks={studyMode.checks}
+            revealedAnswers={studyMode.revealedAnswers}
+            mastery={studyMode.mastery}
+            onToggleObjective={studyMode.toggleObjective}
+            onRevealAnswer={studyMode.revealAnswer}
+            onSaveChecks={studyMode.saveChecks}
+          />
+        </div>
+      </div>
+
       {/* Companion chat */}
       <CompanionChat
         ref={chatRef}
@@ -753,18 +830,18 @@ export default function ReadPage() {
         />
       )}
 
-      {/* Highlight mode indicator */}
+      {/* Highlight mode indicator — subtle pill */}
       {highlightMode && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-full bg-amber-500 text-white text-xs font-medium shadow-lg animate-fade-in">
-          Highlight mode on — select text to highlight
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm">
+          Tap text to highlight
         </div>
       )}
 
-      {/* Milestone toast */}
+      {/* Milestone toast — gentle */}
       {milestone && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
-          <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-teal-500 text-white text-sm font-semibold shadow-lg">
-            {'\uD83C\uDF1F'} {milestone} complete!
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
+          <div className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-amber-700 dark:text-amber-300 text-xs font-medium shadow-md border border-amber-200/50 dark:border-amber-800/50">
+            {milestone} complete
           </div>
         </div>
       )}
@@ -782,14 +859,13 @@ export default function ReadPage() {
         />
       )}
 
-      {/* Shortcuts help button */}
+      {/* Shortcuts help button — subtle */}
       <button
         onClick={() => setShowShortcutsHelp(true)}
-        className="hidden sm:flex fixed bottom-5 right-5 z-20 w-11 h-11 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700 shadow-sm transition-all active:scale-95 items-center justify-center group"
+        className="hidden sm:flex fixed bottom-5 right-5 z-20 w-9 h-9 rounded-full bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 text-gray-300 dark:text-gray-600 hover:text-amber-500 hover:border-amber-300/50 transition-all items-center justify-center"
         aria-label="Keyboard shortcuts help"
-        title="Keyboard shortcuts (?)"
       >
-        <span className="text-sm font-bold group-hover:text-amber-500 transition-colors">?</span>
+        <span className="text-xs font-bold">?</span>
       </button>
 
       {showShortcutsHelp && <ShortcutsHelp onClose={() => setShowShortcutsHelp(false)} />}
