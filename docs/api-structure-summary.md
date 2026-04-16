@@ -38,7 +38,6 @@ packages/api/
 │   │   ├── settings.routes.ts    # User settings
 │   │   └── upload.routes.ts      # Book upload & processing
 │   ├── services/
-│   │   ├── WebSocketManager.ts   # Real-time WS streaming
 │   │   ├── llmClient.ts          # GLM/Zhipu AI integration
 │   │   └── SemanticSearch.ts     # Pinecone vector search
 │   ├── middleware/

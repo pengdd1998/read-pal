@@ -8,6 +8,12 @@ import { consumeSSEStream } from '@/lib/sse';
 import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
 import { generateId } from '@read-pal/shared';
 import { authFetch } from '@/lib/auth-fetch';
+import {
+  detectGenre,
+  getGenreTemplate,
+  shouldAutoOpen,
+  type BookGenre,
+} from '@/lib/companion-prompts';
 
 interface Message {
   id: string;
@@ -28,6 +34,8 @@ interface CompanionChatProps {
   bookTitle?: string;
   author?: string;
   chapterContent?: string;
+  genreMetadata?: string[];
+  bookDescription?: string;
 }
 
 interface FriendPersona {
@@ -45,7 +53,7 @@ const FRIEND_PERSONAS: Record<string, FriendPersona> = {
 
 const DEFAULT_PERSONA: FriendPersona = { name: 'Penny', emoji: '\u2B50' };
 
-export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent }, ref) {
+export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent, genreMetadata, bookDescription }, ref) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -62,6 +70,10 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Detect genre for adaptive behavior
+  const genre: BookGenre = detectGenre(genreMetadata, bookTitle, bookDescription);
+  const genreTemplate = getGenreTemplate(genre);
 
   // Preload DOMPurify on mount
   useEffect(() => { preloadDOMPurify(); }, []);
@@ -87,16 +99,18 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   }), []);
 
   // Auto-open chat for first-time readers after a brief delay (the "aha moment")
-  // and inject a warm contextual greeting
+  // Genre-aware: auto-opens for non-fiction/technical/academic; stays closed for fiction
   useEffect(() => {
     if (!isFirstChat || !bookId) return;
+
+    // Fiction: don't auto-open — it breaks immersion. Show tooltip hint instead.
+    if (!shouldAutoOpen(genre)) return;
+
     const timer = setTimeout(() => {
       setIsOpen(true);
       localStorage.setItem('read-pal-chat-opened', 'true');
 
-      // Show a contextual welcome greeting for first-time users
-      const bookRef = bookTitle ? ` for "${bookTitle}"` : '';
-      const greeting = `Hi there! I'm ${friendName}, your reading companion${bookRef}. I'll be here while you read — ask me anything about the text, or try selecting a passage to get started!`;
+      const greeting = genreTemplate.greeting(friendName, bookTitle);
       setMessages([{
         id: generateId(),
         role: 'assistant' as const,
@@ -105,7 +119,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       }]);
     }, 2500);
     return () => clearTimeout(timer);
-  }, [isFirstChat, bookId, bookTitle, friendName]);
+  }, [isFirstChat, bookId, bookTitle, friendName, genre, genreTemplate]);
 
   // Mark chat as opened when user manually opens it
   const handleOpenChat = useCallback(() => {
@@ -258,17 +272,13 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             const lastMsg = history[history.length - 1];
             const isReturning = lastMsg && (Date.now() - lastMsg.timestamp > 30 * 60 * 1000); // 30 min gap
             if (isReturning && lastMsg.role === 'user') {
-              const greetings = [
-                "Welcome back! Ready to pick up where we left off?",
-                "Hey! Good to see you again. Let's continue.",
-                "You're back! I was thinking about our last discussion...",
-              ];
+              const greeting = genreTemplate.returnGreeting(friendName, bookTitle);
               greetTimer = setTimeout(() => {
                 if (!cancelled) {
                   setMessages((prev) => [...prev, {
                     id: generateId(),
                     role: 'assistant' as const,
-                    content: greetings[Math.floor(Math.random() * greetings.length)],
+                    content: greeting,
                     timestamp: Date.now(),
                   }]);
                 }
@@ -317,8 +327,12 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
           {/* First-time tooltip */}
           {isFirstChat && (
-            <div className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[180px]">
-              Chat with {friendName} about what you&apos;re reading
+            <div className={`px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px] ${
+              genre === 'fiction' ? 'animate-bounce' : ''
+            }`}>
+              {genre === 'fiction'
+                ? `Discuss characters & themes with ${friendName}`
+                : `Chat with ${friendName} about what you're reading`}
             </div>
           )}
           <button
@@ -389,18 +403,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                     Ask anything about what you&apos;re reading
                   </p>
                   <div className="text-left space-y-2 max-w-xs mx-auto">
-                    {(bookTitle
-                      ? [
-                          `What should I know before starting "${bookTitle}"?`,
-                          'Summarize this chapter so far',
-                          'What questions should I ask while reading this?',
-                        ]
-                      : [
-                          "What's the main idea of this chapter?",
-                          'Help me understand this passage better',
-                          'What should I pay attention to next?',
-                        ]
-                    ).map((q) => (
+                    {genreTemplate.suggestedPrompts(bookTitle).map((q) => (
                       <button
                         key={q}
                         onClick={() => setInput(q)}

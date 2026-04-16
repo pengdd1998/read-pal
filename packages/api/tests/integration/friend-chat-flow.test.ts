@@ -45,16 +45,6 @@ jest.mock('../../src/services/llmClient', () => ({
   chatCompletion: jest.fn().mockResolvedValue('AI companion response'),
 }));
 
-jest.mock('../../src/services/WebSocketManager', () => ({
-  WebSocketManager: jest.fn().mockImplementation(() => ({
-    getClientByUserId: jest.fn().mockReturnValue(undefined),
-    notifyAgentStart: jest.fn(),
-    notifyAgentComplete: jest.fn(),
-    notifyComplete: jest.fn(),
-    notifyError: jest.fn(),
-  })),
-}));
-
 jest.mock('../../src/services/llmClient', () => ({
   chatCompletionStream: jest.fn().mockImplementation(async function* () {
     yield 'Great ';
@@ -178,7 +168,6 @@ const mockOrchestrator = {
   getAgents: jest.fn().mockReturnValue([]),
 };
 app.set('orchestrator', mockOrchestrator);
-app.set('wsManager', new (jest.requireMock('../../src/services/WebSocketManager') as any).WebSocketManager());
 
 app.use('/api/friend', friendRoutes);
 app.use('/api/agents', agentRoutes);

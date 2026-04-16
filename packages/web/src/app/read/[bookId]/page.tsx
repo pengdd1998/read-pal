@@ -713,6 +713,8 @@ export default function ReadPage() {
         bookTitle={book?.title || ''}
         author={book?.author || ''}
         chapterContent={chapterContent}
+        genreMetadata={(book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | undefined}
+        bookDescription={(book?.metadata as Record<string, unknown> | undefined)?.description as string | undefined}
       />
 
       {/* Intervention toast */}

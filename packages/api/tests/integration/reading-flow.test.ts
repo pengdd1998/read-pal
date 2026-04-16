@@ -48,16 +48,6 @@ jest.mock('../../src/services/llmClient', () => ({
   chatCompletion: jest.fn().mockResolvedValue('AI response'),
 }));
 
-jest.mock('../../src/services/WebSocketManager', () => ({
-  WebSocketManager: jest.fn().mockImplementation(() => ({
-    getClientByUserId: jest.fn().mockReturnValue(undefined),
-    notifyAgentStart: jest.fn(),
-    notifyAgentComplete: jest.fn(),
-    notifyComplete: jest.fn(),
-    notifyError: jest.fn(),
-  })),
-}));
-
 jest.mock('../../src/models/ChatMessage', () => ({
   ChatMessage: {
     findAll: jest.fn().mockResolvedValue([]),
@@ -141,7 +131,6 @@ const mockOrchestrator = {
   ]),
 };
 app.set('orchestrator', mockOrchestrator);
-app.set('wsManager', new (jest.requireMock('../../src/services/WebSocketManager') as any).WebSocketManager());
 
 // ---- Test Suite ----
 

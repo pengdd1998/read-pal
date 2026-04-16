@@ -4,11 +4,9 @@ import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
 import { AgentOrchestrator } from '../agents/orchestrator/AgentOrchestrator';
-import { WebSocketManager } from '../services/WebSocketManager';
 import { ChatMessage } from '../models/ChatMessage';
 import { chatCompletion, chatCompletionStream } from '../services/llmClient';
 import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
-import type { StreamClient } from '../services/WebSocketManager';
 import type { OrchestratorResponse } from '../agents/orchestrator/AgentOrchestrator';
 import type { IAgent } from '../types';
 
@@ -94,13 +92,6 @@ router.post(
       });
     }
 
-    // Send WS notification that agent processing has started
-    const wsManager: WebSocketManager | null = req.app.get('wsManager');
-    const wsClient: StreamClient | undefined = wsManager?.getClientByUserId(req.user!.id);
-    if (wsClient) {
-      wsManager!.notifyAgentStart(wsClient.sessionId, agent || 'companion', message);
-    }
-
     const response: OrchestratorResponse = await orchestrator.process({
       userId: req.user!.id,
       sessionId: (req.session as { id?: string })?.id || req.id!,
@@ -108,27 +99,6 @@ router.post(
       context,
       options: agent ? { agent } : undefined
     });
-
-    // Send WS notifications for agent results
-    if (wsClient) {
-      if (response.success) {
-        for (const agentUsed of response.agentsUsed || []) {
-          wsManager!.notifyAgentComplete(
-            wsClient.sessionId,
-            agentUsed.agentName,
-            agentUsed.duration || 0,
-            agentUsed.response?.metadata?.tokensUsed as number | undefined,
-          );
-        }
-        wsManager!.notifyComplete(wsClient.sessionId, response.content, response.metadata as unknown as Record<string, unknown>);
-      } else {
-        wsManager!.notifyError(
-          wsClient.sessionId,
-          response.error?.message || 'Agent processing failed',
-          response.error?.code,
-        );
-      }
-    }
 
     // Save chat history (non-blocking)
     const bookId = context?.bookId as string | undefined;

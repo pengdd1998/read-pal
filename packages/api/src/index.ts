@@ -45,9 +45,6 @@ import './models';
 import { sequelize, initPinecone } from './db';
 import { DEFAULT_MODEL } from './services/llmClient';
 
-// WebSocket
-import { wsManager } from './services/WebSocketManager';
-
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -320,10 +317,6 @@ if (require.main === module) {
     const server = app.listen(config.api.port, () => {
       const agentStatus = orchestrator ? `🟢 ${orchestrator.getAgents().length} agents ready` : '🔴 Not configured';
 
-      // Initialize WebSocket on the HTTP server
-      wsManager.initialize(server);
-      app.set('wsManager', wsManager);
-
       console.log(`
 ╔═══════════════════════════════════════════════════════╗
 ║                                                   ║
@@ -353,7 +346,6 @@ if (require.main === module) {
     // Graceful shutdown
     process.on('SIGTERM', () => {
       console.log('SIGTERM received, shutting down gracefully...');
-      wsManager.shutdown();
       server.close(() => {
         console.log('Server closed');
         process.exit(0);
@@ -362,7 +354,6 @@ if (require.main === module) {
 
     process.on('SIGINT', () => {
       console.log('\nSIGINT received, shutting down gracefully...');
-      wsManager.shutdown();
       server.close(() => {
         console.log('Server closed');
         process.exit(0);
