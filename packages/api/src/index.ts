@@ -32,6 +32,7 @@ import challengesRoutes from './routes/challenges.routes';
 import exportRoutes from './routes/export.routes';
 import synthesisRoutes from './routes/synthesis.routes';
 import flashcardsRoutes from './routes/flashcards.routes';
+import studyModeRoutes from './routes/study-mode.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -43,7 +44,7 @@ import { AgentOrchestrator, OrchestratorConfig } from './agents/orchestrator/Age
 
 // Database & Models (import models to register them with Sequelize before sync)
 import './models';
-import { sequelize, initPinecone } from './db';
+import { sequelize, initPinecone, closeConnections } from './db';
 import { DEFAULT_MODEL } from './services/llmClient';
 
 // ============================================================================
@@ -293,6 +294,7 @@ app.use('/api/challenges', challengesRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/synthesis', synthesisRoutes);
 app.use('/api/flashcards', flashcardsRoutes);
+app.use('/api/study-mode', studyModeRoutes);
 
 // ============================================================================
 // Error Handling
@@ -346,21 +348,27 @@ if (require.main === module) {
     });
 
     // Graceful shutdown
-    process.on('SIGTERM', () => {
-      console.log('SIGTERM received, shutting down gracefully...');
-      server.close(() => {
+    const shutdown = async (signal: string) => {
+      console.log(`${signal} received, shutting down gracefully...`);
+      server.close(async () => {
         console.log('Server closed');
+        try {
+          await closeConnections();
+          console.log('Database connections closed');
+        } catch (err) {
+          console.error('Error closing connections:', err);
+        }
         process.exit(0);
       });
-    });
+      // Force exit after 5s if graceful shutdown stalls
+      setTimeout(() => {
+        console.error('Forced shutdown after timeout');
+        process.exit(1);
+      }, 5000);
+    };
 
-    process.on('SIGINT', () => {
-      console.log('\nSIGINT received, shutting down gracefully...');
-      server.close(() => {
-        console.log('Server closed');
-        process.exit(0);
-      });
-    });
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   })();
 }
 
