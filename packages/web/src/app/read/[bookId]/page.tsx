@@ -168,7 +168,7 @@ export default function ReadPage() {
   const [showControls, setShowControls] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sessionSummary, setSessionSummary] = useState<{ duration: number; chaptersRead: number } | null>(null);
+  const [sessionSummary, setSessionSummary] = useState<{ duration: number; chaptersRead: number; sessionId?: string } | null>(null);
   const [showCompletion, setShowCompletion] = useState(false);
   const [highlightMode, setHighlightMode] = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
@@ -195,7 +195,7 @@ export default function ReadPage() {
   const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight } = useReaderSettings(bookId, loading);
 
   // Extracted session hook
-  useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length });
+  const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length });
 
   // Update session timer every second
   useEffect(() => {
@@ -505,7 +505,7 @@ export default function ReadPage() {
   const handleBack = useCallback(() => {
     const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000);
     if (elapsed > 30) {
-      setSessionSummary({ duration: elapsed, chaptersRead: currentChapter + 1 });
+      setSessionSummary({ duration: elapsed, chaptersRead: currentChapter + 1, sessionId: sessionIdRef.current || undefined });
     } else {
       router.push('/library');
     }
@@ -893,6 +893,7 @@ export default function ReadPage() {
           duration={sessionSummary.duration}
           chaptersRead={sessionSummary.chaptersRead}
           totalChapters={chapters.length}
+          sessionId={sessionSummary.sessionId}
           onKeepReading={() => setSessionSummary(null)}
           onBackToLibrary={() => { setSessionSummary(null); router.push('/library'); }}
         />

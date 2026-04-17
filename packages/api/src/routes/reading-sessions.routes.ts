@@ -4,12 +4,13 @@
 
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { ReadingSession, Book } from '../models';
+import { ReadingSession, Book, Annotation } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
 import { notifyGoalAchieved, notifyStreakMilestone } from '../services/NotificationService';
+import { chatCompletion } from '../services/llmClient';
 import { User } from '../models';
 import { fn, col, Op } from 'sequelize';
 
@@ -265,6 +266,135 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
         code: 'SESSIONS_FETCH_ERROR',
         message: 'Failed to fetch sessions',
       },
+    });
+  }
+});
+
+/**
+ * POST /api/reading-sessions/:id/summarize
+ *
+ * Generate an AI summary of the reading session using GLM.
+ * Uses session stats + recent annotations + book context.
+ */
+router.post('/:id/summarize', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const session = await ReadingSession.findOne({
+      where: { id: req.params.id, userId: req.userId },
+    });
+
+    if (!session) {
+      return notFound(res, 'Session');
+    }
+
+    // Already has a summary — return it
+    if (session.summary) {
+      return res.json({ success: true, data: { summary: session.summary } });
+    }
+
+    // Fetch book info
+    const book = await Book.findByPk(session.bookId);
+
+    // Fetch annotations from this session's timeframe
+    const annotations = await Annotation.findAll({
+      where: {
+        userId: req.userId!,
+        bookId: session.bookId,
+        createdAt: {
+          [Op.gte]: session.startedAt,
+          ...(session.endedAt ? { [Op.lte]: session.endedAt } : {}),
+        },
+      },
+      attributes: ['type', 'content', 'text', 'note', 'createdAt'],
+      order: [['createdAt', 'ASC']],
+      limit: 20,
+    });
+
+    const minutesRead = Math.round(session.duration / 60);
+    const highlights = annotations.filter((a) => a.type === 'highlight');
+    const notes = annotations.filter((a) => a.type === 'note');
+
+    // Build context for the LLM
+    const highlightTexts = highlights
+      .map((h) => h.content)
+      .filter(Boolean)
+      .slice(0, 10)
+      .map((t, i) => `${i + 1}. "${t.slice(0, 200)}"`)
+      .join('\n');
+
+    const noteTexts = notes
+      .map((n) => n.note || n.content)
+      .filter(Boolean)
+      .slice(0, 5)
+      .map((t, i) => `${i + 1}. "${t.slice(0, 200)}"`)
+      .join('\n');
+
+    const userMessage = `Generate a concise reading session summary for this reading session:
+
+Book: "${book?.title || 'Unknown'}" by ${book?.author || 'Unknown'}
+Time spent: ${minutesRead} minutes
+Pages read: ${session.pagesRead}
+Highlights made: ${highlights.length}
+Notes written: ${notes.length}
+
+Key highlights:
+${highlightTexts || 'None'}
+
+Reader's notes:
+${noteTexts || 'None'}
+
+Write 2-3 sentences summarizing what the reader likely covered and learned. Be specific about topics/themes based on the highlights. Write in second person ("You explored..."). Keep it warm and encouraging.`;
+
+    const summary = await chatCompletion({
+      system: 'You are a reading companion that writes brief, insightful summaries of reading sessions. Be specific, warm, and concise.',
+      messages: [{ role: 'user', content: userMessage }],
+      maxTokens: 256,
+      temperature: 0.6,
+    });
+
+    // Persist the summary
+    await session.update({ summary });
+
+    res.json({ success: true, data: { summary } });
+  } catch (error) {
+    console.error('Error generating session summary:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SUMMARY_ERROR', message: 'Failed to generate session summary' },
+    });
+  }
+});
+
+/**
+ * GET /api/reading-sessions/book/:bookId/log
+ *
+ * Get reading log (sessions with summaries) for a specific book.
+ */
+router.get('/book/:bookId/log', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { page, limit, offset } = parsePagination(req);
+
+    const { rows: sessions, count: total } = await ReadingSession.findAndCountAll({
+      where: {
+        userId: req.userId!,
+        bookId: req.params.bookId,
+        isActive: false,
+      },
+      attributes: ['id', 'startedAt', 'endedAt', 'duration', 'pagesRead', 'highlights', 'notes', 'summary'],
+      order: [['startedAt', 'DESC']],
+      limit,
+      offset,
+    });
+
+    res.json({
+      success: true,
+      data: sessions,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    console.error('Error fetching reading log:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'LOG_FETCH_ERROR', message: 'Failed to fetch reading log' },
     });
   }
 });

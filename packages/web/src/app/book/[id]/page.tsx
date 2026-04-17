@@ -49,6 +49,7 @@ export default function BookDetailPage() {
   const [error, setError] = useState('');
   const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
   const [exportSuccess, setExportSuccess] = useState('');
+  const [readingLog, setReadingLog] = useState<Array<{ id: string; startedAt: string; duration: number; pagesRead: number; highlights: number; notes: number; summary?: string }>>([]);
 
   useEffect(() => {
     (async () => {
@@ -75,6 +76,11 @@ export default function BookDetailPage() {
         api.get<{ format: string }>(`/api/memory-books/${bookId}`)
           .then((res) => { if (res.success && res.data?.format === 'personal_book') setHasPersonalBook(true); })
           .catch(() => { /* no personal book yet */ });
+
+        // Fetch reading log
+        api.get<Array<{ id: string; startedAt: string; duration: number; pagesRead: number; highlights: number; notes: number; summary?: string }>>(`/api/reading-sessions/book/${bookId}/log?limit=5`)
+          .then((res) => { if (res.success && res.data) setReadingLog(Array.isArray(res.data) ? res.data : []); })
+          .catch(() => {});
       } catch {
         setError('Failed to load book. Please try again.');
       }
@@ -422,6 +428,44 @@ export default function BookDetailPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Reading Log */}
+      {readingLog.length > 0 && (
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 mb-6 animate-slide-up stagger-4">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 className="font-semibold">Reading Log</h2>
+          </div>
+          <div className="space-y-3">
+            {readingLog.map((entry) => {
+              const date = new Date(entry.startedAt);
+              const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+              const timeStr = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+              const mins = Math.round(entry.duration / 60);
+              return (
+                <div key={entry.id} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                  <div className="text-xs text-gray-400 min-w-[52px] pt-0.5">
+                    <div>{dateStr}</div>
+                    <div className="text-[10px]">{timeStr}</div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <span>{mins}m</span>
+                      <span>{entry.pagesRead} pages</span>
+                      {entry.highlights > 0 && <span>{entry.highlights} highlights</span>}
+                    </div>
+                    {entry.summary && (
+                      <p className="text-xs text-gray-700 dark:text-gray-300 mt-1.5 leading-relaxed">{entry.summary}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
