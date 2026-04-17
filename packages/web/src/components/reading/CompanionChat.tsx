@@ -15,6 +15,33 @@ import {
   type BookGenre,
 } from '@/lib/companion-prompts';
 
+/** Extract code blocks from raw HTML chapter content for technical context. */
+function extractCodeBlocks(html: string, maxChars = 2000): string {
+  if (!html) return '';
+  const blocks: string[] = [];
+  let totalChars = 0;
+  const preRegex = /<pre[^>]*>(?:<code[^>]*?(?:class="language-(\w+)")?[^>]*>)?([\s\S]*?)(?:<\/code>)?<\/pre>/gi;
+  let match;
+  while ((match = preRegex.exec(html)) !== null && totalChars < maxChars) {
+    const lang = match[1] || 'code';
+    const code = match[2]
+      .replace(/<[^>]*>/g, '')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .trim();
+    if (code) {
+      const block = `[${lang}]\n${code}`;
+      if (totalChars + block.length <= maxChars) {
+        blocks.push(block);
+        totalChars += block.length;
+      }
+    }
+  }
+  return blocks.join('\n\n');
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -153,6 +180,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
               bookTitle: bookTitle ?? '',
               author: author ?? '',
               chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '',
+              nearbyCode: extractCodeBlocks(chapterContent ?? ''),
               genres: genreMetadata,
               bookDescription,
             },

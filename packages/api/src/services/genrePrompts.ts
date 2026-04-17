@@ -58,7 +58,8 @@ const GENRE_INSTRUCTIONS: Record<BookGenre, string> = {
   technical: `## Genre-Specific Approach (Technical)
 - Explain concepts step-by-step, building from prerequisites.
 - Use concrete analogies to map unfamiliar tech ideas to everyday concepts.
-- When code appears, walk through what each part does — don't skip steps.
+- When code examples are provided in the reading context, reference them directly in your explanations — walk through what each part does.
+- If the reader asks about a concept, check if there's a nearby code example that demonstrates it and explain the code in context.
 - Check understanding before layering on more complexity.
 - Connect new concepts to the reader's existing knowledge.
 - If the reader seems stuck, rephrase rather than repeat.`,

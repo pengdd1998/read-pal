@@ -13,6 +13,7 @@ import { useStudyMode } from '@/hooks/useStudyMode';
 import { api } from '@/lib/api';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
+import { detectGenre, type BookGenre } from '@/lib/companion-prompts';
 
 // Lazy-load heavy reading components — they're only needed on this page
 const ReaderView = dynamic(() => import('@/components/reading/ReaderView').then((m) => ({ default: m.ReaderView })), { ssr: false });
@@ -28,6 +29,7 @@ const MobileSettingsSheet = dynamic(() => import('@/components/reading/MobileSet
 const SearchOverlay = dynamic(() => import('@/components/reading/SearchOverlay').then((m) => ({ default: m.SearchOverlay })), { ssr: false });
 const SynthesisPanel = dynamic(() => import('@/components/reading/SynthesisPanel').then((m) => ({ default: m.SynthesisPanel })), { ssr: false });
 const StudyModePanel = dynamic(() => import('@/components/reading/StudyModePanel').then((m) => ({ default: m.StudyModePanel })), { ssr: false });
+const FictionPanel = dynamic(() => import('@/components/reading/FictionPanel').then((m) => ({ default: m.FictionPanel })), { ssr: false });
 
 // Static theme maps — never change, so hoist to module scope
 const THEME_CLASSES = {
@@ -220,6 +222,14 @@ export default function ReadPage() {
   // Derive current chapter content from chapters array
   const chapterContent = chapters[currentChapter]?.rawContent || chapters[currentChapter]?.content || '';
   const chapterTitle = chapters[currentChapter]?.title || book?.title || '';
+
+  // Genre detection for fiction-specific features
+  const bookGenre: BookGenre = detectGenre(
+    (book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | undefined,
+    book?.title,
+    (book?.metadata as Record<string, unknown> | undefined)?.description as string | undefined,
+  );
+  const isFiction = bookGenre === 'fiction';
 
   // Track when user makes first selection
   useEffect(() => {
@@ -830,6 +840,17 @@ export default function ReadPage() {
         genreMetadata={(book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | undefined}
         bookDescription={(book?.metadata as Record<string, unknown> | undefined)?.description as string | undefined}
       />
+
+      {/* Fiction panel — character tracker + mood (only for fiction books) */}
+      {!loading && isFiction && chapterContent && (
+        <FictionPanel
+          chapterContent={chapterContent}
+          chapterIndex={currentChapter}
+          onAskAboutCharacter={(name) => {
+            chatRef.current?.openWithMessage(`Tell me about ${name} — their role, motivations, and how they've developed so far.`);
+          }}
+        />
+      )}
 
       {/* Intervention toast */}
       {!loading && book && !quietMode && (

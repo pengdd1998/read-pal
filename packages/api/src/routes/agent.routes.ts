@@ -95,6 +95,12 @@ router.post(
           readingParts.push(wrapUserContent(plainText, 'Chapter'));
         }
       }
+      if (context.nearbyCode) {
+        const codeText = sanitizePromptInput(String(context.nearbyCode).slice(0, 2000), 'Code');
+        if (codeText) {
+          readingParts.push(`Nearby Code Examples:\n${codeText}`);
+        }
+      }
       if (readingParts.length > 0) {
         enrichedQuery = `[Reading Context]\n${readingParts.join('\n')}\n\n[User Question]\n${safeMessage}`;
       }
@@ -261,6 +267,12 @@ router.post(
         );
         if (plainText) {
           readingParts.push(wrapUserContent(plainText, 'Chapter'));
+        }
+      }
+      if (context.nearbyCode) {
+        const codeText = sanitizePromptInput(String(context.nearbyCode).slice(0, 2000), 'Code');
+        if (codeText) {
+          readingParts.push(`Nearby Code Examples:\n${codeText}`);
         }
       }
       if (readingParts.length > 0) {
