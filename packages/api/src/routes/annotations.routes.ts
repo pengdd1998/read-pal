@@ -260,7 +260,7 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
     }
 
     // New formats: delegate to ExportService (requires book metadata)
-    const validFormats: ExportFormat[] = ['bookclub', 'bibtex', 'apa', 'mla', 'chicago', 'research'];
+    const validFormats: ExportFormat[] = ['bookclub', 'bibtex', 'apa', 'mla', 'chicago', 'research', 'annotated_bib'];
     if (!validFormats.includes(fmt as ExportFormat)) {
       return res.status(400).json({
         success: false,

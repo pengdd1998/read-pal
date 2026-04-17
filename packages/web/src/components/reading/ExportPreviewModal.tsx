@@ -5,7 +5,7 @@ import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { api } from '@/lib/api';
 
-type ExportFormat = 'markdown' | 'json' | 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research';
+type ExportFormat = 'markdown' | 'json' | 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib';
 
 interface FormatOption {
   value: ExportFormat;
@@ -24,6 +24,7 @@ const FORMATS: FormatOption[] = [
   { value: 'apa', label: 'APA', description: 'APA 7th edition citation', icon: 'A', category: 'citation' },
   { value: 'mla', label: 'MLA', description: 'MLA 9th edition citation', icon: 'M', category: 'citation' },
   { value: 'chicago', label: 'Chicago', description: 'Chicago style citation', icon: 'C', category: 'citation' },
+  { value: 'annotated_bib', label: 'Annotated Bib', description: 'Per-highlight citations with page numbers', icon: 'AB', category: 'citation' },
 ];
 
 const CATEGORIES = [
@@ -59,7 +60,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
   const { toast } = useToast();
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  const isCitationFormat = ['bibtex', 'apa', 'mla', 'chicago'].includes(format);
+  const isCitationFormat = ['bibtex', 'apa', 'mla', 'chicago', 'annotated_bib'].includes(format);
   const hasActiveFilters = selectedTypes.size < 3 || selectedTag !== '';
 
   const buildExportUrl = () => {

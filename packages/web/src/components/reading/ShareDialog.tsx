@@ -31,6 +31,7 @@ const CITATION_FORMATS = [
   { value: 'apa', label: 'APA 7th' },
   { value: 'mla', label: 'MLA 9th' },
   { value: 'chicago', label: 'Chicago' },
+  { value: 'annotated_bib', label: 'Annotated Bib' },
 ] as const;
 
 export function ShareDialog({
@@ -47,7 +48,7 @@ export function ShareDialog({
   const [activeTab, setActiveTab] = useState<ShareTab>('discussion');
   const [generating, setGenerating] = useState(false);
   const [questions, setQuestions] = useState<string[]>([]);
-  const [citationFormat, setCitationFormat] = useState<'bibtex' | 'apa' | 'mla' | 'chicago'>('apa');
+  const [citationFormat, setCitationFormat] = useState<'bibtex' | 'apa' | 'mla' | 'chicago' | 'annotated_bib'>('apa');
   const [citationText, setCitationText] = useState<string | null>(null);
   const [guideHtml, setGuideHtml] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
@@ -413,7 +414,7 @@ export function ShareDialog({
           {activeTab === 'citation' && (
             <div className="space-y-3">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Export a citation for this book in academic format.
+                Export a citation for this book, or generate an annotated bibliography with per-highlight citations and page numbers.
               </p>
 
               <div className="grid grid-cols-2 gap-2">

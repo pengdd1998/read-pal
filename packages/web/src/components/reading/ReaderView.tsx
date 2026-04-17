@@ -48,6 +48,8 @@ interface ReaderViewProps {
   contentRef?: RefObject<HTMLElement | null>;
   fontSize: number;
   theme: 'light' | 'dark' | 'sepia';
+  fontFamily?: string;
+  lineHeight?: number;
   showControls?: boolean;
   onToggleControls?: () => void;
   externalTocOpen?: boolean;
@@ -68,6 +70,8 @@ export function ReaderView({
   contentRef,
   fontSize,
   theme,
+  fontFamily,
+  lineHeight,
   showControls = true,
   onToggleControls,
   externalTocOpen,
@@ -344,6 +348,8 @@ export function ReaderView({
           data-theme={theme}
           style={{
             fontSize: `${fontSize}px`,
+            ...(fontFamily ? { fontFamily } : {}),
+            ...(lineHeight ? { lineHeight } : {}),
           }}
         >
           {/* Chapter header */}

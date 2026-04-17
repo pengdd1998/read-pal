@@ -181,7 +181,7 @@ export default function ReadPage() {
   const studyMode = useStudyMode(bookId);
 
   // Extracted settings hook
-  const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode } = useReaderSettings(bookId, loading);
+  const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight } = useReaderSettings(bookId, loading);
 
   // Extracted session hook
   useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length });
@@ -622,6 +622,39 @@ export default function ReadPage() {
                     </div>
                   </div>
 
+                  {/* Line height */}
+                  <div>
+                    <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">Line Height</label>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setLineHeight(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))} className="w-8 h-8 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">-</button>
+                      <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full relative">
+                        <div className="absolute left-0 top-0 h-full bg-amber-400 rounded-full" style={{ width: `${((lineHeight - 1.2) / 1.0) * 100}%` }} />
+                      </div>
+                      <span className="text-xs font-mono text-amber-600 dark:text-amber-400 w-8 text-center">{lineHeight.toFixed(2)}</span>
+                      <button onClick={() => setLineHeight(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))} className="w-8 h-8 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">+</button>
+                    </div>
+                  </div>
+
+                  {/* Font family */}
+                  <div>
+                    <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">Font</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[{ value: 'system-ui', label: 'System' }, { value: "'Literata', 'Source Serif 4', Georgia, serif", label: 'Serif' }, { value: "'Inter', system-ui, sans-serif", label: 'Sans' }, { value: "'Merriweather', Georgia, serif", label: 'Merri' }].map((f) => (
+                        <button
+                          key={f.label}
+                          onClick={() => setFontFamily(f.value)}
+                          className={`py-1.5 rounded-lg text-[10px] font-medium transition-all ${
+                            fontFamily === f.value
+                              ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 ring-1 ring-amber-300 dark:ring-amber-700'
+                              : 'text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Theme */}
                   <div>
                     <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">Theme</label>
@@ -709,6 +742,8 @@ export default function ReadPage() {
             contentRef={contentRef}
             fontSize={fontSize}
             theme={theme}
+            fontFamily={fontFamily}
+            lineHeight={lineHeight}
             showControls={showControls}
             onToggleControls={handleToggleControls}
             highlightMode={highlightMode}
@@ -852,9 +887,13 @@ export default function ReadPage() {
           fontSize={fontSize}
           theme={theme}
           quietMode={quietMode}
+          fontFamily={fontFamily}
+          lineHeight={lineHeight}
           onFontSizeChange={setFontSize}
           onThemeChange={setTheme}
           onQuietModeChange={setQuietMode}
+          onFontFamilyChange={setFontFamily}
+          onLineHeightChange={setLineHeight}
           onClose={() => setShowMobileSettings(false)}
         />
       )}

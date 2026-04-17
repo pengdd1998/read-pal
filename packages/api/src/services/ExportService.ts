@@ -39,7 +39,7 @@ export interface ReadingStats {
   lastReadAt?: Date;
 }
 
-export type ExportFormat = 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research';
+export type ExportFormat = 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib';
 
 export interface ExportResult {
   content: string;
@@ -303,8 +303,11 @@ function generateBibtex(book: BookInfo, _annotations: AnnotationData[]): ExportR
 function generateApa(book: BookInfo, _annotations: AnnotationData[]): ExportResult {
   const meta = getMeta(book);
   const year = getYear(book);
-  const publisher = meta.publisher ? ` ${meta.publisher}.` : '';
-  const citation = `${book.author} (${year}). *${book.title}*.${publisher}`;
+  // APA 7th: Author, A. A. (Year). *Title of work*. Publisher. DOI
+  const parts = [`${book.author} (${year}). *${book.title}*.`];
+  if (meta.publisher) parts.push(` ${meta.publisher}.`);
+  if (meta.isbn) parts.push(` ISBN: ${meta.isbn}`);
+  const citation = parts.join('');
 
   return {
     content: citation,
@@ -316,8 +319,9 @@ function generateApa(book: BookInfo, _annotations: AnnotationData[]): ExportResu
 function generateMla(book: BookInfo, _annotations: AnnotationData[]): ExportResult {
   const meta = getMeta(book);
   const year = getYear(book);
-  const publisher = meta.publisher ? ` ${meta.publisher},` : '';
-  const citation = `${book.author}. *${book.title}*.${publisher} ${year}.`;
+  // MLA 9th: Author. *Title*. Publisher, Year.
+  const pubInfo = meta.publisher ? ` ${meta.publisher},` : '';
+  const citation = `${book.author}. *${book.title}*.${pubInfo} ${year}.`;
 
   return {
     content: citation,
@@ -329,9 +333,11 @@ function generateMla(book: BookInfo, _annotations: AnnotationData[]): ExportResu
 function generateChicago(book: BookInfo, _annotations: AnnotationData[]): ExportResult {
   const meta = getMeta(book);
   const year = getYear(book);
-  const publisher = meta.publisher ? ` ${meta.publisher},` : '';
-  const loc = publisher ? '' : '';
-  const citation = `${book.author}. *${book.title}*.${publisher} ${year}.`;
+  // Chicago Notes-Bibliography: Author. *Title*. City: Publisher, Year.
+  const publisher = meta.publisher || '';
+  const city = (meta as Record<string, unknown>)?.city as string || '';
+  const pubPart = publisher ? `${city ? city + ': ' : ''}${publisher}, ${year}.` : `${year}.`;
+  const citation = `${book.author}. *${book.title}*. ${pubPart}`;
 
   return {
     content: citation,
@@ -401,6 +407,107 @@ function generateResearch(book: BookInfo, annotations: AnnotationData[], stats?:
 }
 
 // ---------------------------------------------------------------------------
+// Annotated Bibliography — per-highlight citations with page numbers
+// ---------------------------------------------------------------------------
+
+function generateAnnotatedBib(book: BookInfo, annotations: AnnotationData[]): ExportResult {
+  const meta = getMeta(book);
+  const year = getYear(book);
+  const publisher = meta.publisher || '';
+  const isbn = meta.isbn || '';
+  const highlights = annotations.filter((a) => a.type === 'highlight' || a.type === 'note');
+
+  const lines: string[] = [
+    `# Annotated Bibliography`,
+    `## ${book.title}`,
+    `**${book.author}** (${year}). *${book.title}*.${publisher ? ` ${publisher}.` : ''}`,
+    '',
+  ];
+
+  if (isbn) lines.push(`ISBN: ${isbn}`, '');
+  if (meta.publishYear) lines.push(`Published: ${meta.publishYear}`, '');
+
+  lines.push(`_Exported ${new Date().toLocaleDateString()}_`, '');
+  lines.push(`---`, '');
+  lines.push(`## Annotations (${highlights.length})`, '');
+
+  for (let i = 0; i < highlights.length; i++) {
+    const a = highlights[i];
+    const page = a.location?.pageNumber;
+    const chapter = a.location?.chapterIndex !== undefined && a.location?.chapterIndex >= 0
+      ? `Ch. ${a.location.chapterIndex + 1}`
+      : '';
+
+    // APA in-text citation for each annotation
+    const authorLastName = book.author.split(',')[0] || book.author.split(' ').pop() || book.author;
+    const apaInText = page
+      ? `(${authorLastName}, ${year}, p. ${page})`
+      : chapter
+        ? `(${authorLastName}, ${year}, ${chapter})`
+        : `(${authorLastName}, ${year})`;
+
+    // MLA in-text citation
+    const mlaInText = page
+      ? `(${authorLastName} ${page})`
+      : `(${authorLastName})`;
+
+    // Chicago footnote style
+    const chicagoNote = page
+      ? `${book.author}, *${book.title}* (${year}), ${page}.`
+      : `${book.author}, *${book.title}* (${year}).`;
+
+    lines.push(`### ${i + 1}. [${a.type.toUpperCase()}] ${apaInText}`, '');
+
+    // The quoted content
+    const content = a.content.length > 300 ? a.content.slice(0, 300) + '...' : a.content;
+    lines.push(`> ${escapeMarkdown(content)}`, '');
+
+    // User note (if any)
+    if (a.note) {
+      lines.push(`**Note:** ${escapeMarkdown(a.note)}`, '');
+    }
+
+    // Citation formats for this specific passage
+    lines.push(`<details><summary>Cite this passage</summary>`, '');
+    lines.push(`**APA:** ${apaInText}`, '');
+    lines.push(`**MLA:** ${mlaInText}`, '');
+    lines.push(`**Chicago:** ${chicagoNote}`, '');
+    lines.push(`</details>`, '');
+  }
+
+  // Full reference list at the end
+  lines.push('---', '');
+  lines.push('## References', '');
+  lines.push('', '### APA 7th Edition');
+  const apaRef = `${book.author} (${year}). *${book.title}*.${publisher ? ` ${publisher}.` : ''}${isbn ? ` ISBN: ${isbn}.` : ''}`;
+  lines.push(apaRef, '');
+
+  lines.push('### MLA 9th Edition');
+  const mlaRef = `${book.author}. *${book.title}*.${publisher ? ` ${publisher},` : ''} ${year}.`;
+  lines.push(mlaRef, '');
+
+  lines.push('### Chicago (Notes-Bibliography)');
+  const chiRef = `${book.author}. *${book.title}*.${publisher ? ` ${publisher},` : ''} ${year}.`;
+  lines.push(chiRef, '');
+
+  lines.push('### BibTeX');
+  const key = slugify(book.author.split(',')[0] || book.author) + year;
+  lines.push(`@book{${key},`);
+  lines.push(`  title={${book.title}},`);
+  lines.push(`  author={${book.author}},`);
+  lines.push(`  year={${year}},`);
+  if (publisher) lines.push(`  publisher={${publisher}},`);
+  if (isbn) lines.push(`  isbn={${isbn}},`);
+  lines.push('}');
+
+  return {
+    content: lines.join('\n'),
+    contentType: 'text/markdown; charset=utf-8',
+    filename: `annotated-bib-${slugify(book.title)}.md`,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -431,6 +538,8 @@ export async function exportAnnotations(
       return generateChicago(book, annotations);
     case 'research':
       return generateResearch(book, annotations, stats);
+    case 'annotated_bib':
+      return generateAnnotatedBib(book, annotations);
     default:
       throw new Error(`Unsupported export format: ${format}`);
   }
