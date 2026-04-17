@@ -182,13 +182,7 @@ BookClubMember.init(
 );
 
 // ---------------------------------------------------------------------------
-// Associations
-// ---------------------------------------------------------------------------
-
-BookClub.hasMany(BookClubMember, { foreignKey: 'clubId', as: 'members' });
-BookClubMember.belongsTo(BookClub, { foreignKey: 'clubId', as: 'club' });
-
-BookClub.belongsTo(BookClubMember, { foreignKey: 'createdBy', as: 'creator', targetKey: 'userId', constraints: false });
+// Associations are defined in models/index.ts to avoid duplicates
 
 // ---------------------------------------------------------------------------
 // ClubDiscussion — Messages within a book club
@@ -249,6 +243,3 @@ ClubDiscussion.init(
     ],
   }
 );
-
-ClubDiscussion.belongsTo(User, { foreignKey: 'userId', as: 'author' });
-ClubDiscussion.belongsTo(BookClub, { foreignKey: 'clubId', as: 'club' });
