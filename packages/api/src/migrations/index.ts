@@ -16,6 +16,7 @@ import * as m005 from './005_google_oauth';
 import * as m006 from './006_notifications';
 import * as m007 from './007_session_summary';
 import * as m008 from './008_book_clubs';
+import * as m009 from './009_api_keys';
 
 // Register migrations in order
 registerMigration({
@@ -64,6 +65,12 @@ registerMigration({
   id: '008_book_clubs',
   up: m008.up,
   down: m008.down,
+});
+
+registerMigration({
+  id: '009_api_keys',
+  up: m009.up,
+  down: m009.down,
 });
 
 // Re-export migration functions

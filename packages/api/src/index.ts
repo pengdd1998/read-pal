@@ -37,6 +37,7 @@ import studyModeRoutes from './routes/study-mode.routes';
 import collectionsRoutes from './routes/collections.routes';
 import bookClubsRoutes from './routes/book-clubs.routes';
 import zoteroRoutes from './routes/zotero.routes';
+import apiKeysRoutes from './routes/api-keys.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -303,6 +304,7 @@ app.use('/api/study-mode', studyModeRoutes);
 app.use('/api/collections', collectionsRoutes);
 app.use('/api/book-clubs', bookClubsRoutes);
 app.use('/api/zotero', zoteroRoutes);
+app.use('/api/api-keys', apiKeysRoutes);
 
 // ============================================================================
 // Error Handling

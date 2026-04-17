@@ -1,7 +1,8 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models';
+import { User, ApiKey } from '../models';
 import { getJwtSecret, isTokenRevoked } from '../utils/auth';
+import { isApiKeyFormat, hashApiKey } from '../models/ApiKey';
 
 // ============================================================================
 // Types
@@ -24,7 +25,7 @@ export interface AuthRequest extends Request {
 // ============================================================================
 
 /**
- * Verify JWT token and attach user to request
+ * Verify JWT token or API key and attach user to request
  */
 export async function authenticate(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -41,7 +42,7 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = authHeader.substring(7);
 
     if (!token) {
       res.status(401).json({
@@ -54,10 +55,40 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    // Verify token using validated secret (throws at startup if missing)
+    // Check if this is an API key (starts with rpk_)
+    if (isApiKeyFormat(token)) {
+      const keyHash = hashApiKey(token);
+      const apiKey = await ApiKey.findOne({ where: { keyHash } });
+
+      if (!apiKey) {
+        res.status(401).json({
+          success: false,
+          error: { code: 'INVALID_API_KEY', message: 'Invalid API key' },
+        });
+        return;
+      }
+
+      const user = await User.findByPk(apiKey.userId);
+      if (!user) {
+        res.status(401).json({
+          success: false,
+          error: { code: 'USER_NOT_FOUND', message: 'API key owner not found' },
+        });
+        return;
+      }
+
+      // Update last used timestamp (fire and forget)
+      apiKey.update({ lastUsedAt: new Date() }).catch(() => {});
+
+      req.userId = user.id;
+      req.user = { id: user.id, email: user.email, name: user.name };
+      next();
+      return;
+    }
+
+    // JWT token path
     const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as JWTPayload;
 
-    // Check token blacklist (revoked tokens from logout)
     const jti = decoded.jti;
     if (jti && await isTokenRevoked(jti)) {
       res.status(401).json({
@@ -67,10 +98,8 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    // Attach user to request
     const userId = decoded.userId || decoded.sub || '';
 
-    // Verify user still exists in DB (handles stale tokens after DB resets)
     const user = await User.findByPk(userId);
     if (!user) {
       res.status(401).json({

@@ -165,7 +165,7 @@ router.post(
 );
 
 // ---------------------------------------------------------------------------
-// POST /api/zotero/export-all — Export all completed books
+// POST /api/zotero/export-all — Export all completed books with filters
 // ---------------------------------------------------------------------------
 router.post(
   '/export-all',
@@ -184,18 +184,38 @@ router.post(
         });
       }
 
+      const { tag, collectionId, status } = req.body as { tag?: string; collectionId?: string; status?: string };
+
+      const whereClause: Record<string, unknown> = { userId: req.userId! };
+      if (status) {
+        whereClause.status = status;
+      } else {
+        whereClause.status = 'completed';
+      }
+
       const books = await Book.findAll({
-        where: { userId: req.userId!, status: 'completed' },
+        where: whereClause,
         attributes: ['id', 'title', 'author', 'tags'],
       });
 
-      const zotero = new ZoteroService(config);
-      const exported: Array<{ title: string; itemsCreated: number }> = [];
-      const errors: Array<{ title: string; error: string }> = [];
+      // Filter by tag if specified
+      const filteredBooks = tag
+        ? books.filter((b) => {
+            const bookTags = (b.get({ plain: true }).tags as string[]) || [];
+            return bookTags.some((t) => t.toLowerCase() === tag.toLowerCase());
+          })
+        : books;
 
-      for (const book of books) {
+      const zotero = new ZoteroService(config);
+      const exported: Array<{ bookId: string; title: string; itemsCreated: number; bookItemKey: string }> = [];
+      const errors: Array<{ bookId: string; title: string; error: string }> = [];
+      const totalBooks = filteredBooks.length;
+
+      for (let i = 0; i < filteredBooks.length; i++) {
+        const book = filteredBooks[i];
+        const bookData = book.get({ plain: true });
+
         try {
-          const bookData = book.get({ plain: true });
           const annotations = await Annotation.findAll({
             where: { bookId: book.id, userId: req.userId! },
             attributes: ['type', 'content', 'note', 'location'],
@@ -225,10 +245,15 @@ router.post(
             notes,
           });
 
-          exported.push({ title: bookData.title, itemsCreated: exportResult.itemsCreated });
+          exported.push({
+            bookId: book.id,
+            title: bookData.title,
+            itemsCreated: exportResult.itemsCreated,
+            bookItemKey: exportResult.bookItemKey,
+          });
         } catch (err) {
-          const bookData = book.get({ plain: true });
           errors.push({
+            bookId: book.id,
             title: bookData.title,
             error: err instanceof Error ? err.message : 'Unknown error',
           });
@@ -240,8 +265,10 @@ router.post(
         data: {
           exported,
           errors,
+          totalBooks,
           totalExported: exported.length,
           totalErrors: errors.length,
+          filters: { tag: tag || null, collectionId: collectionId || null, status: (status as string) || 'completed' },
         },
       });
     } catch (error) {
