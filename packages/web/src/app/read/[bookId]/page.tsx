@@ -448,6 +448,7 @@ export default function ReadPage() {
     showShortcutsHelp,
     showMobileSettings,
     tocOpen,
+    synthesisOpen,
     onChapterChange: handleChapterChange,
     onToggleBookmark: handleToggleBookmark,
     onSetHighlightMode: setHighlightMode,
@@ -455,6 +456,7 @@ export default function ReadPage() {
     onSetShowShortcutsHelp: setShowShortcutsHelp,
     onSetSidebarOpen: setSidebarOpen,
     onSetShowMobileSettings: setShowMobileSettings,
+    onSetSynthesisOpen: setSynthesisOpen,
   });
 
   // Render annotation highlights in the content
@@ -624,7 +626,7 @@ export default function ReadPage() {
           <BookmarkToggle isBookmarked={isBookmarked} onToggle={handleToggleBookmark} />
 
           {/* Annotations */}
-          <button id="tour-annotations" onClick={() => setSidebarOpen(!sidebarOpen)} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors relative ${sidebarOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Annotations">
+          <button id="tour-annotations" onClick={() => { setSidebarOpen(!sidebarOpen); if (!sidebarOpen) setSynthesisOpen(false); }} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors relative ${sidebarOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Annotations">
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
@@ -641,7 +643,7 @@ export default function ReadPage() {
           </button>
 
           {/* Synthesis */}
-          <button onClick={() => setSynthesisOpen(!synthesisOpen)} className={`w-10 h-10 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors ${synthesisOpen ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20'}`} aria-label="Synthesize">
+          <button onClick={() => { setSynthesisOpen(!synthesisOpen); if (!synthesisOpen) setSidebarOpen(false); }} className={`w-10 h-10 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors ${synthesisOpen ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20'}`} aria-label="Synthesize">
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
             </svg>

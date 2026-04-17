@@ -9,6 +9,7 @@ interface UseKeyboardShortcutsOptions {
   showShortcutsHelp: boolean;
   showMobileSettings: boolean;
   tocOpen: boolean;
+  synthesisOpen?: boolean;
   onChapterChange: (idx: number) => void;
   onToggleBookmark: () => void;
   onSetHighlightMode: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,6 +17,7 @@ interface UseKeyboardShortcutsOptions {
   onSetShowShortcutsHelp: React.Dispatch<React.SetStateAction<boolean>>;
   onSetSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onSetShowMobileSettings: React.Dispatch<React.SetStateAction<boolean>>;
+  onSetSynthesisOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export function useKeyboardShortcuts({
@@ -25,6 +27,7 @@ export function useKeyboardShortcuts({
   showShortcutsHelp,
   showMobileSettings,
   tocOpen,
+  synthesisOpen,
   onChapterChange,
   onToggleBookmark,
   onSetHighlightMode,
@@ -32,6 +35,7 @@ export function useKeyboardShortcuts({
   onSetShowShortcutsHelp,
   onSetSidebarOpen,
   onSetShowMobileSettings,
+  onSetSynthesisOpen,
 }: UseKeyboardShortcutsOptions) {
   // Refs for stable handler access
   const chapterChangeRef = useRef(onChapterChange);
@@ -51,6 +55,7 @@ export function useKeyboardShortcuts({
       if (e.key === 'Escape') {
         if (showShortcutsHelp) { onSetShowShortcutsHelp(false); return; }
         if (showMobileSettings) { onSetShowMobileSettings(false); return; }
+        if (synthesisOpen && onSetSynthesisOpen) { onSetSynthesisOpen(false); return; }
         if (sidebarOpen) { onSetSidebarOpen(false); return; }
         if (tocOpen) { onSetTocOpen(false); return; }
         return;
@@ -111,11 +116,13 @@ export function useKeyboardShortcuts({
     showShortcutsHelp,
     showMobileSettings,
     tocOpen,
+    synthesisOpen,
     onSetShowShortcutsHelp,
     onSetShowMobileSettings,
     onSetSidebarOpen,
     onSetTocOpen,
     onSetHighlightMode,
+    onSetSynthesisOpen,
   ]);
 
   return { chapterChangeRef, toggleBookmarkRef };
