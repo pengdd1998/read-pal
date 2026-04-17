@@ -28,6 +28,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  oauthLogin: (token: string, user: User) => void;
   logout: () => void;
 }
 
@@ -97,6 +98,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const oauthLogin = useCallback((newToken: string, newUser: User) => {
+    localStorage.setItem('auth_token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setAuthCookie(newToken);
+    setToken(newToken);
+    setUser(newUser);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -106,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         register,
+        oauthLogin,
         logout,
       }}
     >

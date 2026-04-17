@@ -12,6 +12,7 @@ import * as m001 from './001_initial_schema';
 import * as m002 from './002_performance_indexes';
 import * as m003 from './003_missing_tables';
 import * as m004 from './004_personal_book_columns';
+import * as m005 from './005_google_oauth';
 
 // Register migrations in order
 registerMigration({
@@ -36,6 +37,12 @@ registerMigration({
   id: '004_personal_book_columns',
   up: m004.up,
   down: m004.down,
+});
+
+registerMigration({
+  id: '005_google_oauth',
+  up: m005.up,
+  down: m005.down,
 });
 
 // Re-export migration functions

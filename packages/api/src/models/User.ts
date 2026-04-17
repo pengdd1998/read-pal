@@ -23,12 +23,13 @@ interface UserAttributes {
   name: string;
   passwordHash?: string;
   avatar?: string;
+  googleId?: string;
   settings: UserSettings;
   createdAt: Date;
   updatedAt: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'passwordHash' | 'avatar' | 'createdAt' | 'updatedAt'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'passwordHash' | 'avatar' | 'googleId' | 'createdAt' | 'updatedAt'> {}
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: string;
@@ -36,6 +37,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public name!: string;
   public passwordHash?: string;
   public avatar?: string;
+  public googleId?: string;
   public settings!: UserSettings;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -68,6 +70,11 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    googleId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
     settings: {
       type: DataTypes.JSONB,
       allowNull: false,
@@ -95,6 +102,10 @@ User.init(
     indexes: [
       {
         fields: ['email'],
+      },
+      {
+        fields: ['google_id'],
+        unique: true,
       },
     ],
   }

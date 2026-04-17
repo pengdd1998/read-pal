@@ -31,6 +31,7 @@ import recommendationsRoutes from './routes/recommendations.routes';
 import challengesRoutes from './routes/challenges.routes';
 import exportRoutes from './routes/export.routes';
 import synthesisRoutes from './routes/synthesis.routes';
+import googleAuthRoutes from './routes/google-auth.routes';
 import flashcardsRoutes from './routes/flashcards.routes';
 import studyModeRoutes from './routes/study-mode.routes';
 import collectionsRoutes from './routes/collections.routes';
@@ -275,6 +276,7 @@ app.use('/health', healthRoutes);
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/google', googleAuthRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/books', booksRoutes);
 app.use('/api/annotations', annotationsRoutes);
