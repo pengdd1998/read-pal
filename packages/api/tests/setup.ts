@@ -65,7 +65,82 @@ jest.mock('../src/models', () => {
     Document: createMockModel('Document'),
     ReadingSession: createMockModel('ReadingSession'),
     MemoryBook: createMockModel('MemoryBook'),
+    ApiKey: createMockModel('ApiKey'),
+    Notification: createMockModel('Notification'),
+    Webhook: createMockModel('Webhook'),
+    WebhookDeliveryLog: createMockModel('WebhookDeliveryLog'),
+    Flashcard: createMockModel('Flashcard'),
+    Collection: createMockModel('Collection'),
+    SharedExport: createMockModel('SharedExport'),
+    ChatMessage: createMockModel('ChatMessage'),
+    InterventionFeedback: createMockModel('InterventionFeedback'),
+    FriendConversation: createMockModel('FriendConversation'),
+    FriendRelationship: createMockModel('FriendRelationship'),
+    BookClub: createMockModel('BookClub'),
+    BookClubMember: createMockModel('BookClubMember'),
+    ClubDiscussion: createMockModel('ClubDiscussion'),
   };
+});
+
+// Mock individual model files that are imported directly by services/routes
+jest.mock('../src/models/ApiKey', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    destroy: jest.fn().mockResolvedValue(1),
+    init: jest.fn(),
+  };
+  return {
+    ApiKey: mockModel,
+    generateApiKey: jest.fn().mockReturnValue({ key: 'test-key', keyHash: 'test-hash', keyPrefix: 'rp_' }),
+    hashApiKey: jest.fn().mockReturnValue('test-hash'),
+    isApiKeyFormat: jest.fn().mockReturnValue(false),
+  };
+});
+
+jest.mock('../src/models/Notification', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([0]),
+    destroy: jest.fn().mockResolvedValue(1),
+    count: jest.fn().mockResolvedValue(0),
+    init: jest.fn(),
+  };
+  return { Notification: mockModel };
+});
+
+jest.mock('../src/models/Webhook', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    count: jest.fn().mockResolvedValue(0),
+    init: jest.fn(),
+  };
+  return {
+    Webhook: mockModel,
+    WebhookEvent: {} as any,
+    isValidWebhookEvent: jest.fn().mockReturnValue(true),
+    getValidWebhookEvents: jest.fn().mockReturnValue(['book.started', 'book.completed']),
+  };
+});
+
+jest.mock('../src/models/WebhookDeliveryLog', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockResolvedValue({}),
+    findAndCountAll: jest.fn().mockResolvedValue({ rows: [], count: 0 }),
+    init: jest.fn(),
+  };
+  return { WebhookDeliveryLog: mockModel };
 });
 
 // Mock OpenAI SDK (used by GLM via OpenAI-compatible API)
