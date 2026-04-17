@@ -142,9 +142,8 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     // Extract genres from books
     const userGenres = new Set<string>();
     for (const book of books) {
-      const bookData = book.get({ plain: true }) as Record<string, any>;
       // Extract genres from title + tags
-      const textSource = `${bookData.title} ${bookData.author} ${(bookData.tags || []).join(' ')}`;
+      const textSource = `${book.title} ${book.author} ${(book.tags || []).join(' ')}`;
       const extracted = extractGenres(textSource);
       extracted.forEach((g) => userGenres.add(g));
     }

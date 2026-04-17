@@ -25,6 +25,7 @@ const router: Router = Router();
 router.post(
   '/start',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 30 }),
   validate([
     body('bookId').isString().withMessage('Book ID is required and must be a string'),
   ]),
@@ -68,7 +69,7 @@ router.post(
         bookId,
         title: book.title,
         startedAt: session.startedAt,
-      }).catch(() => {});
+      }).catch((err) => { console.error('[Webhook] session.started dispatch failed:', err); });
 
       res.status(201).json({ success: true, data: session });
     } catch (error) {
@@ -88,7 +89,7 @@ router.post(
  * POST /api/reading-sessions/:id/end
  * End a reading session
  */
-router.post('/:id/end', authenticate, async (req: AuthRequest, res) => {
+router.post('/:id/end', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const session = await ReadingSession.findOne({
       where: { id: req.params.id, userId: req.userId, isActive: true },
@@ -116,7 +117,7 @@ router.post('/:id/end', authenticate, async (req: AuthRequest, res) => {
       bookId: session.bookId,
       duration,
       pagesRead: req.body.pagesRead || 0,
-    }).catch(() => {});
+    }).catch((err) => { console.error('[Webhook] session.ended dispatch failed:', err); });
 
     // Update book progress if pagesRead provided
     if (req.body.currentPage && req.body.totalPages) {
@@ -184,7 +185,7 @@ router.post('/:id/end', authenticate, async (req: AuthRequest, res) => {
         }
 
         await notifyStreakMilestone(req.userId!, streak);
-      } catch { /* non-critical */ }
+      } catch (err) { console.error('[Sessions] Post-end goal/streak check failed:', err); }
     })();
 
     res.json({ success: true, data: session });
@@ -204,7 +205,7 @@ router.post('/:id/end', authenticate, async (req: AuthRequest, res) => {
  * PATCH /api/reading-sessions/:id/heartbeat
  * Update active session progress
  */
-router.patch('/:id/heartbeat', authenticate, async (req: AuthRequest, res) => {
+router.patch('/:id/heartbeat', authenticate, rateLimiter({ windowMs: 60000, max: 60 }), async (req: AuthRequest, res) => {
   try {
     const session = await ReadingSession.findOne({
       where: { id: req.params.id, userId: req.userId, isActive: true },

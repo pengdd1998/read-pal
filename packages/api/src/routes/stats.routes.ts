@@ -192,7 +192,7 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
     const streak = await calculateStreak(userId);
 
     // Trigger streak milestone notification (fire-and-forget)
-    notifyStreakMilestone(userId, streak).catch(() => {});
+    notifyStreakMilestone(userId, streak).catch((err) => { console.error('[Stats] Streak milestone notification failed:', err); });
 
     // Calculate longest streak in the period
     let longestStreak = 0;

@@ -98,7 +98,7 @@ router.get('/tags', authenticate, async (req: AuthRequest, res) => {
  * PUT /api/books/:id/tags
  * Replace all tags on a book
  */
-router.put('/:id/tags', authenticate, async (req: AuthRequest, res) => {
+router.put('/:id/tags', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const book = await Book.findOne({
       where: { id: req.params.id, userId: req.userId },
@@ -222,7 +222,7 @@ router.post(
  * PATCH /api/books/:id
  * Update a book
  */
-router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
+router.patch('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const book = await Book.findOne({
       where: {
@@ -314,7 +314,7 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
         title: book.title,
         author: book.author,
         completedAt: book.completedAt,
-      }).catch(() => {});
+      }).catch((err) => { console.error('[Webhook] book.completed dispatch failed:', err); });
     }
 
     if (status === 'reading') {
@@ -323,7 +323,7 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
         title: book.title,
         author: book.author,
         startedAt: book.startedAt,
-      }).catch(() => {});
+      }).catch((err) => { console.error('[Webhook] book.started dispatch failed:', err); });
     }
 
     res.json({
@@ -346,7 +346,7 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
  * DELETE /api/books/:id
  * Delete a book
  */
-router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async (req: AuthRequest, res) => {
   try {
     const book = await Book.findOne({
       where: {

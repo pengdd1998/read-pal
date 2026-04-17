@@ -409,7 +409,7 @@ router.post(
       bookId,
       type,
       content: content?.slice(0, 200),
-    }).catch(() => {});
+    }).catch((err) => { console.error('[Webhook] annotation.created dispatch failed:', err); });
 
     res.status(201).json({
       success: true,
@@ -431,7 +431,7 @@ router.post(
  * PATCH /api/annotations/:id
  * Update an annotation
  */
-router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
+router.patch('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const annotation = await Annotation.findOne({
       where: {
@@ -493,7 +493,7 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
       annotationId: annotation.id,
       bookId: annotation.bookId,
       type: annotation.type,
-    }).catch(() => {});
+    }).catch((err) => { console.error('[Webhook] annotation.updated dispatch failed:', err); });
 
     res.json({
       success: true,
@@ -515,7 +515,7 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
  * DELETE /api/annotations/:id
  * Delete an annotation
  */
-router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const annotation = await Annotation.findOne({
       where: {
@@ -535,7 +535,7 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
       annotationId: annotation.id,
       bookId: annotation.bookId,
       type: annotation.type,
-    }).catch(() => {});
+    }).catch((err) => { console.error('[Webhook] annotation.deleted dispatch failed:', err); });
 
     res.json({
       success: true,

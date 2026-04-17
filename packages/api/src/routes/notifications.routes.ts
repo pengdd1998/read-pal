@@ -8,6 +8,7 @@
 import { Router } from 'express';
 import { notFound } from '../utils/errors';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 import {
   getUserNotifications,
   markNotificationRead,
@@ -61,7 +62,7 @@ router.get('/unread-count', authenticate, async (req: AuthRequest, res) => {
  * PATCH /api/notifications/:id/read
  * Mark a notification as read
  */
-router.patch('/:id/read', authenticate, async (req: AuthRequest, res) => {
+router.patch('/:id/read', authenticate, rateLimiter({ windowMs: 60000, max: 60 }), async (req: AuthRequest, res) => {
   try {
     const found = await markNotificationRead(req.userId!, req.params.id);
     if (!found) {
@@ -80,7 +81,7 @@ router.patch('/:id/read', authenticate, async (req: AuthRequest, res) => {
  * POST /api/notifications/mark-all-read
  * Mark all notifications as read
  */
-router.post('/mark-all-read', authenticate, async (req: AuthRequest, res) => {
+router.post('/mark-all-read', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const count = await markAllRead(req.userId!);
     res.json({ success: true, data: { count } });

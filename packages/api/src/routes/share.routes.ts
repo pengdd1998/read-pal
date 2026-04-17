@@ -341,7 +341,7 @@ router.get('/s/:token', rateLimiter({ windowMs: 60000, max: 60 }), async (req, r
     }
 
     // Increment view count (fire and forget)
-    SharedExport.update({ viewCount: shared.viewCount + 1 }, { where: { id: shared.id } }).catch(() => {});
+    SharedExport.update({ viewCount: shared.viewCount + 1 }, { where: { id: shared.id } }).catch((err) => { console.error('[Share] View count update failed:', err); });
 
     // If client wants JSON, return structured data
     const accept = req.headers.accept || '';

@@ -78,7 +78,7 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
       }
 
       // Update last used timestamp (fire and forget)
-      apiKey.update({ lastUsedAt: new Date() }).catch(() => {});
+      apiKey.update({ lastUsedAt: new Date() }).catch((err) => { console.error('[Auth] API key lastUsedAt update failed:', err); });
 
       req.userId = user.id;
       req.user = { id: user.id, email: user.email, name: user.name };

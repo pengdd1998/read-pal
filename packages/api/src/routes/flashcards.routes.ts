@@ -147,7 +147,7 @@ No markdown, no code fences, just the JSON array.`;
         bookId,
         count: flashcards.length,
         flashcardIds: flashcards.map((f) => f.id),
-      }).catch(() => {});
+      }).catch((err) => { console.error('[Webhook] flashcard.created dispatch failed:', err); });
 
       return res.json({
         success: true,
@@ -246,6 +246,7 @@ router.get(
 router.post(
   '/:id/review',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 60 }),
   validate([
     param('id').isUUID(),
     body('rating').isInt({ min: 0, max: 5 }).withMessage('Rating must be 0-5'),
@@ -292,7 +293,7 @@ router.post(
         rating,
         interval: sm2Result.interval,
         repetitionCount: sm2Result.repetitionCount,
-      }).catch(() => {});
+      }).catch((err) => { console.error('[Webhook] flashcard.reviewed dispatch failed:', err); });
 
       return res.json({
         success: true,
@@ -443,6 +444,7 @@ router.get(
 router.delete(
   '/:id',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 30 }),
   validate([param('id').isUUID()]),
   async (req: AuthRequest, res) => {
     try {

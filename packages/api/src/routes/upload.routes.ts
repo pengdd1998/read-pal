@@ -215,7 +215,7 @@ router.post('/', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), upload
       title: book.title,
       author: book.author,
       fileType: book.fileType,
-    }).catch(() => {});
+    }).catch((err) => { console.error('[Webhook] book.uploaded dispatch failed:', err); });
 
     res.json({
       success: true,

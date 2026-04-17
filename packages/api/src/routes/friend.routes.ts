@@ -372,7 +372,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
  * Body: { persona?: ReadingFriendPersona, name?: string }
  * Response: { success: true, data: { persona, personaDetails } }
  */
-router.patch('/', authenticate, async (req: AuthRequest, res) => {
+router.patch('/', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res) => {
   try {
     const { persona } = req.body as UpdateFriendRequest;
 
@@ -484,7 +484,7 @@ router.get('/history', authenticate, async (req: AuthRequest, res) => {
  * DELETE /api/friend/history
  * Clear all conversation history for the authenticated user.
  */
-router.delete('/history', authenticate, async (req: AuthRequest, res) => {
+router.delete('/history', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async (req: AuthRequest, res) => {
   try {
     const friendAgent = req.app.get('friendAgent');
     if (friendAgent) {

@@ -69,7 +69,7 @@ async function deliverOne(
       statusCode: response.status,
       durationMs,
       error: response.ok ? null : `HTTP ${response.status}`,
-    }).catch(() => {});
+    }).catch((err) => { console.error('[Webhook] Delivery log create failed:', err); });
 
     return { status: response.status, durationMs };
   } catch (err) {
@@ -89,7 +89,7 @@ async function deliverOne(
       statusCode: -1,
       durationMs,
       error: err instanceof Error ? err.message : 'Network error',
-    }).catch(() => {});
+    }).catch((logErr) => { console.error('[Webhook] Delivery failure log create failed:', logErr); });
 
     return { status: -1, durationMs };
   }
