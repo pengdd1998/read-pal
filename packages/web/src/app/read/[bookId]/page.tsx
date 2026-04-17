@@ -65,7 +65,7 @@ function SelectionHint({ onDismiss }: { onDismiss: () => void }) {
   }, [onDismiss]);
 
   return (
-    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20 animate-fade-in" style={{ animation: 'fade-in 0.5s 1.5s forwards' }}>
+    <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-20 animate-fade-in" style={{ animation: 'fade-in 0.5s 1.5s forwards' }}>
       <div className={`px-4 py-2 rounded-xl text-white text-sm backdrop-blur-sm shadow-lg flex items-center gap-2 pointer-events-auto ${
         isReturningUser ? 'bg-amber-600/60' : 'bg-amber-600/80'
       }`}>
@@ -585,10 +585,10 @@ export default function ReadPage() {
     <div className="h-screen flex flex-col relative">
       <ReadingBackground content={chapterContent} enabled={bgEnabled} />
 
-      {/* Top bar — slides behind content, stays in flow to prevent layout shifts */}
+      {/* Top bar — fixed position, slides in/out cleanly */}
       <div
-        className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} transition-transform duration-300 ease-out shrink-0 ${
-          showControls ? 'translate-y-0' : '-translate-y-full h-0 overflow-hidden py-0 border-0'
+        className={`fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} transition-transform duration-300 ease-out ${
+          showControls ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
         {/* Left: Back + Book info */}
@@ -606,7 +606,7 @@ export default function ReadPage() {
                 <span className="ml-1.5 text-teal-500 dark:text-teal-400">· {readingWpm} wpm</span>
               )}
               {isPaused && (
-                <span className="ml-1.5 text-amber-500 dark:text-amber-400 animate-pulse">· Paused</span>
+                <span className="ml-1.5 text-amber-500 dark:text-amber-400">· Paused</span>
               )}
             </p>
           </div>
@@ -800,9 +800,9 @@ export default function ReadPage() {
         />
       )}
 
-      {/* Main content — sidebars overlay instead of pushing */}
+      {/* Main content — fills all available space */}
       <div className="flex-1 overflow-hidden">
-        <div className={`h-full ${THEME_CLASSES[theme]} transition-colors duration-200 ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
+        <div className={`h-full ${THEME_CLASSES[theme]} ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
           <ReaderView
             bookId={bookId}
             chapterContent={chapterContent}
@@ -877,7 +877,7 @@ export default function ReadPage() {
 
       {/* Study mode panel */}
       <div className={`fixed right-0 top-0 bottom-0 z-20 w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="h-full overflow-y-auto pt-14 px-3 pb-4">
+        <div className="h-full overflow-y-auto px-3 pb-4">
           <StudyModePanel
             enabled={studyMode.enabled}
             loading={studyMode.loading}
@@ -953,14 +953,14 @@ export default function ReadPage() {
 
       {/* Highlight mode indicator — subtle pill */}
       {highlightMode && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm">
           Tap text to highlight
         </div>
       )}
 
       {/* Milestone toast — gentle */}
       {milestone && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
           <div className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-amber-700 dark:text-amber-300 text-xs font-medium shadow-md border border-amber-200/50 dark:border-amber-800/50">
             {milestone} complete
           </div>
