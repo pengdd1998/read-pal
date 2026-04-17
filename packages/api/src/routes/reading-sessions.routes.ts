@@ -62,6 +62,14 @@ router.post(
         { where: { id: bookId } }
       );
 
+      // Fire-and-forget webhook dispatch
+      dispatchWebhook(req.userId!, 'session.started', {
+        sessionId: session.id,
+        bookId,
+        title: book.title,
+        startedAt: session.startedAt,
+      }).catch(() => {});
+
       res.status(201).json({ success: true, data: session });
     } catch (error) {
       console.error('Error starting session:', error);

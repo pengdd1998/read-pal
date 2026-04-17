@@ -317,6 +317,15 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
       }).catch(() => {});
     }
 
+    if (status === 'reading') {
+      dispatchWebhook(req.userId!, 'book.started', {
+        bookId: book.id,
+        title: book.title,
+        author: book.author,
+        startedAt: book.startedAt,
+      }).catch(() => {});
+    }
+
     res.json({
       success: true,
       data: book,

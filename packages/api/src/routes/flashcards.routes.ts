@@ -15,6 +15,7 @@ import { Annotation } from '../models/Annotation';
 import { Book } from '../models/Book';
 import { chatCompletion } from '../services/llmClient';
 import { sanitizePromptInput, wrapUserContent } from '../utils/promptSanitizer';
+import { dispatchWebhook } from '../services/WebhookDelivery';
 
 const router: Router = Router();
 
@@ -138,6 +139,13 @@ No markdown, no code fences, just the JSON array.`;
           nextReviewAt: new Date(),
         })),
       );
+
+      // Fire-and-forget webhook dispatch
+      dispatchWebhook(userId, 'flashcard.created', {
+        bookId,
+        count: flashcards.length,
+        flashcardIds: flashcards.map((f) => f.id),
+      }).catch(() => {});
 
       return res.json({
         success: true,
@@ -274,6 +282,15 @@ router.post(
         lastReviewAt: new Date(),
         lastRating: rating as 0 | 1 | 2 | 3 | 4 | 5,
       });
+
+      // Fire-and-forget webhook dispatch
+      dispatchWebhook(userId, 'flashcard.reviewed', {
+        flashcardId: card.id,
+        bookId: card.bookId,
+        rating,
+        interval: sm2Result.interval,
+        repetitionCount: sm2Result.repetitionCount,
+      }).catch(() => {});
 
       return res.json({
         success: true,

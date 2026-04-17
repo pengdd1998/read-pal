@@ -13,6 +13,7 @@ import { ContentProcessor } from '../services/ContentProcessor';
 import { SemanticSearch } from '../services/SemanticSearch';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { rateLimiter } from '../middleware/rateLimiter';
+import { dispatchWebhook } from '../services/WebhookDelivery';
 
 const router: Router = Router();
 const processor = new BookProcessor();
@@ -207,6 +208,14 @@ router.post('/', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), upload
 
     // Clean up temp file
     await fs.unlink(tempPath);
+
+    // Fire-and-forget webhook dispatch
+    dispatchWebhook(userId, 'book.started', {
+      bookId: book.id,
+      title: book.title,
+      author: book.author,
+      fileType: book.fileType,
+    }).catch(() => {});
 
     res.json({
       success: true,

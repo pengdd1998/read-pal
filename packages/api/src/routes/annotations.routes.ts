@@ -488,6 +488,13 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
 
     await annotation.save();
 
+    // Fire-and-forget webhook dispatch
+    dispatchWebhook(req.userId!, 'annotation.updated', {
+      annotationId: annotation.id,
+      bookId: annotation.bookId,
+      type: annotation.type,
+    }).catch(() => {});
+
     res.json({
       success: true,
       data: annotation,
@@ -522,6 +529,13 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
     }
 
     await annotation.destroy();
+
+    // Fire-and-forget webhook dispatch
+    dispatchWebhook(req.userId!, 'annotation.deleted', {
+      annotationId: annotation.id,
+      bookId: annotation.bookId,
+      type: annotation.type,
+    }).catch(() => {});
 
     res.json({
       success: true,
