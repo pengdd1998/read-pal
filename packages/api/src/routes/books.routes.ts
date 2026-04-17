@@ -519,6 +519,7 @@ This was not an encouraging opening for a conversation. Alice replied, rather sh
         progress: 0,
         addedAt: new Date(),
         status: 'unread',
+        metadata: { source: 'sample' },
       });
 
       // Create document with chapter content

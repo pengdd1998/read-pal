@@ -30,8 +30,10 @@ export default function WelcomePage() {
         const res = await api.get<Book[]>('/api/books');
         if (res.success && res.data) {
           const books = (res.data) || [];
-          // Find the sample book (updated title or legacy title)
+          // Find the sample book — prefer metadata.source, fallback to title matching
           const sample = books.find(
+            (b) => (b.metadata as Record<string, string>)?.source === 'sample',
+          ) ?? books.find(
             (b) => b.title?.includes("Alice's Adventures") || b.title?.includes('Art of Reading') || b.author === 'read-pal',
           );
           if (sample) setBook(sample);

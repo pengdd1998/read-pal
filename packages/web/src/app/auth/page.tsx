@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -50,6 +51,12 @@ export default function AuthPage() {
     setError('');
     setLoading(true);
 
+    if (mode === 'register' && password !== confirmPassword) {
+      setError('Passwords do not match.');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (mode === 'login') {
         await login(email, password);
@@ -78,7 +85,7 @@ export default function AuthPage() {
     setMode(newMode);
     setError('');
     setPassword('');
-    // Update URL without navigation
+    setConfirmPassword('');
     const params = new URLSearchParams(searchParams.toString());
     params.set('mode', newMode);
     router.replace(`/auth?${params.toString()}`, { scroll: false });
@@ -208,17 +215,41 @@ export default function AuthPage() {
                   Password must be at least 8 characters
                 </p>
               )}
-              {mode === 'login' && (
-                <div className="mt-1.5 text-right">
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-              )}
             </div>
+
+            {/* Confirm Password — register only */}
+            {mode === 'register' && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="input"
+                  placeholder="Repeat your password"
+                  autoComplete="new-password"
+                />
+                {confirmPassword.length > 0 && password !== confirmPassword && (
+                  <p className="text-xs text-red-500 mt-1" role="alert">Passwords do not match</p>
+                )}
+              </div>
+            )}
+
+            {mode === 'login' && (
+              <div className="text-right -mt-2">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            )}
 
             {error && <ErrorAlert message={error} />}
 

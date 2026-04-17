@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+import crypto from 'node:crypto';
 import { notFound } from '../utils/errors';
 import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
@@ -318,8 +319,8 @@ router.patch('/me', authenticate, async (req: AuthRequest, res) => {
 
 /**
  * POST /api/auth/forgot-password
- * Stub — always returns success to prevent email enumeration.
- * Email sending not yet configured.
+ * Generates a password reset token stored in Redis (1hr TTL).
+ * In production, send email with reset link. For beta, log the link.
  */
 router.post('/forgot-password', rateLimiter({ windowMs: 60000, max: 5 }), async (req, res) => {
   const { email } = req.body;
@@ -331,11 +332,87 @@ router.post('/forgot-password', rateLimiter({ windowMs: 60000, max: 5 }), async 
     });
   }
 
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (user) {
+      const resetToken = crypto.randomUUID();
+      const RESET_TTL_S = 3600; // 1 hour
+
+      await redisClient.set(
+        `password-reset:${resetToken}`,
+        JSON.stringify({ userId: user.id, email: user.email }),
+        'EX',
+        RESET_TTL_S,
+      );
+
+      // TODO: Send email with reset link in production
+      // For beta, log the reset URL so admins can share it
+      console.log(`[auth] Password reset for ${email}: /reset-password?token=${resetToken}`);
+    }
+  } catch {
+    // Silently ignore errors to prevent enumeration
+  }
+
   res.json({
     success: true,
     data: { message: 'If an account with that email exists, a reset link has been sent.' },
   });
 });
+
+/**
+ * POST /api/auth/reset-password
+ * Validates reset token and updates the user's password.
+ */
+router.post(
+  '/reset-password',
+  rateLimiter({ windowMs: 60000, max: 5 }),
+  validate([
+    body('token').isUUID().withMessage('Valid reset token is required'),
+    body('password').isLength({ min: 8, max: 72 }).withMessage('Password must be between 8 and 72 characters'),
+  ]),
+  async (req, res) => {
+    try {
+      const { token, password } = req.body;
+
+      const data = await redisClient.get(`password-reset:${token}`);
+      if (!data) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_TOKEN', message: 'Reset token is invalid or expired. Please request a new one.' },
+        });
+      }
+
+      const { userId } = JSON.parse(data) as { userId: string; email: string };
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_TOKEN', message: 'Reset token is invalid or expired.' },
+        });
+      }
+
+      // Update password
+      user.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      await user.save();
+
+      // Consume the token so it can't be reused
+      await redisClient.del(`password-reset:${token}`);
+
+      console.log(`[auth] Password reset successful for user ${userId}`);
+
+      res.json({
+        success: true,
+        data: { message: 'Password has been reset successfully. You can now sign in.' },
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({
+        success: false,
+        error: { code: 'RESET_ERROR', message: 'Failed to reset password' },
+      });
+    }
+  },
+);
 
 /**
  * POST /api/auth/logout
