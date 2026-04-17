@@ -563,4 +563,63 @@ router.get('/reading-speed', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * GET /api/stats/reading-speed/by-book
+ *
+ * Returns estimated WPM per book for the authenticated user,
+ * useful for comparing reading speed across different books.
+ */
+router.get('/reading-speed/by-book', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId!;
+    const WORDS_PER_PAGE = 250;
+
+    const rows = await sequelize.query<{
+      book_id: string;
+      title: string;
+      author: string;
+      total_pages: string;
+      total_duration: string;
+    }>(
+      `SELECT
+         rs.book_id,
+         b.title,
+         COALESCE(b.author, 'Unknown') AS author,
+         COALESCE(SUM(rs.pages_read), 0)::int AS total_pages,
+         COALESCE(SUM(rs.duration), 0)::int   AS total_duration
+       FROM reading_sessions rs
+       JOIN books b ON b.id = rs.book_id
+       WHERE rs.user_id = $1
+         AND rs.duration >= 30
+         AND rs.pages_read >= 1
+       GROUP BY rs.book_id, b.title, b.author
+       HAVING SUM(rs.duration) > 0
+       ORDER BY SUM(rs.pages_read) DESC
+       LIMIT 10`,
+      { bind: [userId], type: QueryTypes.SELECT },
+    );
+
+    const books = rows.map((r) => {
+      const totalMinutes = parseInt(r.total_duration, 10) / 60;
+      const totalPages = parseInt(r.total_pages, 10);
+      return {
+        bookId: r.book_id,
+        title: r.title,
+        author: r.author,
+        wpm: totalMinutes > 0 ? Math.round((totalPages * WORDS_PER_PAGE) / totalMinutes) : 0,
+        totalPagesRead: totalPages,
+        totalMinutes: Math.round(totalMinutes),
+      };
+    });
+
+    res.json({ success: true, data: books });
+  } catch (error) {
+    console.error('Error fetching per-book reading speed:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SPEED_BY_BOOK_ERROR', message: 'Failed to fetch per-book reading speed' },
+    });
+  }
+});
+
 export default router;
