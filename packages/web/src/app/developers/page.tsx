@@ -60,6 +60,14 @@ const endpoints: Endpoint[] = [
   { method: 'POST', path: '/api/api-keys', description: 'Create new API key', auth: true },
   { method: 'DELETE', path: '/api/api-keys/:id', description: 'Revoke API key', auth: true },
 
+  // Webhooks
+  { method: 'GET', path: '/api/webhooks', description: 'List your webhooks', auth: true },
+  { method: 'POST', path: '/api/webhooks', description: 'Create webhook', auth: true },
+  { method: 'PATCH', path: '/api/webhooks/:id', description: 'Update webhook', auth: true },
+  { method: 'DELETE', path: '/api/webhooks/:id', description: 'Delete webhook', auth: true },
+  { method: 'POST', path: '/api/webhooks/:id/test', description: 'Send test ping', auth: true },
+  { method: 'GET', path: '/api/webhooks/events', description: 'List available event types', auth: true },
+
   // AI Companion
   { method: 'POST', path: '/api/agents/chat', description: 'Chat with AI companion', auth: true },
 ];
@@ -279,6 +287,98 @@ export default function DevelopersPage() {
                 <tr><td className="py-2 font-mono">bookclub</td><td>text/markdown</td><td>Discussion guide with AI questions</td></tr>
               </tbody>
             </table>
+          </div>
+        </section>
+
+        {/* Webhooks */}
+        <section>
+          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">Webhooks</h2>
+          <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-4 text-sm text-stone-700">
+            <p>
+              Get real-time HTTP callbacks when events happen in your reading activity. Webhooks are delivered
+              via <code className="bg-stone-100 px-1 rounded">POST</code> with HMAC-SHA256 signatures.
+            </p>
+
+            <div>
+              <h3 className="font-semibold text-stone-800 mb-2">Creating a webhook</h3>
+              <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+                <div className="text-stone-400"># Create a webhook for book and session events</div>
+                <div className="text-green-400">curl -X POST {typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}/api/webhooks \</div>
+                <div className="text-green-400 ml-6">-H &quot;Authorization: Bearer rpk_YOUR_KEY&quot; \</div>
+                <div className="text-green-400 ml-6">-H &quot;Content-Type: application/json&quot; \</div>
+                <div className="text-green-400 ml-6">-d &#123;&quot;url&quot;: &quot;https://example.com/hook&quot;, &quot;events&quot;: [&quot;book.completed&quot;, &quot;session.ended&quot;]&#125;</div>
+              </div>
+              <p className="text-xs text-stone-500 mt-2">
+                The response includes the <code className="bg-stone-100 px-1 rounded">secret</code> — save it, it&#39;s only shown once. Max 10 webhooks per user.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-stone-800 mb-2">Event types</h3>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-stone-200">
+                    <th className="pb-2 font-semibold">Event</th>
+                    <th className="pb-2 font-semibold">Trigger</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  <tr><td className="py-1.5 font-mono text-xs">book.started</td><td>Reading session started for a book</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">book.completed</td><td>Book marked as completed</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">book.updated</td><td>Book metadata or progress updated</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">session.started</td><td>New reading session started</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">session.ended</td><td>Reading session ended</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">annotation.created</td><td>Highlight, note, or bookmark created</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">annotation.updated</td><td>Annotation edited</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">annotation.deleted</td><td>Annotation deleted</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">flashcard.created</td><td>Flashcard generated</td></tr>
+                  <tr><td className="py-1.5 font-mono text-xs">flashcard.reviewed</td><td>SM-2 review submitted</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-stone-800 mb-2">Payload format</h3>
+              <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+                <div className="text-green-400">&#123;</div>
+                <div className="text-green-400 ml-4">&quot;event&quot;: &quot;book.completed&quot;,</div>
+                <div className="text-green-400 ml-4">&quot;timestamp&quot;: &quot;2026-04-17T12:00:00.000Z&quot;,</div>
+                <div className="text-green-400 ml-4">&quot;data&quot;: &#123;</div>
+                <div className="text-green-400 ml-8">&quot;bookId&quot;: &quot;abc-123&quot;,</div>
+                <div className="text-green-400 ml-8">&quot;title&quot;: &quot;Alice in Wonderland&quot;,</div>
+                <div className="text-green-400 ml-8">&quot;author&quot;: &quot;Lewis Carroll&quot;,</div>
+                <div className="text-green-400 ml-8">&quot;completedAt&quot;: &quot;2026-04-17T12:00:00.000Z&quot;</div>
+                <div className="text-green-400 ml-4">&#125;</div>
+                <div className="text-green-400">&#125;</div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-stone-800 mb-2">Verifying signatures</h3>
+              <div className="bg-stone-100 rounded-lg p-3 text-xs space-y-2">
+                <p>Each delivery includes these headers:</p>
+                <div className="font-mono">
+                  <div>X-Webhook-Signature: &lt;HMAC-SHA256 hex&gt;</div>
+                  <div>X-Webhook-Event: book.completed</div>
+                  <div>X-Webhook-Timestamp: 2026-04-17T12:00:00.000Z</div>
+                </div>
+                <p className="mt-2">Verify by computing <code className="bg-white px-1 rounded">HMAC-SHA256(rawBody, secret)</code> and comparing to the signature header.</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-stone-800 mb-2">Testing</h3>
+              <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+                <div className="text-stone-400"># Send a test ping to your webhook</div>
+                <div className="text-green-400">curl -X POST {typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}/api/webhooks/WEBHOOK_ID/test \</div>
+                <div className="text-green-400 ml-6">-H &quot;Authorization: Bearer rpk_YOUR_KEY&quot;</div>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <strong>Retry policy:</strong> Failed deliveries (non-2xx or timeout) increment a failure counter.
+              After 10 consecutive failures, the webhook is automatically disabled. Test pings reset the counter on success.
+            </div>
           </div>
         </section>
 
