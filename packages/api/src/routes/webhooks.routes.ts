@@ -5,7 +5,9 @@
 import { Router, Response } from 'express';
 import crypto from 'node:crypto';
 import { Webhook, isValidWebhookEvent, getValidWebhookEvents, WebhookEvent } from '../models/Webhook';
+import { WebhookDeliveryLog } from '../models/WebhookDeliveryLog';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { parsePagination } from '../utils/pagination';
 
 const router: Router = Router();
 
@@ -192,6 +194,47 @@ router.post('/:id/test', authenticate, async (req: AuthRequest, res: Response) =
  */
 router.get('/events', authenticate, (_req: AuthRequest, res: Response) => {
   res.json({ success: true, data: { events: getValidWebhookEvents() } });
+});
+
+/**
+ * GET /api/webhooks/:id/deliveries — Get delivery logs for a webhook
+ */
+router.get('/:id/deliveries', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const webhook = await Webhook.findOne({
+      where: { id: req.params.id, userId: req.userId! },
+    });
+
+    if (!webhook) {
+      res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Webhook not found' } });
+      return;
+    }
+
+    const { limit, offset } = parsePagination(req, 20);
+
+    const { rows: deliveries, count: total } = await WebhookDeliveryLog.findAndCountAll({
+      where: { webhookId: webhook.id },
+      order: [['createdAt', 'DESC']],
+      limit: Math.min(limit, 50),
+      offset,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        deliveries,
+        pagination: {
+          page: Math.floor(offset / limit) + 1,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Get deliveries error:', error);
+    res.status(500).json({ success: false, error: { code: 'DELIVERIES_ERROR', message: 'Failed to fetch delivery logs' } });
+  }
 });
 
 export default router;

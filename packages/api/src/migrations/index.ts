@@ -18,6 +18,7 @@ import * as m007 from './007_session_summary';
 import * as m008 from './008_book_clubs';
 import * as m009 from './009_api_keys';
 import * as m010 from './010_webhooks';
+import * as m011 from './011_webhook_delivery_logs';
 
 // Register migrations in order
 registerMigration({
@@ -78,6 +79,12 @@ registerMigration({
   id: '010_webhooks',
   up: m010.up,
   down: m010.down,
+});
+
+registerMigration({
+  id: '011_webhook_delivery_logs',
+  up: m011.up,
+  down: m011.down,
 });
 
 // Re-export migration functions

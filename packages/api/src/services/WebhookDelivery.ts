@@ -6,6 +6,7 @@
 
 import crypto from 'node:crypto';
 import { Webhook, WebhookEvent } from '../models/Webhook';
+import { WebhookDeliveryLog } from '../models/WebhookDeliveryLog';
 
 interface WebhookPayload {
   event: WebhookEvent;
@@ -59,14 +60,37 @@ async function deliverOne(
       failureCount: response.ok ? 0 : webhook.failureCount + 1,
     });
 
+    // Log delivery
+    await WebhookDeliveryLog.create({
+      webhookId: webhook.id,
+      userId: webhook.userId,
+      event: payload.event,
+      url: webhook.url,
+      statusCode: response.status,
+      durationMs,
+      error: response.ok ? null : `HTTP ${response.status}`,
+    }).catch(() => {});
+
     return { status: response.status, durationMs };
-  } catch {
+  } catch (err) {
     const durationMs = Date.now() - start;
     await webhook.update({
       lastDeliveryAt: new Date(),
       lastDeliveryStatus: -1,
       failureCount: webhook.failureCount + 1,
     });
+
+    // Log delivery failure
+    await WebhookDeliveryLog.create({
+      webhookId: webhook.id,
+      userId: webhook.userId,
+      event: payload.event,
+      url: webhook.url,
+      statusCode: -1,
+      durationMs,
+      error: err instanceof Error ? err.message : 'Network error',
+    }).catch(() => {});
+
     return { status: -1, durationMs };
   }
 }

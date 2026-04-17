@@ -19,6 +19,7 @@ import { Notification } from './Notification';
 import { BookClub, BookClubMember, ClubDiscussion } from './BookClub';
 import { ApiKey } from './ApiKey';
 import { Webhook } from './Webhook';
+import { WebhookDeliveryLog } from './WebhookDeliveryLog';
 
 // Define associations
 User.hasMany(Book, { foreignKey: 'userId', as: 'books' });
@@ -98,7 +99,13 @@ ApiKey.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(Webhook, { foreignKey: 'userId', as: 'webhooks' });
 Webhook.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-export { User, Book, Annotation, ReadingSession, Document, MemoryBook, ChatMessage, InterventionFeedback, FriendConversation, FriendRelationship, Flashcard, Collection, SharedExport, Notification, BookClub, BookClubMember, ClubDiscussion, ApiKey, Webhook };
+// WebhookDeliveryLog associations
+Webhook.hasMany(WebhookDeliveryLog, { foreignKey: 'webhookId', as: 'deliveryLogs', onDelete: 'CASCADE' });
+WebhookDeliveryLog.belongsTo(Webhook, { foreignKey: 'webhookId', as: 'webhook' });
+User.hasMany(WebhookDeliveryLog, { foreignKey: 'userId', as: 'webhookDeliveryLogs' });
+WebhookDeliveryLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+export { User, Book, Annotation, ReadingSession, Document, MemoryBook, ChatMessage, InterventionFeedback, FriendConversation, FriendRelationship, Flashcard, Collection, SharedExport, Notification, BookClub, BookClubMember, ClubDiscussion, ApiKey, Webhook, WebhookDeliveryLog };
 export type { Chapter } from './Document';
 export type { MemoryBookMoment, MemoryBookInsight, MemoryBookStats, PersonalBookSection } from './MemoryBook';
 export { sequelize };
