@@ -4,7 +4,7 @@
 
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import { BookClub, BookClubMember, Book, User } from '../models';
+import { BookClub, BookClubMember, Book, User, ClubDiscussion } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { parsePagination } from '../utils/pagination';
@@ -498,6 +498,117 @@ router.get('/:id/progress', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Error fetching club progress:', error);
     res.status(500).json({ success: false, error: { code: 'PROGRESS_ERROR', message: 'Failed to fetch progress' } });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/book-clubs/:id/discussions — List discussion messages
+// ---------------------------------------------------------------------------
+router.get('/:id/discussions', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const club = await BookClub.findByPk(req.params.id);
+    if (!club) {
+      return notFound(res, 'Book club');
+    }
+
+    // Private clubs require membership
+    if (club.isPrivate) {
+      const membership = await getClubMembership(club.id, req.userId!);
+      if (!membership) {
+        return forbidden(res, 'Not a member of this club');
+      }
+    }
+
+    const { limit, offset } = parsePagination(req);
+    const maxLimit = Math.min(limit, 50);
+
+    const { rows: messages, count: total } = await ClubDiscussion.findAndCountAll({
+      where: { clubId: req.params.id },
+      include: [{ model: User, as: 'author', attributes: ['id', 'name'] }],
+      order: [['createdAt', 'DESC']],
+      limit: maxLimit,
+      offset,
+    });
+
+    // Return newest-last for chat display
+    res.json({
+      success: true,
+      data: messages.reverse(),
+      pagination: {
+        total,
+        limit: maxLimit,
+        offset,
+        hasMore: offset + maxLimit < total,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching discussions:', error);
+    res.status(500).json({ success: false, error: { code: 'DISCUSSION_FETCH_ERROR', message: 'Failed to fetch discussions' } });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/book-clubs/:id/discussions — Send a message
+// ---------------------------------------------------------------------------
+router.post(
+  '/:id/discussions',
+  authenticate,
+  validate([
+    body('content').isString().trim().isLength({ min: 1, max: 2000 }),
+  ]),
+  async (req: AuthRequest, res) => {
+    try {
+      const club = await BookClub.findByPk(req.params.id);
+      if (!club) {
+        return notFound(res, 'Book club');
+      }
+
+      // Must be a member to post
+      const membership = await getClubMembership(club.id, req.userId!);
+      if (!membership) {
+        return forbidden(res, 'Only members can post messages');
+      }
+
+      const message = await ClubDiscussion.create({
+        clubId: club.id,
+        userId: req.userId!,
+        content: req.body.content,
+      });
+
+      // Fetch with author info
+      const result = await ClubDiscussion.findByPk(message.id, {
+        include: [{ model: User, as: 'author', attributes: ['id', 'name'] }],
+      });
+
+      res.status(201).json({ success: true, data: result });
+    } catch (error) {
+      console.error('Error posting discussion:', error);
+      res.status(500).json({ success: false, error: { code: 'DISCUSSION_POST_ERROR', message: 'Failed to post message' } });
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// DELETE /api/book-clubs/:id/discussions/:messageId — Delete a message (author or admin)
+// ---------------------------------------------------------------------------
+router.delete('/:id/discussions/:messageId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const message = await ClubDiscussion.findByPk(req.params.messageId);
+    if (!message) {
+      return notFound(res, 'Message');
+    }
+
+    // Author can delete own messages, admins can delete any
+    const isAdmin = await requireAdmin(req, req.params.id);
+    if (message.userId !== req.userId! && !isAdmin) {
+      return forbidden(res, 'Can only delete your own messages');
+    }
+
+    await message.destroy();
+    res.json({ success: true, data: { message: 'Message deleted' } });
+  } catch (error) {
+    console.error('Error deleting discussion:', error);
+    res.status(500).json({ success: false, error: { code: 'DISCUSSION_DELETE_ERROR', message: 'Failed to delete message' } });
   }
 });
 

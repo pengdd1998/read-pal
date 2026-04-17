@@ -49,6 +49,8 @@ export default function BookDetailPage() {
   const [error, setError] = useState('');
   const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
   const [exportSuccess, setExportSuccess] = useState('');
+  const [zoteroExporting, setZoteroExporting] = useState(false);
+  const [zoteroConnected, setZoteroConnected] = useState(false);
   const [readingLog, setReadingLog] = useState<Array<{ id: string; startedAt: string; duration: number; pagesRead: number; highlights: number; notes: number; summary?: string }>>([]);
   const [readingWpm, setReadingWpm] = useState<number>(0);
   const [flashcardCount, setFlashcardCount] = useState<number>(0);
@@ -105,6 +107,11 @@ export default function BookDetailPage() {
         // Fetch reading speed for completion prediction
         api.get<{ currentWpm: number }>('/api/stats/reading-speed')
           .then((res) => { if (res.success && res.data?.currentWpm) setReadingWpm(res.data.currentWpm); })
+          .catch(() => {});
+
+        // Check Zotero connection
+        api.get<{ connected: boolean }>('/api/zotero/status')
+          .then((res) => { if (res.success && res.data?.connected) setZoteroConnected(true); })
           .catch(() => {});
       } catch {
         setError('Failed to load book. Please try again.');
@@ -572,6 +579,31 @@ export default function BookDetailPage() {
             </svg>
             Export JSON
           </button>
+          {zoteroConnected && (
+            <button
+              onClick={async () => {
+                setZoteroExporting(true);
+                try {
+                  const res = await api.post<{ message: string }>(`/api/zotero/export/${bookId}`);
+                  if (res.success && res.data) {
+                    setExportSuccess(res.data.message || 'Exported to Zotero!');
+                    setTimeout(() => setExportSuccess(''), 4000);
+                  } else {
+                    setError(res.error?.message || 'Failed to export to Zotero');
+                  }
+                } catch {
+                  setError('Failed to export to Zotero. Check your connection.');
+                } finally {
+                  setZoteroExporting(false);
+                }
+              }}
+              disabled={zoteroExporting}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+            >
+              <span className="font-bold text-sm">Z</span>
+              {zoteroExporting ? 'Exporting...' : 'Export to Zotero'}
+            </button>
+          )}
         </div>
       )}
 

@@ -89,6 +89,8 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
       'friendPersona',
       'friendFrequency',
       'companionMode',
+      'zoteroApiKey',
+      'zoteroUserId',
     ];
 
     const currentSettings =

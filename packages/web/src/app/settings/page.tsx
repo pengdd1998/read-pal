@@ -25,6 +25,134 @@ const PERSONAS = [
   { id: 'sam', name: 'Sam', description: 'Practical and focused', emoji: '\uD83D\uDCDA', color: 'from-blue-100 to-sky-100 dark:from-blue-900/30 dark:to-sky-900/30', accent: 'text-blue-600 dark:text-blue-400' },
 ];
 
+function ZoteroSection() {
+  const { toast } = useToast();
+  const [connected, setConnected] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [userId, setUserId] = useState('');
+  const [validating, setValidating] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    // Check if already connected
+    api.get<{ connected: boolean; userId: string | null }>('/api/zotero/status')
+      .then((res) => {
+        if (res.success && res.data) {
+          setConnected(res.data.connected);
+          if (res.data.userId) setUserId(res.data.userId);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  async function handleConnect() {
+    if (!apiKey.trim() || !userId.trim()) {
+      toast('Enter both API Key and User ID', 'error');
+      return;
+    }
+    setValidating(true);
+    try {
+      // Validate key first
+      const valRes = await api.post<{ valid: boolean; username?: string; error?: string }>('/api/zotero/validate', {
+        apiKey: apiKey.trim(),
+        userId: userId.trim(),
+      });
+      if (!valRes.success || !valRes.data?.valid) {
+        toast(valRes.data?.error || 'Invalid Zotero credentials', 'error');
+        return;
+      }
+      // Save to settings
+      const saveRes = await api.patch('/api/settings', {
+        zoteroApiKey: apiKey.trim(),
+        zoteroUserId: userId.trim(),
+      });
+      if (saveRes.success) {
+        setConnected(true);
+        toast(`Connected to Zotero${valRes.data.username ? ` (${valRes.data.username})` : ''}`, 'success');
+      }
+    } catch {
+      toast('Failed to connect to Zotero', 'error');
+    } finally {
+      setValidating(false);
+    }
+  }
+
+  async function handleDisconnect() {
+    setSaving(true);
+    try {
+      await api.patch('/api/settings', { zoteroApiKey: '', zoteroUserId: '' });
+      setConnected(false);
+      setApiKey('');
+      setUserId('');
+      toast('Zotero disconnected', 'success');
+    } catch {
+      toast('Failed to disconnect', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (connected) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Connected {userId && <span className="text-gray-400">(User {userId})</span>}
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Export highlights and notes from any book to your Zotero library using the &quot;Export to Zotero&quot; button on the book detail page.
+        </p>
+        <button
+          onClick={handleDisconnect}
+          disabled={saving}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors"
+        >
+          {saving ? 'Disconnecting...' : 'Disconnect'}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">API Key</label>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Your Zotero API key"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">User ID</label>
+          <input
+            type="text"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            placeholder="Your Zotero user ID (numeric)"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+        </div>
+      </div>
+      <p className="text-[10px] text-gray-400 dark:text-gray-500">
+        Get your API key at <span className="text-blue-500">zotero.org/settings/keys</span>
+      </p>
+      <button
+        onClick={handleConnect}
+        disabled={validating || !apiKey.trim() || !userId.trim()}
+        className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+      >
+        {validating ? 'Validating...' : 'Connect Zotero'}
+      </button>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -450,6 +578,29 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Integrations — Zotero */}
+      <section className="mt-10 animate-slide-up stagger-3">
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          Integrations
+        </h2>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-100 to-rose-200 dark:from-red-900/30 dark:to-rose-900/30 flex items-center justify-center text-lg font-bold text-red-600 dark:text-red-400">
+              Z
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Zotero</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Export highlights & notes to your Zotero library</p>
+            </div>
+          </div>
+
+          <ZoteroSection />
         </div>
       </section>
 

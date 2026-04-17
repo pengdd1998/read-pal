@@ -4,6 +4,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../db';
+import { User } from './User';
 
 // ---------------------------------------------------------------------------
 // BookClub
@@ -188,3 +189,66 @@ BookClub.hasMany(BookClubMember, { foreignKey: 'clubId', as: 'members' });
 BookClubMember.belongsTo(BookClub, { foreignKey: 'clubId', as: 'club' });
 
 BookClub.belongsTo(BookClubMember, { foreignKey: 'createdBy', as: 'creator', targetKey: 'userId', constraints: false });
+
+// ---------------------------------------------------------------------------
+// ClubDiscussion — Messages within a book club
+// ---------------------------------------------------------------------------
+
+interface ClubDiscussionAttributes {
+  id: string;
+  clubId: string;
+  userId: string;
+  content: string;
+  createdAt: Date;
+}
+
+interface ClubDiscussionCreationAttributes extends Optional<ClubDiscussionAttributes, 'id' | 'createdAt'> {}
+
+export class ClubDiscussion extends Model<ClubDiscussionAttributes, ClubDiscussionCreationAttributes> implements ClubDiscussionAttributes {
+  public id!: string;
+  public clubId!: string;
+  public userId!: string;
+  public content!: string;
+  public readonly createdAt!: Date;
+}
+
+ClubDiscussion.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    clubId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: { model: 'book_clubs', key: 'id' },
+      onDelete: 'CASCADE',
+    },
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: { model: 'users', key: 'id' },
+      onDelete: 'CASCADE',
+    },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: { len: [1, 2000] },
+    },
+    createdAt: { type: DataTypes.DATE, allowNull: false },
+  },
+  {
+    sequelize,
+    tableName: 'club_discussions',
+    timestamps: true,
+    updatedAt: false,
+    indexes: [
+      { fields: ['club_id', 'created_at'] },
+      { fields: ['user_id'] },
+    ],
+  }
+);
+
+ClubDiscussion.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+ClubDiscussion.belongsTo(BookClub, { foreignKey: 'clubId', as: 'club' });

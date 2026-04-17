@@ -16,7 +16,7 @@ import { Flashcard } from './Flashcard';
 import { Collection } from './Collection';
 import { SharedExport } from './SharedExport';
 import { Notification } from './Notification';
-import { BookClub, BookClubMember } from './BookClub';
+import { BookClub, BookClubMember, ClubDiscussion } from './BookClub';
 
 // Define associations
 User.hasMany(Book, { foreignKey: 'userId', as: 'books' });
@@ -83,7 +83,12 @@ BookClub.hasMany(BookClubMember, { foreignKey: 'clubId', as: 'clubMembers' });
 BookClubMember.belongsTo(BookClub, { foreignKey: 'clubId', as: 'club' });
 BookClubMember.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-export { User, Book, Annotation, ReadingSession, Document, MemoryBook, ChatMessage, InterventionFeedback, FriendConversation, FriendRelationship, Flashcard, Collection, SharedExport, Notification, BookClub, BookClubMember };
+// ClubDiscussion associations
+BookClub.hasMany(ClubDiscussion, { foreignKey: 'clubId', as: 'discussions' });
+ClubDiscussion.belongsTo(BookClub, { foreignKey: 'clubId', as: 'club' });
+ClubDiscussion.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+
+export { User, Book, Annotation, ReadingSession, Document, MemoryBook, ChatMessage, InterventionFeedback, FriendConversation, FriendRelationship, Flashcard, Collection, SharedExport, Notification, BookClub, BookClubMember, ClubDiscussion };
 export type { Chapter } from './Document';
 export type { MemoryBookMoment, MemoryBookInsight, MemoryBookStats, PersonalBookSection } from './MemoryBook';
 export { sequelize };

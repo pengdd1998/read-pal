@@ -15,6 +15,7 @@ import * as m004 from './004_personal_book_columns';
 import * as m005 from './005_google_oauth';
 import * as m006 from './006_notifications';
 import * as m007 from './007_session_summary';
+import * as m008 from './008_book_clubs';
 
 // Register migrations in order
 registerMigration({
@@ -57,6 +58,12 @@ registerMigration({
   id: '007_session_summary',
   up: m007.up,
   down: m007.down,
+});
+
+registerMigration({
+  id: '008_book_clubs',
+  up: m008.up,
+  down: m008.down,
 });
 
 // Re-export migration functions
