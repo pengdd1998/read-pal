@@ -370,9 +370,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
           {/* First-time tooltip */}
           {isFirstChat && (
-            <div className={`px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px] ${
-              genre === 'fiction' ? 'animate-bounce' : ''
-            }`}>
+            <div className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px]">
               {genre === 'fiction'
                 ? `Discuss characters & themes with ${friendName}`
                 : `Chat with ${friendName} about what you're reading`}
@@ -381,9 +379,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
           <button
             id="tour-ai-companion"
             onClick={handleOpenChat}
-            className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-xl relative ${
-              isFirstChat ? 'animate-pulse' : ''
-            }`}
+            className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-xl relative"
             style={{
               background: 'linear-gradient(135deg, #14b8a6, #10b981)',
             }}

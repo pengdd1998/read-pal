@@ -220,8 +220,8 @@ export default function ReadPage() {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleUserActivity = useCallback(() => {
-    // Resume if paused
-    if (isPaused && pausedAtRef.current) {
+    // Resume if paused — use ref to avoid re-renders during touch
+    if (pausedAtRef.current) {
       totalPausedMsRef.current += Date.now() - pausedAtRef.current;
       pausedAtRef.current = null;
       setIsPaused(false);
@@ -232,7 +232,7 @@ export default function ReadPage() {
       setIsPaused(true);
       pausedAtRef.current = Date.now();
     }, IDLE_TIMEOUT);
-  }, [isPaused]);
+  }, []);
 
   useEffect(() => {
     const events = ['scroll', 'click', 'keydown', 'touchstart', 'mousemove'] as const;
@@ -585,10 +585,10 @@ export default function ReadPage() {
     <div className="h-screen flex flex-col relative">
       <ReadingBackground content={chapterContent} enabled={bgEnabled} />
 
-      {/* Top bar — clean and minimal */}
+      {/* Top bar — slides behind content, stays in flow to prevent layout shifts */}
       <div
-        className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-          showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none absolute'
+        className={`relative z-10 flex items-center justify-between px-3 py-2 border-b backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} transition-transform duration-300 ease-out shrink-0 ${
+          showControls ? 'translate-y-0' : '-translate-y-full h-0 overflow-hidden py-0 border-0'
         }`}
       >
         {/* Left: Back + Book info */}
@@ -800,8 +800,13 @@ export default function ReadPage() {
         />
       )}
 
-      {/* Main content */}
-      <div className={`flex-1 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:mr-[360px]' : ''} ${synthesisOpen ? 'md:ml-[400px]' : ''} ${studyMode.enabled ? 'md:mr-[320px]' : ''}`}>
+      {/* Main content — uses transform for sidebars to avoid layout reflow */}
+      <div className="flex-1 overflow-hidden relative">
+        <div className={`h-full transition-transform duration-300 ease-out ${
+          sidebarOpen ? 'md:-translate-x-[360px] md:scale-[0.97]' : ''
+        } ${synthesisOpen ? 'md:translate-x-[400px] md:scale-[0.97]' : ''
+        } ${studyMode.enabled ? 'md:-translate-x-[160px] md:scale-[0.97]' : ''
+        }`}>
         <div className={`h-full ${THEME_CLASSES[theme]} transition-colors duration-200 ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
           <ReaderView
             bookId={bookId}
@@ -825,9 +830,8 @@ export default function ReadPage() {
             onTocClose={() => setTocOpen(false)}
           />
         </div>
+        </div>
       </div>
-
-      {/* Selection hint */}
       {!hasMadeSelection && <SelectionHint onDismiss={() => setHasMadeSelection(true)} />}
 
       {/* First-time feature tour */}
