@@ -95,6 +95,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   });
   const [friendName, setFriendName] = useState<string>(DEFAULT_PERSONA.name);
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
+  const [companionMode, setCompanionMode] = useState<'casual' | 'scholar'>('casual');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -183,6 +184,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
               nearbyCode: extractCodeBlocks(chapterContent ?? ''),
               genres: genreMetadata,
               bookDescription,
+              companionMode,
             },
           }),
         });
@@ -258,17 +260,20 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, sendStreamMessage]);
 
-  // Fetch friend persona from settings
+  // Fetch friend persona and companion mode from settings
   useEffect(() => {
     let cancelled = false;
     const loadPersona = async () => {
       try {
-        const result = await api.get<{ friendPersona?: string }>('/api/settings');
+        const result = await api.get<{ friendPersona?: string; companionMode?: string }>('/api/settings');
         if (!cancelled && result.success && result.data) {
           const data = result.data;
           const persona = FRIEND_PERSONAS[data.friendPersona ?? ''] ?? DEFAULT_PERSONA;
           setFriendName(persona.name);
           setFriendEmoji(persona.emoji);
+          if (data.companionMode === 'scholar' || data.companionMode === 'casual') {
+            setCompanionMode(data.companionMode);
+          }
         }
       } catch {
         // Keep defaults on error
@@ -337,6 +342,12 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     setLoading(false);
     setConnecting(false);
   }, []);
+
+  const toggleCompanionMode = useCallback(() => {
+    const newMode = companionMode === 'casual' ? 'scholar' : 'casual';
+    setCompanionMode(newMode);
+    api.patch('/api/settings', { companionMode: newMode }).catch(() => {});
+  }, [companionMode]);
 
   // Send
   const handleSend = () => {
@@ -410,6 +421,26 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                   <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Your reading companion</p>
                 </div>
               </div>
+              <button
+                onClick={toggleCompanionMode}
+                className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                  companionMode === 'scholar'
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                title={companionMode === 'scholar' ? 'Scholar mode — deeper analysis' : 'Casual mode — switch to scholarly analysis'}
+                aria-label={companionMode === 'scholar' ? 'Switch to casual mode' : 'Switch to scholar mode'}
+              >
+                {companionMode === 'scholar' ? (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                )}
+              </button>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

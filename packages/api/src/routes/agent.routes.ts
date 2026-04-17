@@ -178,6 +178,20 @@ You connect ideas across the user's reading library, find themes, and create kno
 Be insightful, creative, and good at pattern recognition. Help the reader see the big picture.`,
 };
 
+const SCHOLAR_INSTRUCTIONS = `## Scholar Mode Active
+
+The reader has enabled Scholar Mode for deeper academic engagement. Adjust your behavior accordingly:
+- Provide thorough, nuanced analysis with no strict word limit — depth over brevity
+- Discuss methodology, evidence quality, and logical structure of arguments
+- Identify underlying assumptions, theoretical frameworks, and schools of thought
+- Ask probing questions about implications, limitations, and counter-arguments
+- Compare and contrast with alternative perspectives in the field
+- Suggest further reading, primary sources, or key references when relevant
+- Use precise academic terminology where appropriate, but explain it clearly
+- Flag potential biases, logical fallacies, or unsupported claims
+- Structure responses with clear reasoning chains (premise → evidence → conclusion)
+- When the text makes empirical claims, evaluate the quality of supporting evidence`;
+
 /**
  * Build the system prompt for a given agent type, appending genre-specific
  * instructions when the context provides genre clues (for companion agent).
@@ -188,17 +202,24 @@ function getAgentSystemPrompt(
 ): string {
   const base = BASE_AGENT_PROMPTS[agentType] || BASE_AGENT_PROMPTS.companion;
 
-  // Only companion agent gets genre-aware prompts
+  // Only companion agent gets genre-aware and scholar mode prompts
   if (agentType !== 'companion' || !context) return base;
 
   const genres = context.genres as string[] | undefined;
   const bookTitle = context.bookTitle as string | undefined;
   const bookDescription = context.bookDescription as string | undefined;
+  const companionMode = context.companionMode as string | undefined;
 
   const genre: BookGenre = detectGenre(genres, bookTitle, bookDescription);
   const instructions = getGenreInstructions(genre);
 
-  return instructions ? `${base}\n\n${instructions}` : base;
+  let prompt = instructions ? `${base}\n\n${instructions}` : base;
+
+  if (companionMode === 'scholar') {
+    prompt += `\n\n${SCHOLAR_INSTRUCTIONS}`;
+  }
+
+  return prompt;
 }
 
 /**

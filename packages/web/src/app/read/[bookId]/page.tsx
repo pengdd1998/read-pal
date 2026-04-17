@@ -178,6 +178,15 @@ export default function ReadPage() {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const sessionStartRef = useRef<number>(Date.now());
   const [sessionElapsed, setSessionElapsed] = useState(0);
+  const [readingWpm, setReadingWpm] = useState<number | null>(null);
+
+  // Fetch reading speed from recent sessions
+  useEffect(() => {
+    if (loading) return;
+    api.get<{ currentWpm: number; trend: string }>('/api/stats/reading-speed')
+      .then((res) => { if (res.success && res.data && res.data.currentWpm > 0) setReadingWpm(res.data.currentWpm); })
+      .catch(() => {});
+  }, [loading]);
 
   // Study mode
   const studyMode = useStudyMode(bookId);
@@ -553,6 +562,9 @@ export default function ReadPage() {
             <h1 className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
             <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
               {book.author && `${book.author} · `}Ch. {currentChapter + 1}/{chapters.length}
+              {readingWpm && (
+                <span className="ml-1.5 text-teal-500 dark:text-teal-400">· {readingWpm} wpm</span>
+              )}
             </p>
           </div>
         </div>

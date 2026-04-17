@@ -459,4 +459,108 @@ router.get('/dashboard', authenticate, etag(60), async (req: AuthRequest, res) =
   }
 });
 
+/**
+ * GET /api/stats/reading-speed
+ *
+ * Returns estimated reading speed (WPM) from recent sessions,
+ * along with a 7-day trend.
+ */
+router.get('/reading-speed', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId!;
+
+    // Words per page estimate — standard for most non-illustrated books
+    const WORDS_PER_PAGE = 250;
+
+    // Last 30 days of sessions with sufficient duration (>30s to avoid noise)
+    const sessions = await ReadingSession.findAll({
+      where: {
+        userId,
+        duration: { [Op.gte]: 30 },
+        pagesRead: { [Op.gte]: 1 },
+        startedAt: { [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+      },
+      attributes: ['startedAt', 'duration', 'pagesRead'],
+      order: [['startedAt', 'DESC']],
+      limit: 100,
+    });
+
+    if (sessions.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          currentWpm: 0,
+          trend: 'stable' as const,
+          sessionsCount: 0,
+          weeklyTrend: [],
+        },
+      });
+    }
+
+    // Calculate WPM for each session
+    const wpmValues = sessions.map((s) => {
+      const minutes = s.duration / 60;
+      return Math.round((s.pagesRead * WORDS_PER_PAGE) / minutes);
+    });
+
+    // Current speed: average of last 5 sessions (or all if fewer)
+    const recentCount = Math.min(5, wpmValues.length);
+    const currentWpm = Math.round(
+      wpmValues.slice(0, recentCount).reduce((a, b) => a + b, 0) / recentCount,
+    );
+
+    // 7-day trend: group sessions by day, calculate average WPM per day
+    const dayMap = new Map<string, { wpmSum: number; count: number }>();
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      dayMap.set(dateStr, { wpmSum: 0, count: 0 });
+    }
+
+    for (let i = 0; i < sessions.length; i++) {
+      const dateStr = new Date(sessions[i].startedAt).toISOString().slice(0, 10);
+      const entry = dayMap.get(dateStr);
+      if (entry) {
+        entry.wpmSum += wpmValues[i];
+        entry.count++;
+      }
+    }
+
+    const weeklyTrend = Array.from(dayMap.entries()).map(([date, { wpmSum, count }]) => ({
+      date,
+      wpm: count > 0 ? Math.round(wpmSum / count) : 0,
+    }));
+
+    // Trend direction: compare first half vs second half of the week
+    const firstHalf = weeklyTrend.slice(0, 3).filter((d) => d.wpm > 0);
+    const secondHalf = weeklyTrend.slice(4).filter((d) => d.wpm > 0);
+    let trend: 'improving' | 'declining' | 'stable' = 'stable';
+    if (firstHalf.length > 0 && secondHalf.length > 0) {
+      const avgFirst = firstHalf.reduce((s, d) => s + d.wpm, 0) / firstHalf.length;
+      const avgSecond = secondHalf.reduce((s, d) => s + d.wpm, 0) / secondHalf.length;
+      const diff = (avgSecond - avgFirst) / avgFirst;
+      if (diff > 0.05) trend = 'improving';
+      else if (diff < -0.05) trend = 'declining';
+    }
+
+    res.json({
+      success: true,
+      data: {
+        currentWpm,
+        trend,
+        sessionsCount: sessions.length,
+        weeklyTrend,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching reading speed:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SPEED_FETCH_ERROR', message: 'Failed to fetch reading speed' },
+    });
+  }
+});
+
 export default router;

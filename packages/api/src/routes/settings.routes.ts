@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS = {
   notificationsEnabled: true,
   friendPersona: 'sage',
   friendFrequency: 'normal' as const,
+  companionMode: 'casual' as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -87,6 +88,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
       'notificationsEnabled',
       'friendPersona',
       'friendFrequency',
+      'companionMode',
     ];
 
     const currentSettings =
@@ -135,6 +137,16 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
       return res.status(400).json({
         success: false,
         error: { code: 'INVALID_FREQUENCY', message: 'Frequency must be minimal, normal, or frequent' },
+      });
+    }
+
+    if (
+      updates.companionMode &&
+      !['casual', 'scholar'].includes(updates.companionMode)
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_COMPANION_MODE', message: 'companionMode must be casual or scholar' },
       });
     }
 
