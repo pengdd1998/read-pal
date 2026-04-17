@@ -212,13 +212,7 @@ export function ReaderView({
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-        e.preventDefault();
-        goNextPage();
-      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-        e.preventDefault();
-        goPrevPage();
-      } else if (e.key === 'ArrowRight') {
+      if (e.key === 'ArrowRight') {
         if (e.shiftKey) {
           if (currentPage < totalPages - 1) onPageChange(currentPage + 1);
         }

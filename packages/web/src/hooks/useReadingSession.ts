@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 
 interface UseReadingSessionOptions {
@@ -83,9 +83,5 @@ export function useReadingSession({
     };
   }, [bookId, loading, chaptersLength]);
 
-  const getSessionDuration = useCallback(() => {
-    return Date.now();
-  }, []);
-
-  return { sessionIdRef, getSessionDuration };
+  return { sessionIdRef };
 }

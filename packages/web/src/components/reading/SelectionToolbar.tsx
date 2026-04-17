@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';
 import { QuoteCard } from './QuoteCard';
@@ -42,7 +42,6 @@ export function SelectionToolbar({
   const [showQuoteCard, setShowQuoteCard] = useState(false);
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [pendingTag, setPendingTag] = useState<string | null>(null);
-  const toolbarRef = useRef<HTMLDivElement>(null);
 
   if (!rect || rect.width === 0) return null;
 
@@ -287,7 +286,6 @@ export function SelectionToolbar({
   return (
     <>
       <div
-        ref={toolbarRef}
         data-selection-toolbar
         className="fixed z-40 animate-bounce-in"
         style={{ top, left }}

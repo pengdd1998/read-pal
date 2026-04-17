@@ -956,14 +956,14 @@ export default function ReadPage() {
 
       {/* Highlight mode indicator — subtle pill */}
       {highlightMode && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-15 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm">
           Tap text to highlight
         </div>
       )}
 
       {/* Milestone toast — gentle */}
       {milestone && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-15 animate-fade-in">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 animate-fade-in">
           <div className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-amber-700 dark:text-amber-300 text-xs font-medium shadow-md border border-amber-200/50 dark:border-amber-800/50">
             {milestone} complete
           </div>

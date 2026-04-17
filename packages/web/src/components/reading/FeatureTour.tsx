@@ -99,41 +99,80 @@ export function FeatureTour() {
     setStep(null);
   }, []);
 
+  // Close on Escape key
+  useEffect(() => {
+    if (step === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleSkip();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [step, handleSkip]);
+
   if (step === null || !targetRect) return null;
 
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
 
   // Compute tooltip position
+  const tooltipW = 288; // w-72 = 18rem = 288px
+  const tooltipH = 160; // estimated tooltip height
   const gap = 12;
+  const pad = 8; // viewport padding
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
   let top = 0;
   let left = 0;
+  let translateX = '';
+  let translateY = '';
 
   switch (current.position) {
     case 'bottom':
       top = targetRect.bottom + gap;
       left = targetRect.left + targetRect.width / 2;
+      translateX = '-translate-x-1/2';
       break;
     case 'top':
-      top = targetRect.top - gap;
+      top = targetRect.top - gap - tooltipH;
       left = targetRect.left + targetRect.width / 2;
+      translateX = '-translate-x-1/2';
       break;
     case 'left':
       top = targetRect.top + targetRect.height / 2;
-      left = targetRect.left - gap;
+      left = targetRect.left - gap - tooltipW;
+      translateY = '-translate-y-1/2';
       break;
     case 'right':
       top = targetRect.top + targetRect.height / 2;
       left = targetRect.right + gap;
+      translateY = '-translate-y-1/2';
       break;
   }
 
-  // Alignment classes
-  const alignClass = current.position === 'bottom' || current.position === 'top'
-    ? '-translate-x-1/2'
-    : current.position === 'left'
-      ? '-translate-x-full -translate-y-1/2'
-      : '-translate-y-1/2';
+  // Clamp to viewport — prevent tooltip from going off-screen
+  // Account for the translate transforms
+  const effectiveLeft = translateX === '-translate-x-1/2' ? left - tooltipW / 2 : left;
+  const effectiveTop = translateY === '-translate-y-1/2' ? top - tooltipH / 2 : top;
+
+  if (effectiveLeft < pad) {
+    left = translateX === '-translate-x-1/2' ? pad + tooltipW / 2 : pad;
+  } else if (effectiveLeft + tooltipW > vw - pad) {
+    left = translateX === '-translate-x-1/2' ? vw - pad - tooltipW / 2 : vw - pad - tooltipW;
+  }
+
+  if (current.position === 'bottom' && top + tooltipH > vh - pad) {
+    // Flip to top if no room below
+    top = targetRect.top - gap - tooltipH;
+  } else if (current.position === 'top' && effectiveTop < pad) {
+    // Flip to bottom if no room above
+    top = targetRect.bottom + gap;
+  }
+
+  if (top < pad) top = pad;
+  if (top + tooltipH > vh - pad) top = vh - pad - tooltipH;
+
+  const alignClass = `${translateX} ${translateY}`.trim();
 
   return (
     <>
