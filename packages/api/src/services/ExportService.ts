@@ -39,7 +39,7 @@ export interface ReadingStats {
   lastReadAt?: Date;
 }
 
-export type ExportFormat = 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib' | 'study_guide';
+export type ExportFormat = 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib' | 'study_guide' | 'csv';
 
 export interface ExportResult {
   content: string;
@@ -641,6 +641,50 @@ function generateStudyGuide(
 }
 
 // ---------------------------------------------------------------------------
+// CSV Export — flat table of all annotations with book metadata
+// ---------------------------------------------------------------------------
+
+function escapeCsvField(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function generateCsv(book: BookInfo, annotations: AnnotationData[]): ExportResult {
+  const headers = ['Type', 'Content', 'Note', 'Page', 'Chapter', 'Tags', 'Color', 'Location_CFI', 'Created_At'];
+  const rows: string[] = [headers.map(escapeCsvField).join(',')];
+
+  for (const a of annotations) {
+    const page = a.location?.pageNumber ?? '';
+    const chapter = a.location?.chapterIndex !== undefined && a.location?.chapterIndex >= 0
+      ? String(a.location?.chapterIndex + 1) : '';
+    const cfi = a.location?.cfi ?? '';
+    const tags = a.tags ? a.tags.join('; ') : '';
+    const color = a.color ?? '';
+    const createdAt = a.createdAt ? new Date(a.createdAt).toISOString() : '';
+
+    rows.push([
+      escapeCsvField(a.type),
+      escapeCsvField(a.content),
+      escapeCsvField(a.note ?? ''),
+      escapeCsvField(String(page)),
+      escapeCsvField(chapter),
+      escapeCsvField(tags),
+      escapeCsvField(color),
+      escapeCsvField(cfi),
+      escapeCsvField(createdAt),
+    ].join(','));
+  }
+
+  return {
+    content: rows.join('\n'),
+    contentType: 'text/csv; charset=utf-8',
+    filename: `annotations-${slugify(book.title)}.csv`,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -676,6 +720,8 @@ export async function exportAnnotations(
       return generateAnnotatedBib(book, annotations);
     case 'study_guide':
       return generateStudyGuide(book, annotations, flashcards || [], stats);
+    case 'csv':
+      return generateCsv(book, annotations);
     default:
       throw new Error(`Unsupported export format: ${format}`);
   }
