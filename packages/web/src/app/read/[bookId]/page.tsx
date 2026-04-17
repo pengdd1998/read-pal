@@ -180,6 +180,9 @@ export default function ReadPage() {
   const [showTimeline, setShowTimeline] = useState(false);
   const sessionStartRef = useRef<number>(Date.now());
   const [sessionElapsed, setSessionElapsed] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const pausedAtRef = useRef<number | null>(null);
+  const totalPausedMsRef = useRef<number>(0);
   const [readingWpm, setReadingWpm] = useState<number | null>(null);
 
   // Fetch reading speed from recent sessions
@@ -197,15 +200,48 @@ export default function ReadPage() {
   const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight } = useReaderSettings(bookId, loading);
 
   // Extracted session hook
-  const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length });
+  const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length, isPaused });
 
-  // Update session timer every second
+  // Update session timer every second (accounting for paused time)
   useEffect(() => {
     const timer = setInterval(() => {
-      setSessionElapsed(Math.floor((Date.now() - sessionStartRef.current) / 1000));
+      if (!isPaused) {
+        const pausedMs = totalPausedMsRef.current + (pausedAtRef.current ? Date.now() - pausedAtRef.current : 0);
+        setSessionElapsed(Math.floor((Date.now() - sessionStartRef.current - pausedMs) / 1000));
+      }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isPaused]);
+
+  // --- Auto-pause after 5 minutes of inactivity ---
+  const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleUserActivity = useCallback(() => {
+    // Resume if paused
+    if (isPaused && pausedAtRef.current) {
+      totalPausedMsRef.current += Date.now() - pausedAtRef.current;
+      pausedAtRef.current = null;
+      setIsPaused(false);
+    }
+    // Reset idle timer
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      setIsPaused(true);
+      pausedAtRef.current = Date.now();
+    }, IDLE_TIMEOUT);
+  }, [isPaused]);
+
+  useEffect(() => {
+    const events = ['scroll', 'click', 'keydown', 'touchstart', 'mousemove'] as const;
+    const handler = () => handleUserActivity();
+    events.forEach((e) => window.addEventListener(e, handler, { passive: true }));
+    handleUserActivity(); // start timer
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, handler));
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [handleUserActivity]);
 
   // --- Auto-hide controls after 3s of inactivity ---
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -566,6 +602,9 @@ export default function ReadPage() {
               {book.author && `${book.author} · `}Ch. {currentChapter + 1}/{chapters.length}
               {readingWpm && (
                 <span className="ml-1.5 text-teal-500 dark:text-teal-400">· {readingWpm} wpm</span>
+              )}
+              {isPaused && (
+                <span className="ml-1.5 text-amber-500 dark:text-amber-400 animate-pulse">· Paused</span>
               )}
             </p>
           </div>

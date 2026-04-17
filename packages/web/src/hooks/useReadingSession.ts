@@ -8,6 +8,7 @@ interface UseReadingSessionOptions {
   loading: boolean;
   currentChapter: number;
   chaptersLength: number;
+  isPaused?: boolean;
 }
 
 export function useReadingSession({
@@ -15,15 +16,21 @@ export function useReadingSession({
   loading,
   currentChapter,
   chaptersLength,
+  isPaused = false,
 }: UseReadingSessionOptions) {
   const sessionIdRef = useRef<string | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentChapterRef = useRef(currentChapter);
+  const isPausedRef = useRef(isPaused);
 
-  // Keep ref in sync so heartbeat always sends the latest chapter
+  // Keep refs in sync
   useEffect(() => {
     currentChapterRef.current = currentChapter;
   }, [currentChapter]);
+
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
 
   // Start/end reading session lifecycle
   useEffect(() => {
@@ -39,8 +46,9 @@ export function useReadingSession({
           sessionIdRef.current = data.id;
 
           // Heartbeat every 30s to keep session alive and track progress
+          // Skipped when paused (no user activity)
           heartbeatRef.current = setInterval(async () => {
-            if (!sessionIdRef.current) return;
+            if (!sessionIdRef.current || isPausedRef.current) return;
             try {
               await api.patch(`/api/reading-sessions/${sessionIdRef.current}/heartbeat`, {
                 pagesRead: currentChapterRef.current + 1,

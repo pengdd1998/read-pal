@@ -10,6 +10,7 @@ interface UserSettings {
   fontSize: number;
   fontFamily: string;
   readingGoal: number;
+  dailyReadingMinutes: number;
   notificationsEnabled: boolean;
   streakAlerts: boolean;
   friendMessages: boolean;
@@ -594,6 +595,36 @@ export default function SettingsPage() {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* Daily Reading Minutes */}
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="daily-minutes-slider" className="text-sm font-medium">Daily reading time</label>
+              <span className="text-xs px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 font-medium">
+                {settings.dailyReadingMinutes || 30} min
+              </span>
+            </div>
+            <input
+              id="daily-minutes-slider"
+              type="range"
+              min="5"
+              max="120"
+              step="5"
+              value={settings.dailyReadingMinutes || 30}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                setSettings({ ...settings!, dailyReadingMinutes: val });
+                debouncedSave({ dailyReadingMinutes: val });
+              }}
+              className="w-full accent-teal-500"
+              disabled={saving}
+            />
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <span>5 min</span>
+              <span>1 hr</span>
+              <span>2 hr</span>
             </div>
           </div>
         </div>
