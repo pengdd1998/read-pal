@@ -530,6 +530,28 @@ export default function BookDetailPage() {
         </div>
       )}
 
+      {/* Knowledge Graph */}
+      <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/10 dark:to-purple-900/10 rounded-2xl border border-violet-200/50 dark:border-violet-800/30 p-5 mb-6 animate-slide-up stagger-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{'\uD83D\uDDE3\uFE0F'}</span>
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-white">Knowledge Graph</h2>
+              <p className="text-xs text-gray-500">Explore concepts and connections across your reading</p>
+            </div>
+          </div>
+          <Link
+            href="/knowledge"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-500 hover:bg-violet-600 text-white transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            Explore
+          </Link>
+        </div>
+      </div>
+
       {/* Export annotations */}
       {totalAnnotations > 0 && (
         <div className="flex flex-wrap gap-2 mb-6 animate-slide-up stagger-4">
