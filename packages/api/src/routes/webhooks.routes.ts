@@ -8,6 +8,7 @@ import { body } from 'express-validator';
 import { Webhook, isValidWebhookEvent, getValidWebhookEvents, WebhookEvent } from '../models/Webhook';
 import { WebhookDeliveryLog } from '../models/WebhookDeliveryLog';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { parsePagination } from '../utils/pagination';
 
 const router: Router = Router();
@@ -15,7 +16,7 @@ const router: Router = Router();
 /**
  * GET /api/webhooks — List user's webhooks
  */
-router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res: Response) => {
   try {
     const webhooks = await Webhook.findAll({
       where: { userId: req.userId! },
@@ -33,7 +34,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 /**
  * POST /api/webhooks — Create webhook
  */
-router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async (req: AuthRequest, res: Response) => {
   try {
     const { url, events } = req.body as { url: string; events: string[] };
 
@@ -112,7 +113,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
 /**
  * PATCH /api/webhooks/:id — Update webhook
  */
-router.patch('/:id', authenticate, async (req: AuthRequest, res: Response) => {
+router.patch('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res: Response) => {
   try {
     const webhook = await Webhook.findOne({
       where: { id: req.params.id, userId: req.userId! },
@@ -173,7 +174,7 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 /**
  * DELETE /api/webhooks/:id — Delete webhook
  */
-router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res: Response) => {
   try {
     const deleted = await Webhook.destroy({
       where: { id: req.params.id, userId: req.userId! },
@@ -194,7 +195,7 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 /**
  * POST /api/webhooks/:id/test — Send test ping
  */
-router.post('/:id/test', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/:id/test', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async (req: AuthRequest, res: Response) => {
   try {
     const { testWebhook } = await import('../services/WebhookDelivery');
     const webhook = await Webhook.findOne({

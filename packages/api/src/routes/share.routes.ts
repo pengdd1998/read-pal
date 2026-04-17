@@ -7,10 +7,12 @@
 
 import { Router } from 'express';
 import { randomBytes } from 'node:crypto';
+import { body, param } from 'express-validator';
 import { notFound } from '../utils/errors';
 import { Book, ReadingSession, Annotation, SharedExport } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { rateLimiter } from '../middleware/rateLimiter';
+import { validate } from '../middleware/validate';
 import { exportAnnotations } from '../services/ExportService';
 import { Op } from 'sequelize';
 
@@ -43,7 +45,7 @@ router.get('/reading-card', authenticate, rateLimiter({ windowMs: 60000, max: 20
 
     const card = {
       user: {
-        name: (req.user as { name?: string })?.name || 'Reader',
+        name: (req as unknown as { user?: { name?: string } }).user?.name || 'Reader',
       },
       stats: {
         booksCompleted: completedBooks,
@@ -132,7 +134,12 @@ router.get('/book/:id', authenticate, rateLimiter({ windowMs: 60000, max: 30 }),
  * Generate a shareable link for an annotation export.
  * Returns the generated content + a public URL token.
  */
-router.post('/export', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async (req: AuthRequest, res) => {
+router.post('/export', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), validate([
+  body('bookId').isString().notEmpty(),
+  body('format').isString().isIn(['markdown', 'json', 'bookclub', 'research']),
+  body('types').optional().isString(),
+  body('tags').optional().isString(),
+]), async (req: AuthRequest, res) => {
   try {
     const { bookId, format, types, tags } = req.body as {
       bookId?: string;
@@ -370,7 +377,9 @@ router.get('/s/:token', rateLimiter({ windowMs: 60000, max: 60 }), async (req, r
  *
  * Revoke a shareable export link.
  */
-router.delete('/export/:token', authenticate, async (req: AuthRequest, res) => {
+router.delete('/export/:token', authenticate, validate([
+  param('token').isHexadecimal().isLength({ min: 16, max: 16 }),
+]), async (req: AuthRequest, res) => {
   try {
     const shared = await SharedExport.findOne({
       where: { token: req.params.token, userId: req.userId },

@@ -108,7 +108,8 @@ No markdown, no code fences, just the JSON array.`;
               annotationId: annotations[i]?.id,
             }));
         }
-      } catch {
+      } catch (err) {
+        console.error('[Flashcards] JSON parse failed, using text fallback:', err);
         // Fallback: try to extract Q&A from numbered lines
         const qaPairs = raw.match(/(?:Q|Question)\s*\d*[:.]\s*(.+?)[\n\r]+(?:A|Answer)\s*\d*[:.]\s*(.+?)(?=(?:Q|Question)\s*\d*|$)/gis);
         if (qaPairs) {

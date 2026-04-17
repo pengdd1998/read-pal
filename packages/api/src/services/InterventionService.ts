@@ -25,7 +25,7 @@ export interface Intervention {
   priority: 'low' | 'medium' | 'high';
   message: string;
   trigger: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

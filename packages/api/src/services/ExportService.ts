@@ -230,7 +230,8 @@ async function generateBookClub(
       for (let i = 0; i < questions.length; i++) {
         lines.push(`${i + 1}. ${questions[i]}`, '');
       }
-    } catch {
+    } catch (err) {
+      console.error('[ExportService] Discussion question generation failed:', err);
       lines.push('_AI-generated questions unavailable — generate your own from the highlights above._', '');
     }
   }
@@ -268,7 +269,9 @@ Return ONLY a JSON array of 5 question strings. No explanation, no markdown.`;
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) return parsed.slice(0, 5).map(String);
-  } catch { /* try to extract from text */ }
+  } catch (err) {
+    console.error('[ExportService] JSON parse for discussion questions failed, using text fallback:', err);
+  }
   // Fallback: split by newlines, filter numbered items
   return raw.split('\n').filter((l) => l.trim().match(/^\d+\./)).map((l) => l.replace(/^\d+\.\s*/, '').trim()).slice(0, 5);
 }
