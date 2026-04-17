@@ -116,7 +116,7 @@ export default function BookClubsPage() {
             {displayClubs.map((club) => (
               <Link
                 key={club.id}
-                href={tab === 'my' ? `/book-clubs/${club.id}` : '#'}
+                href={`/book-clubs/${club.id}`}
                 className="block rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between">

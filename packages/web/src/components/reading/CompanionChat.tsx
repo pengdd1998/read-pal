@@ -346,7 +346,9 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const toggleCompanionMode = useCallback(() => {
     const newMode = companionMode === 'casual' ? 'scholar' : 'casual';
     setCompanionMode(newMode);
-    api.patch('/api/settings', { companionMode: newMode }).catch(() => {});
+    api.patch('/api/settings', { companionMode: newMode }).catch(() => {
+      setCompanionMode(companionMode); // revert on failure
+    });
   }, [companionMode]);
 
   // Send

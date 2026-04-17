@@ -285,7 +285,7 @@ export default function BookClubDetailPage() {
                   {progress.map((p) => (
                     <div key={p.userId} className="flex items-center gap-3">
                       <span className="text-sm text-gray-700 dark:text-gray-300 w-24 truncate">
-                        {p.user?.name || 'Unknown'}
+                        {p.user?.name || 'Member'}
                       </span>
                       <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                         <div
@@ -331,11 +331,11 @@ export default function BookClubDetailPage() {
                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center text-sm font-bold text-primary-700 dark:text-primary-300">
-                  {(member.user?.name || '?')[0].toUpperCase()}
+                  {(member.user?.name || 'M')[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {member.user?.name || 'Unknown'}
+                    {member.user?.name || 'Member'}
                   </span>
                 </div>
                 {member.role === 'admin' && (
@@ -375,7 +375,7 @@ export default function BookClubDetailPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {msg.author?.name || 'Unknown'}
+                      {msg.author?.name || 'Member'}
                     </span>
                     <span className="text-[10px] text-gray-400">
                       {new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} {new Date(msg.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}

@@ -144,22 +144,218 @@ jest.mock('../src/models/WebhookDeliveryLog', () => {
 });
 
 // Mock OpenAI SDK (used by GLM via OpenAI-compatible API)
-jest.mock('openai', () => ({
-  default: jest.fn().mockImplementation(() => ({
-    chat: {
-      completions: {
-        create: jest.fn().mockResolvedValue({
-          id: 'chatcmpl-test',
-          object: 'chat.completion',
-          choices: [{
-            index: 0,
-            message: { role: 'assistant', content: 'Test AI response' },
-            finish_reason: 'stop',
-          }],
-          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
-          model: 'glm-4.7-flash',
-        }),
-      },
+const MockOpenAI = jest.fn().mockImplementation(() => ({
+  chat: {
+    completions: {
+      create: jest.fn().mockResolvedValue({
+        id: 'chatcmpl-test',
+        object: 'chat.completion',
+        choices: [{
+          index: 0,
+          message: { role: 'assistant', content: 'Test AI response' },
+          finish_reason: 'stop',
+        }],
+        usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
+        model: 'glm-4.7-flash',
+      }),
     },
-  })),
+  },
 }));
+
+jest.mock('openai', () => ({
+  __esModule: true,
+  default: MockOpenAI,
+}));
+
+// Mock individual model files imported directly by routes/services
+jest.mock('../src/models/Flashcard', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    count: jest.fn().mockResolvedValue(0),
+    bulkCreate: jest.fn().mockResolvedValue([]),
+    init: jest.fn(),
+  };
+  return {
+    Flashcard: mockModel,
+    calculateSM2: jest.fn().mockReturnValue({ interval: 1, easeFactor: 2.5, repetitions: 0 }),
+  };
+});
+
+jest.mock('../src/models/FriendConversation', () => {
+  const convMock: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    init: jest.fn(),
+  };
+  const relMock: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    init: jest.fn(),
+  };
+  return { FriendConversation: convMock, FriendRelationship: relMock };
+});
+
+jest.mock('../src/models/ChatMessage', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    bulkCreate: jest.fn().mockResolvedValue([]),
+    count: jest.fn().mockResolvedValue(0),
+    init: jest.fn(),
+  };
+  return { ChatMessage: mockModel };
+});
+
+jest.mock('../src/models/Book', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    count: jest.fn().mockResolvedValue(0),
+    init: jest.fn(),
+  };
+  return { Book: mockModel };
+});
+
+jest.mock('../src/models/Annotation', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    count: jest.fn().mockResolvedValue(0),
+    bulkCreate: jest.fn().mockResolvedValue([]),
+    findAndCountAll: jest.fn().mockResolvedValue({ rows: [], count: 0 }),
+    init: jest.fn(),
+  };
+  return { Annotation: mockModel };
+});
+
+jest.mock('../src/models/ReadingSession', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    count: jest.fn().mockResolvedValue(0),
+    init: jest.fn(),
+  };
+  return { ReadingSession: mockModel };
+});
+
+jest.mock('../src/models/InterventionFeedback', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    init: jest.fn(),
+  };
+  return { InterventionFeedback: mockModel };
+});
+
+jest.mock('../src/models/User', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    count: jest.fn().mockResolvedValue(0),
+    init: jest.fn(),
+  };
+  return { User: mockModel };
+});
+
+jest.mock('../src/models/Document', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    destroy: jest.fn().mockResolvedValue(1),
+    init: jest.fn(),
+  };
+  return { Document: mockModel };
+});
+
+jest.mock('../src/models/MemoryBook', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    init: jest.fn(),
+  };
+  return { MemoryBook: mockModel };
+});
+
+jest.mock('../src/models/Collection', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    init: jest.fn(),
+  };
+  return { Collection: mockModel };
+});
+
+jest.mock('../src/models/SharedExport', () => {
+  const mockModel: any = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    init: jest.fn(),
+  };
+  return { SharedExport: mockModel };
+});
+
+jest.mock('../src/models/BookClub', () => {
+  const createMock = () => ({
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    findByPk: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue([1]),
+    destroy: jest.fn().mockResolvedValue(1),
+    init: jest.fn(),
+  });
+  return {
+    BookClub: createMock(),
+    BookClubMember: createMock(),
+    ClubDiscussion: createMock(),
+  };
+});

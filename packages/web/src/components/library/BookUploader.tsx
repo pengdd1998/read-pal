@@ -47,8 +47,11 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       } else {
         setError(result.error?.message || 'Upload failed');
       }
-    } catch {
-      setError('Failed to upload file. Please try again.');
+    } catch (err) {
+      const msg = err instanceof TypeError && err.message.includes('fetch')
+        ? 'Network error — please check your connection and try again.'
+        : 'Failed to upload file. It may be corrupted or in an unsupported format.';
+      setError(msg);
     } finally {
       setUploading(false);
     }

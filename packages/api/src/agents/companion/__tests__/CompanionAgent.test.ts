@@ -109,9 +109,9 @@ describe('CompanionAgent', () => {
       await agent.chat('user-1', 'Hello');
 
       const callArgs = mockChatCompletion.mock.calls[0][0];
-      expect(callArgs.system).toContain('Companion Agent');
+      expect(callArgs.system).toContain('reading companion');
       expect(callArgs.system).toContain('read-pal');
-      expect(callArgs.system).toContain('Available Tools');
+      expect(callArgs.system).toContain('Tools');
     });
 
     it('should call chatCompletion with user message', async () => {
@@ -396,8 +396,8 @@ describe('CompanionAgent', () => {
       await agent.chat('user-1', 'Hello');
 
       const callArgs = mockChatCompletion.mock.calls[0][0];
-      expect(callArgs.system).toContain('Friendly but professional');
-      expect(callArgs.system).toContain('Patient and supportive');
+      expect(callArgs.system).toContain('Warm');
+      expect(callArgs.system).toContain('curious');
       expect(callArgs.system).toContain('concise');
     });
 
@@ -406,7 +406,7 @@ describe('CompanionAgent', () => {
 
       const callArgs = mockChatCompletion.mock.calls[0][0];
       expect(callArgs.system).toContain('200 words');
-      expect(callArgs.system).toContain('Never make up information');
+      expect(callArgs.system).toContain('never condescending');
     });
   });
 

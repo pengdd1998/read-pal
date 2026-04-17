@@ -150,7 +150,7 @@ describe('utils/auth', () => {
       const result = verifyToken('valid-token');
 
       expect(result).toEqual(payload);
-      expect(mockJwtVerify).toHaveBeenCalledWith('valid-token', VALID_SECRET);
+      expect(mockJwtVerify).toHaveBeenCalledWith('valid-token', VALID_SECRET, { algorithms: ['HS256'] });
     });
 
     it('should return null for invalid tokens', () => {
