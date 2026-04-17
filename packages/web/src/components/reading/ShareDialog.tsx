@@ -306,7 +306,7 @@ export function ShareDialog({
                   )}
 
                   {/* Action buttons */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <button
                       onClick={handleCopyGuide}
                       className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -332,16 +332,44 @@ export function ShareDialog({
                       <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                       </svg>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Print/PDF</span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Print</span>
+                    </button>
+                    <button
+                      onClick={handleShareGuideLink}
+                      disabled={sharing}
+                      className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50"
+                    >
+                      <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                      <span className="text-xs text-amber-600 dark:text-amber-400">Link</span>
                     </button>
                   </div>
 
                   <button
-                    onClick={() => { setGuideHtml(null); setQuestions([]); }}
+                    onClick={() => { setGuideHtml(null); setQuestions([]); setShareLink(null); }}
                     className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     Regenerate
                   </button>
+
+                  {shareLink && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={shareLink}
+                        className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300"
+                        onClick={(e) => (e.target as HTMLInputElement).select()}
+                      />
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(shareLink); toast('Link copied', 'success'); }}
+                        className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
 

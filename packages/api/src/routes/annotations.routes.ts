@@ -243,7 +243,7 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
       if (bookmarks.length > 0) {
         lines.push(`## Bookmarks (${bookmarks.length})`, ``);
         for (const b of bookmarks) {
-          const loc = b.location?.pageNumber ? ` (p. ${b.location.pageNumber})` : '';
+          const loc = b.location?.pageNumber ? ` (p. ${b.location.pageNumber})` : b.location?.chapterIndex !== undefined && (b.location as Record<string, unknown>).chapterIndex as number >= 0 ? ` (Ch. ${((b.location as Record<string, unknown>).chapterIndex as number) + 1})` : '';
           lines.push(`- ${escapeMarkdown(b.content)}${loc}`);
         }
         lines.push(``);

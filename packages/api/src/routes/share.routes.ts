@@ -226,7 +226,11 @@ router.post('/export', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), 
       if (highlights.length > 0) {
         lines.push(`## Highlights (${highlights.length})`, '');
         for (const h of highlights) {
-          const page = (h.location as Record<string, unknown>)?.pageNumber ? ` (p. ${(h.location as Record<string, unknown>).pageNumber})` : '';
+          const page = (h.location as Record<string, unknown>)?.pageNumber
+            ? ` (p. ${(h.location as Record<string, unknown>).pageNumber})`
+            : (h.location as Record<string, unknown>)?.chapterIndex !== undefined && ((h.location as Record<string, unknown>).chapterIndex as number) >= 0
+              ? ` (Ch. ${((h.location as Record<string, unknown>).chapterIndex as number) + 1})`
+              : '';
           lines.push(`> ${h.content}${page}`);
           if (h.note) lines.push(`  — *${h.note}*`);
           lines.push('');

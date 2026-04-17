@@ -114,6 +114,14 @@ function formatDate(date?: Date): string {
   return new Date(date).toLocaleDateString();
 }
 
+/** Get location reference string for citations — prefers page number, falls back to chapter */
+function locationRef(location?: AnnotationData['location']): string {
+  if (!location) return '';
+  if (location.pageNumber) return ` (p. ${location.pageNumber})`;
+  if (location.chapterIndex !== undefined && location.chapterIndex >= 0) return ` (Ch. ${location.chapterIndex + 1})`;
+  return '';
+}
+
 // ---------------------------------------------------------------------------
 // Book Club Summary
 // ---------------------------------------------------------------------------
@@ -178,8 +186,7 @@ async function generateBookClub(
       const chNotes = items.filter((a) => a.type === 'note');
       lines.push(`### Chapter ${ch + 1} (${items.length} annotations)`, '');
       for (const h of chHighlights.slice(0, 10)) {
-        const page = h.location?.pageNumber ? ` (p. ${h.location?.pageNumber})` : '';
-        lines.push(`> ${escapeMarkdown(h.content)}${page}`);
+        lines.push(`> ${escapeMarkdown(h.content)}${locationRef(h.location)}`);
         if (h.note) lines.push(`  — *${escapeMarkdown(h.note)}*`);
       }
       for (const n of chNotes.slice(0, 5)) {
@@ -195,8 +202,7 @@ async function generateBookClub(
     lines.push(`## Key Highlights (${highlights.length})`, '');
     const top = sortedHighlights.slice(0, 20);
     for (const h of top) {
-      const page = h.location?.pageNumber ? ` (p. ${h.location.pageNumber})` : '';
-      lines.push(`> ${escapeMarkdown(h.content)}${page}`);
+      lines.push(`> ${escapeMarkdown(h.content)}${locationRef(h.location)}`);
       if (h.note) lines.push(`  — *${escapeMarkdown(h.note)}*`);
       if (h.tags && h.tags.length > 0) {
         lines.push(`  Tags: ${h.tags.map((t) => `\`${t}\``).join(', ')}`);
@@ -364,13 +370,13 @@ function generateResearch(book: BookInfo, annotations: AnnotationData[], stats?:
     for (const [tag, items] of tagGroups) {
       lines.push(`## ${escapeMarkdown(tag)} (${items.length})`, '');
       for (const a of items) {
-        const page = a.location?.pageNumber ? ` (p. ${a.location.pageNumber})` : '';
+        const ref = locationRef(a.location);
         if (a.type === 'highlight') {
-          lines.push(`> ${escapeMarkdown(a.content)}${page}`);
+          lines.push(`> ${escapeMarkdown(a.content)}${ref}`);
         } else if (a.type === 'note') {
-          lines.push(`**Note:** ${escapeMarkdown(a.content)}${page}`);
+          lines.push(`**Note:** ${escapeMarkdown(a.content)}${ref}`);
         } else {
-          lines.push(`- ${escapeMarkdown(a.content)}${page}`);
+          lines.push(`- ${escapeMarkdown(a.content)}${ref}`);
         }
         if (a.note) lines.push(`  → ${escapeMarkdown(a.note)}`);
         lines.push('');
@@ -379,8 +385,7 @@ function generateResearch(book: BookInfo, annotations: AnnotationData[], stats?:
   } else if (annotations.length > 0) {
     lines.push('## Annotations', '');
     for (const a of annotations) {
-      const page = a.location?.pageNumber ? ` (p. ${a.location.pageNumber})` : '';
-      lines.push(`- [${a.type}] ${escapeMarkdown(a.content)}${page}`);
+      lines.push(`- [${a.type}] ${escapeMarkdown(a.content)}${locationRef(a.location)}`);
       if (a.note) lines.push(`  → ${escapeMarkdown(a.note)}`);
       lines.push('');
     }
