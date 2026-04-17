@@ -26,25 +26,23 @@ async function loadPrism(): Promise<void> {
       // Dynamic imports — tree-shaken away when no code blocks are present
       const Prism = (await import('prismjs')).default;
 
-      // Core components commonly needed in technical books
-      await Promise.all([
-        import('prismjs/components/prism-clike'),
-        import('prismjs/components/prism-javascript'),
-        import('prismjs/components/prism-typescript'),
-        import('prismjs/components/prism-python'),
-        import('prismjs/components/prism-bash'),
-        import('prismjs/components/prism-sql'),
-        import('prismjs/components/prism-json'),
-        import('prismjs/components/prism-css'),
-        import('prismjs/components/prism-markup'),
-        import('prismjs/components/prism-java'),
-        import('prismjs/components/prism-c'),
-        import('prismjs/components/prism-cpp'),
-        import('prismjs/components/prism-go'),
-        import('prismjs/components/prism-rust'),
-        import('prismjs/components/prism-yaml'),
-        import('prismjs/components/prism-shell-session'),
-      ]);
+      // Load sequentially — many languages depend on earlier ones (e.g. cpp→c, ts→js)
+      await import('prismjs/components/prism-clike');
+      await import('prismjs/components/prism-markup');
+      await import('prismjs/components/prism-css');
+      await import('prismjs/components/prism-javascript');
+      await import('prismjs/components/prism-typescript');
+      await import('prismjs/components/prism-java');
+      await import('prismjs/components/prism-c');
+      await import('prismjs/components/prism-cpp');
+      await import('prismjs/components/prism-python');
+      await import('prismjs/components/prism-bash');
+      await import('prismjs/components/prism-sql');
+      await import('prismjs/components/prism-json');
+      await import('prismjs/components/prism-go');
+      await import('prismjs/components/prism-rust');
+      await import('prismjs/components/prism-yaml');
+      await import('prismjs/components/prism-shell-session');
 
       // Never auto-highlight the entire document — we do it manually per container
       Prism.manual = true;

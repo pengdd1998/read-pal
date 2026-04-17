@@ -128,8 +128,10 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
   // Auto-open chat for first-time readers after a brief delay (the "aha moment")
   // Genre-aware: auto-opens for non-fiction/technical/academic; stays closed for fiction
+  // Skip if FeatureTour hasn't completed — avoid competing overlays on first visit
   useEffect(() => {
     if (!isFirstChat || !bookId) return;
+    if (localStorage.getItem('read-pal-tour-complete') !== 'true') return;
 
     // Fiction: don't auto-open — it breaks immersion. Show tooltip hint instead.
     if (!shouldAutoOpen(genre)) return;
