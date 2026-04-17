@@ -50,6 +50,7 @@ export default function BookDetailPage() {
   const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
   const [exportSuccess, setExportSuccess] = useState('');
   const [readingLog, setReadingLog] = useState<Array<{ id: string; startedAt: string; duration: number; pagesRead: number; highlights: number; notes: number; summary?: string }>>([]);
+  const [readingWpm, setReadingWpm] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
@@ -80,6 +81,11 @@ export default function BookDetailPage() {
         // Fetch reading log
         api.get<Array<{ id: string; startedAt: string; duration: number; pagesRead: number; highlights: number; notes: number; summary?: string }>>(`/api/reading-sessions/book/${bookId}/log?limit=5`)
           .then((res) => { if (res.success && res.data) setReadingLog(Array.isArray(res.data) ? res.data : []); })
+          .catch(() => {});
+
+        // Fetch reading speed for completion prediction
+        api.get<{ currentWpm: number }>('/api/stats/reading-speed')
+          .then((res) => { if (res.success && res.data?.currentWpm) setReadingWpm(res.data.currentWpm); })
           .catch(() => {});
       } catch {
         setError('Failed to load book. Please try again.');
@@ -144,8 +150,13 @@ export default function BookDetailPage() {
   }
 
   const progressPct = Math.round(book.progress);
-  const estimatedMinutesLeft = book.totalPages > 0
-    ? Math.round((book.totalPages - book.currentPage) * 8) // ~8 min per chapter avg
+  const remainingChapters = Math.max(0, book.totalPages - book.currentPage);
+  // Use actual reading speed (WPM) for prediction, fallback to ~8 min/chapter
+  const WORDS_PER_CHAPTER = 250 * 25; // ~25 pages per chapter, 250 words/page
+  const estimatedMinutesLeft = remainingChapters > 0
+    ? readingWpm > 0
+      ? Math.round((remainingChapters * WORDS_PER_CHAPTER) / readingWpm)
+      : remainingChapters * 8
     : 0;
   const statusConfig = {
     unread: { label: 'Not Started', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
@@ -225,11 +236,26 @@ export default function BookDetailPage() {
           <span className="text-gray-500">{book.currentPage} of {book.totalPages} chapters</span>
           <span className="font-semibold text-amber-600 dark:text-amber-400">{progressPct}%</span>
         </div>
-        {book.status === 'reading' && estimatedMinutesLeft > 0 && (
-          <p className="text-xs text-gray-400 mt-2">
-            ~{estimatedMinutesLeft < 60 ? `${estimatedMinutesLeft} min` : `${Math.floor(estimatedMinutesLeft / 60)}h ${estimatedMinutesLeft % 60}m`} remaining
-          </p>
-        )}
+        {book.status === 'reading' && estimatedMinutesLeft > 0 && (() => {
+          const hours = Math.floor(estimatedMinutesLeft / 60);
+          const mins = estimatedMinutesLeft % 60;
+          const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+          // Estimate finish date assuming 30 min/day reading
+          const daysLeft = Math.ceil(estimatedMinutesLeft / 30);
+          const finishDate = new Date();
+          finishDate.setDate(finishDate.getDate() + daysLeft);
+          const finishStr = finishDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          return (
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-gray-400">
+                ~{timeStr} remaining
+              </p>
+              <p className="text-xs text-gray-400">
+                Finish by {finishStr} {readingWpm > 0 && <span className="text-teal-500">({readingWpm} wpm)</span>}
+              </p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Stats grid */}
