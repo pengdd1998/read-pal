@@ -31,6 +31,7 @@ const SynthesisPanel = dynamic(() => import('@/components/reading/SynthesisPanel
 const StudyModePanel = dynamic(() => import('@/components/reading/StudyModePanel').then((m) => ({ default: m.StudyModePanel })), { ssr: false });
 const FictionPanel = dynamic(() => import('@/components/reading/FictionPanel').then((m) => ({ default: m.FictionPanel })), { ssr: false });
 const ChapterTimeline = dynamic(() => import('@/components/reading/ChapterTimeline').then((m) => ({ default: m.ChapterTimeline })), { ssr: false });
+const FeatureTour = dynamic(() => import('@/components/reading/FeatureTour').then((m) => ({ default: m.FeatureTour })), { ssr: false });
 
 // Static theme maps — never change, so hoist to module scope
 const THEME_CLASSES = {
@@ -598,7 +599,7 @@ export default function ReadPage() {
           </button>
           <div className="min-w-0">
             <h1 className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
+            <p id="tour-progress" className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
               {book.author && `${book.author} · `}Ch. {currentChapter + 1}/{chapters.length}
               {readingWpm && (
                 <span className="ml-1.5 text-teal-500 dark:text-teal-400">· {readingWpm} wpm</span>
@@ -622,7 +623,7 @@ export default function ReadPage() {
           <BookmarkToggle isBookmarked={isBookmarked} onToggle={handleToggleBookmark} />
 
           {/* Annotations */}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors relative ${sidebarOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Annotations">
+          <button id="tour-annotations" onClick={() => setSidebarOpen(!sidebarOpen)} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors relative ${sidebarOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Annotations">
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
@@ -827,6 +828,9 @@ export default function ReadPage() {
 
       {/* Selection hint */}
       {!hasMadeSelection && <SelectionHint onDismiss={() => setHasMadeSelection(true)} />}
+
+      {/* First-time feature tour */}
+      <FeatureTour />
 
       {/* Selection toolbar */}
       {!selection.isCollapsed && selection.rect && (

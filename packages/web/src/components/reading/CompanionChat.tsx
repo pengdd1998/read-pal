@@ -377,6 +377,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             </div>
           )}
           <button
+            id="tour-ai-companion"
             onClick={handleOpenChat}
             className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-xl relative ${
               isFirstChat ? 'animate-pulse' : ''
