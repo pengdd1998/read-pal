@@ -11,6 +11,7 @@ import { validate } from '../middleware/validate';
 import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
 import { notifyGoalAchieved, notifyStreakMilestone } from '../services/NotificationService';
+import { dispatchWebhook } from '../services/WebhookDelivery';
 import { chatCompletion } from '../services/llmClient';
 import { User } from '../models';
 import { fn, col, Op } from 'sequelize';
@@ -100,6 +101,14 @@ router.post('/:id/end', authenticate, async (req: AuthRequest, res) => {
       isActive: false,
       pagesRead: req.body.pagesRead || 0,
     });
+
+    // Fire-and-forget webhook dispatch
+    dispatchWebhook(req.userId!, 'session.ended', {
+      sessionId: session.id,
+      bookId: session.bookId,
+      duration,
+      pagesRead: req.body.pagesRead || 0,
+    }).catch(() => {});
 
     // Update book progress if pagesRead provided
     if (req.body.currentPage && req.body.totalPages) {

@@ -12,6 +12,7 @@ import { rateLimiter } from '../middleware/rateLimiter';
 import { etag } from '../middleware/cache';
 import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
+import { dispatchWebhook } from '../services/WebhookDelivery';
 
 const router: Router = Router();
 
@@ -305,6 +306,16 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
     }
 
     await book.save();
+
+    // Fire-and-forget webhook dispatch
+    if (status === 'completed') {
+      dispatchWebhook(req.userId!, 'book.completed', {
+        bookId: book.id,
+        title: book.title,
+        author: book.author,
+        completedAt: book.completedAt,
+      }).catch(() => {});
+    }
 
     res.json({
       success: true,

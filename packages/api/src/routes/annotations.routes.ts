@@ -13,6 +13,7 @@ import { Op, QueryTypes } from 'sequelize';
 import { sequelize } from '../models';
 import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
+import { dispatchWebhook } from '../services/WebhookDelivery';
 import { exportAnnotations, type ExportFormat } from '../services/ExportService';
 import { Book } from '../models';
 import { ReadingSession } from '../models';
@@ -401,6 +402,14 @@ router.post(
       note,
       tags: tags || [],
     });
+
+    // Fire-and-forget webhook dispatch
+    dispatchWebhook(req.userId!, 'annotation.created', {
+      annotationId: annotation.id,
+      bookId,
+      type,
+      content: content?.slice(0, 200),
+    }).catch(() => {});
 
     res.status(201).json({
       success: true,
