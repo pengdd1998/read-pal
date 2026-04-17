@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { api } from '@/lib/api';
 
 // ---------------------------------------------------------------------------
@@ -20,38 +20,56 @@ interface ReadingCalendarData {
   totalDaysActive: number;
 }
 
-type ActivityLevel = 'none' | 'low' | 'medium' | 'high';
+type ActivityLevel = 0 | 1 | 2 | 3 | 4;
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
+const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''] as const;
 
-function parseISODate(iso: string): Date {
-  const parts = iso.split('-').map(Number);
-  const [year, month, day] = parts.length === 3 ? parts : [2026, 1, 1];
-  return new Date(year, month - 1, day);
+function parseISO(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
-function formatTooltipDate(dateStr: string): string {
-  const d = parseISODate(dateStr);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+function getMonth(date: Date): number {
+  return date.getMonth();
 }
 
 function getActivityLevel(pages: number, minutes: number): ActivityLevel {
-  if (pages === 0 && minutes === 0) return 'none';
-  if (pages >= 30 || minutes >= 45) return 'high';
-  if (pages >= 15 || minutes >= 20) return 'medium';
-  return 'low';
+  if (pages === 0 && minutes === 0) return 0;
+  if (pages >= 40 || minutes >= 60) return 4;
+  if (pages >= 20 || minutes >= 30) return 3;
+  if (pages >= 10 || minutes >= 15) return 2;
+  return 1;
 }
+
+const LEVEL_COLORS: Record<ActivityLevel, string> = {
+  0: 'bg-gray-100 dark:bg-gray-800',
+  1: 'bg-amber-200 dark:bg-amber-900/50',
+  2: 'bg-amber-300 dark:bg-amber-700/60',
+  3: 'bg-amber-500 dark:bg-amber-600/80',
+  4: 'bg-amber-700 dark:bg-amber-500',
+};
+
+const HOVER_COLORS: Record<ActivityLevel, string> = {
+  0: 'hover:bg-gray-200 dark:hover:bg-gray-700',
+  1: 'hover:bg-amber-300 dark:hover:bg-amber-800/60',
+  2: 'hover:bg-amber-400 dark:hover:bg-amber-600/70',
+  3: 'hover:bg-amber-600 dark:hover:bg-amber-500/90',
+  4: 'hover:bg-amber-800 dark:hover:bg-amber-400',
+};
 
 function todayISO(): string {
   const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatTooltipDate(dateStr: string): string {
+  const d = parseISO(dateStr);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // ---------------------------------------------------------------------------
@@ -61,68 +79,50 @@ function todayISO(): string {
 function DayCell({
   day,
   isToday,
-  isOutsideRange,
 }: {
   day: CalendarDay | null;
   isToday: boolean;
-  isOutsideRange: boolean;
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  if (!day || isOutsideRange) {
-    return (
-      <div className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px] rounded-[4px] bg-transparent" />
-    );
+  if (!day) {
+    return <div className="w-[13px] h-[13px] rounded-[3px]" />;
   }
 
   const level = getActivityLevel(day.pages, day.minutes);
-
-  const bgClasses: Record<ActivityLevel, string> = {
-    none: 'bg-gray-100 dark:bg-gray-800',
-    low: 'bg-amber-200 dark:bg-amber-800/60',
-    medium: 'bg-amber-400 dark:bg-amber-600/80',
-    high: 'bg-amber-600 dark:bg-amber-500',
-  };
-
-  const hoverClasses: Record<ActivityLevel, string> = {
-    none: 'hover:bg-gray-200 dark:hover:bg-gray-700',
-    low: 'hover:bg-amber-300 dark:hover:bg-amber-700/70',
-    medium: 'hover:bg-amber-500 dark:hover:bg-amber-500/90',
-    high: 'hover:bg-amber-700 dark:hover:bg-amber-400',
-  };
-
-  const todayRing = isToday
-    ? 'ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-gray-900'
-    : '';
+  const todayRing = isToday ? 'ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-gray-900' : '';
 
   return (
     <div className="relative">
       <div
-        className={`w-[18px] h-[18px] sm:w-[22px] sm:h-[22px] rounded-[4px] transition-colors duration-150 cursor-default ${bgClasses[level]} ${hoverClasses[level]} ${todayRing}`}
+        className={`w-[13px] h-[13px] rounded-[3px] transition-colors duration-100 cursor-default ${LEVEL_COLORS[level]} ${HOVER_COLORS[level]} ${todayRing}`}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       />
-
       {showTooltip && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg whitespace-nowrap shadow-lg pointer-events-none">
-          {formatTooltipDate(day.date)}:{' '}
-          {day.pages} page{day.pages !== 1 ? 's' : ''}, {day.minutes} min
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900 dark:border-t-gray-100" />
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-[11px] rounded-md whitespace-nowrap shadow-lg pointer-events-none">
+          {formatTooltipDate(day.date)}
+          {level > 0 && (
+            <span className="ml-1 text-gray-300 dark:text-gray-600">
+              {day.pages}p, {day.minutes}m
+            </span>
+          )}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-[3px] border-transparent border-t-gray-900 dark:border-t-gray-100" />
         </div>
       )}
     </div>
   );
 }
 
-function SkeletonGrid() {
+function SkeletonHeatmap() {
   return (
-    <div className="space-y-1.5">
-      {Array.from({ length: 5 }).map((_, row) => (
-        <div key={row} className="flex gap-1.5">
-          {Array.from({ length: 7 }).map((_, col) => (
+    <div className="space-y-[3px]">
+      {Array.from({ length: 7 }).map((_, row) => (
+        <div key={row} className="flex gap-[3px]">
+          {Array.from({ length: 26 }).map((_, col) => (
             <div
               key={col}
-              className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px] rounded-[4px] bg-gray-100 dark:bg-gray-800 animate-pulse"
+              className="w-[13px] h-[13px] rounded-[3px] bg-gray-100 dark:bg-gray-800 animate-pulse"
             />
           ))}
         </div>
@@ -132,7 +132,7 @@ function SkeletonGrid() {
 }
 
 // ---------------------------------------------------------------------------
-// Main component
+// Main component — GitHub-style contribution heatmap
 // ---------------------------------------------------------------------------
 
 export default function StreakCalendar() {
@@ -144,7 +144,7 @@ export default function StreakCalendar() {
     let cancelled = false;
 
     api
-      .get<ReadingCalendarData>('/api/stats/reading-calendar')
+      .get<ReadingCalendarData>('/api/stats/reading-calendar?months=6')
       .then((res) => {
         if (!cancelled && res.success && res.data) {
           setData(res.data);
@@ -162,91 +162,71 @@ export default function StreakCalendar() {
     };
   }, []);
 
-  // Build the 30-day grid layout: 7 columns, rows indexed by day-of-week offset
-  const { grid, totalDays } = useMemo(() => {
-    if (!data) {
-      return { grid: [] as (CalendarDay | null)[][], totalDays: 30 };
+  // Build GitHub-style heatmap: columns = weeks, rows = days of week (Mon-Sun)
+  const { weeks, monthMarkers } = useMemo(() => {
+    if (!data || data.calendar.length === 0) {
+      return { weeks: [] as (CalendarDay | null)[][], monthMarkers: [] as { label: string; col: number }[] };
     }
 
     const calendar = data.calendar;
-    const days = calendar.length || 30;
-    const today = todayISO();
-
-    // Build a lookup by date string
     const lookup = new Map<string, CalendarDay>();
     for (const d of calendar) {
       lookup.set(d.date, d);
     }
 
-    // Determine the start of the 30-day window
-    // If the API gave us exactly the days we need, use those; otherwise compute
-    let startDate: Date;
-    if (calendar.length > 0) {
-      const lastDate = parseISODate(calendar[calendar.length - 1].date);
-      startDate = new Date(lastDate);
-      startDate.setDate(startDate.getDate() - (days - 1));
-    } else {
-      startDate = new Date();
-      startDate.setDate(startDate.getDate() - (days - 1));
-    }
+    // Determine date range: ~6 months ending today
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - calendar.length + 1);
 
-    // Generate all days in the range
-    const allDays: CalendarDay[] = [];
-    const cursor = new Date(startDate);
-    for (let i = 0; i < days; i++) {
+    // Snap start to previous Sunday to align weeks
+    const startDow = startDate.getDay(); // 0=Sun
+    const alignedStart = new Date(startDate);
+    alignedStart.setDate(alignedStart.getDate() - startDow);
+
+    // Generate all days from alignedStart to today
+    const allDays: (CalendarDay | null)[] = [];
+    const cursor = new Date(alignedStart);
+    while (cursor <= today) {
       const yyyy = cursor.getFullYear();
       const mm = String(cursor.getMonth() + 1).padStart(2, '0');
       const dd = String(cursor.getDate()).padStart(2, '0');
       const iso = `${yyyy}-${mm}-${dd}`;
       const existing = lookup.get(iso);
-      allDays.push(existing ?? { date: iso, pages: 0, minutes: 0 });
+      allDays.push(existing ?? null);
       cursor.setDate(cursor.getDate() + 1);
     }
 
-    // Determine the day-of-week offset for the first day (0=Sun .. 6=Sat)
-    const firstDow = allDays.length > 0 ? parseISODate(allDays[0].date).getDay() : 0;
-
-    // Build rows: each row represents one week (Sun-Sat)
-    const rows: (CalendarDay | null)[][] = [];
-
-    // First row may have leading empty cells
-    const firstRow: (CalendarDay | null)[] = [];
-    for (let pad = 0; pad < firstDow; pad++) {
-      firstRow.push(null);
+    // Chunk into weeks (7 days each, Sun-Sat)
+    const weekCols: (CalendarDay | null)[][] = [];
+    for (let i = 0; i < allDays.length; i += 7) {
+      weekCols.push(allDays.slice(i, i + 7));
     }
-    for (let col = firstDow; col < 7 && firstRow.length < days + firstDow; col++) {
-      const idx = col - firstDow;
-      firstRow.push(idx < allDays.length ? allDays[idx] : null);
-    }
-    rows.push(firstRow);
 
-    // Subsequent rows
-    let dayIndex = firstRow.filter(Boolean).length;
-    while (dayIndex < allDays.length) {
-      const row: (CalendarDay | null)[] = [];
-      for (let col = 0; col < 7 && dayIndex < allDays.length; col++) {
-        row.push(allDays[dayIndex]);
-        dayIndex++;
+    // Compute month markers (first column where a new month starts)
+    const markers: { label: string; col: number }[] = [];
+    let lastMonth = -1;
+    for (let col = 0; col < weekCols.length; col++) {
+      const week = weekCols[col];
+      for (const day of week) {
+        if (day) {
+          const m = getMonth(parseISO(day.date));
+          if (m !== lastMonth) {
+            markers.push({ label: MONTH_LABELS[m], col });
+            lastMonth = m;
+          }
+          break;
+        }
       }
-      // Pad incomplete last row
-      while (row.length < 7) {
-        row.push(null);
-      }
-      rows.push(row);
     }
 
-    return { grid: rows, totalDays: days };
+    return { weeks: weekCols, monthMarkers: markers };
   }, [data]);
 
   const todayStr = todayISO();
 
-  // Determine which cells are outside the 30-day range (the null cells or padding)
-  const isOutside = useCallback(
-    (day: CalendarDay | null): boolean => {
-      return day === null;
-    },
-    [],
-  );
+  // Total days in the period
+  const totalDays = data?.calendar.length ?? 180;
 
   return (
     <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 sm:p-6 shadow-sm">
@@ -269,7 +249,6 @@ export default function StreakCalendar() {
 
         {!loading && !error && data && (
           <div className="flex items-center gap-4">
-            {/* Longest streak */}
             <div className="text-center">
               <div className="text-xs text-gray-400 uppercase tracking-wide font-medium">
                 Best
@@ -279,7 +258,6 @@ export default function StreakCalendar() {
               </div>
             </div>
             <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
-            {/* Current streak */}
             <div className="text-center">
               <div className="text-xs text-gray-400 uppercase tracking-wide font-medium">
                 Current
@@ -299,40 +277,62 @@ export default function StreakCalendar() {
         )}
       </div>
 
-      {/* Calendar Grid */}
+      {/* Heatmap Grid */}
       {loading ? (
-        <SkeletonGrid />
+        <SkeletonHeatmap />
       ) : error ? (
-        <div className="h-48 flex items-center justify-center">
+        <div className="h-32 flex items-center justify-center">
           <p className="text-sm text-gray-400">{error}</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <div className="inline-flex gap-3">
-            {/* Day-of-week labels */}
-            <div className="flex flex-col gap-1.5">
-              {DAY_LABELS.map((label) => (
+          {/* Month labels */}
+          <div className="flex mb-1 ml-[32px]" style={{ gap: '0px' }}>
+            {monthMarkers.map((m, i) => {
+              const nextCol = monthMarkers[i + 1]?.col ?? weeks.length;
+              const spanCols = nextCol - m.col;
+              return (
                 <div
-                  key={label}
-                  className="h-[18px] sm:h-[22px] flex items-center text-[10px] text-gray-400 dark:text-gray-500 font-medium leading-none pr-1"
+                  key={`${m.label}-${m.col}`}
+                  className="text-[10px] text-gray-400 dark:text-gray-500 font-medium"
+                  style={{ width: `${spanCols * 16}px` }}
+                >
+                  {spanCols >= 2 ? m.label : ''}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Grid with day labels */}
+          <div className="flex gap-0">
+            {/* Day-of-week labels */}
+            <div className="flex flex-col gap-[3px] mr-1">
+              {DAY_LABELS.map((label, i) => (
+                <div
+                  key={i}
+                  className="h-[13px] flex items-center text-[10px] text-gray-400 dark:text-gray-500 font-medium leading-none pr-1"
                 >
                   {label}
                 </div>
               ))}
             </div>
 
-            {/* Grid cells */}
-            <div className="flex gap-3">
-              {grid.map((row, rowIdx) => (
-                <div key={rowIdx} className="flex flex-col gap-1.5">
-                  {row.map((day, colIdx) => (
+            {/* Heatmap columns */}
+            <div className="flex gap-[3px]">
+              {weeks.map((week, colIdx) => (
+                <div key={colIdx} className="flex flex-col gap-[3px]">
+                  {week.map((day, rowIdx) => (
                     <DayCell
-                      key={`${rowIdx}-${colIdx}`}
+                      key={`${colIdx}-${rowIdx}`}
                       day={day}
                       isToday={day !== null && day.date === todayStr}
-                      isOutsideRange={isOutside(day)}
                     />
                   ))}
+                  {/* Pad incomplete weeks */}
+                  {week.length < 7 &&
+                    Array.from({ length: 7 - week.length }).map((_, i) => (
+                      <div key={`pad-${i}`} className="w-[13px] h-[13px]" />
+                    ))}
                 </div>
               ))}
             </div>
@@ -344,10 +344,11 @@ export default function StreakCalendar() {
       {!loading && !error && (
         <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-400 dark:text-gray-500">
           <span>Less</span>
-          <div className="w-[14px] h-[14px] rounded-[3px] bg-gray-100 dark:bg-gray-800" />
-          <div className="w-[14px] h-[14px] rounded-[3px] bg-amber-200 dark:bg-amber-800/60" />
-          <div className="w-[14px] h-[14px] rounded-[3px] bg-amber-400 dark:bg-amber-600/80" />
-          <div className="w-[14px] h-[14px] rounded-[3px] bg-amber-600 dark:bg-amber-500" />
+          <div className="w-[13px] h-[13px] rounded-[3px] bg-gray-100 dark:bg-gray-800" />
+          <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-200 dark:bg-amber-900/50" />
+          <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-300 dark:bg-amber-700/60" />
+          <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-500 dark:bg-amber-600/80" />
+          <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-700 dark:bg-amber-500" />
           <span>More</span>
         </div>
       )}

@@ -111,9 +111,10 @@ async function calculateStreak(userId: string): Promise<number> {
 router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
+    const months = Math.min(Math.max(parseInt(String(req.query.months)) || 6, 1), 12);
 
     // --- Try Redis cache first (120s TTL) ---
-    const cacheKey = `stats:calendar:${userId}`;
+    const cacheKey = `stats:calendar:${userId}:${months}`;
     try {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
@@ -134,10 +135,10 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
          COALESCE(SUM(duration) / 60, 0)::int    AS minutes
        FROM reading_sessions
        WHERE user_id = $1
-         AND started_at >= NOW() - INTERVAL '30 days'
+         AND started_at >= NOW() - ($2 || ' months')::interval
        GROUP BY DATE(started_at)
        ORDER BY DATE(started_at) ASC`,
-      { bind: [userId], type: QueryTypes.SELECT },
+      { bind: [userId, months], type: QueryTypes.SELECT },
     );
 
     // Build a map for quick lookup
@@ -155,7 +156,7 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
         where: {
           userId,
           lastReadAt: {
-            [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            [Op.gte]: new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000),
           },
         },
         attributes: ['lastReadAt', 'progress', 'totalPages'],
@@ -171,10 +172,11 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
       }
     }
 
-    // Build 30-day array
+    // Build N-month array
     const calendar: { date: string; pages: number; minutes: number }[] = [];
     const now = new Date();
-    for (let i = 29; i >= 0; i--) {
+    const totalDays = months * 30;
+    for (let i = totalDays - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().slice(0, 10);
@@ -192,7 +194,7 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
     // Trigger streak milestone notification (fire-and-forget)
     notifyStreakMilestone(userId, streak).catch(() => {});
 
-    // Calculate longest streak in the 30-day window
+    // Calculate longest streak in the period
     let longestStreak = 0;
     let currentRun = 0;
     for (const day of calendar) {
