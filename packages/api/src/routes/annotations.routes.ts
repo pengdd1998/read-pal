@@ -16,6 +16,7 @@ import { notFound } from '../utils/errors';
 import { exportAnnotations, type ExportFormat } from '../services/ExportService';
 import { Book } from '../models';
 import { ReadingSession } from '../models';
+import { Flashcard } from '../models/Flashcard';
 
 const router: Router = Router();
 
@@ -260,7 +261,7 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
     }
 
     // New formats: delegate to ExportService (requires book metadata)
-    const validFormats: ExportFormat[] = ['bookclub', 'bibtex', 'apa', 'mla', 'chicago', 'research', 'annotated_bib'];
+    const validFormats: ExportFormat[] = ['bookclub', 'bibtex', 'apa', 'mla', 'chicago', 'research', 'annotated_bib', 'study_guide'];
     if (!validFormats.includes(fmt as ExportFormat)) {
       return res.status(400).json({
         success: false,
@@ -280,6 +281,21 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
     });
     const totalReadingTime = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
     const totalPagesRead = sessions.reduce((sum, s) => sum + (s.pagesRead || 0), 0);
+
+    // Fetch flashcards for study_guide format
+    let flashcardData: { question: string; answer: string; repetitionCount: number; lastReviewAt?: Date }[] = [];
+    if (fmt === 'study_guide') {
+      const cards = await Flashcard.findAll({
+        where: { userId: req.userId, bookId },
+        order: [['createdAt', 'ASC']],
+      });
+      flashcardData = cards.map((c) => ({
+        question: c.question,
+        answer: c.answer,
+        repetitionCount: c.repetitionCount,
+        lastReviewAt: c.lastReviewAt ?? undefined,
+      }));
+    }
 
     const result = await exportAnnotations(
       fmt as ExportFormat,
@@ -307,6 +323,7 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
         firstReadAt: sessions.length > 0 ? sessions[0].startedAt : undefined,
         lastReadAt: sessions.length > 0 ? sessions[sessions.length - 1].startedAt : undefined,
       },
+      flashcardData,
     );
 
     res.setHeader('Content-Type', result.contentType);

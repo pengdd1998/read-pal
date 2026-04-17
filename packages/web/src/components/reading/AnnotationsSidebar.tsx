@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
 import { ExportPreviewModal } from './ExportPreviewModal';
+import { OutlinePanel } from './OutlinePanel';
 
 // ShareDialog is heavy (~400 lines + export utils) — only load when user clicks Share
 const ShareDialog = dynamic(() => import('./ShareDialog').then((m) => ({ default: m.ShareDialog })), {
@@ -27,6 +28,7 @@ interface AnnotationsSidebarProps {
 }
 
 type FilterTab = 'all' | 'highlight' | 'note' | 'bookmark';
+type ViewMode = 'list' | 'outline';
 
 const TABS: { key: FilterTab; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -56,6 +58,7 @@ export function AnnotationsSidebar({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Escape key to close
   useEffect(() => {
@@ -180,6 +183,28 @@ export function AnnotationsSidebar({
           </button>
           {annotations.length > 0 && (
             <button
+              onClick={() => setViewMode((v) => v === 'list' ? 'outline' : 'list')}
+              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
+                viewMode === 'outline'
+                  ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20'
+                  : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+              }`}
+              title={viewMode === 'list' ? 'Outline view (by chapter)' : 'List view'}
+              aria-label={viewMode === 'list' ? 'Switch to outline view' : 'Switch to list view'}
+            >
+              {viewMode === 'list' ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M3 8h12M3 12h18M3 16h12M3 20h18" />
+                </svg>
+              )}
+            </button>
+          )}
+          {annotations.length > 0 && (
+            <button
               onClick={() => setBulkMode((v) => !v)}
               className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
                 bulkMode
@@ -268,6 +293,7 @@ export function AnnotationsSidebar({
             </div>
           </div>
         )}
+        {viewMode === 'list' && (
         <div role="tablist" aria-label="Filter annotations" className="flex border-b border-gray-200 dark:border-gray-700 px-2">
           {TABS.map((tab) => (
             <button
@@ -297,9 +323,10 @@ export function AnnotationsSidebar({
             </button>
           ))}
         </div>
+        )}
 
         {/* Bulk action bar */}
-        {bulkMode && (
+        {viewMode === 'list' && bulkMode && (
           <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200/50 dark:border-amber-900/30 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
@@ -331,7 +358,14 @@ export function AnnotationsSidebar({
           </div>
         )}
 
-        {/* Annotations list */}
+        {/* Annotations content */}
+        {viewMode === 'outline' ? (
+          <OutlinePanel
+            annotations={filtered}
+            bookTitle={bookTitle}
+            onScrollToAnnotation={onScrollToAnnotation}
+          />
+        ) : (
         <div role="tabpanel" className="flex-1 overflow-y-auto p-3 space-y-2">
           {filtered.length === 0 ? (
             <div className="text-center py-12">
@@ -375,6 +409,7 @@ export function AnnotationsSidebar({
             ))
           )}
         </div>
+        )}
       </div>
 
       {/* Export modal */}

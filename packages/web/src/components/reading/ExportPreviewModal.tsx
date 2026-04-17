@@ -5,7 +5,7 @@ import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { api } from '@/lib/api';
 
-type ExportFormat = 'markdown' | 'json' | 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib';
+type ExportFormat = 'markdown' | 'json' | 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib' | 'study_guide';
 
 interface FormatOption {
   value: ExportFormat;
@@ -25,6 +25,7 @@ const FORMATS: FormatOption[] = [
   { value: 'mla', label: 'MLA', description: 'MLA 9th edition citation', icon: 'M', category: 'citation' },
   { value: 'chicago', label: 'Chicago', description: 'Chicago style citation', icon: 'C', category: 'citation' },
   { value: 'annotated_bib', label: 'Annotated Bib', description: 'Per-highlight citations with page numbers', icon: 'AB', category: 'citation' },
+  { value: 'study_guide', label: 'Study Guide', description: 'Flashcards + notes in printable format', icon: 'SG', category: 'discussion' },
 ];
 
 const CATEGORIES = [

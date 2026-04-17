@@ -39,7 +39,7 @@ export interface ReadingStats {
   lastReadAt?: Date;
 }
 
-export type ExportFormat = 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib';
+export type ExportFormat = 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib' | 'study_guide';
 
 export interface ExportResult {
   content: string;
@@ -508,6 +508,139 @@ function generateAnnotatedBib(book: BookInfo, annotations: AnnotationData[]): Ex
 }
 
 // ---------------------------------------------------------------------------
+// Study Guide — flashcards + annotations in printable format
+// ---------------------------------------------------------------------------
+
+export interface FlashcardData {
+  question: string;
+  answer: string;
+  repetitionCount?: number;
+  lastReviewAt?: Date;
+}
+
+function generateStudyGuide(
+  book: BookInfo,
+  annotations: AnnotationData[],
+  flashcards: FlashcardData[],
+  stats?: ReadingStats,
+): ExportResult {
+  const lines: string[] = [
+    `# Study Guide: ${escapeMarkdown(book.title)}`,
+    `**Author:** ${escapeMarkdown(book.author)}`,
+    '',
+  ];
+
+  const meta = getMeta(book);
+  if (meta.publishYear) lines.push(`**Published:** ${meta.publishYear}`);
+  lines.push(`_Generated ${new Date().toLocaleDateString()}_`, '');
+
+  // Reading stats
+  if (stats && stats.sessionCount > 0) {
+    lines.push('## Reading Overview', '');
+    lines.push(`- **Sessions:** ${stats.sessionCount}`);
+    lines.push(`- **Total time:** ${formatDuration(stats.totalReadingTime)}`);
+    if (stats.totalPagesRead > 0) lines.push(`- **Pages read:** ${stats.totalPagesRead}`);
+    if (book.progress) lines.push(`- **Progress:** ${book.progress}%`);
+    lines.push('');
+  }
+
+  // Chapter-by-chapter outline from highlights and notes
+  const chapterGroups = groupByChapter(annotations);
+  const sortedChapters = [...chapterGroups.entries()]
+    .filter(([ch]) => ch >= 0)
+    .sort(([a], [b]) => a - b);
+
+  if (sortedChapters.length > 0) {
+    lines.push('## Chapter Outline', '');
+    for (const [ch, items] of sortedChapters) {
+      const highlights = items.filter((a) => a.type === 'highlight');
+      const notes = items.filter((a) => a.type === 'note');
+      lines.push(`### Chapter ${ch + 1} (${items.length} annotations)`, '');
+
+      // Key highlights as blockquotes
+      if (highlights.length > 0) {
+        for (const h of highlights.slice(0, 10)) {
+          lines.push(`> ${escapeMarkdown(h.content.length > 200 ? h.content.slice(0, 200) + '...' : h.content)}${locationRef(h.location)}`);
+          if (h.note) lines.push(`  → _${escapeMarkdown(h.note)}_`);
+        }
+        lines.push('');
+      }
+
+      // Notes as structured observations
+      if (notes.length > 0) {
+        for (const n of notes) {
+          lines.push(`**Note:** ${escapeMarkdown(n.content.length > 150 ? n.content.slice(0, 150) + '...' : n.content)}`);
+          if (n.note) lines.push(`  ${escapeMarkdown(n.note)}`);
+          lines.push('');
+        }
+      }
+    }
+  } else if (annotations.length > 0) {
+    // Flat list fallback
+    lines.push('## Key Passages', '');
+    const highlights = annotations.filter((a) => a.type === 'highlight');
+    for (const h of highlights.slice(0, 20)) {
+      lines.push(`> ${escapeMarkdown(h.content.length > 200 ? h.content.slice(0, 200) + '...' : h.content)}`);
+      if (h.note) lines.push(`  → _${escapeMarkdown(h.note)}_`);
+      lines.push('');
+    }
+  }
+
+  // Flashcard section — Q&A pairs for review
+  if (flashcards.length > 0) {
+    lines.push('---', '');
+    lines.push(`## Review Cards (${flashcards.length})`, '');
+    lines.push('_Test yourself: cover the answers and try to recall._', '');
+
+    for (let i = 0; i < flashcards.length; i++) {
+      const card = flashcards[i];
+      const reviewed = card.lastReviewAt ? ' (reviewed)' : '';
+      lines.push(`### Q${i + 1}${reviewed}`, '');
+      lines.push(`**${escapeMarkdown(card.question)}**`, '');
+      lines.push(`<details><summary>Reveal answer</summary>`, '');
+      lines.push('', escapeMarkdown(card.answer), '');
+      lines.push('</details>', '');
+    }
+  }
+
+  // Key themes from tags
+  const tagGroups = groupByTag(annotations);
+  if (tagGroups.size > 0) {
+    lines.push('---', '');
+    lines.push('## Key Themes', '');
+    const sortedTags = [...tagGroups.entries()].sort(([, a], [, b]) => b.length - a.length);
+    for (const [tag, items] of sortedTags) {
+      const highlights = items.filter((a) => a.type === 'highlight').length;
+      const notes = items.filter((a) => a.type === 'note').length;
+      lines.push(`- **${escapeMarkdown(tag)}** — ${highlights} highlight${highlights !== 1 ? 's' : ''}, ${notes} note${notes !== 1 ? 's' : ''}`);
+    }
+    lines.push('');
+  }
+
+  // Study plan based on SM-2 intervals
+  if (flashcards.length > 0) {
+    const newCards = flashcards.filter((c) => !c.lastReviewAt).length;
+    const reviewedCards = flashcards.length - newCards;
+    lines.push('---', '');
+    lines.push('## Study Plan', '');
+    lines.push(`- **New cards:** ${newCards} — review today`);
+    lines.push(`- **Previously reviewed:** ${reviewedCards} — spaced repetition schedule active`);
+    lines.push('- **Recommended:** Review all cards daily until 80% are "Easy", then switch to spaced schedule.');
+    lines.push('');
+  }
+
+  if (annotations.length === 0 && flashcards.length === 0) {
+    lines.push('_No annotations or flashcards yet. Start highlighting and generating review cards!_');
+  }
+
+  return {
+    content: lines.join('\n'),
+    contentType: 'text/markdown; charset=utf-8',
+    filename: `study-guide-${slugify(book.title)}.md`,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -524,6 +657,7 @@ export async function exportAnnotations(
   book: BookInfo,
   annotations: AnnotationData[],
   stats?: ReadingStats,
+  flashcards?: FlashcardData[],
 ): Promise<ExportResult> {
   switch (format) {
     case 'bookclub':
@@ -540,6 +674,8 @@ export async function exportAnnotations(
       return generateResearch(book, annotations, stats);
     case 'annotated_bib':
       return generateAnnotatedBib(book, annotations);
+    case 'study_guide':
+      return generateStudyGuide(book, annotations, flashcards || [], stats);
     default:
       throw new Error(`Unsupported export format: ${format}`);
   }
