@@ -10,6 +10,7 @@ import { Book, ReadingSession, sequelize } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { redisClient } from '../db';
 import { etag } from '../middleware/cache';
+import { notifyStreakMilestone } from '../services/NotificationService';
 
 const router: Router = Router();
 
@@ -187,6 +188,9 @@ router.get('/reading-calendar', authenticate, async (req: AuthRequest, res) => {
 
     // Calculate current streak
     const streak = await calculateStreak(userId);
+
+    // Trigger streak milestone notification (fire-and-forget)
+    notifyStreakMilestone(userId, streak).catch(() => {});
 
     // Calculate longest streak in the 30-day window
     let longestStreak = 0;

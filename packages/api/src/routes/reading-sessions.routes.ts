@@ -9,6 +9,9 @@ import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
+import { notifyGoalAchieved, notifyStreakMilestone } from '../services/NotificationService';
+import { User } from '../models';
+import { fn, col, Op } from 'sequelize';
 
 const router: Router = Router();
 
@@ -111,6 +114,59 @@ router.post('/:id/end', authenticate, async (req: AuthRequest, res) => {
         { where: { id: session.bookId } }
       );
     }
+
+    // Fire-and-forget: check if daily reading goal was achieved
+    (async () => {
+      try {
+        const user = await User.findByPk(req.userId!);
+        const dailyGoalMinutes = (user?.settings as Record<string, unknown>)?.dailyReadingMinutes as number || 30;
+
+        // Sum today's reading minutes
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todaySessions = await ReadingSession.findAll({
+          attributes: [[fn('COALESCE', fn('SUM', col('duration')), 0), 'totalSeconds']],
+          where: {
+            userId: req.userId!,
+            startedAt: { [Op.gte]: todayStart },
+            isActive: false,
+          },
+          raw: true,
+        });
+        const totalMinutes = Math.round(
+          ((todaySessions[0] as unknown as Record<string, unknown>)?.totalSeconds as number || 0) / 60
+        );
+
+        if (totalMinutes >= dailyGoalMinutes) {
+          await notifyGoalAchieved(req.userId!, 'daily_minutes', dailyGoalMinutes);
+        }
+
+        // Also check streak milestones
+        const streakRows = await ReadingSession.findAll({
+          attributes: [[fn('DATE', col('started_at')), 'day']],
+          where: { userId: req.userId! },
+          group: [fn('DATE', col('started_at'))],
+          order: [[fn('DATE', col('started_at')), 'DESC']],
+          raw: true,
+          limit: 60,
+        }) as unknown as { day: string }[];
+
+        let streak = 0;
+        const now = new Date();
+        for (let i = 0; i < 60; i++) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          const dateStr = d.toISOString().slice(0, 10);
+          if (streakRows.some((r) => r.day === dateStr)) {
+            streak++;
+          } else if (i > 0) {
+            break;
+          }
+        }
+
+        await notifyStreakMilestone(req.userId!, streak);
+      } catch { /* non-critical */ }
+    })();
 
     res.json({ success: true, data: session });
   } catch (error) {

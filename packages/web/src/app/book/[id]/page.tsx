@@ -48,6 +48,7 @@ export default function BookDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -159,6 +160,13 @@ export default function BookDetailPage() {
           <button onClick={() => setError('')} className="ml-2 text-red-400 hover:text-red-600">&times;</button>
         </div>
       )}
+      {/* Success banner */}
+      {exportSuccess && (
+        <div className="mb-6 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 flex items-center justify-between animate-scale-in">
+          <span>{exportSuccess}</span>
+          <button onClick={() => setExportSuccess('')} className="ml-2 text-green-400 hover:text-green-600">&times;</button>
+        </div>
+      )}
       {/* Back */}
       <div className="mb-8 animate-slide-up">
         <button
@@ -233,7 +241,7 @@ export default function BookDetailPage() {
       </div>
 
       {/* Annotation timeline */}
-      {recentAnnotations.length > 0 && (
+      {recentAnnotations.length > 0 ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 mb-6 animate-slide-up stagger-3">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Recent Annotations</h2>
@@ -265,6 +273,11 @@ export default function BookDetailPage() {
               );
             })}
           </div>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 mb-6 animate-slide-up stagger-3 text-center">
+          <p className="text-gray-400 text-sm">No annotations yet</p>
+          <p className="text-gray-400 text-xs mt-1">Start reading to add highlights, notes, and bookmarks</p>
         </div>
       )}
 
@@ -315,6 +328,8 @@ export default function BookDetailPage() {
                 a.download = `annotations-${book.title.replace(/\s+/g, '-')}.md`;
                 a.click();
                 URL.revokeObjectURL(url);
+                setExportSuccess('Markdown exported!');
+                setTimeout(() => setExportSuccess(''), 3000);
               } catch { setError('Failed to export annotations.'); }
             }}
             className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -336,6 +351,8 @@ export default function BookDetailPage() {
                 a.download = `annotations-${book.title.replace(/\s+/g, '-')}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
+                setExportSuccess('JSON exported!');
+                setTimeout(() => setExportSuccess(''), 3000);
               } catch { setError('Failed to export annotations.'); }
             }}
             className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

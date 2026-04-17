@@ -2,6 +2,7 @@
  * Notifications Routes
  *
  * API endpoints for reading reminders, streak alerts, and in-app notifications.
+ * Database-backed with Sequelize.
  */
 
 import { Router } from 'express';
@@ -25,7 +26,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
     const unreadOnly = req.query.unread === 'true';
 
-    const notifications = getUserNotifications(req.userId!, { limit, unreadOnly });
+    const notifications = await getUserNotifications(req.userId!, { limit, unreadOnly });
 
     res.json({
       success: true,
@@ -46,7 +47,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
  */
 router.get('/unread-count', authenticate, async (req: AuthRequest, res) => {
   try {
-    const count = getUnreadCount(req.userId!);
+    const count = await getUnreadCount(req.userId!);
     res.json({ success: true, data: { count } });
   } catch (error) {
     res.status(500).json({
@@ -62,7 +63,7 @@ router.get('/unread-count', authenticate, async (req: AuthRequest, res) => {
  */
 router.patch('/:id/read', authenticate, async (req: AuthRequest, res) => {
   try {
-    const found = markNotificationRead(req.userId!, req.params.id);
+    const found = await markNotificationRead(req.userId!, req.params.id);
     if (!found) {
       return notFound(res, 'Notification');
     }
@@ -81,7 +82,7 @@ router.patch('/:id/read', authenticate, async (req: AuthRequest, res) => {
  */
 router.post('/mark-all-read', authenticate, async (req: AuthRequest, res) => {
   try {
-    const count = markAllRead(req.userId!);
+    const count = await markAllRead(req.userId!);
     res.json({ success: true, data: { count } });
   } catch (error) {
     res.status(500).json({

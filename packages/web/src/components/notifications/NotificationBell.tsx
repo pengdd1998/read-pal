@@ -7,20 +7,19 @@ interface Notification {
   id: string;
   type: string;
   title: string;
-  body: string;
+  message: string;
   read: boolean;
   createdAt: string;
-  data?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 function getNotificationIcon(type: string) {
   switch (type) {
     case 'reading_reminder': return '📖';
-    case 'streak_alert':
+    case 'streak_at_risk':
     case 'streak_milestone': return '🔥';
-    case 'friend_message': return '💬';
-    case 'book_completed': return '🎉';
-    case 'goal_progress': return '🎯';
+    case 'goal_achieved': return '🎯';
+    case 'system': return '🔔';
     default: return '📬';
   }
 }
@@ -154,7 +153,7 @@ export function NotificationBell() {
                         )}
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
-                        {notif.body}
+                        {notif.message}
                       </p>
                       <span className="text-[10px] text-gray-400 mt-1 block">
                         {timeAgo(notif.createdAt)}
