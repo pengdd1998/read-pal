@@ -133,6 +133,10 @@ const DashboardChallenges = memo(function DashboardChallenges() {
 
   useEffect(() => { return fetchChallenges(); }, [fetchChallenges]);
 
+  // Hooks must be called before any early returns (React rules of hooks)
+  const active = useMemo(() => challenges.filter((c) => !c.completed).slice(0, 4), [challenges]);
+  const completedCount = useMemo(() => challenges.filter((c) => c.completed).length, [challenges]);
+
   if (loading) {
     return (
       <div className="card">
@@ -152,9 +156,6 @@ const DashboardChallenges = memo(function DashboardChallenges() {
       </div>
     );
   }
-
-  const active = useMemo(() => challenges.filter((c) => !c.completed).slice(0, 4), [challenges]);
-  const completedCount = useMemo(() => challenges.filter((c) => c.completed).length, [challenges]);
   if (active.length === 0) return null;
 
   return (
