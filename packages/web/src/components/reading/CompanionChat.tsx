@@ -367,7 +367,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     <>
       {/* Fixed chat button — bottom-right, labeled and discoverable for first-time users */}
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+        <div className="fixed bottom-6 right-6 z-10 flex flex-col items-end gap-2">
           {/* First-time tooltip */}
           {isFirstChat && (
             <div className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px]">
@@ -395,15 +395,15 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       {/* Chat Panel */}
       {isOpen && (
         <>
-          {/* Mobile: semi-transparent backdrop covering top portion */}
+          {/* Backdrop — click to close on all screen sizes */}
           <div
-            className="fixed inset-0 z-40 md:hidden bg-black/10"
+            className="fixed inset-0 z-30 bg-black/10"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Mobile: bottom sheet (55vh) — Desktop: full-height sidebar (400px) */}
           <div
-            className="fixed right-0 bottom-0 h-[55vh] w-full md:top-0 md:bottom-0 md:h-full md:w-[400px] bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right overscroll-contain"
+            className="fixed right-0 bottom-0 h-[55vh] w-full md:top-0 md:bottom-0 md:h-full md:w-[400px] bg-white dark:bg-gray-800 shadow-2xl z-40 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right overscroll-contain"
           >
             {/* Mobile drag handle */}
             <div className="flex justify-center pt-2 pb-1 md:hidden">

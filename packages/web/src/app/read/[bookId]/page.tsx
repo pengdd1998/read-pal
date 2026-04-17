@@ -582,13 +582,13 @@ export default function ReadPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col relative">
+    <div className="h-screen flex flex-col relative overflow-x-hidden">
       <ReadingBackground content={chapterContent} enabled={bgEnabled} />
 
-      {/* Top bar — collapses smoothly with height + opacity transition */}
+      {/* Top bar — collapses smoothly with max-h transition */}
       <div
         className={`relative z-10 flex items-center justify-between px-3 py-2 backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} shrink-0 overflow-hidden transition-all duration-300 ease-out ${
-          showControls ? 'max-h-14 border-b opacity-100' : 'max-h-0 py-0 opacity-0'
+          showControls ? 'max-h-20 border-b opacity-100' : 'max-h-0 py-0 opacity-0'
         }`}
       >
         {/* Left: Back + Book info */}
@@ -876,6 +876,9 @@ export default function ReadPage() {
       />
 
       {/* Study mode panel */}
+      {studyMode.enabled && (
+        <div className="fixed inset-0 z-20 bg-black/20" onClick={studyMode.toggleStudyMode} />
+      )}
       <div className={`fixed right-0 top-0 bottom-0 z-20 w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="h-full overflow-y-auto px-3 pb-4">
           <StudyModePanel
@@ -953,14 +956,14 @@ export default function ReadPage() {
 
       {/* Highlight mode indicator — subtle pill */}
       {highlightMode && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-15 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm">
           Tap text to highlight
         </div>
       )}
 
       {/* Milestone toast — gentle */}
       {milestone && (
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-15 animate-fade-in">
           <div className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-amber-700 dark:text-amber-300 text-xs font-medium shadow-md border border-amber-200/50 dark:border-amber-800/50">
             {milestone} complete
           </div>
@@ -984,10 +987,10 @@ export default function ReadPage() {
         />
       )}
 
-      {/* Shortcuts help button — subtle */}
+      {/* Shortcuts help button — subtle, doesn't conflict with chat */}
       <button
         onClick={() => setShowShortcutsHelp(true)}
-        className="hidden sm:flex fixed bottom-5 right-5 z-20 w-9 h-9 rounded-full bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 text-gray-300 dark:text-gray-600 hover:text-amber-500 hover:border-amber-300/50 transition-all items-center justify-center"
+        className="hidden sm:flex fixed bottom-5 right-20 z-10 w-9 h-9 rounded-full bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 text-gray-300 dark:text-gray-600 hover:text-amber-500 hover:border-amber-300/50 transition-all items-center justify-center"
         aria-label="Keyboard shortcuts help"
       >
         <span className="text-xs font-bold">?</span>

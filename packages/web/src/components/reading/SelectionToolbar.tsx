@@ -111,7 +111,7 @@ export function SelectionToolbar({
     return (
       <>
         <div
-          className="fixed inset-0 z-50 bg-black/20 animate-fade-in"
+          className="fixed inset-0 z-40 bg-black/20 animate-fade-in"
           onClick={onDismiss}
         >
           <div
@@ -289,7 +289,7 @@ export function SelectionToolbar({
       <div
         ref={toolbarRef}
         data-selection-toolbar
-        className="fixed z-50 animate-bounce-in"
+        className="fixed z-40 animate-bounce-in"
         style={{ top, left }}
       >
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-lg max-w-[calc(100vw-16px)] overflow-x-auto">
