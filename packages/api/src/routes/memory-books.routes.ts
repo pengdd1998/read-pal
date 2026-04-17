@@ -8,6 +8,7 @@
 import { Router } from 'express';
 import { Book } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { memoryBookService } from '../services/MemoryBookService';
 import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
@@ -110,7 +111,7 @@ router.get('/:bookId/html', authenticate, async (req: AuthRequest, res) => {
  * POST /api/memory-books/:bookId/generate
  * Trigger generation of a memory book for a specific book
  */
-router.post('/:bookId/generate', authenticate, async (req: AuthRequest, res) => {
+router.post('/:bookId/generate', rateLimiter({ windowMs: 300000, max: 3 }), authenticate, async (req: AuthRequest, res) => {
   try {
     const { format } = req.body ?? {};
 

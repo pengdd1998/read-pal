@@ -10,6 +10,7 @@
 
 import { Router, type Response } from 'express';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 import type { ReadingFriendPersona } from '../types';
 import { User } from '../models';
 import { FriendConversation, FriendRelationship } from '../models/FriendConversation';
@@ -77,7 +78,7 @@ interface UpdateFriendRequest {
  * Body: { message: string, context?: { ... } }
  * Response: { success: true, data: { response, persona, emotion } }
  */
-router.post('/chat', authenticate, async (req: AuthRequest, res) => {
+router.post('/chat', rateLimiter({ windowMs: 60000, max: 20 }), authenticate, async (req: AuthRequest, res) => {
   try {
     const { message, context } = req.body as ChatRequest;
 
@@ -159,7 +160,7 @@ const PERSONA_TONES: Record<string, { tone: string; speech: string }> = {
  *
  * Body: { message: string, context?: { persona?: string, ... } }
  */
-router.post('/chat/stream', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/chat/stream', rateLimiter({ windowMs: 60000, max: 20 }), authenticate, async (req: AuthRequest, res: Response) => {
   const { message, context } = req.body as ChatRequest;
   const persona = (context as Record<string, string> | undefined)?.persona || 'sage';
 
@@ -262,7 +263,7 @@ ${contextSection}
  * Body: { text: string, context?: { ... } }
  * Response: { success: true, data: { response, persona, emotion } }
  */
-router.post('/react', authenticate, async (req: AuthRequest, res) => {
+router.post('/react', rateLimiter({ windowMs: 60000, max: 15 }), authenticate, async (req: AuthRequest, res) => {
   try {
     const { text, context } = req.body as ReactRequest;
 

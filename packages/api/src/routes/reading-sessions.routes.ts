@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { ReadingSession, Book, Annotation } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { validate } from '../middleware/validate';
 import { parsePagination } from '../utils/pagination';
 import { notFound } from '../utils/errors';
@@ -276,7 +277,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
  * Generate an AI summary of the reading session using GLM.
  * Uses session stats + recent annotations + book context.
  */
-router.post('/:id/summarize', authenticate, async (req: AuthRequest, res) => {
+router.post('/:id/summarize', rateLimiter({ windowMs: 60000, max: 10 }), authenticate, async (req: AuthRequest, res) => {
   try {
     const session = await ReadingSession.findOne({
       where: { id: req.params.id, userId: req.userId },
