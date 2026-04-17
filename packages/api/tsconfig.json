@@ -19,6 +19,7 @@
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "downlevelIteration": true,
     "skipLibCheck": true
   },
   "include": ["src/**/*"],
