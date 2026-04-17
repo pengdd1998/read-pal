@@ -128,8 +128,8 @@ router.get(
         req.params.bookId,
       );
       res.json({ success: true, data: report });
-    } catch (error: any) {
-      if (error.message === 'Book not found') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Book not found') {
         return notFound(res, 'Book');
       }
       console.error('Error getting mastery report:', error);

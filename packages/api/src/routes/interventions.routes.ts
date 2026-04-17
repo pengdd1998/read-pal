@@ -7,14 +7,24 @@
  */
 
 import { Router } from 'express';
+import { body } from 'express-validator';
 import { ReadingSession, Book, InterventionFeedback } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 import { InterventionService, ReadingContext } from '../services/InterventionService';
 
 const router: Router = Router();
 
 // POST /api/interventions/check - Check if an intervention is needed
-router.post('/check', authenticate, async (req: AuthRequest, res) => {
+router.post('/check', authenticate, validate([
+  body('bookId').isString().notEmpty(),
+  body('currentPage').optional().isInt({ min: 0 }),
+  body('totalPages').optional().isInt({ min: 0 }),
+  body('wordsPerMinute').optional().isInt({ min: 0, max: 2000 }),
+  body('timeOnPage').optional().isInt({ min: 0 }),
+  body('reReadCount').optional().isInt({ min: 0 }),
+  body('highlightCount').optional().isInt({ min: 0 }),
+]), async (req: AuthRequest, res) => {
   try {
     const { bookId, currentPage, totalPages, wordsPerMinute, timeOnPage, reReadCount, highlightCount } = req.body;
 
@@ -56,7 +66,13 @@ router.post('/check', authenticate, async (req: AuthRequest, res) => {
 });
 
 // POST /api/interventions/feedback - User feedback on intervention
-router.post('/feedback', authenticate, async (req: AuthRequest, res) => {
+router.post('/feedback', authenticate, validate([
+  body('interventionType').optional().isString().isIn(['confusion', 'encouragement', 'insight', 'break', 'question', 'unknown']),
+  body('helpful').optional().isBoolean(),
+  body('dismissed').optional().isBoolean(),
+  body('bookId').optional().isString(),
+  body('context').optional().isObject(),
+]), async (req: AuthRequest, res) => {
   try {
     const { interventionType, helpful, dismissed, bookId, context } = req.body;
 

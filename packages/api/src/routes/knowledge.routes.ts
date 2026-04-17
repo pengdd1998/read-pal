@@ -6,9 +6,11 @@
  */
 
 import { Router } from 'express';
+import { query } from 'express-validator';
 import { KnowledgeGraphService } from '../services/KnowledgeGraph';
 import { neo4jDriver } from '../db';
 import { AuthRequest, authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 
 const router: Router = Router();
 
@@ -85,7 +87,9 @@ router.get('/graph', authenticate, async (req: AuthRequest, res) => {
  * Returns a list of concepts for the authenticated user, optionally filtered
  * by bookId query parameter.
  */
-router.get('/concepts', authenticate, async (req: AuthRequest, res) => {
+router.get('/concepts', authenticate, validate([
+  query('bookId').optional().isString().isLength({ max: 100 }),
+]), async (req: AuthRequest, res) => {
   try {
     const kg = getKnowledgeGraph();
     if (!kg) {

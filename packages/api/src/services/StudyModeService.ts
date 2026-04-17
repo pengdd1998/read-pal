@@ -97,14 +97,14 @@ export class StudyModeService {
     });
 
     const chapterAnnotations = annotations.filter((a) => {
-      const loc = (a as any).location as any;
+      const loc = a.location as Record<string, unknown> | null;
       return loc?.pageIndex === chapterIndex;
     });
 
     const contentForLLM = chapterAnnotations.length > 0
       ? chapterAnnotations.map((a) => {
-          const note = (a as any).note;
-          return note ? `${(a as any).content}\n(Note: ${note})` : (a as any).content;
+          const note = a.note;
+          return note ? `${a.content}\n(Note: ${note})` : a.content;
         }).join('\n')
       : '(No highlights or notes yet for this chapter)';
 
@@ -159,7 +159,7 @@ export class StudyModeService {
     try {
       const raw = JSON.parse(response);
       const checks = Array.isArray(raw) ? raw : [];
-      return checks.map((c: any, i: number) => ({
+      return checks.map((c: { question?: string; hint?: string; answer?: string; position?: string }, i: number) => ({
         id: `check-${chapterIndex}-${i}`,
         question: c.question || '',
         hint: c.hint || '',

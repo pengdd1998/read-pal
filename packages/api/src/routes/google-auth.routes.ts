@@ -218,7 +218,7 @@ router.get('/status', (_req, res) => {
   });
 });
 
-function redirectWithError(res: any, message: string, frontendUrl?: string): void {
+function redirectWithError(res: { redirect: (url: string) => void }, message: string, frontendUrl?: string): void {
   const url = new URL('/auth', frontendUrl || process.env.FRONTEND_URL || 'http://localhost:3000');
   url.searchParams.set('error', message);
   url.searchParams.set('mode', 'login');
