@@ -43,7 +43,7 @@ export default function BookDetailPage() {
 
   const [book, setBook] = useState<BookData | null>(null);
   const [annotationStats, setAnnotationStats] = useState<AnnotationStats>({ highlights: 0, notes: 0, bookmarks: 0 });
-  const [recentAnnotations, setRecentAnnotations] = useState<AnnotationItem[]>([]);
+  const [allAnnotations, setAllAnnotations] = useState<AnnotationItem[]>([]);
   const [hasPersonalBook, setHasPersonalBook] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,6 +51,9 @@ export default function BookDetailPage() {
   const [exportSuccess, setExportSuccess] = useState('');
   const [readingLog, setReadingLog] = useState<Array<{ id: string; startedAt: string; duration: number; pagesRead: number; highlights: number; notes: number; summary?: string }>>([]);
   const [readingWpm, setReadingWpm] = useState<number>(0);
+  const [flashcardCount, setFlashcardCount] = useState<number>(0);
+  const [outlineExpanded, setOutlineExpanded] = useState<Set<number>>(new Set());
+  const [outlineFilter, setOutlineFilter] = useState<'all' | 'highlight' | 'note' | 'bookmark'>('all');
 
   useEffect(() => {
     (async () => {
@@ -70,8 +73,18 @@ export default function BookDetailPage() {
             notes: annotations.filter((a) => a.type === 'note').length,
             bookmarks: annotations.filter((a) => a.type === 'bookmark').length,
           });
-          setRecentAnnotations(annotations.slice(-5).reverse());
+          setAllAnnotations(annotations);
         }
+
+        // Fetch flashcard count for study guide CTA
+        api.get<Array<{ bookId: string; total: number }>>('/api/flashcards/decks')
+          .then((res) => {
+            if (res.success && Array.isArray(res.data)) {
+              const deck = res.data.find((d) => d.bookId === bookId);
+              if (deck) setFlashcardCount(deck.total);
+            }
+          })
+          .catch(() => {});
 
         // Check if personal book exists
         api.get<{ format: string }>(`/api/memory-books/${bookId}`)
@@ -167,6 +180,46 @@ export default function BookDetailPage() {
   const lastRead = book.lastReadAt ? new Date(book.lastReadAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : null;
 
   const totalAnnotations = annotationStats.highlights + annotationStats.notes + annotationStats.bookmarks;
+  const recentAnnotations = allAnnotations.slice(-5).reverse();
+
+  // Outline: group annotations by chapter
+  const outlineChapters = (() => {
+    const filtered = allAnnotations.filter((a) => {
+      if (outlineFilter !== 'all' && a.type !== outlineFilter) return false;
+      return true;
+    });
+    const chapterMap = new Map<number, AnnotationItem[]>();
+    const ungrouped: AnnotationItem[] = [];
+    for (const a of filtered) {
+      const ch = a.location?.chapterIndex;
+      if (typeof ch === 'number' && ch >= 0) {
+        const list = chapterMap.get(ch) || [];
+        list.push(a);
+        chapterMap.set(ch, list);
+      } else {
+        ungrouped.push(a);
+      }
+    }
+    const groups = [...chapterMap.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([idx, items]) => ({
+        chapterIndex: idx,
+        label: `Chapter ${idx + 1}`,
+        highlights: items.filter((a) => a.type === 'highlight'),
+        notes: items.filter((a) => a.type === 'note'),
+        bookmarks: items.filter((a) => a.type === 'bookmark'),
+      }));
+    if (ungrouped.length > 0) {
+      groups.push({
+        chapterIndex: -1,
+        label: 'Other',
+        highlights: ungrouped.filter((a) => a.type === 'highlight'),
+        notes: ungrouped.filter((a) => a.type === 'note'),
+        bookmarks: ungrouped.filter((a) => a.type === 'bookmark'),
+      });
+    }
+    return groups;
+  })();
 
   return (
     <main className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
@@ -272,35 +325,132 @@ export default function BookDetailPage() {
         ))}
       </div>
 
-      {/* Annotation timeline */}
-      {recentAnnotations.length > 0 ? (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 mb-6 animate-slide-up stagger-3">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Recent Annotations</h2>
-            <Link href="/library" className="text-xs text-amber-600 dark:text-amber-400 hover:underline">
-              View all
-            </Link>
+      {/* Notes Outline */}
+      {allAnnotations.length > 0 ? (
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 mb-6 animate-slide-up stagger-3 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="font-semibold">Notes Outline</h2>
+                <p className="text-[10px] text-gray-400 mt-0.5">{allAnnotations.length} annotations across {outlineChapters.length} chapter{outlineChapters.length !== 1 ? 's' : ''}</p>
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setOutlineExpanded(new Set(outlineChapters.map((c) => c.chapterIndex)))}
+                  className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Expand all
+                </button>
+                <button
+                  onClick={() => setOutlineExpanded(new Set())}
+                  className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Collapse all
+                </button>
+              </div>
+            </div>
+            {/* Type filter */}
+            <div className="flex gap-1">
+              {[
+                { key: 'all' as const, label: `All (${allAnnotations.length})` },
+                { key: 'highlight' as const, label: `\u{1F58D} ${annotationStats.highlights}` },
+                { key: 'note' as const, label: `\u{1F4DD} ${annotationStats.notes}` },
+                { key: 'bookmark' as const, label: `\u{1F516} ${annotationStats.bookmarks}` },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setOutlineFilter(opt.key)}
+                  className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                    outlineFilter === opt.key
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="space-y-3">
-            {recentAnnotations.map((ann) => {
-              const icon = ann.type === 'highlight' ? '\u{1F58D}' : ann.type === 'note' ? '\u{1F4DD}' : '\u{1F516}';
-              const colorClass = ann.type === 'highlight'
-                ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30'
-                : ann.type === 'note'
-                ? 'bg-teal-50 dark:bg-teal-900/10 border-teal-200 dark:border-teal-800/30'
-                : 'bg-violet-50 dark:bg-violet-900/10 border-violet-200 dark:border-violet-800/30';
+          {/* Chapter tree */}
+          <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-80 overflow-y-auto">
+            {outlineChapters.map((chapter) => {
+              const isExpanded = outlineExpanded.has(chapter.chapterIndex);
+              const totalCount = chapter.highlights.length + chapter.notes.length + chapter.bookmarks.length;
               return (
-                <div key={ann.id} className={`flex items-start gap-3 p-3 rounded-xl border ${colorClass}`}>
-                  <span className="text-sm mt-0.5 shrink-0">{icon}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-                      {ann.content || ann.note || 'Bookmark'}
-                    </p>
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      {new Date(ann.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      {ann.location?.chapterIndex !== undefined && ` \u00B7 Ch ${ann.location.chapterIndex + 1}`}
-                    </p>
-                  </div>
+                <div key={chapter.chapterIndex}>
+                  <button
+                    onClick={() => {
+                      setOutlineExpanded((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(chapter.chapterIndex)) next.delete(chapter.chapterIndex);
+                        else next.add(chapter.chapterIndex);
+                        return next;
+                      });
+                    }}
+                    className="w-full flex items-center gap-2 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+                  >
+                    <svg
+                      className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">{chapter.label}</span>
+                    <div className="flex items-center gap-1.5">
+                      {chapter.notes.length > 0 && (
+                        <span className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full">
+                          {chapter.notes.length} note{chapter.notes.length !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {chapter.highlights.length > 0 && (
+                        <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full">
+                          {chapter.highlights.length}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div className="pb-2">
+                      {chapter.notes.map((ann) => (
+                        <div key={ann.id} className="px-7 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/5 transition-colors">
+                          <div className="flex items-start gap-2">
+                            <span className="text-[10px] mt-0.5 flex-shrink-0">{'\u{1F4DD}'}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-blue-700 dark:text-blue-300 line-clamp-3">{ann.content}</p>
+                              {ann.note && <p className="text-[10px] text-gray-400 mt-0.5 italic line-clamp-1">{ann.note}</p>}
+                              {ann.tags && ann.tags.length > 0 && (
+                                <div className="flex gap-1 mt-1">
+                                  {ann.tags.slice(0, 3).map((t) => (
+                                    <span key={t} className="text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-500 px-1 py-0.5 rounded">{t}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {chapter.highlights.map((ann) => (
+                        <div key={ann.id} className="px-7 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/5 transition-colors">
+                          <div className="flex items-start gap-2">
+                            <span className="text-[10px] mt-0.5 flex-shrink-0">{'\u{1F58D}'}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{ann.content}</p>
+                              {ann.note && <p className="text-[10px] text-gray-400 mt-0.5 italic line-clamp-1">{ann.note}</p>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {chapter.bookmarks.map((ann) => (
+                        <div key={ann.id} className="px-7 py-2 hover:bg-violet-50 dark:hover:bg-violet-900/5 transition-colors">
+                          <div className="flex items-start gap-2">
+                            <span className="text-[10px] mt-0.5 flex-shrink-0">{'\u{1F516}'}</span>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{ann.content || 'Bookmark'}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {totalCount === 0 && <p className="text-[10px] text-gray-400 px-7 py-1">No matching items.</p>}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -394,6 +544,50 @@ export default function BookDetailPage() {
             </svg>
             Export JSON
           </button>
+        </div>
+      )}
+
+      {/* Study Guide Export */}
+      {(flashcardCount > 0 || totalAnnotations > 5) && (
+        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/10 dark:to-blue-900/10 rounded-2xl border border-indigo-200/50 dark:border-indigo-800/30 p-5 mb-6 animate-slide-up stagger-4">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-2xl">{'\uD83D\uDCDA'}</span>
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-white">Study Guide</h2>
+              <p className="text-xs text-gray-500">Printable guide with flashcards, notes, and chapter outlines</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={async () => {
+                try {
+                  const res = await authFetch(`/api/annotations/export?bookId=${bookId}&format=study_guide`);
+                  if (!res.ok) throw new Error('Export failed');
+                  const text = await res.text();
+                  const blob = new Blob([text], { type: 'text/markdown; charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `study-guide-${book.title.replace(/\s+/g, '-')}.md`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  setExportSuccess('Study guide exported!');
+                  setTimeout(() => setExportSuccess(''), 3000);
+                } catch { setError('Failed to export study guide.'); }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-indigo-500 hover:bg-indigo-600 text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Export Study Guide
+            </button>
+            {flashcardCount > 0 && (
+              <span className="text-xs text-indigo-600 dark:text-indigo-400">
+                {flashcardCount} flashcard{flashcardCount !== 1 ? 's' : ''} included
+              </span>
+            )}
+          </div>
         </div>
       )}
 
