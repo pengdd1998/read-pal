@@ -523,6 +523,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
                   placeholder="Ask about what you're reading..."
+                  aria-label="Message companion"
                   className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
                   rows={2}
                   disabled={loading}
