@@ -39,6 +39,7 @@ import bookClubsRoutes from './routes/book-clubs.routes';
 import zoteroRoutes from './routes/zotero.routes';
 import apiKeysRoutes from './routes/api-keys.routes';
 import openapiRoutes from './routes/openapi.routes';
+import webhooksRoutes from './routes/webhooks.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -307,6 +308,7 @@ app.use('/api/book-clubs', bookClubsRoutes);
 app.use('/api/zotero', zoteroRoutes);
 app.use('/api/api-keys', apiKeysRoutes);
 app.use('/api/docs', openapiRoutes);
+app.use('/api/webhooks', webhooksRoutes);
 
 // ============================================================================
 // Error Handling

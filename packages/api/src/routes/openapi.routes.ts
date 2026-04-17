@@ -122,6 +122,19 @@ const spec = {
           createdAt: { type: 'string', format: 'date-time' },
         },
       },
+      Webhook: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          url: { type: 'string', format: 'uri' },
+          events: { type: 'array', items: { type: 'string' } },
+          isActive: { type: 'boolean' },
+          lastDeliveryAt: { type: 'string', format: 'date-time', nullable: true },
+          lastDeliveryStatus: { type: 'integer', nullable: true },
+          failureCount: { type: 'integer' },
+          createdAt: { type: 'string', format: 'date-time' },
+        },
+      },
     },
   },
   paths: {
@@ -545,6 +558,79 @@ const spec = {
         responses: { '200': { description: 'Batch export complete' } },
       },
     },
+    '/api/webhooks': {
+      get: {
+        tags: ['Webhooks'],
+        summary: 'List your webhooks',
+        security: [{ BearerAuth: [] }],
+        responses: { '200': { description: 'List of webhooks' } },
+      },
+      post: {
+        tags: ['Webhooks'],
+        summary: 'Create webhook',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  url: { type: 'string', format: 'uri' },
+                  events: {
+                    type: 'array',
+                    items: {
+                      type: 'string',
+                      enum: [
+                        'annotation.created', 'annotation.updated', 'annotation.deleted',
+                        'book.started', 'book.completed', 'book.updated',
+                        'session.started', 'session.ended',
+                        'flashcard.created', 'flashcard.reviewed',
+                      ],
+                    },
+                  },
+                },
+                required: ['url', 'events'],
+              },
+            },
+          },
+        },
+        responses: { '201': { description: 'Webhook created (secret shown once)' } },
+      },
+    },
+    '/api/webhooks/{id}': {
+      patch: {
+        tags: ['Webhooks'],
+        summary: 'Update webhook',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { '200': { description: 'Webhook updated' } },
+      },
+      delete: {
+        tags: ['Webhooks'],
+        summary: 'Delete webhook',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { '200': { description: 'Deleted' } },
+      },
+    },
+    '/api/webhooks/{id}/test': {
+      post: {
+        tags: ['Webhooks'],
+        summary: 'Send test ping to webhook endpoint',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: { '200': { description: 'Test result with status and latency' } },
+      },
+    },
+    '/api/webhooks/events': {
+      get: {
+        tags: ['Webhooks'],
+        summary: 'List available webhook event types',
+        security: [{ BearerAuth: [] }],
+        responses: { '200': { description: 'List of event types' } },
+      },
+    },
   },
   tags: [
     { name: 'Auth', description: 'Authentication & account management' },
@@ -561,6 +647,7 @@ const spec = {
     { name: 'Notifications', description: 'Reading reminders & alerts' },
     { name: 'Settings', description: 'User preferences & configuration' },
     { name: 'Zotero', description: 'Zotero integration' },
+    { name: 'Webhooks', description: 'HTTP callbacks for external integrations' },
   ],
 };
 
