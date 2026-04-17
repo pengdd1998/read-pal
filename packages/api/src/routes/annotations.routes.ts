@@ -530,4 +530,59 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * GET /api/annotations/stats/chapters
+ *
+ * Aggregates annotation counts and reading activity per chapter for a book.
+ * Used by the cross-chapter reading timeline.
+ */
+router.get('/stats/chapters', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const bookId = req.query.bookId as string;
+    if (!bookId) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_BOOK_ID', message: 'bookId query parameter is required' },
+      });
+    }
+
+    // Aggregate annotations by chapter
+    const rows = await sequelize.query<{
+      chapter_index: string;
+      highlights: string;
+      notes: string;
+      bookmarks: string;
+      last_activity: string;
+    }>(
+      `SELECT
+         COALESCE((location->>'chapterIndex')::int, 0) AS chapter_index,
+         COUNT(*) FILTER (WHERE type = 'highlight')::int AS highlights,
+         COUNT(*) FILTER (WHERE type = 'note')::int AS notes,
+         COUNT(*) FILTER (WHERE type = 'bookmark')::int AS bookmarks,
+         MAX(created_at)::text AS last_activity
+       FROM annotations
+       WHERE user_id = $1 AND book_id = $2
+       GROUP BY COALESCE((location->>'chapterIndex')::int, 0)
+       ORDER BY chapter_index ASC`,
+      { bind: [req.userId, bookId], type: QueryTypes.SELECT },
+    );
+
+    const chapters = rows.map((r) => ({
+      chapterIndex: parseInt(r.chapter_index, 10),
+      highlights: parseInt(r.highlights, 10),
+      notes: parseInt(r.notes, 10),
+      bookmarks: parseInt(r.bookmarks, 10),
+      lastActivity: r.last_activity,
+    }));
+
+    res.json({ success: true, data: chapters });
+  } catch (error) {
+    console.error('Error fetching chapter stats:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'CHAPTER_STATS_ERROR', message: 'Failed to fetch chapter statistics' },
+    });
+  }
+});
+
 export default router;

@@ -30,6 +30,7 @@ const SearchOverlay = dynamic(() => import('@/components/reading/SearchOverlay')
 const SynthesisPanel = dynamic(() => import('@/components/reading/SynthesisPanel').then((m) => ({ default: m.SynthesisPanel })), { ssr: false });
 const StudyModePanel = dynamic(() => import('@/components/reading/StudyModePanel').then((m) => ({ default: m.StudyModePanel })), { ssr: false });
 const FictionPanel = dynamic(() => import('@/components/reading/FictionPanel').then((m) => ({ default: m.FictionPanel })), { ssr: false });
+const ChapterTimeline = dynamic(() => import('@/components/reading/ChapterTimeline').then((m) => ({ default: m.ChapterTimeline })), { ssr: false });
 
 // Static theme maps — never change, so hoist to module scope
 const THEME_CLASSES = {
@@ -176,6 +177,7 @@ export default function ReadPage() {
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
   const sessionStartRef = useRef<number>(Date.now());
   const [sessionElapsed, setSessionElapsed] = useState(0);
   const [readingWpm, setReadingWpm] = useState<number | null>(null);
@@ -604,6 +606,13 @@ export default function ReadPage() {
             </svg>
           </button>
 
+          {/* Chapter Timeline */}
+          <button onClick={() => setShowTimeline(true)} className="w-10 h-10 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20" aria-label="Chapter timeline" title="Chapter timeline">
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </button>
+
           {/* Settings dropdown trigger */}
           <div className="relative">
             <button
@@ -942,6 +951,17 @@ export default function ReadPage() {
       </button>
 
       {showShortcutsHelp && <ShortcutsHelp onClose={() => setShowShortcutsHelp(false)} />}
+
+      {showTimeline && book && (
+        <ChapterTimeline
+          bookId={book.id}
+          totalChapters={chapters.length}
+          currentChapter={currentChapter}
+          chapterTitles={chapterTitles}
+          onChapterSelect={(i) => { setCurrentChapter(i); setShowTimeline(false); }}
+          onClose={() => setShowTimeline(false)}
+        />
+      )}
     </div>
   );
 }
