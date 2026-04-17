@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 import { body, query, param } from 'express-validator';
+import { Op } from 'sequelize';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { agentRateLimiter, rateLimiter } from '../middleware/rateLimiter';
@@ -190,7 +191,7 @@ router.get(
 
       const where: Record<string, unknown> = {
         userId,
-        nextReviewAt: { $lte: new Date() } as unknown as Date,
+        nextReviewAt: { [Op.lte]: new Date() },
       };
       if (bookId) where.bookId = bookId;
 
@@ -204,7 +205,7 @@ router.get(
       // Get stats
       const totalCards = await Flashcard.count({ where: { userId } });
       const dueCards = await Flashcard.count({
-        where: { userId, nextReviewAt: { $lte: new Date() } as unknown as Date },
+        where: { userId, nextReviewAt: { [Op.lte]: new Date() } },
       });
 
       return res.json({

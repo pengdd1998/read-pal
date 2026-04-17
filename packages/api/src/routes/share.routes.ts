@@ -166,7 +166,15 @@ router.post('/export', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), 
     const whereClause: Record<string, unknown> = { bookId, userId: req.userId };
     if (types) {
       const typeList = String(types).split(',').filter(Boolean);
-      if (typeList.length > 0 && typeList.length < 3) {
+      const validTypes = ['highlight', 'note', 'bookmark'];
+      const invalidTypes = typeList.filter(t => !validTypes.includes(t));
+      if (invalidTypes.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_TYPES', message: `Invalid annotation types: ${invalidTypes.join(', ')}. Valid: ${validTypes.join(', ')}` },
+        });
+      }
+      if (typeList.length > 0) {
         whereClause.type = typeList;
       }
     }

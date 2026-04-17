@@ -71,20 +71,12 @@ async function clearFailedLogins(email: string): Promise<void> {
  * POST /api/auth/login
  * Login with email and password
  */
-router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), async (req, res) => {
+router.post('/login', rateLimiter({ windowMs: 60000, max: 10 }), validate([
+  body('email').isEmail().normalizeEmail(),
+  body('password').notEmpty(),
+]), async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Email and password are required',
-        },
-      });
-    }
 
     // Check account lockout
     const lockout = await checkLoginLockout(email);
@@ -279,7 +271,11 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
  * PATCH /api/auth/me
  * Update current user profile
  */
-router.patch('/me', authenticate, async (req: AuthRequest, res) => {
+router.patch('/me', authenticate, validate([
+  body('name').optional().trim().isLength({ min: 1, max: 100 }),
+  body('avatar').optional().isURL(),
+  body('settings').optional().isObject(),
+]), async (req: AuthRequest, res) => {
   try {
     const user = await User.findByPk(req.userId);
 

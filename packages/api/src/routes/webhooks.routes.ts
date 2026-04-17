@@ -4,6 +4,7 @@
 
 import { Router, Response } from 'express';
 import crypto from 'node:crypto';
+import { body } from 'express-validator';
 import { Webhook, isValidWebhookEvent, getValidWebhookEvents, WebhookEvent } from '../models/Webhook';
 import { WebhookDeliveryLog } from '../models/WebhookDeliveryLog';
 import { AuthRequest, authenticate } from '../middleware/auth';
@@ -40,6 +41,20 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       res.status(400).json({
         success: false,
         error: { code: 'VALIDATION', message: 'url and events[] are required' },
+      });
+      return;
+    }
+
+    // Validate URL format
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        throw new Error('Invalid protocol');
+      }
+    } catch {
+      res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION', message: 'url must be a valid HTTP(S) URL' },
       });
       return;
     }
@@ -109,7 +124,18 @@ router.patch('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     const updates: Record<string, unknown> = {};
-    if (req.body.url) updates.url = req.body.url;
+    if (req.body.url) {
+      try {
+        const parsed = new URL(req.body.url);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+          throw new Error('Invalid protocol');
+        }
+        updates.url = req.body.url;
+      } catch {
+        res.status(400).json({ success: false, error: { code: 'VALIDATION', message: 'url must be a valid HTTP(S) URL' } });
+        return;
+      }
+    }
     if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
     if (Array.isArray(req.body.events)) {
       for (const ev of req.body.events) {
