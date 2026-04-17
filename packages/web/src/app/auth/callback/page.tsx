@@ -3,8 +3,10 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 function OAuthCallback() {
+  usePageTitle('Signing in...');
   const router = useRouter();
   const searchParams = useSearchParams();
   const { oauthLogin } = useAuth();

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface ClubListItem {
   id: string;
@@ -15,6 +16,7 @@ interface ClubListItem {
 }
 
 export default function BookClubsPage() {
+  usePageTitle('Book Clubs');
   const [myClubs, setMyClubs] = useState<ClubListItem[]>([]);
   const [discoverClubs, setDiscoverClubs] = useState<ClubListItem[]>([]);
   const [loading, setLoading] = useState(true);

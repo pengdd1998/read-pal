@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface MemoryBookStats {
   pagesRead: number;
@@ -42,6 +43,7 @@ interface Book {
 }
 
 export default function MemoryBooksPage() {
+  usePageTitle('Memory Books');
   const [memoryBooks, setMemoryBooks] = useState<MemoryBook[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);

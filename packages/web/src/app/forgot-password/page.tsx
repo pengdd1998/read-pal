@@ -4,8 +4,10 @@ import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { LoadingSpinner, ErrorAlert } from '@/components/ui';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function ForgotPasswordPage() {
+  usePageTitle('Reset Password');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);

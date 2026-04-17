@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // ---------------------------------------------------------------------------
 // Endpoint data
@@ -91,6 +92,7 @@ function methodColor(method: string): string {
 // ---------------------------------------------------------------------------
 
 export default function DevelopersPage() {
+  usePageTitle('Developer API');
   const { user } = useAuth();
   const [filter, setFilter] = useState('');
   const [apiKeyHint, setApiKeyHint] = useState<string | null>(null);

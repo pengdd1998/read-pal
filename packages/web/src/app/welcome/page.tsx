@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
 import { Check } from '@/components/icons';
 import type { Book } from '@read-pal/shared';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 const ONBOARDING_KEY = 'read-pal-onboarding-complete';
 
@@ -18,6 +19,7 @@ const PERSONAS = [
 ] as const;
 
 export default function WelcomePage() {
+  usePageTitle('Welcome');
   const router = useRouter();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);

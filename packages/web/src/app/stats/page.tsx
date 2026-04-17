@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface ReadingStats {
   booksRead: number;
@@ -52,6 +53,7 @@ function getDayName(dateStr: string) {
 }
 
 export default function StatsPage() {
+  usePageTitle('Reading Stats');
   const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);

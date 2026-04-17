@@ -10,6 +10,7 @@ import { useReaderSettings } from '@/hooks/useReaderSettings';
 import { useReadingSession } from '@/hooks/useReadingSession';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useStudyMode } from '@/hooks/useStudyMode';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { api } from '@/lib/api';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
@@ -151,6 +152,7 @@ function computeOffsets(range: Range, container: HTMLElement): { start: number; 
 }
 
 export default function ReadPage() {
+  usePageTitle('Reading');
   const params = useParams();
   const router = useRouter();
   const bookId = params.bookId as string;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface CachedBook {
   bookId: string;
@@ -11,6 +12,7 @@ interface CachedBook {
 }
 
 export default function OfflinePage() {
+  usePageTitle('Offline Reading');
   const [isOnline, setIsOnline] = useState(false);
   const [cachedBooks, setCachedBooks] = useState<CachedBook[]>([]);
 

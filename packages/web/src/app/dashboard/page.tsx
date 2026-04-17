@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
 import { formatRelativeTime } from '@/lib/date';
 import { useToast } from '@/components/Toast';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // Lazy-load heavy dashboard components
 const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false });
@@ -466,6 +467,7 @@ const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
 });
 
 export default function DashboardPage() {
+  usePageTitle('Dashboard');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

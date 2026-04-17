@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, API_BASE_URL } from '@/lib/api';
 import { getAuthToken } from '@/lib/auth-fetch';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,6 +40,7 @@ type GenerationStep = 'idle' | 'collecting' | 'analyzing' | 'curating' | 'synthe
 // ---------------------------------------------------------------------------
 
 export default function PersonalBookPage() {
+  usePageTitle('Memory Book');
   const params = useParams();
   const router = useRouter();
   const bookId = params.bookId as string;

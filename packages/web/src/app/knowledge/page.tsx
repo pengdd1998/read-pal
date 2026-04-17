@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -146,6 +147,7 @@ function getColor(group?: string): string {
 // ---------------------------------------------------------------------------
 
 export default function KnowledgePage() {
+  usePageTitle('Knowledge Graph');
   const router = useRouter();
   const svgRef = useRef<SVGSVGElement>(null);
 

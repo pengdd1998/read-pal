@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,6 +70,7 @@ interface DiscussionMessage {
 // ---------------------------------------------------------------------------
 
 export default function BookClubDetailPage() {
+  usePageTitle('Book Club');
   const params = useParams();
   const clubId = params?.id as string;
 

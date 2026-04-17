@@ -12,14 +12,18 @@ const PROTECTED_PREFIXES = ['/dashboard', '/library', '/read/', '/settings', '/m
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const token = request.cookies.get('auth_token')?.value;
+
+  // Redirect authenticated users from landing page to dashboard
+  if (pathname === '/' && token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
 
   // Only check protected routes
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   if (!isProtected) {
     return NextResponse.next();
   }
-
-  const token = request.cookies.get('auth_token')?.value;
 
   if (!token) {
     const authUrl = new URL('/auth', request.url);

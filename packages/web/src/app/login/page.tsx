@@ -3,8 +3,10 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 function LoginRedirect() {
+  usePageTitle('Sign In');
   const router = useRouter();
   const searchParams = useSearchParams();
 

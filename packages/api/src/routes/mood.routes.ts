@@ -147,7 +147,7 @@ router.post('/scene', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), a
     const imagePrompt = await Promise.race([
       scenePromise,
       new Promise<string>((_, reject) =>
-        setTimeout(() => reject(new Error('Scene prompt timeout')), 15_000),
+        setTimeout(() => reject(new Error('Scene prompt timeout')), 8_000),
       ),
     ]);
 

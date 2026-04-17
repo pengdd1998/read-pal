@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { authFetch } from '@/lib/auth-fetch';
 import { api } from '@/lib/api';
 import { useBackgroundApi } from '@/hooks/useApi';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface BookData {
   id: string;
@@ -38,6 +39,7 @@ interface AnnotationItem {
 }
 
 export default function BookDetailPage() {
+  usePageTitle('Book Details');
   const params = useParams();
   const router = useRouter();
   const bookId = params.id as string;

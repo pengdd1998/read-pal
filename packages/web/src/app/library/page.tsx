@@ -6,6 +6,7 @@ import { LibraryGrid } from '@/components/library/LibraryGrid';
 import { CollectionsSidebar } from '@/components/library/CollectionsSidebar';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { Collection } from '@read-pal/shared';
 
 interface FreeBook {
@@ -17,6 +18,7 @@ interface FreeBook {
 }
 
 export default function LibraryPage() {
+  usePageTitle('Library');
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [suggestions, setSuggestions] = useState<FreeBook[]>([]);

@@ -5,6 +5,7 @@ import { api, API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
 import { useToast } from '@/components/Toast';
 import { getQueueCount, clearQueue, cacheBookForOffline } from '@/lib/offline-queue';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface UserSettings {
   theme: string;
@@ -519,6 +520,7 @@ function OfflineSection() {
 }
 
 export default function SettingsPage() {
+  usePageTitle('Settings');
   const { toast } = useToast();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);

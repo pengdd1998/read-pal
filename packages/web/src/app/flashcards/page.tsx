@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface FlashcardData {
   id: string;
@@ -38,6 +39,7 @@ const RATINGS: { value: number; label: string; hint: string; color: string }[] =
 ];
 
 export default function FlashcardsPage() {
+  usePageTitle('Flashcards');
   const [mode, setMode] = useState<'decks' | 'review'>('decks');
   const [decks, setDecks] = useState<DeckInfo[]>([]);
   const [deckTotalCards, setDeckTotalCards] = useState(0);

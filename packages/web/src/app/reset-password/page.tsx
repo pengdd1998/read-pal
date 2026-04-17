@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { LoadingSpinner, ErrorAlert } from '@/components/ui';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 function ResetPasswordForm() {
+  usePageTitle('Reset Password');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');

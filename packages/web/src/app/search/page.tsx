@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import Link from 'next/link';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface Book {
   id: string;
@@ -35,6 +36,7 @@ interface Passage {
 }
 
 export default function SearchPage() {
+  usePageTitle('Search');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Book[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);

@@ -6,10 +6,12 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { authFetch } from '@/lib/auth-fetch';
 import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/ui';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 type AuthMode = 'login' | 'register';
 
 function AuthForm() {
+  usePageTitle('Sign In');
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, register, isAuthenticated } = useAuth();
