@@ -342,8 +342,8 @@ router.post('/forgot-password', rateLimiter({ windowMs: 60000, max: 5 }), async 
       );
 
       // TODO: Send email with reset link in production
-      // For beta, log the reset URL so admins can share it
-      console.log(`[auth] Password reset for ${email}: /reset-password?token=${resetToken}`);
+      // For beta, log only that a reset was requested (no token)
+      console.log(`[auth] Password reset requested for ${email}`);
     }
   } catch {
     // Silently ignore errors to prevent enumeration
@@ -394,7 +394,7 @@ router.post(
       // Consume the token so it can't be reused
       await redisClient.del(`password-reset:${token}`);
 
-      console.log(`[auth] Password reset successful for user ${userId}`);
+      console.log('[auth] Password reset successful');
 
       res.json({
         success: true,
@@ -494,7 +494,7 @@ router.delete('/account', authenticate, rateLimiter({ windowMs: 60000, max: 3 })
     // Delete user — cascading deletes handle related data
     await User.destroy({ where: { id: userId } });
 
-    console.log(`[auth] Account deleted: ${userId}`);
+    console.log('[auth] Account deleted');
 
     res.json({
       success: true,

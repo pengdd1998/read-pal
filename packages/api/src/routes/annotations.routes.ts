@@ -304,9 +304,9 @@ router.get('/export', authenticate, async (req: AuthRequest, res) => {
         title: book.title,
         author: book.author,
         metadata: book.metadata,
-        totalPages: (book as any).totalPages,
-        currentPage: (book as any).currentPage,
-        progress: (book as any).progress,
+        totalPages: book.totalPages,
+        currentPage: book.currentPage,
+        progress: book.progress,
       },
       filteredAnnotations.map((a) => ({
         type: a.type,

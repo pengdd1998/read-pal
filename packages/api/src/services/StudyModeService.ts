@@ -204,8 +204,8 @@ export class StudyModeService {
       throw new Error('Book not found');
     }
 
-    const totalChapters = (book as any).totalPages || 1;
-    const currentChapter = (book as any).currentPage || 0;
+    const totalChapters = book.totalPages || 1;
+    const currentChapter = book.currentPage || 0;
 
     // Get flashcard mastery stats
     const cards = await Flashcard.findAll({
@@ -213,9 +213,9 @@ export class StudyModeService {
     });
 
     const now = new Date();
-    const mastered = cards.filter((c) => (c as any).easeFactor >= 2.8 && (c as any).interval >= 7).length;
-    const learning = cards.filter((c) => (c as any).repetitionCount > 0 && (c as any).easeFactor < 2.8).length;
-    const due = cards.filter((c) => new Date((c as any).nextReviewAt) <= now).length;
+    const mastered = cards.filter((c) => c.easeFactor >= 2.8 && c.interval >= 7).length;
+    const learning = cards.filter((c) => c.repetitionCount > 0 && c.easeFactor < 2.8).length;
+    const due = cards.filter((c) => new Date(c.nextReviewAt) <= now).length;
 
     // Calculate overall mastery (0-1)
     const totalCards = cards.length || 1;
@@ -225,11 +225,11 @@ export class StudyModeService {
 
     // Identify weak/strong areas from card performance
     const weakCards = cards
-      .filter((c) => (c as any).easeFactor < 2.3)
-      .map((c) => (c as any).question);
+      .filter((c) => c.easeFactor < 2.3)
+      .map((c) => c.question);
     const strongCards = cards
-      .filter((c) => (c as any).easeFactor >= 2.8)
-      .map((c) => (c as any).question);
+      .filter((c) => c.easeFactor >= 2.8)
+      .map((c) => c.question);
 
     return {
       bookId,
