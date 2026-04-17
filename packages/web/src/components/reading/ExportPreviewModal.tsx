@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
+import { api } from '@/lib/api';
 
 type ExportFormat = 'markdown' | 'json' | 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research';
 
@@ -139,6 +140,40 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
       () => toast('Copied to clipboard', 'success'),
       () => toast('Copy failed', 'error'),
     );
+  };
+
+  // Shareable link state
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+
+  const canShare = ['markdown', 'json', 'bookclub', 'research'].includes(format);
+
+  const handleShareLink = async () => {
+    setSharing(true);
+    try {
+      const body: Record<string, string> = { bookId, format };
+      if (selectedTypes.size < 3) body.types = [...selectedTypes].join(',');
+      if (selectedTag) body.tags = selectedTag;
+
+      const res = await api.post<{ token: string; url: string; format: string; title: string }>(
+        '/api/share/export',
+        body,
+      );
+
+      if (res.success && res.data) {
+        const baseUrl = window.location.origin;
+        const fullUrl = `${baseUrl}/api/share/s/${res.data.token}`;
+        setShareLink(fullUrl);
+        await navigator.clipboard.writeText(fullUrl);
+        toast('Link copied to clipboard', 'success');
+      } else {
+        toast('Failed to create share link', 'error');
+      }
+    } catch {
+      toast('Failed to create share link', 'error');
+    } finally {
+      setSharing(false);
+    }
   };
 
   return (
@@ -306,6 +341,40 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
             Download
           </button>
         </div>
+
+        {/* Share link section */}
+        {canShare && (
+          <div className="px-5 pb-4">
+            {!shareLink ? (
+              <button
+                onClick={handleShareLink}
+                disabled={sharing}
+                className="w-full px-4 py-2.5 text-sm font-medium rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                {sharing ? 'Creating link...' : 'Share via Link'}
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={shareLink}
+                  className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <button
+                  onClick={() => { navigator.clipboard.writeText(shareLink); toast('Link copied', 'success'); }}
+                  className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -50,6 +50,8 @@ export function ShareDialog({
   const [citationFormat, setCitationFormat] = useState<'bibtex' | 'apa' | 'mla' | 'chicago'>('apa');
   const [citationText, setCitationText] = useState<string | null>(null);
   const [guideHtml, setGuideHtml] = useState<string | null>(null);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
   const { toast } = useToast();
   const backdropRef = useRef<HTMLDivElement>(null);
 
@@ -170,6 +172,28 @@ export function ShareDialog({
       () => toast('Copy failed', 'error'),
     );
   }, [citationText, toast]);
+
+  const handleShareGuideLink = useCallback(async () => {
+    if (!guideHtml) return;
+    setSharing(true);
+    try {
+      const res = await api.post<{ token: string }>(
+        '/api/share/export',
+        { bookId, format: 'bookclub' },
+      );
+      if (res.success && res.data) {
+        const baseUrl = window.location.origin;
+        const fullUrl = `${baseUrl}/api/share/s/${res.data.token}`;
+        setShareLink(fullUrl);
+        await navigator.clipboard.writeText(fullUrl);
+        toast('Share link copied', 'success');
+      }
+    } catch {
+      toast('Failed to create share link', 'error');
+    } finally {
+      setSharing(false);
+    }
+  }, [bookId, guideHtml, toast]);
 
   return (
     <div
