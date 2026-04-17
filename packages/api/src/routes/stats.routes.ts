@@ -33,11 +33,11 @@ async function calculateStreak(userId: string): Promise<number> {
   // --- Primary: use ReadingSession days ---
   const rows = await ReadingSession.findAll({
     attributes: [
-      [fn('DATE', col('startedAt')), 'day'],
+      [fn('DATE', col('started_at')), 'day'],
     ],
     where: { userId },
-    group: [fn('DATE', col('startedAt'))],
-    order: [[fn('DATE', col('startedAt')), 'DESC']],
+    group: [fn('DATE', col('started_at'))],
+    order: [[fn('DATE', col('started_at')), 'DESC']],
     raw: true,
   }) as unknown as { day: string }[];
 
@@ -47,7 +47,7 @@ async function calculateStreak(userId: string): Promise<number> {
   if (days.length === 0) {
     const bookDays = await Book.findAll({
       attributes: [
-        [fn('DATE', col('lastReadAt')), 'day'],
+        [fn('DATE', col('last_read_at')), 'day'],
       ],
       where: {
         userId,
@@ -56,8 +56,8 @@ async function calculateStreak(userId: string): Promise<number> {
           [Op.gte]: literal("NOW() - INTERVAL '7 days'"),
         },
       },
-      group: [fn('DATE', col('lastReadAt'))],
-      order: [[fn('DATE', col('lastReadAt')), 'DESC']],
+      group: [fn('DATE', col('last_read_at'))],
+      order: [[fn('DATE', col('last_read_at')), 'DESC']],
       raw: true,
     }) as unknown as { day: string }[];
 

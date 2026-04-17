@@ -132,9 +132,9 @@ async function calculateProgress(
 
   if (unit === 'days') {
     const rows = await ReadingSession.findAll({
-      attributes: [[fn('DATE', col('startedAt')), 'day']],
+      attributes: [[fn('DATE', col('started_at')), 'day']],
       where: { userId, startedAt: { [Op.gte]: startDate } },
-      group: [fn('DATE', col('startedAt'))],
+      group: [fn('DATE', col('started_at'))],
       raw: true,
     });
     return rows.length;
