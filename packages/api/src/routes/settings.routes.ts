@@ -11,6 +11,7 @@ import { Op } from 'sequelize';
 import { User, Book, ReadingSession } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { etag } from '../middleware/cache';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router: Router = Router();
 
@@ -72,7 +73,7 @@ router.get('/', authenticate, etag(60), async (req: AuthRequest, res) => {
  * Updates the authenticated user's settings. Only whitelisted fields are
  * accepted; all values are validated before persisting.
  */
-router.patch('/', authenticate, async (req: AuthRequest, res) => {
+router.patch('/', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res) => {
   try {
     const user = await User.findByPk(req.userId);
     if (!user) {
@@ -98,7 +99,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
         ? (user.settings as Record<string, unknown>)
         : {};
 
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
 
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
@@ -108,7 +109,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
 
     // --- Validation --------------------------------------------------------
 
-    if (updates.theme && !['light', 'dark', 'system'].includes(updates.theme)) {
+    if (updates.theme && !['light', 'dark', 'system'].includes(updates.theme as string)) {
       return res.status(400).json({
         success: false,
         error: { code: 'INVALID_THEME', message: 'Theme must be light, dark, or system' },
@@ -124,7 +125,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
 
     if (
       updates.friendPersona &&
-      !['sage', 'penny', 'alex', 'quinn', 'sam'].includes(updates.friendPersona)
+      !['sage', 'penny', 'alex', 'quinn', 'sam'].includes(updates.friendPersona as string)
     ) {
       return res.status(400).json({
         success: false,
@@ -134,7 +135,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
 
     if (
       updates.friendFrequency &&
-      !['minimal', 'normal', 'frequent'].includes(updates.friendFrequency)
+      !['minimal', 'normal', 'frequent'].includes(updates.friendFrequency as string)
     ) {
       return res.status(400).json({
         success: false,
@@ -144,7 +145,7 @@ router.patch('/', authenticate, async (req: AuthRequest, res) => {
 
     if (
       updates.companionMode &&
-      !['casual', 'scholar'].includes(updates.companionMode)
+      !['casual', 'scholar'].includes(updates.companionMode as string)
     ) {
       return res.status(400).json({
         success: false,

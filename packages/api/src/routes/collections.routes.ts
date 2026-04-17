@@ -7,6 +7,7 @@ import { body } from 'express-validator';
 import { Collection } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { notFound } from '../utils/errors';
 
 const router: Router = Router();
@@ -45,6 +46,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 router.post(
   '/',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 30 }),
   validate([
     body('name').trim().isLength({ min: 1, max: 100 }).withMessage('Name is required (1-100 chars)'),
     body('description').optional().trim().isLength({ max: 500 }),
@@ -85,6 +87,7 @@ router.post(
 router.patch(
   '/:id',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 30 }),
   validate([
     body('name').optional().trim().isLength({ min: 1, max: 100 }),
     body('description').optional().trim().isLength({ max: 500 }),
@@ -126,7 +129,7 @@ router.patch(
 /**
  * DELETE /api/collections/:id
  */
-router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const collection = await Collection.findOne({
       where: { id: req.params.id, userId: req.userId },
@@ -155,6 +158,7 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
 router.post(
   '/:id/books',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 30 }),
   validate([
     body('bookIds').isArray({ min: 1 }).withMessage('bookIds must be a non-empty array'),
   ]),
@@ -197,6 +201,7 @@ router.post(
 router.post(
   '/:id/books/remove',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 30 }),
   validate([
     body('bookIds').isArray({ min: 1 }).withMessage('bookIds must be a non-empty array'),
   ]),

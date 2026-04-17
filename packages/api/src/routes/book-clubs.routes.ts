@@ -7,6 +7,7 @@ import { body, param } from 'express-validator';
 import { BookClub, BookClubMember, Book, User, ClubDiscussion } from '../models';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { parsePagination } from '../utils/pagination';
 import { notFound, forbidden } from '../utils/errors';
 import { sequelize } from '../db';
@@ -36,6 +37,7 @@ async function requireAdmin(req: AuthRequest, clubId: string) {
 router.post(
   '/',
   authenticate,
+  rateLimiter({ windowMs: 300000, max: 5 }),
   validate([
     body('name').isString().trim().isLength({ min: 1, max: 100 }),
     body('description').optional().isString().trim().isLength({ max: 500 }),
@@ -212,6 +214,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res) => {
 router.post(
   '/:id/join',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 10 }),
   async (req: AuthRequest, res) => {
     try {
       const club = await BookClub.findByPk(req.params.id);
@@ -259,6 +262,7 @@ router.post(
 router.post(
   '/join-code',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 10 }),
   validate([body('inviteCode').isString().trim().isLength({ min: 6, max: 6 })]),
   async (req: AuthRequest, res) => {
     try {
@@ -298,7 +302,7 @@ router.post(
 // ---------------------------------------------------------------------------
 // POST /api/book-clubs/:id/leave — Leave a club
 // ---------------------------------------------------------------------------
-router.post('/:id/leave', authenticate, async (req: AuthRequest, res) => {
+router.post('/:id/leave', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async (req: AuthRequest, res) => {
   try {
     const membership = await getClubMembership(req.params.id, req.userId!);
     if (!membership) {
@@ -371,6 +375,7 @@ router.get('/:id/members', authenticate, async (req: AuthRequest, res) => {
 router.patch(
   '/:id',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 20 }),
   validate([
     body('name').optional().isString().trim().isLength({ min: 1, max: 100 }),
     body('description').optional().isString().trim().isLength({ max: 500 }),
@@ -410,6 +415,7 @@ router.patch(
 router.post(
   '/:id/set-book',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 10 }),
   validate([body('bookId').isString()]),
   async (req: AuthRequest, res) => {
     try {
@@ -441,7 +447,7 @@ router.post(
 // ---------------------------------------------------------------------------
 // DELETE /api/book-clubs/:id — Delete club (admin only)
 // ---------------------------------------------------------------------------
-router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async (req: AuthRequest, res) => {
   try {
     if (!await requireAdmin(req, req.params.id)) {
       return forbidden(res, 'Only admins can delete the club');
@@ -553,6 +559,7 @@ router.get('/:id/discussions', authenticate, async (req: AuthRequest, res) => {
 router.post(
   '/:id/discussions',
   authenticate,
+  rateLimiter({ windowMs: 60000, max: 20 }),
   validate([
     body('content').isString().trim().isLength({ min: 1, max: 2000 }),
   ]),
@@ -591,7 +598,7 @@ router.post(
 // ---------------------------------------------------------------------------
 // DELETE /api/book-clubs/:id/discussions/:messageId — Delete a message (author or admin)
 // ---------------------------------------------------------------------------
-router.delete('/:id/discussions/:messageId', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:id/discussions/:messageId', authenticate, rateLimiter({ windowMs: 60000, max: 30 }), async (req: AuthRequest, res) => {
   try {
     const message = await ClubDiscussion.findByPk(req.params.messageId);
     if (!message) {
