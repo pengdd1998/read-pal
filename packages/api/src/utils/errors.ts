@@ -79,6 +79,16 @@ export function notFound(res: Response, resource: string): Response<ApiError> {
 }
 
 /**
+ * Send a 403 Forbidden response.
+ */
+export function forbidden(res: Response, message: string): Response<ApiError> {
+  return res.status(403).json({
+    success: false,
+    error: { code: 'FORBIDDEN', message },
+  });
+}
+
+/**
  * Send a 500 Internal Server Error response.
  */
 export function serverError(res: Response, code: string, message: string): Response<ApiError> {

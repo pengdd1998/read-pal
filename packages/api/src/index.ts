@@ -35,6 +35,7 @@ import googleAuthRoutes from './routes/google-auth.routes';
 import flashcardsRoutes from './routes/flashcards.routes';
 import studyModeRoutes from './routes/study-mode.routes';
 import collectionsRoutes from './routes/collections.routes';
+import bookClubsRoutes from './routes/book-clubs.routes';
 
 // Agents
 import { CompanionAgent } from './agents/companion/CompanionAgent';
@@ -299,6 +300,7 @@ app.use('/api/synthesis', synthesisRoutes);
 app.use('/api/flashcards', flashcardsRoutes);
 app.use('/api/study-mode', studyModeRoutes);
 app.use('/api/collections', collectionsRoutes);
+app.use('/api/book-clubs', bookClubsRoutes);
 
 // ============================================================================
 // Error Handling

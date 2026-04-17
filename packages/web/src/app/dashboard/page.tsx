@@ -11,6 +11,7 @@ import { useToast } from '@/components/Toast';
 const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false });
 const ShareReadingCard = dynamic(() => import('@/components/share/ReadingShareCard').then((m) => ({ default: m.ShareReadingCard })), { ssr: false });
 const StreakCalendar = dynamic(() => import('@/components/dashboard/StreakCalendar'), { ssr: false });
+const BookClubsWidget = dynamic(() => import('@/components/dashboard/BookClubsWidget'), { ssr: false });
 
 interface DashboardStats {
   booksRead: number;
@@ -752,12 +753,13 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             {[
               { label: 'Upload Book', href: '/library', icon: '\u{1F4C2}', color: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20' },
               { label: 'Memory Books', href: '/memory-books', icon: '\u{1F4D5}', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },
               { label: 'Flashcards', href: '/flashcards', icon: '\u{1F4C7}', color: 'from-teal-50 to-emerald-50 dark:from-teal-950/20 dark:to-emerald-950/20' },
               { label: 'Reading Stats', href: '/stats', icon: '\u{1F4CA}', color: 'from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20' },
+              { label: 'Book Clubs', href: '/book-clubs', icon: '\u{1F4DA}', color: 'from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20' },
             ].map((action) => (
               <Link
                 key={action.label}
@@ -813,6 +815,13 @@ export default function DashboardPage() {
       {hasData && !loading && (
         <div className="mt-5 animate-fade-in">
           <StreakCalendar />
+        </div>
+      )}
+
+      {/* ── Book Clubs ── */}
+      {hasData && !loading && (
+        <div className="mt-5 animate-fade-in">
+          <BookClubsWidget />
         </div>
       )}
 
