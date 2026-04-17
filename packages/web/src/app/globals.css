@@ -62,16 +62,6 @@
     overscroll-behavior: none;
   }
 
-  /* Reading mode: hide AppShell header, footer, bottom nav */
-  .reading-mode header,
-  .reading-mode footer,
-  .reading-mode nav[aria-label="Bottom navigation"] {
-    display: none !important;
-  }
-  .reading-mode #main-content {
-    padding-bottom: 0 !important;
-  }
-
   /* Active/press feedback for all interactive elements */
   button:active:not(:disabled),
   a:active:not(:disabled) {

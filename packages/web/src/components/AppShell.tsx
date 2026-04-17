@@ -37,6 +37,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline } = useOnlineStatus();
 
+  // Immersive reading mode — hide all AppShell chrome
+  const isReading = pathname.startsWith('/read/');
+
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   // Close mobile menu on navigation
@@ -45,12 +48,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f5f0] dark:bg-gray-950">
       {/* Skip to main content for accessibility */}
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-amber-500 focus:text-white focus:rounded-lg focus:text-sm focus:font-medium">
-        Skip to main content
-      </a>
+      {!isReading && (
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-amber-500 focus:text-white focus:rounded-lg focus:text-sm focus:font-medium">
+          Skip to main content
+        </a>
+      )}
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0]/95 dark:bg-gray-950/95 backdrop-blur-lg">
+      {!isReading && <header className="sticky top-0 z-40 border-b border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0]/95 dark:bg-gray-950/95 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
@@ -181,10 +186,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </nav>
         )}
-      </header>
+      </header>}
 
       {/* Main Content */}
-      <main id="main-content" className="flex-1 pb-16 md:pb-0" tabIndex={-1}>
+      <main id="main-content" className={`flex-1 ${isReading ? '' : 'pb-16 md:pb-0'}`} tabIndex={-1}>
         <ErrorBoundary>
           <ToastProvider>
             <PageTransition>{children}</PageTransition>
@@ -193,7 +198,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       {/* Mobile Bottom Nav */}
-      {isAuthenticated && (
+      {isAuthenticated && !isReading && (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 safe-area-inset-bottom" aria-label="Bottom navigation">
           <div className="flex items-center justify-around h-14">
             {BOTTOM_NAV_ITEMS.map((item) => {
@@ -221,10 +226,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       {/* Offline Banner */}
-      {!isOnline && <OfflineBanner />}
+      {!isOnline && !isReading && <OfflineBanner />}
 
       {/* Footer */}
-      <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-8 sm:py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">
+      {!isReading && <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-8 sm:py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-md bg-[#d97706] flex items-center justify-center text-white text-xs font-bold">
@@ -239,7 +244,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link href="/settings" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Settings</Link>
           </div>
         </div>
-      </footer>
+      </footer>}
     </div>
   );
 }

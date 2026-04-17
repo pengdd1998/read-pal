@@ -800,13 +800,8 @@ export default function ReadPage() {
         />
       )}
 
-      {/* Main content — uses transform for sidebars to avoid layout reflow */}
-      <div className="flex-1 overflow-hidden relative">
-        <div className={`h-full transition-transform duration-300 ease-out ${
-          sidebarOpen ? 'md:-translate-x-[360px] md:scale-[0.97]' : ''
-        } ${synthesisOpen ? 'md:translate-x-[400px] md:scale-[0.97]' : ''
-        } ${studyMode.enabled ? 'md:-translate-x-[160px] md:scale-[0.97]' : ''
-        }`}>
+      {/* Main content — sidebars overlay instead of pushing */}
+      <div className="flex-1 overflow-hidden">
         <div className={`h-full ${THEME_CLASSES[theme]} transition-colors duration-200 ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
           <ReaderView
             bookId={bookId}
@@ -830,8 +825,8 @@ export default function ReadPage() {
             onTocClose={() => setTocOpen(false)}
           />
         </div>
-        </div>
       </div>
+
       {!hasMadeSelection && <SelectionHint onDismiss={() => setHasMadeSelection(true)} />}
 
       {/* First-time feature tour */}

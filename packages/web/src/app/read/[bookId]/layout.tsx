@@ -16,9 +16,5 @@ export default function ReadLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="reading-mode">
-      {children}
-    </div>
-  );
+  return children;
 }
