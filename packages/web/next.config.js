@@ -3,6 +3,12 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   transpilePackages: ['@read-pal/shared'],
+  compiler: {
+    // Strip console.error and console.warn in production (keeps console.log for debugging)
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['log'] }
+      : false,
+  },
   async rewrites() {
     const apiTarget = process.env.API_URL || 'http://localhost:3001';
     return [

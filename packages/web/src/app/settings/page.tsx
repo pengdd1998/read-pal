@@ -43,8 +43,7 @@ function ZoteroSection() {
           setConnected(res.data.connected);
           if (res.data.userId) setUserId(res.data.userId);
         }
-      })
-      .catch(() => {});
+      });
   }, []);
 
   async function handleConnect() {

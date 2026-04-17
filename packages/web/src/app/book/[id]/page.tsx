@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authFetch } from '@/lib/auth-fetch';
 import { api } from '@/lib/api';
+import { useBackgroundApi } from '@/hooks/useApi';
 
 interface BookData {
   id: string;
@@ -58,10 +59,15 @@ export default function BookDetailPage() {
   const [outlineFilter, setOutlineFilter] = useState<'all' | 'highlight' | 'note' | 'bookmark'>('all');
   const [tags, setTags] = useState<Array<{ name: string; count: number }>>([]);
 
+  const { fetch: bgFetch } = useBackgroundApi();
+
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       try {
         const res = await api.get<BookData>(`/api/books/${bookId}`);
+        if (cancelled) return;
         if (res.success && res.data) {
           setBook(res.data);
         } else {
@@ -69,6 +75,7 @@ export default function BookDetailPage() {
         }
 
         const annRes = await api.get<AnnotationItem[]>(`/api/annotations?bookId=${bookId}&limit=1000`);
+        if (cancelled) return;
         if (annRes.success && annRes.data) {
           const annotations = annRes.data;
           setAnnotationStats({
@@ -78,47 +85,35 @@ export default function BookDetailPage() {
           });
           setAllAnnotations(annotations);
         }
-
-        // Fetch flashcard count for study guide CTA
-        api.get<Array<{ bookId: string; total: number }>>('/api/flashcards/decks')
-          .then((res) => {
-            if (res.success && Array.isArray(res.data)) {
-              const deck = res.data.find((d) => d.bookId === bookId);
-              if (deck) setFlashcardCount(deck.total);
-            }
-          })
-          .catch(() => {});
-
-        // Fetch tags for this book
-        api.get<Array<{ name: string; count: number }>>(`/api/annotations/tags?bookId=${bookId}`)
-          .then((res) => { if (res.success && Array.isArray(res.data)) setTags(res.data); })
-          .catch(() => {});
-
-        // Check if personal book exists
-        api.get<{ format: string }>(`/api/memory-books/${bookId}`)
-          .then((res) => { if (res.success && res.data?.format === 'personal_book') setHasPersonalBook(true); })
-          .catch(() => { /* no personal book yet */ });
-
-        // Fetch reading log
-        api.get<Array<{ id: string; startedAt: string; duration: number; pagesRead: number; highlights: number; notes: number; summary?: string }>>(`/api/reading-sessions/book/${bookId}/log?limit=5`)
-          .then((res) => { if (res.success && res.data) setReadingLog(Array.isArray(res.data) ? res.data : []); })
-          .catch(() => {});
-
-        // Fetch reading speed for completion prediction
-        api.get<{ currentWpm: number }>('/api/stats/reading-speed')
-          .then((res) => { if (res.success && res.data?.currentWpm) setReadingWpm(res.data.currentWpm); })
-          .catch(() => {});
-
-        // Check Zotero connection
-        api.get<{ connected: boolean }>('/api/zotero/status')
-          .then((res) => { if (res.success && res.data?.connected) setZoteroConnected(true); })
-          .catch(() => {});
       } catch {
-        setError('Failed to load book. Please try again.');
+        if (!cancelled) setError('Failed to load book. Please try again.');
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     })();
-  }, [bookId]);
+
+    // Background fetches — non-critical, silenced errors
+    bgFetch<Array<{ bookId: string; total: number }>>('/api/flashcards/decks', (data) => {
+      const deck = data.find((d) => d.bookId === bookId);
+      if (deck) setFlashcardCount(deck.total);
+    });
+    bgFetch<Array<{ name: string; count: number }>>(`/api/annotations/tags?bookId=${bookId}`, (data) => {
+      if (Array.isArray(data)) setTags(data);
+    });
+    bgFetch<{ format: string }>(`/api/memory-books/${bookId}`, (data) => {
+      if (data.format === 'personal_book') setHasPersonalBook(true);
+    });
+    bgFetch<Array<{ id: string; startedAt: string; duration: number; pagesRead: number; highlights: number; notes: number; summary?: string }>>(`/api/reading-sessions/book/${bookId}/log?limit=5`, (data) => {
+      if (Array.isArray(data)) setReadingLog(data);
+    });
+    bgFetch<{ currentWpm: number }>('/api/stats/reading-speed', (data) => {
+      if (data.currentWpm) setReadingWpm(data.currentWpm);
+    });
+    bgFetch<{ connected: boolean }>('/api/zotero/status', (data) => {
+      if (data.connected) setZoteroConnected(true);
+    });
+
+    return () => { cancelled = true; };
+  }, [bookId, bgFetch]);
 
   if (loading) {
     return (

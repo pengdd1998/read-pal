@@ -1,13 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { LoadingSpinner } from '@/components/ui';
 
-/**
- * Redirect /login to the unified /auth page (login mode).
- * Preserves the ?next= query param for post-login redirect.
- */
-export default function LoginPage() {
+function LoginRedirect() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -20,4 +17,16 @@ export default function LoginPage() {
   }, [router, searchParams]);
 
   return null;
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-[80vh] flex items-center justify-center">
+        <LoadingSpinner />
+      </main>
+    }>
+      <LoginRedirect />
+    </Suspense>
+  );
 }

@@ -36,7 +36,7 @@ export function ChapterTimeline({
       .then((res) => {
         if (res.success && res.data) setStats(res.data);
       })
-      .catch(() => {})
+
       .finally(() => setLoading(false));
   }, [bookId]);
 

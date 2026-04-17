@@ -52,15 +52,17 @@ const HEADER_BG_CLASSES = {
  * After the user has used text selection once, it only shows for 3s as a gentle reminder.
  */
 function SelectionHint({ onDismiss }: { onDismiss: () => void }) {
-  const isReturningUser = typeof window !== 'undefined' && localStorage.getItem('read-pal-selection-used') === 'true';
+  const [isReturningUser, setIsReturningUser] = useState(false);
 
   useEffect(() => {
+    const returning = localStorage.getItem('read-pal-selection-used') === 'true';
+    setIsReturningUser(returning);
     // Returning users: auto-dismiss after 3s. First-time users: stays until dismissed.
-    if (isReturningUser) {
+    if (returning) {
       const t = setTimeout(onDismiss, 3000);
       return () => clearTimeout(t);
     }
-  }, [onDismiss, isReturningUser]);
+  }, [onDismiss]);
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20 animate-fade-in" style={{ animation: 'fade-in 0.5s 1.5s forwards' }}>
@@ -190,8 +192,7 @@ export default function ReadPage() {
   useEffect(() => {
     if (loading) return;
     api.get<{ currentWpm: number; trend: string }>('/api/stats/reading-speed')
-      .then((res) => { if (res.success && res.data && res.data.currentWpm > 0) setReadingWpm(res.data.currentWpm); })
-      .catch(() => {});
+      .then((res) => { if (res.success && res.data && res.data.currentWpm > 0) setReadingWpm(res.data.currentWpm); });
   }, [loading]);
 
   // Study mode

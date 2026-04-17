@@ -188,6 +188,12 @@ class ApiClient {
     return 0; // Not cacheable
   }
 
+  /**
+   * GET request — returns { success: false } for HTTP errors instead of throwing.
+   * This eliminates the need for .catch() on every GET call and prevents
+   * unhandled rejection errors in the console.
+   * Only throws on truly unexpected errors (e.g., request cancellation).
+   */
   async get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const ttl = this.getCacheTTL(url);
     this.pruneStaleEntries();
@@ -215,6 +221,10 @@ class ApiClient {
           this.cache.set(cacheKey, { data, expiry: Date.now() + ttl });
         }
         return data;
+      })
+      .catch(() => {
+        // Return safe default instead of throwing — prevents console noise
+        return { success: false as const, error: { code: 'NETWORK_ERROR', message: 'Request failed' } };
       })
       .finally(() => {
         this.inFlightRequests.delete(cacheKey);

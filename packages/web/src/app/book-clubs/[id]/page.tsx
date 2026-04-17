@@ -113,8 +113,7 @@ export default function BookClubDetailPage() {
         if (!cancelled && res.success && res.data?.progress) {
           setProgress(res.data.progress);
         }
-      })
-      .catch(() => {});
+      });
 
     return () => { cancelled = true; };
   }, [clubId, club?.currentBookId]);
@@ -130,8 +129,7 @@ export default function BookClubDetailPage() {
         if (!cancelled && res.success && res.data) {
           setMessages(Array.isArray(res.data) ? res.data : []);
         }
-      })
-      .catch(() => {});
+      });
 
     return () => { cancelled = true; };
   }, [clubId]);

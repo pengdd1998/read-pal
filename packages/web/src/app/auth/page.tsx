@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
@@ -9,7 +9,7 @@ import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/u
 
 type AuthMode = 'login' | 'register';
 
-export default function AuthPage() {
+function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, register, isAuthenticated } = useAuth();
@@ -301,5 +301,20 @@ export default function AuthPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-[80vh] flex items-center justify-center">
+        <div className="flex items-center gap-2 text-gray-500">
+          <LoadingSpinner />
+          Loading...
+        </div>
+      </main>
+    }>
+      <AuthForm />
+    </Suspense>
   );
 }

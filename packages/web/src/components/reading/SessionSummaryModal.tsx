@@ -32,7 +32,7 @@ export function SessionSummaryModal({
           setAiSummary(res.data.summary);
         }
       })
-      .catch(() => {})
+
       .finally(() => setSummaryLoading(false));
   }, [sessionId]);
 

@@ -419,7 +419,6 @@ const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
     let cancelled = false;
     api.get<{ bookId: string; title: string; author: string; wpm: number; totalMinutes: number }[]>('/api/stats/reading-speed/by-book')
       .then((res) => { if (!cancelled && res.success && Array.isArray(res.data)) setBooks(res.data); })
-      .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);

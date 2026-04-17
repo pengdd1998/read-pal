@@ -22,7 +22,7 @@ export function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
       if (res.success && res.data) {
         setCollections(Array.isArray(res.data) ? res.data : []);
       }
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).finally(() => setLoading(false));
   }, []);
 
   // Close on outside click

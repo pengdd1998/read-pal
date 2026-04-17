@@ -82,7 +82,6 @@ export default function BookClubsWidget() {
           setClubs(res.data);
         }
       })
-      .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoading(false);
       });

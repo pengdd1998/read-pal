@@ -1,14 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 
-/**
- * OAuth callback page — receives token and user from the server redirect.
- * URL format: /auth/callback?token=xxx&user={...}
- */
-export default function OAuthCallbackPage() {
+function OAuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { oauthLogin } = useAuth();
@@ -44,5 +40,20 @@ export default function OAuthCallbackPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400">Completing sign in...</p>
       </div>
     </main>
+  );
+}
+
+export default function OAuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-[80vh] flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Completing sign in...</p>
+        </div>
+      </main>
+    }>
+      <OAuthCallback />
+    </Suspense>
   );
 }
