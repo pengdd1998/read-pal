@@ -29,15 +29,17 @@ def _match_type(value: Any, target: AnnotationType) -> bool:
 
 def _get_year(book: Book) -> str:
     """Extract publication year from book metadata."""
-    if hasattr(book, 'metadata') and book.metadata:
-        return str(book.metadata.get('year', 'n.d.'))
+    meta = getattr(book, 'metadata_', None)
+    if meta and isinstance(meta, dict):
+        return str(meta.get('year', 'n.d.'))
     return 'n.d.'
 
 
 def _get_publisher(book: Book) -> str:
     """Extract publisher from book metadata."""
-    if hasattr(book, 'metadata') and book.metadata:
-        return book.metadata.get('publisher', '')
+    meta = getattr(book, 'metadata_', None)
+    if meta and isinstance(meta, dict):
+        return meta.get('publisher', '')
     return ''
 
 
