@@ -132,11 +132,35 @@ async def get_book_content(
             ch.get('content', '') for ch in doc.chapters if isinstance(ch, dict)
         )
 
+    # Build chapters array from document if available
+    chapters = []
+    if doc and hasattr(doc, 'chapters') and doc.chapters:
+        for i, ch in enumerate(doc.chapters):
+            if isinstance(ch, dict):
+                chapters.append({
+                    'id': ch.get('id', str(i)),
+                    'title': ch.get('title', f'Chapter {i + 1}'),
+                    'content': ch.get('content', ''),
+                    'rawContent': ch.get('rawContent', ch.get('content', '')),
+                })
+
     return {
         'success': True,
         'data': {
-            'book_id': str(book_id),
-            'title': book.title,
+            'book': {
+                'id': str(book.id),
+                'title': book.title,
+                'author': book.author,
+                'fileType': book.file_type.value if hasattr(book.file_type, 'value') else book.file_type,
+                'fileSize': book.file_size,
+                'totalPages': book.total_pages,
+                'currentPage': book.current_page,
+                'progress': float(book.progress) if book.progress else 0,
+                'status': book.status.value if hasattr(book.status, 'value') else book.status,
+                'tags': book.tags or [],
+                'metadata': book.metadata_,
+            },
+            'chapters': chapters,
             'content': content,
         },
     }
