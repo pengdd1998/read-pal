@@ -125,6 +125,7 @@ async def health_check() -> dict[str, str]:
 
 # --- Router includes ---
 from app.routers import (
+    account,
     agent,
     api_keys,
     annotations,
@@ -140,6 +141,7 @@ from app.routers import (
     interventions,
     knowledge,
     notifications,
+    password_reset,
     reading_book,
     reading_sessions,
     recommendations,
@@ -154,6 +156,8 @@ from app.routers import (
 
 for r in [
     auth.router,
+    password_reset.router,
+    account.router,
     agent.router,
     api_keys.router,
     friend.router,

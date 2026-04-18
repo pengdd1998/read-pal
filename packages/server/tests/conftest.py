@@ -125,7 +125,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
     with (
         patch('app.middleware.auth._get_redis', return_value=mock_redis),
-        patch('app.routers.auth._get_redis', return_value=mock_redis),
+        patch('app.routers.password_reset._get_redis', return_value=mock_redis),
         patch('redis.asyncio.from_url', return_value=mock_redis),
     ):
         async with AsyncClient(
