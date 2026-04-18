@@ -83,6 +83,20 @@ export function ReaderView({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
   const chapterMenuRef = useRef<HTMLDivElement>(null);
+  const selectingRef = useRef(false);
+
+  // Track selection activity to prevent control toggle during text selection
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed && sel.toString().trim()) {
+        selectingRef.current = true;
+        setTimeout(() => { selectingRef.current = false; }, 600);
+      }
+    };
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => document.removeEventListener('selectionchange', onSelectionChange);
+  }, []);
 
   // Preload DOMPurify on mount so purifySync works immediately after
   useEffect(() => { preloadDOMPurify(); preloadPrism(); }, []);
@@ -310,6 +324,7 @@ export function ReaderView({
       onClick={(e) => {
         const target = e.target as HTMLElement;
         if (target.closest('button, a, [data-selection-toolbar], footer')) return;
+        if (selectingRef.current) return; // User is selecting text — don't toggle
         const sel = window.getSelection();
         if (sel && !sel.isCollapsed && sel.toString().trim()) return;
         onToggleControls?.();
@@ -375,8 +390,8 @@ export function ReaderView({
           theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-[#faf6f0]/95' : 'border-gray-200/60 bg-white/95'
         } backdrop-blur-sm ${
           showControls
-            ? 'translate-y-0 opacity-100 shrink-0'
-            : 'translate-y-full opacity-0 pointer-events-none absolute bottom-0 left-0 right-0'
+            ? 'opacity-100 shrink-0'
+            : 'opacity-0 pointer-events-none shrink-0'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
