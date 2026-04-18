@@ -144,6 +144,22 @@ async def get_book_content(
                     'rawContent': ch.get('rawContent', ch.get('content', '')),
                 })
 
+    # For books without uploaded content (e.g. sample books), provide a placeholder chapter
+    if not chapters and not content:
+        content = (
+            f'<h1>{book.title}</h1>'
+            f'<p><em>by {book.author}</em></p>'
+            f'<p>This is a sample book. Upload an EPUB or PDF to get the full reading experience '
+            f'with AI companion, highlights, and notes.</p>'
+            f'<p>To upload a real book, go to your Library and use the upload area.</p>'
+        )
+        chapters = [{
+            'id': 'sample-0',
+            'title': f'{book.title} — Sample',
+            'content': content,
+            'rawContent': content,
+        }]
+
     return {
         'success': True,
         'data': {
