@@ -64,7 +64,7 @@ app = FastAPI(
     version='0.1.0',
     docs_url='/api/v1/docs',
     openapi_url='/api/v1/openapi.json',
-    redirect_slashes=True,
+    redirect_slashes=False,
 )
 
 # Global exception handler — always return JSON, never plain text
