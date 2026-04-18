@@ -3,6 +3,8 @@
 All responses follow the shape: ``{"success": true, "data": {...}}``
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.user import User
+from app.schemas.settings import SettingsUpdate
 
 router = APIRouter(prefix='/api/v1/settings', tags=['settings'])
 
@@ -21,7 +24,7 @@ async def get_settings(
 ) -> dict:
     """Return the authenticated user's settings."""
     result = await db.execute(
-        select(User).where(User.id == current_user['id']),
+        select(User).where(User.id == UUID(current_user['id'])),
     )
     user = result.scalar_one_or_none()
 
@@ -36,7 +39,7 @@ async def get_settings(
 
 @router.patch('/')
 async def update_settings(
-    body: dict,
+    body: SettingsUpdate,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -45,14 +48,8 @@ async def update_settings(
     Body should be a JSON object to merge into existing settings:
     ``{"theme": "dark", "fontSize": 18}``
     """
-    if not isinstance(body, dict):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'INVALID_INPUT', 'message': 'Settings must be a JSON object'},
-        )
-
     result = await db.execute(
-        select(User).where(User.id == current_user['id']),
+        select(User).where(User.id == UUID(current_user['id'])),
     )
     user = result.scalar_one_or_none()
 

@@ -34,7 +34,7 @@ async def list_annotations(
     """List annotations with optional book and type filters."""
     annotations, total = await annotation_service.get_annotations(
         db,
-        current_user['id'],
+        UUID(current_user['id']),
         book_id=book_id,
         type=type,
         page=page,
@@ -56,7 +56,7 @@ async def search_annotations(
     """Search annotations by content or note text."""
     annotations = await annotation_service.search_annotations(
         db,
-        current_user['id'],
+        UUID(current_user['id']),
         q,
         book_id=book_id,
     )
@@ -76,7 +76,7 @@ async def get_chapter_stats(
     """Return annotation stats grouped by chapter for a book."""
     stats = await annotation_service.get_chapter_stats(
         db,
-        current_user['id'],
+        UUID(current_user['id']),
         book_id,
     )
     return ChapterStatsResponse(data=stats)
@@ -90,7 +90,7 @@ async def get_annotation(
 ) -> dict:
     """Return a single annotation by ID."""
     annotation = await annotation_service.get_annotation(
-        db, current_user['id'], annotation_id,
+        db, UUID(current_user['id']), annotation_id,
     )
     if annotation is None:
         raise HTTPException(
@@ -111,7 +111,7 @@ async def create_annotation(
 ) -> dict:
     """Create a new annotation."""
     annotation = await annotation_service.create_annotation(
-        db, current_user['id'], body,
+        db, UUID(current_user['id']), body,
     )
     return {
         'success': True,
@@ -128,7 +128,7 @@ async def update_annotation(
 ) -> dict:
     """Partially update an annotation."""
     annotation = await annotation_service.update_annotation(
-        db, current_user['id'], annotation_id, body,
+        db, UUID(current_user['id']), annotation_id, body,
     )
     if annotation is None:
         raise HTTPException(
@@ -149,7 +149,7 @@ async def delete_annotation(
 ) -> dict:
     """Delete an annotation."""
     deleted = await annotation_service.delete_annotation(
-        db, current_user['id'], annotation_id,
+        db, UUID(current_user['id']), annotation_id,
     )
     if not deleted:
         raise HTTPException(

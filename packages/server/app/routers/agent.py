@@ -54,7 +54,7 @@ async def chat(
     try:
         result = await companion_service.chat(
             db=db,
-            user_id=current_user['id'],
+            user_id=UUID(current_user['id']),
             book_id=body.book_id,
             message=body.message,
             context=body.context,
@@ -96,7 +96,7 @@ async def summarize(
     try:
         result = await companion_service.summarize(
             db=db,
-            user_id=current_user['id'],
+            user_id=UUID(current_user['id']),
             book_id=body.book_id,
             chapter_ids=body.chapter_ids,
         )
@@ -119,7 +119,7 @@ async def explain(
     try:
         result = await companion_service.explain(
             db=db,
-            user_id=current_user['id'],
+            user_id=UUID(current_user['id']),
             book_id=body.book_id,
             text=body.text,
             context=body.context,

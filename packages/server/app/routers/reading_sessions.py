@@ -33,7 +33,7 @@ async def list_sessions(
     """List reading sessions with optional book filter."""
     sessions, total = await reading_session_service.get_sessions(
         db,
-        current_user['id'],
+        UUID(current_user['id']),
         book_id=book_id,
         page=page,
         per_page=per_page,
@@ -52,7 +52,7 @@ async def get_active_session(
 ) -> dict:
     """Return the active reading session for a book, if any."""
     session = await reading_session_service.get_active_session(
-        db, current_user['id'], book_id,
+        db, UUID(current_user['id']), book_id,
     )
     if session is None:
         return {'success': True, 'data': None}
@@ -68,7 +68,7 @@ async def get_session_stats(
     db: AsyncSession = Depends(get_db),
 ) -> SessionStatsResponse:
     """Return aggregate reading session statistics."""
-    stats = await reading_session_service.get_session_stats(db, current_user['id'])
+    stats = await reading_session_service.get_session_stats(db, UUID(current_user['id']))
     return SessionStatsResponse(data=stats)
 
 
@@ -80,7 +80,7 @@ async def get_session(
 ) -> dict:
     """Return a single reading session by ID."""
     session = await reading_session_service.get_session(
-        db, current_user['id'], session_id,
+        db, UUID(current_user['id']), session_id,
     )
     if session is None:
         raise HTTPException(
@@ -101,7 +101,7 @@ async def create_session(
 ) -> dict:
     """Create a new reading session and auto-start it."""
     session = await reading_session_service.create_session(
-        db, current_user['id'], body,
+        db, UUID(current_user['id']), body,
     )
     return {
         'success': True,
@@ -118,7 +118,7 @@ async def end_session(
 ) -> dict:
     """End an active reading session and update book progress."""
     session = await reading_session_service.end_session(
-        db, current_user['id'], session_id, data=body,
+        db, UUID(current_user['id']), session_id, data=body,
     )
     if session is None:
         raise HTTPException(

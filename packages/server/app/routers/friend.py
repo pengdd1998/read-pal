@@ -1,6 +1,7 @@
 """Friend routes — personality-based reading friend chat and relationship info."""
 
 import logging
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,7 +26,7 @@ async def chat(
     try:
         result = await friend_service.chat(
             db=db,
-            user_id=current_user['id'],
+            user_id=UUID(current_user['id']),
             persona=body.persona,
             message=body.message,
             book_id=body.book_id,
