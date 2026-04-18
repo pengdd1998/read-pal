@@ -1,0 +1,43 @@
+[project]
+name = "read-pal-server"
+version = "0.1.0"
+description = "Read-Pal AI Reading Companion - Python Backend"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.2.0",
+    "redis>=5.2.0",
+    "httpx>=0.28.0",
+    "python-multipart>=0.0.18",
+    # "ebooklib>=0.18",  # blocked on Python 3.13 (lxml)
+    "pypdf>=5.1.0",
+    "networkx>=3.4.0",
+    "langchain>=0.3.0",
+    "langchain-openai>=0.2.0",
+    # "pinecone>=5.0.0",  # add when needed
+    "numpy>=2.1.0",
+    "email-validator>=2.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "httpx>=0.28.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
