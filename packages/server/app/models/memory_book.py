@@ -46,7 +46,7 @@ class MemoryBook(Base):
     )
     format: Mapped[str] = mapped_column(
         String(20),
-        default='scrapbook',
+        default='personal_book',
     )
     moments: Mapped[list] = mapped_column(
         JSONB,
