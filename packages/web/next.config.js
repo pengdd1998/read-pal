@@ -10,7 +10,7 @@ const nextConfig = {
       : false,
   },
   async rewrites() {
-    const apiTarget = process.env.API_URL || 'http://192.168.1.13:8000';
+    const apiTarget = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:8000';
     return [
       {
         source: '/api/:path*',

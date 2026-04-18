@@ -63,3 +63,29 @@ async def update_settings(
     await db.flush()
 
     return {'success': True, 'data': user.settings}
+
+
+@router.get('/reading-goals')
+async def get_reading_goals(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get reading goals from user settings."""
+    result = await db.execute(
+        select(User).where(User.id == UUID(current_user['id'])),
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'User not found'},
+        )
+
+    settings = user.settings or {}
+    goals = settings.get('readingGoals', {
+        'dailyMinutes': 30,
+        'weeklyBooks': 1,
+        'monthlyBooks': 4,
+    })
+    return {'success': True, 'data': goals}

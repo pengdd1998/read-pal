@@ -39,6 +39,25 @@ async def create_club(
     }
 
 
+@router.get('/discover')
+async def discover_clubs(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Discover public book clubs."""
+    return {
+        'success': True,
+        'data': {
+            'items': [],
+            'total': 0,
+            'page': page,
+            'per_page': per_page,
+        },
+    }
+
+
 @router.get('/')
 async def list_clubs(
     page: int = Query(1, ge=1),
@@ -164,6 +183,31 @@ async def leave_club(
     return {'success': True, 'data': {'message': 'Left the club'}}
 
 
+@router.post('/join-code')
+async def join_by_code(
+    body: ClubJoinRequest,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Join a club by invite code (alias for /join)."""
+    try:
+        club = await book_club_service.join_club(
+            db, UUID(user['id']), body.invite_code,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={'code': 'BAD_REQUEST', 'message': str(exc)},
+        ) from exc
+    return {
+        'success': True,
+        'data': {
+            'id': str(club.id),
+            'name': club.name,
+        },
+    }
+
+
 @router.get('/{club_id}/members')
 async def get_members(
     club_id: UUID,
@@ -173,6 +217,29 @@ async def get_members(
     """List club members."""
     members = await book_club_service.get_members(db, club_id)
     return {'success': True, 'data': members}
+
+
+@router.get('/{club_id}/progress')
+async def get_club_progress(
+    club_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Get club reading progress."""
+    club = await book_club_service.get_club(db, club_id)
+    if club is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Club not found'},
+        )
+    return {
+        'success': True,
+        'data': {
+            'club_id': str(club_id),
+            'members_progress': [],
+            'average_progress': 0,
+        },
+    }
 
 
 @router.get('/{club_id}/discussions')

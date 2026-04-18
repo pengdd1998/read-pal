@@ -93,3 +93,50 @@ async def upload_book(
         }
     finally:
         os.unlink(tmp_path)
+
+
+@router.get('/books/{book_id}/content')
+async def get_book_content(
+    book_id: UUID,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get book content (raw text/chapters)."""
+    from sqlalchemy import select as sa_select
+    from app.models.book import Book
+    from app.models.document import Document
+
+    result = await db.execute(
+        sa_select(Book).where(
+            Book.id == book_id,
+            Book.user_id == UUID(user['id']),
+        ),
+    )
+    book = result.scalar_one_or_none()
+    if book is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+        )
+
+    result = await db.execute(
+        sa_select(Document).where(Document.book_id == book_id),
+    )
+    doc = result.scalar_one_or_none()
+
+    content = ''
+    if doc and hasattr(doc, 'content') and doc.content:
+        content = doc.content
+    elif doc and hasattr(doc, 'chapters') and doc.chapters:
+        content = '\n'.join(
+            ch.get('content', '') for ch in doc.chapters if isinstance(ch, dict)
+        )
+
+    return {
+        'success': True,
+        'data': {
+            'book_id': str(book_id),
+            'title': book.title,
+            'content': content,
+        },
+    }

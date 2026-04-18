@@ -4,12 +4,14 @@ import logging
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.models.chat_message import ChatMessage
 from app.schemas.agent import (
     ChatRequest,
     ChatResponse,
@@ -131,3 +133,97 @@ async def explain(
         ) from exc
 
     return ChatResponse(data=result)
+
+
+# --- Frontend compatibility aliases ---
+
+
+@router.post('/chat/stream')
+async def chat_stream_alias(
+    body: ChatRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Alias for POST /stream — streaming chat via /chat/stream path."""
+    return StreamingResponse(
+        _sse_stream(db, current_user['id'], body.book_id, body.message),
+        media_type='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',
+        },
+    )
+
+
+@router.get('/history')
+async def get_chat_history(
+    book_id: UUID | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get chat history for a user, optionally filtered by book."""
+    q = select(ChatMessage).where(
+        ChatMessage.user_id == UUID(current_user['id']),
+    )
+    if book_id:
+        q = q.where(ChatMessage.book_id == book_id)
+    q = q.order_by(ChatMessage.created_at.desc()).limit(limit)
+    result = await db.execute(q)
+    messages = list(result.scalars().all())
+    return {
+        'success': True,
+        'data': [
+            {
+                'id': str(m.id),
+                'book_id': str(m.book_id),
+                'role': m.role,
+                'content': m.content,
+                'created_at': m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in messages
+        ],
+    }
+
+
+@router.post('/discussion-questions')
+async def discussion_questions(
+    body: ChatRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Generate discussion questions for a book."""
+    try:
+        result = await companion_service.chat(
+            db=db,
+            user_id=UUID(current_user['id']),
+            book_id=body.book_id,
+            message=body.message or 'Generate discussion questions for this book',
+            context=body.context,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+        ) from exc
+    return {'success': True, 'data': result}
+
+
+@router.post('/mood/scene')
+async def mood_scene(
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return a mood-based scene description."""
+    mood = body.get('mood', 'neutral')
+    return {
+        'success': True,
+        'data': {
+            'mood': mood,
+            'scene': f'A {mood} reading atmosphere',
+            'suggestion': 'Enjoy your reading session',
+            'color': '#4A90D9',
+        },
+    }

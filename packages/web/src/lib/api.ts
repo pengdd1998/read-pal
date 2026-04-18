@@ -15,7 +15,11 @@ import type { ApiResponse } from '@read-pal/shared';
 import { queueMutation } from '@/lib/offline-queue';
 import { getAuthToken } from '@/lib/auth-fetch';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (
+  typeof window !== 'undefined'
+    ? `${window.location.protocol}//${window.location.hostname}:8000`
+    : ''
+);
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1_000;
@@ -43,7 +47,6 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      withCredentials: true,
     });
 
     // Request interceptor - attach auth token (browser only)

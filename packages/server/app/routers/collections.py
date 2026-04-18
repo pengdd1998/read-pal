@@ -104,6 +104,83 @@ async def delete_collection(
         ) from exc
 
 
+@router.get('/{collection_id}/books')
+async def get_collection_books(
+    collection_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """List books in a collection."""
+    col = await collection_service.get_collection(db, UUID(user['id']), collection_id)
+    if col is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Collection not found'},
+        )
+    return {
+        'success': True,
+        'data': {
+            'book_ids': [str(bid) for bid in (col.book_ids or [])],
+        },
+    }
+
+
+@router.post('/{collection_id}/books')
+async def add_books_batch(
+    collection_id: UUID,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Add multiple books to a collection.
+
+    Body: ``{"bookIds": ["uuid1", "uuid2"]}``
+    """
+    book_ids = body.get('bookIds', [])
+    col = None
+    for bid_str in book_ids:
+        try:
+            col = await collection_service.add_book_to_collection(
+                db, UUID(user['id']), collection_id, UUID(bid_str),
+            )
+        except ValueError:
+            continue
+    if col is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Collection not found'},
+        )
+    return {'success': True, 'data': _serialize_collection(col)}
+
+
+@router.post('/{collection_id}/books/remove')
+async def remove_books_batch(
+    collection_id: UUID,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Remove multiple books from a collection.
+
+    Body: ``{"bookIds": ["uuid1", "uuid2"]}``
+    """
+    book_ids = body.get('bookIds', [])
+    col = None
+    for bid_str in book_ids:
+        try:
+            col = await collection_service.remove_book_from_collection(
+                db, UUID(user['id']), collection_id, UUID(bid_str),
+            )
+        except ValueError:
+            continue
+    if col is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Collection not found'},
+        )
+    return {'success': True, 'data': _serialize_collection(col)}
+
+
 @router.post('/{collection_id}/books/{book_id}')
 async def add_book(
     collection_id: UUID,

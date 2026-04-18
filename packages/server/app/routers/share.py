@@ -98,3 +98,30 @@ async def delete_share(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': str(exc)},
         ) from exc
+
+
+@router.post('/export', status_code=status.HTTP_201_CREATED)
+async def export_share(
+    body: ShareCreate,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Share an export — alias for POST /."""
+    share = await share_service.create_share(db, UUID(user['id']), body)
+    return {'success': True, 'data': _serialize_share(share, include_url=True)}
+
+
+@router.get('/reading-card')
+async def get_reading_card(
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Get reading card data for the user."""
+    shares = await share_service.list_shares(db, UUID(user['id']))
+    return {
+        'success': True,
+        'data': {
+            'total_shares': len(shares),
+            'shares': [_serialize_share(s) for s in shares[:10]],
+        },
+    }

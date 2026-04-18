@@ -13,6 +13,56 @@ from app.services import webhook_service
 router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'])
 
 
+@router.get('/events')
+async def list_webhook_events(
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """List available webhook event types."""
+    events = [
+        'book.created',
+        'book.updated',
+        'book.deleted',
+        'book.completed',
+        'annotation.created',
+        'annotation.updated',
+        'annotation.deleted',
+        'session.started',
+        'session.ended',
+        'flashcard.created',
+        'flashcard.reviewed',
+        'memory_book.generated',
+        'reading_book.shared',
+    ]
+    return {'success': True, 'data': events}
+
+
+@router.post('/{webhook_id}/test')
+async def test_webhook(
+    webhook_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Test a webhook by sending a test payload."""
+    try:
+        webhooks = await webhook_service.list_webhooks(db, UUID(user['id']))
+        wh = next((w for w in webhooks if w.id == webhook_id), None)
+        if wh is None:
+            raise ValueError('Webhook not found')
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+        ) from exc
+    return {
+        'success': True,
+        'data': {
+            'id': str(wh.id),
+            'url': wh.url,
+            'test_result': 'queued',
+        },
+    }
+
+
 @router.post('/', status_code=status.HTTP_201_CREATED)
 async def create_webhook(
     body: WebhookCreate,

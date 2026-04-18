@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.models.book import Book, BookFileType, BookStatus
 from app.schemas.book import (
     BookCreate,
     BookListResponse,
@@ -141,3 +142,35 @@ async def update_tags(
             detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
         )
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
+
+
+@router.post('/seed-sample', status_code=status.HTTP_201_CREATED)
+async def seed_sample_book(
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Create a sample book for testing.
+
+    Body: ``{"title": "...", "author": "..."}``
+    """
+    title = body.get('title', 'Sample Book')
+    author = body.get('author', 'Sample Author')
+
+    sample = Book(
+        user_id=UUID(current_user['id']),
+        title=title,
+        author=author,
+        file_type=BookFileType.epub,
+        file_size=1024,
+        total_pages=100,
+        current_page=0,
+        status=BookStatus.unread,
+        tags=['sample'],
+    )
+    db.add(sample)
+    await db.flush()
+    return {
+        'success': True,
+        'data': BookResponse.model_validate(sample).model_dump(mode='json'),
+    }

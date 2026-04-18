@@ -70,6 +70,24 @@ async def mark_notification_read(
     return {'success': True, 'data': _serialize_notification(notification)}
 
 
+@router.patch('/{notification_id}/read')
+async def mark_read_alias(
+    notification_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Mark a notification as read (frontend compatibility alias)."""
+    notification = await notification_service.mark_read(
+        db, UUID(user['id']), notification_id,
+    )
+    if notification is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Notification not found'},
+        )
+    return {'success': True, 'data': _serialize_notification(notification)}
+
+
 @router.post('/mark-all-read')
 async def mark_all_read(
     db: AsyncSession = Depends(get_db),

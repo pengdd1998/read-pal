@@ -5,18 +5,12 @@
   "description": "AI reading companion — capture your reading journey as a personal book",
   "license": "PROPRIETARY",
   "scripts": {
-    "dev": "pnpm --filter @read-pal/api dev & pnpm --filter @read-pal/web dev",
-    "dev:api": "pnpm --filter @read-pal/api dev",
-    "dev:web": "pnpm --filter @read-pal/web dev",
-    "build": "pnpm --filter @read-pal/shared build && pnpm --filter @read-pal/api build && NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build",
-    "build:api": "pnpm --filter @read-pal/api build",
+    "dev": "pnpm --filter @read-pal/web dev",
+    "build": "pnpm --filter @read-pal/shared build && NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build",
     "build:web": "NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build",
-    "typecheck": "pnpm --filter @read-pal/api typecheck && pnpm --filter @read-pal/web typecheck",
-    "test": "pnpm --filter @read-pal/api test -- --testPathPattern=tests/unit",
-    "clean": "rm -rf packages/api/dist packages/web/.next packages/shared/dist node_modules",
-    "setup": "pnpm install && pnpm --filter @read-pal/shared build && pnpm --filter @read-pal/api build",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "typecheck": "pnpm --filter @read-pal/web typecheck",
+    "clean": "rm -rf packages/web/.next packages/shared/dist node_modules",
+    "setup": "pnpm install && pnpm --filter @read-pal/shared build"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

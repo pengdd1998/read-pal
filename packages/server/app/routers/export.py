@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -53,6 +53,54 @@ async def export_annotations(
         'markdown': f'annotations-{book_id}.md',
         'html': f'annotations-{book_id}.html',
         'zotero': f'annotations-{book_id}.rdf',
+    }
+
+    return Response(
+        content=content,
+        media_type=content_type,
+        headers={
+            'Content-Disposition': (
+                f'attachment; filename="{filename_map[format]}"'
+            ),
+        },
+    )
+
+
+@router.get('/')
+async def export_by_query_params(
+    bookId: UUID = Query(..., alias='bookId'),
+    format: str = Query(..., alias='format'),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Export annotations using query params (frontend compatibility).
+
+    Query params: ``?bookId=...&format=...``
+    """
+    if format not in SUPPORTED_FORMATS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                'code': 'INVALID_FORMAT',
+                'message': f'Unsupported format: {format}. Use one of: {", ".join(SUPPORTED_FORMATS)}',
+            },
+        )
+
+    result = await export(db, UUID(current_user['id']), bookId, format)
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+        )
+
+    content, content_type = result
+
+    filename_map = {
+        'csv': f'annotations-{bookId}.csv',
+        'markdown': f'annotations-{bookId}.md',
+        'html': f'annotations-{bookId}.html',
+        'zotero': f'annotations-{bookId}.rdf',
     }
 
     return Response(

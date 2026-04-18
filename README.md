@@ -25,11 +25,11 @@ Read → Highlight/Note/Ask AI → Everything is captured → Finish book → Ge
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js 14, TypeScript, TailwindCSS |
-| Backend | Express, TypeScript |
+| Backend | Python 3.12+, FastAPI, SQLAlchemy 2.0 |
 | AI | GLM-4.7-flash (Zhipu AI) |
 | Database | PostgreSQL, Redis |
 | Search | Pinecone (vectors) |
-| Build | pnpm monorepo |
+| Build | pnpm (frontend), uv (backend) |
 | Deploy | PM2 on self-hosted server |
 
 ## Project Structure
@@ -37,9 +37,9 @@ Read → Highlight/Note/Ask AI → Everything is captured → Finish book → Ge
 ```
 read-pal/
 ├── packages/
-│   ├── api/       # Express API + AI agents
+│   ├── server/    # Python backend (FastAPI)
 │   ├── web/       # Next.js web app
-│   └── shared/    # Shared types and utilities
+│   └── shared/    # Shared TypeScript types
 ├── docs/          # Documentation
 └── .claude/       # Claude Code config
 ```
@@ -47,21 +47,20 @@ read-pal/
 ## Getting Started
 
 ```bash
+# Frontend
 pnpm install
 pnpm --filter @read-pal/shared build
-
-# Dev
-pnpm --filter @read-pal/api dev      # port 3001
 pnpm --filter @read-pal/web dev      # port 3000
 
-# Production build
-pnpm --filter @read-pal/api build
-NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build
+# Backend
+cd packages/server
+uv sync
+uvicorn app.main:app --reload --port 8000
 ```
 
 ## Environment Variables
 
-See `packages/api/.env.example`:
+See `packages/server/.env`:
 
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — PostgreSQL
 - `REDIS_URL` — Redis
@@ -77,9 +76,10 @@ Self-hosted with PM2 standalone mode:
 # On your server
 cd /path/to/read-pal
 git pull origin main
-pnpm --filter @read-pal/api build
+cd packages/server && alembic upgrade head
 pm2 restart read-pal-api
-NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build
+cd ../.. 
+cd packages/web && NEXT_PUBLIC_API_URL= pnpm build
 pm2 restart read-pal-web
 ```
 

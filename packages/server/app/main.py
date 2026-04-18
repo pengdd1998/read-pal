@@ -15,19 +15,41 @@ settings = get_settings()
 
 
 class ApiCompatMiddleware(BaseHTTPMiddleware):
-    """Rewrite /api/ requests to /api/v1/ for frontend compatibility."""
+    """Rewrite /api/ requests to /api/v1/ for frontend compatibility.
+
+    Also rewrites legacy frontend route names:
+      /api/v1/reading-sessions/*  -> /api/v1/sessions/*
+      /api/v1/memory-books/*      -> /api/v1/reading-book/*
+      /api/v1/agents/*            -> /api/v1/agent/*
+    """
+
+    # Path rewrites applied after the /api/ -> /api/v1/ conversion.
+    _PATH_REWRITES: list[tuple[str, str]] = [
+        ('/api/v1/reading-sessions/', '/api/v1/sessions/'),
+        ('/api/v1/memory-books/', '/api/v1/reading-book/'),
+        ('/api/v1/agents/', '/api/v1/agent/'),
+    ]
 
     async def dispatch(self, request: StarletteRequest, call_next) -> Response:
         path = request.url.path
+
+        # Step 1: /api/ -> /api/v1/
         if (
             path.startswith('/api/')
             and not path.startswith('/api/v1/')
             and not path.startswith('/api/docs')
             and not path.startswith('/api/openapi')
         ):
-            new_path = path.replace('/api/', '/api/v1/', 1)
-            request.scope['path'] = new_path
-            request.scope['raw_path'] = new_path.encode()
+            path = path.replace('/api/', '/api/v1/', 1)
+
+        # Step 2: legacy route name rewrites
+        for old_prefix, new_prefix in self._PATH_REWRITES:
+            if path.startswith(old_prefix):
+                path = path.replace(old_prefix, new_prefix, 1)
+                break
+
+        request.scope['path'] = path
+        request.scope['raw_path'] = path.encode()
         return await call_next(request)
 
 
@@ -56,10 +78,14 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 
 # CORS — allow all origins in development
+# NOTE: allow_origins=['*'] + allow_credentials=True is INVALID per CORS spec.
+# Browsers reject responses when credentials are sent but the origin is '*'.
+# Auth uses Bearer tokens in the Authorization header (not cookies), so
+# allow_credentials is not needed.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=['*'],
     allow_headers=['*'],
 )
@@ -100,20 +126,27 @@ async def health_check() -> dict[str, str]:
 # --- Router includes ---
 from app.routers import (
     agent,
+    api_keys,
     annotations,
     auth,
     book_clubs,
     books,
+    challenges,
     collections,
+    discovery,
     export,
     flashcards,
     friend,
+    interventions,
     knowledge,
     notifications,
     reading_book,
     reading_sessions,
+    recommendations,
     settings as settings_router,
     share,
+    stats,
+    study_mode,
     synthesis,
     upload,
     webhooks,
@@ -122,6 +155,7 @@ from app.routers import (
 for r in [
     auth.router,
     agent.router,
+    api_keys.router,
     friend.router,
     books.router,
     annotations.router,
@@ -138,5 +172,11 @@ for r in [
     share.router,
     webhooks.router,
     upload.router,
+    stats.router,
+    discovery.router,
+    challenges.router,
+    recommendations.router,
+    interventions.router,
+    study_mode.router,
 ]:
     app.include_router(r)

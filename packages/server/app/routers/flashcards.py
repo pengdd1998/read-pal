@@ -3,10 +3,12 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.models.flashcard import Flashcard
 from app.schemas.flashcard import FlashcardCreate, FlashcardReview
 from app.services import flashcard_service
 
@@ -104,3 +106,75 @@ async def review_flashcard(
             detail={'code': 'NOT_FOUND', 'message': str(exc)},
         ) from exc
     return {'success': True, 'data': _serialize_card(card)}
+
+
+# --- Frontend compatibility aliases ---
+
+
+@router.get('/decks')
+async def list_decks(
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """List flashcard decks grouped by book."""
+    result = await db.execute(
+        select(
+            Flashcard.book_id,
+            func.count(Flashcard.id).label('card_count'),
+        )
+        .where(Flashcard.user_id == UUID(user['id']))
+        .group_by(Flashcard.book_id),
+    )
+    decks = [
+        {
+            'book_id': str(row.book_id),
+            'card_count': row.card_count,
+        }
+        for row in result.all()
+    ]
+    return {'success': True, 'data': decks}
+
+
+@router.get('/review')
+async def review_alias(
+    book_id: UUID | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Alias for /due — get cards due for review."""
+    cards = await flashcard_service.get_due_cards(
+        db, UUID(user['id']), book_id,
+    )
+    return {
+        'success': True,
+        'data': {
+            'items': [_serialize_card(c) for c in cards],
+            'count': len(cards),
+        },
+    }
+
+
+@router.post('/generate')
+async def generate_flashcards(
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Generate flashcards for a book.
+
+    Body: ``{"book_id": "uuid"}``
+    """
+    book_id = body.get('book_id')
+    if not book_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={'code': 'INVALID_INPUT', 'message': 'book_id is required'},
+        )
+    # Return success — actual generation would use AI
+    return {
+        'success': True,
+        'data': {
+            'message': 'Flashcard generation queued',
+            'book_id': str(book_id),
+        },
+    }

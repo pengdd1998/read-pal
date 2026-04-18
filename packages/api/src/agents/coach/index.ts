@@ -1,1 +1,0 @@
-export { CoachAgent } from './CoachAgent';
