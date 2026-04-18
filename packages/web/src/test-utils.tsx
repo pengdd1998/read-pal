@@ -37,7 +37,7 @@ interface CustomRenderOptions extends RenderOptions {
 export function renderWithProviders(
   ui: React.ReactElement,
   options?: CustomRenderOptions,
-) {
+): ReturnType<typeof render> {
   return render(ui, { ...options });
 }
 
@@ -48,12 +48,15 @@ export { renderWithProviders as render };
 // --- Common mock factories ---
 
 export function mockFetch(response: unknown, status = 200) {
-  return vi.fn().mockResolvedValue({
-    ok: status >= 200 && status < 300,
-    status,
-    json: () => Promise.resolve(response),
-    text: () => Promise.resolve(JSON.stringify(response)),
-  });
+  function mockFn(): Promise<Response> {
+    return Promise.resolve({
+      ok: status >= 200 && status < 300,
+      status,
+      json: () => Promise.resolve(response),
+      text: () => Promise.resolve(JSON.stringify(response)),
+    } as Response);
+  }
+  return mockFn;
 }
 
 export function mockUser(overrides?: Record<string, unknown>) {
