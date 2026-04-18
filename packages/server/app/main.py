@@ -3,9 +3,6 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request as StarletteRequest
-from starlette.responses import Response
 from fastapi.routing import APIRoute
 
 from app.config import get_settings
@@ -14,43 +11,52 @@ logger = logging.getLogger('read-pal')
 settings = get_settings()
 
 
-class ApiCompatMiddleware(BaseHTTPMiddleware):
-    """Rewrite /api/ requests to /api/v1/ for frontend compatibility.
+class ApiCompatMiddleware:
+    """Pure ASGI middleware — rewrites paths without breaking CORS.
 
-    Also rewrites legacy frontend route names:
+    BaseHTTPMiddleware wraps responses in a way that strips CORS headers
+    added by inner middleware (CORSMiddleware). Rewriting as pure ASGI
+    avoids this by passing scope/send directly to the next app.
+
+    Rewrites:
+      /api/*            -> /api/v1/*  (except /api/docs, /api/openapi)
       /api/v1/reading-sessions/*  -> /api/v1/sessions/*
       /api/v1/memory-books/*      -> /api/v1/reading-book/*
       /api/v1/agents/*            -> /api/v1/agent/*
     """
 
-    # Path rewrites applied after the /api/ -> /api/v1/ conversion.
     _PATH_REWRITES: list[tuple[str, str]] = [
         ('/api/v1/reading-sessions/', '/api/v1/sessions/'),
         ('/api/v1/memory-books/', '/api/v1/reading-book/'),
         ('/api/v1/agents/', '/api/v1/agent/'),
     ]
 
-    async def dispatch(self, request: StarletteRequest, call_next) -> Response:
-        path = request.url.path
+    def __init__(self, app):
+        self.app = app
 
-        # Step 1: /api/ -> /api/v1/
-        if (
-            path.startswith('/api/')
-            and not path.startswith('/api/v1/')
-            and not path.startswith('/api/docs')
-            and not path.startswith('/api/openapi')
-        ):
-            path = path.replace('/api/', '/api/v1/', 1)
+    async def __call__(self, scope, receive, send):
+        if scope['type'] == 'http':
+            path = scope.get('path', '')
 
-        # Step 2: legacy route name rewrites
-        for old_prefix, new_prefix in self._PATH_REWRITES:
-            if path.startswith(old_prefix):
-                path = path.replace(old_prefix, new_prefix, 1)
-                break
+            # Step 1: /api/ -> /api/v1/
+            if (
+                path.startswith('/api/')
+                and not path.startswith('/api/v1/')
+                and not path.startswith('/api/docs')
+                and not path.startswith('/api/openapi')
+            ):
+                path = path.replace('/api/', '/api/v1/', 1)
 
-        request.scope['path'] = path
-        request.scope['raw_path'] = path.encode()
-        return await call_next(request)
+            # Step 2: legacy route name rewrites
+            for old_prefix, new_prefix in self._PATH_REWRITES:
+                if path.startswith(old_prefix):
+                    path = path.replace(old_prefix, new_prefix, 1)
+                    break
+
+            scope['path'] = path
+            scope['raw_path'] = path.encode()
+
+        await self.app(scope, receive, send)
 
 
 app = FastAPI(
