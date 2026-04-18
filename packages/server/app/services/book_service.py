@@ -2,7 +2,7 @@
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -89,7 +89,7 @@ async def update_book(
     if book is None:
         return None
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     update_data = data.model_dump(exclude_unset=True)
 
     for field, value in update_data.items():

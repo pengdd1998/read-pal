@@ -1,7 +1,7 @@
 """Reading friend agent — personality-based AI personas."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -172,7 +172,7 @@ async def chat(
 
     # Update relationship stats
     rel.total_messages += 2
-    rel.last_interaction_at = datetime.now(timezone.utc)
+    rel.last_interaction_at = datetime.utcnow()
     await db.flush()
 
     return {'role': 'assistant', 'content': assistant_content}

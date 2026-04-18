@@ -2,7 +2,7 @@
 
 import logging
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -23,7 +23,7 @@ async def create_share(
 ) -> SharedExport:
     """Create a shared export with a secure token."""
     token = secrets.token_urlsafe(32)  # 256-bit entropy
-    expires_at = data.expires_at or datetime.now(timezone.utc) + timedelta(
+    expires_at = data.expires_at or datetime.utcnow() + timedelta(
         days=DEFAULT_EXPIRY_DAYS,
     )
 
@@ -55,7 +55,7 @@ async def get_share(
     if share is None:
         return None
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     if share.expires_at and share.expires_at < now:
         return None
 

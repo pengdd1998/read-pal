@@ -1,7 +1,7 @@
 """Flashcard business logic — SM-2 spaced repetition algorithm."""
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -31,7 +31,7 @@ async def create_flashcard(
         ease_factor=DEFAULT_EASE_FACTOR,
         interval=0,
         repetition_count=0,
-        next_review_at=datetime.now(timezone.utc),
+        next_review_at=datetime.utcnow(),
     )
     db.add(card)
     await db.flush()
@@ -78,7 +78,7 @@ async def review_flashcard(
         old_ef + (0.1 - (5 - rating) * (0.08 + (5 - rating) * 0.02)),
     )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     card.ease_factor = new_ef
     card.interval = new_interval
     card.repetition_count = new_repetition
@@ -97,7 +97,7 @@ async def get_due_cards(
     book_id: UUID | None = None,
 ) -> list[Flashcard]:
     """Get flashcards due for review."""
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     query = (
         select(Flashcard)
         .where(
