@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -207,7 +207,7 @@ async def save_concept_checks(
         return {'success': True, 'data': {'message': 'Results saved'}}
 
     user_id = UUID(current_user['id'])
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Verify book ownership
     book_result = await db.execute(
@@ -322,7 +322,7 @@ async def get_mastery(
     )
     strong_cards = strong_result.scalar() or 0
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     due_result = await db.execute(
         select(func.count(Flashcard.id)).where(
             and_(

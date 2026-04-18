@@ -47,11 +47,12 @@ async def discover_clubs(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Discover public book clubs."""
+    items, total = await book_club_service.discover_clubs(db, page, per_page)
     return {
         'success': True,
         'data': {
-            'items': [],
-            'total': 0,
+            'items': items,
+            'total': total,
             'page': page,
             'per_page': per_page,
         },
@@ -232,12 +233,20 @@ async def get_club_progress(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': 'Club not found'},
         )
+
+    members_progress = await book_club_service.get_club_progress(db, club_id)
+    avg = 0
+    if members_progress:
+        avg = round(
+            sum(m['progress'] for m in members_progress) / len(members_progress),
+        )
+
     return {
         'success': True,
         'data': {
             'club_id': str(club_id),
-            'members_progress': [],
-            'average_progress': 0,
+            'members_progress': members_progress,
+            'average_progress': avg,
         },
     }
 
