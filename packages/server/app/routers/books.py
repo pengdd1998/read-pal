@@ -146,16 +146,16 @@ async def update_tags(
 
 @router.post('/seed-sample', status_code=status.HTTP_201_CREATED)
 async def seed_sample_book(
-    body: dict,
+    body: dict | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Create a sample book for testing.
 
-    Body: ``{"title": "...", "author": "..."}``
+    Body (optional): ``{"title": "...", "author": "..."}``
     """
-    title = body.get('title', 'Sample Book')
-    author = body.get('author', 'Sample Author')
+    title = (body or {}).get('title', 'Sample Book')
+    author = (body or {}).get('author', 'Sample Author')
 
     sample = Book(
         user_id=UUID(current_user['id']),
