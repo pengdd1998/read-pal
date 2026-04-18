@@ -11,7 +11,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.annotation import Annotation
+from app.models.annotation import Annotation, AnnotationType
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.memory_book import MemoryBook
@@ -20,6 +20,13 @@ from app.schemas.memory_book import MemoryBookResponse
 from app.services.llm import get_llm
 
 logger = logging.getLogger('read-pal.memory_book')
+
+
+def _match_type(value: object, target: AnnotationType) -> bool:
+    """Compare annotation type — works with both enum members and strings."""
+    if hasattr(value, 'value'):
+        return value == target or value.value == target.value
+    return value == target.value
 
 CHAPTER_PROMPTS = {
     1: (
@@ -85,11 +92,11 @@ async def _collect_book_data(
     annotations = list(result.scalars().all())
     data['highlights'] = [
         {'content': a.content, 'note': a.note, 'tags': a.tags, 'location': a.location}
-        for a in annotations if a.type == 'highlight'
+        for a in annotations if _match_type(a.type, AnnotationType.highlight)
     ]
     data['notes'] = [
         {'content': a.content, 'note': a.note, 'tags': a.tags}
-        for a in annotations if a.type == 'note'
+        for a in annotations if _match_type(a.type, AnnotationType.note)
     ]
     # Chat messages
     result = await db.execute(
@@ -160,10 +167,18 @@ async def _generate_chapter(
         }
 
     human_prompt = json.dumps(relevant_data, default=str)
-    response = await llm.ainvoke([
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=human_prompt),
-    ])
+    try:
+        response = await llm.ainvoke([
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=human_prompt),
+        ])
+    except Exception as exc:
+        logger.error('Memory book chapter %d LLM failed: %s', chapter_num, exc)
+        return {
+            'chapter': chapter_num,
+            'title': f'Chapter {chapter_num}',
+            'error': 'AI generation temporarily unavailable. Try regenerating later.',
+        }
 
     content = response.content.strip()
     if content.startswith('```'):

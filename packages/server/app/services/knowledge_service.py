@@ -86,10 +86,14 @@ async def _extract_concepts_via_llm(
 
     human_prompt = f'Analyse these reader annotations and extract concepts:\n\n{combined}'
 
-    response = await llm.ainvoke([
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=human_prompt),
-    ])
+    try:
+        response = await llm.ainvoke([
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=human_prompt),
+        ])
+    except Exception as exc:
+        logger.error('Knowledge graph concept extraction failed: %s', exc)
+        return []
 
     content = response.content.strip()
     # Strip markdown fences if present

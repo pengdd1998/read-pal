@@ -67,12 +67,6 @@ app = FastAPI(
     redirect_slashes=True,
 )
 
-# 让路由忽略末尾斜杠
-for route in app.routes:
-    if isinstance(route, APIRoute):
-        route.path_format = route.path_format.rstrip('/')
-        route.path = route.path.rstrip('/')
-
 # Global exception handler — always return JSON, never plain text
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -186,3 +180,10 @@ for r in [
     study_mode.router,
 ]:
     app.include_router(r)
+
+# Strip trailing slashes from all routes AFTER they are registered.
+# This prevents 307 redirects when clients call /api/v1/books instead of /api/v1/books/
+for route in app.routes:
+    if isinstance(route, APIRoute):
+        route.path_format = route.path_format.rstrip('/')
+        route.path = route.path.rstrip('/')
