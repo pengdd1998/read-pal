@@ -54,12 +54,8 @@ class MemoryBook(Base):
         nullable=False,
     )
     format: Mapped[str] = mapped_column(
-        Enum(
-            MemoryBookFormat,
-            name='memory_book_format_enum',
-            values_callable=lambda e: [x.value for x in e],
-        ),
-        default=MemoryBookFormat.scrapbook,
+        String(20),
+        default=MemoryBookFormat.scrapbook.value,
     )
     moments: Mapped[list] = mapped_column(
         JSONB,
