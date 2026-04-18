@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface MemoryBookStats {
@@ -74,6 +75,7 @@ export default function MemoryBooksPage() {
         format: 'personal_book',
       });
       if (res.success && res.data) {
+        analytics.track('reading_book_generated');
         // Navigate to the personal book page
         window.location.href = `/memory-books/${bookId}`;
       }

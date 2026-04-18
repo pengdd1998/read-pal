@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { api } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 
 type ExportFormat = 'markdown' | 'json' | 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib' | 'study_guide';
 
@@ -131,6 +132,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
       a.click();
       URL.revokeObjectURL(url);
       toast(`Downloaded ${filename}`, 'success');
+      analytics.track('export_completed', { format });
     } catch {
       toast('Download failed', 'error');
     }

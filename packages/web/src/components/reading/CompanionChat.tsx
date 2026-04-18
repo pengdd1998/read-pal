@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { api, API_BASE_URL } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 import { useToast } from '@/components/Toast';
 import { renderSimpleMarkdown } from '@/lib/markdown';
 import { consumeSSEStream } from '@/lib/sse';
@@ -358,6 +359,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     if (!input.trim() || loading) return;
     const msg = input.trim();
     setInput('');
+    analytics.track('ai_chat_sent');
     sendStreamMessage(msg);
   };
 
