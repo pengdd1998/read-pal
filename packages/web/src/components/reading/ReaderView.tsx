@@ -403,22 +403,24 @@ export function ReaderView({
           />
         </div>
 
-        {/* Chapter navigation */}
-        <div className="flex items-center justify-between px-3 md:px-6 py-2.5">
+        {/* Navigation: fixed-width nav buttons + compact center */}
+        <div className="grid grid-cols-[3.5rem_1fr_3.5rem] sm:grid-cols-[4.5rem_1fr_4.5rem] items-center px-2 sm:px-3 py-1.5">
+          {/* Prev */}
           <button
             onClick={goPrevPage}
             disabled={currentPage === 0}
-            className="flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-xl text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95 min-w-[60px] sm:min-w-[80px]"
+            className="h-10 flex items-center justify-center rounded-lg text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
+            aria-label="Previous chapter"
           >
             <ChevronLeft />
-            <span className="hidden sm:inline">Prev</span>
+            <span className="hidden sm:inline ml-1">Prev</span>
           </button>
 
-          {/* Chapter dropdown / TOC */}
-          <div className="flex-1 mx-2 sm:mx-4 min-w-0 relative" ref={chapterMenuRef}>
+          {/* Chapter dropdown / TOC — compact single-line trigger */}
+          <div className="min-w-0 relative flex justify-center" ref={chapterMenuRef}>
             <button
               onClick={() => setShowChapterMenu((v) => !v)}
-              className={`w-full flex flex-col items-center px-2 py-2 sm:py-1 rounded-lg transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors max-w-full ${
                 showChapterMenu
                   ? 'bg-amber-100/80 dark:bg-amber-900/40'
                   : 'hover:bg-black/5 dark:hover:bg-white/5'
@@ -426,35 +428,15 @@ export function ReaderView({
               aria-label="Open chapter list"
               aria-expanded={showChapterMenu}
             >
-              <span className="text-xs font-medium opacity-70 truncate w-full text-center">
-                Chapter {currentPage + 1} of {totalPages}
+              <span className="text-xs font-medium opacity-70 whitespace-nowrap">
+                Ch. {currentPage + 1}/{totalPages}
               </span>
-              <span className="text-[10px] opacity-40 mt-0.5 truncate w-full text-center">
-                {chapters[currentPage]?.title || ''} &middot; {clampedProgress}%
+              <span className="text-[11px] opacity-40 truncate hidden sm:inline">
+                {chapters[currentPage]?.title || ''}
               </span>
-              {/* Highlight & bookmark badges */}
-              {(highlightCount > 0 || bookmarkCount > 0) && (
-                <div className="flex items-center gap-1.5 mt-1 justify-center">
-                  {highlightCount > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500/70">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 3.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 9H10a3 3 0 013 3v1a1 1 0 102 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z" />
-                      </svg>
-                      {highlightCount}
-                    </span>
-                  )}
-                  {bookmarkCount > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] text-teal-500/70">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-                      </svg>
-                      {bookmarkCount}
-                    </span>
-                  )}
-                </div>
-              )}
+              <span className="text-[10px] opacity-30 whitespace-nowrap">{clampedProgress}%</span>
               <ChevronDown
-                className={`w-3 h-3 opacity-40 mt-0.5 transition-transform ${showChapterMenu ? 'rotate-180' : ''}`}
+                className={`w-3 h-3 opacity-40 shrink-0 transition-transform ${showChapterMenu ? 'rotate-180' : ''}`}
               />
             </button>
 
@@ -533,12 +515,14 @@ export function ReaderView({
             )}
           </div>
 
+          {/* Next */}
           <button
             onClick={goNextPage}
             disabled={currentPage >= totalPages - 1}
-            className="flex items-center gap-1.5 px-4 py-3 sm:py-2 rounded-xl text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95 min-w-[60px] sm:min-w-[80px] justify-end"
+            className="h-10 flex items-center justify-center rounded-lg text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
+            aria-label="Next chapter"
           >
-            <span className="hidden sm:inline">Next</span>
+            <span className="hidden sm:inline mr-1">Next</span>
             <ChevronRight />
           </button>
         </div>
