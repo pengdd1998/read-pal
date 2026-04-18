@@ -31,6 +31,7 @@ from app.middleware.rate_limiter import (
     refresh_limiter,
     register_limiter,
 )
+from app.models.book import Book, BookFileType, BookStatus
 from app.models.user import User
 from app.schemas.auth import (
     AuthResponse,
@@ -176,6 +177,20 @@ async def register(
     )
     db.add(user)
     await db.flush()
+
+    # Auto-seed a sample book so new users see content immediately
+    sample = Book(
+        user_id=user.id,
+        title='The Great Gatsby',
+        author='F. Scott Fitzgerald',
+        file_type=BookFileType.epub,
+        file_size=2048,
+        total_pages=180,
+        current_page=0,
+        status=BookStatus.unread,
+        tags=['sample', 'classic', 'fiction'],
+    )
+    db.add(sample)
 
     token = create_access_token({'userId': str(user.id)})
 

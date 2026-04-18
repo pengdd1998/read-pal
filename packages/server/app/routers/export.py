@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.services.export_service import SUPPORTED_FORMATS, export
+from app.services.export_service import CITATION_FORMATS, SUPPORTED_FORMATS, export
 
 logger = logging.getLogger('read-pal.export')
 
@@ -27,14 +27,15 @@ async def export_annotations(
 ) -> Response:
     """Export annotations for a book in the specified format.
 
-    Supported formats: csv, markdown, html, zotero.
+    Supported formats: csv, markdown, html, zotero, apa, mla, chicago.
     """
-    if format not in SUPPORTED_FORMATS:
+    all_formats = SUPPORTED_FORMATS + CITATION_FORMATS
+    if format not in all_formats:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 'code': 'INVALID_FORMAT',
-                'message': f'Unsupported format: {format}. Use one of: {", ".join(SUPPORTED_FORMATS)}',
+                'message': f'Unsupported format: {format}. Use one of: {", ".join(all_formats)}',
             },
         )
 
@@ -53,6 +54,9 @@ async def export_annotations(
         'markdown': f'annotations-{book_id}.md',
         'html': f'annotations-{book_id}.html',
         'zotero': f'annotations-{book_id}.rdf',
+        'apa': f'citation-{book_id}.txt',
+        'mla': f'citation-{book_id}.txt',
+        'chicago': f'citation-{book_id}.txt',
     }
 
     return Response(
@@ -77,12 +81,13 @@ async def export_by_query_params(
 
     Query params: ``?bookId=...&format=...``
     """
-    if format not in SUPPORTED_FORMATS:
+    all_formats = SUPPORTED_FORMATS + CITATION_FORMATS
+    if format not in all_formats:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 'code': 'INVALID_FORMAT',
-                'message': f'Unsupported format: {format}. Use one of: {", ".join(SUPPORTED_FORMATS)}',
+                'message': f'Unsupported format: {format}. Use one of: {", ".join(all_formats)}',
             },
         )
 
@@ -101,6 +106,9 @@ async def export_by_query_params(
         'markdown': f'annotations-{bookId}.md',
         'html': f'annotations-{bookId}.html',
         'zotero': f'annotations-{bookId}.rdf',
+        'apa': f'citation-{bookId}.txt',
+        'mla': f'citation-{bookId}.txt',
+        'chicago': f'citation-{bookId}.txt',
     }
 
     return Response(
