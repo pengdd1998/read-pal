@@ -3,7 +3,9 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import { param } from 'express-validator';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 import { rateLimiter } from '../middleware/rateLimiter';
 import { ApiKey, generateApiKey } from '../models/ApiKey';
 
@@ -66,7 +68,9 @@ router.post('/', authenticate, rateLimiter({ windowMs: 60000, max: 10 }), async 
 });
 
 // Revoke (delete) an API key
-router.delete('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, rateLimiter({ windowMs: 60000, max: 20 }), validate([
+  param('id').isUUID().withMessage('Invalid API key ID'),
+]), async (req: AuthRequest, res) => {
   try {
     const deleted = await ApiKey.destroy({
       where: { id: req.params.id, userId: req.userId },

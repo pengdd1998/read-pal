@@ -26,7 +26,8 @@ export async function loadDOMPurify(): Promise<typeof import('dompurify').defaul
  */
 export function purifySync(html: string, config?: Record<string, unknown>): string {
   if (_domPurify) return _domPurify.sanitize(html, config);
-  return html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  // Safe fallback: strip ALL tags, keep text content only
+  return html.replace(/<[^>]*>/g, '');
 }
 
 /**

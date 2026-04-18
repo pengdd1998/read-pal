@@ -171,7 +171,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res) => {
           model: BookClubMember,
           as: 'clubMembers',
           attributes: ['id', 'userId', 'role', 'joinedAt'],
-          include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email'] }],
+          include: [{ model: User, as: 'user', attributes: ['id', 'name'] }],
         },
       ],
     });
@@ -358,7 +358,7 @@ router.get('/:id/members', authenticate, async (req: AuthRequest, res) => {
 
     const members = await BookClubMember.findAll({
       where: { clubId: req.params.id },
-      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email'] }],
+      include: [{ model: User, as: 'user', attributes: ['id', 'name'] }],
       order: [['joinedAt', 'ASC']],
     });
 
