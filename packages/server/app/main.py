@@ -56,14 +56,14 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 
 # CORS — allow all origins in development
-if settings.is_dev:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=['*'],
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*'],
-    )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
+
 
 # Rewrite /api/ → /api/v1/ for frontend compatibility
 app.add_middleware(ApiCompatMiddleware)
