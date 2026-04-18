@@ -3,7 +3,7 @@
 All responses follow the shape: ``{"success": true, "data": {...}}``
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -205,7 +205,7 @@ async def heartbeat_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': 'Session not found'},
         )
-    session.updated_at = datetime.utcnow()
+    session.updated_at = datetime.now(timezone.utc)
     await db.flush()
     return {'success': True, 'data': {'message': 'Heartbeat received'}}
 

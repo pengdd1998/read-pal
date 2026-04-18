@@ -1,7 +1,7 @@
 """Business logic for reading session operations."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
@@ -21,7 +21,7 @@ async def create_session(
     data: SessionCreate,
 ) -> ReadingSession:
     """Create a new reading session, mark it active, update book status."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     session = ReadingSession(
         user_id=user_id,
         book_id=data.book_id,
@@ -63,7 +63,7 @@ async def end_session(
     if session is None:
         return None
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     session.ended_at = now
     session.is_active = False
 

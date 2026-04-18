@@ -40,6 +40,7 @@ async def get_all_graphs(
             graph_data = await build_graph(db, UUID(current_user['id']), bid)
             graphs.append(graph_data.model_dump())
         except Exception:
+            logger.warning('Failed to build graph for book %s', bid, exc_info=True)
             continue
     return {'success': True, 'data': graphs}
 
