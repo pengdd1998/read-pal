@@ -1,6 +1,7 @@
 """Business logic for book CRUD operations."""
 
 import logging
+import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
@@ -58,6 +59,7 @@ async def create_book(
 ) -> Book:
     """Create a new book with status='unread'."""
     book = Book(
+        id=uuid.uuid4(),
         user_id=user_id,
         title=data.title,
         author=data.author,

@@ -1,7 +1,7 @@
 """User model."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
@@ -67,13 +67,11 @@ class User(Base):
         server_default=text("'{}'"),
     )
     created_at: Mapped[datetime] = mapped_column(
-        default=func.now,
-        server_default=func.now(),
+        default=lambda: datetime.now(timezone.utc),
     )
     updated_at: Mapped[datetime] = mapped_column(
-        default=func.now,
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # relationships
