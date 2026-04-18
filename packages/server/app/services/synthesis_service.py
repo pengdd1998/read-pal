@@ -16,16 +16,10 @@ from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.reading_session import ReadingSession
 from app.schemas.synthesis import SynthesisResponse
-from app.services.llm import get_llm
+from app.services.llm import safe_llm_invoke
+from app.utils.annotations import match_annotation_type
 
 logger = logging.getLogger('read-pal.synthesis')
-
-
-def _match_type(value: object, target: AnnotationType) -> bool:
-    """Compare annotation type — works with both enum members and strings."""
-    if hasattr(value, 'value'):
-        return value == target or value.value == target.value
-    return value == target.value
 
 
 async def _collect_reading_data(
@@ -68,7 +62,7 @@ async def _collect_reading_data(
         highlights = [
             {'content': a.content, 'note': a.note, 'tags': a.tags}
             for a in annotations
-            if _match_type(a.type, AnnotationType.highlight)
+            if match_annotation_type(a.type, AnnotationType.highlight)
         ]
         data['highlights'] = highlights
 
@@ -76,7 +70,7 @@ async def _collect_reading_data(
         notes = [
             {'content': a.content, 'note': a.note, 'tags': a.tags}
             for a in annotations
-            if _match_type(a.type, AnnotationType.note)
+            if match_annotation_type(a.type, AnnotationType.note)
         ]
         data['notes'] = notes
 
@@ -147,8 +141,6 @@ async def synthesize(
             data={'error': 'Book not found'},
         )
 
-    llm = get_llm()
-
     system_prompt = (
         'You are a reading analysis assistant. Synthesize the reader\'s data '
         'into a structured analysis. Return valid JSON with these keys:\n\n'
@@ -167,39 +159,20 @@ async def synthesize(
         f'Reading data:\n{json.dumps(reading_data, default=str)}'
     )
 
-    try:
-        response = await llm.ainvoke([
+    empty_synthesis = {
+        'themes': [],
+        'connections': [],
+        'timeline': [],
+        'insights': [],
+    }
+    synthesis_data = await safe_llm_invoke(
+        [
             SystemMessage(content=system_prompt),
             HumanMessage(content=human_prompt),
-        ])
-    except Exception as exc:
-        logger.error('Synthesis LLM call failed: %s', exc)
-        return SynthesisResponse(
-            success=True,
-            data={
-                'themes': [],
-                'connections': [],
-                'timeline': [],
-                'insights': [],
-                'error': 'AI synthesis temporarily unavailable',
-            },
-        )
-
-    content = response.content.strip()
-    if content.startswith('```'):
-        lines = content.split('\n')
-        content = '\n'.join(lines[1:-1])
-
-    try:
-        synthesis_data = json.loads(content)
-    except json.JSONDecodeError:
-        logger.warning('Failed to parse LLM synthesis response')
-        synthesis_data = {
-            'themes': [],
-            'connections': [],
-            'timeline': [],
-            'insights': [],
-        }
+        ],
+        fallback=empty_synthesis,
+        log_label='Synthesis',
+    )
 
     return SynthesisResponse(success=True, data=synthesis_data)
 
@@ -222,8 +195,6 @@ async def cross_book_synthesize(
             success=True,
             data={'themes': [], 'connections': [], 'book_summaries': []},
         )
-
-    llm = get_llm()
 
     system_prompt = (
         'You are a cross-book analysis assistant. Compare the reader\'s data '
@@ -253,42 +224,18 @@ async def cross_book_synthesize(
         f'{json.dumps(condensed, default=str)}'
     )
 
-    try:
-        response = await llm.ainvoke([
+    book_summaries = [
+        {'title': bd.get('book', {}).get('title', 'Unknown'), 'key_takeaway': ''}
+        for bd in all_book_data
+    ]
+    fallback = {'themes': [], 'connections': [], 'book_summaries': book_summaries}
+    synthesis_data = await safe_llm_invoke(
+        [
             SystemMessage(content=system_prompt),
             HumanMessage(content=human_prompt),
-        ])
-    except Exception as exc:
-        logger.error('Cross-book synthesis LLM failed: %s', exc)
-        return SynthesisResponse(
-            success=True,
-            data={
-                'themes': [],
-                'connections': [],
-                'book_summaries': [
-                    {'title': bd.get('book', {}).get('title', 'Unknown'), 'key_takeaway': ''}
-                    for bd in all_book_data
-                ],
-                'error': 'AI synthesis temporarily unavailable',
-            },
-        )
-
-    content = response.content.strip()
-    if content.startswith('```'):
-        lines = content.split('\n')
-        content = '\n'.join(lines[1:-1])
-
-    try:
-        synthesis_data = json.loads(content)
-    except json.JSONDecodeError:
-        logger.warning('Failed to parse cross-book synthesis response')
-        synthesis_data = {
-            'themes': [],
-            'connections': [],
-            'book_summaries': [
-                {'title': bd.get('book', {}).get('title', 'Unknown'), 'key_takeaway': ''}
-                for bd in all_book_data
-            ],
-        }
+        ],
+        fallback=fallback,
+        log_label='Cross-book synthesis',
+    )
 
     return SynthesisResponse(success=True, data=synthesis_data)

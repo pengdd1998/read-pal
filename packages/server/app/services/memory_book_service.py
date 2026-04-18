@@ -17,16 +17,10 @@ from app.models.chat_message import ChatMessage
 from app.models.memory_book import MemoryBook
 from app.models.reading_session import ReadingSession
 from app.schemas.memory_book import MemoryBookResponse
-from app.services.llm import get_llm
+from app.services.llm import safe_llm_invoke
+from app.utils.annotations import match_annotation_type
 
 logger = logging.getLogger('read-pal.memory_book')
-
-
-def _match_type(value: object, target: AnnotationType) -> bool:
-    """Compare annotation type — works with both enum members and strings."""
-    if hasattr(value, 'value'):
-        return value == target or value.value == target.value
-    return value == target.value
 
 CHAPTER_PROMPTS = {
     1: (
@@ -92,11 +86,11 @@ async def _collect_book_data(
     annotations = list(result.scalars().all())
     data['highlights'] = [
         {'content': a.content, 'note': a.note, 'tags': a.tags, 'location': a.location}
-        for a in annotations if _match_type(a.type, AnnotationType.highlight)
+        for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)
     ]
     data['notes'] = [
         {'content': a.content, 'note': a.note, 'tags': a.tags}
-        for a in annotations if _match_type(a.type, AnnotationType.note)
+        for a in annotations if match_annotation_type(a.type, AnnotationType.note)
     ]
     # Chat messages
     result = await db.execute(
@@ -138,7 +132,6 @@ async def _generate_chapter(
     book_format: str,
 ) -> dict[str, Any]:
     """Generate a single chapter via LLM."""
-    llm = get_llm()
     prompt = CHAPTER_PROMPTS.get(chapter_num, 'Generate chapter content.')
     book_title = book_data.get('book', {}).get('title', 'Unknown')
     book_author = book_data.get('book', {}).get('author', 'Unknown')
@@ -167,29 +160,22 @@ async def _generate_chapter(
         }
 
     human_prompt = json.dumps(relevant_data, default=str)
-    try:
-        response = await llm.ainvoke([
+    fallback = {
+        'chapter': chapter_num,
+        'title': f'Chapter {chapter_num}',
+        'error': 'AI generation temporarily unavailable. Try regenerating later.',
+    }
+    result = await safe_llm_invoke(
+        [
             SystemMessage(content=system_prompt),
             HumanMessage(content=human_prompt),
-        ])
-    except Exception as exc:
-        logger.error('Memory book chapter %d LLM failed: %s', chapter_num, exc)
-        return {
-            'chapter': chapter_num,
-            'title': f'Chapter {chapter_num}',
-            'error': 'AI generation temporarily unavailable. Try regenerating later.',
-        }
-
-    content = response.content.strip()
-    if content.startswith('```'):
-        lines = content.split('\n')
-        content = '\n'.join(lines[1:-1])
-
-    try:
-        return json.loads(content)
-    except json.JSONDecodeError:
-        logger.warning('Failed to parse chapter %d response', chapter_num)
-        return {'chapter': chapter_num, 'error': 'Generation failed'}
+        ],
+        fallback=fallback,
+        log_label=f'Memory book chapter {chapter_num}',
+    )
+    if isinstance(result, dict):
+        return result
+    return fallback
 
 
 def _esc(text: str) -> str:

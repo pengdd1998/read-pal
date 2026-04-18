@@ -48,15 +48,17 @@ async def _load_annotations(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
+    limit: int = 50,
 ) -> list[Annotation]:
-    """Load all annotations for a given user + book."""
+    """Load annotations for a given user + book (capped to avoid token overflow)."""
     result = await db.execute(
         select(Annotation)
         .where(
             Annotation.user_id == user_id,
             Annotation.book_id == book_id,
         )
-        .order_by(Annotation.created_at),
+        .order_by(Annotation.created_at)
+        .limit(limit),
     )
     return list(result.scalars().all())
 

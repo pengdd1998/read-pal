@@ -2,11 +2,10 @@
 
 import uuid
 from datetime import datetime
-from enum import Enum as PyEnum
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import Enum, ForeignKey, String, Text, UniqueConstraint, text
+from sqlalchemy import ForeignKey, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,14 +14,6 @@ from app.db import Base
 if TYPE_CHECKING:
     from app.models.book import Book
     from app.models.user import User
-
-
-class MemoryBookFormat(PyEnum):
-    scrapbook = 'scrapbook'
-    journal = 'journal'
-    timeline = 'timeline'
-    podcast = 'podcast'
-    personal_book = 'personal_book'
 
 
 class MemoryBook(Base):
@@ -55,7 +46,7 @@ class MemoryBook(Base):
     )
     format: Mapped[str] = mapped_column(
         String(20),
-        default=MemoryBookFormat.scrapbook.value,
+        default='scrapbook',
     )
     moments: Mapped[list] = mapped_column(
         JSONB,
