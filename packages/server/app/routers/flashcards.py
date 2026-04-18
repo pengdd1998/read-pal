@@ -132,7 +132,16 @@ async def list_decks(
         }
         for row in result.all()
     ]
-    return {'success': True, 'data': decks}
+    # Build response matching frontend expected shape
+    total_cards = sum(d['card_count'] for d in decks)
+    return {
+        'success': True,
+        'data': {
+            'decks': decks,
+            'totalCards': total_cards,
+            'totalDue': total_cards,
+        },
+    }
 
 
 @router.get('/review')
@@ -148,8 +157,12 @@ async def review_alias(
     return {
         'success': True,
         'data': {
-            'items': [_serialize_card(c) for c in cards],
-            'count': len(cards),
+            'flashcards': [_serialize_card(c) for c in cards],
+            'stats': {
+                'totalCards': len(cards),
+                'dueCards': len(cards),
+                'newCards': len(cards),
+            },
         },
     }
 
