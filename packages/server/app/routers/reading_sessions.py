@@ -139,13 +139,23 @@ async def end_session(
 
 @router.post('/start', status_code=status.HTTP_201_CREATED)
 async def start_session(
-    body: SessionCreate,
+    body: dict,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Alias for POST / — create a new reading session."""
+    """Alias for POST / — create a new reading session.
+
+    Accepts both ``book_id`` and ``bookId`` (camelCase) keys.
+    """
+    book_id = body.get('book_id') or body.get('bookId')
+    if not book_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={'code': 'VALIDATION_ERROR', 'message': 'book_id is required'},
+        )
+    session_body = SessionCreate(book_id=UUID(str(book_id)))
     session = await reading_session_service.create_session(
-        db, UUID(current_user['id']), body,
+        db, UUID(current_user['id']), session_body,
     )
     return {
         'success': True,
@@ -175,6 +185,7 @@ async def end_session_post(
     }
 
 
+@router.patch('/{session_id}/heartbeat')
 @router.post('/{session_id}/heartbeat')
 async def heartbeat_session(
     session_id: UUID,
