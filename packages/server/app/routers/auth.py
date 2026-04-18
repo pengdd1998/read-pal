@@ -445,7 +445,7 @@ async def refresh(
         except HTTPException:
             raise
         except Exception:
-            pass
+            logger.warning('Failed to revoke old token during refresh', exc_info=True)
 
     # Generate new token
     token = create_access_token({'userId': current_user['id']})
