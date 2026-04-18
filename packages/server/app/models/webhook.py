@@ -1,5 +1,6 @@
 """Webhook and delivery log models."""
 
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
@@ -33,6 +34,7 @@ class Webhook(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         primary_key=True,
+        default=uuid.uuid4,
         server_default=text('gen_random_uuid()'),
     )
     user_id: Mapped[UUID] = mapped_column(
@@ -42,7 +44,7 @@ class Webhook(Base):
         index=True,
     )
     url: Mapped[str] = mapped_column(String(2048), nullable=False)
-    events: Mapped[list] = mapped_column(JSONB, default=[])
+    events: Mapped[list] = mapped_column(JSONB, default=list)
     secret: Mapped[str] = mapped_column(String(64), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     last_delivery_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)

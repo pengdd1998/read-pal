@@ -1,6 +1,7 @@
 """Book club business logic — CRUD, membership, discussions."""
 
 import logging
+import secrets
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -21,6 +22,7 @@ async def create_club(
     data: BookClubCreate,
 ) -> BookClub:
     """Create a new book club and add the creator as admin member."""
+    invite_code = secrets.token_urlsafe(4)[:6].upper()
     club = BookClub(
         name=data.name,
         description=data.description,
@@ -28,6 +30,7 @@ async def create_club(
         created_by=user_id,
         is_private=data.is_private,
         max_members=data.max_members,
+        invite_code=invite_code,
     )
     db.add(club)
     await db.flush()

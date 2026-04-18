@@ -11,12 +11,19 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.annotation import Annotation
+from app.models.annotation import Annotation, AnnotationType
 from app.models.book import Book
 
 logger = logging.getLogger('read-pal.export')
 
 SUPPORTED_FORMATS = ('csv', 'markdown', 'html', 'zotero')
+
+
+def _match_type(value: Any, target: AnnotationType) -> bool:
+    """Compare annotation type — works with both enum members and strings."""
+    if hasattr(value, 'value'):
+        return value == target or value.value == target.value
+    return value == target.value
 
 
 async def _load_book_and_annotations(
@@ -56,8 +63,9 @@ def export_csv(annotations: list[Annotation]) -> str:
     ])
 
     for ann in annotations:
+        ann_type = ann.type.value if hasattr(ann.type, 'value') else ann.type
         writer.writerow([
-            ann.type,
+            ann_type,
             ann.content,
             ann.note or '',
             ann.color or '',
@@ -86,9 +94,9 @@ def export_markdown(
     lines.append('---')
     lines.append('')
 
-    highlights = [a for a in annotations if a.type == 'highlight']
-    notes = [a for a in annotations if a.type == 'note']
-    bookmarks = [a for a in annotations if a.type == 'bookmark']
+    highlights = [a for a in annotations if _match_type(a.type, AnnotationType.highlight)]
+    notes = [a for a in annotations if _match_type(a.type, AnnotationType.note)]
+    bookmarks = [a for a in annotations if _match_type(a.type, AnnotationType.bookmark)]
 
     if highlights:
         lines.append('## Highlights')
@@ -140,9 +148,9 @@ def export_html(
     author = book_info.get('author', 'Unknown')
     progress = book_info.get('progress', 0)
 
-    highlights = [a for a in annotations if a.type == 'highlight']
-    notes = [a for a in annotations if a.type == 'note']
-    bookmarks = [a for a in annotations if a.type == 'bookmark']
+    highlights = [a for a in annotations if _match_type(a.type, AnnotationType.highlight)]
+    notes = [a for a in annotations if _match_type(a.type, AnnotationType.note)]
+    bookmarks = [a for a in annotations if _match_type(a.type, AnnotationType.bookmark)]
 
     sections: list[str] = []
 
@@ -221,7 +229,8 @@ def export_zotero_rdf(
     for i, ann in enumerate(annotations):
         note_text = _escape_html(ann.note or '')
         date_str = ann.created_at.isoformat() if ann.created_at else ''
-        escaped_type = _escape_html(ann.type)
+        ann_type = ann.type.value if hasattr(ann.type, 'value') else ann.type
+        escaped_type = _escape_html(ann_type)
         escaped_content = _escape_html(ann.content)
         items.append(
             f'<z:Annotation rdf:about="#ann-{i}">'

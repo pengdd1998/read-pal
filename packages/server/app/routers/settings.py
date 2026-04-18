@@ -59,7 +59,7 @@ async def update_settings(
             detail={'code': 'NOT_FOUND', 'message': 'User not found'},
         )
 
-    user.settings = {**(user.settings or {}), **body}
+    user.settings = {**(user.settings or {}), **body.model_dump(exclude_unset=True)}
     await db.flush()
 
     return {'success': True, 'data': user.settings}

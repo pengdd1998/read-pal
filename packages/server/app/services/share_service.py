@@ -74,7 +74,7 @@ async def list_shares(
     query = (
         select(SharedExport)
         .where(SharedExport.user_id == user_id)
-        .order_by(SharedExport.created_at.desc()),
+        .order_by(SharedExport.created_at.desc())
     )
     if book_id is not None:
         query = query.where(SharedExport.book_id == book_id)

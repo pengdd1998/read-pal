@@ -22,4 +22,5 @@ def get_llm(temperature: float = 0.7, max_tokens: int = 2000) -> ChatOpenAI:
         base_url=settings.glm_base_url,
         temperature=temperature,
         max_tokens=max_tokens,
+        max_retries=3,
     )

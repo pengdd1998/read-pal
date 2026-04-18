@@ -154,8 +154,15 @@ async def chat(
     messages.append(HumanMessage(content=message))
 
     llm = get_llm()
-    response: AIMessage = await llm.ainvoke(messages)
-    assistant_content = response.content
+    try:
+        response: AIMessage = await llm.ainvoke(messages)
+        assistant_content = response.content
+    except Exception as exc:
+        logger.error('GLM API call failed: %s', exc)
+        assistant_content = (
+            "I'm having trouble connecting to my AI service right now. "
+            "Please try again in a moment."
+        )
 
     await _save_message(db, user_id, book_id, 'user', message)
     await _save_message(db, user_id, book_id, 'assistant', assistant_content)
@@ -181,11 +188,19 @@ async def stream_chat(
     llm = get_llm()
     collected_parts: list[str] = []
 
-    async for chunk in llm.astream(messages):
-        token = chunk.content
-        if token:
-            collected_parts.append(token)
-            yield f'data: {json.dumps({"content": token})}\n\n'
+    try:
+        async for chunk in llm.astream(messages):
+            token = chunk.content
+            if token:
+                collected_parts.append(token)
+                yield f'data: {json.dumps({"content": token})}\n\n'
+    except Exception as exc:
+        logger.error('GLM streaming failed: %s', exc)
+        fallback = (
+            "I'm having trouble connecting to my AI service right now. "
+            "Please try again in a moment."
+        )
+        yield f'data: {json.dumps({"content": fallback})}\n\n'
 
     yield 'data: [DONE]\n\n'
 
@@ -220,7 +235,14 @@ async def summarize(
     ]
 
     llm = get_llm(temperature=0.3, max_tokens=3000)
-    response: AIMessage = await llm.ainvoke(messages)
+    try:
+        response: AIMessage = await llm.ainvoke(messages)
+    except Exception as exc:
+        logger.error('GLM summarize failed: %s', exc)
+        return {
+            'role': 'assistant',
+            'content': 'Unable to generate summary right now. Please try again.',
+        }
 
     return {'role': 'assistant', 'content': response.content}
 
@@ -253,6 +275,13 @@ async def explain(
     ]
 
     llm = get_llm(temperature=0.4, max_tokens=1500)
-    response: AIMessage = await llm.ainvoke(messages)
+    try:
+        response: AIMessage = await llm.ainvoke(messages)
+    except Exception as exc:
+        logger.error('GLM explain failed: %s', exc)
+        return {
+            'role': 'assistant',
+            'content': 'Unable to explain this passage right now. Please try again.',
+        }
 
     return {'role': 'assistant', 'content': response.content}
