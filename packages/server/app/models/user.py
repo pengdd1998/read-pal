@@ -1,5 +1,6 @@
 """User model."""
 
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
@@ -34,6 +35,7 @@ class User(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         primary_key=True,
+        default=uuid.uuid4,
         server_default=text('gen_random_uuid()'),
     )
     email: Mapped[str] = mapped_column(

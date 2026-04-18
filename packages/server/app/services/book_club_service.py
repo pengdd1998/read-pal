@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.models.book_club import BookClub, BookClubMember, ClubDiscussion
 from app.models.user import User
 from app.schemas.book_club import BookClubCreate, BookClubUpdate
+from app.utils.exceptions import ForbiddenError
 
 logger = logging.getLogger('read-pal.book_clubs')
 

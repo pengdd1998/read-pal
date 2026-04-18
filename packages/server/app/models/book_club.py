@@ -1,5 +1,6 @@
 """Book club models."""
 
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
@@ -25,6 +26,7 @@ class BookClub(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         primary_key=True,
+        default=uuid.uuid4,
         server_default=text('gen_random_uuid()'),
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -83,6 +85,7 @@ class BookClubMember(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         primary_key=True,
+        default=uuid.uuid4,
         server_default=text('gen_random_uuid()'),
     )
     club_id: Mapped[UUID] = mapped_column(

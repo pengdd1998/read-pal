@@ -1,9 +1,10 @@
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
+from starlette.requests import Request as StarletteRequest
 from starlette.responses import Response
 
 from app.config import get_settings
@@ -13,14 +14,9 @@ settings = get_settings()
 
 
 class ApiCompatMiddleware(BaseHTTPMiddleware):
-    """Rewrite /api/ requests to /api/v1/ for frontend compatibility.
+    """Rewrite /api/ requests to /api/v1/ for frontend compatibility."""
 
-    The frontend currently calls /api/books, /api/auth/login, etc.
-    The Python backend uses /api/v1/books, /api/v1/auth/login, etc.
-    This middleware bridges the gap during migration.
-    """
-
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: StarletteRequest, call_next) -> Response:
         path = request.url.path
         if (
             path.startswith('/api/')
@@ -39,7 +35,19 @@ app = FastAPI(
     version='0.1.0',
     docs_url='/api/v1/docs',
     openapi_url='/api/v1/openapi.json',
+    redirect_slashes=False,
 )
+
+
+# Global exception handler — always return JSON, never plain text
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error('Unhandled exception: %s', exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={'detail': {'code': 'INTERNAL_ERROR', 'message': 'Internal server error'}},
+    )
+
 
 # CORS — allow all origins in development
 if settings.is_dev:

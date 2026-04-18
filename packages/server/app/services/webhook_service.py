@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import json
 import logging
 import secrets
 import time
@@ -144,7 +145,7 @@ async def deliver_webhook(
     Returns (status_code, duration_ms, error).
     """
     body = payload
-    body_str = str(body)
+    body_str = json.dumps(body, separators=(',', ':'), sort_keys=True)
     signature = hmac.new(
         webhook.secret.encode(),
         body_str.encode(),
