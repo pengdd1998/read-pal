@@ -104,7 +104,7 @@ async def get_due_cards(
             Flashcard.user_id == user_id,
             Flashcard.next_review_at <= now,
         )
-        .order_by(Flashcard.next_review_at.asc()),
+        .order_by(Flashcard.next_review_at.asc())
     )
     if book_id is not None:
         query = query.where(Flashcard.book_id == book_id)
