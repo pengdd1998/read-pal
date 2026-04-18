@@ -42,6 +42,22 @@ async def list_notifications(
     return list(result.scalars().all()), total
 
 
+async def unread_count(
+    db: AsyncSession,
+    user_id: UUID,
+) -> int:
+    """Get unread notification count."""
+    result = await db.execute(
+        select(func.count())
+        .select_from(Notification)
+        .where(
+            Notification.user_id == user_id,
+            Notification.read == False,  # noqa: E712
+        ),
+    )
+    return result.scalar() or 0
+
+
 async def mark_read(
     db: AsyncSession,
     user_id: UUID,

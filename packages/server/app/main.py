@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import Response
+from fastapi.routing import APIRoute
 
 from app.config import get_settings
 
@@ -38,6 +39,11 @@ app = FastAPI(
     redirect_slashes=True,
 )
 
+# 让路由忽略末尾斜杠
+for route in app.routes:
+    if isinstance(route, APIRoute):
+        route.path_format = route.path_format.rstrip('/')
+        route.path = route.path.rstrip('/')
 
 # Global exception handler — always return JSON, never plain text
 @app.exception_handler(Exception)

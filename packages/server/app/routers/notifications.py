@@ -81,3 +81,16 @@ async def mark_all_read(
         'success': True,
         'data': {'message': f'{count} notifications marked as read'},
     }
+
+
+@router.get('/unread-count')
+async def unread_count(
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Get unread notification count."""
+    count = await notification_service.unread_count(db, UUID(user['id']))
+    return {
+        'success': True,
+        'data': count,
+    }
