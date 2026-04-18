@@ -26,9 +26,9 @@ class ApiCompatMiddleware:
     """
 
     _PATH_REWRITES: list[tuple[str, str]] = [
-        ('/api/v1/reading-sessions/', '/api/v1/sessions/'),
-        ('/api/v1/memory-books/', '/api/v1/reading-book/'),
-        ('/api/v1/agents/', '/api/v1/agent/'),
+        ('/api/v1/reading-sessions', '/api/v1/sessions'),
+        ('/api/v1/memory-books', '/api/v1/reading-book'),
+        ('/api/v1/agents', '/api/v1/agent'),
     ]
 
     def __init__(self, app):
