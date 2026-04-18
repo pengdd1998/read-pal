@@ -67,9 +67,11 @@ class User(Base):
         server_default=text("'{}'"),
     )
     created_at: Mapped[datetime] = mapped_column(
+        default=func.now,
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
+        default=func.now,
         server_default=func.now(),
         onupdate=func.now(),
     )

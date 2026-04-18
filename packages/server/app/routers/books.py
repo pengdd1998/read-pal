@@ -33,7 +33,7 @@ async def list_books(
     """List user's books with optional status filter and pagination."""
     books, total = await book_service.get_user_books(
         db,
-        current_user['id'],
+        UUID(current_user['id']),
         status=status_filter,
         page=page,
         per_page=per_page,
@@ -50,7 +50,7 @@ async def get_stats(
     db: AsyncSession = Depends(get_db),
 ) -> BookStatsResponse:
     """Return aggregate book statistics for the current user."""
-    stats = await book_service.get_book_stats(db, current_user['id'])
+    stats = await book_service.get_book_stats(db, UUID(current_user['id']))
     return BookStatsResponse(data=stats)
 
 
@@ -61,7 +61,7 @@ async def get_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return a single book by ID."""
-    book = await book_service.get_book(db, current_user['id'], book_id)
+    book = await book_service.get_book(db, UUID(current_user['id']), book_id)
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -77,7 +77,7 @@ async def create_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Create a new book."""
-    book = await book_service.create_book(db, current_user['id'], body)
+    book = await book_service.create_book(db, UUID(current_user['id']), body)
     return {
         'success': True,
         'data': BookResponse.model_validate(book).model_dump(mode='json'),
@@ -92,7 +92,7 @@ async def update_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Partially update a book."""
-    book = await book_service.update_book(db, current_user['id'], book_id, body)
+    book = await book_service.update_book(db, UUID(current_user['id']), book_id, body)
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -108,7 +108,7 @@ async def delete_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Delete a book and all associated data."""
-    deleted = await book_service.delete_book(db, current_user['id'], book_id)
+    deleted = await book_service.delete_book(db, UUID(current_user['id']), book_id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -134,7 +134,7 @@ async def update_tags(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={'code': 'INVALID_INPUT', 'message': 'tags must be a list'},
         )
-    book = await book_service.update_tags(db, current_user['id'], book_id, tags)
+    book = await book_service.update_tags(db, UUID(current_user['id']), book_id, tags)
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

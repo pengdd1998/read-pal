@@ -1,5 +1,6 @@
 """Friend conversation and relationship models."""
 
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
