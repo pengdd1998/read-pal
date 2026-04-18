@@ -386,7 +386,7 @@ export function ReaderView({
 
       {/* Bottom navigation bar — toggles with controls */}
       <footer
-        className={`border-t transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        className={`relative z-30 border-t transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-[#faf6f0]/95' : 'border-gray-200/60 bg-white/95'
         } backdrop-blur-sm ${
           showControls
@@ -396,47 +396,52 @@ export function ReaderView({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Progress bar — overall book progress */}
-        <div className={`h-1 ${progressBg[theme]}`}>
+        <div className={`h-0.5 ${progressBg[theme]}`}>
           <div
-            className={`h-1 ${progressFill[theme]} transition-all duration-300 ease-out`}
+            className={`h-0.5 ${progressFill[theme]} transition-all duration-300 ease-out`}
             style={{ width: `${clampedProgress}%` }}
           />
         </div>
 
-        {/* Navigation: fixed-width nav buttons + compact center */}
-        <div className="grid grid-cols-[3.5rem_1fr_3.5rem] sm:grid-cols-[4.5rem_1fr_4.5rem] items-center px-2 sm:px-3 py-1.5">
-          {/* Prev */}
+        {/* Three-zone navigation: prev | toc | next */}
+        <div className="flex items-center px-1 sm:px-4 py-1.5">
+          {/* Prev — fixed touch target */}
           <button
             onClick={goPrevPage}
             disabled={currentPage === 0}
-            className="h-10 flex items-center justify-center rounded-lg text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
+            className="w-12 h-10 sm:w-auto sm:px-3 sm:h-9 flex items-center justify-center gap-1 rounded-lg text-sm font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 dark:active:bg-white/10 transition-colors shrink-0"
             aria-label="Previous chapter"
           >
-            <ChevronLeft />
-            <span className="hidden sm:inline ml-1">Prev</span>
+            <ChevronLeft className="w-5 h-5" />
+            <span className="hidden sm:inline">Prev</span>
           </button>
 
-          {/* Chapter dropdown / TOC — compact single-line trigger */}
-          <div className="min-w-0 relative flex justify-center" ref={chapterMenuRef}>
+          {/* Center: compact TOC trigger — self-sizing, never stretches into nav buttons */}
+          <div className="flex-1 flex justify-center min-w-0 relative" ref={chapterMenuRef}>
             <button
               onClick={() => setShowChapterMenu((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors max-w-full ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 showChapterMenu
-                  ? 'bg-amber-100/80 dark:bg-amber-900/40'
-                  : 'hover:bg-black/5 dark:hover:bg-white/5'
+                  ? theme === 'dark'
+                    ? 'bg-amber-900/40 text-amber-300'
+                    : theme === 'sepia'
+                      ? 'bg-amber-200/60 text-amber-800'
+                      : 'bg-amber-100/70 text-amber-700'
+                  : theme === 'dark'
+                    ? 'text-gray-400 hover:bg-white/5'
+                    : theme === 'sepia'
+                      ? 'text-amber-800/60 hover:bg-black/5'
+                      : 'text-gray-500 hover:bg-black/5'
               }`}
               aria-label="Open chapter list"
               aria-expanded={showChapterMenu}
             >
-              <span className="text-xs font-medium opacity-70 whitespace-nowrap">
-                Ch. {currentPage + 1}/{totalPages}
-              </span>
-              <span className="text-[11px] opacity-40 truncate hidden sm:inline">
+              <span>Ch. {currentPage + 1}/{totalPages}</span>
+              <span className="hidden sm:inline opacity-50 truncate max-w-[140px]">
                 {chapters[currentPage]?.title || ''}
               </span>
-              <span className="text-[10px] opacity-30 whitespace-nowrap">{clampedProgress}%</span>
               <ChevronDown
-                className={`w-3 h-3 opacity-40 shrink-0 transition-transform ${showChapterMenu ? 'rotate-180' : ''}`}
+                className={`w-3 h-3 opacity-50 transition-transform duration-200 ${showChapterMenu ? 'rotate-180' : ''}`}
               />
             </button>
 
@@ -451,7 +456,7 @@ export function ReaderView({
 
                 {/* Dropdown panel — opens upward since footer is at bottom */}
                 <div
-                  className={`absolute left-0 right-0 bottom-full z-40 mb-1 rounded-xl shadow-lg border max-h-[60vh] md:max-h-[40vh] overflow-y-auto ${
+                  className={`absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 sm:right-0 bottom-full z-40 mb-2 rounded-xl shadow-lg border max-h-[60vh] md:max-h-[40vh] overflow-y-auto w-64 sm:w-auto ${
                     theme === 'dark'
                       ? 'bg-gray-800 border-gray-700'
                       : theme === 'sepia'
@@ -515,15 +520,15 @@ export function ReaderView({
             )}
           </div>
 
-          {/* Next */}
+          {/* Next — fixed touch target */}
           <button
             onClick={goNextPage}
             disabled={currentPage >= totalPages - 1}
-            className="h-10 flex items-center justify-center rounded-lg text-sm font-medium disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 transition-colors active:scale-95"
+            className="w-12 h-10 sm:w-auto sm:px-3 sm:h-9 flex items-center justify-center gap-1 rounded-lg text-sm font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 dark:active:bg-white/10 transition-colors shrink-0"
             aria-label="Next chapter"
           >
-            <span className="hidden sm:inline mr-1">Next</span>
-            <ChevronRight />
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </footer>
