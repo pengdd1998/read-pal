@@ -12,6 +12,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useStudyMode } from '@/hooks/useStudyMode';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { api } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
 import { detectGenre, type BookGenre } from '@/lib/companion-prompts';
@@ -334,6 +335,7 @@ export default function ReadPage() {
       if (result.success && result.data) {
         const annotation = result.data;
         setAnnotations((prev) => [...prev, annotation]);
+        analytics.track('annotation_created', { type: 'highlight' });
       }
     } catch (err) {
       console.error('Failed to add highlight:', err);
@@ -358,6 +360,7 @@ export default function ReadPage() {
       if (result.success && result.data) {
         const annotation = result.data;
         setAnnotations((prev) => [...prev, annotation]);
+        analytics.track('annotation_created', { type: 'note' });
       }
     } catch (err) {
       console.error('Failed to add note:', err);
@@ -409,6 +412,7 @@ export default function ReadPage() {
         if (result.success && result.data) {
           const annotation = result.data;
           setAnnotations((prev) => [...prev, annotation]);
+          analytics.track('annotation_created', { type: 'bookmark' });
         }
       } catch (err) {
         console.error('Failed to add bookmark:', err);
@@ -480,6 +484,7 @@ export default function ReadPage() {
           setBook(data.book);
           setChapters(data.chapters ?? []);
           setCurrentChapter(data.book.currentPage || 0);
+          analytics.track('book_opened', { bookId, title: data.book.title });
         } else {
           setError(bookResult.error?.message || 'Failed to load book');
         }
@@ -601,7 +606,7 @@ export default function ReadPage() {
             </svg>
           </button>
           <div className="min-w-0">
-            <h1 className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
+            <h1 id="tour-reading-book" className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{book.title}</h1>
             <p id="tour-progress" className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
               {book.author && `${book.author} · `}Ch. {currentChapter + 1}/{chapters.length}
               {readingWpm && (

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { authFetch } from '@/lib/auth-fetch';
+import { analytics } from '@/lib/analytics';
 import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -66,6 +67,7 @@ function AuthForm() {
         router.push(next);
       } else {
         await register(name, email, password);
+        analytics.track('user_registered');
         // Auto-seed a sample book for the magic first experience
         try {
           await authFetch((process.env.NEXT_PUBLIC_API_URL || '') + '/api/books/seed-sample', {

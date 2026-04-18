@@ -56,6 +56,14 @@ class Settings(BaseSettings):
 
     # App
     app_env: str = 'development'
+    frontend_url: str = 'http://localhost:3000'
+
+    # SMTP (optional — console fallback when unset)
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
 
     @computed_field
     @property

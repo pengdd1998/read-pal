@@ -7,6 +7,7 @@ import { authFetch } from '@/lib/auth-fetch';
 import { Check } from '@/components/icons';
 import type { Book } from '@read-pal/shared';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useAuth } from '@/lib/auth';
 
 const ONBOARDING_KEY = 'read-pal-onboarding-complete';
 
@@ -21,12 +22,25 @@ const PERSONAS = [
 export default function WelcomePage() {
   usePageTitle('Welcome');
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(0);
   const [selectedPersona, setSelectedPersona] = useState<string>('penny');
 
+  // Auto-redirect returning users who already completed onboarding
   useEffect(() => {
+    const alreadyOnboarded = localStorage.getItem(ONBOARDING_KEY) === 'true';
+    if (isAuthenticated && alreadyOnboarded) {
+      router.replace('/library');
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    // Skip data fetching if user is already onboarded (redirecting anyway)
+    const alreadyOnboarded = localStorage.getItem(ONBOARDING_KEY) === 'true';
+    if (isAuthenticated && alreadyOnboarded) return;
+
     (async () => {
       try {
         const res = await api.get<Book[]>('/api/books');
@@ -46,7 +60,7 @@ export default function WelcomePage() {
       }
       setLoading(false);
     })();
-  }, []);
+  }, [isAuthenticated]);
 
   // Auto-advance through intro steps
   useEffect(() => {

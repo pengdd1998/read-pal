@@ -309,6 +309,9 @@ async def forgot_password(body: ForgotPasswordRequest) -> MessageResponse:
             )
             logger.info('Password reset requested for %s', body.email)
 
+            from app.services.email_service import send_password_reset_email
+            await send_password_reset_email(body.email, reset_token)
+
     except Exception:
         # Silently ignore errors to prevent enumeration
         logger.debug('Error during forgot-password flow', exc_info=True)

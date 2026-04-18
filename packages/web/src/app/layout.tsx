@@ -5,6 +5,7 @@ import { AppShell } from '@/components/AppShell';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
 import { NetworkStatus } from '@/components/NetworkStatus';
+import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -162,11 +163,13 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <AuthProvider>
-          <ErrorBoundary>
-            <ServiceWorkerRegistrar />
-            <NetworkStatus />
-            <AppShell>{children}</AppShell>
-          </ErrorBoundary>
+          <AnalyticsProvider>
+            <ErrorBoundary>
+              <ServiceWorkerRegistrar />
+              <NetworkStatus />
+              <AppShell>{children}</AppShell>
+            </ErrorBoundary>
+          </AnalyticsProvider>
         </AuthProvider>
       </body>
     </html>

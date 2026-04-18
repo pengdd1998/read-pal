@@ -26,9 +26,15 @@ const STEPS: TourStep[] = [
     position: 'bottom',
   },
   {
+    targetId: 'tour-reading-book',
+    title: 'Your Personal Reading Book',
+    description: 'When you finish, read-pal creates a unique document from your highlights, notes, and AI conversations. Look for it after completion!',
+    position: 'bottom',
+  },
+  {
     targetId: 'tour-progress',
     title: 'Track Your Progress',
-    description: 'Your reading session is tracked automatically. When you\'re done, you\'ll get an AI summary of what you covered.',
+    description: 'Your reading session is tracked automatically. Milestones celebrate your journey through the book.',
     position: 'bottom',
   },
 ];

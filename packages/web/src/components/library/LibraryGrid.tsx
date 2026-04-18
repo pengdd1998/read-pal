@@ -186,12 +186,12 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
       {/* Empty state with prominent CTA */}
       {!hasBooks && !error && (
         <div className="animate-scale-in">
-          <div className="text-center py-16">
+          <div className="text-center py-12">
             {/* Large illustrated book icon */}
-            <div className="w-28 h-28 mx-auto mb-6 relative">
+            <div className="w-24 h-24 mx-auto mb-5 relative">
               <div className="absolute inset-0 bg-gradient-to-br from-primary-100 to-amber-100 dark:from-primary-900/30 dark:to-amber-900/30 rounded-3xl rotate-6 scale-95" />
               <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-amber-50 dark:from-primary-900/20 dark:to-amber-900/20 rounded-3xl flex items-center justify-center shadow-sm">
-                <svg className="w-12 h-12 text-primary-400 dark:text-primary-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-10 h-10 text-primary-400 dark:text-primary-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                   <line x1="9" y1="7" x2="16" y2="7" />
@@ -199,26 +199,40 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
                 </svg>
               </div>
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-2xl mb-2">
-              Your library is empty
+            <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-2">
+              Start your reading journey
             </h3>
-            <p className="text-sm text-gray-500 max-w-md mx-auto mb-8 leading-relaxed">
-              Upload an EPUB or PDF above, or try a sample book to explore all features
-              including AI chat, highlights, and annotations.
+            <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6 leading-relaxed">
+              Upload an EPUB or PDF, or try a sample book to explore AI chat, highlights, and your Personal Reading Book.
             </p>
 
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
               <button
                 onClick={handleSeedSample}
                 disabled={seeding}
-                className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {seeding ? 'Loading sample...' : 'Try a sample book'}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                {seeding ? 'Loading sample...' : 'Try The Great Gatsby'}
+              </button>
+              <button
+                onClick={() => uploaderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                className="btn bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-600 hover:text-amber-700 dark:hover:text-amber-300 transition-all flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Upload your own book
               </button>
             </div>
 
-            <p className="text-xs text-gray-400 mt-6">
-              Drag and drop a file onto the upload area above to add your own books
+            <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Drag and drop EPUB or PDF files onto the upload area
             </p>
           </div>
         </div>
