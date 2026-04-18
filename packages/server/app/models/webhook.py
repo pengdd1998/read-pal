@@ -7,7 +7,6 @@ from uuid import UUID
 from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -49,10 +48,10 @@ class Webhook(Base):
     last_delivery_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     last_delivery_status: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     failure_count: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     user: Mapped['User'] = relationship('User', back_populates='webhooks')
@@ -91,7 +90,7 @@ class WebhookDeliveryLog(Base):
     status_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     duration_ms: Mapped[int] = mapped_column(Integer, default=0)
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     webhook: Mapped['Webhook'] = relationship(
         'Webhook',

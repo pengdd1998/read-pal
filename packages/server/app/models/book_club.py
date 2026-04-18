@@ -8,7 +8,6 @@ from uuid import UUID
 from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -52,10 +51,10 @@ class BookClub(Base):
         server_default=text("upper(substring(md5(random()::text), 1, 6))"),
     )
     max_members: Mapped[int] = mapped_column(Integer, default=20)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     creator: Mapped['User'] = relationship(
@@ -101,7 +100,7 @@ class BookClubMember(Base):
         index=True,
     )
     role: Mapped[str] = mapped_column(String(20), default='member')
-    joined_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    joined_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     club: Mapped['BookClub'] = relationship('BookClub', back_populates='members')
     user: Mapped['User'] = relationship('User', back_populates='club_memberships')
@@ -130,7 +129,7 @@ class ClubDiscussion(Base):
         nullable=False,
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     club: Mapped['BookClub'] = relationship('BookClub', back_populates='discussions')
     user: Mapped['User'] = relationship('User')

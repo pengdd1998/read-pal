@@ -8,7 +8,6 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -63,7 +62,7 @@ class ChatMessage(Base):
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
+        default=datetime.utcnow,
     )
 
     # relationships

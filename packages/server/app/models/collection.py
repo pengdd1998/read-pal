@@ -8,7 +8,6 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Index, String, text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -42,10 +41,10 @@ class Collection(Base):
         ARRAY(PG_UUID(as_uuid=True)),
         default=[],
     )
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     user: Mapped['User'] = relationship('User', back_populates='collections')

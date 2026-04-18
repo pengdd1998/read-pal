@@ -8,7 +8,6 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -41,7 +40,7 @@ class FriendConversation(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     emotion: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     context: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     user: Mapped['User'] = relationship(
         'User',
@@ -69,10 +68,10 @@ class FriendRelationship(Base):
     shared_moments: Mapped[list] = mapped_column(JSONB, default=[])
     total_messages: Mapped[int] = mapped_column(Integer, default=0)
     last_interaction_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     user: Mapped['User'] = relationship(

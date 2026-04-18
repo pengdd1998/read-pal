@@ -19,7 +19,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -121,7 +120,7 @@ class Book(Base):
         default=[],
     )
     added_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
+        default=datetime.utcnow,
     )
     started_at: Mapped[Optional[datetime]] = mapped_column(
         nullable=True,
@@ -138,11 +137,11 @@ class Book(Base):
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
+        default=datetime.utcnow,
     )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     # relationships

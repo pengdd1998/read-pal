@@ -9,7 +9,6 @@ from uuid import UUID
 from sqlalchemy import Enum, ForeignKey, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -90,11 +89,11 @@ class Annotation(Base):
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
+        default=datetime.utcnow,
     )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     # relationships

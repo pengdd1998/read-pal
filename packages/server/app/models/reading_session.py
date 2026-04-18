@@ -8,7 +8,6 @@ from uuid import UUID
 from sqlalchemy import Boolean, ForeignKey, Index, Integer, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -56,7 +55,7 @@ class ReadingSession(Base):
         index=True,
     )
     started_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
+        default=datetime.utcnow,
     )
     ended_at: Mapped[Optional[datetime]] = mapped_column(
         nullable=True,
@@ -86,11 +85,11 @@ class ReadingSession(Base):
         default=False,
     )
     created_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
+        default=datetime.utcnow,
     )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     # relationships
