@@ -10,7 +10,7 @@ const nextConfig = {
       : false,
   },
   async rewrites() {
-    const apiTarget = process.env.API_URL || 'http://localhost:3001';
+    const apiTarget = process.env.API_URL || 'http://localhost:8000';
     return [
       {
         source: '/api/:path*',
