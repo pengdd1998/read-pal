@@ -589,11 +589,9 @@ export default function ReadPage() {
     <div className="h-screen flex flex-col relative overflow-x-hidden">
       <ReadingBackground content={chapterContent} enabled={bgEnabled} />
 
-      {/* Top bar — fades in/out, always reserves space to prevent layout shift */}
+      {/* Top bar — always visible */}
       <div
-        className={`relative z-10 flex items-center justify-between px-3 py-2 backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} shrink-0 transition-opacity duration-300 ease-out ${
-          showControls ? 'opacity-100 border-b' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`relative z-10 flex items-center justify-between px-3 py-2 backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} shrink-0 border-b`}
       >
         {/* Left: Back + Book info */}
         <div className="flex items-center gap-2 min-w-0">
