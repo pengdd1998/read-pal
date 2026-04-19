@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0-beta] - 2026-04-19
+## [1.0.0] - 2026-04-19
 
 ### Added
 
@@ -74,4 +74,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database: PostgreSQL 16, Redis 7
 - Knowledge: NetworkX graph engine
 
-[0.1.0-beta]: https://github.com/pengdd1998/read-pal/releases/tag/v0.1.0-beta
+[1.0.0]: https://github.com/pengdd1998/read-pal/releases/tag/v1.0.0
