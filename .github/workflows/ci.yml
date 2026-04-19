@@ -102,12 +102,14 @@ jobs:
         run: pip install uv
 
       - name: Install dependencies
-        run: cd packages/server && uv sync
+        run: |
+          cd packages/server
+          uv sync
+          pip install -r requirements.txt
 
       - name: Run tests
         run: |
           cd packages/server
-          pip install pytest
           pytest
         env:
           APP_ENV: test
