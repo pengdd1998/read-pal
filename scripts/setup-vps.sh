@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
-# setup-vps.sh — One-shot provisioning for read-pal on Ubuntu 22.04/24.04
-# Usage: ssh -i ~/.ssh/tencent_ubuntu_key ubuntu@175.178.66.207 'bash -s' < scripts/setup-vps.sh
+# setup-vps.sh — One-shot Docker provisioning for read-pal on Ubuntu 22.04/24.04
+# Usage: ssh -i ~/.ssh/key ubuntu@HOST 'bash -s' < scripts/setup-vps.sh
 set -euo pipefail
 
 DEPLOY_DIR="/home/ubuntu/read-pal"
-DB_NAME="readpal"
-DB_USER="readpal"
-DB_PASS=$(openssl rand -hex 16)
+DB_PASSWORD=$(openssl rand -hex 16)
 JWT_SECRET=$(openssl rand -hex 32)
 
-echo "=== read-pal VPS Setup ==="
+echo "=== read-pal Docker Setup ==="
 echo "Deploy dir: $DEPLOY_DIR"
 
 # ---------------------------------------------------------------------------
@@ -17,79 +15,33 @@ echo "Deploy dir: $DEPLOY_DIR"
 # ---------------------------------------------------------------------------
 echo ">>> Installing system packages..."
 sudo apt-get update -qq
-sudo apt-get install -y -qq \
-  curl git build-essential libpq-dev software-properties-common \
-  nginx redis-server postgresql postgresql-contrib >/dev/null
+sudo apt-get install -y -qq curl git ca-certificates gnupg >/dev/null
 
 # ---------------------------------------------------------------------------
-# 2. Node.js 20 + pnpm
+# 2. Docker + Docker Compose
 # ---------------------------------------------------------------------------
-if ! command -v node &>/dev/null; then
-  echo ">>> Installing Node.js 20..."
-  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - >/dev/null 2>&1
-  sudo apt-get install -y -qq nodejs >/dev/null
-fi
-echo "Node.js: $(node -v)"
-
-if ! command -v pnpm &>/dev/null; then
-  echo ">>> Enabling pnpm via corepack..."
-  sudo corepack enable
-  sudo corepack prepare pnpm@latest --activate
-fi
-echo "pnpm: $(pnpm -v)"
-
-# ---------------------------------------------------------------------------
-# 3. Python 3.12 + uv
-# ---------------------------------------------------------------------------
-PYTHON_VER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "0.0")
-if [[ "$PYTHON_VER" != "3.12" ]]; then
-  echo ">>> Installing Python 3.12..."
-  sudo add-apt-repository -y ppa:deadsnakes/ppa >/dev/null 2>&1 || true
+if ! command -v docker &>/dev/null; then
+  echo ">>> Installing Docker..."
+  sudo install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
+  sudo chmod a+r /etc/apt/keyrings/docker.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+    https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
   sudo apt-get update -qq
-  sudo apt-get install -y -qq python3.12 python3.12-venv python3.12-dev >/dev/null
-  sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 2>/dev/null || true
+  sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null
+  sudo usermod -aG docker ubuntu
 fi
-echo "Python: $(python3 --version)"
-
-if ! command -v uv &>/dev/null; then
-  echo ">>> Installing uv..."
-  curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1
-  export PATH="$HOME/.local/bin:$PATH"
-fi
-echo "uv: $(uv --version)"
+echo "Docker: $(docker --version)"
+echo "Compose: $(docker compose version)"
 
 # ---------------------------------------------------------------------------
-# 4. PostgreSQL — create database and user
-# ---------------------------------------------------------------------------
-echo ">>> Setting up PostgreSQL..."
-sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';" 2>/dev/null || echo "User $DB_USER already exists"
-sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>/dev/null || echo "Database $DB_NAME already exists"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;" 2>/dev/null
-echo "PostgreSQL ready: $DB_USER@$DB_NAME"
-
-# ---------------------------------------------------------------------------
-# 5. Redis
-# ---------------------------------------------------------------------------
-echo ">>> Ensuring Redis is running..."
-sudo systemctl enable redis-server
-sudo systemctl start redis-server
-echo "Redis: $(redis-cli ping)"
-
-# ---------------------------------------------------------------------------
-# 6. PM2
-# ---------------------------------------------------------------------------
-if ! command -v pm2 &>/dev/null; then
-  echo ">>> Installing PM2..."
-  sudo npm install -g pm2 >/dev/null
-fi
-echo "PM2: $(pm2 -v)"
-
-# ---------------------------------------------------------------------------
-# 7. Clone repo
+# 3. Clone repo
 # ---------------------------------------------------------------------------
 if [[ ! -d "$DEPLOY_DIR/.git" ]]; then
   echo ">>> Cloning read-pal repository..."
-  git clone https://github.com/pengjundong/read-pal.git "$DEPLOY_DIR"
+  git clone https://github.com/pengdd1998/read-pal.git "$DEPLOY_DIR"
 else
   echo ">>> Repository already exists, pulling latest..."
   cd "$DEPLOY_DIR" && git pull origin main
@@ -97,17 +49,15 @@ fi
 cd "$DEPLOY_DIR"
 
 # ---------------------------------------------------------------------------
-# 8. Write .env file
+# 4. Write .env file
 # ---------------------------------------------------------------------------
-echo ">>> Writing packages/server/.env..."
-cat > packages/server/.env << EOF
+echo ">>> Writing .env..."
+cat > .env << EOF
 # Auto-generated by setup-vps.sh — $(date -Iseconds)
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=$DB_NAME
-DB_USER=$DB_USER
-DB_PASSWORD=$DB_PASS
-REDIS_URL=redis://localhost:6379
+DB_NAME=readpal
+DB_USER=readpal
+DB_PASSWORD=$DB_PASSWORD
+REDIS_URL=redis://redis:6379
 GLM_API_KEY=PLACEHOLDER_CHANGE_ME
 GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
 DEFAULT_MODEL=glm-4.7-flash
@@ -116,137 +66,59 @@ JWT_EXPIRES_IN=7d
 APP_ENV=production
 FRONTEND_URL=http://$(hostname -I | awk '{print $1}')
 EOF
-chmod 600 packages/server/.env
+chmod 600 .env
 
 echo ""
-echo "  ⚠️  IMPORTANT: Edit packages/server/.env and set GLM_API_KEY"
+echo "  ⚠️  IMPORTANT: Edit .env and set GLM_API_KEY"
 echo ""
 
 # ---------------------------------------------------------------------------
-# 9. Install Python dependencies + migrate
+# 5. Stop old PM2 / bare-metal services (if any)
 # ---------------------------------------------------------------------------
-echo ">>> Installing Python dependencies..."
-cd packages/server
-uv sync
-echo ">>> Running database migrations..."
-uv run alembic upgrade head
-cd "$DEPLOY_DIR"
-
-# ---------------------------------------------------------------------------
-# 10. Install Node dependencies + build
-# ---------------------------------------------------------------------------
-echo ">>> Installing Node dependencies..."
-pnpm install --frozen-lockfile 2>/dev/null || pnpm install
-
-echo ">>> Building shared package..."
-pnpm --filter @read-pal/shared build
-
-echo ">>> Building web (standalone)..."
-NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build
-
-# ---------------------------------------------------------------------------
-# 11. Nginx config
-# ---------------------------------------------------------------------------
-echo ">>> Configuring nginx..."
-SERVER_IP=$(hostname -I | awk '{print $1}')
-sudo tee /etc/nginx/sites-available/read-pal > /dev/null << 'NGINX'
-server {
-    listen 80 default_server;
-    server_name _;
-
-    # Security headers
-    add_header X-Frame-Options DENY always;
-    add_header X-Content-Type-Options nosniff always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy strict-origin-when-cross-origin always;
-
-    # Gzip
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml;
-    gzip_min_length 256;
-
-    # API — FastAPI backend
-    location /api/v1/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # SSE streaming support
-        proxy_buffering off;
-        proxy_cache off;
-        proxy_read_timeout 300s;
-        proxy_http_version 1.1;
-        proxy_set_header Connection '';
-    }
-
-    # Frontend — Next.js standalone
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-}
-NGINX
-
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo ln -sf /etc/nginx/sites-available/read-pal /etc/nginx/sites-enabled/read-pal
-sudo nginx -t && sudo systemctl reload nginx
-echo "Nginx configured."
-
-# ---------------------------------------------------------------------------
-# 12. PM2 ecosystem + start
-# ---------------------------------------------------------------------------
-echo ">>> Starting services with PM2..."
-cd "$DEPLOY_DIR"
-
+echo ">>> Stopping old services..."
 pm2 delete read-pal-api 2>/dev/null || true
 pm2 delete read-pal-web 2>/dev/null || true
-
-pm2 start "cd $DEPLOY_DIR/packages/server && $(which uv) run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2" \
-  --name read-pal-api \
-  --time
-
-pm2 start "node $DEPLOY_DIR/packages/web/.next/standalone/packages/web/server.js" \
-  --name read-pal-web \
-  --time
-
-pm2 save
-pm2 startup systemd -u ubuntu --hp /home/ubuntu 2>/dev/null || true
+sudo systemctl stop gohttpserver 2>/dev/null || true
+sudo systemctl disable gohttpserver 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
-# 13. Verify
+# 6. Build and start Docker Compose
+# ---------------------------------------------------------------------------
+echo ">>> Building and starting containers..."
+docker compose up -d --build
+
+echo ">>> Running database migrations..."
+sleep 10
+docker compose exec -T api python -m alembic upgrade head || echo "Migration may have already run"
+
+# ---------------------------------------------------------------------------
+# 7. Verify
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== Waiting for services to start..."
-sleep 5
+sleep 10
 
-API_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/v1/health 2>/dev/null || echo "000")
-WEB_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000 2>/dev/null || echo "000")
+SERVER_IP=$(hostname -I | awk '{print $1}')
+API_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/api/v1/health 2>/dev/null || echo "000")
+WEB_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost 2>/dev/null || echo "000")
 
 echo ""
 echo "=== Setup Complete ==="
 echo "  API  health: http://$SERVER_IP/api/v1/health → $API_STATUS"
 echo "  Web  status:  http://$SERVER_IP/ → $WEB_STATUS"
-echo "  PM2 status:"
-pm2 list
+echo "  Containers:"
+docker compose ps
 echo ""
-echo "  ⚠️  REMINDER: Set GLM_API_KEY in $DEPLOY_DIR/packages/server/.env"
-echo "  Then run: pm2 restart read-pal-api"
+echo "  ⚠️  REMINDER: Set GLM_API_KEY in $DEPLOY_DIR/.env"
+echo "  Then run: cd $DEPLOY_DIR && docker compose up -d"
 echo ""
 if [[ "$API_STATUS" == "200" ]]; then
   echo "  ✅ API is healthy"
 else
-  echo "  ❌ API returned $API_STATUS — check: pm2 logs read-pal-api"
+  echo "  ❌ API returned $API_STATUS — check: docker compose logs api"
 fi
 if [[ "$WEB_STATUS" == "200" ]]; then
   echo "  ✅ Web is healthy"
 else
-  echo "  ❌ Web returned $WEB_STATUS — check: pm2 logs read-pal-web"
+  echo "  ❌ Web returned $WEB_STATUS — check: docker compose logs web"
 fi
