@@ -13,7 +13,7 @@ Your AI reading companion — ask questions, explore ideas, and remember every i
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Status](https://img.shields.io/badge/status-beta%20live-orange)]()
 
-[Get Started](#quickstart) · [Features](#features) · [Architecture](#architecture) · [Deploy](#deployment) · [Contributing](CONTRIBUTING.md)
+[Live Demo](http://175.178.66.207:8090) · [Get Started](#quickstart) · [Features](#features) · [Architecture](#architecture) · [Deploy](#deployment) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -100,6 +100,17 @@ read-pal/
 | Testing | pytest (275 tests), Vitest (24 tests) |
 
 ## Quickstart
+
+### Docker (fastest)
+
+```bash
+git clone https://github.com/pengdd/read-pal.git
+cd read-pal
+cp .env.example .env   # edit with your DB credentials + GLM API key
+docker compose up -d
+```
+
+Open http://localhost:8090 — that's it.
 
 ### Prerequisites
 
@@ -219,6 +230,10 @@ pnpm start
 pm2 start "uvicorn app.main:app --port 8000" --name read-pal-api
 pm2 start "pnpm start" --name read-pal-web
 ```
+
+## Why Open Source?
+
+Your reading data is personal — highlights, notes, AI conversations. You should own it. read-pal is MIT licensed: self-host, export your data, no lock-in.
 
 ## Contributing
 

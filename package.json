@@ -2,8 +2,21 @@
   "name": "read-pal",
   "version": "1.0.0",
   "private": true,
-  "description": "AI reading companion — capture your reading journey as a personal book",
-  "license": "PROPRIETARY",
+  "description": "AI reading companion — chat with your books, build a knowledge graph, and remember every insight",
+  "license": "MIT",
+  "keywords": [
+    "reading",
+    "ai",
+    "reading-companion",
+    "epub-reader",
+    "knowledge-graph",
+    "flashcards",
+    "spaced-repetition",
+    "book-clubs",
+    "fastapi",
+    "nextjs",
+    "langchain"
+  ],
   "scripts": {
     "dev": "pnpm --filter @read-pal/web dev",
     "build": "pnpm --filter @read-pal/shared build && NEXT_PUBLIC_API_URL= pnpm --filter @read-pal/web build",

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/pengdd/read-pal#api-overview
+    about: Check the README and API docs before opening an issue.
+  - name: Discussions
+    url: https://github.com/pengdd/read-pal/discussions
+    about: Ask questions, share ideas, or show off how you use read-pal.
