@@ -532,9 +532,11 @@ export default function ReadPage() {
         if (cancelled) return;
         if (bookResult.success && bookResult.data) {
           const data = bookResult.data;
+          const chapterList = data.chapters ?? [];
           setBook(data.book);
-          setChapters(data.chapters ?? []);
-          setCurrentChapter(data.book.currentPage || 0);
+          setChapters(chapterList);
+          const startPage = data.book.currentPage || 0;
+          setCurrentChapter(Math.min(startPage, Math.max(chapterList.length - 1, 0)));
           analytics.track('book_opened', { bookId, title: data.book.title });
         } else {
           setError(bookResult.error?.message || 'Failed to load book');

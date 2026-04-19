@@ -475,7 +475,13 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const celebratedMilestones = useRef<Set<number>>(new Set());
 
-  const insightOfDay = INSIGHTS_POOL[new Date().getDate() % INSIGHTS_POOL.length];
+  const [greeting, setGreeting] = useState('');
+  const [insightOfDay, setInsightOfDay] = useState<AgentInsight | null>(null);
+
+  useEffect(() => {
+    setGreeting(getTimeGreeting());
+    setInsightOfDay(INSIGHTS_POOL[new Date().getDate() % INSIGHTS_POOL.length]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -534,7 +540,7 @@ export default function DashboardPage() {
       {/* Welcome */}
       <div className="mb-8 animate-fade-in">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-          {!hasData && !loading ? `${getTimeGreeting()}` : 'Welcome back'}
+          {!hasData && !loading ? (greeting || 'Welcome') : 'Welcome back'}
         </h1>
         <p className="text-gray-500 mt-2 text-sm sm:text-base">
           {loading ? (
@@ -777,13 +783,13 @@ export default function DashboardPage() {
           {/* Card 3: Quick Insight */}
           <div className="card border-l-4 border-l-primary-400 dark:border-l-primary-600">
             <div className="flex items-start gap-3">
-              <span className="text-2xl leading-none mt-0.5">{insightOfDay.icon}</span>
+              <span className="text-2xl leading-none mt-0.5">{insightOfDay?.icon}</span>
               <div>
                 <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
-                  {insightOfDay.agent}
+                  {insightOfDay?.agent}
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                  {insightOfDay.message}
+                  {insightOfDay?.message}
                 </p>
               </div>
             </div>

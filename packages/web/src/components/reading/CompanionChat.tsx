@@ -178,6 +178,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         const response = await authFetch(`${API_BASE_URL}/api/agents/chat/stream`, {
           method: 'POST',
           body: JSON.stringify({
+            book_id: bookId,
             message: msg,
             context: {
               bookId,

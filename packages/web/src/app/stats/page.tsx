@@ -48,8 +48,9 @@ function formatTime(minutes: number) {
 }
 
 function getDayName(dateStr: string) {
+  if (!dateStr) return '—';
   const d = new Date(dateStr);
-  return d.toLocaleDateString(undefined, { weekday: 'short' });
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined, { weekday: 'short' });
 }
 
 export default function StatsPage() {
@@ -271,7 +272,7 @@ export default function StatsPage() {
                   <div key={i} className="flex items-center gap-3 py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
                     <div className="w-2 h-2 rounded-full bg-amber-400" />
                     <span className="text-sm text-gray-600 dark:text-gray-400 flex-1">
-                      {new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      {session.date ? new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}
                     </span>
                     <span className="text-xs text-gray-500">
                       {session.pagesRead} pages

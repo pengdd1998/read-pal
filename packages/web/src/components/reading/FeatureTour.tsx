@@ -183,7 +183,7 @@ export function FeatureTour() {
   return (
     <>
       {/* Spotlight overlay */}
-      <div className="fixed inset-0 z-[60] pointer-events-auto" onClick={handleSkip}>
+      <div className="fixed inset-0 z-[60] pointer-events-none">
         {/* Dark overlay with cutout */}
         <div className="absolute inset-0 bg-black/40 animate-fade-in" />
         {/* Highlight ring around target */}
