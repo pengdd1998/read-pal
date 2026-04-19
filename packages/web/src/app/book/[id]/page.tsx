@@ -76,10 +76,10 @@ export default function BookDetailPage() {
           setError('Book not found.');
         }
 
-        const annRes = await api.get<AnnotationItem[]>(`/api/annotations?bookId=${bookId}&limit=1000`);
+        const annRes = await api.get<AnnotationItem[]>('/api/annotations', { book_id: bookId, per_page: 200 });
         if (cancelled) return;
         if (annRes.success && annRes.data) {
-          const annotations = annRes.data;
+          const annotations = Array.isArray(annRes.data) ? annRes.data : [];
           setAnnotationStats({
             highlights: annotations.filter((a) => a.type === 'highlight').length,
             notes: annotations.filter((a) => a.type === 'note').length,

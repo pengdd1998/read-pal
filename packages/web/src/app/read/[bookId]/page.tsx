@@ -353,7 +353,7 @@ export default function ReadPage() {
   // --- Annotation handlers ---
   const loadAnnotations = useCallback(async () => {
     try {
-      const result = await api.get<Annotation[]>('/api/annotations', { bookId });
+      const result = await api.get<Annotation[]>('/api/annotations', { book_id: bookId });
       if (result.success && result.data) {
         const data = result.data;
         setAnnotations(Array.isArray(data) ? data : []);
@@ -527,7 +527,7 @@ export default function ReadPage() {
         setLoading(true);
         const [bookResult, annotationsResult] = await Promise.all([
           api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/upload/books/${bookId}/content`),
-          api.get<Annotation[]>('/api/annotations', { bookId }).catch(() => null),
+          api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch(() => null),
         ]);
         if (cancelled) return;
         if (bookResult.success && bookResult.data) {

@@ -58,10 +58,11 @@ export default function MemoryBooksPage() {
     ])
       .then(([mbRes, booksRes]) => {
         if (mbRes.success && mbRes.data) {
-          setMemoryBooks(mbRes.data);
+          setMemoryBooks(Array.isArray(mbRes.data) ? mbRes.data : []);
         }
         if (booksRes.success && booksRes.data) {
-          setBooks((booksRes.data).filter((b) => b.progress > 10));
+          const list = Array.isArray(booksRes.data) ? booksRes.data : [];
+          setBooks(list.filter((b) => b.progress > 10));
         }
       })
       .catch(() => setError('Failed to load data'))
@@ -71,7 +72,8 @@ export default function MemoryBooksPage() {
   const handleGenerate = async (bookId: string) => {
     setGenerating(bookId);
     try {
-      const res = await api.post<MemoryBook>(`/api/memory-books/${bookId}/generate`, {
+      const res = await api.post<MemoryBook>('/api/memory-books/generate', {
+        book_id: bookId,
         format: 'personal_book',
       });
       if (res.success && res.data) {

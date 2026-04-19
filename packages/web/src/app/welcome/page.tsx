@@ -107,7 +107,7 @@ export default function WelcomePage() {
           <div className="w-24 h-24 mx-auto mb-6 relative">
             <div className="absolute inset-0 bg-gradient-to-br from-amber-200 to-teal-200 dark:from-amber-800/40 dark:to-teal-800/40 rounded-3xl rotate-6 scale-95" />
             <div className="absolute inset-0 bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 rounded-3xl flex items-center justify-center shadow-sm">
-              <span className="text-4xl">{'\u2B50'}</span>
+              <span className="text-4xl">{persona.emoji}</span>
             </div>
           </div>
 
@@ -118,7 +118,7 @@ export default function WelcomePage() {
             </div>
           ) : (
             <>
-              <h1 className="text-3xl font-bold mb-2">Hi there! I&apos;m Penny.</h1>
+              <h1 className="text-3xl font-bold mb-2">Hi there! I&apos;m {persona.name}.</h1>
               <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
                 Your reading friend. I&apos;ll be right here while you read —
                 asking questions, making connections, and celebrating those
