@@ -5,9 +5,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 WORKDIR /app
 
-# config available mirror source
-RUN uv config set index-url https://mirrors.aliyun.com/pypi/simple/
-RUN uv config set default-index-url https://mirrors.aliyun.com/pypi/simple/
+# Use Aliyun mirror for faster downloads in China
+ENV UV_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 
 # Install deps first (cache layer)
 COPY pyproject.toml ./
