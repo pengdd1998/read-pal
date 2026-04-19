@@ -22,6 +22,7 @@ class SharedExport(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         primary_key=True,
+        default=uuid.uuid4,
         server_default=text('gen_random_uuid()'),
     )
     user_id: Mapped[UUID] = mapped_column(
