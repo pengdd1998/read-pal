@@ -58,8 +58,8 @@ services:
 
   web:
     build:
-      context: ./packages/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: packages/web/Dockerfile
     depends_on:
       api:
         condition: service_healthy
