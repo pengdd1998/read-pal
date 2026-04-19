@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -15,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.utils import utcnow
 from app.models.book import Book
 from app.models.flashcard import Flashcard
 from app.services.llm import safe_llm_invoke
@@ -207,7 +207,7 @@ async def save_concept_checks(
         return {'success': True, 'data': {'message': 'Results saved'}}
 
     user_id = UUID(current_user['id'])
-    now = datetime.now(timezone.utc)
+    now = utcnow()
 
     # Verify book ownership
     book_result = await db.execute(
@@ -322,7 +322,7 @@ async def get_mastery(
     )
     strong_cards = strong_result.scalar() or 0
 
-    now = datetime.now(timezone.utc)
+    now = utcnow()
     due_result = await db.execute(
         select(func.count(Flashcard.id)).where(
             and_(

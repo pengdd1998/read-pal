@@ -1,9 +1,11 @@
 """Business logic for reading session operations."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
+
+from app.utils import utcnow
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +23,7 @@ async def create_session(
     data: SessionCreate,
 ) -> ReadingSession:
     """Create a new reading session, mark it active, update book status."""
-    now = datetime.now(timezone.utc)
+    now = utcnow()
     session = ReadingSession(
         user_id=user_id,
         book_id=data.book_id,
@@ -63,7 +65,7 @@ async def end_session(
     if session is None:
         return None
 
-    now = datetime.now(timezone.utc)
+    now = utcnow()
     session.ended_at = now
     session.is_active = False
 

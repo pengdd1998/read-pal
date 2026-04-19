@@ -5,6 +5,8 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+from app.utils import utcnow
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,7 +25,7 @@ async def create_share(
 ) -> SharedExport:
     """Create a shared export with a secure token."""
     token = secrets.token_urlsafe(32)  # 256-bit entropy
-    expires_at = data.expires_at or datetime.now(timezone.utc) + timedelta(
+    expires_at = data.expires_at or utcnow() + timedelta(
         days=DEFAULT_EXPIRY_DAYS,
     )
 
@@ -55,12 +57,12 @@ async def get_share(
     if share is None:
         return None
 
-    now = datetime.now(timezone.utc)
+    now = utcnow()
     if share.expires_at:
-        # Ensure timezone-aware comparison
+        # Normalize to naive UTC for comparison
         exp = share.expires_at
-        if exp.tzinfo is None:
-            exp = exp.replace(tzinfo=timezone.utc)
+        if exp.tzinfo is not None:
+            exp = exp.replace(tzinfo=None)
         if exp < now:
             return None
 

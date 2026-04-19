@@ -2,7 +2,6 @@
 
 import logging
 import uuid
-from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
@@ -10,6 +9,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookStatus
+from app.utils import utcnow
 from app.schemas.book import BookCreate, BookUpdate
 
 logger = logging.getLogger('read-pal.books')
@@ -89,7 +89,7 @@ async def update_book(
     if book is None:
         return None
 
-    now = datetime.now(timezone.utc)
+    now = utcnow()
     update_data = data.model_dump(exclude_unset=True)
 
     for field, value in update_data.items():

@@ -9,7 +9,7 @@ patterns that suggest a break or encouragement is warranted:
 - Recently returned after a gap (welcome back)
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.utils import utcnow
 from app.models.intervention_feedback import InterventionFeedback
 from app.models.reading_session import ReadingSession
 
@@ -40,7 +41,7 @@ async def _analyze_reading_pattern(
     book_id: UUID | None = None,
 ) -> dict | None:
     """Return an intervention dict if one is warranted, else None."""
-    now = datetime.now(timezone.utc)
+    now = utcnow()
     week_ago = now - timedelta(days=7)
     day_ago = now - timedelta(days=1)
 

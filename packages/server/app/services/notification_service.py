@@ -1,8 +1,9 @@
 """Notification business logic — list, mark read, create."""
 
 import logging
-from datetime import datetime, timezone
 from uuid import UUID
+
+from app.utils import utcnow
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,7 +92,7 @@ async def mark_all_read(
             Notification.user_id == user_id,
             Notification.read == False,  # noqa: E712
         )
-        .values(read=True, updated_at=datetime.now(timezone.utc))
+        .values(read=True, updated_at=utcnow())
         .returning(Notification.id),
     )
     rows = result.fetchall()

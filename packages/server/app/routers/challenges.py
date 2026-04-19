@@ -4,7 +4,7 @@ Generates personalised challenges based on the user's current reading stats.
 No LLM/AI calls — progress is computed directly from the database.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -17,12 +17,13 @@ from app.models.annotation import Annotation
 from app.models.book import Book, BookStatus
 from app.models.flashcard import Flashcard
 from app.models.reading_session import ReadingSession
+from app.utils import utcnow
 
 router = APIRouter(prefix='/api/v1/challenges', tags=['challenges'])
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return utcnow()
 
 
 def _start_of_week() -> datetime:

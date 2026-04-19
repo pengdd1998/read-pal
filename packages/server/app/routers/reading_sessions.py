@@ -3,7 +3,6 @@
 All responses follow the shape: ``{"success": true, "data": {...}}``
 """
 
-from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -12,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.utils import utcnow
 from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import (
     SessionCreate,
@@ -205,7 +205,7 @@ async def heartbeat_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': 'Session not found'},
         )
-    session.updated_at = datetime.now(timezone.utc)
+    session.updated_at = utcnow()
     await db.flush()
     return {'success': True, 'data': {'message': 'Heartbeat received'}}
 
