@@ -136,7 +136,7 @@ jobs:
       - name: Run tests
         run: |
           cd packages/server
-          pytest
+          uv run pytest
         env:
           APP_ENV: test
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long

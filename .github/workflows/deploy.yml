@@ -22,7 +22,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script_stop: true
-          command_timeout: 10m
+          command_timeout: 20m
           script: |
             set -euo pipefail
             cd /home/ubuntu/read-pal
@@ -30,11 +30,9 @@ jobs:
             echo ">>> Pulling latest code..."
             git pull origin main
 
-            # Use BuildKit cache to avoid re-downloading layers
+            echo ">>> Rebuilding containers with layer cache..."
             export DOCKER_BUILDKIT=1
-
-            echo ">>> Building (with layer cache)..."
-            docker compose build --pull
+            docker compose build
 
             echo ">>> Starting containers..."
             docker compose up -d --remove-orphans
@@ -43,11 +41,11 @@ jobs:
             docker compose exec -T api python -m alembic upgrade head
 
             echo ">>> Waiting for services..."
-            sleep 10
+            sleep 15
 
             echo ">>> Health check..."
-            API_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/api/v1/health 2>/dev/null || echo "000")
-            WEB_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost 2>/dev/null || echo "000")
+            API_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 10 http://localhost/api/v1/health || echo "000")
+            WEB_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 10 http://localhost || echo "000")
 
             if [ "$API_STATUS" != "200" ]; then
               echo "❌ API health check failed: $API_STATUS"
