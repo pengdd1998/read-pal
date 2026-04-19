@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     # App
     app_env: str = 'development'
     frontend_url: str = 'http://localhost:3000'
+    cors_origins: str = 'http://localhost:3000'  # Comma-separated allowed origins
 
     # SMTP (optional — console fallback when unset)
     smtp_host: str | None = None

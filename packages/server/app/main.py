@@ -77,18 +77,26 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
-# CORS — allow all origins in development
-# NOTE: allow_origins=['*'] + allow_credentials=True is INVALID per CORS spec.
-# Browsers reject responses when credentials are sent but the origin is '*'.
-# Auth uses Bearer tokens in the Authorization header (not cookies), so
-# allow_credentials is not needed.
+# CORS — configurable origins (defaults to localhost:3000 in dev)
+_cors_origins = [o.strip() for o in settings.cors_origins.split(',') if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=_cors_origins,
     allow_credentials=False,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allow_headers=['Authorization', 'Content-Type'],
 )
+
+
+# Security headers middleware
+@app.middleware('http')
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    if not settings.is_dev:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
 
 
 # Rewrite /api/ → /api/v1/ for frontend compatibility
