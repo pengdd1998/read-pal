@@ -89,11 +89,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: packages/server/.venv
-          key: venv-${{ runner.os }}-${{ hashFiles('packages/server/pyproject.toml', 'packages/server/uv.lock') }}
+          key: venv-dev-${{ runner.os }}-${{ hashFiles('packages/server/pyproject.toml', 'packages/server/uv.lock') }}
 
       - run: pip install uv
 
-      - run: cd packages/server && uv sync
+      - run: cd packages/server && uv sync --dev
 
       - run: cd packages/server && uv run pytest
         env:
