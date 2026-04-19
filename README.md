@@ -30,6 +30,29 @@ read-pal transforms passive reading into an active, intelligent experience. Uplo
 
 Think of it as a friend who's always read the same book and loves talking about it.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><b>AI Companion Chat</b></td>
+    <td align="center"><b>EPUB Reader</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/companion-chat.png" alt="AI Companion Chat" width="480" /></td>
+    <td><img src="docs/screenshots/reader-view.png" alt="EPUB Reader" width="480" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Knowledge Graph</b></td>
+    <td align="center"><b>Memory Book</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/knowledge-graph.png" alt="Knowledge Graph" width="480" /></td>
+    <td><img src="docs/screenshots/memory-book.png" alt="Memory Book" width="480" /></td>
+  </tr>
+</table>
+
+> Screenshots coming soon — see the [live demo](http://175.178.66.207:8090) for the full experience.
+
 ## Features
 
 ### AI Reading Companion
