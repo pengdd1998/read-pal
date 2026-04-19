@@ -20,19 +20,25 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # --- Enums (use IF NOT EXISTS to handle shared PG instances) ---
-    op.execute(
-        "CREATE TYPE IF NOT EXISTS annotation_type_enum "
-        "AS ENUM ('highlight', 'note', 'bookmark')"
-    )
-    op.execute(
-        "CREATE TYPE IF NOT EXISTS book_file_type_enum "
-        "AS ENUM ('epub', 'pdf')"
-    )
-    op.execute(
-        "CREATE TYPE IF NOT EXISTS book_status_enum "
-        "AS ENUM ('unread', 'reading', 'completed')"
-    )
+    # --- Enums (use DO block to handle shared PG instances) ---
+    op.execute(sa.text(
+        "DO $$ BEGIN"
+        "  CREATE TYPE annotation_type_enum AS ENUM ('highlight', 'note', 'bookmark');"
+        " EXCEPTION WHEN duplicate_object THEN NULL;"
+        " END $$"
+    ))
+    op.execute(sa.text(
+        "DO $$ BEGIN"
+        "  CREATE TYPE book_file_type_enum AS ENUM ('epub', 'pdf');"
+        " EXCEPTION WHEN duplicate_object THEN NULL;"
+        " END $$"
+    ))
+    op.execute(sa.text(
+        "DO $$ BEGIN"
+        "  CREATE TYPE book_status_enum AS ENUM ('unread', 'reading', 'completed');"
+        " EXCEPTION WHEN duplicate_object THEN NULL;"
+        " END $$"
+    ))
 
     annotation_type = postgresql.ENUM(
         'highlight', 'note', 'bookmark',
@@ -486,6 +492,6 @@ def downgrade() -> None:
     op.drop_table('books')
     op.drop_table('users')
 
-    op.execute('DROP TYPE IF EXISTS annotation_type_enum')
-    op.execute('DROP TYPE IF EXISTS book_file_type_enum')
-    op.execute('DROP TYPE IF EXISTS book_status_enum')
+    op.execute(sa.text('DROP TYPE IF EXISTS annotation_type_enum'))
+    op.execute(sa.text('DROP TYPE IF EXISTS book_file_type_enum'))
+    op.execute(sa.text('DROP TYPE IF EXISTS book_status_enum'))
