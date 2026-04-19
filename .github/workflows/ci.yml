@@ -16,10 +16,10 @@ env:
 
 jobs:
   # -------------------------------------------------------------------
-  # Install once, reuse artifacts in downstream jobs
+  # Typecheck frontend
   # -------------------------------------------------------------------
-  install:
-    name: Install Dependencies
+  typecheck:
+    name: Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,54 +33,17 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
-      - name: Build shared package
-        run: pnpm --filter @read-pal/shared build
+      - run: pnpm --filter @read-pal/shared build
 
-      # Upload node_modules + shared dist for downstream jobs
-      - uses: actions/upload-artifact@v4
-        with:
-          name: node-deps
-          path: |
-            node_modules
-            packages/shared/dist
-            packages/web/node_modules
-            packages/web/.next
-          retention-days: 1
-
-  # -------------------------------------------------------------------
-  # Typecheck frontend
-  # -------------------------------------------------------------------
-  typecheck:
-    name: Typecheck
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: node-deps
-
-      - name: Typecheck frontend
-        run: pnpm --filter @read-pal/web typecheck
+      - run: pnpm --filter @read-pal/web typecheck
 
   # -------------------------------------------------------------------
   # Build verification
   # -------------------------------------------------------------------
   build:
     name: Build (${{ matrix.package }})
-    needs: install
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -96,10 +59,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: node-deps
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build shared first (dependency for web)
+        if: matrix.package != 'shared'
+        run: pnpm --filter @read-pal/shared build
 
       - name: Build ${{ matrix.package }}
         run: pnpm --filter @read-pal/${{ matrix.package }} build
@@ -123,20 +89,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: packages/server/.venv
-          key: venv-${{ runner.os }}-${{ hashFiles('packages/server/pyproject.toml') }}
+          key: venv-${{ runner.os }}-${{ hashFiles('packages/server/pyproject.toml', 'packages/server/uv.lock') }}
 
-      - name: Install uv
-        run: pip install uv
+      - run: pip install uv
 
-      - name: Install dependencies
-        run: |
-          cd packages/server
-          uv sync
+      - run: cd packages/server && uv sync
 
-      - name: Run tests
-        run: |
-          cd packages/server
-          uv run pytest
+      - run: cd packages/server && uv run pytest
         env:
           APP_ENV: test
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
