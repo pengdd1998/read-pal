@@ -156,6 +156,7 @@ export default function KnowledgePage() {
   const [themes, setThemes] = useState<CrossBookTheme[]>([]);
   const [neo4jAvailable, setNeo4jAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<SimNode | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
@@ -191,6 +192,7 @@ export default function KnowledgePage() {
         }
       } catch (err) {
         console.error('Failed to load knowledge graph:', err);
+        setError('Failed to load knowledge graph. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -223,6 +225,27 @@ export default function KnowledgePage() {
     selectedNode?.id,
     ...connectedEdges.map((e) => (e.source === selectedNode?.id ? e.target : e.source)),
   ]);
+
+  // ---------------------------------------------------------------------------
+  // Error state
+  // ---------------------------------------------------------------------------
+  if (!loading && error) {
+    return (
+      <div className="min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Something went wrong</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+          <button
+            onClick={() => { setError(null); setLoading(true); window.location.reload(); }}
+            className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors text-sm"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Empty state — Neo4j not configured
