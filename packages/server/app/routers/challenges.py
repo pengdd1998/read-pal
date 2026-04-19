@@ -22,7 +22,7 @@ router = APIRouter(prefix='/api/v1/challenges', tags=['challenges'])
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def _start_of_week() -> datetime:
