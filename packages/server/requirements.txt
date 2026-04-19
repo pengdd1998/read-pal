@@ -1,5 +1,28 @@
+# Test dependencies — install with: pip install -r requirements.txt
+# Or use: uv sync --extra dev (preferred, handles everything via pyproject.toml)
+#
+# Note: This file is for CI or standalone pip installs.
+# When using uv (recommended), these are declared in pyproject.toml [project.optional-dependencies] dev
+
+# Test runner
 pytest>=8.3.0
 pytest-asyncio>=0.24.0
 pytest-cov>=6.0.0
+
+# Async HTTP test client (used by conftest.py for ASGI transport)
 httpx>=0.28.0
+
+# SQLite async driver (used by conftest.py for test DB)
 aiosqlite>=0.22.1
+
+# Main app dependencies needed by test fixtures (conftest.py imports these)
+fastapi>=0.115.0
+sqlalchemy[asyncio]>=2.0.36
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.2.0,<4.3.0
+uvicorn[standard]>=0.34.0
+python-multipart>=0.0.18
+email-validator>=2.3.0
