@@ -16,6 +16,9 @@ from app.models.intervention_feedback import InterventionFeedback
 from app.models.book_club import BookClub, BookClubMember, ClubDiscussion
 from app.models.api_key import ApiKey
 from app.models.webhook import Webhook, WebhookDeliveryLog
+from app.models.conversation_summary import ConversationSummary
+from app.models.ai_feedback import AIFeedback
+from app.models.reading_plan import ReadingPlan
 
 __all__ = [
     'User',
@@ -38,4 +41,7 @@ __all__ = [
     'ApiKey',
     'Webhook',
     'WebhookDeliveryLog',
+    'ConversationSummary',
+    'AIFeedback',
+    'ReadingPlan',
 ]

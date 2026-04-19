@@ -214,3 +214,23 @@ export function shouldAutoOpen(genre: BookGenre): boolean {
   // All other genres: auto-open with contextual greeting
   return genre !== 'fiction';
 }
+
+// ---------------------------------------------------------------------------
+// Socratic mode prompts
+// ---------------------------------------------------------------------------
+
+/**
+ * Suggested prompts for Socratic companion mode.
+ *
+ * Socratic mode is genre-independent — it guides the reader to discover
+ * meaning through questions rather than providing direct answers.
+ */
+export function getSocraticPrompts(bookTitle?: string): string[] {
+  return [
+    bookTitle
+      ? `Guide me to discover the deeper meaning of "${bookTitle}"`
+      : 'Guide me to discover the deeper meaning of this text',
+    'What questions should I be asking myself while reading?',
+    'Help me uncover the hidden themes in this passage',
+  ];
+}

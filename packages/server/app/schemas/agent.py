@@ -42,3 +42,33 @@ class ExplainRequest(BaseModel):
     book_id: UUID
     text: str = Field(min_length=1)
     context: str | None = None
+
+
+class AIFeedbackRequest(BaseModel):
+    """Request body for AI response feedback."""
+
+    book_id: UUID
+    message_id: str | None = None
+    rating: bool  # True=thumbs up, False=thumbs down
+    comment: str | None = None
+
+
+class ReadingPlanRequest(BaseModel):
+    """Request body for generating a reading plan."""
+
+    book_id: UUID
+    total_days: int = Field(default=7, ge=1, le=90)
+    daily_minutes: int = Field(default=30, ge=10, le=240)
+
+
+class ReadingPlanResponse(BaseModel):
+    """Response for reading plan."""
+
+    success: bool = True
+    data: dict
+
+
+class CompanionModeRequest(BaseModel):
+    """Request body for setting companion mode."""
+
+    mode: Literal['casual', 'scholar', 'socratic']

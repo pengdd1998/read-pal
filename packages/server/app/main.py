@@ -117,6 +117,13 @@ async def startup() -> None:
             logger.warning('Could not auto-create tables: %s', exc)
 
 
+@app.on_event('shutdown')
+async def shutdown() -> None:
+    """Clean up resources on application shutdown."""
+    from app.services.llm import shutdown_llm
+    await shutdown_llm()
+
+
 @app.get('/api/v1/health')
 async def health_check() -> dict[str, str]:
     """Health check endpoint."""

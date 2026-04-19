@@ -13,17 +13,20 @@ from sqlalchemy.sql import func
 from app.db import Base
 
 if TYPE_CHECKING:
+    from app.models.ai_feedback import AIFeedback
     from app.models.annotation import Annotation
     from app.models.api_key import ApiKey
     from app.models.book import Book
     from app.models.book_club import BookClub, BookClubMember
     from app.models.chat_message import ChatMessage
     from app.models.collection import Collection
+    from app.models.conversation_summary import ConversationSummary
     from app.models.flashcard import Flashcard
     from app.models.friend import FriendConversation, FriendRelationship
     from app.models.intervention_feedback import InterventionFeedback
     from app.models.memory_book import MemoryBook
     from app.models.notification import Notification
+    from app.models.reading_plan import ReadingPlan
     from app.models.reading_session import ReadingSession
     from app.models.shared_export import SharedExport
     from app.models.webhook import Webhook
@@ -154,6 +157,21 @@ class User(Base):
     )
     club_memberships: Mapped[list['BookClubMember']] = relationship(
         'BookClubMember',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )
+    conversation_summaries: Mapped[list['ConversationSummary']] = relationship(
+        'ConversationSummary',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )
+    ai_feedback: Mapped[list['AIFeedback']] = relationship(
+        'AIFeedback',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )
+    reading_plans: Mapped[list['ReadingPlan']] = relationship(
+        'ReadingPlan',
         back_populates='user',
         cascade='all, delete-orphan',
     )

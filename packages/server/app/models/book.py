@@ -23,11 +23,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 if TYPE_CHECKING:
+    from app.models.ai_feedback import AIFeedback
     from app.models.annotation import Annotation
     from app.models.chat_message import ChatMessage
+    from app.models.conversation_summary import ConversationSummary
     from app.models.document import Document
     from app.models.flashcard import Flashcard
     from app.models.memory_book import MemoryBook
+    from app.models.reading_plan import ReadingPlan
     from app.models.reading_session import ReadingSession
     from app.models.shared_export import SharedExport
     from app.models.user import User
@@ -185,4 +188,19 @@ class Book(Base):
         back_populates='book',
         cascade='all, delete-orphan',
         uselist=False,
+    )
+    conversation_summaries: Mapped[list['ConversationSummary']] = relationship(
+        'ConversationSummary',
+        back_populates='book',
+        cascade='all, delete-orphan',
+    )
+    ai_feedback: Mapped[list['AIFeedback']] = relationship(
+        'AIFeedback',
+        back_populates='book',
+        cascade='all, delete-orphan',
+    )
+    reading_plans: Mapped[list['ReadingPlan']] = relationship(
+        'ReadingPlan',
+        back_populates='book',
+        cascade='all, delete-orphan',
     )

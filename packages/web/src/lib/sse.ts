@@ -44,13 +44,14 @@ export function consumeSSEStream(
       }
 
       try {
-        const parsed = JSON.parse(payload) as { token?: string; error?: string };
+        const parsed = JSON.parse(payload) as { token?: string; content?: string; error?: string };
         if (parsed.error) {
           onError(parsed.error);
           return;
         }
-        if (parsed.token) {
-          onToken(parsed.token);
+        const token = parsed.content || parsed.token;
+        if (token) {
+          onToken(token);
         }
       } catch {
         // Ignore malformed JSON lines

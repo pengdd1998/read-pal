@@ -1,4 +1,4 @@
-"""Reading companion agent — AI chat, summarization, and explanation."""
+"""Reading companion agent — AI chat, summarization, explanation, and tools."""
 
 import json
 import logging
@@ -17,6 +17,10 @@ from app.services.llm import get_llm
 
 logger = logging.getLogger('read-pal.companion')
 
+# ---------------------------------------------------------------------------
+# System prompt templates
+# ---------------------------------------------------------------------------
+
 SYSTEM_TEMPLATE = (
     'You are an AI reading companion helping the user understand '
     '"{title}" by {author}.\n'
@@ -27,8 +31,27 @@ SYSTEM_TEMPLATE = (
     'Keep responses concise (2-3 paragraphs max).'
 )
 
+SOCRATIC_SYSTEM_TEMPLATE = (
+    'You are an AI reading companion helping the user understand '
+    '"{title}" by {author}.\n'
+    'The user is {progress}% through the book '
+    '(currently on page {current_page} of {total_pages}).\n\n'
+    'IMPORTANT: You are in SOCRATIC mode. Instead of giving direct answers, '
+    'guide the user to discover insights themselves:\n'
+    '- Ask probing questions that lead to deeper understanding\n'
+    '- Offer hints and partial observations, not full explanations\n'
+    '- Challenge assumptions and encourage critical thinking\n'
+    '- When the user is stuck, provide a small nudge, not the full answer\n'
+    '- Celebrate when the user reaches an insight on their own\n'
+    'Keep responses concise (2-3 paragraphs max).'
+)
+
 HISTORY_LIMIT = 20
 ANNOTATION_LIMIT = 10
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
 
 
 async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book:
@@ -99,9 +122,21 @@ async def _load_annotations_context(
     return '\n'.join(parts)
 
 
-def _build_system_prompt(book: Book, annotations_ctx: str) -> str:
-    """Build the system prompt from book metadata and annotations."""
-    prompt = SYSTEM_TEMPLATE.format(
+def _build_system_prompt(
+    book: Book,
+    annotations_ctx: str,
+    rag_ctx: str = '',
+    memory_summary: str = '',
+    companion_mode: str = 'casual',
+    context: dict | None = None,
+) -> str:
+    """Build the system prompt from all available context."""
+    template = (
+        SOCRATIC_SYSTEM_TEMPLATE
+        if companion_mode == 'socratic'
+        else SYSTEM_TEMPLATE
+    )
+    prompt = template.format(
         title=book.title,
         author=book.author,
         progress=book.progress,
@@ -113,6 +148,27 @@ def _build_system_prompt(book: Book, annotations_ctx: str) -> str:
             '\n\nThe user has made these recent annotations:\n'
             + annotations_ctx
         )
+    if rag_ctx:
+        prompt += (
+            '\n\nRelevant passages from the book:\n'
+            + rag_ctx
+        )
+    if memory_summary:
+        prompt += (
+            '\n\nSummary of previous conversation context:\n'
+            + memory_summary
+        )
+    if context:
+        extra_parts: list[str] = []
+        if context.get('chapterContent'):
+            content = context['chapterContent'][:3000]
+            extra_parts.append(f'Current chapter content:\n{content}')
+        if context.get('nearbyCode'):
+            extra_parts.append(f'Nearby code examples:\n{context["nearbyCode"]}')
+        if context.get('bookDescription'):
+            extra_parts.append(f'Book description: {context["bookDescription"]}')
+        if extra_parts:
+            prompt += '\n\n' + '\n\n'.join(extra_parts)
     return prompt
 
 
@@ -134,21 +190,44 @@ async def _save_message(
     await db.flush()
 
 
+# ---------------------------------------------------------------------------
+# Public API — chat, stream, summarize, explain
+# ---------------------------------------------------------------------------
+
+
 async def chat(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
     message: str,
     context: dict | None = None,
+    companion_mode: str = 'casual',
 ) -> dict[str, Any]:
     """Run a single-turn companion chat and return the assistant response."""
     book = await _load_book(db, user_id, book_id)
     annotations_ctx = await _load_annotations_context(db, user_id, book_id)
     history = await _load_history(db, user_id, book_id)
 
-    system_text = _build_system_prompt(book, annotations_ctx)
-    if context:
-        system_text += f'\n\nAdditional context: {json.dumps(context)}'
+    # RAG: retrieve relevant book content
+    rag_ctx = ''
+    try:
+        from app.services.rag_service import get_book_context
+        rag_ctx = await get_book_context(db, user_id, book_id, message)
+    except Exception as exc:
+        logger.warning('RAG context retrieval failed: %s', exc)
+
+    # Conversation memory summary
+    memory_summary = ''
+    try:
+        from app.services.conversation_memory import get_or_create_summary
+        memory_summary = await get_or_create_summary(db, user_id, book_id) or ''
+    except Exception as exc:
+        logger.warning('Memory summary retrieval failed: %s', exc)
+
+    system_text = _build_system_prompt(
+        book, annotations_ctx, rag_ctx, memory_summary,
+        companion_mode=companion_mode, context=context,
+    )
 
     messages = [SystemMessage(content=system_text)] + history
     messages.append(HumanMessage(content=message))
@@ -161,7 +240,7 @@ async def chat(
         logger.error('GLM API call failed: %s', exc)
         assistant_content = (
             "I'm having trouble connecting to my AI service right now. "
-            "Please try again in a moment."
+            'Please try again in a moment.'
         )
 
     await _save_message(db, user_id, book_id, 'user', message)
@@ -175,13 +254,34 @@ async def stream_chat(
     user_id: UUID,
     book_id: UUID,
     message: str,
+    context: dict | None = None,
+    companion_mode: str = 'casual',
 ) -> AsyncGenerator[str, None]:
     """Stream companion chat as SSE chunks and persist messages after."""
     book = await _load_book(db, user_id, book_id)
     annotations_ctx = await _load_annotations_context(db, user_id, book_id)
     history = await _load_history(db, user_id, book_id)
 
-    system_text = _build_system_prompt(book, annotations_ctx)
+    # RAG enrichment
+    rag_ctx = ''
+    try:
+        from app.services.rag_service import get_book_context
+        rag_ctx = await get_book_context(db, user_id, book_id, message)
+    except Exception as exc:
+        logger.warning('RAG context retrieval failed: %s', exc)
+
+    # Memory summary
+    memory_summary = ''
+    try:
+        from app.services.conversation_memory import get_or_create_summary
+        memory_summary = await get_or_create_summary(db, user_id, book_id) or ''
+    except Exception as exc:
+        logger.warning('Memory summary retrieval failed: %s', exc)
+
+    system_text = _build_system_prompt(
+        book, annotations_ctx, rag_ctx, memory_summary,
+        companion_mode=companion_mode, context=context,
+    )
     messages = [SystemMessage(content=system_text)] + history
     messages.append(HumanMessage(content=message))
 
@@ -198,7 +298,7 @@ async def stream_chat(
         logger.error('GLM streaming failed: %s', exc)
         fallback = (
             "I'm having trouble connecting to my AI service right now. "
-            "Please try again in a moment."
+            'Please try again in a moment.'
         )
         yield f'data: {json.dumps({"content": fallback})}\n\n'
 

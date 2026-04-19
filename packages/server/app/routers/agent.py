@@ -1,4 +1,4 @@
-"""Agent routes — reading companion chat, streaming, summarization, explanation."""
+"""Agent routes — reading companion chat, streaming, summarization, explanation, plans, feedback."""
 
 import logging
 from collections.abc import AsyncGenerator
@@ -13,9 +13,12 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.chat_message import ChatMessage
 from app.schemas.agent import (
+    AIFeedbackRequest,
     ChatRequest,
     ChatResponse,
     ExplainRequest,
+    ReadingPlanRequest,
+    ReadingPlanResponse,
     SummarizeRequest,
 )
 from app.services import companion_service
@@ -25,16 +28,30 @@ logger = logging.getLogger('read-pal.agent')
 router = APIRouter(prefix='/api/v1/agent', tags=['agent'])
 
 
+@router.get('/health')
+async def llm_health() -> dict:
+    """Public health check for the LLM service (no auth required)."""
+    try:
+        from app.services.llm import check_llm_health
+        return await check_llm_health()
+    except Exception as exc:
+        logger.error('Health check failed: %s', exc)
+        return {'healthy': False, 'error': str(exc)}
+
+
 async def _sse_stream(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
     message: str,
+    context: dict | None = None,
+    companion_mode: str = 'casual',
 ) -> AsyncGenerator[bytes, None]:
     """Wrap companion_service.stream_chat as a bytes SSE generator."""
     try:
         async for chunk in companion_service.stream_chat(
-            db, user_id, book_id, message,
+            db, user_id, book_id, message, context=context,
+            companion_mode=companion_mode,
         ):
             yield chunk.encode('utf-8')
     except ValueError as exc:
@@ -77,8 +94,15 @@ async def stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Streaming reading companion chat (SSE)."""
+    companion_mode = (
+        body.context.get('companionMode', 'casual')
+        if body.context else 'casual'
+    )
     return StreamingResponse(
-        _sse_stream(db, current_user['id'], body.book_id, body.message),
+        _sse_stream(
+            db, current_user['id'], body.book_id, body.message,
+            context=body.context, companion_mode=companion_mode,
+        ),
         media_type='text/event-stream',
         headers={
             'Cache-Control': 'no-cache',
@@ -145,8 +169,15 @@ async def chat_stream_alias(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Alias for POST /stream — streaming chat via /chat/stream path."""
+    companion_mode = (
+        body.context.get('companionMode', 'casual')
+        if body.context else 'casual'
+    )
     return StreamingResponse(
-        _sse_stream(db, current_user['id'], body.book_id, body.message),
+        _sse_stream(
+            db, current_user['id'], body.book_id, body.message,
+            context=body.context, companion_mode=companion_mode,
+        ),
         media_type='text/event-stream',
         headers={
             'Cache-Control': 'no-cache',
@@ -227,3 +258,118 @@ async def mood_scene(
             'color': '#4A90D9',
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# AI Feedback (thumbs up/down)
+# ---------------------------------------------------------------------------
+
+
+@router.post('/feedback')
+async def submit_feedback(
+    body: AIFeedbackRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Submit feedback (thumbs up/down) for an AI response."""
+    from app.models.ai_feedback import AIFeedback
+
+    feedback = AIFeedback(
+        user_id=UUID(current_user['id']),
+        book_id=body.book_id,
+        message_id=body.message_id,
+        rating=body.rating,
+        comment=body.comment,
+    )
+    db.add(feedback)
+    await db.flush()
+
+    return {
+        'success': True,
+        'data': {
+            'id': str(feedback.id),
+            'rating': body.rating,
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
+# Reading Plans
+# ---------------------------------------------------------------------------
+
+
+@router.post('/reading-plan', response_model=ReadingPlanResponse)
+async def create_reading_plan(
+    body: ReadingPlanRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ReadingPlanResponse:
+    """Generate an AI reading plan for a book."""
+    from app.services.reading_plan_service import generate_plan
+
+    try:
+        result = await generate_plan(
+            db=db,
+            user_id=UUID(current_user['id']),
+            book_id=body.book_id,
+            total_days=body.total_days,
+            daily_minutes=body.daily_minutes,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+        ) from exc
+    except Exception as exc:
+        logger.error('Reading plan generation failed: %s', exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': 'AI service unavailable'},
+        ) from exc
+
+    return ReadingPlanResponse(data=result)
+
+
+@router.get('/reading-plan')
+async def get_reading_plan(
+    book_id: UUID = Query(...),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get the active reading plan for a book."""
+    from app.services.reading_plan_service import get_active_plan
+
+    result = await get_active_plan(
+        db=db,
+        user_id=UUID(current_user['id']),
+        book_id=book_id,
+    )
+    if not result:
+        return {'success': True, 'data': None}
+    return {'success': True, 'data': result}
+
+
+@router.post('/reading-plan/advance')
+async def advance_reading_plan(
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Advance reading plan to the next day."""
+    from app.services.reading_plan_service import advance_plan
+
+    book_id = body.get('book_id')
+    if not book_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={'code': 'MISSING_FIELD', 'message': 'book_id is required'},
+        )
+
+    result = await advance_plan(
+        db=db,
+        user_id=UUID(current_user['id']),
+        book_id=UUID(book_id),
+    )
+    if not result:
+        return {'success': True, 'data': None, 'message': 'No active plan found'}
+    return {'success': True, 'data': result}

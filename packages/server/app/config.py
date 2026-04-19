@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     glm_api_key: str = 'dev-key'
     glm_base_url: str = 'https://open.bigmodel.cn/api/paas/v4'
     default_model: str = 'glm-4.7-flash'
+    fallback_model: str = 'glm-4-flash'
+    llm_timeout_seconds: int = 15
+    llm_max_retries: int = 3
+    circuit_failure_threshold: int = 5
+    circuit_reset_timeout_seconds: int = 30
 
     # JWT
     jwt_secret: str = 'dev-secret-key-change-in-production-32ch'
