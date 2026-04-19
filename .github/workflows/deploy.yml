@@ -30,8 +30,14 @@ jobs:
             echo ">>> Pulling latest code..."
             git pull origin main
 
-            echo ">>> Rebuilding and restarting containers..."
-            docker compose up -d --build --remove-orphans
+            # Use BuildKit cache to avoid re-downloading layers
+            export DOCKER_BUILDKIT=1
+
+            echo ">>> Building (with layer cache)..."
+            docker compose build --pull
+
+            echo ">>> Starting containers..."
+            docker compose up -d --remove-orphans
 
             echo ">>> Running database migrations..."
             docker compose exec -T api python -m alembic upgrade head
