@@ -85,15 +85,9 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Cache uv virtualenv
-        uses: actions/cache@v4
-        with:
-          path: packages/server/.venv
-          key: venv-dev-${{ runner.os }}-${{ hashFiles('packages/server/pyproject.toml', 'packages/server/uv.lock') }}
-
       - run: pip install uv
 
-      - run: cd packages/server && uv sync --dev
+      - run: cd packages/server && uv sync --all-groups
 
       - run: cd packages/server && uv run pytest
         env:
