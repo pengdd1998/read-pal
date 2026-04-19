@@ -103,7 +103,7 @@ export default function LibraryPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search library..."
               aria-label="Search library"
-              className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none w-36 lg:w-48"
+              className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none w-32 sm:w-44 lg:w-48"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} aria-label="Clear search" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">

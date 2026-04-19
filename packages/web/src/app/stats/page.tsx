@@ -102,7 +102,7 @@ export default function StatsPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Reading Stats</h1>
-        <p className="text-sm text-gray-500 mt-1">Your reading journey, by the numbers</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your reading journey, by the numbers</p>
       </div>
 
       {error && (

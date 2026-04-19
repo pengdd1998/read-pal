@@ -381,7 +381,11 @@ export default function KnowledgePage() {
                   return (
                     <g
                       key={node.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${node.label}${node.bookTitle ? ` from ${node.bookTitle}` : ''}`}
                       onClick={() => handleNodeClick(node)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNodeClick(node); } }}
                       className="cursor-pointer"
                       opacity={isDimmed ? 0.3 : 1}
                     >
@@ -443,6 +447,7 @@ export default function KnowledgePage() {
                 )}
                 <button
                   onClick={() => setSelectedNode(null)}
+                  aria-label="Close selected concept details"
                   className="mt-3 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   Deselect

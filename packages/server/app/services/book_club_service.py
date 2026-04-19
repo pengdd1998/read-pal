@@ -95,26 +95,26 @@ async def list_clubs(
     )
     total = (await db.execute(count_q)).scalar() or 0
 
-    # Fetch clubs
+    # Fetch clubs with member count in a single query (avoid N+1)
     offset = (page - 1) * per_page
+    member_count_sq = (
+        select(BookClubMember.club_id, func.count().label('mc'))
+        .group_by(BookClubMember.club_id)
+        .subquery()
+    )
     result = await db.execute(
-        select(BookClub)
+        select(BookClub, func.coalesce(member_count_sq.c.mc, 0))
         .join(BookClubMember, BookClubMember.club_id == BookClub.id)
+        .outerjoin(member_count_sq, member_count_sq.c.club_id == BookClub.id)
         .where(BookClubMember.user_id == user_id)
         .order_by(BookClub.created_at.desc())
         .offset(offset)
         .limit(per_page),
     )
-    clubs = result.scalars().all()
+    rows = result.all()
 
     items = []
-    for club in clubs:
-        count_result = await db.execute(
-            select(func.count())
-            .select_from(BookClubMember)
-            .where(BookClubMember.club_id == club.id),
-        )
-        mc = count_result.scalar() or 0
+    for club, mc in rows:
         items.append({
             'id': str(club.id),
             'name': club.name,

@@ -653,7 +653,7 @@ export default function ReadPage() {
       >
         {/* Left: Back + Book info */}
         <div className="flex items-center gap-2 min-w-0">
-          <button onClick={handleBack} className="flex items-center justify-center w-10 h-10 -ml-1 rounded-xl text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label="Back to library">
+          <button onClick={handleBack} className="flex items-center justify-center w-11 h-11 -ml-1 rounded-xl text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label="Back to library">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
@@ -675,7 +675,7 @@ export default function ReadPage() {
         {/* Right: Essential actions only */}
         <div className="flex items-center gap-0.5 flex-shrink-0">
           {/* Search */}
-          <button onClick={() => setSearchOpen(!searchOpen)} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors ${searchOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Search">
+          <button onClick={() => setSearchOpen(!searchOpen)} className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors ${searchOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Search">
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -684,7 +684,7 @@ export default function ReadPage() {
           <BookmarkToggle isBookmarked={isBookmarked} onToggle={handleToggleBookmark} />
 
           {/* Annotations */}
-          <button id="tour-annotations" onClick={() => { setSidebarOpen(!sidebarOpen); if (!sidebarOpen) setSynthesisOpen(false); }} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors relative ${sidebarOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Annotations">
+          <button id="tour-annotations" onClick={() => { setSidebarOpen(!sidebarOpen); if (!sidebarOpen) setSynthesisOpen(false); }} className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors relative ${sidebarOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Annotations">
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
@@ -694,21 +694,21 @@ export default function ReadPage() {
           </button>
 
           {/* Study mode toggle */}
-          <button onClick={studyMode.toggleStudyMode} className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors ${studyMode.enabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Study mode" title="Study mode">
+          <button onClick={studyMode.toggleStudyMode} className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors ${studyMode.enabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} aria-label="Study mode" title="Study mode">
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </button>
 
           {/* Synthesis */}
-          <button onClick={() => { setSynthesisOpen(!synthesisOpen); if (!synthesisOpen) setSidebarOpen(false); }} className={`w-10 h-10 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors ${synthesisOpen ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20'}`} aria-label="Synthesize">
+          <button onClick={() => { setSynthesisOpen(!synthesisOpen); if (!synthesisOpen) setSidebarOpen(false); }} className={`w-11 h-11 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors ${synthesisOpen ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20'}`} aria-label="Synthesize">
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
             </svg>
           </button>
 
           {/* Chapter Timeline */}
-          <button onClick={() => setShowTimeline(true)} className="w-10 h-10 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20" aria-label="Chapter timeline" title="Chapter timeline">
+          <button onClick={() => setShowTimeline(true)} className="w-11 h-11 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20" aria-label="Chapter timeline" title="Chapter timeline">
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -725,7 +725,7 @@ export default function ReadPage() {
                   setShowSettingsMenu(!showSettingsMenu);
                 }
               }}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-colors ${showSettingsMenu ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
+              className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors ${showSettingsMenu ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
               aria-label="Settings"
             >
               <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
