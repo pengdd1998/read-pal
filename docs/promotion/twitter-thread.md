@@ -52,8 +52,8 @@ Also includes:
 **Tweet 8:**
 Tech stack:
 - Python (FastAPI) + Next.js + LangChain
-- 27 API routers, 140+ endpoints
-- 275 tests, 16 database models
+- 27 API routers, 130+ endpoints
+- 320+ tests, 19 database models
 - Docker Compose — one command to deploy
 
 All open source, MIT licensed.
@@ -73,7 +73,7 @@ git clone https://github.com/pengdd1998/read-pal.git
 cd read-pal && docker compose up -d
 ```
 
-Live demo: http://175.178.66.207:8090
+Live demo: https://read-pal.example.com
 GitHub: https://github.com/pengdd1998/read-pal
 
 Star the repo if you find it useful! Would love your feedback. 🙏
@@ -122,11 +122,11 @@ The knowledge graph uses NetworkX with force-directed layout.
 Every highlight, note, and AI conversation extracts concepts. These get connected across books automatically. The visualization is an interactive SVG you can explore.
 
 **Tweet 6:**
-27 API routers, 140+ endpoints. Clean architecture:
+27 API routers, 130+ endpoints. Clean architecture:
 
-Routers (thin) → Services (logic) → Models (ORM)
+Routers (thin) -> Services (logic) -> Models (ORM)
 
-Every router is tested. 275 pytest tests with async support.
+Every router is tested. 320+ pytest tests with async support.
 
 ```python
 @router.post("/chat")
@@ -135,7 +135,7 @@ async def chat(req: ChatRequest, user=Depends(auth)):
 ```
 
 **Tweet 7:**
-The frontend is 50+ React components with Next.js App Router:
+The frontend is 60+ React components with Next.js App Router:
 
 - Reader view with custom themes/fonts
 - SSE streaming for AI chat

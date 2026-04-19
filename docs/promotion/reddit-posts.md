@@ -19,11 +19,11 @@ Hey everyone! After months of building, I want to share my side project: [read-p
 - Spaced repetition flashcards from highlights
 - Book clubs with discussions
 
-**Tech stack:** FastAPI + Next.js + LangChain + GLM (Zhipu AI). Full Docker Compose deployment.
+**Tech stack:** FastAPI + Next.js 14 + LangChain + GLM (Zhipu AI). Full Docker Compose deployment.
 
 **It's open source (MIT):** [github.com/pengdd1998/read-pal](https://github.com/pengdd1998/read-pal)
 
-**Live demo:** [http://175.178.66.207:8090](http://175.178.66.207:8090)
+**Live demo:** [https://read-pal.example.com](https://read-pal.example.com) *(replace with your actual domain)*
 
 Would love feedback! What would make you actually use something like this?
 
@@ -31,13 +31,13 @@ Would love feedback! What would make you actually use something like this?
 
 ## r/opensource
 
-**Title:** [Show] read-pal — Open-source AI reading companion with 140+ API endpoints, self-hostable
+**Title:** [Show] read-pal — Open-source AI reading companion with 130+ API endpoints, self-hostable
 
 **Body:**
 
 Built an open-source AI reading companion that you can self-host. Your reading data stays on your server.
 
-[GitHub](https://github.com/pengdd1998/read-pal) | [Live Demo](http://175.178.66.207:8090)
+[GitHub](https://github.com/pengdd1998/read-pal) | [Live Demo](https://read-pal.example.com)
 
 **What it does:**
 - Upload EPUBs, read alongside an AI companion that explains and asks questions
@@ -50,7 +50,7 @@ Built an open-source AI reading companion that you can self-host. Your reading d
 
 **Deployment:** `docker compose up -d` — PostgreSQL, Redis, FastAPI, Next.js, nginx in 5 containers.
 
-**Stats:** 27 routers, 140+ endpoints, 275 tests, 16 database models, MIT licensed.
+**Stats:** 27 routers, 130+ endpoints, 320+ tests, 19 database models, MIT licensed.
 
 Contributions welcome — there are good first issues for mobile, browser extension, i18n, and more.
 
@@ -85,13 +85,13 @@ Runs 5 containers: PostgreSQL, Redis, FastAPI API, Next.js web, nginx reverse pr
 
 **Why self-host:** Your highlights, notes, and AI conversations are personal data. This keeps them on your server. MIT licensed.
 
-[GitHub](https://github.com/pengdd1998/read-pal) | [Demo](http://175.178.66.207:8090)
+[GitHub](https://github.com/pengdd1998/read-pal) | [Demo](https://read-pal.example.com)
 
 ---
 
 ## r/Python
 
-**Title:** Built an AI reading companion with FastAPI + LangChain — 27 routers, 275 tests, open source
+**Title:** Built an AI reading companion with FastAPI + LangChain — 27 routers, 320+ tests, open source
 
 **Body:**
 
@@ -104,7 +104,7 @@ Sharing a project that showcases modern Python backend architecture: [read-pal](
 - **Circuit breaker** pattern for LLM API resilience
 - **Pydantic v2** schemas for request/response validation
 - **Alembic** migrations
-- **pytest + pytest-asyncio** with 275 tests
+- **pytest + pytest-asyncio** with 320+ tests
 
 The AI companion uses RAG to retrieve relevant book passages, conversation memory for context, and genre-aware prompts. The circuit breaker automatically falls back to a lighter model when the primary LLM is down.
 
@@ -121,15 +121,15 @@ Full code at [github.com/pengdd1998/read-pal](https://github.com/pengdd1998/read
 
 ## r/NextJS
 
-**Title:** Built an AI reading companion with Next.js 14 — 30+ pages, 50+ components, open source
+**Title:** Built an AI reading companion with Next.js 14 — 25+ pages, 60+ components, open source
 
 **Body:**
 
 Sharing the frontend of my open-source AI reading companion: [read-pal](https://github.com/pengdd1998/read-pal)
 
 **Frontend highlights:**
-- **Next.js 14 App Router** with 30+ pages
-- **50+ React components** — Reader view, AI companion chat, knowledge graph visualization, memory books
+- **Next.js 14 App Router** with 25+ pages
+- **60+ React components** — Reader view, AI companion chat, knowledge graph visualization, memory books
 - **TypeScript strict mode** throughout
 - **TailwindCSS** with design tokens and dark mode
 - **Dynamic imports** for heavy reading components (code splitting)
@@ -139,4 +139,4 @@ Sharing the frontend of my open-source AI reading companion: [read-pal](https://
 
 The reader view supports custom fonts, 3 themes (light/dark/sepia), and line height adjustment. The text selection system detects highlights and shows a floating toolbar for notes, AI questions, or bookmarking.
 
-[GitHub](https://github.com/pengdd1998/read-pal) | [Live Demo](http://175.178.66.207:8090)
+[GitHub](https://github.com/pengdd1998/read-pal) | [Live Demo](https://read-pal.example.com)

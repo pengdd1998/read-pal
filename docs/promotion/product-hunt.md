@@ -54,7 +54,7 @@ I'd highlight passages in Kindle, export to Readwise, and never look at them aga
 
 read-pal is an AI friend that reads alongside you. It explains passages in context, asks questions that deepen understanding, and builds a knowledge graph connecting everything you've read.
 
-**Tech stack:** Python (FastAPI) + Next.js + LangChain + GLM (Zhipu AI). Docker Compose for one-command deployment. 140+ API endpoints, 275 tests.
+**Tech stack:** Python (FastAPI) + Next.js 14 + LangChain + GLM (Zhipu AI). Docker Compose for one-command deployment. 130+ API endpoints, 320+ tests.
 
 It's completely open source (MIT) and self-hostable. Would love your feedback!
 

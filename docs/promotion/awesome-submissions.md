@@ -7,7 +7,7 @@
 **Entry:**
 
 ```markdown
-- [read-pal](https://github.com/pengdd1998/read-pal) - AI reading companion with chat, knowledge graph, flashcards, and memory books. ([Demo](http://175.178.66.207:8090)) `MIT` `Python/Nodejs/Docker`
+- [read-pal](https://github.com/pengdd1998/read-pal) - AI reading companion with chat, knowledge graph, flashcards, and memory books. ([Demo](https://read-pal.example.com)) `MIT` `Python/Nodejs/Docker`
 ```
 
 **PR Title:** Add read-pal - AI reading companion
@@ -35,7 +35,7 @@ Docker Compose deployment (PostgreSQL, Redis, FastAPI, Next.js, nginx). MIT lice
 **Entry:**
 
 ```markdown
-- [read-pal](https://github.com/pengdd1998/read-pal) - AI reading companion. 27 routers, 140+ endpoints, SQLAlchemy 2.0 async, LangChain RAG, circuit breaker pattern.
+- [read-pal](https://github.com/pengdd1998/read-pal) - AI reading companion. 27 routers, 130+ endpoints, SQLAlchemy 2.0 async, LangChain RAG, circuit breaker pattern.
 ```
 
 ---
@@ -47,7 +47,7 @@ Docker Compose deployment (PostgreSQL, Redis, FastAPI, Next.js, nginx). MIT lice
 **Entry:**
 
 ```markdown
-- [read-pal](https://github.com/pengdd1998/read-pal) - AI reading companion. Next.js 14 App Router, 30+ pages, 50+ components, SSE streaming, PWA.
+- [read-pal](https://github.com/pengdd1998/read-pal) - AI reading companion. Next.js 14 App Router, 25+ pages, 60+ components, SSE streaming, PWA.
 ```
 
 ---

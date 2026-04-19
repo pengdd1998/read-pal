@@ -1,6 +1,6 @@
 # I Built an Open-Source AI Reading Companion — Here's What I Learned
 
-*How a personal frustration with forgetting what I read turned into a full-stack open source project with 140+ API endpoints, 275 tests, and an AI that actually helps you understand books.*
+*How a personal frustration with forgetting what I read turned into a full-stack open source project with 130+ API endpoints, 320+ tests, and an AI that actually helps you understand books.*
 
 ---
 
@@ -83,10 +83,10 @@ Every highlight, note, and AI conversation feeds into a NetworkX graph. Concepts
 
 ### Scale of the Codebase
 
-- **27 API routers, 140+ endpoints** — Auth, Books, Annotations, AI Companion, Knowledge Graph, Flashcards, Book Clubs, Export, Webhooks...
-- **275 backend tests** — Every router is tested. pytest with async support.
-- **50+ React components** — Reader view, companion chat, knowledge graph, memory books, annotations sidebar...
-- **16 database models** — Full SQLAlchemy ORM with Alembic migrations.
+- **27 API routers, 130+ endpoints** — Auth, Books, Annotations, AI Companion, Knowledge Graph, Flashcards, Book Clubs, Export, Webhooks...
+- **320+ backend tests** — Every router is tested. pytest with async support.
+- **60+ React components** — Reader view, companion chat, knowledge graph, memory books, annotations sidebar...
+- **19 database models** — Full SQLAlchemy ORM with Alembic migrations.
 
 ## Why Open Source?
 

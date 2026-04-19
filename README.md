@@ -7,7 +7,7 @@
 Your AI reading companion — ask questions, explore ideas, and remember every insight.
 
 [![CI](https://github.com/pengdd1998/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd1998/read-pal/actions)
-[![Tests](https://img.shields.io/badge/tests-275%20passing-brightgreen)](packages/server/tests)
+[![Tests](https://img.shields.io/badge/tests-320%20passing-brightgreen)](packages/server/tests)
 [![Backend](https://img.shields.io/badge/backend-Python%203.12%20%7C%20FastAPI-blue)](packages/server)
 [![Frontend](https://img.shields.io/badge/frontend-Next.js%2014%20%7C%20TypeScript-black)](packages/web)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -95,13 +95,13 @@ read-pal/
 ├── packages/
 │   ├── server/         # Python 3.12 / FastAPI backend
 │   │   ├── app/
-│   │   │   ├── routers/       # 27 routers, 140+ endpoints
+│   │   │   ├── routers/       # 27 routers, 130+ endpoints
 │   │   │   ├── services/      # Business logic (LLM, knowledge, synthesis)
 │   │   │   ├── models/        # SQLAlchemy 2.0 ORM (16 models)
 │   │   │   ├── schemas/       # Pydantic request/response
 │   │   │   └── middleware/    # Auth, rate limiting
 │   │   ├── alembic/           # Database migrations
-│   │   └── tests/             # 275 pytest tests
+│   │   └── tests/             # 320 pytest tests
 │   └── web/           # Next.js 14 / TypeScript frontend
 │       └── src/
 │           ├── app/           # 30+ pages (App Router)
@@ -121,7 +121,7 @@ read-pal/
 | Search | Vector-ready (Pinecone configured) |
 | File Processing | ebooklib (EPUB), pypdf (PDF) |
 | Knowledge | NetworkX graph engine |
-| Testing | pytest (275 tests), Vitest (24 tests) |
+| Testing | pytest (320 tests), Vitest (24 tests) |
 
 ## Quickstart
 
@@ -190,7 +190,7 @@ Open http://localhost:3000 and start reading!
 ### 5. Run Tests
 
 ```bash
-# Backend (275 tests)
+# Backend (320 tests)
 cd packages/server
 uv run pytest tests/ -v
 

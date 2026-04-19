@@ -31,9 +31,9 @@ read-pal is an active reading partner:
 
 ## Technical Highlights
 
-- **27 API routers, 140+ endpoints** — Full REST API with OpenAPI spec
-- **275 passing tests** — pytest backend, vitest frontend
-- **LangChain + GLM** — AI powered by Zhipu AI's GLM models (China-friendly alternative to OpenAI)
+- **27 API routers, 130+ endpoints** — Full REST API with OpenAPI spec
+- **320+ passing tests** — pytest backend, Vitest frontend
+- **LangChain + GLM** — AI powered by Zhipu AI's GLM models (cost-effective alternative to OpenAI with strong multilingual support)
 - **Connection pooling + circuit breaker** — LLM service with fallback model, health checks
 - **RAG + conversation memory** — Retrieves relevant book passages and summarizes chat history
 - **Docker Compose** — One command to deploy the full stack (PostgreSQL, Redis, FastAPI, Next.js, nginx)
@@ -47,12 +47,12 @@ read-pal is an active reading partner:
 | Frontend | Next.js 14, TypeScript, TailwindCSS |
 | Database | PostgreSQL 16, Redis 7 |
 | Knowledge | NetworkX graph engine |
-| Testing | pytest (275), Vitest (24) |
+| Testing | pytest (320+), Vitest (24) |
 
 ## Self-Host in 60 Seconds
 
 ```bash
-git clone https://github.com/pengdd/read-pal.git
+git clone https://github.com/pengdd1998/read-pal.git
 cd read-pal
 cp .env.example .env  # Add your GLM API key
 docker compose up -d
@@ -76,7 +76,7 @@ read-pal is MIT licensed. Self-host on your own server. Export your data anytime
 
 ## Links
 
-- **GitHub:** https://github.com/pengdd/read-pal
+- **GitHub:** https://github.com/pengdd1998/read-pal
 - **Live Demo:** http://175.178.66.207:8090
 - **Docs:** Full API spec at /docs when running
 
