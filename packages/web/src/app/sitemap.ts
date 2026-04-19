@@ -16,7 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${APP_URL}/register`,
       lastModified,
       changeFrequency: 'monthly',
-      priority: 0.7,
+      priority: 0.8,
     },
     {
       url: `${APP_URL}/login`,
@@ -35,6 +35,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: 'weekly',
       priority: 0.8,
+    },
+    {
+      url: `${APP_URL}/developers`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${APP_URL}/flashcards`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${APP_URL}/stats`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.5,
     },
   ];
 }

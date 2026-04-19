@@ -1,88 +1,258 @@
+<div align="center">
+
 # read-pal
 
-> AI reading companion that captures your reading journey and turns it into a personal book.
+**A friend who reads with you.**
 
-## What It Does
+Your AI reading companion — ask questions, explore ideas, and remember every insight.
 
-Students and reading enthusiasts read with an AI partner. Every highlight, note, and AI discussion feeds into a **Personal Reading Book** — a unique, AI-enriched document generated when you finish reading.
+[![CI](https://github.com/pengdd/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd/read-pal/actions)
+[![Tests](https://img.shields.io/badge/tests-275%20passing-brightgreen)](packages/server/tests)
+[![Backend](https://img.shields.io/badge/backend-Python%203.12%20%7C%20FastAPI-blue)](packages/server)
+[![Frontend](https://img.shields.io/badge/frontend-Next.js%2014%20%7C%20TypeScript-black)](packages/web)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Status](https://img.shields.io/badge/status-beta%20live-orange)]()
 
-## Core Loop
+[Get Started](#quickstart) · [Features](#features) · [Architecture](#architecture) · [Deploy](#deployment) · [Contributing](CONTRIBUTING.md)
 
-```
-Read → Highlight/Note/Ask AI → Everything is captured → Finish book → Get YOUR book
-```
+</div>
 
-## What's Built
+---
 
-- **EPUB reader** with themes, font controls, chapter navigation
-- **AI companion chat** — context-aware, streams in real time (GLM-powered)
-- **Annotations** — highlights, notes, bookmarks with tags
-- **Personal Reading Book** — 6-chapter document weaving your journey (reading timeline, themed highlights, notes, AI conversations, insights, recommendations)
-- **Library & dashboard** — upload, browse, track reading streaks and stats
+## What is read-pal?
 
-## Tech Stack
+read-pal transforms passive reading into an active, intelligent experience. Upload any EPUB book and read alongside an AI companion who:
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 14, TypeScript, TailwindCSS |
-| Backend | Python 3.12+, FastAPI, SQLAlchemy 2.0 |
-| AI | GLM-4.7-flash (Zhipu AI) |
-| Database | PostgreSQL, Redis |
-| Search | Pinecone (vectors) |
-| Build | pnpm (frontend), uv (backend) |
-| Deploy | PM2 on self-hosted server |
+- **Explains** tricky passages in context
+- **Asks** thoughtful questions to deepen understanding
+- **Connects** ideas across all the books you've read
+- **Remembers** everything so you don't have to
 
-## Project Structure
+Think of it as a friend who's always read the same book and loves talking about it.
+
+## Features
+
+### AI Reading Companion
+Chat with your book in real-time. Highlight a passage, ask "why does this matter?", and get an instant, contextual answer. Your companion remembers your reading history and connects ideas across your entire library.
+
+### 5 Reading Friend Personas
+Choose a companion that matches your style:
+- **Sage** 🧙 — Wise & patient, asks deep questions
+- **Penny** 🌟 — Enthusiastic explorer of ideas
+- **Alex** ⚡ — Gentle challenger, pushes your thinking
+- **Quinn** 🌙 — Quiet companion, speaks when needed
+- **Sam** 📚 — Study buddy, practical & focused
+
+### Personal Knowledge Graph
+Ideas connect automatically across books. See how concepts relate in a visual, interactive graph that grows with every page you read.
+
+### Smart Annotations
+Highlights, notes, and bookmarks with AI-powered connections. Your annotations feed into the knowledge graph and AI conversations.
+
+### Spaced Repetition Flashcards
+SM-2 algorithm (Anki-style) generates flashcards from your reading. Review at optimal intervals to retain what you've learned.
+
+### Memory Books
+Beautiful 6-chapter compilations of your reading journey — highlights, notes, AI conversations, and insights woven into a personal document.
+
+### Reading Streaks & Stats
+Track your daily reading habit with streaks, activity heatmaps, reading speed analytics, and time tracking.
+
+### Book Clubs & Sharing
+Join or create book clubs, share reading cards, export highlights in APA/MLA/Chicago/Zotero formats.
+
+### Developer-Friendly
+Full REST API with OpenAPI spec, API key management, webhook support, and CSV/Markdown/JSON export.
+
+## Architecture
 
 ```
 read-pal/
 ├── packages/
-│   ├── server/    # Python backend (FastAPI)
-│   ├── web/       # Next.js web app
-│   └── shared/    # Shared TypeScript types
-├── docs/          # Documentation
-└── .claude/       # Claude Code config
+│   ├── server/         # Python 3.12 / FastAPI backend
+│   │   ├── app/
+│   │   │   ├── routers/       # 27 routers, 140+ endpoints
+│   │   │   ├── services/      # Business logic (LLM, knowledge, synthesis)
+│   │   │   ├── models/        # SQLAlchemy 2.0 ORM (16 models)
+│   │   │   ├── schemas/       # Pydantic request/response
+│   │   │   └── middleware/    # Auth, rate limiting
+│   │   ├── alembic/           # Database migrations
+│   │   └── tests/             # 275 pytest tests
+│   └── web/           # Next.js 14 / TypeScript frontend
+│       └── src/
+│           ├── app/           # 30+ pages (App Router)
+│           ├── components/    # 50+ React components
+│           └── hooks/         # 10 custom hooks
+└── docs/
 ```
 
-## Getting Started
+### Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python 3.12, FastAPI, SQLAlchemy 2.0 (async) |
+| AI Engine | GLM (Zhipu AI) via LangChain |
+| Frontend | Next.js 14, TypeScript, TailwindCSS |
+| Database | PostgreSQL 16, Redis 7 |
+| Search | Vector-ready (Pinecone configured) |
+| File Processing | ebooklib (EPUB), pypdf (PDF) |
+| Knowledge | NetworkX graph engine |
+| Testing | pytest (275 tests), Vitest (24 tests) |
+
+## Quickstart
+
+### Prerequisites
+
+- Python 3.12+
+- Node.js 20+
+- PostgreSQL 16
+- Redis 7
+- pnpm
+
+### 1. Clone & Install
 
 ```bash
-# Frontend
-pnpm install
-pnpm --filter @read-pal/shared build
-pnpm --filter @read-pal/web dev      # port 3000
+git clone https://github.com/pengdd/read-pal.git
+cd read-pal
 
 # Backend
 cd packages/server
 uv sync
-uvicorn app.main:app --reload --port 8000
+
+# Frontend
+cd ../../
+pnpm install
 ```
 
-## Environment Variables
+### 2. Configure Environment
 
-See `packages/server/.env`:
+```bash
+cp packages/server/.env.example packages/server/.env
+```
 
-- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — PostgreSQL
-- `REDIS_URL` — Redis
-- `GLM_API_KEY` — Zhipu AI
-- `JWT_SECRET` — Auth
-- `PINECONE_API_KEY` — Vector search
+Edit `.env` with your database, Redis, and AI API credentials.
+
+### 3. Database Setup
+
+```bash
+cd packages/server
+alembic upgrade head
+```
+
+### 4. Run Development Servers
+
+```bash
+# Backend (port 8000)
+cd packages/server
+uvicorn app.main:app --reload --port 8000
+
+# Frontend (port 3000)
+pnpm --filter @read-pal/web dev
+```
+
+Open http://localhost:3000 and start reading!
+
+### 5. Run Tests
+
+```bash
+# Backend (275 tests)
+cd packages/server
+uv run pytest tests/ -v
+
+# Frontend (24 tests)
+pnpm --filter @read-pal/web test
+```
+
+## API Overview
+
+read-pal exposes a comprehensive REST API under `/api/v1/`:
+
+| Category | Endpoints | Description |
+|----------|-----------|-------------|
+| Auth | 8 | Register, login, password reset, token refresh |
+| Books | 8 | CRUD, upload (EPUB/PDF), tags, stats |
+| Reading | 7 | Sessions, stats, heartbeat, speed tracking |
+| Annotations | 7 | Highlights, notes, bookmarks, search, tags |
+| AI Companion | 7 | Chat, stream (SSE), summarize, explain, questions |
+| AI Friend | 2 | 5 persona chat, relationship tracking |
+| Knowledge | 5 | Graph, themes, concepts, search |
+| Synthesis | 2 | Single-book & cross-book analysis |
+| Flashcards | 6 | SM-2 spaced repetition, decks |
+| Book Clubs | 7 | CRUD, join/leave, discussions, progress |
+| Collections | 6 | CRUD, add/remove books |
+| Export | 7 | CSV, Markdown, HTML, Zotero, APA, MLA, Chicago |
+| Stats | 3 | Dashboard, calendar, reading speed |
+| Share | 6 | Create, reading cards, export |
+| Webhooks | 5 | Events, delivery logs, test |
+| Settings | 3 | User preferences, reading goals |
+| API Keys | 4 | CRUD for personal access tokens |
+| Notifications | 4 | List, mark read, unread count |
+
+Full OpenAPI spec available at `/docs` when running the server.
 
 ## Deployment
 
-Self-hosted with PM2 standalone mode:
+### Docker Compose (Recommended)
 
 ```bash
-# On your server
-cd /path/to/read-pal
-git pull origin main
-cd packages/server && alembic upgrade head
-pm2 restart read-pal-api
-cd ../.. 
-cd packages/web && NEXT_PUBLIC_API_URL= pnpm build
-pm2 restart read-pal-web
+docker compose up -d
 ```
+
+### Manual Deployment
+
+```bash
+# Backend
+cd packages/server
+uv sync --production
+alembic upgrade head
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Frontend
+cd packages/web
+NEXT_PUBLIC_API_URL=https://your-api-url pnpm build
+pnpm start
+```
+
+### PM2 (Self-hosted)
+
+```bash
+pm2 start "uvicorn app.main:app --port 8000" --name read-pal-api
+pm2 start "pnpm start" --name read-pal-web
+```
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+Areas where we'd love help:
+- Mobile responsiveness improvements
+- Browser extension (Chrome/Firefox)
+- E-reader integrations (Kindle, Kobo)
+- Internationalization (i18n)
+- Accessibility audit and fixes
+
+## Roadmap
+
+### Phase 1 — MVP (Current)
+- [x] EPUB/PDF reading with AI companion
+- [x] Annotations and knowledge graph
+- [x] Spaced repetition flashcards
+- [x] Memory books
+- [x] Book clubs and sharing
+- [ ] 100 beta users
+- [ ] Mobile app (Capacitor)
+
+### Phase 2 — Multi-Agent
+- [ ] Research agent (web search, cross-document)
+- [ ] Coach agent (comprehension monitoring)
+- [ ] Synthesis agent (advanced cross-document)
+- [ ] Mobile apps (iOS/Android)
+
+### Phase 3 — Scale
+- [ ] Reading Persona system
+- [ ] Browser extension
+- [ ] Public launch
 
 ## License
 
-Proprietary — All rights reserved
+[MIT](LICENSE) — free for personal and commercial use.

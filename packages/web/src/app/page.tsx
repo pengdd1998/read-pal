@@ -150,6 +150,25 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Social Proof Stats */}
+      <section className="bg-surface-1 pt-8 pb-4">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center py-6">
+            {[
+              { value: '140+', label: 'API Endpoints' },
+              { value: '275', label: 'Tests Passing' },
+              { value: '16', label: 'Data Models' },
+              { value: '5', label: 'AI Personas' },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <div className="text-2xl sm:text-3xl font-bold text-primary-500">{stat.value}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
       <section className="bg-surface-1 pt-4 pb-20">
         {/* Trust bar */}
@@ -166,10 +185,6 @@ export default function HomePage() {
             <span className="flex items-center gap-1.5">
               <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
               EPUB support
-            </span>
-            <span className="flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-              AI-powered
             </span>
             <span className="flex items-center gap-1.5">
               <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
@@ -294,6 +309,93 @@ export default function HomePage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Built For */}
+      <section className="bg-surface-1 py-20">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
+              Built for People Who Actually Read
+            </h2>
+            <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">
+              Whether you&apos;re studying for exams, doing research, or just love books — read-pal adapts to you.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-8">
+            {[
+              {
+                emoji: '\uD83C\uDF93',
+                title: 'Students',
+                desc: 'Ace your exams with AI-powered study sessions, spaced repetition flashcards, and a knowledge graph that connects course material across semesters.',
+                features: ['Flashcards from highlights', 'Study mode with quizzes', 'Cross-book connections'],
+              },
+              {
+                emoji: '\uD83D\uDD0D',
+                title: 'Researchers',
+                desc: 'Synthesize insights across papers, track citations, and export in academic formats. Your research companion that never forgets a connection.',
+                features: ['APA/MLA/Chicago export', 'Cross-book synthesis', 'Knowledge graph'],
+              },
+              {
+                emoji: '\uD83D\uDCDA',
+                title: 'Book Lovers',
+                desc: 'Remember every insight from every book. Share beautiful reading cards, join book clubs, and build a personal library of ideas.',
+                features: ['Memory books', 'Reading streaks', 'Book clubs'],
+              },
+            ].map((persona) => (
+              <div key={persona.title} className="card-hover text-center">
+                <div className="text-4xl mb-4">{persona.emoji}</div>
+                <h3 className="text-lg font-bold text-navy-700 dark:text-white mb-2">{persona.title}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">{persona.desc}</p>
+                <ul className="space-y-1.5">
+                  {persona.features.map((f) => (
+                    <li key={f} className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1.5">
+                      <svg className="w-3 h-3 text-primary-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Open Source */}
+      <section className="max-w-5xl mx-auto px-4 py-20">
+        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-navy-700/5 to-primary-500/5 dark:from-navy-700/20 dark:to-primary-500/10 p-10 sm:p-14">
+          <div className="grid sm:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
+                Open Source
+              </h2>
+              <p className="mt-4 text-gray-600 dark:text-gray-400 leading-relaxed">
+                read-pal is open source under the MIT license. Inspect the code, contribute features,
+                or self-host on your own server. Built with transparency in mind.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                {['Python + FastAPI', 'Next.js + TypeScript', 'PostgreSQL', 'MIT License'].map((tag) => (
+                  <span key={tag} className="px-3 py-1.5 text-xs font-medium rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              {[
+                { value: '275+', label: 'Tests' },
+                { value: '27', label: 'API Routers' },
+                { value: '140+', label: 'Endpoints' },
+                { value: '50+', label: 'Components' },
+              ].map((stat) => (
+                <div key={stat.label} className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  <div className="text-2xl font-bold text-primary-500">{stat.value}</div>
+                  <div className="text-xs text-gray-500 mt-1">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
