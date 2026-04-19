@@ -10,7 +10,9 @@ const nextConfig = {
       : false,
   },
   async rewrites() {
-    const apiTarget = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:8000';
+    // In Docker, nginx handles API proxying — skip rewrites when API_URL is empty
+    const apiTarget = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
+    if (!apiTarget) return [];
     return [
       {
         source: '/api/:path*',
