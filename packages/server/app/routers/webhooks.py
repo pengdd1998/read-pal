@@ -45,7 +45,7 @@ async def test_webhook(
     """Test a webhook by sending a test payload."""
     try:
         webhooks = await webhook_service.list_webhooks(db, UUID(user['id']))
-        wh = next((w for w in webhooks if w.id == webhook_id), None)
+        wh = next((w for w in webhooks if str(w.id) == str(webhook_id)), None)
         if wh is None:
             raise ValueError('Webhook not found')
     except ValueError as exc:

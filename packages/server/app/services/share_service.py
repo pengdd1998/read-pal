@@ -56,8 +56,13 @@ async def get_share(
         return None
 
     now = datetime.now(timezone.utc)
-    if share.expires_at and share.expires_at < now:
-        return None
+    if share.expires_at:
+        # Ensure timezone-aware comparison
+        exp = share.expires_at
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp < now:
+            return None
 
     share.view_count = (share.view_count or 0) + 1
     await db.flush()

@@ -1,14 +1,17 @@
 """Shared test fixtures — SQLite in-memory DB, authenticated client, mocks."""
 
+import json
+import re
 import sqlite3
 from collections.abc import AsyncGenerator
 from unittest.mock import AsyncMock, patch
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import DefaultClause, JSON, String, TypeDecorator
+from sqlalchemy import DefaultClause, String, TypeDecorator
+from sqlalchemy.types import JSON as _JSON
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -17,6 +20,33 @@ from sqlalchemy.ext.asyncio import (
 
 from app.db import Base, get_db
 from app.main import app
+
+
+class _UuidSafeJSON(TypeDecorator):
+    """JSON type that serializes UUID objects to strings for SQLite compat."""
+
+    impl = _JSON
+    cache_ok = True
+
+    _UUID_RE = re.compile(
+        r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.I,
+    )
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = json.loads(json.dumps(value, default=str))
+        return value
+
+    def process_result_value(self, value, dialect):
+        if isinstance(value, list):
+            return [self._maybe_uuid(v) for v in value]
+        return value
+
+    @classmethod
+    def _maybe_uuid(cls, v):
+        if isinstance(v, str) and cls._UUID_RE.match(v):
+            return UUID(v)
+        return v
 
 # ---------------------------------------------------------------------------
 # SQLite in-memory engine with PostgreSQL-type compatibility
@@ -62,9 +92,9 @@ def _patch_metadata_for_sqlite():
         for column in table.columns:
             col_type = column.type
             if isinstance(col_type, PG_JSONB):
-                column.type = JSON()
+                column.type = _UuidSafeJSON()
             elif isinstance(col_type, PG_ARRAY):
-                column.type = JSON()
+                column.type = _UuidSafeJSON()
             elif isinstance(col_type, PG_UUID):
                 column.type = _UUIDAsString()
 
@@ -73,6 +103,11 @@ def _patch_metadata_for_sqlite():
                 clause = str(column.server_default.arg)
                 if 'gen_random_uuid' in clause or 'random()' in clause or 'md5(' in clause:
                     column.server_default = None
+                    # Add Python-side default for primary key UUID columns
+                    if column.primary_key and column.default is None:
+                        from sqlalchemy import ColumnDefault
+
+                        column.default = ColumnDefault(lambda ctx: str(uuid4()))
                 elif '::' in clause:
                     clean = re.sub(r'::[\w]+\b', '', clause)
                     column.server_default = DefaultClause(clean)
