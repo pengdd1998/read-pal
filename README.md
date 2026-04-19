@@ -6,11 +6,12 @@
 
 Your AI reading companion — ask questions, explore ideas, and remember every insight.
 
-[![CI](https://github.com/pengdd/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd/read-pal/actions)
+[![CI](https://github.com/pengdd1998/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd1998/read-pal/actions)
 [![Tests](https://img.shields.io/badge/tests-275%20passing-brightgreen)](packages/server/tests)
 [![Backend](https://img.shields.io/badge/backend-Python%203.12%20%7C%20FastAPI-blue)](packages/server)
 [![Frontend](https://img.shields.io/badge/frontend-Next.js%2014%20%7C%20TypeScript-black)](packages/web)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/pengdd1998/read-pal?style=social)](https://github.com/pengdd1998/read-pal)
 [![Status](https://img.shields.io/badge/status-beta%20live-orange)]()
 
 [Live Demo](http://175.178.66.207:8090) · [Get Started](#quickstart) · [Features](#features) · [Architecture](#architecture) · [Deploy](#deployment) · [Contributing](CONTRIBUTING.md)
@@ -51,7 +52,7 @@ Think of it as a friend who's always read the same book and loves talking about 
   </tr>
 </table>
 
-> Screenshots coming soon — see the [live demo](http://175.178.66.207:8090) for the full experience.
+> Try the [live demo](http://175.178.66.207:8090) to see the full experience.
 
 ## Features
 
