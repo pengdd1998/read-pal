@@ -105,7 +105,7 @@ jobs:
         run: cd packages/server && uv sync
 
       - name: Run tests
-        run: cd packages/server && pytest
+        run: cd packages/server && python -m pytest
         env:
           APP_ENV: test
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
