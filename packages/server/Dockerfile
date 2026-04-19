@@ -5,6 +5,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 WORKDIR /app
 
+# config available mirror source
+RUN uv config set index-url https://mirrors.aliyun.com/pypi/simple/
+RUN uv config set default-index-url https://mirrors.aliyun.com/pypi/simple/
+
 # Install deps first (cache layer)
 COPY pyproject.toml ./
 RUN uv sync --no-dev --no-install-project
