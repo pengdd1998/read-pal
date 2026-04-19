@@ -20,26 +20,35 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # --- Enums ---
+    # --- Enums (use IF NOT EXISTS to handle shared PG instances) ---
+    op.execute(
+        "CREATE TYPE IF NOT EXISTS annotation_type_enum "
+        "AS ENUM ('highlight', 'note', 'bookmark')"
+    )
+    op.execute(
+        "CREATE TYPE IF NOT EXISTS book_file_type_enum "
+        "AS ENUM ('epub', 'pdf')"
+    )
+    op.execute(
+        "CREATE TYPE IF NOT EXISTS book_status_enum "
+        "AS ENUM ('unread', 'reading', 'completed')"
+    )
+
     annotation_type = postgresql.ENUM(
         'highlight', 'note', 'bookmark',
         name='annotation_type_enum',
-        create_type=True,
+        create_type=False,
     )
     book_file_type = postgresql.ENUM(
         'epub', 'pdf',
         name='book_file_type_enum',
-        create_type=True,
+        create_type=False,
     )
     book_status = postgresql.ENUM(
         'unread', 'reading', 'completed',
         name='book_status_enum',
-        create_type=True,
+        create_type=False,
     )
-
-    annotation_type.create(op.get_bind(), checkfirst=True)
-    book_file_type.create(op.get_bind(), checkfirst=True)
-    book_status.create(op.get_bind(), checkfirst=True)
 
     # --- users ---
     op.create_table(
@@ -477,6 +486,6 @@ def downgrade() -> None:
     op.drop_table('books')
     op.drop_table('users')
 
-    postgresql.ENUM(name='annotation_type_enum').drop(op.get_bind(), checkfirst=True)
-    postgresql.ENUM(name='book_file_type_enum').drop(op.get_bind(), checkfirst=True)
-    postgresql.ENUM(name='book_status_enum').drop(op.get_bind(), checkfirst=True)
+    op.execute('DROP TYPE IF EXISTS annotation_type_enum')
+    op.execute('DROP TYPE IF EXISTS book_file_type_enum')
+    op.execute('DROP TYPE IF EXISTS book_status_enum')
