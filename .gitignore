@@ -104,6 +104,7 @@ credentials.*
 secrets/
 .secrets
 private/
+.env
 
 # Backup files
 *.bak
