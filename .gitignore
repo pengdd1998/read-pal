@@ -168,3 +168,7 @@ packages/shared/src/**/*.js.map
 
 # frontend design context
 .impeccable.md
+
+# Local-only docs and scripts (not source code)
+docs/
+scripts/
