@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev && \
 
 WORKDIR /app
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app /app
 

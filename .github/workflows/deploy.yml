@@ -21,7 +21,6 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script_stop: true
           command_timeout: 30m
           script: |
             set -euo pipefail
@@ -53,7 +52,7 @@ jobs:
             # 4. Run database migrations
             # -------------------------------------------------------
             echo ">>> Running database migrations..."
-            docker compose exec -T api uv run alembic upgrade head
+            docker compose exec -T api alembic upgrade head
 
             # -------------------------------------------------------
             # 5. Health checks with retry
