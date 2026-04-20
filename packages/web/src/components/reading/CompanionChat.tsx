@@ -28,11 +28,14 @@ function extractCodeBlocks(html: string, maxChars = 2000): string {
   while ((match = preRegex.exec(html)) !== null && totalChars < maxChars) {
     const lang = match[1] || 'code';
     const code = match[2]
-      .replace(/<[^>]*>/g, '')
+      .replace(/<\/?[^>]+(>|$)/g, '')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&amp;/g, '&')
       .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
       .trim();
     if (code) {
       const block = `[${lang}]\n${code}`;
@@ -189,7 +192,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
               totalPages: totalPages ?? 0,
               bookTitle: bookTitle ?? '',
               author: author ?? '',
-              chapterContent: chapterContent ? chapterContent.replace(/<[^>]*>/g, '').slice(0, 3000) : '',
+              chapterContent: chapterContent ? purifySync(chapterContent).slice(0, 3000) : '',
               nearbyCode: extractCodeBlocks(chapterContent ?? ''),
               genres: genreMetadata,
               bookDescription,

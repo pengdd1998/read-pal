@@ -26,8 +26,10 @@ export async function loadDOMPurify(): Promise<typeof import('dompurify').defaul
  */
 export function purifySync(html: string, config?: Record<string, unknown>): string {
   if (_domPurify) return _domPurify.sanitize(html, config);
-  // Safe fallback: strip ALL tags, keep text content only
-  return html.replace(/<[^>]*>/g, '');
+  // Safe fallback: use textarea trick to decode HTML entities and strip tags
+  const ta = document.createElement('textarea');
+  ta.innerHTML = html;
+  return ta.value;
 }
 
 /**

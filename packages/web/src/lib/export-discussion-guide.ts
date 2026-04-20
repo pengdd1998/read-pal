@@ -332,7 +332,7 @@ export function downloadDiscussionGuide(
   html: string,
   bookTitle: string,
 ): void {
-  const safeTitle = bookTitle.replace(/[^a-zA-Z0-9]/g, '-').slice(0, 40);
+  const safeTitle = bookTitle.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-').slice(0, 40);
   const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

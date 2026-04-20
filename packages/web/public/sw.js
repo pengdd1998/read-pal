@@ -328,13 +328,22 @@ function wrapRequest(idbRequest) {
 // --- Message Handler ---
 
 self.addEventListener('message', (event) => {
+  // Only accept messages from same origin
+  if (event.source && event.source.url && new URL(event.source.url).origin !== location.origin) {
+    return;
+  }
+
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 
   // Cache book content for offline reading
   if (event.data && event.data.type === 'CACHE_BOOK') {
-    event.waitUntil(cacheBookContent(event.data.bookId, event.data.chapters));
+    // Validate bookId to prevent injection
+    const bookId = String(event.data.bookId || '').replace(/[^a-zA-Z0-9-]/g, '');
+    if (bookId) {
+      event.waitUntil(cacheBookContent(bookId, event.data.chapters));
+    }
   }
 
   // Clear all caches
@@ -361,7 +370,12 @@ async function cacheBookContent(bookId, chapters) {
   let cached = 0;
   for (const chapter of chapters) {
     try {
-      const url = `/api/books/${bookId}/chapters/${chapter.id}/content`;
+      // Validate chapter ID to prevent URL injection
+      const chapterId = String(chapter.id || '').replace(/[^a-zA-Z0-9-]/g, '');
+      if (!chapterId) continue;
+      const url = `/api/books/${bookId}/chapters/${chapterId}/content`;
+      // Verify URL is same-origin
+      if (new URL(url, location.origin).origin !== location.origin) continue;
       const response = await fetch(url);
       if (response.ok) {
         const headers = new Headers(response.headers);
