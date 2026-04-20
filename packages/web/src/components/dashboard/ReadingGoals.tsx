@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
 interface ReadingGoalsData {
@@ -89,6 +90,7 @@ function ProgressRing({
 }
 
 export function ReadingGoals() {
+  const t = useTranslations('dashboard');
   const [data, setData] = useState<ReadingGoalsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +106,7 @@ export function ReadingGoals() {
         setPendingMinutes((res.data).dailyGoalMinutes);
       }
     } catch {
-      setError('Failed to load reading goals');
+      setError(t('goals_failed_load'));
     } finally {
       setLoading(false);
     }
@@ -171,9 +173,9 @@ export function ReadingGoals() {
           <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          <h3 className="font-bold text-gray-900 dark:text-white">Reading Goals</h3>
+          <h3 className="font-bold text-gray-900 dark:text-white">{t('goals_title')}</h3>
         </div>
-        <p className="text-sm text-gray-500">{error ?? 'No goal data available'}</p>
+        <p className="text-sm text-gray-500">{error ?? t('goals_no_data')}</p>
       </div>
     );
   }
@@ -188,7 +190,7 @@ export function ReadingGoals() {
         <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
-        <h3 className="font-bold text-gray-900 dark:text-white">Reading Goals</h3>
+        <h3 className="font-bold text-gray-900 dark:text-white">{t('goals_title')}</h3>
       </div>
 
       {/* Progress Rings */}
@@ -208,20 +210,20 @@ export function ReadingGoals() {
                 {data.todayMinutes}
               </span>
               <span className="text-xs text-gray-400">/{data.dailyGoalMinutes}</span>
-              <div className="text-[10px] text-gray-500 mt-0.5">min today</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">{t('goals_min_today')}</div>
             </div>
           </ProgressRing>
           <p className="text-xs font-medium text-center">
             {dailyComplete ? (
-              <span className="text-emerald-600 dark:text-emerald-400">Goal reached!</span>
+              <span className="text-emerald-600 dark:text-emerald-400">{t('goals_reached')}</span>
             ) : (
               <span className="text-gray-500 dark:text-gray-400">
-                {data.dailyRemaining} min to go
+                {t('goals_min_to_go', { count: data.dailyRemaining })}
               </span>
             )}
           </p>
           <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-            Daily
+            {t('goals_daily')}
           </span>
         </div>
 
@@ -240,20 +242,20 @@ export function ReadingGoals() {
                 {data.completed}
               </span>
               <span className="text-xs text-gray-400">/{data.goal}</span>
-              <div className="text-[10px] text-gray-500 mt-0.5">books this week</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">{t('goals_books_this_week')}</div>
             </div>
           </ProgressRing>
           <p className="text-xs font-medium text-center">
             {weeklyComplete ? (
-              <span className="text-emerald-600 dark:text-emerald-400">Goal reached!</span>
+              <span className="text-emerald-600 dark:text-emerald-400">{t('goals_reached')}</span>
             ) : (
               <span className="text-gray-500 dark:text-gray-400">
-                {data.remaining} book{data.remaining !== 1 ? 's' : ''} to go
+                {t('goals_books_to_go', { count: data.remaining })}
               </span>
             )}
           </p>
           <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">
-            Weekly
+            {t('goals_weekly')}
           </span>
         </div>
       </div>
@@ -261,7 +263,7 @@ export function ReadingGoals() {
       {/* In-progress count */}
       {data.inProgress > 0 && (
         <p className="text-center text-xs text-gray-400 mt-4">
-          {data.inProgress} book{data.inProgress !== 1 ? 's' : ''} in progress
+          {t('goals_books_in_progress', { count: data.inProgress })}
         </p>
       )}
 
@@ -279,12 +281,12 @@ export function ReadingGoals() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            Change daily goal ({data.dailyGoalMinutes} min)
+            {t('goals_change_daily', { minutes: data.dailyGoalMinutes })}
           </button>
         ) : (
           <div className="flex flex-col items-center gap-3">
             <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-              Daily reading goal
+              {t('goals_daily_reading_goal')}
             </p>
             <div className="flex items-center gap-3">
               <button
@@ -315,17 +317,17 @@ export function ReadingGoals() {
                 disabled={saving}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? t('goals_saving') : t('goals_save')}
               </button>
               <button
                 onClick={() => setEditingGoal(false)}
                 disabled={saving}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Cancel
+                {t('goals_cancel')}
               </button>
             </div>
-            <p className="text-[10px] text-gray-400">Range: 10-120 minutes</p>
+            <p className="text-[10px] text-gray-400">{t('goals_range_hint')}</p>
           </div>
         )}
       </div>

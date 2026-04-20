@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Collection } from '@read-pal/shared';
 import { useToast } from '@/components/Toast';
@@ -13,17 +14,6 @@ interface CollectionsSidebarProps {
 const DEFAULT_COLORS = [
   '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6',
   '#ef4444', '#ec4899', '#06b6d4', '#84cc16',
-];
-
-const ICONS: { value: string; label: string }[] = [
-  { value: 'folder', label: 'Folder' },
-  { value: 'book', label: 'Books' },
-  { value: 'star', label: 'Favorites' },
-  { value: 'briefcase', label: 'Work' },
-  { value: 'heart', label: 'Love' },
-  { value: 'graduation-cap', label: 'Study' },
-  { value: 'lightbulb', label: 'Ideas' },
-  { value: 'bookmark', label: 'To Read' },
 ];
 
 function CollectionIcon({ icon, color }: { icon: string; color: string }) {
@@ -50,6 +40,7 @@ function CollectionIcon({ icon, color }: { icon: string; color: string }) {
 
 export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: CollectionsSidebarProps) {
   const { toast } = useToast();
+  const t = useTranslations('library');
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -59,6 +50,17 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [collapsed, setCollapsed] = useState(false);
+
+  const ICONS: { value: string; label: string }[] = useMemo(() => [
+    { value: 'folder', label: t('icon_folder') },
+    { value: 'book', label: t('icon_books') },
+    { value: 'star', label: t('icon_favorites') },
+    { value: 'briefcase', label: t('icon_work') },
+    { value: 'heart', label: t('icon_love') },
+    { value: 'graduation-cap', label: t('icon_study') },
+    { value: 'lightbulb', label: t('icon_ideas') },
+    { value: 'bookmark', label: t('icon_to_read') },
+  ], [t]);
 
   const loadCollections = useCallback(async () => {
     try {
@@ -91,10 +93,10 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
         setNewIcon('folder');
         setNewColor('#f59e0b');
         setShowCreate(false);
-        toast('Collection created!', 'success');
+        toast(t('collections_created'), 'success');
       }
     } catch {
-      toast('Failed to create collection', 'error');
+      toast(t('collections_create_failed'), 'error');
     }
   };
 
@@ -104,10 +106,10 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
     if (activeCollectionId === id) onSelectCollection(null);
     try {
       await api.delete(`/api/collections/${id}`);
-      toast('Collection deleted', 'success');
+      toast(t('collections_deleted'), 'success');
     } catch {
       setCollections(prev);
-      toast('Failed to delete', 'error');
+      toast(t('collections_delete_failed'), 'error');
     }
   };
 
@@ -119,7 +121,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
         setCollections((prev) => prev.map((c) => (c.id === id ? (res.data as Collection) : c)));
       }
     } catch {
-      toast('Failed to rename', 'error');
+      toast(t('collections_rename_failed'), 'error');
     }
     setEditingId(null);
   };
@@ -146,12 +148,12 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
           <svg className={`w-3 h-3 transition-transform ${collapsed ? '' : 'rotate-90'}`} fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
           </svg>
-          Collections
+          {t('collections_title')}
         </button>
         <button
           onClick={() => setShowCreate((v) => !v)}
           className="p-1 rounded-md text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          title="New collection"
+          title={t('collections_new')}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -169,7 +171,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setShowCreate(false); }}
-                placeholder="Collection name..."
+                placeholder={t('collections_name_placeholder')}
                 className="w-full px-2.5 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-1 focus:ring-primary-400/50"
                 autoFocus
               />
@@ -203,13 +205,13 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
                   disabled={!newName.trim()}
                   className="flex-1 px-3 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Create
+                  {t('collections_create')}
                 </button>
                 <button
                   onClick={() => { setShowCreate(false); setNewName(''); }}
                   className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 >
-                  Cancel
+                  {t('collections_cancel')}
                 </button>
               </div>
             </div>
@@ -227,7 +229,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            All Books
+            {t('collections_all_books')}
           </button>
 
           {/* Collection list */}
@@ -263,7 +265,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingId(col.id); setEditName(col.name); }}
                       className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                      title="Rename"
+                      title={t('collections_rename')}
                     >
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -272,7 +274,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(col.id); }}
                       className="p-0.5 rounded text-gray-400 hover:text-red-500"
-                      title="Delete"
+                      title={t('collections_delete')}
                     >
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -286,7 +288,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
 
           {collections.length === 0 && !showCreate && (
             <p className="text-xs text-gray-400 dark:text-gray-500 px-3 py-2">
-              No collections yet. Create one to organize your books.
+              {t('collections_empty')}
             </p>
           )}
         </>

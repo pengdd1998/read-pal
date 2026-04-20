@@ -5,9 +5,12 @@ from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 
 class AnnotationCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     book_id: UUID
     type: Literal['highlight', 'note', 'bookmark']
     location: dict
@@ -18,6 +21,8 @@ class AnnotationCreate(BaseModel):
 
 
 class AnnotationUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     content: str | None = Field(None, min_length=1)
     color: str | None = Field(None, max_length=7)
     note: str | None = None

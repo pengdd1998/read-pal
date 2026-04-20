@@ -361,7 +361,7 @@ export default function PersonalBookPage() {
               srcDoc={book.htmlContent}
               title="Personal Reading Book"
               className="w-full min-h-[80vh] border border-gray-200 dark:border-gray-700 rounded-xl bg-[#faf7f2]"
-              sandbox="allow-same-origin"
+              sandbox="allow-same-origin allow-scripts"
               onLoad={() => {
                 // Auto-resize iframe to content
                 try {

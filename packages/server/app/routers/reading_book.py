@@ -37,7 +37,7 @@ async def generate_memory_book(
         )
         return {
             'success': True,
-            'data': result.model_dump(mode='json'),
+            'data': result.model_dump(mode='json', by_alias=True),
         }
     except ValueError as exc:
         raise HTTPException(
@@ -73,7 +73,7 @@ async def get_memory_book(
     response = MemoryBookResponse.model_validate(memory_book)
     return {
         'success': True,
-        'data': response.model_dump(mode='json'),
+        'data': response.model_dump(mode='json', by_alias=True),
     }
 
 
@@ -93,7 +93,7 @@ async def list_memory_books(
     return {
         'success': True,
         'data': [
-            MemoryBookResponse.model_validate(mb).model_dump(mode='json')
+            MemoryBookResponse.model_validate(mb).model_dump(mode='json', by_alias=True)
             for mb in books
         ],
     }

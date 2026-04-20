@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -21,12 +22,6 @@ interface BookCardProps {
   onDelete?: (id: string) => void;
   onTagsChange?: (id: string, tags: string[]) => void;
 }
-
-const STATUS_CONFIG = {
-  unread: { label: 'Unread', dot: 'bg-gray-300', ring: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
-  reading: { label: 'Reading', dot: 'bg-primary-400', ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
-  completed: { label: 'Completed', dot: 'bg-emerald-400', ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
-} as const;
 
 export function BookCard({
   id,
@@ -49,6 +44,14 @@ export function BookCard({
   const [cachedOffline, setCachedOffline] = useState(false);
   const [showCollectionPicker, setShowCollectionPicker] = useState(false);
   const router = useRouter();
+  const t = useTranslations('library');
+
+  const STATUS_CONFIG = {
+    unread: { label: t('card_unread'), dot: 'bg-gray-300', ring: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
+    reading: { label: t('card_reading'), dot: 'bg-primary-400', ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
+    completed: { label: t('card_completed'), dot: 'bg-emerald-400', ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
+  } as const;
+
   const cfg = STATUS_CONFIG[status];
 
   // Check if book is cached for offline
@@ -152,7 +155,7 @@ export function BookCard({
           {coverUrl ? (
             <img
               src={coverUrl}
-              alt={`Cover of ${title}`}
+              alt={t('card_cover_of', { title })}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -168,7 +171,7 @@ export function BookCard({
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/book/${id}`); }}
             className="absolute bottom-1 right-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50 transition-all duration-200"
-            aria-label="Book details"
+            aria-label={t('card_book_details')}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -178,7 +181,7 @@ export function BookCard({
           {/* Offline cache button */}
           <button
             onClick={handleCacheOffline}
-            aria-label={cachedOffline ? 'Available offline' : 'Save for offline reading'}
+            aria-label={cachedOffline ? t('card_available_offline') : t('card_save_offline')}
             className={`absolute bottom-1 left-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all duration-200 ${
               cachedOffline
                 ? 'bg-emerald-500/80 text-white opacity-100'
@@ -201,13 +204,13 @@ export function BookCard({
           {/* Delete button - shows on hover */}
           <button
             onClick={handleDelete}
-            aria-label={confirmDelete ? 'Confirm delete book' : 'Delete book'}
+            aria-label={confirmDelete ? t('card_confirm_delete') : t('card_delete_book')}
             className={`absolute top-2 left-2.5 p-2 rounded-lg transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center ${
               confirmDelete
                 ? 'bg-red-500 text-white opacity-100'
                 : 'bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-red-500'
             }`}
-            title={confirmDelete ? 'Click again to confirm' : 'Delete book'}
+            title={confirmDelete ? t('card_click_confirm') : t('card_delete_book')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -218,9 +221,9 @@ export function BookCard({
           <div className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowCollectionPicker((v) => !v); }}
-              aria-label="Add to collection"
+              aria-label={t('card_add_to_collection')}
               className="p-2 rounded-lg bg-black/40 text-white hover:bg-black/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
-              title="Add to collection"
+              title={t('card_add_to_collection')}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -276,8 +279,8 @@ export function BookCard({
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={(e) => { e.stopPropagation(); handleAddTag(e); }}
               onBlur={() => setEditingTags(false)}
-              placeholder="tag..."
-              aria-label="Add a tag"
+              placeholder={t('card_tag_placeholder')}
+              aria-label={t('card_add_tag')}
               className="px-1.5 py-0.5 text-[9px] rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 w-16 focus:outline-none focus:ring-1 focus:ring-amber-400"
               autoFocus
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -285,10 +288,10 @@ export function BookCard({
           ) : (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingTags(true); }}
-              aria-label="Add tag"
+              aria-label={t('card_add_tag')}
               className="px-1.5 py-0.5 rounded text-[9px] text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
             >
-              + tag
+              {t('card_plus_tag')}
             </button>
           )}
         </div>
@@ -311,7 +314,7 @@ export function BookCard({
             </div>
             <div className="flex items-center justify-between mt-1.5">
               <p className="text-[10px] text-gray-400 tabular-nums">
-                {currentPage} / {totalPages} pages
+                {t('card_pages', { current: currentPage, total: totalPages })}
               </p>
               <p className="text-[10px] text-primary-500 font-semibold tabular-nums">
                 {progress}%

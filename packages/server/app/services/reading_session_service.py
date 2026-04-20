@@ -70,14 +70,19 @@ async def end_session(
     session.is_active = False
 
     # Apply additional update fields if provided
+    current_page_from_client = None
+    total_pages_from_client = None
     if data:
         update_data = data.model_dump(exclude_unset=True)
+        current_page_from_client = update_data.pop('current_page', None)
+        total_pages_from_client = update_data.pop('total_pages', None)
         for field, value in update_data.items():
             if field != 'is_active':
                 setattr(session, field, value)
 
-    # Update book current_page, progress, and last_read_at
-    if session.pages_read:
+    # Update book progress
+    should_update_book = session.pages_read or current_page_from_client is not None
+    if should_update_book:
         book_result = await db.execute(
             select(Book).where(Book.id == session.book_id, Book.user_id == user_id),
         )
@@ -85,10 +90,15 @@ async def end_session(
         if book:
             book.last_read_at = now
             if book.total_pages > 0:
-                book.current_page = min(
-                    book.current_page + session.pages_read,
-                    book.total_pages,
-                )
+                if current_page_from_client is not None:
+                    # Frontend sends absolute page position — use it directly
+                    book.current_page = min(current_page_from_client, book.total_pages)
+                else:
+                    # Fallback: add delta
+                    book.current_page = min(
+                        book.current_page + session.pages_read,
+                        book.total_pages,
+                    )
                 book.progress = Decimal(
                     str(round((book.current_page / book.total_pages) * 100, 2)),
                 )

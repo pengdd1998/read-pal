@@ -7,10 +7,13 @@ from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
 class MemoryBookGenerateRequest(BaseModel):
     """Request body for generating a memory book."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     book_id: UUID
     format: Literal[
@@ -34,4 +37,8 @@ class MemoryBookResponse(BaseModel):
     html_content: str | None
     generated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )

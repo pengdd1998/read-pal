@@ -3,15 +3,20 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic.alias_generators import to_camel
 
 
 class LoginRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     email: EmailStr
     password: str = Field(max_length=72)
 
 
 class RegisterRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
     name: str = Field(min_length=1, max_length=100)
@@ -34,16 +39,22 @@ class AuthResponse(BaseModel):
 
 
 class UpdateProfileRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     name: str | None = Field(None, min_length=1, max_length=100)
     avatar: str | None = None
     settings: dict | None = None
 
 
 class ForgotPasswordRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     email: EmailStr
 
 
 class ResetPasswordRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     token: str
     password: str = Field(min_length=8, max_length=72)
 

@@ -190,10 +190,14 @@ async def end_session_post(
 @router.post('/{session_id}/heartbeat')
 async def heartbeat_session(
     session_id: UUID,
+    body: dict | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Update session activity timestamp (heartbeat)."""
+    """Update session activity timestamp (heartbeat).
+
+    Optionally accepts ``pagesRead`` to track reading progress.
+    """
     result = await db.execute(
         select(ReadingSession).where(
             ReadingSession.id == session_id,
@@ -207,8 +211,56 @@ async def heartbeat_session(
             detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
         )
     session.updated_at = utcnow()
+    # Accept pagesRead (camelCase) from frontend
+    if body:
+        pages_read = body.get('pagesRead') or body.get('pages_read')
+        if pages_read is not None:
+            session.pages_read = int(pages_read)
     await db.flush()
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
+
+
+@router.post('/{session_id}/summarize')
+async def summarize_session(
+    session_id: UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Generate a brief AI summary of the reading session."""
+    session = await reading_session_service.get_session(
+        db, UUID(current_user['id']), session_id,
+    )
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
+        )
+
+    # Build a simple contextual summary based on session data
+    duration_min = (session.duration or 0) // 60
+    pages = session.pages_read or 0
+    highlights = session.highlights or 0
+    notes = session.notes or 0
+
+    parts = []
+    if duration_min > 0:
+        parts.append(f'Read for {duration_min} minute{"s" if duration_min != 1 else ""}')
+    if pages > 0:
+        parts.append(f'covered {pages} page{"s" if pages != 1 else ""}')
+    if highlights > 0:
+        parts.append(f'made {highlights} highlight{"s" if highlights != 1 else ""}')
+    if notes > 0:
+        parts.append(f'wrote {notes} note{"s" if notes != 1 else ""}')
+
+    if parts:
+        summary = 'You ' + ', and '.join([
+            ', '.join(parts[:-1]),
+            parts[-1],
+        ]) + '.' if len(parts) > 1 else parts[0] + '.'
+    else:
+        summary = 'Session recorded successfully.'
+
+    return {'success': True, 'data': {'summary': summary}}
 
 
 @router.get('/book/{book_id}/log')

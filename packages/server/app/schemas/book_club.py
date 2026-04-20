@@ -3,10 +3,13 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 
 class BookClubCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     name: str = Field(min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
     cover_image: str | None = None
@@ -15,6 +18,8 @@ class BookClubCreate(BaseModel):
 
 
 class BookClubUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
     cover_image: str | None = None
@@ -37,14 +42,18 @@ class BookClubResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {'from_attributes': True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClubJoinRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     invite_code: str
 
 
 class DiscussionCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     content: str = Field(min_length=1, max_length=2000)
 
 
@@ -55,7 +64,7 @@ class DiscussionResponse(BaseModel):
     content: str
     created_at: datetime
 
-    model_config = {'from_attributes': True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MemberResponse(BaseModel):
@@ -66,4 +75,4 @@ class MemberResponse(BaseModel):
     joined_at: datetime
     user_name: str | None = None
 
-    model_config = {'from_attributes': True}
+    model_config = ConfigDict(from_attributes=True)

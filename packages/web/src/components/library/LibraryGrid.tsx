@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
 import { BookCard } from './BookCard';
@@ -13,14 +14,6 @@ interface LibraryGridProps {
 
 type StatusFilter = 'all' | 'reading' | 'completed' | 'unread';
 type SortOption = 'addedAt-desc' | 'title-asc' | 'author-asc' | 'lastReadAt-desc' | 'progress-desc';
-
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'addedAt-desc', label: 'Recently Added' },
-  { value: 'title-asc', label: 'Title A-Z' },
-  { value: 'author-asc', label: 'Author A-Z' },
-  { value: 'lastReadAt-desc', label: 'Last Read' },
-  { value: 'progress-desc', label: 'Progress' },
-];
 
 function sortBooks(bookList: Book[], sortOption: SortOption): Book[] {
   const sorted = [...bookList];
@@ -49,6 +42,8 @@ function sortBooks(bookList: Book[], sortOption: SortOption): Book[] {
 }
 
 export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGridProps) {
+  const t = useTranslations('library');
+  const tc = useTranslations('common');
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -61,6 +56,14 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
   const [sortOption, setSortOption] = useState<SortOption>('addedAt-desc');
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
+  const SORT_OPTIONS: { value: SortOption; label: string }[] = useMemo(() => [
+    { value: 'addedAt-desc', label: t('sort_recently_added') },
+    { value: 'title-asc', label: t('sort_title_az') },
+    { value: 'author-asc', label: t('sort_author_az') },
+    { value: 'lastReadAt-desc', label: t('sort_last_read') },
+    { value: 'progress-desc', label: t('sort_progress') },
+  ], [t]);
+
   const loadLibrary = useCallback(async () => {
     try {
       setLoading(true);
@@ -71,10 +74,10 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
         const data = response.data;
         setBooks(Array.isArray(data) ? data : []);
       } else {
-        setError(response.error?.message || 'Failed to load library');
+        setError(response.error?.message || t('failed_load_library'));
       }
     } catch {
-      setError('Failed to connect to server');
+      setError(t('failed_connect_server'));
     } finally {
       setLoading(false);
     }
@@ -172,7 +175,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
               onClick={loadLibrary}
               className="ml-4 px-3 py-1.5 bg-red-100 dark:bg-red-900 rounded-lg text-xs font-medium hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
             >
-              Retry
+              {tc('retry')}
             </button>
           </div>
         </div>
@@ -200,10 +203,10 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
               </div>
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white text-xl mb-2">
-              Start your reading journey
+              {t('start_reading_journey')}
             </h3>
             <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6 leading-relaxed">
-              Upload an EPUB or PDF, or try a sample book to explore AI chat, highlights, and your Personal Reading Book.
+              {t('empty_state_desc')}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
@@ -215,7 +218,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
-                {seeding ? 'Loading sample...' : 'Try The Great Gatsby'}
+                {seeding ? t('loading_sample') : t('try_gatsby')}
               </button>
               <button
                 onClick={() => uploaderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
@@ -224,7 +227,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                Upload your own book
+                {t('upload_own_book')}
               </button>
             </div>
 
@@ -232,7 +235,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              Drag and drop EPUB or PDF files onto the upload area
+              {t('drag_drop_hint')}
             </p>
           </div>
         </div>
@@ -253,7 +256,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by title or author..."
+                placeholder={t('search_title_author')}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all duration-200"
               />
               {searchQuery && (
@@ -272,10 +275,10 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
                 {([
-                  ['all', 'All'],
-                  ['reading', 'Reading'],
-                  ['completed', 'Done'],
-                  ['unread', 'Unread'],
+                  ['all', t('status_all')],
+                  ['reading', t('status_reading')],
+                  ['completed', t('status_done')],
+                  ['unread', t('status_unread')],
                 ] as [StatusFilter, string][]).map(([value, label]) => (
                   <button
                     key={value}
@@ -310,15 +313,15 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
           <div className="flex items-center justify-between animate-slide-up">
             <p className="text-sm text-gray-500">
               {filteredBooks.length === books.length
-                ? `${books.length} book${books.length !== 1 ? 's' : ''} in your library`
-                : `${filteredBooks.length} of ${books.length} books`}
+                ? t('books_in_library', { count: books.length })
+                : t('books_of_total', { filtered: filteredBooks.length, total: books.length })}
             </p>
             <button
               onClick={handleSeedSample}
               disabled={seeding}
               className="text-xs text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {seeding ? 'Loading...' : '+ Add sample book'}
+              {seeding ? t('loading_sample') : t('add_sample_book')}
             </button>
           </div>
 
@@ -356,14 +359,14 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
                 </svg>
               </div>
               <p className="text-gray-500 dark:text-gray-400 mb-1">
-                No books match &quot;{searchQuery}&quot;
-                {statusFilter !== 'all' ? ` with status "${statusFilter}"` : ''}
+                {t('no_books_match', { query: searchQuery })}
+                {statusFilter !== 'all' ? ` ${t('with_status', { status: statusFilter })}` : ''}
               </p>
               <button
                 onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}
                 className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
               >
-                Clear filters
+                {t('clear_filters')}
               </button>
             </div>
           )}

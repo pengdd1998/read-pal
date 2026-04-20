@@ -3,11 +3,14 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 
 class ChatRequest(BaseModel):
     """Request body for the reading companion chat."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     book_id: UUID
     message: str = Field(min_length=1, max_length=4000)
@@ -24,6 +27,8 @@ class ChatResponse(BaseModel):
 class FriendChatRequest(BaseModel):
     """Request body for the reading friend chat."""
 
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     persona: Literal['sage', 'penny', 'alex', 'quinn', 'sam']
     message: str = Field(min_length=1, max_length=4000)
     book_id: UUID | None = None
@@ -32,12 +37,16 @@ class FriendChatRequest(BaseModel):
 class SummarizeRequest(BaseModel):
     """Request body for book or chapter summarization."""
 
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     book_id: UUID
     chapter_ids: list[str] | None = None
 
 
 class ExplainRequest(BaseModel):
     """Request body for passage explanation."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     book_id: UUID
     text: str = Field(min_length=1)
@@ -47,6 +56,8 @@ class ExplainRequest(BaseModel):
 class AIFeedbackRequest(BaseModel):
     """Request body for AI response feedback."""
 
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     book_id: UUID
     message_id: str | None = None
     rating: bool  # True=thumbs up, False=thumbs down
@@ -55,6 +66,8 @@ class AIFeedbackRequest(BaseModel):
 
 class ReadingPlanRequest(BaseModel):
     """Request body for generating a reading plan."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     book_id: UUID
     total_days: int = Field(default=7, ge=1, le=90)
@@ -70,5 +83,7 @@ class ReadingPlanResponse(BaseModel):
 
 class CompanionModeRequest(BaseModel):
     """Request body for setting companion mode."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     mode: Literal['casual', 'scholar', 'socratic']

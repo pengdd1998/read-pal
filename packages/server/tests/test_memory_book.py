@@ -70,8 +70,8 @@ async def test_generate_memory_book(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert 'html_content' in body['data']
-    assert '<html' in body['data']['html_content'].lower()
+    assert 'htmlContent' in body['data']
+    assert '<html' in body['data']['htmlContent'].lower()
     assert body['data']['format'] == 'personal_book'
 
 
