@@ -16,11 +16,11 @@ type AuthMode = 'login' | 'register';
 function AuthForm() {
   const t = useTranslations('auth');
   const tc = useTranslations('common');
-  usePageTitle(t('page_title_login'));
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, register, isAuthenticated } = useAuth();
   const [mode, setMode] = useState<AuthMode>('register');
+  usePageTitle(mode === 'login' ? t('page_title_login') : t('page_title_register'));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -239,7 +239,7 @@ function AuthForm() {
                   required
                   minLength={8}
                   className="input"
-                  placeholder="Repeat your password"
+                  placeholder={t('confirm_password_placeholder')}
                   autoComplete="new-password"
                 />
                 {confirmPassword.length > 0 && password !== confirmPassword && (

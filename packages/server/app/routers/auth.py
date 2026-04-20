@@ -9,6 +9,7 @@ Related routers:
 """
 
 import logging
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
@@ -191,7 +192,7 @@ async def get_me(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return the authenticated user's profile."""
-    lang = await _get_user_lang(db, current_user['id'])
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     result = await db.execute(
         select(User).where(User.id == current_user['id']),
     )
@@ -227,7 +228,7 @@ async def logout(
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
     """Revoke the current JWT token."""
-    lang = await _get_user_lang(db, current_user['id'])
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     auth_header = request.headers.get('authorization', '')
     if auth_header.startswith('Bearer '):
         token = auth_header[7:]
@@ -265,7 +266,7 @@ async def refresh(
     from jose import jwt as jose_jwt
     from app.middleware.auth import is_token_revoked
 
-    lang = await _get_user_lang(db, current_user['id'])
+    lang = await _get_user_lang(db, UUID(current_user['id']))
 
     auth_header = request.headers.get('authorization', '')
     if auth_header.startswith('Bearer '):

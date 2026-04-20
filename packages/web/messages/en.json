@@ -200,6 +200,7 @@
     "password_min_placeholder": "Min. 8 characters",
     "password_min_error": "Password must be at least 8 characters",
     "confirm_password_label": "Confirm password",
+    "confirm_password_placeholder": "Repeat your password",
     "name_label": "Full name",
     "name_label_short": "Name",
     "name_placeholder": "Your name",

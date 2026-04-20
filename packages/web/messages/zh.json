@@ -200,6 +200,7 @@
     "password_min_placeholder": "至少 8 个字符",
     "password_min_error": "密码至少需要 8 个字符",
     "confirm_password_label": "确认密码",
+    "confirm_password_placeholder": "请再次输入密码",
     "name_label": "姓名",
     "name_label_short": "姓名",
     "name_placeholder": "你的名字",

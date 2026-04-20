@@ -20,6 +20,13 @@ const PROTECTED_PREFIXES = [
   '/settings',
   '/memory-books',
   '/search',
+  '/stats',
+  '/flashcards',
+  '/book-clubs',
+  '/knowledge',
+  '/challenges',
+  '/offline',
+  '/welcome',
 ];
 
 function stripLocale(pathname: string): string {

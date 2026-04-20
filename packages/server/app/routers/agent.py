@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.chat_message import ChatMessage
-from app.models.user import User
 from app.schemas.agent import (
     AIFeedbackRequest,
     ChatRequest,
@@ -23,7 +22,7 @@ from app.schemas.agent import (
     SummarizeRequest,
 )
 from app.services import companion_service
-from app.utils.i18n import _get_user_lang, t
+from app.utils.i18n import DEFAULT_LANGUAGE, _get_user_lang, t
 
 logger = logging.getLogger('read-pal.agent')
 
