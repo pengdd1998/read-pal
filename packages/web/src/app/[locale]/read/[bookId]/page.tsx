@@ -434,7 +434,7 @@ export default function ReadPage() {
     setChapterFade('in');
 
     try {
-      await api.patch(`/api/books/${bookId}`, { currentPage: chapterIndex });
+      await api.patch(`/api/books/${bookId}`, { current_page: chapterIndex });
     } catch (err) {
       console.error('Failed to update progress:', err);
       toast(t('failed_save_progress'), 'error');

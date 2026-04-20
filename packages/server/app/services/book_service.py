@@ -103,6 +103,15 @@ async def update_book(
         if book.progress < Decimal('100'):
             book.progress = Decimal('100')
 
+    # Recalculate progress when currentPage is updated
+    if data.current_page is not None and book.total_pages > 0:
+        book.progress = Decimal(
+            str(round((book.current_page / book.total_pages) * 100, 2)),
+        )
+        if book.progress >= Decimal('100') and book.status != BookStatus.completed:
+            book.status = BookStatus.completed
+            book.completed_at = now
+
     await db.flush()
 
     logger.info('Book updated: %s for user %s', book_id, user_id)

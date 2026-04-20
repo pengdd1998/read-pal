@@ -22,41 +22,70 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script_stop: true
-          command_timeout: 20m
+          command_timeout: 30m
           script: |
             set -euo pipefail
-            cd /home/ubuntu/read-pal
 
+            DEPLOY_PATH="/home/ubuntu/read-pal"
+            cd "$DEPLOY_PATH"
+
+            # -------------------------------------------------------
+            # 1. Pull latest code
+            # -------------------------------------------------------
             echo ">>> Pulling latest code..."
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
 
-            echo ">>> Rebuilding containers with layer cache..."
+            # -------------------------------------------------------
+            # 2. Rebuild containers with layer cache
+            # -------------------------------------------------------
+            echo ">>> Rebuilding containers..."
             export DOCKER_BUILDKIT=1
             docker compose build
 
+            # -------------------------------------------------------
+            # 3. Start containers (recreates changed services)
+            # -------------------------------------------------------
             echo ">>> Starting containers..."
             docker compose up -d --remove-orphans
 
+            # -------------------------------------------------------
+            # 4. Run database migrations
+            # -------------------------------------------------------
             echo ">>> Running database migrations..."
-            docker compose exec -T api python -m alembic upgrade head
+            docker compose exec -T api uv run alembic upgrade head
 
-            echo ">>> Waiting for services..."
-            sleep 15
+            # -------------------------------------------------------
+            # 5. Health checks with retry
+            # -------------------------------------------------------
+            echo ">>> Waiting for services to be ready..."
 
-            echo ">>> Health check..."
-            API_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 10 http://localhost/api/v1/health || echo "000")
-            WEB_STATUS=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 10 http://localhost || echo "000")
+            check_health() {
+              local name="$1"
+              local url="$2"
+              local status="000"
+              for i in 1 2 3 4 5 6; do
+                status=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo "000")
+                if [ "$status" = "200" ]; then
+                  echo "  $name OK (attempt $i)"
+                  return 0
+                fi
+                echo "  $name not ready (attempt $i, status=$status)..."
+                sleep 10
+              done
+              echo "❌ $name health check failed: $status"
+              return 1
+            }
 
-            if [ "$API_STATUS" != "200" ]; then
-              echo "❌ API health check failed: $API_STATUS"
-              docker compose logs api --tail 50
-              exit 1
-            fi
+            check_health "API" "http://localhost:8090/api/v1/health"
+            check_health "Web" "http://localhost:8090"
 
-            if [ "$WEB_STATUS" != "200" ]; then
-              echo "❌ Web health check failed: $WEB_STATUS"
-              docker compose logs web --tail 50
-              exit 1
-            fi
+            # -------------------------------------------------------
+            # 6. Cleanup temporary files
+            # -------------------------------------------------------
+            echo ">>> Cleaning up..."
+            docker system prune -f --filter "until=24h" 2>/dev/null || true
+            docker builder prune -f --filter "until=24h" 2>/dev/null || true
 
-            echo "✅ Deploy complete — API: $API_STATUS, Web: $WEB_STATUS"
+            DISK_USAGE=$(df -h . | tail -1 | awk '{print $5}')
+            echo "✅ Deploy complete — Disk usage: $DISK_USAGE"

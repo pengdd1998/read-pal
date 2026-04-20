@@ -92,6 +92,10 @@ async def end_session(
                 book.progress = Decimal(
                     str(round((book.current_page / book.total_pages) * 100, 2)),
                 )
+                # Auto-complete when all pages read
+                if book.progress >= Decimal('100') and book.status != BookStatus.completed:
+                    book.status = BookStatus.completed
+                    book.completed_at = now
 
     await db.flush()
 
