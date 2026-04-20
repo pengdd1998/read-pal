@@ -22,19 +22,14 @@ async def test_dashboard_returns_success_with_all_fields(client):
     assert body['success'] is True
 
     data = body['data']
-    expected_fields = {
-        'totalBooks',
-        'booksReading',
-        'booksCompleted',
-        'totalPagesRead',
-        'totalReadingTimeMinutes',
-        'currentStreak',
-        'longestStreak',
-        'totalHighlights',
-        'totalNotes',
-        'totalFlashcards',
-    }
-    assert expected_fields == set(data.keys())
+    # New nested shape: {stats, recentBooks, weeklyActivity, booksByStatus}
+    assert 'stats' in data
+    assert 'recentBooks' in data
+    assert 'weeklyActivity' in data
+    assert 'booksByStatus' in data
+    assert isinstance(data['recentBooks'], list)
+    assert isinstance(data['weeklyActivity'], list)
+    assert isinstance(data['booksByStatus'], dict)
 
 
 # ---------------------------------------------------------------------------

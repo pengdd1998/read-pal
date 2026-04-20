@@ -85,8 +85,8 @@ export default function StatsPage() {
   const weekly = data?.weeklyActivity || [];
   const statusCounts = data?.booksByStatus || { unread: 0, reading: 0, completed: 0 };
 
-  // Compute monthly totals from sessions
-  const totalMinutes = sessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+  // Compute monthly totals from sessions (duration is in seconds)
+  const totalMinutes = Math.round(sessions.reduce((acc, s) => acc + (s.duration || 0), 0) / 60);
   const totalPages = sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
 
   return (

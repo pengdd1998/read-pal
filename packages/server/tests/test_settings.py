@@ -83,9 +83,13 @@ async def test_reading_goals_returns_defaults(client):
     body = resp.json()
     assert body['success'] is True
     goals = body['data']
-    assert goals['dailyMinutes'] == 30
-    assert goals['weeklyBooks'] == 1
-    assert goals['monthlyBooks'] == 4
+    # New shape returns computed progress, not raw preferences
+    assert 'goal' in goals
+    assert 'completed' in goals
+    assert 'onTrack' in goals
+    assert 'dailyGoalMinutes' in goals
+    assert 'todayMinutes' in goals
+    assert 'dailyOnTrack' in goals
 
 
 # ---------------------------------------------------------------------------

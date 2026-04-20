@@ -371,33 +371,34 @@ async def discover_clubs(
     )
     total = count_result.scalar() or 0
 
+    # Single query with subqueries for member count and book title
+    member_count_sq = (
+        select(BookClubMember.club_id, func.count().label('mc'))
+        .group_by(BookClubMember.club_id)
+        .subquery()
+    )
     offset = (page - 1) * per_page
     result = await db.execute(
-        select(BookClub)
+        select(BookClub, func.coalesce(member_count_sq.c.mc, 0))
+        .outerjoin(member_count_sq, member_count_sq.c.club_id == BookClub.id)
         .where(BookClub.is_private == False)  # noqa: E712
         .order_by(BookClub.created_at.desc())
         .offset(offset)
         .limit(per_page),
     )
-    clubs = result.scalars().all()
+    rows = result.all()
+
+    # Collect book titles in one batch
+    book_ids = [club.current_book_id for club, _ in rows if club.current_book_id]
+    book_titles: dict = {}
+    if book_ids:
+        book_result = await db.execute(
+            select(Book.id, Book.title).where(Book.id.in_(book_ids)),
+        )
+        book_titles = dict(book_result.all())
 
     items = []
-    for club in clubs:
-        mc = (
-            await db.execute(
-                select(func.count())
-                .select_from(BookClubMember)
-                .where(BookClubMember.club_id == club.id),
-            )
-        ).scalar() or 0
-
-        current_book_title = None
-        if club.current_book_id:
-            book_result = await db.execute(
-                select(Book.title).where(Book.id == club.current_book_id),
-            )
-            current_book_title = book_result.scalar()
-
+    for club, mc in rows:
         items.append({
             'id': str(club.id),
             'name': club.name,
@@ -406,7 +407,7 @@ async def discover_clubs(
             'is_private': club.is_private,
             'max_members': club.max_members,
             'member_count': mc,
-            'current_book_title': current_book_title,
+            'current_book_title': book_titles.get(club.current_book_id) if club.current_book_id else None,
             'created_at': club.created_at.isoformat() if club.created_at else None,
         })
 

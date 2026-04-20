@@ -174,23 +174,22 @@ async def check_llm_health() -> dict[str, Any]:
 # Safe invoke with circuit breaker + fallback
 # ---------------------------------------------------------------------------
 
-async def safe_llm_invoke(
+async def _invoke_with_circuit(
     messages: list[BaseMessage],
     *,
-    fallback: Any = None,
     log_label: str = 'LLM',
 ) -> Any:
-    """Invoke LLM with circuit breaker, fallback model, and JSON parsing.
+    """Low-level invoke with circuit breaker + fallback model.
 
-    On primary model failure the configured ``fallback_model`` is tried.
-    Returns parsed JSON, stripped markdown fences, or *fallback* on failure.
+    Returns the raw response object on success, or None on total failure.
+    Records circuit breaker state transitions as a side-effect.
     """
     settings = get_settings()
 
     # Circuit breaker gate
     if not await circuit.allow_request():
         logger.warning('%s blocked by circuit breaker', log_label)
-        return fallback
+        return None
 
     model_used = settings.default_model
     try:
@@ -206,14 +205,31 @@ async def safe_llm_invoke(
             logger.info('%s retrying with fallback model %s', log_label, fallback_model)
             llm = get_llm(model=fallback_model)
             response = await llm.ainvoke(messages)
-            model_used = fallback_model
             await circuit.record_success()
         except Exception as fb_exc:
             logger.error('%s fallback also failed: %s', log_label, fb_exc)
             await circuit.record_failure()
-            return fallback
+            return None
 
     logger.debug('%s served by model=%s', log_label, model_used)
+    return response
+
+
+async def safe_llm_invoke(
+    messages: list[BaseMessage],
+    *,
+    fallback: Any = None,
+    log_label: str = 'LLM',
+) -> Any:
+    """Invoke LLM with circuit breaker, fallback model, and JSON parsing.
+
+    On primary model failure the configured ``fallback_model`` is tried.
+    Returns parsed JSON, stripped markdown fences, or *fallback* on failure.
+    """
+    response = await _invoke_with_circuit(messages, log_label=log_label)
+    if response is None:
+        return fallback
+
     content = response.content.strip()
     if content.startswith('```'):
         lines = content.split('\n')
@@ -224,3 +240,20 @@ async def safe_llm_invoke(
     except json.JSONDecodeError:
         logger.warning('Failed to parse %s response as JSON', log_label)
         return fallback
+
+
+async def safe_llm_call(
+    messages: list[BaseMessage],
+    *,
+    fallback: str = '',
+    log_label: str = 'LLM',
+) -> str:
+    """Invoke LLM with circuit breaker + fallback model, returning raw text.
+
+    Unlike ``safe_llm_invoke``, this does NOT attempt JSON parsing.
+    Returns the response content as a string, or *fallback* on failure.
+    """
+    response = await _invoke_with_circuit(messages, log_label=log_label)
+    if response is None:
+        return fallback
+    return response.content.strip()

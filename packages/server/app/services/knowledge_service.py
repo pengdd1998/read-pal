@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 from uuid import UUID
@@ -22,7 +21,7 @@ from app.schemas.knowledge import (
     GraphEdge,
     GraphNode,
 )
-from app.services.llm import get_llm
+from app.services.llm import safe_llm_invoke
 
 logger = logging.getLogger('read-pal.knowledge')
 
@@ -73,7 +72,6 @@ async def _extract_concepts_via_llm(
     if not texts:
         return []
 
-    llm = get_llm()
     combined = '\n---\n'.join(texts[:20])  # limit to avoid token overflow
 
     system_prompt = (
@@ -88,27 +86,17 @@ async def _extract_concepts_via_llm(
 
     human_prompt = f'Analyse these reader annotations and extract concepts:\n\n{combined}'
 
-    try:
-        response = await llm.ainvoke([
+    result = await safe_llm_invoke(
+        [
             SystemMessage(content=system_prompt),
             HumanMessage(content=human_prompt),
-        ])
-    except Exception as exc:
-        logger.error('Knowledge graph concept extraction failed: %s', exc)
-        return []
+        ],
+        fallback=[],
+        log_label='Knowledge concept extraction',
+    )
 
-    content = response.content.strip()
-    # Strip markdown fences if present
-    if content.startswith('```'):
-        lines = content.split('\n')
-        content = '\n'.join(lines[1:-1])
-
-    try:
-        concepts = json.loads(content)
-        if isinstance(concepts, list):
-            return concepts
-    except json.JSONDecodeError:
-        logger.warning('Failed to parse LLM concept extraction response')
+    if isinstance(result, list):
+        return result
 
     return []
 

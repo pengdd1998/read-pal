@@ -23,6 +23,14 @@ class FlashcardReview(BaseModel):
 
 
 class FlashcardResponse(BaseModel):
+    """Flashcard response with camelCase aliases for frontend compatibility."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
     id: UUID
     user_id: UUID
     book_id: UUID
@@ -32,10 +40,8 @@ class FlashcardResponse(BaseModel):
     ease_factor: float
     interval: int
     repetition_count: int
-    next_review_at: datetime
+    next_review_at: datetime | None
     last_review_at: datetime | None
     last_rating: int | None
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
+    created_at: datetime | None
+    updated_at: datetime | None

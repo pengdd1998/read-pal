@@ -76,15 +76,21 @@ async def get_tags(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Get unique tags for a user's annotations, optionally filtered by book."""
+    """Get tags with counts for a user's annotations, optionally filtered by book."""
+    tag_col = func.unnest(Annotation.tags).label('tag')
     q = (
-        select(func.distinct(func.unnest(Annotation.tags)))
+        select(
+            tag_col,
+            func.count().label('count'),
+        )
         .where(Annotation.user_id == UUID(current_user['id']))
+        .group_by(tag_col)
+        .order_by(func.count().desc())
     )
     if bookId:
         q = q.where(Annotation.book_id == bookId)
     result = await db.execute(q)
-    tags = [row[0] for row in result.all() if row[0]]
+    tags = [{'name': row[0], 'count': row[1]} for row in result.all() if row[0]]
     return {'success': True, 'data': tags}
 
 

@@ -48,13 +48,13 @@ async def _collect_reading_data(
         'status': book.status,
     }
 
-    # Load annotations (highlights + notes)
+    # Load annotations (highlights + notes), capped at 500
     conditions = [
         Annotation.user_id == user_id,
         Annotation.book_id == book_id,
     ]
     result = await db.execute(
-        select(Annotation).where(*conditions).order_by(Annotation.created_at),
+        select(Annotation).where(*conditions).order_by(Annotation.created_at).limit(500),
     )
     annotations = list(result.scalars().all())
 
@@ -74,7 +74,7 @@ async def _collect_reading_data(
         ]
         data['notes'] = notes
 
-    # Load chat conversations
+    # Load chat conversations (capped at 200)
     if include_conversations:
         result = await db.execute(
             select(ChatMessage)
@@ -82,7 +82,8 @@ async def _collect_reading_data(
                 ChatMessage.user_id == user_id,
                 ChatMessage.book_id == book_id,
             )
-            .order_by(ChatMessage.created_at),
+            .order_by(ChatMessage.created_at)
+            .limit(200),
         )
         messages = list(result.scalars().all())
         data['conversations'] = [
@@ -90,14 +91,15 @@ async def _collect_reading_data(
             for m in messages
         ]
 
-    # Load reading sessions for timeline
+    # Load reading sessions for timeline (capped at 100)
     result = await db.execute(
         select(ReadingSession)
         .where(
             ReadingSession.user_id == user_id,
             ReadingSession.book_id == book_id,
         )
-        .order_by(ReadingSession.started_at),
+        .order_by(ReadingSession.started_at)
+        .limit(100),
     )
     sessions = list(result.scalars().all())
     data['reading_sessions'] = [

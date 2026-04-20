@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Any
@@ -77,11 +78,12 @@ async def _collect_book_data(
         'started_at': book.started_at.isoformat() if book.started_at else None,
         'completed_at': book.completed_at.isoformat() if book.completed_at else None,
     }
-    # Annotations
+    # Annotations (capped at 500)
     result = await db.execute(
         select(Annotation)
         .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
-        .order_by(Annotation.created_at),
+        .order_by(Annotation.created_at)
+        .limit(500),
     )
     annotations = list(result.scalars().all())
     data['highlights'] = [
@@ -92,21 +94,23 @@ async def _collect_book_data(
         {'content': a.content, 'note': a.note, 'tags': a.tags}
         for a in annotations if match_annotation_type(a.type, AnnotationType.note)
     ]
-    # Chat messages
+    # Chat messages (capped at 200)
     result = await db.execute(
         select(ChatMessage)
         .where(ChatMessage.user_id == user_id, ChatMessage.book_id == book_id)
-        .order_by(ChatMessage.created_at),
+        .order_by(ChatMessage.created_at)
+        .limit(200),
     )
     messages = list(result.scalars().all())
     data['conversations'] = [
         {'role': m.role, 'content': m.content} for m in messages
     ]
-    # Reading sessions
+    # Reading sessions (capped at 100)
     result = await db.execute(
         select(ReadingSession)
         .where(ReadingSession.user_id == user_id, ReadingSession.book_id == book_id)
-        .order_by(ReadingSession.started_at),
+        .order_by(ReadingSession.started_at)
+        .limit(100),
     )
     sessions = list(result.scalars().all())
     data['reading_sessions'] = [
@@ -120,7 +124,7 @@ async def _collect_book_data(
         'total_notes': len(data['notes']),
         'total_conversations': len(data['conversations']),
         'total_sessions': len(sessions),
-        'total_reading_minutes': sum(s.duration for s in sessions),
+        'total_reading_minutes': sum(s.duration for s in sessions) // 60,
         'total_pages_read': sum(s.pages_read for s in sessions),
     }
     return data
@@ -408,17 +412,20 @@ async def generate(
     # Chapter type mapping for frontend navigation
     chapter_types = ['cover', 'reading_journey', 'highlights', 'notes', 'conversations', 'looking_forward']
 
-    # Generate all 6 chapters
-    sections: list[dict[str, Any]] = []
-    for chapter_num in range(1, 7):
+    # Generate all 6 chapters concurrently
+    async def _gen(chapter_num: int) -> dict[str, Any]:
         try:
-            chapter = await _generate_chapter(chapter_num, book_data, book_format)
+            return await _generate_chapter(chapter_num, book_data, book_format)
         except Exception:
             logger.exception('Failed to generate chapter %d', chapter_num)
-            chapter = {'chapter': chapter_num, 'error': 'Generation failed'}
+            return {'chapter': chapter_num, 'error': 'Generation failed'}
 
-        # Enrich section with id and type for frontend navigation
-        section_type = chapter_types[chapter_num - 1] if chapter_num <= 6 else f'chapter_{chapter_num}'
+    chapter_results = await asyncio.gather(*[_gen(n) for n in range(1, 7)])
+
+    sections: list[dict[str, Any]] = []
+    for idx, chapter in enumerate(chapter_results):
+        chapter_num = idx + 1
+        section_type = chapter_types[idx] if idx < len(chapter_types) else f'chapter_{chapter_num}'
         chapter['id'] = f'section-{chapter_num}'
         chapter['type'] = section_type
         sections.append(chapter)

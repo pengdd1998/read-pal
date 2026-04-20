@@ -113,9 +113,6 @@ export default function BookDetailPage() {
     bgFetch<{ currentWpm: number }>('/api/stats/reading-speed', (data) => {
       if (data.currentWpm) setReadingWpm(data.currentWpm);
     });
-    bgFetch<{ connected: boolean }>('/api/zotero/status', (data) => {
-      if (data.connected) setZoteroConnected(true);
-    });
 
     return () => { cancelled = true; };
   }, [bookId, bgFetch, t]);

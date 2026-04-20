@@ -768,7 +768,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {[
               { label: t('quick_upload'), href: '/library', icon: '\u{1F4C2}', color: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20' },
               { label: t('quick_memory_books'), href: '/memory-books', icon: '\u{1F4D5}', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },

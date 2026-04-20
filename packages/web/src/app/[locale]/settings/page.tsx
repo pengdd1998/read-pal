@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -233,7 +233,7 @@ export default function SettingsPage() {
 
       {/* Back link */}
       <div className="mt-8 animate-slide-up stagger-4">
-        <a
+        <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
         >
@@ -241,7 +241,7 @@ export default function SettingsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
           {t('back_to_dashboard')}
-        </a>
+        </Link>
       </div>
     </main>
   );

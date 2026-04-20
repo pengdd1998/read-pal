@@ -3,12 +3,12 @@
 import logging
 from uuid import UUID
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat_message import ChatMessage
-from app.services.llm import get_llm
+from app.services.llm import safe_llm_call
 
 logger = logging.getLogger('read-pal.memory')
 
@@ -68,7 +68,7 @@ async def _generate_summary(
     existing: 'ConversationSummary | None' = None,
 ) -> str:
     """Generate a compressed summary of older conversation turns."""
-    # Load older messages (skip the most recent MAX_RECENT)
+    # Load older messages (skip the most recent MAX_RECENT), capped at 200
     result = await db.execute(
         select(ChatMessage)
         .where(
@@ -76,6 +76,7 @@ async def _generate_summary(
             ChatMessage.book_id == book_id,
         )
         .order_by(ChatMessage.created_at)
+        .limit(200)
     )
     all_messages = list(result.scalars().all())
 
@@ -113,13 +114,11 @@ async def _generate_summary(
         HumanMessage(content='Generate the updated conversation summary.'),
     ]
 
-    llm = get_llm(temperature=0.3, max_tokens=500)
-    try:
-        response = await llm.ainvoke(messages)
-        summary_text = response.content.strip()
-    except Exception as exc:
-        logger.error('Summary generation failed: %s', exc)
-        return existing_summary
+    summary_text = await safe_llm_call(
+        messages,
+        fallback=existing_summary,
+        log_label='Conversation summary',
+    )
 
     # Save/update in DB
     from app.models.conversation_summary import ConversationSummary

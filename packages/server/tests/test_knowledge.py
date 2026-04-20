@@ -34,20 +34,16 @@ async def _create_annotation(client, token, book_id, content='Important concept 
     return resp.json()['data']
 
 
-MOCK_CONCEPTS = json.dumps([
+MOCK_CONCEPTS = [
     {'name': 'Resilience', 'type': 'theme', 'related': ['Hope', 'Survival']},
     {'name': 'Hope', 'type': 'concept', 'related': ['Resilience']},
     {'name': 'Gatsby', 'type': 'character', 'related': ['Daisy', 'Green Light']},
-])
+]
 
 
-def _mock_llm_concepts():
-    """Return a mock LLM that returns concept extraction results."""
-    mock_llm = AsyncMock()
-    mock_llm.ainvoke = AsyncMock(
-        return_value=type('Resp', (), {'content': MOCK_CONCEPTS})(),
-    )
-    return mock_llm
+def _mock_safe_llm_invoke(**kwargs):
+    """Return an AsyncMock for safe_llm_invoke that returns parsed concepts."""
+    return AsyncMock(return_value=MOCK_CONCEPTS)
 
 
 # ---------------------------------------------------------------------------
@@ -66,7 +62,7 @@ async def test_get_graph(client):
     mock_redis.setex.return_value = True
 
     with (
-        patch('app.services.knowledge_service.get_llm', return_value=_mock_llm_concepts()),
+        patch('app.services.knowledge_service.safe_llm_invoke', _mock_safe_llm_invoke()),
         patch('app.services.knowledge_service._get_redis', return_value=mock_redis),
     ):
         resp = await client.get(
@@ -117,7 +113,7 @@ async def test_list_concepts(client):
     mock_redis.setex.return_value = True
 
     with (
-        patch('app.services.knowledge_service.get_llm', return_value=_mock_llm_concepts()),
+        patch('app.services.knowledge_service.safe_llm_invoke', _mock_safe_llm_invoke()),
         patch('app.services.knowledge_service._get_redis', return_value=mock_redis),
     ):
         resp = await client.get(
@@ -149,7 +145,7 @@ async def test_search_concepts(client):
     mock_redis.setex.return_value = True
 
     with (
-        patch('app.services.knowledge_service.get_llm', return_value=_mock_llm_concepts()),
+        patch('app.services.knowledge_service.safe_llm_invoke', _mock_safe_llm_invoke()),
         patch('app.services.knowledge_service._get_redis', return_value=mock_redis),
     ):
         resp = await client.get(
@@ -175,7 +171,7 @@ async def test_search_concepts_no_match(client):
     mock_redis.setex.return_value = True
 
     with (
-        patch('app.services.knowledge_service.get_llm', return_value=_mock_llm_concepts()),
+        patch('app.services.knowledge_service.safe_llm_invoke', _mock_safe_llm_invoke()),
         patch('app.services.knowledge_service._get_redis', return_value=mock_redis),
     ):
         resp = await client.get(

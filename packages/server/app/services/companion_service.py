@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
-from app.services.llm import get_llm
+from app.services.llm import circuit, get_llm, safe_llm_call
 from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.companion')
@@ -179,13 +179,12 @@ async def chat(
     messages = [SystemMessage(content=system_text)] + history
     messages.append(HumanMessage(content=message))
 
-    llm = get_llm()
-    try:
-        response: AIMessage = await llm.ainvoke(messages)
-        assistant_content = response.content
-    except Exception as exc:
-        logger.error('GLM API call failed: %s', exc)
-        assistant_content = t('companion.fallback_error', lang)
+    fallback_text = t('companion.fallback_error', lang)
+    assistant_content = await safe_llm_call(
+        messages,
+        fallback=fallback_text,
+        log_label='Companion chat',
+    )
 
     await _save_message(db, user_id, book_id, 'user', message)
     await _save_message(db, user_id, book_id, 'assistant', assistant_content)
@@ -231,16 +230,25 @@ async def stream_chat(
     llm = get_llm()
     collected_parts: list[str] = []
 
-    try:
-        async for chunk in llm.astream(messages):
-            token = chunk.content
-            if token:
-                collected_parts.append(token)
-                yield f'data: {json.dumps({"content": token})}\n\n'
-    except Exception as exc:
-        logger.error('GLM streaming failed: %s', exc)
+    # Circuit breaker gate for streaming
+    if not await circuit.allow_request():
+        logger.warning('Companion stream blocked by circuit breaker')
         fallback = t('companion.fallback_error', lang)
         yield f'data: {json.dumps({"content": fallback})}\n\n'
+    else:
+        try:
+            async for chunk in llm.astream(messages):
+                token = chunk.content
+                if token:
+                    collected_parts.append(token)
+                    yield f'data: {json.dumps({"content": token})}\n\n'
+            await circuit.record_success()
+        except Exception as exc:
+            logger.error('GLM streaming failed: %s', exc)
+            await circuit.record_failure()
+            # Try fallback model for error signal
+            fallback = t('companion.fallback_error', lang)
+            yield f'data: {json.dumps({"content": fallback})}\n\n'
 
     yield 'data: [DONE]\n\n'
 
@@ -273,17 +281,14 @@ async def summarize(
         HumanMessage(content=' '.join(prompt_parts)),
     ]
 
-    llm = get_llm(temperature=0.3, max_tokens=3000)
-    try:
-        response: AIMessage = await llm.ainvoke(messages)
-    except Exception as exc:
-        logger.error('GLM summarize failed: %s', exc)
-        return {
-            'role': 'assistant',
-            'content': t('companion.summary_error', lang),
-        }
+    fallback_text = t('companion.summary_error', lang)
+    content = await safe_llm_call(
+        messages,
+        fallback=fallback_text,
+        log_label='Companion summarize',
+    )
 
-    return {'role': 'assistant', 'content': response.content}
+    return {'role': 'assistant', 'content': content}
 
 
 async def explain(
@@ -306,14 +311,11 @@ async def explain(
         HumanMessage(content=prompt),
     ]
 
-    llm = get_llm(temperature=0.4, max_tokens=1500)
-    try:
-        response: AIMessage = await llm.ainvoke(messages)
-    except Exception as exc:
-        logger.error('GLM explain failed: %s', exc)
-        return {
-            'role': 'assistant',
-            'content': t('companion.explain_error', lang),
-        }
+    fallback_text = t('companion.explain_error', lang)
+    content = await safe_llm_call(
+        messages,
+        fallback=fallback_text,
+        log_label='Companion explain',
+    )
 
-    return {'role': 'assistant', 'content': response.content}
+    return {'role': 'assistant', 'content': content}

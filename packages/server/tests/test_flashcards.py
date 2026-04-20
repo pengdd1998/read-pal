@@ -43,9 +43,9 @@ async def test_create_flashcard(client):
     card = await _create_flashcard(client, reg['token'], book['id'])
     assert card['question'] == 'What is the main theme?'
     assert card['answer'] == 'The main theme is resilience.'
-    assert card['book_id'] == book['id']
-    assert card['ease_factor'] == 2.5
-    assert card['repetition_count'] == 0
+    assert card['bookId'] == book['id']
+    assert card['easeFactor'] == 2.5
+    assert card['repetitionCount'] == 0
 
 
 @pytest.mark.asyncio
@@ -98,7 +98,7 @@ async def test_list_flashcards_filter_by_book(client):
     assert resp.status_code == 200
     items = resp.json()['data']['items']
     assert len(items) == 1
-    assert items[0]['book_id'] == book1['id']
+    assert items[0]['bookId'] == book1['id']
 
 
 # ---------------------------------------------------------------------------
@@ -119,9 +119,9 @@ async def test_review_flashcard_good_rating(client):
     )
     assert resp.status_code == 200
     updated = resp.json()['data']
-    assert updated['repetition_count'] == 1
+    assert updated['repetitionCount'] == 1
     assert updated['interval'] == 1
-    assert updated['last_rating'] == 4
+    assert updated['lastRating'] == 4
 
 
 @pytest.mark.asyncio
@@ -142,7 +142,7 @@ async def test_review_flashcard_poor_rating_resets(client):
         headers=auth_headers(reg['token']),
     )
     updated = resp.json()['data']
-    assert updated['repetition_count'] == 0
+    assert updated['repetitionCount'] == 0
     assert updated['interval'] == 1
 
 
@@ -193,7 +193,7 @@ async def test_get_due_cards_filter_by_book(client):
     )
     assert resp.status_code == 200
     items = resp.json()['data']['items']
-    assert all(c['book_id'] == book1['id'] for c in items)
+    assert all(c['bookId'] == book1['id'] for c in items)
 
 
 # ---------------------------------------------------------------------------

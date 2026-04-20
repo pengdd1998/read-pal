@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.models.book import Book
 from app.models.flashcard import Flashcard
-from app.schemas.flashcard import FlashcardCreate, FlashcardReview
+from app.schemas.flashcard import FlashcardCreate, FlashcardResponse, FlashcardReview
 from app.services import flashcard_service
 from app.utils.i18n import t
 
@@ -17,23 +18,10 @@ router = APIRouter(prefix='/api/v1/flashcards', tags=['flashcards'])
 
 
 def _serialize_card(card: object) -> dict:
-    """Convert a Flashcard ORM object to a response dict."""
-    return {
-        'id': str(card.id),
-        'user_id': str(card.user_id),
-        'book_id': str(card.book_id),
-        'annotation_id': str(card.annotation_id) if card.annotation_id else None,
-        'question': card.question,
-        'answer': card.answer,
-        'ease_factor': card.ease_factor,
-        'interval': card.interval,
-        'repetition_count': card.repetition_count,
-        'next_review_at': card.next_review_at.isoformat() if card.next_review_at else None,
-        'last_review_at': card.last_review_at.isoformat() if card.last_review_at else None,
-        'last_rating': card.last_rating,
-        'created_at': card.created_at.isoformat() if card.created_at else None,
-        'updated_at': card.updated_at.isoformat() if card.updated_at else None,
-    }
+    """Convert a Flashcard ORM object to a camelCase response dict."""
+    return FlashcardResponse.model_validate(card).model_dump(
+        mode='json', by_alias=True,
+    )
 
 
 @router.get('/')
@@ -121,26 +109,34 @@ async def list_decks(
     result = await db.execute(
         select(
             Flashcard.book_id,
+            Book.title.label('book_title'),
+            Book.author,
+            Book.cover_url,
             func.count(Flashcard.id).label('card_count'),
         )
+        .join(Book, Book.id == Flashcard.book_id)
         .where(Flashcard.user_id == UUID(user['id']))
-        .group_by(Flashcard.book_id),
+        .group_by(Flashcard.book_id, Book.title, Book.author, Book.cover_url),
     )
     decks = [
         {
-            'book_id': str(row.book_id),
-            'card_count': row.card_count,
+            'bookId': str(row.book_id),
+            'bookTitle': row.book_title or '',
+            'author': row.author or '',
+            'coverUrl': row.cover_url,
+            'total': row.card_count,
+            'due': row.card_count,
         }
         for row in result.all()
     ]
-    # Build response matching frontend expected shape
-    total_cards = sum(d['card_count'] for d in decks)
+    total_cards = sum(d['total'] for d in decks)
+    total_due = sum(d['due'] for d in decks)
     return {
         'success': True,
         'data': {
             'decks': decks,
             'totalCards': total_cards,
-            'totalDue': total_cards,
+            'totalDue': total_due,
         },
     }
 
@@ -160,9 +156,9 @@ async def review_alias(
         'data': {
             'flashcards': [_serialize_card(c) for c in cards],
             'stats': {
-                'totalCards': len(cards),
-                'dueCards': len(cards),
-                'newCards': len(cards),
+                'total': len(cards),
+                'due': len(cards),
+                'reviewed': len(cards),
             },
         },
     }
@@ -178,7 +174,7 @@ async def generate_flashcards(
 
     Body: ``{"book_id": "uuid"}``
     """
-    book_id = body.get('book_id')
+    book_id = body.get('book_id') or body.get('bookId')
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

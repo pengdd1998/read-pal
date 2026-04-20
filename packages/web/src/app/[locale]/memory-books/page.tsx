@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -52,6 +52,7 @@ export default function MemoryBooksPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     Promise.all([
@@ -81,7 +82,7 @@ export default function MemoryBooksPage() {
       if (res.success && res.data) {
         analytics.track('reading_book_generated');
         // Navigate to the personal book page
-        window.location.href = `/memory-books/${bookId}`;
+        router.push(`/memory-books/${bookId}`);
       }
     } catch {
       setError(t('failedToGenerate'));

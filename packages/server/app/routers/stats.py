@@ -27,7 +27,10 @@ async def get_dashboard(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Return real dashboard stats from database."""
+    """Return dashboard data matching the nested shape the frontend expects.
+
+    Response shape: ``{stats, recentBooks, weeklyActivity, booksByStatus}``
+    """
     uid = _user_id(current_user)
 
     # --- Book counts ---
@@ -42,6 +45,11 @@ async def get_dashboard(
     books_completed = await db.scalar(
         select(func.count(Book.id)).where(
             and_(Book.user_id == uid, Book.status == BookStatus.completed.value)
+        )
+    )
+    books_unread = await db.scalar(
+        select(func.count(Book.id)).where(
+            and_(Book.user_id == uid, Book.status == BookStatus.unread.value)
         )
     )
 
@@ -61,7 +69,6 @@ async def get_dashboard(
     total_minutes = int(total_seconds) // 60 if total_seconds else 0
 
     # --- Streaks ---
-    # Query all distinct dates on which the user had reading sessions
     date_col = func.date(ReadingSession.started_at).label('day')
     date_rows = await db.execute(
         select(date_col)
@@ -75,10 +82,8 @@ async def get_dashboard(
     ]
 
     current_streak = 0
-    longest_streak = 0
 
     if reading_dates:
-        # Current streak: count backwards from today
         today = date.today()
         check = today
         for d in reading_dates:
@@ -87,17 +92,6 @@ async def get_dashboard(
                 check -= timedelta(days=1)
             elif d < check:
                 break
-
-        # Longest streak: iterate all dates in order
-        sorted_dates = sorted(reading_dates)
-        run = 1
-        longest_streak = 1
-        for i in range(1, len(sorted_dates)):
-            if sorted_dates[i] == sorted_dates[i - 1] + timedelta(days=1):
-                run += 1
-                longest_streak = max(longest_streak, run)
-            else:
-                run = 1
 
     # --- Annotations ---
     total_highlights = await db.scalar(
@@ -111,24 +105,83 @@ async def get_dashboard(
         )
     )
 
-    # --- Flashcards ---
-    total_flashcards = await db.scalar(
-        select(func.count(Flashcard.id)).where(Flashcard.user_id == uid)
+    # --- Recent books (last 10 by last_read_at desc) ---
+    recent_rows = await db.execute(
+        select(Book)
+        .where(Book.user_id == uid)
+        .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
+        .limit(10)
     )
+    recent_books = []
+    for book in recent_rows.scalars().all():
+        recent_books.append({
+            'id': str(book.id),
+            'title': book.title,
+            'author': book.author,
+            'progress': float(book.progress or 0),
+            'lastRead': book.last_read_at.isoformat() if book.last_read_at else book.added_at.isoformat(),
+            'coverUrl': book.cover_url,
+        })
+
+    # --- Weekly activity (last 7 days) ---
+    today = date.today()
+    week_start = today - timedelta(days=6)
+    day_col = func.date(ReadingSession.started_at).label('day')
+    week_rows = await db.execute(
+        select(
+            day_col,
+            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
+        )
+        .where(
+            and_(
+                ReadingSession.user_id == uid,
+                ReadingSession.started_at >= datetime.combine(week_start, datetime.min.time()),
+            )
+        )
+        .group_by(day_col)
+        .order_by(day_col)
+    )
+    week_map: dict[str, int] = {}
+    for row in week_rows.all():
+        key = row[0].isoformat() if isinstance(row[0], date) else str(row[0])
+        week_map[key] = int(row[1])
+    weekly_activity = []
+    for i in range(7):
+        d = week_start + timedelta(days=i)
+        weekly_activity.append({
+            'day': d.isoformat(),
+            'pages': week_map.get(d.isoformat(), 0),
+        })
+
+    # --- Stats object ---
+    hours = total_minutes // 60
+    mins = total_minutes % 60
+    total_time_str = f'{hours}h {mins}m' if hours > 0 else f'{mins}m'
+
+    stats = {
+        'booksRead': books_completed or 0,
+        'totalPages': int(total_pages or 0),
+        'pagesRead': int(total_pages or 0),
+        'readingStreak': current_streak,
+        'totalTime': total_time_str,
+        'conceptsLearned': (total_highlights or 0) + (total_notes or 0),
+        'connections': 0,
+    }
+
+    # --- Books by status ---
+    books_by_status = {
+        'unread': books_unread or 0,
+        'reading': books_reading or 0,
+        'completed': books_completed or 0,
+    }
 
     return {
         'success': True,
         'data': {
-            'totalBooks': total_books or 0,
-            'booksReading': books_reading or 0,
-            'booksCompleted': books_completed or 0,
-            'totalPagesRead': int(total_pages or 0),
-            'totalReadingTimeMinutes': total_minutes,
-            'currentStreak': current_streak,
-            'longestStreak': longest_streak,
-            'totalHighlights': total_highlights or 0,
-            'totalNotes': total_notes or 0,
-            'totalFlashcards': total_flashcards or 0,
+            'stats': stats,
+            'recentBooks': recent_books,
+            'weeklyActivity': weekly_activity,
+            'booksByStatus': books_by_status,
         },
     }
 
@@ -254,6 +307,7 @@ async def get_reading_speed(
         'data': {
             'averagePagesPerHour': round(avg_pph, 2),
             'averageWordsPerMinute': round(avg_wpm, 2),
+            'currentWpm': round(avg_wpm, 2),
             'speedOverTime': speed_over_time,
         },
     }
@@ -271,6 +325,7 @@ async def get_reading_speed_by_book(
         select(
             ReadingSession.book_id,
             Book.title.label('book_title'),
+            Book.author.label('book_author'),
             func.count(ReadingSession.id).label('total_sessions'),
             func.coalesce(func.sum(ReadingSession.pages_read), 0).label(
                 'total_pages'
@@ -286,20 +341,25 @@ async def get_reading_speed_by_book(
         )
         .join(Book, Book.id == ReadingSession.book_id)
         .where(ReadingSession.user_id == uid)
-        .group_by(ReadingSession.book_id, Book.title)
+        .group_by(ReadingSession.book_id, Book.title, Book.author)
     )
 
     books = []
     for row in rows.all():
-        total_seconds = int(row[4])
+        total_seconds = int(row[5])
         total_minutes = total_seconds // 60
+        avg_pph = float(row[6]) if row[6] else 0
+        wpm = round(avg_pph * 250.0 / 60.0, 2)
         books.append({
             'bookId': str(row[0]),
             'bookTitle': row[1],
-            'averagePagesPerHour': round(float(row[5]), 2) if row[5] else 0,
-            'totalSessions': int(row[2]),
-            'totalPagesRead': int(row[3]),
+            'title': row[1],
+            'author': row[2],
+            'averagePagesPerHour': round(avg_pph, 2),
+            'totalSessions': int(row[3]),
+            'totalPagesRead': int(row[4]),
             'totalMinutes': total_minutes,
+            'wpm': wpm,
         })
 
     return {

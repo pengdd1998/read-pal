@@ -946,10 +946,10 @@ export default function ReadPage() {
 
       {/* Study mode panel */}
       {studyMode.enabled && (
-        <div className="fixed inset-0 z-20 bg-black/20" onClick={studyMode.toggleStudyMode} />
+        <div className="fixed inset-0 z-20 bg-black/40 md:bg-black/20" onClick={studyMode.toggleStudyMode} />
       )}
-      <div className={`fixed right-0 top-0 bottom-0 z-20 w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="h-full overflow-y-auto px-3 pb-4">
+      <div className={`fixed right-0 top-0 bottom-0 z-20 w-full md:w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="h-full overflow-y-auto px-3 pb-4 bg-white dark:bg-gray-900 md:bg-transparent">
           <StudyModePanel
             enabled={studyMode.enabled}
             loading={studyMode.loading}
