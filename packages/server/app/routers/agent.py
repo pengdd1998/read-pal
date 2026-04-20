@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.chat_message import ChatMessage
+from app.models.user import User
 from app.schemas.agent import (
     AIFeedbackRequest,
     ChatRequest,
@@ -22,6 +23,19 @@ from app.schemas.agent import (
     SummarizeRequest,
 )
 from app.services import companion_service
+from app.utils.i18n import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, t
+
+
+async def _get_user_lang(db: AsyncSession, user_id: UUID) -> str:
+    """Get user's language preference from settings."""
+    result = await db.execute(
+        select(User.settings).where(User.id == user_id)
+    )
+    settings = result.scalar_one_or_none()
+    if settings and isinstance(settings, dict):
+        lang = settings.get('language', DEFAULT_LANGUAGE)
+        return lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
+    return DEFAULT_LANGUAGE
 
 logger = logging.getLogger('read-pal.agent')
 
@@ -46,12 +60,13 @@ async def _sse_stream(
     message: str,
     context: dict | None = None,
     companion_mode: str = 'casual',
+    lang: str = DEFAULT_LANGUAGE,
 ) -> AsyncGenerator[bytes, None]:
     """Wrap companion_service.stream_chat as a bytes SSE generator."""
     try:
         async for chunk in companion_service.stream_chat(
             db, user_id, book_id, message, context=context,
-            companion_mode=companion_mode,
+            companion_mode=companion_mode, lang=lang,
         ):
             yield chunk.encode('utf-8')
     except ValueError as exc:
@@ -70,6 +85,7 @@ async def chat(
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Reading companion chat endpoint."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     try:
         result = await companion_service.chat(
             db=db,
@@ -77,6 +93,7 @@ async def chat(
             book_id=body.book_id,
             message=body.message,
             context=body.context,
+            lang=lang,
         )
     except ValueError as exc:
         raise HTTPException(
@@ -98,10 +115,12 @@ async def stream(
         body.context.get('companionMode', 'casual')
         if body.context else 'casual'
     )
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     return StreamingResponse(
         _sse_stream(
             db, current_user['id'], body.book_id, body.message,
             context=body.context, companion_mode=companion_mode,
+            lang=lang,
         ),
         media_type='text/event-stream',
         headers={
@@ -119,12 +138,14 @@ async def summarize(
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Summarize a book or specific chapters."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     try:
         result = await companion_service.summarize(
             db=db,
             user_id=UUID(current_user['id']),
             book_id=body.book_id,
             chapter_ids=body.chapter_ids,
+            lang=lang,
         )
     except ValueError as exc:
         raise HTTPException(
@@ -142,6 +163,7 @@ async def explain(
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Explain a passage from a book."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     try:
         result = await companion_service.explain(
             db=db,
@@ -149,6 +171,7 @@ async def explain(
             book_id=body.book_id,
             text=body.text,
             context=body.context,
+            lang=lang,
         )
     except ValueError as exc:
         raise HTTPException(
@@ -173,10 +196,12 @@ async def chat_stream_alias(
         body.context.get('companionMode', 'casual')
         if body.context else 'casual'
     )
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     return StreamingResponse(
         _sse_stream(
             db, current_user['id'], body.book_id, body.message,
             context=body.context, companion_mode=companion_mode,
+            lang=lang,
         ),
         media_type='text/event-stream',
         headers={
@@ -225,6 +250,7 @@ async def discussion_questions(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Generate discussion questions for a book."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     try:
         result = await companion_service.chat(
             db=db,
@@ -232,6 +258,7 @@ async def discussion_questions(
             book_id=body.book_id,
             message=body.message or 'Generate discussion questions for this book',
             context=body.context,
+            lang=lang,
         )
     except ValueError as exc:
         raise HTTPException(
@@ -324,7 +351,7 @@ async def create_reading_plan(
         logger.error('Reading plan generation failed: %s', exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={'code': 'AI_UNAVAILABLE', 'message': 'AI service unavailable'},
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable')},
         ) from exc
 
     return ReadingPlanResponse(data=result)
@@ -362,7 +389,7 @@ async def advance_reading_plan(
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'MISSING_FIELD', 'message': 'book_id is required'},
+            detail={'code': 'MISSING_FIELD', 'message': t('errors.book_id_required')},
         )
 
     result = await advance_plan(
@@ -371,5 +398,5 @@ async def advance_reading_plan(
         book_id=UUID(book_id),
     )
     if not result:
-        return {'success': True, 'data': None, 'message': 'No active plan found'}
+        return {'success': True, 'data': None, 'message': t('errors.no_active_plan')}
     return {'success': True, 'data': result}

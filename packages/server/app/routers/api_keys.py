@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.api_key import ApiKey, generate_api_key
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/api-keys', tags=['api-keys'])
 
@@ -87,7 +88,7 @@ async def delete_api_key(
     if key is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'API key not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.api_key_not_found')},
         )
     await db.execute(
         sa_delete(ApiKey).where(ApiKey.id == key_id),

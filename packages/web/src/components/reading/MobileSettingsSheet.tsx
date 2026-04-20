@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface MobileSettingsSheetProps {
   fontSize: number;
   theme: 'light' | 'dark' | 'sepia';
@@ -34,11 +36,12 @@ export function MobileSettingsSheet({
   onLineHeightChange,
   onClose,
 }: MobileSettingsSheetProps) {
+  const t = useTranslations('reader');
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Reading settings"
+      aria-label={t('settings_title')}
       className="fixed inset-0 z-40 sm:hidden bg-black/30 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
@@ -48,11 +51,11 @@ export function MobileSettingsSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mb-4" />
-        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-4">Reading Settings</h3>
+        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-4">{t('settings_title')}</h3>
 
         {/* Font size */}
         <div className="flex items-center justify-between mb-5">
-          <span className="text-sm text-gray-600 dark:text-gray-300">Font Size</span>
+          <span className="text-sm text-gray-600 dark:text-gray-300">{t('settings_size')}</span>
           <div className="flex items-center gap-3">
             <button
               onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))}
@@ -72,7 +75,7 @@ export function MobileSettingsSheet({
 
         {/* Line height */}
         <div className="flex items-center justify-between mb-5">
-          <span className="text-sm text-gray-600 dark:text-gray-300">Line Height</span>
+          <span className="text-sm text-gray-600 dark:text-gray-300">{t('settings_line_height')}</span>
           <div className="flex items-center gap-3">
             <button
               onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))}
@@ -92,7 +95,7 @@ export function MobileSettingsSheet({
 
         {/* Font family */}
         <div className="mb-5">
-          <span className="text-sm text-gray-600 dark:text-gray-300 block mb-2">Font</span>
+          <span className="text-sm text-gray-600 dark:text-gray-300 block mb-2">{t('settings_font')}</span>
           <div className="grid grid-cols-4 gap-2">
             {FONT_OPTIONS.map((f) => (
               <button
@@ -112,19 +115,19 @@ export function MobileSettingsSheet({
 
         {/* Theme */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600 dark:text-gray-300">Theme</span>
+          <span className="text-sm text-gray-600 dark:text-gray-300">{t('settings_theme')}</span>
           <div className="flex gap-2">
-            {(['light', 'sepia', 'dark'] as const).map((t) => (
+            {(['light', 'sepia', 'dark'] as const).map((themeKey) => (
               <button
-                key={t}
-                onClick={() => onThemeChange(t)}
+                key={themeKey}
+                onClick={() => onThemeChange(themeKey)}
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors active:scale-95 ${
-                  theme === t
+                  theme === themeKey
                     ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                 }`}
               >
-                {t === 'light' ? '\u2600\uFE0F Light' : t === 'sepia' ? '\uD83D\uDCD6 Sepia' : '\uD83C\uDF19 Dark'}
+                {themeKey === 'light' ? `\u2600\uFE0F ${t('settings_theme_light')}` : themeKey === 'sepia' ? `\uD83D\uDCD6 ${t('settings_theme_sepia')}` : `\uD83C\uDF19 ${t('settings_theme_dark')}`}
               </button>
             ))}
           </div>
@@ -133,8 +136,8 @@ export function MobileSettingsSheet({
         {/* Quiet mode */}
         <div className="flex items-center justify-between mt-5">
           <div>
-            <span className="text-sm text-gray-600 dark:text-gray-300">Quiet Mode</span>
-            <p className="text-[10px] text-gray-400 mt-0.5">Hide interruptions &amp; coaching</p>
+            <span className="text-sm text-gray-600 dark:text-gray-300">{t('settings_quiet_mode')}</span>
+            <p className="text-[10px] text-gray-400 mt-0.5">{t('settings_quiet_desc')}</p>
           </div>
           <button
             onClick={() => onQuietModeChange(!quietMode)}

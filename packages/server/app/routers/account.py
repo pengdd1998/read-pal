@@ -11,6 +11,7 @@ from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import account_limiter
 from app.models.user import User
 from app.schemas.auth import MessageResponse, UpdateProfileRequest
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.account')
 
@@ -36,7 +37,7 @@ async def update_me(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'User not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
         )
 
     if body.name is not None:
@@ -78,7 +79,7 @@ async def delete_account(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'code': 'UNAUTHORIZED', 'message': 'Not authenticated'},
+            detail={'code': 'UNAUTHORIZED', 'message': t('errors.unauthorized')},
         )
 
     await db.delete(user)
@@ -86,4 +87,4 @@ async def delete_account(
 
     logger.info('Account deleted: %s', user_id)
 
-    return MessageResponse(data={'message': 'Account deleted successfully'})
+    return MessageResponse(data={'message': t('errors.account_deleted')})

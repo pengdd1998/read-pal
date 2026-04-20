@@ -19,6 +19,7 @@ from app.schemas.book import (
     BookUpdate,
 )
 from app.services import book_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/books', tags=['books'])
 
@@ -66,7 +67,7 @@ async def get_book(
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
         )
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
 
@@ -97,7 +98,7 @@ async def update_book(
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
         )
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
 
@@ -113,9 +114,9 @@ async def delete_book(
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
         )
-    return {'success': True, 'data': {'message': 'Book deleted successfully'}}
+    return {'success': True, 'data': {'message': t('errors.book_deleted')}}
 
 
 @router.put('/{book_id}/tags')
@@ -133,13 +134,13 @@ async def update_tags(
     if not isinstance(tags, list):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'INVALID_INPUT', 'message': 'tags must be a list'},
+            detail={'code': 'INVALID_INPUT', 'message': t('errors.tags_must_be_list')},
         )
     book = await book_service.update_tags(db, UUID(current_user['id']), book_id, tags)
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
         )
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
 

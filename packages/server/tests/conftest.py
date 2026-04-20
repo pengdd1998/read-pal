@@ -20,6 +20,10 @@ from sqlalchemy.ext.asyncio import (
 
 from app.db import Base, get_db
 from app.main import app
+from app.utils.i18n import load_translations
+
+# Load translations once for all tests so t() returns actual strings
+load_translations()
 
 
 class _UuidSafeJSON(TypeDecorator):

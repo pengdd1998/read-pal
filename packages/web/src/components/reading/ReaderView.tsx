@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, type RefObject } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle } from '@/components/icons';
 import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
 import { highlightCodeBlocks, preloadPrism } from '@/lib/syntax-highlight';
@@ -80,6 +81,7 @@ export function ReaderView({
   highlightCount = 0,
   bookmarkCount = 0,
 }: ReaderViewProps) {
+  const t = useTranslations('reader');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
   const chapterMenuRef = useRef<HTMLDivElement>(null);
@@ -364,7 +366,7 @@ export function ReaderView({
           {/* Chapter header */}
           {chapterTitle && (
             <div className="chapter-header">
-              <span className="chapter-number">Chapter {currentPage + 1}</span>
+              <span className="chapter-number">{t('reader_chapter', { num: currentPage + 1 })}</span>
               <h2 className="chapter-title">{chapterTitle}</h2>
               <div className="chapter-divider">
                 <span className="chapter-ornament">&#10047;</span>
@@ -410,10 +412,10 @@ export function ReaderView({
             onClick={goPrevPage}
             disabled={currentPage === 0}
             className="w-12 h-10 sm:w-auto sm:px-3 sm:h-9 flex items-center justify-center gap-1 rounded-lg text-sm font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 dark:active:bg-white/10 transition-colors shrink-0"
-            aria-label="Previous chapter"
+            aria-label={t('reader_prev_chapter')}
           >
             <ChevronLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Prev</span>
+            <span className="hidden sm:inline">{t('reader_prev')}</span>
           </button>
 
           {/* Center: compact TOC trigger — self-sizing, never stretches into nav buttons */}
@@ -433,7 +435,7 @@ export function ReaderView({
                       ? 'text-amber-800/60 hover:bg-black/5'
                       : 'text-gray-500 hover:bg-black/5'
               }`}
-              aria-label="Open chapter list"
+              aria-label={t('reader_open_chapter_list')}
               aria-expanded={showChapterMenu}
             >
               <span>Ch. {currentPage + 1}/{totalPages}</span>
@@ -473,7 +475,7 @@ export function ReaderView({
                         ? 'bg-[#f5f0e6] text-amber-700 border-amber-300/60'
                         : 'bg-white text-amber-600 border-amber-200/60'
                   }`}>
-                    Table of Contents
+                    {t('toc_title')}
                   </div>
 
                   {chapters.map((ch, i) => {
@@ -505,7 +507,7 @@ export function ReaderView({
                           {i + 1}
                         </span>
                         <span className={`truncate ${isCurrent ? 'font-semibold' : ''}`}>
-                          {ch.title || `Chapter ${i + 1}`}
+                          {ch.title || t('reader_chapter', { num: i + 1 })}
                         </span>
                         {isCurrent && (
                           <span className="flex-shrink-0 ml-auto">
@@ -525,9 +527,9 @@ export function ReaderView({
             onClick={goNextPage}
             disabled={currentPage >= totalPages - 1}
             className="w-12 h-10 sm:w-auto sm:px-3 sm:h-9 flex items-center justify-center gap-1 rounded-lg text-sm font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 dark:active:bg-white/10 transition-colors shrink-0"
-            aria-label="Next chapter"
+            aria-label={t('reader_next_chapter')}
           >
-            <span className="hidden sm:inline">Next</span>
+            <span className="hidden sm:inline">{t('reader_next')}</span>
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>

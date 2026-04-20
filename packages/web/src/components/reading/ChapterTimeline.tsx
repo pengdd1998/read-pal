@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
 interface ChapterStat {
@@ -28,6 +29,7 @@ export function ChapterTimeline({
   onChapterSelect,
   onClose,
 }: ChapterTimelineProps) {
+  const t = useTranslations('reader');
   const [stats, setStats] = useState<ChapterStat[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,13 +55,13 @@ export function ChapterTimeline({
       >
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-4 flex items-center justify-between z-10">
           <div>
-            <h2 className="font-semibold text-gray-900 dark:text-white">Chapter Timeline</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Reading activity across chapters</p>
+            <h2 className="font-semibold text-gray-900 dark:text-white">{t('timeline_title')}</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{t('timeline_subtitle')}</p>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close timeline"
+            aria-label={t('timeline_close')}
           >
             <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -70,13 +72,13 @@ export function ChapterTimeline({
         {/* Legend */}
         <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-[10px] text-gray-400">
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-amber-400" /> Highlights
+            <span className="w-2 h-2 rounded-full bg-amber-400" /> {t('timeline_highlights')}
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-teal-400" /> Notes
+            <span className="w-2 h-2 rounded-full bg-teal-400" /> {t('timeline_notes')}
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-violet-400" /> Bookmarks
+            <span className="w-2 h-2 rounded-full bg-violet-400" /> {t('timeline_bookmarks')}
           </span>
         </div>
 
@@ -95,7 +97,7 @@ export function ChapterTimeline({
               const barWidth = stat ? (total / maxAnnotations) * 100 : 0;
               const isCurrent = i === currentChapter;
               const isRead = stat && stat.lastActivity;
-              const title = chapterTitles[i]?.title || `Chapter ${i + 1}`;
+              const title = chapterTitles[i]?.title || t('timeline_chapter_fallback', { num: i + 1 });
 
               return (
                 <button
@@ -127,7 +129,7 @@ export function ChapterTimeline({
                     </span>
                     {isCurrent && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-medium ml-auto flex-shrink-0">
-                        Here
+                        {t('timeline_here')}
                       </span>
                     )}
                   </div>

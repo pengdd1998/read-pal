@@ -9,6 +9,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.collection import CollectionCreate, CollectionUpdate
 from app.services import collection_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/collections', tags=['collections'])
 
@@ -63,7 +64,7 @@ async def get_collection(
     if col is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Collection not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
     return {'success': True, 'data': _serialize_collection(col)}
 
@@ -115,7 +116,7 @@ async def get_collection_books(
     if col is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Collection not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
     return {
         'success': True,
@@ -148,7 +149,7 @@ async def add_books_batch(
     if col is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Collection not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
     return {'success': True, 'data': _serialize_collection(col)}
 
@@ -176,7 +177,7 @@ async def remove_books_batch(
     if col is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Collection not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
     return {'success': True, 'data': _serialize_collection(col)}
 

@@ -14,6 +14,7 @@ from app.middleware.auth import get_current_user
 from app.models.book import Book
 from app.schemas.synthesis import SynthesisRequest, SynthesisResponse
 from app.services.synthesis_service import cross_book_synthesize, synthesize
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.synthesis')
 
@@ -44,7 +45,7 @@ async def run_synthesis(
     if not response.success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
         )
 
     return {

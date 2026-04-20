@@ -1,41 +1,69 @@
+import createIntlMiddleware from 'next-intl/middleware';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { routing } from './i18n/routing';
 
 /**
- * Route protection middleware.
+ * Combined i18n + route protection middleware.
  *
- * Redirects unauthenticated users away from protected pages to /login.
+ * 1. Handles locale detection and URL prefixing (next-intl).
+ * 2. Redirects unauthenticated users away from protected pages to /login.
  * Auth state is tracked via an `auth_token` cookie set by the AuthProvider.
  */
 
-const PROTECTED_PREFIXES = ['/dashboard', '/library', '/read/', '/settings', '/memory-books', '/search'];
+const intlMiddleware = createIntlMiddleware(routing);
+
+const PROTECTED_PREFIXES = [
+  '/dashboard',
+  '/library',
+  '/read/',
+  '/settings',
+  '/memory-books',
+  '/search',
+];
+
+function stripLocale(pathname: string): string {
+  for (const locale of routing.locales) {
+    if (pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`) {
+      return pathname.slice(`/${locale}`.length) || '/';
+    }
+  }
+  return pathname;
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('auth_token')?.value;
 
+  // Strip locale prefix to check the actual route path
+  const barePath = stripLocale(pathname);
+
   // Redirect authenticated users from landing page to dashboard
-  if (pathname === '/' && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  if (barePath === '/' && token) {
+    const locale = routing.locales.find((l) =>
+      pathname.startsWith(`/${l}`)
+    ) || routing.defaultLocale;
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
   }
 
   // Only check protected routes
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-  if (!isProtected) {
-    return NextResponse.next();
-  }
-
-  if (!token) {
-    const authUrl = new URL('/auth', request.url);
+  const isProtected = PROTECTED_PREFIXES.some(
+    (prefix) => barePath.startsWith(prefix),
+  );
+  if (isProtected && !token) {
+    const locale = routing.locales.find((l) =>
+      pathname.startsWith(`/${l}`)
+    ) || routing.defaultLocale;
+    const authUrl = new URL(`/${locale}/auth`, request.url);
     authUrl.searchParams.set('mode', 'login');
     authUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(authUrl);
   }
 
-  return NextResponse.next();
+  // Delegate to next-intl middleware for locale handling
+  return intlMiddleware(request);
 }
 
 export const config = {
-  // Match all paths except static files, api routes, and Next.js internals
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
+  matcher: ['/', '/(en|zh)/:path*'],
 };

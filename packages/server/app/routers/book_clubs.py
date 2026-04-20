@@ -17,6 +17,7 @@ from app.schemas.book_club import (
     MemberResponse,
 )
 from app.services import book_club_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'])
 
@@ -92,7 +93,7 @@ async def get_club(
     if club is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Club not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
         )
     return {'success': True, 'data': club}
 
@@ -181,7 +182,7 @@ async def leave_club(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={'code': 'BAD_REQUEST', 'message': str(exc)},
         ) from exc
-    return {'success': True, 'data': {'message': 'Left the club'}}
+    return {'success': True, 'data': {'message': t('errors.left_club')}}
 
 
 @router.post('/join-code')
@@ -231,7 +232,7 @@ async def get_club_progress(
     if club is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Club not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
         )
 
     members_progress = await book_club_service.get_club_progress(db, club_id)

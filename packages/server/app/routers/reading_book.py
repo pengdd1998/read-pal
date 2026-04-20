@@ -14,6 +14,7 @@ from app.middleware.auth import get_current_user
 from app.models.memory_book import MemoryBook
 from app.schemas.memory_book import MemoryBookGenerateRequest, MemoryBookResponse
 from app.services.memory_book_service import generate
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.reading_book')
 
@@ -65,7 +66,7 @@ async def get_memory_book(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
                 'code': 'NOT_FOUND',
-                'message': 'Memory book not found. Generate one first.',
+                'message': t('errors.memory_book_not_found'),
             },
         )
 

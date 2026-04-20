@@ -37,6 +37,7 @@ from app.schemas.auth import (
     RegisterRequest,
     UserResponse,
 )
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.auth')
 
@@ -63,7 +64,7 @@ async def login(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
                 'code': 'ACCOUNT_LOCKED',
-                'message': f'Account temporarily locked. Try again in {minutes_remaining} minutes.',
+                'message': t('errors.account_locked', minutes=minutes_remaining),
             },
         )
 
@@ -76,7 +77,7 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 'code': 'INVALID_CREDENTIALS',
-                'message': 'Invalid email or password',
+                'message': t('errors.invalid_credentials'),
             },
         )
 
@@ -87,7 +88,7 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 'code': 'INVALID_CREDENTIALS',
-                'message': 'Invalid email or password',
+                'message': t('errors.invalid_credentials'),
             },
         )
 
@@ -131,7 +132,7 @@ async def register(
             status_code=status.HTTP_409_CONFLICT,
             detail={
                 'code': 'USER_EXISTS',
-                'message': 'A user with this email already exists',
+                'message': t('errors.user_exists'),
             },
         )
 
@@ -195,7 +196,7 @@ async def get_me(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'User not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
         )
 
     return {
@@ -241,7 +242,7 @@ async def logout(
             # Token may be invalid/expired — still return success for idempotent logout
             pass
 
-    return MessageResponse(data={'message': 'Logged out successfully'})
+    return MessageResponse(data={'message': t('errors.logged_out')})
 
 
 # ---------------------------------------------------------------------------
@@ -274,7 +275,7 @@ async def refresh(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail={
                         'code': 'TOKEN_REVOKED',
-                        'message': 'Token has already been revoked',
+                        'message': t('errors.token_revoked'),
                     },
                 )
 

@@ -22,6 +22,7 @@ from app.schemas.auth import (
     MessageResponse,
     ResetPasswordRequest,
 )
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.password_reset')
 
@@ -82,7 +83,7 @@ async def forgot_password(body: ForgotPasswordRequest) -> MessageResponse:
         logger.debug('Error during forgot-password flow', exc_info=True)
 
     return MessageResponse(
-        data={'message': 'If an account with that email exists, a reset link has been sent.'},
+        data={'message': t('errors.reset_link_sent')},
     )
 
 
@@ -101,7 +102,7 @@ async def reset_password(body: ResetPasswordRequest) -> MessageResponse:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 'code': 'INVALID_TOKEN',
-                'message': 'Reset token is invalid or expired. Please request a new one.',
+                'message': t('errors.reset_token_invalid'),
             },
         )
 
@@ -119,7 +120,7 @@ async def reset_password(body: ResetPasswordRequest) -> MessageResponse:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
                     'code': 'INVALID_TOKEN',
-                    'message': 'Reset token is invalid or expired.',
+                    'message': t('errors.reset_token_invalid'),
                 },
             )
 
@@ -132,5 +133,5 @@ async def reset_password(body: ResetPasswordRequest) -> MessageResponse:
     logger.info('Password reset successful')
 
     return MessageResponse(
-        data={'message': 'Password has been reset successfully. You can now sign in.'},
+        data={'message': t('errors.password_reset_success')},
     )

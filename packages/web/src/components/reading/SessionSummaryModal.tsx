@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
 interface SessionSummaryModalProps {
@@ -20,6 +21,7 @@ export function SessionSummaryModal({
   onKeepReading,
   onBackToLibrary,
 }: SessionSummaryModalProps) {
+  const t = useTranslations('reader');
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
 
@@ -40,7 +42,7 @@ export function SessionSummaryModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Reading session summary"
+      aria-label={t('session_title')}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
       onClick={onKeepReading}
     >
@@ -50,21 +52,21 @@ export function SessionSummaryModal({
       >
         <div className="text-center">
           <div className="text-4xl mb-3">{'\uD83D\uDCD6'}</div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Reading Session</h3>
-          <p className="text-sm text-gray-500 mb-4">Great reading today!</p>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t('session_title')}</h3>
+          <p className="text-sm text-gray-500 mb-4">{t('session_great_reading')}</p>
 
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {Math.floor(duration / 60)}m {duration % 60}s
               </div>
-              <div className="text-xs text-gray-500 mt-1">Time spent</div>
+              <div className="text-xs text-gray-500 mt-1">{t('session_time_spent')}</div>
             </div>
             <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
               <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
                 {chaptersRead}/{totalChapters}
               </div>
-              <div className="text-xs text-gray-500 mt-1">Chapters read</div>
+              <div className="text-xs text-gray-500 mt-1">{t('session_chapters_read')}</div>
             </div>
           </div>
 
@@ -76,7 +78,7 @@ export function SessionSummaryModal({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Generating your reading insight...
+                {t('session_generating_insight')}
               </div>
             </div>
           )}
@@ -86,7 +88,7 @@ export function SessionSummaryModal({
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
-                Reading Insight
+                {t('session_reading_insight')}
               </div>
               <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{aiSummary}</p>
             </div>
@@ -97,13 +99,13 @@ export function SessionSummaryModal({
               onClick={onKeepReading}
               className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
-              Keep Reading
+              {t('session_keep_reading')}
             </button>
             <button
               onClick={onBackToLibrary}
               className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors"
             >
-              Back to Library
+              {t('back_to_library')}
             </button>
           </div>
         </div>

@@ -12,3 +12,4 @@ class SettingsUpdate(BaseModel):
     readingGoal: int | None = Field(None, ge=1, le=50)
     dailyReadingMinutes: int | None = Field(None, ge=5, le=480)
     notificationsEnabled: bool | None = None
+    language: str | None = Field(None, pattern=r'^(en|zh)$')

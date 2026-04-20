@@ -21,6 +21,7 @@ from app.schemas.reading_session import (
     SessionUpdate,
 )
 from app.services import reading_session_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/sessions', tags=['sessions'])
 
@@ -88,7 +89,7 @@ async def get_session(
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Session not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
         )
     return {
         'success': True,
@@ -126,7 +127,7 @@ async def end_session(
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Session not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
         )
     return {
         'success': True,
@@ -151,7 +152,7 @@ async def start_session(
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={'code': 'VALIDATION_ERROR', 'message': 'book_id is required'},
+            detail={'code': 'VALIDATION_ERROR', 'message': t('errors.book_id_required')},
         )
     session_body = SessionCreate(book_id=UUID(str(book_id)))
     session = await reading_session_service.create_session(
@@ -177,7 +178,7 @@ async def end_session_post(
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Session not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
         )
     return {
         'success': True,
@@ -203,11 +204,11 @@ async def heartbeat_session(
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Session not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
         )
     session.updated_at = utcnow()
     await db.flush()
-    return {'success': True, 'data': {'message': 'Heartbeat received'}}
+    return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 
 
 @router.get('/book/{book_id}/log')

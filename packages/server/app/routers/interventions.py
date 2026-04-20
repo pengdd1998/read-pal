@@ -20,6 +20,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.utils import utcnow
 from app.models.intervention_feedback import InterventionFeedback
+from app.utils.i18n import t
 from app.models.reading_session import ReadingSession
 
 router = APIRouter(prefix='/api/v1/interventions', tags=['interventions'])
@@ -187,4 +188,4 @@ async def submit_feedback(
     db.add(feedback)
     await db.commit()
 
-    return {'success': True, 'data': {'message': 'Feedback recorded'}}
+    return {'success': True, 'data': {'message': t('errors.feedback_recorded')}}

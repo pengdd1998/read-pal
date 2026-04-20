@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.services.export_service import CITATION_FORMATS, SUPPORTED_FORMATS, export
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.export')
 
@@ -35,7 +36,7 @@ async def export_annotations(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 'code': 'INVALID_FORMAT',
-                'message': f'Unsupported format: {format}. Use one of: {", ".join(all_formats)}',
+                'message': t('errors.unsupported_format', format=format, formats=', '.join(all_formats)),
             },
         )
 
@@ -44,7 +45,7 @@ async def export_annotations(
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
         )
 
     content, content_type = result
@@ -87,7 +88,7 @@ async def export_by_query_params(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 'code': 'INVALID_FORMAT',
-                'message': f'Unsupported format: {format}. Use one of: {", ".join(all_formats)}',
+                'message': t('errors.unsupported_format', format=format, formats=', '.join(all_formats)),
             },
         )
 
@@ -96,7 +97,7 @@ async def export_by_query_params(
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
         )
 
     content, content_type = result

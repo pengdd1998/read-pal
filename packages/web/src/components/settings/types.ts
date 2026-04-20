@@ -9,4 +9,5 @@ export interface UserSettings {
   friendMessages: boolean;
   friendPersona: string;
   friendFrequency: string;
+  language: 'en' | 'zh';
 }

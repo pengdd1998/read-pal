@@ -14,44 +14,12 @@ from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.services.llm import get_llm
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.companion')
 
-# ---------------------------------------------------------------------------
-# System prompt templates
-# ---------------------------------------------------------------------------
-
-SYSTEM_TEMPLATE = (
-    'You are an AI reading companion helping the user understand '
-    '"{title}" by {author}.\n'
-    'The user is {progress}% through the book '
-    '(currently on page {current_page} of {total_pages}).\n'
-    'Be insightful, ask thought-provoking questions, and connect ideas '
-    'across the text.\n'
-    'Keep responses concise (2-3 paragraphs max).'
-)
-
-SOCRATIC_SYSTEM_TEMPLATE = (
-    'You are an AI reading companion helping the user understand '
-    '"{title}" by {author}.\n'
-    'The user is {progress}% through the book '
-    '(currently on page {current_page} of {total_pages}).\n\n'
-    'IMPORTANT: You are in SOCRATIC mode. Instead of giving direct answers, '
-    'guide the user to discover insights themselves:\n'
-    '- Ask probing questions that lead to deeper understanding\n'
-    '- Offer hints and partial observations, not full explanations\n'
-    '- Challenge assumptions and encourage critical thinking\n'
-    '- When the user is stuck, provide a small nudge, not the full answer\n'
-    '- Celebrate when the user reaches an insight on their own\n'
-    'Keep responses concise (2-3 paragraphs max).'
-)
-
 HISTORY_LIMIT = 20
 ANNOTATION_LIMIT = 10
-
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
 
 
 async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book:
@@ -64,7 +32,7 @@ async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book:
     )
     book = result.scalar_one_or_none()
     if book is None:
-        raise ValueError(f'Book {book_id} not found for user {user_id}')
+        raise ValueError(t('errors.book_not_found'))
     return book
 
 
@@ -129,44 +97,29 @@ def _build_system_prompt(
     memory_summary: str = '',
     companion_mode: str = 'casual',
     context: dict | None = None,
+    lang: str = 'en',
 ) -> str:
     """Build the system prompt from all available context."""
-    template = (
-        SOCRATIC_SYSTEM_TEMPLATE
-        if companion_mode == 'socratic'
-        else SYSTEM_TEMPLATE
-    )
-    prompt = template.format(
-        title=book.title,
-        author=book.author,
-        progress=book.progress,
-        current_page=book.current_page,
-        total_pages=book.total_pages,
-    )
+    prompt_key = 'companion.socratic_prompt' if companion_mode == 'socratic' else 'companion.system_prompt'
+    prompt = t(prompt_key, lang,
+               title=book.title, author=book.author,
+               progress=book.progress, current_page=book.current_page,
+               total_pages=book.total_pages)
     if annotations_ctx:
-        prompt += (
-            '\n\nThe user has made these recent annotations:\n'
-            + annotations_ctx
-        )
+        prompt += t('companion.annotations_context', lang, annotations=annotations_ctx)
     if rag_ctx:
-        prompt += (
-            '\n\nRelevant passages from the book:\n'
-            + rag_ctx
-        )
+        prompt += t('companion.rag_context', lang, context=rag_ctx)
     if memory_summary:
-        prompt += (
-            '\n\nSummary of previous conversation context:\n'
-            + memory_summary
-        )
+        prompt += t('companion.memory_context', lang, summary=memory_summary)
     if context:
         extra_parts: list[str] = []
         if context.get('chapterContent'):
             content = context['chapterContent'][:3000]
-            extra_parts.append(f'Current chapter content:\n{content}')
+            extra_parts.append(t('companion.chapter_content', lang, content=content))
         if context.get('nearbyCode'):
-            extra_parts.append(f'Nearby code examples:\n{context["nearbyCode"]}')
+            extra_parts.append(t('companion.nearby_code', lang, code=context['nearbyCode']))
         if context.get('bookDescription'):
-            extra_parts.append(f'Book description: {context["bookDescription"]}')
+            extra_parts.append(t('companion.book_description', lang, description=context['bookDescription']))
         if extra_parts:
             prompt += '\n\n' + '\n\n'.join(extra_parts)
     return prompt
@@ -190,11 +143,6 @@ async def _save_message(
     await db.flush()
 
 
-# ---------------------------------------------------------------------------
-# Public API — chat, stream, summarize, explain
-# ---------------------------------------------------------------------------
-
-
 async def chat(
     db: AsyncSession,
     user_id: UUID,
@@ -202,13 +150,13 @@ async def chat(
     message: str,
     context: dict | None = None,
     companion_mode: str = 'casual',
+    lang: str = 'en',
 ) -> dict[str, Any]:
     """Run a single-turn companion chat and return the assistant response."""
     book = await _load_book(db, user_id, book_id)
     annotations_ctx = await _load_annotations_context(db, user_id, book_id)
     history = await _load_history(db, user_id, book_id)
 
-    # RAG: retrieve relevant book content
     rag_ctx = ''
     try:
         from app.services.rag_service import get_book_context
@@ -216,7 +164,6 @@ async def chat(
     except Exception as exc:
         logger.warning('RAG context retrieval failed: %s', exc)
 
-    # Conversation memory summary
     memory_summary = ''
     try:
         from app.services.conversation_memory import get_or_create_summary
@@ -226,7 +173,7 @@ async def chat(
 
     system_text = _build_system_prompt(
         book, annotations_ctx, rag_ctx, memory_summary,
-        companion_mode=companion_mode, context=context,
+        companion_mode=companion_mode, context=context, lang=lang,
     )
 
     messages = [SystemMessage(content=system_text)] + history
@@ -238,10 +185,7 @@ async def chat(
         assistant_content = response.content
     except Exception as exc:
         logger.error('GLM API call failed: %s', exc)
-        assistant_content = (
-            "I'm having trouble connecting to my AI service right now. "
-            'Please try again in a moment.'
-        )
+        assistant_content = t('companion.fallback_error', lang)
 
     await _save_message(db, user_id, book_id, 'user', message)
     await _save_message(db, user_id, book_id, 'assistant', assistant_content)
@@ -256,13 +200,13 @@ async def stream_chat(
     message: str,
     context: dict | None = None,
     companion_mode: str = 'casual',
+    lang: str = 'en',
 ) -> AsyncGenerator[str, None]:
     """Stream companion chat as SSE chunks and persist messages after."""
     book = await _load_book(db, user_id, book_id)
     annotations_ctx = await _load_annotations_context(db, user_id, book_id)
     history = await _load_history(db, user_id, book_id)
 
-    # RAG enrichment
     rag_ctx = ''
     try:
         from app.services.rag_service import get_book_context
@@ -270,7 +214,6 @@ async def stream_chat(
     except Exception as exc:
         logger.warning('RAG context retrieval failed: %s', exc)
 
-    # Memory summary
     memory_summary = ''
     try:
         from app.services.conversation_memory import get_or_create_summary
@@ -280,7 +223,7 @@ async def stream_chat(
 
     system_text = _build_system_prompt(
         book, annotations_ctx, rag_ctx, memory_summary,
-        companion_mode=companion_mode, context=context,
+        companion_mode=companion_mode, context=context, lang=lang,
     )
     messages = [SystemMessage(content=system_text)] + history
     messages.append(HumanMessage(content=message))
@@ -296,10 +239,7 @@ async def stream_chat(
                 yield f'data: {json.dumps({"content": token})}\n\n'
     except Exception as exc:
         logger.error('GLM streaming failed: %s', exc)
-        fallback = (
-            "I'm having trouble connecting to my AI service right now. "
-            'Please try again in a moment.'
-        )
+        fallback = t('companion.fallback_error', lang)
         yield f'data: {json.dumps({"content": fallback})}\n\n'
 
     yield 'data: [DONE]\n\n'
@@ -314,23 +254,22 @@ async def summarize(
     user_id: UUID,
     book_id: UUID,
     chapter_ids: list[str] | None = None,
+    lang: str = 'en',
 ) -> dict[str, Any]:
     """Summarize a book or specific chapters."""
     book = await _load_book(db, user_id, book_id)
 
     prompt_parts = [
-        f'Summarize the book "{book.title}" by {book.author}.',
+        t('companion.summarize_prompt', lang, title=book.title, author=book.author),
     ]
     if chapter_ids:
         prompt_parts.append(
-            f'Focus on these chapters: {", ".join(chapter_ids)}.',
+            t('companion.summarize_chapters', lang, chapters=', '.join(chapter_ids)),
         )
-    prompt_parts.append(
-        'Provide a clear, structured summary with key themes and takeaways.',
-    )
+    prompt_parts.append(t('companion.summarize_instruction', lang))
 
     messages = [
-        SystemMessage(content='You are a literary analysis assistant.'),
+        SystemMessage(content=t('companion.summarize_system', lang)),
         HumanMessage(content=' '.join(prompt_parts)),
     ]
 
@@ -341,7 +280,7 @@ async def summarize(
         logger.error('GLM summarize failed: %s', exc)
         return {
             'role': 'assistant',
-            'content': 'Unable to generate summary right now. Please try again.',
+            'content': t('companion.summary_error', lang),
         }
 
     return {'role': 'assistant', 'content': response.content}
@@ -353,24 +292,17 @@ async def explain(
     book_id: UUID,
     text: str,
     context: str | None = None,
+    lang: str = 'en',
 ) -> dict[str, Any]:
     """Explain a passage from a book."""
     book = await _load_book(db, user_id, book_id)
 
-    prompt = (
-        f'In the context of "{book.title}" by {book.author}, '
-        f'explain the following passage:\n\n{text}'
-    )
+    prompt = t('companion.explain_prompt', lang, title=book.title, author=book.author, text=text)
     if context:
-        prompt += f'\n\nAdditional context: {context}'
+        prompt += t('companion.explain_extra_context', lang, context=context)
 
     messages = [
-        SystemMessage(
-            content=(
-                'You are a reading companion that helps readers understand '
-                'difficult passages. Explain clearly with examples.'
-            ),
-        ),
+        SystemMessage(content=t('companion.explain_system', lang)),
         HumanMessage(content=prompt),
     ]
 
@@ -381,7 +313,7 @@ async def explain(
         logger.error('GLM explain failed: %s', exc)
         return {
             'role': 'assistant',
-            'content': 'Unable to explain this passage right now. Please try again.',
+            'content': t('companion.explain_error', lang),
         }
 
     return {'role': 'assistant', 'content': response.content}

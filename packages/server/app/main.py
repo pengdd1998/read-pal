@@ -110,6 +110,8 @@ async def startup() -> None:
         level=logging.INFO,
         format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
     )
+    from app.utils.i18n import load_translations
+    load_translations()
     logger.info(
         'Read-Pal API starting — env=%s, model=%s',
         settings.app_env,

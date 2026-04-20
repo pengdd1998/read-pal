@@ -10,6 +10,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.agent import ChatResponse, FriendChatRequest
 from app.services import friend_service
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.friend')
 
@@ -37,7 +38,7 @@ async def chat(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 'code': 'INTERNAL_ERROR',
-                'message': 'Failed to generate friend response',
+                'message': t('errors.friend_response_failed'),
             },
         ) from exc
 

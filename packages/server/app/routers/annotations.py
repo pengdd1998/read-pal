@@ -20,6 +20,7 @@ from app.schemas.annotation import (
     ChapterStatsResponse,
 )
 from app.services import annotation_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/annotations', tags=['annotations'])
 
@@ -115,7 +116,7 @@ async def get_annotation(
     if annotation is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Annotation not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found')},
         )
     return {
         'success': True,
@@ -153,7 +154,7 @@ async def update_annotation(
     if annotation is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Annotation not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found')},
         )
     return {
         'success': True,
@@ -174,6 +175,6 @@ async def delete_annotation(
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Annotation not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found')},
         )
-    return {'success': True, 'data': {'message': 'Annotation deleted successfully'}}
+    return {'success': True, 'data': {'message': t('errors.annotation_deleted')}}

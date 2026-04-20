@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';
 import { QuoteCard } from './QuoteCard';
@@ -36,6 +37,7 @@ export function SelectionToolbar({
   onDismiss,
   onAskAI,
 }: SelectionToolbarProps) {
+  const t = useTranslations('reader');
   const [showNote, setShowNote] = useState(false);
   const [copied, setCopied] = useState(false);
   const [highlightToast, setHighlightToast] = useState(false);
@@ -135,7 +137,7 @@ export function SelectionToolbar({
                   onClick={() => handleHighlight(color)}
                   className="w-9 h-9 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
                   style={{ backgroundColor: color }}
-                  aria-label={`Highlight in ${color}`}
+                  aria-label={t('toolbar_highlight_in', { color })}
                 />
               ))}
             </div>
@@ -147,7 +149,7 @@ export function SelectionToolbar({
               <button
                 onClick={() => setShowNote(!showNote)}
                 className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
-                aria-label="Add note"
+                aria-label={t('toolbar_add_note')}
               >
                 <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <svg
@@ -164,7 +166,7 @@ export function SelectionToolbar({
                     />
                   </svg>
                 </div>
-                <span className="text-[10px] font-medium">Note</span>
+                <span className="text-[10px] font-medium">{t('toolbar_note')}</span>
               </button>
 
               <button
@@ -172,7 +174,7 @@ export function SelectionToolbar({
                 className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
                   showTagPicker ? 'text-amber-600 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400'
                 }`}
-                aria-label="Tag and highlight"
+                aria-label={t('toolbar_tag_and_highlight')}
               >
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
                   showTagPicker ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'
@@ -181,7 +183,7 @@ export function SelectionToolbar({
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
                 </div>
-                <span className="text-[10px] font-medium">Tag</span>
+                <span className="text-[10px] font-medium">{t('toolbar_tag')}</span>
               </button>
 
               <button
@@ -189,7 +191,7 @@ export function SelectionToolbar({
                 className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
                   copied ? 'text-emerald-500' : 'text-gray-600 dark:text-gray-400'
                 }`}
-                aria-label="Copy text"
+                aria-label={t('toolbar_copy_text')}
               >
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${copied ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
                   {copied ? (
@@ -208,14 +210,14 @@ export function SelectionToolbar({
               <button
                 onClick={() => setShowQuoteCard(true)}
                 className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
-                aria-label="Share as quote card"
+                aria-label={t('toolbar_share_as_quote')}
               >
                 <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
                 </div>
-                <span className="text-[10px] font-medium">Share</span>
+                <span className="text-[10px] font-medium">{t('toolbar_share')}</span>
               </button>
 
               {onAskAI && (
@@ -225,7 +227,7 @@ export function SelectionToolbar({
                     onDismiss();
                   }}
                   className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
-                  aria-label="Ask AI about selected text"
+                  aria-label={t('toolbar_ask_ai_about')}
                 >
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 flex items-center justify-center shadow-sm">
                     <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -233,7 +235,7 @@ export function SelectionToolbar({
                     </svg>
                   </div>
                   <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">
-                    Ask AI
+                    {t('toolbar_ask_ai')}
                   </span>
                 </button>
               )}
@@ -242,7 +244,7 @@ export function SelectionToolbar({
             {/* Tag picker — mobile */}
             {showTagPicker && (
               <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">Quick tag + highlight</p>
+                <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
                 <div className="flex flex-wrap gap-2">
                   {QUICK_TAGS.map((qt) => (
                     <button
@@ -298,7 +300,7 @@ export function SelectionToolbar({
               onClick={() => handleHighlight(color)}
               className="w-7 h-7 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
               style={{ backgroundColor: color }}
-              aria-label={`Highlight in ${color}`}
+              aria-label={t('toolbar_highlight_in', { color })}
             />
           ))}
 
@@ -308,12 +310,12 @@ export function SelectionToolbar({
           <button
             onClick={() => setShowNote(!showNote)}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Add note"
+            aria-label={t('toolbar_add_note')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            <span>Note</span>
+            <span>{t('toolbar_note')}</span>
           </button>
 
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
@@ -326,12 +328,12 @@ export function SelectionToolbar({
                 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
-            aria-label="Tag and highlight"
+            aria-label={t('toolbar_tag_and_highlight')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
             </svg>
-            <span>Tag</span>
+            <span>{t('toolbar_tag')}</span>
           </button>
 
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
@@ -340,7 +342,7 @@ export function SelectionToolbar({
           <button
             onClick={handleCopy}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Copy text"
+            aria-label={t('toolbar_copy_text')}
           >
             {copied ? (
               <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -362,12 +364,12 @@ export function SelectionToolbar({
           <button
             onClick={() => setShowQuoteCard(true)}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Share as quote card"
+            aria-label={t('toolbar_share_as_quote')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
-            <span>Share</span>
+            <span>{t('toolbar_share')}</span>
           </button>
 
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
@@ -380,12 +382,12 @@ export function SelectionToolbar({
                 onDismiss();
               }}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 transition-colors active:scale-95"
-              aria-label="Ask AI about selected text"
+              aria-label={t('toolbar_ask_ai_about')}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
-              <span>Ask AI</span>
+              <span>{t('toolbar_ask_ai')}</span>
             </button>
           )}
         </div>
@@ -393,7 +395,7 @@ export function SelectionToolbar({
         {/* Tag picker popup — desktop */}
         {showTagPicker && (
           <div className="absolute top-full mt-2 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 min-w-[220px] z-10 animate-bounce-in">
-            <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">Quick tag + highlight</p>
+            <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
             <div className="flex flex-wrap gap-1.5">
               {QUICK_TAGS.map((qt) => (
                 <button

@@ -9,6 +9,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.webhook import WebhookCreate, WebhookUpdate
 from app.services import webhook_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'])
 
@@ -47,7 +48,7 @@ async def test_webhook(
         webhooks = await webhook_service.list_webhooks(db, UUID(user['id']))
         wh = next((w for w in webhooks if str(w.id) == str(webhook_id)), None)
         if wh is None:
-            raise ValueError('Webhook not found')
+            raise ValueError(t('errors.webhook_not_found'))
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

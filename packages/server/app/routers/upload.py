@@ -15,6 +15,7 @@ from app.services.upload_service import (
     get_file_type,
     validate_file,
 )
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/upload', tags=['upload'])
 
@@ -32,7 +33,7 @@ async def upload_book(
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='No filename provided',
+            detail=t('errors.no_filename'),
         )
 
     file_size = 0
@@ -116,7 +117,7 @@ async def get_book_content(
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
         )
 
     result = await db.execute(

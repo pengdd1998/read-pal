@@ -11,6 +11,7 @@ from app.middleware.auth import get_current_user
 from app.models.flashcard import Flashcard
 from app.schemas.flashcard import FlashcardCreate, FlashcardReview
 from app.services import flashcard_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/flashcards', tags=['flashcards'])
 
@@ -181,13 +182,13 @@ async def generate_flashcards(
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'INVALID_INPUT', 'message': 'book_id is required'},
+            detail={'code': 'INVALID_INPUT', 'message': t('errors.book_id_required')},
         )
     # Return success — actual generation would use AI
     return {
         'success': True,
         'data': {
-            'message': 'Flashcard generation queued',
+            'message': t('errors.flashcard_generation_queued'),
             'book_id': str(book_id),
         },
     }

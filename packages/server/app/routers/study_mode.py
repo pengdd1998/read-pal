@@ -18,6 +18,7 @@ from app.utils import utcnow
 from app.models.book import Book
 from app.models.flashcard import Flashcard
 from app.services.llm import safe_llm_invoke
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.study')
 
@@ -204,7 +205,7 @@ async def save_concept_checks(
     checks = body.get('checks', [])
 
     if not book_id or not checks:
-        return {'success': True, 'data': {'message': 'Results saved'}}
+        return {'success': True, 'data': {'message': t('errors.results_saved')}}
 
     user_id = UUID(current_user['id'])
     now = utcnow()
@@ -216,7 +217,7 @@ async def save_concept_checks(
         ),
     )
     if not book_result.scalar_one_or_none():
-        return {'success': True, 'data': {'message': 'Results saved'}}
+        return {'success': True, 'data': {'message': t('errors.results_saved')}}
 
     saved_count = 0
     for check in checks:

@@ -9,6 +9,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.notification import NotificationUpdate
 from app.services import notification_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/notifications', tags=['notifications'])
 
@@ -65,7 +66,7 @@ async def mark_notification_read(
     if notification is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Notification not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.notification_not_found')},
         )
     return {'success': True, 'data': _serialize_notification(notification)}
 
@@ -83,7 +84,7 @@ async def mark_read_alias(
     if notification is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Notification not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.notification_not_found')},
         )
     return {'success': True, 'data': _serialize_notification(notification)}
 

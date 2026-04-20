@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 
 interface BookCompletionModalProps {
@@ -21,6 +22,7 @@ export function BookCompletionModal({
   totalChapters,
   onClose,
 }: BookCompletionModalProps) {
+  const t = useTranslations('reader');
   const router = useRouter();
   const [generating, setGenerating] = useState(false);
   const [showPersonalBookCTA, setShowPersonalBookCTA] = useState(true);
@@ -36,7 +38,7 @@ export function BookCompletionModal({
       router.push(`/memory-books/${bookId}`);
     } catch {
       setGenerating(false);
-      setGenError('Failed to generate. Please try again.');
+      setGenError(t('completion_failed_generate'));
     }
   };
 
@@ -44,7 +46,7 @@ export function BookCompletionModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Book completed"
+      aria-label={t('completion_title')}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
       onClick={onClose}
     >
@@ -53,21 +55,21 @@ export function BookCompletionModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-6xl mb-4">{'\uD83C\uDF89'}</div>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Book Complete!</h3>
-        <p className="text-gray-500 mb-5">You finished <strong>{bookTitle}</strong></p>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{t('completion_title')}</h3>
+        <p className="text-gray-500 mb-5">{t('completion_subtitle')} <strong>{bookTitle}</strong></p>
 
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
             <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalHighlights}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">Highlights</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_highlights')}</div>
           </div>
           <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
             <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{totalNotes}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">Notes</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_notes')}</div>
           </div>
           <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3">
             <div className="text-xl font-bold text-violet-600 dark:text-violet-400">{totalChapters}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">Chapters</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_chapters')}</div>
           </div>
         </div>
 
@@ -84,10 +86,10 @@ export function BookCompletionModal({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Creating Your Personal Book...
+                  {t('completion_creating_book')}
                 </span>
               ) : (
-                'Create Your Personal Reading Book'
+                t('completion_create_book')
               )}
             </button>
             {genError && (
@@ -100,7 +102,7 @@ export function BookCompletionModal({
           onClick={onClose}
           className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
-          Amazing! Keep Exploring
+          {t('completion_keep_exploring')}
         </button>
       </div>
     </div>

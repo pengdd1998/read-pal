@@ -1,58 +1,28 @@
 import type { MetadataRoute } from 'next';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://read-pal.app';
+const LOCALES = ['en', 'zh'];
+
+const PATHS = [
+  '',
+  '/register',
+  '/login',
+  '/forgot-password',
+  '/memory-books',
+  '/developers',
+  '/flashcards',
+  '/stats',
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
 
-  return [
-    {
-      url: APP_URL,
+  return PATHS.flatMap((path) =>
+    LOCALES.map((locale) => ({
+      url: `${APP_URL}/${locale}${path}`,
       lastModified,
-      changeFrequency: 'weekly',
-      priority: 1.0,
-    },
-    {
-      url: `${APP_URL}/register`,
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${APP_URL}/login`,
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.4,
-    },
-    {
-      url: `${APP_URL}/forgot-password`,
-      lastModified,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: `${APP_URL}/memory-books`,
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${APP_URL}/developers`,
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${APP_URL}/flashcards`,
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-    {
-      url: `${APP_URL}/stats`,
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.5,
-    },
-  ];
+      changeFrequency: path === '' ? 'weekly' : 'monthly',
+      priority: path === '' ? 1.0 : 0.7,
+    })),
+  );
 }

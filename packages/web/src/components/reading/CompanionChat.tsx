@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { api, API_BASE_URL } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
 import { useToast } from '@/components/Toast';
@@ -84,6 +85,8 @@ const DEFAULT_PERSONA: FriendPersona = { name: 'Penny', emoji: '\u2B50' };
 
 export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent, genreMetadata, bookDescription }, ref) {
   const { toast } = useToast();
+  const t = useTranslations('reader');
+  const tc = useTranslations('common');
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -199,13 +202,13 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
           // Retry on 5xx or 429, not on 4xx client errors
           if ((response.status >= 500 || response.status === 429) && attempt < MAX_RETRIES) {
             const delay = Math.pow(2, attempt) * 1000;
-            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Retrying in ${delay / 1000}s...` } : m));
+            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_retrying', { seconds: delay / 1000 }) } : m));
             await new Promise((r) => setTimeout(r, delay));
             return attemptStream(attempt + 1);
           }
-          let errorMsg = `Server error (${response.status})`;
+          let errorMsg = t('companion_server_error', { status: response.status });
           try { const errData = await response.json() as { error?: { message?: string } }; errorMsg = errData.error?.message || errorMsg; } catch { /* use default */ }
-          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Error: ${errorMsg}`, streaming: false } : m));
+          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_error_prefix', { message: errorMsg }), streaming: false } : m));
           setLoading(false);
           setConnecting(false);
           return;
@@ -218,7 +221,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content + tokenChunk } : m));
           },
           () => {
-            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, streaming: false, content: m.content || "Sorry, I couldn't generate a response." } : m));
+            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, streaming: false, content: m.content || t('companion_no_response') } : m));
             setLoading(false);
             setConnecting(false);
             abortRef.current = null;
@@ -227,11 +230,11 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             // Retry on stream errors
             if (attempt < MAX_RETRIES) {
               const delay = Math.pow(2, attempt) * 1000;
-              setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Connection lost. Retrying in ${delay / 1000}s...` } : m));
+              setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_connection_lost', { seconds: delay / 1000 }) } : m));
               setTimeout(() => attemptStream(attempt + 1), delay);
               return;
             }
-            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content || `Failed: ${errMsg}`, streaming: false } : m));
+            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content || t('companion_stream_failed', { message: errMsg }), streaming: false } : m));
             setLoading(false);
             setConnecting(false);
             abortRef.current = null;
@@ -241,11 +244,11 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         // Network error — retry with backoff
         if (attempt < MAX_RETRIES) {
           const delay = Math.pow(2, attempt) * 1000;
-          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: `Network error. Retrying in ${delay / 1000}s...` } : m));
+          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_network_error', { seconds: delay / 1000 }) } : m));
           await new Promise((r) => setTimeout(r, delay));
           return attemptStream(attempt + 1);
         }
-        setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: 'Failed to connect to the AI companion. Please check your connection and try again.', streaming: false } : m));
+        setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_connect_failed'), streaming: false } : m));
         setLoading(false);
         setConnecting(false);
       }
@@ -346,7 +349,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             }
           }
         }
-      } catch { toast('Failed to load chat history', 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
+      } catch { toast(t('companion_history_load_error'), 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
     };
     load();
     return () => {
@@ -412,8 +415,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
           {isFirstChat && (
             <div className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px]">
               {genre === 'fiction'
-                ? `Discuss characters & themes with ${friendName}`
-                : `Chat with ${friendName} about what you're reading`}
+                ? t('companion_tooltip_fiction', { name: friendName })
+                : t('companion_tooltip_general', { name: friendName })}
             </div>
           )}
           <button
@@ -423,7 +426,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             style={{
               background: 'linear-gradient(135deg, #14b8a6, #10b981)',
             }}
-            aria-label={`Chat with ${friendName}, your reading companion`}
+            aria-label={t('companion_aria_chat_with', { name: friendName })}
           >
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -455,15 +458,15 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                 <div className="relative w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-teal-500 text-sm shrink-0">
                   {friendEmoji}
                   {aiHealthy === false && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-white dark:border-gray-800" title="AI service slow" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-white dark:border-gray-800" title={t('companion_ai_slow')} />
                   )}
                   {aiHealthy === true && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-white dark:border-gray-800" title="AI service healthy" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-white dark:border-gray-800" title={t('companion_ai_healthy')} />
                   )}
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm text-amber-900 dark:text-amber-100">{friendName}</h3>
-                  <p className="text-xs text-amber-600/70 dark:text-amber-400/60">Your reading companion</p>
+                  <p className="text-xs text-amber-600/70 dark:text-amber-400/60">{t('companion_your_reading_companion')}</p>
                 </div>
               </div>
               <button
@@ -475,8 +478,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                       ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
                       : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
-                title={companionMode === 'socratic' ? 'Socratic mode — guided discovery' : companionMode === 'scholar' ? 'Scholar mode — deeper analysis' : 'Casual mode — switch modes'}
-                aria-label={`Switch from ${companionMode} mode`}
+                title={companionMode === 'socratic' ? t('companion_mode_socratic_title') : companionMode === 'scholar' ? t('companion_mode_scholar_title') : t('companion_mode_casual_title')}
+                aria-label={t('companion_aria_switch_mode', { mode: companionMode })}
               >
                 {companionMode === 'socratic' ? (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -495,7 +498,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                aria-label="Close chat"
+                aria-label={t('companion_aria_close')}
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -504,7 +507,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             </div>
 
             {/* Messages */}
-            <div ref={chatContainerRef} role="log" aria-label="Chat messages" aria-live="polite" className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div ref={chatContainerRef} role="log" aria-label={t('companion_aria_messages')} aria-live="polite" className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && !loading ? (
                 <div className="text-center text-amber-700/60 dark:text-amber-300/50 py-10">
                   <div className="text-3xl mb-3">{friendEmoji}</div>
@@ -512,7 +515,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                     {bookTitle ? `${friendName} on "${bookTitle}"` : `Chat with ${friendName}`}
                   </p>
                   <p className="text-xs text-amber-600/60 dark:text-amber-400/40 mb-4">
-                    Ask anything about what you&apos;re reading
+                    {t('companion_ask_anything')}
                   </p>
                   <div className="text-left space-y-2 max-w-xs mx-auto">
                     {(companionMode === 'socratic' ? getSocraticPrompts(bookTitle) : genreTemplate.suggestedPrompts(bookTitle)).map((q) => (
@@ -549,7 +552,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                               <button
                                 onClick={() => submitFeedback(msg.id, true)}
                                 className="p-1 rounded text-amber-400/50 hover:text-green-500 transition-colors"
-                                aria-label="Helpful response"
+                                aria-label={t('companion_aria_helpful')}
                               >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
@@ -558,7 +561,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                               <button
                                 onClick={() => submitFeedback(msg.id, false)}
                                 className="p-1 rounded text-amber-400/50 hover:text-red-500 transition-colors"
-                                aria-label="Unhelpful response"
+                                aria-label={t('companion_aria_unhelpful')}
                               >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
@@ -581,7 +584,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDuration: '0.6s' }} />
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '120ms', animationDuration: '0.6s' }} />
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '240ms', animationDuration: '0.6s' }} />
-                      <span className="text-[10px] text-amber-500/80 ml-1">Thinking...</span>
+                      <span className="text-[10px] text-amber-500/80 ml-1">{t('companion_thinking')}</span>
                     </div>
                   </div>
                 </div>
@@ -596,8 +599,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  placeholder="Ask about what you're reading..."
-                  aria-label="Message companion"
+                  placeholder={t('companion_placeholder')}
+                  aria-label={t('companion_aria_message')}
                   className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
                   rows={2}
                   disabled={loading}
@@ -607,13 +610,13 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                     onClick={stopStreaming}
                     className="self-end shrink-0 px-3 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-medium transition-colors"
                   >
-                    Stop
+                    {t('companion_stop')}
                   </button>
                 ) : (
                   <button
                     onClick={handleSend}
                     disabled={!input.trim()}
-                    aria-label="Send message"
+                    aria-label={t('companion_aria_send')}
                     className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 shadow-soft disabled:opacity-50"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

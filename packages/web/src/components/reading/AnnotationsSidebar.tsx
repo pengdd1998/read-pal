@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
@@ -30,12 +31,7 @@ interface AnnotationsSidebarProps {
 type FilterTab = 'all' | 'highlight' | 'note' | 'bookmark';
 type ViewMode = 'list' | 'outline';
 
-const TABS: { key: FilterTab; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'highlight', label: 'Highlights' },
-  { key: 'note', label: 'Notes' },
-  { key: 'bookmark', label: 'Bookmarks' },
-];
+const TAB_KEYS: FilterTab[] = ['all', 'highlight', 'note', 'bookmark'];
 
 export function AnnotationsSidebar({
   annotations,
@@ -51,6 +47,7 @@ export function AnnotationsSidebar({
   onUpdateAnnotation,
   onScrollToAnnotation,
 }: AnnotationsSidebarProps) {
+  const t = useTranslations('reader');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -156,7 +153,7 @@ export function AnnotationsSidebar({
           onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
           tabIndex={-1}
           role="button"
-          aria-label="Close annotations"
+          aria-label={t('sidebar_close_annotations')}
         />
       )}
 
@@ -169,13 +166,13 @@ export function AnnotationsSidebar({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/50 dark:border-amber-900/30">
           <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
-            Annotations
+            {t('sidebar_annotations')}
           </h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-            aria-label="Close annotations (Esc)"
-            title="Close (Esc)"
+            aria-label={t('sidebar_close_esc')}
+            title={t('sidebar_close_esc')}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -189,8 +186,8 @@ export function AnnotationsSidebar({
                   ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20'
                   : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
               }`}
-              title={viewMode === 'list' ? 'Outline view (by chapter)' : 'List view'}
-              aria-label={viewMode === 'list' ? 'Switch to outline view' : 'Switch to list view'}
+              title={viewMode === 'list' ? t('sidebar_outline_view') : t('sidebar_list_view')}
+              aria-label={viewMode === 'list' ? t('sidebar_switch_outline') : t('sidebar_switch_list')}
             >
               {viewMode === 'list' ? (
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -211,7 +208,7 @@ export function AnnotationsSidebar({
                   ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20'
                   : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
               }`}
-              title={bulkMode ? 'Cancel selection' : 'Select multiple'}
+              title={bulkMode ? t('sidebar_cancel_selection') : t('sidebar_select_multiple')}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -221,20 +218,20 @@ export function AnnotationsSidebar({
           {annotations.length > 0 && (
             <>
               <button
-                aria-label="Share & export"
+                aria-label={t('sidebar_share_export')}
                 onClick={() => setShowShareDialog(true)}
                 className="p-2 rounded-lg text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title="Share & export"
+                title={t('sidebar_share_export')}
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
               </button>
               <button
-                aria-label="Export annotations"
+                aria-label={t('sidebar_export_annotations')}
                 onClick={() => setShowExportModal(true)}
                 className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title="Export annotations"
+                title={t('sidebar_export_annotations')}
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -250,8 +247,8 @@ export function AnnotationsSidebar({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search annotations..."
-            aria-label="Search annotations"
+            placeholder={t('sidebar_search_annotations')}
+            aria-label={t('sidebar_search_annotations')}
             className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
           />
         </div>
@@ -287,37 +284,37 @@ export function AnnotationsSidebar({
                   onClick={() => setSelectedTags([])}
                   className="px-1.5 py-0.5 rounded-full text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
-                  Clear
+                  {t('sidebar_clear')}
                 </button>
               )}
             </div>
           </div>
         )}
         {viewMode === 'list' && (
-        <div role="tablist" aria-label="Filter annotations" className="flex border-b border-gray-200 dark:border-gray-700 px-2">
-          {TABS.map((tab) => (
+        <div role="tablist" aria-label={t('sidebar_annotations')} className="flex border-b border-gray-200 dark:border-gray-700 px-2">
+          {TAB_KEYS.map((tab) => (
             <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
               role="tab"
-              aria-selected={activeTab === tab.key}
+              aria-selected={activeTab === tab}
               className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative ${
-                activeTab === tab.key
+                activeTab === tab
                   ? 'text-primary-600 dark:text-primary-400'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
-              {tab.label}
-              {counts[tab.key] > 0 && (
+              {t({ all: 'sidebar_all', highlight: 'sidebar_highlights', note: 'sidebar_notes', bookmark: 'sidebar_bookmarks' }[tab])}
+              {counts[tab] > 0 && (
                 <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] ${
-                  activeTab === tab.key
+                  activeTab === tab
                     ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
                 }`}>
-                  {counts[tab.key]}
+                  {counts[tab]}
                 </span>
               )}
-              {activeTab === tab.key && (
+              {activeTab === tab && (
                 <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-500 rounded-full" />
               )}
             </button>
@@ -330,13 +327,13 @@ export function AnnotationsSidebar({
           <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200/50 dark:border-amber-900/30 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
-                {selectedIds.size} selected
+                {t('sidebar_selected', { count: selectedIds.size })}
               </span>
               <button
                 onClick={selectedIds.size === filtered.length ? deselectAll : selectAll}
                 className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline"
               >
-                {selectedIds.size === filtered.length ? 'Deselect all' : 'Select all'}
+                {selectedIds.size === filtered.length ? t('sidebar_deselect_all') : t('sidebar_select_all')}
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -345,14 +342,14 @@ export function AnnotationsSidebar({
                   onClick={bulkDelete}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors active:scale-95"
                 >
-                  Delete ({selectedIds.size})
+                  {t('sidebar_delete_count', { count: selectedIds.size })}
                 </button>
               )}
               <button
                 onClick={exitBulkMode}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
-                Done
+                {t('sidebar_done')}
               </button>
             </div>
           </div>
@@ -374,12 +371,12 @@ export function AnnotationsSidebar({
               </div>
               <p className="text-sm text-amber-700/50 dark:text-amber-400/40">
                 {activeTab === 'all'
-                  ? 'No annotations yet. Select text to start highlighting.'
+                  ? t('sidebar_empty_all')
                   : activeTab === 'highlight'
-                  ? 'No highlights yet. Select text and pick a color.'
+                  ? t('sidebar_empty_highlights')
                   : activeTab === 'note'
-                  ? 'No notes yet. Select text and tap the note button.'
-                  : 'No bookmarks yet. Tap the bookmark icon to save your place.'}
+                  ? t('sidebar_empty_notes')
+                  : t('sidebar_empty_bookmarks')}
               </p>
             </div>
           ) : (

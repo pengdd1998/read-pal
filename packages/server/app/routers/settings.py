@@ -13,6 +13,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.schemas.settings import SettingsUpdate
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/settings', tags=['settings'])
 
@@ -31,7 +32,7 @@ async def get_settings(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'User not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
         )
 
     return {'success': True, 'data': user.settings or {}}
@@ -56,7 +57,7 @@ async def update_settings(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'User not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
         )
 
     user.settings = {**(user.settings or {}), **body.model_dump(exclude_unset=True)}
@@ -79,7 +80,7 @@ async def get_reading_goals(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'User not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
         )
 
     settings = user.settings or {}

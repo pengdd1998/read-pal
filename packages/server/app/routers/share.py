@@ -9,6 +9,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.share import ShareCreate
 from app.services import share_service
+from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/share', tags=['share'])
 
@@ -70,7 +71,7 @@ async def get_shared_content(
     if share is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'Share not found or expired'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.share_not_found')},
         )
     return {
         'success': True,
