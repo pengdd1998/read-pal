@@ -15,7 +15,7 @@ from app.services.upload_service import (
     get_file_type,
     validate_file,
 )
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, t
 
 router = APIRouter(prefix='/api/v1/upload', tags=['upload'])
 
@@ -30,10 +30,11 @@ async def upload_book(
     tags: str | None = None,
 ) -> dict:
     """Upload an EPUB or PDF file and create a book record."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t('errors.no_filename'),
+            detail=t('errors.no_filename', lang),
         )
 
     file_size = 0
@@ -107,6 +108,8 @@ async def get_book_content(
     from app.models.book import Book
     from app.models.document import Document
 
+    lang = await _get_user_lang(db, UUID(user['id']))
+
     result = await db.execute(
         sa_select(Book).where(
             Book.id == book_id,
@@ -117,7 +120,7 @@ async def get_book_content(
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
 
     result = await db.execute(

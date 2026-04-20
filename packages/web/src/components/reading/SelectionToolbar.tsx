@@ -8,10 +8,10 @@ import { QuoteCard } from './QuoteCard';
 import { copyToClipboard } from '@/lib/clipboard';
 
 const QUICK_TAGS = [
-  { id: 'discuss', label: 'Discuss', emoji: '\u{1F4AC}' },
-  { id: 'important', label: 'Key', emoji: '\u{2B50}' },
-  { id: 'question', label: 'Question', emoji: '\u{2753}' },
-  { id: 'key-idea', label: 'Idea', emoji: '\u{1F4A1}' },
+  { id: 'discuss', labelKey: 'tag_discuss', emoji: '\u{1F4AC}' },
+  { id: 'important', labelKey: 'tag_key', emoji: '\u{2B50}' },
+  { id: 'question', labelKey: 'tag_question', emoji: '\u{2753}' },
+  { id: 'key-idea', labelKey: 'tag_idea', emoji: '\u{1F4A1}' },
 ];
 
 interface SelectionToolbarProps {
@@ -204,7 +204,7 @@ export function SelectionToolbar({
                     </svg>
                   )}
                 </div>
-                <span className="text-[10px] font-medium">{copied ? 'Copied!' : 'Copy'}</span>
+                <span className="text-[10px] font-medium">{copied ? t('toolbar_copied') : t('toolbar_copy')}</span>
               </button>
 
               <button
@@ -253,7 +253,7 @@ export function SelectionToolbar({
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 active:scale-95 transition-all hover:border-amber-300 dark:hover:border-amber-700"
                     >
                       <span>{qt.emoji}</span>
-                      {qt.label}
+                      {t(qt.labelKey)}
                     </button>
                   ))}
                 </div>
@@ -354,7 +354,7 @@ export function SelectionToolbar({
               </svg>
             )}
             <span className={copied ? 'text-emerald-500' : ''}>
-              {copied ? 'Copied!' : 'Copy'}
+              {copied ? t('toolbar_copied') : t('toolbar_copy')}
             </span>
           </button>
 
@@ -404,7 +404,7 @@ export function SelectionToolbar({
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-95 transition-all"
                 >
                   <span>{qt.emoji}</span>
-                  {qt.label}
+                  {t(qt.labelKey)}
                 </button>
               ))}
             </div>
@@ -418,7 +418,7 @@ export function SelectionToolbar({
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              Highlighted!
+              {t('toolbar_highlighted')}
             </div>
           </div>
         )}

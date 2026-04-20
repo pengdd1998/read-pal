@@ -15,7 +15,7 @@ from app.middleware.auth import get_current_user
 from app.models.reading_session import ReadingSession
 from app.models.user import User
 from app.schemas.settings import SettingsUpdate
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, t
 
 router = APIRouter(prefix='/api/v1/settings', tags=['settings'])
 
@@ -26,6 +26,7 @@ async def get_settings(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return the authenticated user's settings."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     result = await db.execute(
         select(User).where(User.id == UUID(current_user['id'])),
     )
@@ -34,7 +35,7 @@ async def get_settings(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found', lang)},
         )
 
     return {'success': True, 'data': user.settings or {}}
@@ -51,6 +52,7 @@ async def update_settings(
     Body should be a JSON object to merge into existing settings:
     ``{"theme": "dark", "fontSize": 18}``
     """
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     result = await db.execute(
         select(User).where(User.id == UUID(current_user['id'])),
     )
@@ -59,7 +61,7 @@ async def update_settings(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found', lang)},
         )
 
     user.settings = {**(user.settings or {}), **body.model_dump(exclude_unset=True)}
@@ -75,6 +77,7 @@ async def get_reading_goals(
 ) -> dict:
     """Get reading goals with computed progress from today's sessions."""
     uid = UUID(current_user['id'])
+    lang = await _get_user_lang(db, uid)
 
     result = await db.execute(
         select(User).where(User.id == uid),
@@ -84,7 +87,7 @@ async def get_reading_goals(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found', lang)},
         )
 
     settings = user.settings or {}

@@ -64,13 +64,15 @@ class ApiClient {
         if (
           typeof window !== 'undefined' &&
           error.response?.status === 401 &&
-          !window.location.pathname.startsWith('/auth') &&
-          !window.location.pathname.startsWith('/login') &&
-          !window.location.pathname.startsWith('/register')
+          !window.location.pathname.includes('/auth') &&
+          !window.location.pathname.includes('/login') &&
+          !window.location.pathname.includes('/register')
         ) {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('user');
-          window.location.href = '/auth?mode=login';
+          // Preserve current locale prefix in redirect
+          const locale = window.location.pathname.split('/')[1] || 'en';
+          window.location.href = `/${locale}/auth?mode=login`;
         }
         return Promise.reject(error);
       },

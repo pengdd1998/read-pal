@@ -634,7 +634,15 @@
     "settings_title": "Reading Settings",
     "share_html": "HTML",
     "share_link": "Link",
-    "share_print": "Print"
+    "share_print": "Print",
+    "tag_discuss": "Discuss",
+    "tag_key": "Key",
+    "tag_question": "Question",
+    "tag_idea": "Idea",
+    "export_clear_filters_btn": "Clear filters",
+    "export_downloaded_file": "Downloaded {filename}",
+    "export_link_copied_clipboard_msg": "Link copied to clipboard",
+    "share_by_author": "by {author}"
   },
   "stats": {
     "title": "Reading Stats",

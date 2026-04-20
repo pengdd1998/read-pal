@@ -19,7 +19,7 @@ from app.schemas.book import (
     BookUpdate,
 )
 from app.services import book_service
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, t
 
 router = APIRouter(prefix='/api/v1/books', tags=['books'])
 
@@ -63,11 +63,12 @@ async def get_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return a single book by ID."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     book = await book_service.get_book(db, UUID(current_user['id']), book_id)
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
 
@@ -94,11 +95,12 @@ async def update_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Partially update a book."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     book = await book_service.update_book(db, UUID(current_user['id']), book_id, body)
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
 
@@ -110,13 +112,14 @@ async def delete_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Delete a book and all associated data."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     deleted = await book_service.delete_book(db, UUID(current_user['id']), book_id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
-    return {'success': True, 'data': {'message': t('errors.book_deleted')}}
+    return {'success': True, 'data': {'message': t('errors.book_deleted', lang)}}
 
 
 @router.put('/{book_id}/tags')
@@ -130,17 +133,18 @@ async def update_tags(
 
     Body: ``{"tags": ["fiction", "sci-fi"]}``
     """
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     tags = body.get('tags', [])
     if not isinstance(tags, list):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'INVALID_INPUT', 'message': t('errors.tags_must_be_list')},
+            detail={'code': 'INVALID_INPUT', 'message': t('errors.tags_must_be_list', lang)},
         )
     book = await book_service.update_tags(db, UUID(current_user['id']), book_id, tags)
     if book is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
 

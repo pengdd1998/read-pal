@@ -134,7 +134,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
-      toast(`Downloaded ${filename}`, 'success');
+      toast(t('export_downloaded_file', { filename }), 'success');
       analytics.track('export_completed', { format });
     } catch {
       toast(t('export_download_failed'), 'error');
@@ -172,7 +172,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
         const fullUrl = `${baseUrl}/api/share/s/${res.data.token}`;
         setShareLink(fullUrl);
         await navigator.clipboard.writeText(fullUrl);
-        toast('Link copied to clipboard', 'success');
+        toast(t('export_link_copied_clipboard_msg'), 'success');
       } else {
         toast(t('export_failed_share_link'), 'error');
       }
@@ -304,7 +304,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
                       onClick={() => { clearFilters(); setPreview(null); }}
                       className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      Clear filters
+                      {t('export_clear_filters_btn')}
                     </button>
                   )}
                 </div>
@@ -321,7 +321,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
                   onClick={handleCopy}
                   className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
                 >
-                  Copy
+                  {t('export_copy')}
                 </button>
               </div>
               <pre className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 overflow-auto max-h-40 whitespace-pre-wrap break-words border border-gray-200 dark:border-gray-700">
@@ -338,7 +338,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
             disabled={loading}
             className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
-            {loading ? 'Loading…' : preview ? 'Refresh' : 'Preview'}
+            {loading ? t('export_loading') : preview ? t('export_refresh') : t('export_preview_button')}
           </button>
           <button
             onClick={handleDownload}

@@ -23,19 +23,7 @@ from app.schemas.agent import (
     SummarizeRequest,
 )
 from app.services import companion_service
-from app.utils.i18n import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, t
-
-
-async def _get_user_lang(db: AsyncSession, user_id: UUID) -> str:
-    """Get user's language preference from settings."""
-    result = await db.execute(
-        select(User.settings).where(User.id == user_id)
-    )
-    settings = result.scalar_one_or_none()
-    if settings and isinstance(settings, dict):
-        lang = settings.get('language', DEFAULT_LANGUAGE)
-        return lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
-    return DEFAULT_LANGUAGE
+from app.utils.i18n import _get_user_lang, t
 
 logger = logging.getLogger('read-pal.agent')
 
@@ -334,6 +322,8 @@ async def create_reading_plan(
     """Generate an AI reading plan for a book."""
     from app.services.reading_plan_service import generate_plan
 
+    lang = await _get_user_lang(db, UUID(current_user['id']))
+
     try:
         result = await generate_plan(
             db=db,
@@ -351,7 +341,7 @@ async def create_reading_plan(
         logger.error('Reading plan generation failed: %s', exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable')},
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable', lang)},
         ) from exc
 
     return ReadingPlanResponse(data=result)
@@ -385,11 +375,13 @@ async def advance_reading_plan(
     """Advance reading plan to the next day."""
     from app.services.reading_plan_service import advance_plan
 
+    lang = await _get_user_lang(db, UUID(current_user['id']))
+
     book_id = body.get('book_id')
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'MISSING_FIELD', 'message': t('errors.book_id_required')},
+            detail={'code': 'MISSING_FIELD', 'message': t('errors.book_id_required', lang)},
         )
 
     result = await advance_plan(
@@ -398,5 +390,5 @@ async def advance_reading_plan(
         book_id=UUID(book_id),
     )
     if not result:
-        return {'success': True, 'data': None, 'message': t('errors.no_active_plan')}
+        return {'success': True, 'data': None, 'message': t('errors.no_active_plan', lang)}
     return {'success': True, 'data': result}

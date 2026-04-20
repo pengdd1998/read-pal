@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -48,14 +48,15 @@ function formatTime(minutes: number) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-function getDayName(dateStr: string) {
+function getDayName(dateStr: string, locale: string) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined, { weekday: 'short' });
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(locale, { weekday: 'short' });
 }
 
 export default function StatsPage() {
   const t = useTranslations('stats');
+  const locale = useLocale();
   usePageTitle(t('page_title'));
   const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
@@ -203,7 +204,7 @@ export default function StatsPage() {
                           style={{ height: `${height}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-gray-400">{getDayName(day.day)}</span>
+                      <span className="text-[10px] text-gray-400">{getDayName(day.day, locale)}</span>
                     </div>
                   );
                 })}

@@ -533,7 +533,9 @@ export default function DashboardPage() {
       setSeeding(true);
       const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
       if (res.success) {
-        window.location.href = '/library';
+        // Use locale-aware redirect
+        const locale = window.location.pathname.split('/')[1] || 'en';
+        window.location.href = `/${locale}/library`;
       }
     } catch {
       toast(t('failed_seed_sample'), 'error');

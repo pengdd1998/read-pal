@@ -515,7 +515,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                 <div className="text-center text-amber-700/60 dark:text-amber-300/50 py-10">
                   <div className="text-3xl mb-3">{friendEmoji}</div>
                   <p className="text-sm mb-1 font-medium text-amber-800 dark:text-amber-200">
-                    {bookTitle ? `${friendName} on "${bookTitle}"` : `Chat with ${friendName}`}
+                    {bookTitle ? t('companion_chat_on_book', { name: friendName, title: bookTitle }) : t('companion_chat_with', { name: friendName })}
                   </p>
                   <p className="text-xs text-amber-600/60 dark:text-amber-400/40 mb-4">
                     {t('companion_ask_anything')}

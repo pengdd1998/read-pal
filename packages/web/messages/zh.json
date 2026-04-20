@@ -634,7 +634,15 @@
     "settings_title": "阅读设置",
     "share_html": "HTML",
     "share_link": "链接",
-    "share_print": "打印"
+    "share_print": "打印",
+    "tag_discuss": "讨论",
+    "tag_key": "关键",
+    "tag_question": "提问",
+    "tag_idea": "想法",
+    "export_clear_filters_btn": "清除筛选",
+    "export_downloaded_file": "已下载 {filename}",
+    "export_link_copied_clipboard_msg": "链接已复制到剪贴板",
+    "share_by_author": "作者：{author}"
   },
   "stats": {
     "title": "阅读统计",

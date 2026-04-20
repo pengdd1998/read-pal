@@ -37,7 +37,7 @@ from app.schemas.auth import (
     RegisterRequest,
     UserResponse,
 )
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, t
 
 logger = logging.getLogger('read-pal.auth')
 
@@ -81,6 +81,9 @@ async def login(
             },
         )
 
+    # Get user language preference for error messages
+    lang = await _get_user_lang(db, user.id)
+
     # Verify password
     if not verify_password(body.password, user.password_hash):
         await lockout.record_failed_login(body.email)
@@ -88,7 +91,7 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 'code': 'INVALID_CREDENTIALS',
-                'message': t('errors.invalid_credentials'),
+                'message': t('errors.invalid_credentials', lang),
             },
         )
 
@@ -188,6 +191,7 @@ async def get_me(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return the authenticated user's profile."""
+    lang = await _get_user_lang(db, current_user['id'])
     result = await db.execute(
         select(User).where(User.id == current_user['id']),
     )
@@ -196,7 +200,7 @@ async def get_me(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found', lang)},
         )
 
     return {
@@ -220,8 +224,10 @@ async def get_me(
 async def logout(
     request: Request,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
     """Revoke the current JWT token."""
+    lang = await _get_user_lang(db, current_user['id'])
     auth_header = request.headers.get('authorization', '')
     if auth_header.startswith('Bearer '):
         token = auth_header[7:]
@@ -242,7 +248,7 @@ async def logout(
             # Token may be invalid/expired — still return success for idempotent logout
             pass
 
-    return MessageResponse(data={'message': t('errors.logged_out')})
+    return MessageResponse(data={'message': t('errors.logged_out', lang)})
 
 
 # ---------------------------------------------------------------------------
@@ -253,10 +259,13 @@ async def logout(
 async def refresh(
     request: Request,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Revoke the old token and issue a new one."""
     from jose import jwt as jose_jwt
     from app.middleware.auth import is_token_revoked
+
+    lang = await _get_user_lang(db, current_user['id'])
 
     auth_header = request.headers.get('authorization', '')
     if auth_header.startswith('Bearer '):
@@ -275,7 +284,7 @@ async def refresh(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail={
                         'code': 'TOKEN_REVOKED',
-                        'message': t('errors.token_revoked'),
+                        'message': t('errors.token_revoked', lang),
                     },
                 )
 

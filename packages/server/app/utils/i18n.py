@@ -50,3 +50,18 @@ def t(key: str, lang: str = DEFAULT_LANGUAGE, **kwargs) -> str:
 
 def get_supported_languages() -> list[str]:
     return SUPPORTED_LANGUAGES
+
+
+async def _get_user_lang(db: 'AsyncSession', user_id: 'UUID') -> str:
+    """Get user's language preference from settings."""
+    from sqlalchemy import select
+    from app.models.user import User
+
+    result = await db.execute(
+        select(User.settings).where(User.id == user_id)
+    )
+    settings = result.scalar_one_or_none()
+    if settings and isinstance(settings, dict):
+        lang = settings.get('language', DEFAULT_LANGUAGE)
+        return lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
+    return DEFAULT_LANGUAGE

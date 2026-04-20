@@ -251,7 +251,7 @@ export function ShareDialog({
           {/* Book info */}
           {bookTitle && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {bookTitle}{author ? ` by ${author}` : ''}
+              {bookTitle}{author ? ` ${t('share_by_author', { author })}` : ''}
             </p>
           )}
 

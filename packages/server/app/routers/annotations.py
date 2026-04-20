@@ -20,7 +20,7 @@ from app.schemas.annotation import (
     ChapterStatsResponse,
 )
 from app.services import annotation_service
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, t
 
 router = APIRouter(prefix='/api/v1/annotations', tags=['annotations'])
 
@@ -116,13 +116,14 @@ async def get_annotation(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return a single annotation by ID."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     annotation = await annotation_service.get_annotation(
         db, UUID(current_user['id']), annotation_id,
     )
     if annotation is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found', lang)},
         )
     return {
         'success': True,
@@ -154,13 +155,14 @@ async def update_annotation(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Partially update an annotation."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     annotation = await annotation_service.update_annotation(
         db, UUID(current_user['id']), annotation_id, body,
     )
     if annotation is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found', lang)},
         )
     return {
         'success': True,
@@ -175,12 +177,13 @@ async def delete_annotation(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Delete an annotation."""
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     deleted = await annotation_service.delete_annotation(
         db, UUID(current_user['id']), annotation_id,
     )
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found')},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found', lang)},
         )
-    return {'success': True, 'data': {'message': t('errors.annotation_deleted')}}
+    return {'success': True, 'data': {'message': t('errors.annotation_deleted', lang)}}
