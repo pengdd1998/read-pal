@@ -77,7 +77,7 @@ jobs:
             }
 
             check_health "API" "http://localhost:8090/api/v1/health"
-            check_health "Web" "http://localhost:8090"
+            check_health "Web" "http://localhost:8090/en"
 
             # -------------------------------------------------------
             # 6. Cleanup temporary files
