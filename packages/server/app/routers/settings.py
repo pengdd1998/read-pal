@@ -38,7 +38,9 @@ async def get_settings(
             detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found', lang)},
         )
 
-    return {'success': True, 'data': user.settings or {}}
+    settings = user.settings or {}
+    settings.setdefault('language', 'en')
+    return {'success': True, 'data': settings}
 
 
 @router.patch('')
