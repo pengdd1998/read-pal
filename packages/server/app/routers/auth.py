@@ -46,6 +46,22 @@ router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
 
 
 # ---------------------------------------------------------------------------
+# GET /api/auth/google/status
+# ---------------------------------------------------------------------------
+
+@router.get('/google/status')
+async def google_oauth_status() -> dict:
+    """Return whether Google OAuth is configured.
+
+    Public endpoint (no auth required) — the login page polls this to
+    decide whether to render the "Sign in with Google" button.
+    """
+    settings = get_settings()
+    configured = bool(getattr(settings, 'google_client_id', None))
+    return {'success': True, 'data': {'configured': configured}}
+
+
+# ---------------------------------------------------------------------------
 # POST /api/v1/auth/login
 # ---------------------------------------------------------------------------
 

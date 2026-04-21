@@ -71,7 +71,7 @@ async def export_annotations(
     )
 
 
-@router.get('/')
+@router.get('')
 async def export_by_query_params(
     bookId: UUID = Query(..., alias='bookId'),
     format: str = Query(..., alias='format'),

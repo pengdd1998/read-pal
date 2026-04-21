@@ -29,7 +29,7 @@ def _serialize_notification(n: object) -> dict:
     }
 
 
-@router.get('/')
+@router.get('')
 async def list_notifications(
     unread_only: bool = Query(False),
     page: int = Query(1, ge=1),

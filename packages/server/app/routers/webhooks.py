@@ -64,7 +64,7 @@ async def test_webhook(
     }
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_webhook(
     body: WebhookCreate,
     db: AsyncSession = Depends(get_db),
@@ -84,7 +84,7 @@ async def create_webhook(
     }
 
 
-@router.get('/')
+@router.get('')
 async def list_webhooks(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),

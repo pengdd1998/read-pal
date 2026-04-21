@@ -24,7 +24,7 @@ from app.utils.i18n import _get_user_lang, t
 router = APIRouter(prefix='/api/v1/books', tags=['books'])
 
 
-@router.get('/', response_model=BookListResponse)
+@router.get('', response_model=BookListResponse)
 async def list_books(
     status_filter: str | None = Query(None, alias='status'),
     page: int = Query(1, ge=1),
@@ -73,7 +73,7 @@ async def get_book(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_book(
     body: BookCreate,
     current_user: dict = Depends(get_current_user),

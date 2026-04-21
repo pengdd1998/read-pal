@@ -34,7 +34,7 @@ def _serialize_share(share: object, include_url: bool = False) -> dict:
     return data
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_share(
     body: ShareCreate,
     db: AsyncSession = Depends(get_db),
@@ -45,7 +45,7 @@ async def create_share(
     return {'success': True, 'data': _serialize_share(share, include_url=True)}
 
 
-@router.get('/')
+@router.get('')
 async def list_shares(
     book_id: UUID | None = Query(None),
     db: AsyncSession = Depends(get_db),

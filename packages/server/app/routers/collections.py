@@ -29,7 +29,7 @@ def _serialize_collection(col: object) -> dict:
     }
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_collection(
     body: CollectionCreate,
     db: AsyncSession = Depends(get_db),
@@ -40,7 +40,7 @@ async def create_collection(
     return {'success': True, 'data': _serialize_collection(col)}
 
 
-@router.get('/')
+@router.get('')
 async def list_collections(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),

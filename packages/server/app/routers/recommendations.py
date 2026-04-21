@@ -93,7 +93,7 @@ def _score_book(
     return min(score, 1.0)
 
 
-@router.get('/')
+@router.get('')
 async def list_recommendations(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

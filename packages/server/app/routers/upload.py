@@ -20,7 +20,7 @@ from app.utils.i18n import _get_user_lang, t
 router = APIRouter(prefix='/api/v1/upload', tags=['upload'])
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def upload_book(
     file: UploadFile,
     db: AsyncSession = Depends(get_db),

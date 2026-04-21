@@ -28,7 +28,7 @@ def _serialize_key(key: ApiKey, include_secret: bool = False) -> dict:
     return data
 
 
-@router.get('/')
+@router.get('')
 async def list_api_keys(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -44,7 +44,7 @@ async def list_api_keys(
     }
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_api_key(
     body: dict,
     db: AsyncSession = Depends(get_db),

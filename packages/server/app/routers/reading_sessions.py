@@ -26,7 +26,7 @@ from app.utils.i18n import t
 router = APIRouter(prefix='/api/v1/sessions', tags=['sessions'])
 
 
-@router.get('/', response_model=SessionListResponse)
+@router.get('', response_model=SessionListResponse)
 async def list_sessions(
     book_id: UUID | None = Query(None),
     page: int = Query(1, ge=1),
@@ -97,7 +97,7 @@ async def get_session(
     }
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_session(
     body: SessionCreate,
     current_user: dict = Depends(get_current_user),

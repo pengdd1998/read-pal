@@ -24,7 +24,7 @@ def _serialize_card(card: object) -> dict:
     )
 
 
-@router.get('/')
+@router.get('')
 async def list_flashcards(
     book_id: UUID | None = Query(None),
     page: int = Query(1, ge=1),
@@ -66,7 +66,7 @@ async def get_due_cards(
     }
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_flashcard(
     body: FlashcardCreate,
     db: AsyncSession = Depends(get_db),

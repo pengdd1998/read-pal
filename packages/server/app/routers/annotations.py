@@ -25,7 +25,7 @@ from app.utils.i18n import _get_user_lang, t
 router = APIRouter(prefix='/api/v1/annotations', tags=['annotations'])
 
 
-@router.get('/', response_model=AnnotationListResponse)
+@router.get('', response_model=AnnotationListResponse)
 async def list_annotations(
     book_id: UUID | None = Query(None),
     type: str | None = Query(None),
@@ -131,7 +131,7 @@ async def get_annotation(
     }
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_annotation(
     body: AnnotationCreate,
     current_user: dict = Depends(get_current_user),

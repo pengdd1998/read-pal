@@ -20,7 +20,7 @@ from app.utils.i18n import _get_user_lang, t
 router = APIRouter(prefix='/api/v1/settings', tags=['settings'])
 
 
-@router.get('/')
+@router.get('')
 async def get_settings(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -41,7 +41,7 @@ async def get_settings(
     return {'success': True, 'data': user.settings or {}}
 
 
-@router.patch('/')
+@router.patch('')
 async def update_settings(
     body: SettingsUpdate,
     current_user: dict = Depends(get_current_user),

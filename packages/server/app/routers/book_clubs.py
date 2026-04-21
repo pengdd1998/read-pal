@@ -22,7 +22,7 @@ from app.utils.i18n import t
 router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'])
 
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED)
 async def create_club(
     body: BookClubCreate,
     db: AsyncSession = Depends(get_db),
@@ -60,7 +60,7 @@ async def discover_clubs(
     }
 
 
-@router.get('/')
+@router.get('')
 async def list_clubs(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),

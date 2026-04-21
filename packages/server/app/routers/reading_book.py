@@ -77,7 +77,7 @@ async def get_memory_book(
     }
 
 
-@router.get('/')
+@router.get('')
 async def list_memory_books(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
