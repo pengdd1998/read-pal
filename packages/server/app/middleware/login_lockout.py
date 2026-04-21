@@ -13,6 +13,7 @@ import time
 
 import redis.asyncio as aioredis
 
+from app.core.redis import get_redis
 from app.config import get_settings
 
 logger = logging.getLogger('read-pal.lockout')
@@ -25,11 +26,8 @@ LOCKOUT_DURATION = 15 * 60  # 15 minutes in seconds
 class LoginLockout:
     """Redis-backed account lockout tracker."""
 
-    def __init__(self, redis_url: str) -> None:
-        self.redis: aioredis.Redis = aioredis.from_url(
-            redis_url,
-            decode_responses=True,
-        )
+    def __init__(self) -> None:
+        self.redis: aioredis.Redis = get_redis()
 
     async def check_lockout(self, email: str) -> tuple[bool, int | None]:
         """Check whether an email is currently locked out.
@@ -100,6 +98,5 @@ def get_login_lockout() -> LoginLockout:
     """Return the shared LoginLockout instance."""
     global _lockout
     if _lockout is None:
-        settings = get_settings()
-        _lockout = LoginLockout(settings.redis_url)
+        _lockout = LoginLockout()
     return _lockout

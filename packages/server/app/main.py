@@ -131,7 +131,9 @@ async def startup() -> None:
 async def shutdown() -> None:
     """Clean up resources on application shutdown."""
     from app.services.llm import shutdown_llm
+    from app.core.redis import close_redis
     await shutdown_llm()
+    await close_redis()
 
 
 @app.get('/api/v1/health')

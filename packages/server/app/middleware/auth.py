@@ -22,6 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
+from app.core.redis import get_redis as _get_redis
 from app.db import get_db
 from app.models.api_key import ApiKey, hash_api_key, is_api_key_format
 from app.models.user import User
@@ -38,24 +39,11 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 
 # --- Redis client for blacklist -----------------------------------------------
 
-_redis_client: aioredis.Redis | None = None
 _in_memory_blacklist: set[str] = set()
 _redis_ever_connected: bool = False
 _MAX_IN_MEMORY_BLACKLIST = 10_000
 
 TOKEN_BLACKLIST_PREFIX = 'auth:blacklist:'
-
-
-def _get_redis() -> aioredis.Redis:
-    """Lazily initialise a shared async Redis client."""
-    global _redis_client
-    if _redis_client is None:
-        settings = get_settings()
-        _redis_client = aioredis.from_url(
-            settings.redis_url,
-            decode_responses=True,
-        )
-    return _redis_client
 
 
 # ---------------------------------------------------------------------------

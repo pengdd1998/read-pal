@@ -1,33 +1,111 @@
-"""RAG service — retrieve relevant book content for AI chat enrichment."""
+"""RAG service — retrieve relevant book content for AI chat enrichment.
 
+Strategy tiers (auto-degrading):
+  1. Semantic search via GLM embeddings + cosine similarity
+  2. Keyword matching fallback when embeddings unavailable
+Results are cached in Redis per (book, query) for 30 minutes.
+"""
+
+import asyncio
+import hashlib
 import json
 import logging
+import math
 from typing import Any
 from uuid import UUID
 
-import redis.asyncio as aioredis
+import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
+from app.core.redis import get_redis
 from app.models.annotation import Annotation
 from app.models.book import Book
 
 logger = logging.getLogger('read-pal.rag')
 
 RAG_CACHE_PREFIX = 'rag:'
+RAG_EMBED_CACHE_PREFIX = 'rag:emb:'
 RAG_CACHE_TTL = 1800  # 30 min
+EMBED_CACHE_TTL = 86400  # 24 hrs — chapter embeddings are stable
 
-_redis_client: aioredis.Redis | None = None
+# Pooled HTTP client for embedding requests
+_http_client: httpx.AsyncClient | None = None
 
-def _get_redis() -> aioredis.Redis:
-    """Lazily initialise shared Redis client."""
-    global _redis_client
-    if _redis_client is None:
-        settings = get_settings()
-        _redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
-    return _redis_client
 
+def _get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(timeout=10)
+    return _http_client
+
+
+def _stable_hash(text: str) -> str:
+    """Stable hash for cache keys (survives process restarts)."""
+    return hashlib.md5(text.encode()).hexdigest()[:16]
+
+
+# ---------------------------------------------------------------------------
+# Embedding helpers
+# ---------------------------------------------------------------------------
+
+async def _get_embedding(text: str) -> list[float] | None:
+    """Get embedding vector from GLM API (OpenAI-compatible /embeddings)."""
+    settings = get_settings()
+    if not settings.glm_api_key or settings.glm_api_key == 'dev-key':
+        return None
+
+    try:
+        client = _get_http_client()
+        resp = await client.post(
+            f'{settings.glm_base_url}/embeddings',
+            headers={'Authorization': f'Bearer {settings.glm_api_key}'},
+            json={'model': 'embedding-3', 'input': text[:2000]},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data['data'][0]['embedding']
+    except Exception as exc:
+        logger.debug('Embedding request failed: %s', exc)
+        return None
+
+
+async def _get_chapter_embedding(chapter: dict) -> list[float] | None:
+    """Get cached or fresh embedding for a chapter."""
+    title = chapter.get('title', '')
+    cache_key = f'{RAG_EMBED_CACHE_PREFIX}{_stable_hash(title)}'
+    r = get_redis()
+    try:
+        cached = await r.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    except Exception:
+        pass
+
+    text = f"{title} {chapter.get('content', '')}"[:2000]
+    emb = await _get_embedding(text)
+    if emb:
+        try:
+            await r.setex(cache_key, EMBED_CACHE_TTL, json.dumps(emb))
+        except Exception:
+            pass
+    return emb
+
+
+def _cosine_sim(a: list[float], b: list[float]) -> float:
+    """Compute cosine similarity between two vectors."""
+    dot = sum(x * y for x, y in zip(a, b))
+    mag_a = math.sqrt(sum(x * x for x in a))
+    mag_b = math.sqrt(sum(x * x for x in b))
+    if mag_a == 0 or mag_b == 0:
+        return 0.0
+    return dot / (mag_a * mag_b)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
 async def get_book_context(
     db: AsyncSession,
@@ -38,18 +116,12 @@ async def get_book_context(
 ) -> str:
     """Retrieve relevant book content for enriching AI chat.
 
-    Strategy:
-    1. Load chapter-level content from book metadata (stored in Book.chapters or metadata)
-    2. Simple keyword matching against chapter text
-    3. Load related annotations
-    4. Return combined context string
-
-    Falls back to annotations-only if no chapter content available.
+    Tries semantic search first, falls back to keyword matching.
     """
     # Check Redis cache first
-    cache_key = f'{RAG_CACHE_PREFIX}{book_id}:{hash(query)}'
+    cache_key = f'{RAG_CACHE_PREFIX}{book_id}:{_stable_hash(query)}'
     try:
-        cached = await _get_redis().get(cache_key)
+        cached = await get_redis().get(cache_key)
         if cached:
             return cached[:max_chars]
     except Exception:
@@ -63,19 +135,24 @@ async def get_book_context(
     if not book:
         return ''
 
+    chapters = _get_chapters(book)
+
+    # Try semantic search first
+    relevant_chapters = await _semantic_chapter_search(chapters, query, top_k=3)
+
+    # Fallback to keyword matching
+    if not relevant_chapters and chapters:
+        relevant_chapters = _keyword_chapter_search(chapters, query, top_k=3)
+
     context_parts: list[str] = []
 
-    # 1. Chapter content - search for relevant chapters
-    chapters = _get_chapters(book)
-    if chapters:
-        relevant = _find_relevant_chapters(chapters, query, top_k=3)
-        for ch in relevant:
-            if ch.get('content'):
-                header = f"[Chapter: {ch.get('title', 'Untitled')}]"
-                content = ch['content'][:1000]
-                context_parts.append(f'{header}\n{content}')
+    for ch in relevant_chapters:
+        if ch.get('content'):
+            header = f"[Chapter: {ch.get('title', 'Untitled')}]"
+            content = ch['content'][:1000]
+            context_parts.append(f'{header}\n{content}')
 
-    # 2. Related annotations (highlights/notes with keyword overlap)
+    # Related annotations
     annotations = await _load_related_annotations(db, user_id, book_id, query, limit=5)
     for ann in annotations:
         label = ann.type.value if hasattr(ann.type, 'value') else str(ann.type)
@@ -89,28 +166,45 @@ async def get_book_context(
     # Cache result
     if combined:
         try:
-            await _get_redis().setex(cache_key, RAG_CACHE_TTL, combined)
+            await get_redis().setex(cache_key, RAG_CACHE_TTL, combined)
         except Exception:
             pass
 
     return combined
 
 
-def _get_chapters(book: Book) -> list[dict[str, Any]]:
-    """Extract chapters from book metadata."""
-    metadata = {}
-    if hasattr(book, 'metadata') and book.metadata:
-        if isinstance(book.metadata, dict):
-            metadata = book.metadata
-        elif isinstance(book.metadata, str):
-            try:
-                metadata = json.loads(book.metadata)
-            except (json.JSONDecodeError, TypeError):
-                pass
-    return metadata.get('chapters', [])
+# ---------------------------------------------------------------------------
+# Search strategies
+# ---------------------------------------------------------------------------
+
+async def _semantic_chapter_search(
+    chapters: list[dict[str, Any]],
+    query: str,
+    top_k: int = 3,
+) -> list[dict[str, Any]]:
+    """Embedding-based chapter search with cosine similarity."""
+    query_emb = await _get_embedding(query)
+    if query_emb is None:
+        return []
+
+    # Fetch all chapter embeddings in parallel
+    embeddings = await asyncio.gather(
+        *[_get_chapter_embedding(ch) for ch in chapters],
+    )
+
+    scored: list[tuple[float, dict]] = []
+    for ch, ch_emb in zip(chapters, embeddings):
+        if ch_emb is None:
+            continue
+        sim = _cosine_sim(query_emb, ch_emb)
+        if sim > 0.3:
+            scored.append((sim, ch))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [ch for _, ch in scored[:top_k]]
 
 
-def _find_relevant_chapters(
+def _keyword_chapter_search(
     chapters: list[dict[str, Any]],
     query: str,
     top_k: int = 3,
@@ -128,6 +222,24 @@ def _find_relevant_chapters(
 
     scored.sort(key=lambda x: x[0], reverse=True)
     return [ch for _, ch in scored[:top_k]]
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _get_chapters(book: Book) -> list[dict[str, Any]]:
+    """Extract chapters from book metadata."""
+    metadata = {}
+    if hasattr(book, 'metadata') and book.metadata:
+        if isinstance(book.metadata, dict):
+            metadata = book.metadata
+        elif isinstance(book.metadata, str):
+            try:
+                metadata = json.loads(book.metadata)
+            except (json.JSONDecodeError, TypeError):
+                pass
+    return metadata.get('chapters', [])
 
 
 async def _load_related_annotations(
@@ -149,7 +261,6 @@ async def _load_related_annotations(
     )
     all_annotations = list(result.scalars().all())
 
-    # Score by keyword overlap
     query_words = set(query.lower().split())
     scored = []
     for ann in all_annotations:

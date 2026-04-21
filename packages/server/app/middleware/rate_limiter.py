@@ -13,6 +13,7 @@ from collections.abc import Callable
 import redis.asyncio as aioredis
 from fastapi import Depends, HTTPException, Request, status
 
+from app.core.redis import get_redis
 from app.config import get_settings
 
 logger = logging.getLogger('read-pal.rate-limit')
@@ -36,11 +37,8 @@ def _evict_expired(now: float) -> None:
 class RateLimiter:
     """Sliding-window rate limiter backed by Redis with in-memory fallback."""
 
-    def __init__(self, redis_url: str) -> None:
-        self.redis: aioredis.Redis = aioredis.from_url(
-            redis_url,
-            decode_responses=True,
-        )
+    def __init__(self) -> None:
+        self.redis: aioredis.Redis = get_redis()
 
     async def check(
         self,
@@ -127,8 +125,7 @@ _limiter: RateLimiter | None = None
 def _get_limiter() -> RateLimiter:
     global _limiter
     if _limiter is None:
-        settings = get_settings()
-        _limiter = RateLimiter(settings.redis_url)
+        _limiter = RateLimiter()
     return _limiter
 
 

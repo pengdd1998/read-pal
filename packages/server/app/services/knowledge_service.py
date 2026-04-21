@@ -12,7 +12,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import get_settings
+from app.core.redis import get_redis as _get_redis
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.schemas.knowledge import (
@@ -27,20 +27,6 @@ logger = logging.getLogger('read-pal.knowledge')
 
 GRAPH_CACHE_PREFIX = 'graph:'
 GRAPH_CACHE_TTL = 3600  # 1 hour
-
-_redis_client: aioredis.Redis | None = None
-
-
-def _get_redis() -> aioredis.Redis:
-    """Lazily initialise a shared async Redis client."""
-    global _redis_client
-    if _redis_client is None:
-        settings = get_settings()
-        _redis_client = aioredis.from_url(
-            settings.redis_url,
-            decode_responses=True,
-        )
-    return _redis_client
 
 
 async def _load_annotations(

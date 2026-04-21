@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import get_settings
+from app.core.redis import get_redis as _get_redis
 from app.middleware.auth import hash_password
 from app.middleware.rate_limiter import password_reset_limiter
 from app.models.user import User
@@ -27,21 +27,6 @@ from app.utils.i18n import t
 logger = logging.getLogger('read-pal.password_reset')
 
 router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
-
-# --- Redis client for password reset tokens ----------------------------------
-
-_redis_client: aioredis.Redis | None = None
-
-
-def _get_redis() -> aioredis.Redis:
-    global _redis_client
-    if _redis_client is None:
-        settings = get_settings()
-        _redis_client = aioredis.from_url(
-            settings.redis_url,
-            decode_responses=True,
-        )
-    return _redis_client
 
 
 # ---------------------------------------------------------------------------
