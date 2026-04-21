@@ -571,9 +571,9 @@ export default function ReadPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChapter, loading, chapters.length, studyMode.enabled]);
 
-  // Detect book completion
+  // Detect book completion (only for multi-chapter books, after user actually navigates)
   useEffect(() => {
-    if (!loading && chapters.length > 0 && currentChapter === chapters.length - 1) {
+    if (!loading && chapters.length > 1 && currentChapter === chapters.length - 1) {
       const timer = setTimeout(() => setShowCompletion(true), 3000);
       return () => clearTimeout(timer);
     }
