@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface NotePopoverProps {
   selectedText: string;
@@ -9,6 +10,8 @@ interface NotePopoverProps {
 }
 
 export function NotePopover({ selectedText, onSave, onCancel }: NotePopoverProps) {
+  const t = useTranslations('reader');
+  const tc = useTranslations('common');
   const [note, setNote] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,7 +38,7 @@ export function NotePopover({ selectedText, onSave, onCancel }: NotePopoverProps
           ref={textareaRef}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Write your note..."
+          placeholder={t('note_placeholder')}
           className="input mb-3 text-sm"
           rows={3}
         />
@@ -45,14 +48,14 @@ export function NotePopover({ selectedText, onSave, onCancel }: NotePopoverProps
             onClick={onCancel}
             className="btn btn-ghost text-sm"
           >
-            Cancel
+            {tc('cancel')}
           </button>
           <button
             type="submit"
             disabled={!note.trim()}
             className="btn btn-primary text-sm disabled:opacity-50"
           >
-            Save Note
+            {t('note_save')}
           </button>
         </div>
       </form>

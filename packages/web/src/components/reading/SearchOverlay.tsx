@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Chapter } from '@read-pal/shared';
 
 interface SearchResult {
@@ -27,6 +28,8 @@ export function SearchOverlay({
   onNavigate,
   onClose,
 }: SearchOverlayProps) {
+  const t = useTranslations('reader');
+
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (q.length < 2) return [];
@@ -45,10 +48,10 @@ export function SearchOverlay({
             ch.content!.slice(start, end) +
             (end < ch.content!.length ? '...' : '');
         }
-        return { index: i, title: ch.title || `Chapter ${i + 1}`, snippet, titleMatch };
+        return { index: i, title: ch.title || t('reader_chapter', { num: i + 1 }), snippet, titleMatch };
       })
       .filter(Boolean) as SearchResult[];
-  }, [searchQuery, chapters]);
+  }, [searchQuery, chapters, t]);
 
   return (
     <div
@@ -57,7 +60,7 @@ export function SearchOverlay({
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       tabIndex={-1}
       role="button"
-      aria-label="Close search"
+      aria-label={t('search_close')}
     >
       <div
         className="absolute top-16 left-1/2 -translate-x-1/2 w-full max-w-lg px-4"
@@ -72,17 +75,17 @@ export function SearchOverlay({
               type="text"
               value={searchQuery}
               onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search in this book..."
-              aria-label="Search in this book"
+              placeholder={t('search_in_book')}
+              aria-label={t('search_in_book')}
               className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 outline-none"
               autoFocus
             />
             <span className="text-xs text-gray-400">
-              {searchResults.length > 0 ? `${searchResults.length} chapters` : ''}
+              {searchResults.length > 0 ? t('search_chapters', { count: searchResults.length }) : ''}
             </span>
             <button
               onClick={() => { onQueryChange(''); onClose(); }}
-              aria-label="Close search"
+              aria-label={t('search_close')}
               className="p-2 -m-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -113,7 +116,7 @@ export function SearchOverlay({
                       </span>
                       {r.index === currentChapter && (
                         <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full font-medium">
-                          Current
+                          {t('search_current')}
                         </span>
                       )}
                     </div>
@@ -126,7 +129,7 @@ export function SearchOverlay({
                 ))
               ) : (
                 <div className="px-4 py-6 text-center text-sm text-gray-400">
-                  No results for &ldquo;{searchQuery}&rdquo;
+                  {t('search_no_results', { query: searchQuery })}
                 </div>
               )}
             </div>

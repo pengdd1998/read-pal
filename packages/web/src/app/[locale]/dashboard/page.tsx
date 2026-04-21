@@ -739,6 +739,27 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* Stats summary row */}
+          {stats && !loading && (
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {[
+                { label: t('stat_books_read'), value: stats.booksRead, icon: '\u{1F4DA}' },
+                { label: t('stat_pages_read'), value: stats.pagesRead, icon: '\u{1F4D0}' },
+                { label: t('stat_total_time'), value: stats.totalTime, icon: '\u{23F1}\u{FE0F}' },
+                { label: t('stat_concepts'), value: stats.conceptsLearned, icon: '\u{1F9E0}' },
+                { label: t('stat_connections'), value: stats.connections, icon: '\u{1F517}' },
+              ].map((s) => (
+                <div key={s.label} className="card py-3 px-3 flex items-center gap-2">
+                  <span className="text-lg">{s.icon}</span>
+                  <div>
+                    <div className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{s.value}</div>
+                    <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wide leading-tight">{s.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Card 2: Reading Streak */}
           <div className="card flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 flex items-center justify-center flex-shrink-0">

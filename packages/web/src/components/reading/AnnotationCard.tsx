@@ -1,16 +1,11 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { renderCardToCanvas } from './QuoteCard';
-
-const TYPE_CONFIG = {
-  highlight: { icon: '\u{1F58D}', label: 'Highlight', defaultColor: '#FFEB3B' },
-  note: { icon: '\u{1F4DD}', label: 'Note', defaultColor: '#2196F3' },
-  bookmark: { icon: '\u{1F516}', label: 'Bookmark', defaultColor: '#9C27B0' },
-} as const;
 
 const COLORS = ['#FFEB3B', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#F44336'];
 
@@ -26,6 +21,8 @@ interface AnnotationCardProps {
 }
 
 export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpdate, onClick }: AnnotationCardProps) {
+  const t = useTranslations('reader');
+  const tc = useTranslations('common');
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [editNote, setEditNote] = useState(annotation.note || '');
@@ -39,6 +36,12 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
   const canShareAsImage = annotation.type === 'highlight' || annotation.type === 'note';
   const quoteText = annotation.content || '';
 
+  const TYPE_CONFIG = {
+    highlight: { icon: '\u{1F58D}', label: t('card_highlight'), defaultColor: '#FFEB3B' },
+    note: { icon: '\u{1F4DD}', label: t('card_note'), defaultColor: '#2196F3' },
+    bookmark: { icon: '\u{1F516}', label: t('card_bookmark'), defaultColor: '#9C27B0' },
+  } as const;
+
   const handleShareAsImage = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!quoteText || sharing) return;
@@ -49,8 +52,8 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
       renderCardToCanvas(
         canvas,
         quoteText,
-        bookTitle || 'Unknown Book',
-        author || 'Unknown Author',
+        bookTitle || t('card_unknown_book'),
+        author || t('card_unknown_author'),
         'warm',
       );
 
@@ -100,7 +103,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
     } catch {
       setSharing(false);
     }
-  }, [quoteText, bookTitle, author, sharing]);
+  }, [quoteText, bookTitle, author, sharing, t]);
 
   const config = TYPE_CONFIG[annotation.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.highlight;
   const borderColor = editing ? editColor : (annotation.color || config.defaultColor);
@@ -126,7 +129,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
       }
       setEditing(false);
     } catch {
-      toast('Failed to save annotation', 'error');
+      toast(t('card_failed_save'), 'error');
     }
     setSaving(false);
   };
@@ -195,7 +198,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
         <textarea
           value={editNote}
           onChange={(e) => setEditNote(e.target.value)}
-          placeholder="Add a note..."
+          placeholder={t('card_add_note')}
           className="w-full px-2.5 py-1.5 rounded-md bg-white dark:bg-gray-700/50 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 resize-none"
           rows={2}
           autoFocus
@@ -228,7 +231,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
-              placeholder={editTags.length === 0 ? 'Add tags (e.g. discuss, important)...' : 'Add tag...'}
+              placeholder={editTags.length === 0 ? t('card_add_tags') : t('card_add_tag')}
               className="w-full px-2.5 py-1 rounded-md bg-white dark:bg-gray-700/50 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400"
             />
             {tagInput && filteredPresets.length > 0 && (
@@ -267,13 +270,13 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
             disabled={saving}
             className="px-3 py-1 rounded-md bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-50 transition-colors"
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? t('card_saving') : t('card_save')}
           </button>
           <button
             onClick={() => setEditing(false)}
             className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
-            Cancel
+            {tc('cancel')}
           </button>
         </div>
       </div>
@@ -308,7 +311,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
           <button
             onClick={startEdit}
             className="p-1 rounded text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all"
-            aria-label="Edit annotation"
+            aria-label={tc('edit')}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -320,7 +323,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
               onDelete();
             }}
             className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-            aria-label="Delete annotation"
+            aria-label={tc('delete')}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -366,7 +369,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
       {/* Page location */}
       {annotation.location?.pageIndex != null && (
         <p className="text-[10px] text-gray-400 mt-2">
-          Page {annotation.location.pageIndex + 1}
+          {t('card_page', { number: annotation.location.pageIndex + 1 })}
         </p>
       )}
     </div>

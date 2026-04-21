@@ -38,6 +38,14 @@ interface ChapterItem {
   title: string;
 }
 
+interface HighlightAnnotation {
+  id: string;
+  content: string;
+  color?: string;
+  type: string;
+  location?: { pageIndex?: number; [k: string]: unknown };
+}
+
 interface ReaderViewProps {
   bookId: string;
   chapterContent: string;
@@ -58,6 +66,7 @@ interface ReaderViewProps {
   highlightMode?: boolean;
   highlightCount?: number;
   bookmarkCount?: number;
+  highlights?: HighlightAnnotation[];
 }
 
 export function ReaderView({
@@ -80,6 +89,7 @@ export function ReaderView({
   highlightMode: _highlightMode,
   highlightCount = 0,
   bookmarkCount = 0,
+  highlights = [],
 }: ReaderViewProps) {
   const t = useTranslations('reader');
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -149,6 +159,59 @@ export function ReaderView({
     if (!el) return;
     highlightCodeBlocks(el).catch(() => { /* non-critical — graceful degradation */ });
   }, [sanitizedContent, chapterKey]);
+
+  // Render inline highlight annotations in the DOM
+  useEffect(() => {
+    const el = articleRef.current;
+    if (!el || highlights.length === 0) return;
+
+    const proseEl = el.querySelector('.reader-content');
+    if (!proseEl) return;
+
+    const colorMap: Record<string, string> = {
+      yellow: 'rgba(250, 204, 21, 0.35)',
+      green: 'rgba(74, 222, 128, 0.35)',
+      blue: 'rgba(96, 165, 250, 0.35)',
+      pink: 'rgba(244, 114, 182, 0.35)',
+      purple: 'rgba(192, 132, 252, 0.35)',
+    };
+
+    highlights.forEach((ann) => {
+      if (!ann.content || ann.content.length < 3) return;
+      const text = ann.content.trim();
+      const bgColor = colorMap[ann.color || 'yellow'] || colorMap.yellow;
+
+      const walker = document.createTreeWalker(proseEl, NodeFilter.SHOW_TEXT);
+      const textNodes: Text[] = [];
+      while (walker.nextNode()) {
+        const node = walker.currentNode as Text;
+        if (node.textContent && node.textContent.includes(text)) {
+          textNodes.push(node);
+        }
+      }
+
+      textNodes.forEach((node) => {
+        const idx = node.textContent!.indexOf(text);
+        if (idx === -1) return;
+        const range = document.createRange();
+        range.setStart(node, idx);
+        range.setEnd(node, idx + text.length);
+
+        const mark = document.createElement('mark');
+        mark.setAttribute('data-annotation-id', ann.id);
+        mark.style.backgroundColor = bgColor;
+        mark.style.borderRadius = '2px';
+        mark.style.padding = '0 1px';
+        mark.style.cursor = 'pointer';
+
+        try {
+          range.surroundContents(mark);
+        } catch {
+          // Cross-element text — skip gracefully
+        }
+      });
+    });
+  }, [highlights, sanitizedContent, chapterKey]);
 
   // Save scroll position before chapter changes or component unmounts
   const scrollKey = `scroll-${bookId}-ch${currentPage}`;

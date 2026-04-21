@@ -439,7 +439,7 @@ export default function ReadPage() {
       console.error('Failed to update progress:', err);
       toast(t('failed_save_progress'), 'error');
     }
-  }, [currentChapter, bookId, toast]);
+  }, [currentChapter, chapters.length, bookId, t, toast]);
 
   const handleToggleBookmark = useCallback(async () => {
     const isBookmarked = annotations.some(
@@ -887,6 +887,10 @@ export default function ReadPage() {
             highlightMode={highlightMode}
             highlightCount={highlightCount}
             bookmarkCount={bookmarkCount}
+            highlights={annotations
+              .filter(a => (a.type === 'highlight' || a.type === 'note') && (a.location?.pageIndex == null || a.location.pageIndex === currentChapter))
+              .map(a => ({ id: a.id, content: a.content, color: a.color, type: a.type, location: { pageIndex: a.location?.pageIndex } }))
+            }
             externalTocOpen={tocOpen}
             onTocClose={() => setTocOpen(false)}
           />

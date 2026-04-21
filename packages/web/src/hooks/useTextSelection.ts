@@ -39,7 +39,7 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
         return;
       }
 
-      // Only track selections within our container
+      // Read containerRef.current at invocation time (not capture time)
       const container = containerRef.current;
       if (!container) return;
 
@@ -82,17 +82,14 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
   }, []);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    // Listen for selection changes via the selectionchange event (more reliable)
     const handleSelectionChange = () => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || !sel.toString().trim()) {
         setSelection(EMPTY_SELECTION);
         return;
       }
-      // Only track selections within our container
+      // Read containerRef.current at invocation time to handle remounts
+      const container = containerRef.current;
       if (container && sel.anchorNode && !container.contains(sel.anchorNode)) {
         return;
       }
@@ -109,8 +106,9 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
       const target = e.target as HTMLElement;
       // Don't clear if clicking on the selection toolbar itself
       if (target.closest('[data-selection-toolbar]')) return;
-      // Don't clear if clicking inside our content container (user might be selecting)
-      if (container.contains(target)) return;
+      // Read containerRef.current at invocation time to handle remounts
+      const container = containerRef.current;
+      if (container && container.contains(target)) return;
       // Don't clear if there's an active selection (user might be interacting with toolbar)
       const sel = window.getSelection();
       if (sel && !sel.isCollapsed && sel.toString().trim()) return;

@@ -1,11 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface BookmarkToggleProps {
   isBookmarked: boolean;
   onToggle: () => void;
 }
 
 export function BookmarkToggle({ isBookmarked, onToggle }: BookmarkToggleProps) {
+  const t = useTranslations('reader');
+
   return (
     <button
       onClick={onToggle}
@@ -14,7 +18,7 @@ export function BookmarkToggle({ isBookmarked, onToggle }: BookmarkToggleProps) 
           ? 'text-amber-500 hover:text-amber-600'
           : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
       }`}
-      aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
+      aria-label={isBookmarked ? t('bookmark_remove') : t('bookmark_add')}
       aria-pressed={isBookmarked}
     >
       {isBookmarked ? (

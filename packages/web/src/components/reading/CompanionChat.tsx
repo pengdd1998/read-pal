@@ -300,7 +300,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     let cancelled = false;
     const checkHealth = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/agent/health`);
+        const res = await fetch(`${API_BASE_URL}/api/agents/health`);
         if (!cancelled && res.ok) {
           const data = await res.json() as { healthy?: boolean };
           setAiHealthy(data.healthy === true);
@@ -399,7 +399,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
   const submitFeedback = useCallback(async (messageId: string, rating: boolean) => {
     try {
-      await api.post('/api/v1/agent/feedback', {
+      await api.post('/api/agents/feedback', {
         book_id: bookId,
         message_id: messageId,
         rating,
