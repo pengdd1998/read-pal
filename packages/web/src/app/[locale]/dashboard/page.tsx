@@ -551,7 +551,7 @@ export default function DashboardPage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
           {!hasData && !loading ? (t(greetingKey) || t('welcome')) : t('welcome_back')}
         </h1>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">
+        <div className="text-gray-500 mt-2 text-sm sm:text-base">
           {loading ? (
             <SkeletonPulse className="w-48 h-5 inline-block" />
           ) : hasData && streak > 0 ? (
@@ -564,7 +564,7 @@ export default function DashboardPage() {
           ) : (
             t('what_read_today')
           )}
-        </p>
+        </div>
       </div>
 
       {/* Error */}

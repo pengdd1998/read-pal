@@ -54,7 +54,9 @@ async def test_reading_calendar_returns_success_with_year_month(client):
     data = body['data']
     assert data['year'] == 2026
     assert data['month'] is None
-    assert 'days' in data
+    assert 'calendar' in data
+    assert 'currentStreak' in data
+    assert 'longestStreak' in data
 
 
 @pytest.mark.asyncio

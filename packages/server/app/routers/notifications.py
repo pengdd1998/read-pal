@@ -98,7 +98,7 @@ async def mark_all_read(
     count = await notification_service.mark_all_read(db, UUID(user['id']))
     return {
         'success': True,
-        'data': {'message': f'{count} notifications marked as read'},
+        'data': {'message': t('errors.notifications_marked_read', count=count)},
     }
 
 

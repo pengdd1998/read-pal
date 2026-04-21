@@ -76,10 +76,11 @@ export default function BookClubsWidget() {
   useEffect(() => {
     let cancelled = false;
     api
-      .get<BookClub[]>('/api/book-clubs')
+      .get<{ items: BookClub[] }>('/api/book-clubs')
       .then((res) => {
         if (!cancelled && res.success && res.data) {
-          setClubs(res.data);
+          const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
+          setClubs(list);
         }
       })
       .finally(() => {

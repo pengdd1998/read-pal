@@ -188,25 +188,37 @@ async def get_dashboard(
 
 @router.get('/reading-calendar')
 async def get_reading_calendar(
-    year: int = Query(2026),
+    months: int | None = Query(None),
+    year: int | None = Query(None),
     month: int | None = Query(None),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Return calendar data: days with reading activity."""
+    """Return calendar data: days with reading activity.
+
+    Supports two modes:
+    - ``?months=6`` — last N months from today (frontend StreakCalendar)
+    - ``?year=2026`` and optional ``?month=4`` — specific date range
+    """
     uid = _user_id(current_user)
 
     # Build date filter using date range (cross-DB compatible)
     conditions = [ReadingSession.user_id == uid]
-    if month is not None:
+    if months is not None:
+        # Last N months from today
+        today = date.today()
+        end = datetime.combine(today + timedelta(days=1), datetime.min.time())
+        start = datetime(today.year, today.month - min(months, 12), 1) if today.month > min(months, 12) else datetime(today.year - 1, 12 + today.month - months, 1)
+    elif month is not None and year is not None:
         start = datetime(year, month, 1)
         if month == 12:
             end = datetime(year + 1, 1, 1)
         else:
             end = datetime(year, month + 1, 1)
     else:
-        start = datetime(year, 1, 1)
-        end = datetime(year + 1, 1, 1)
+        y = year or date.today().year
+        start = datetime(y, 1, 1)
+        end = datetime(y + 1, 1, 1)
     conditions.extend([
         ReadingSession.started_at >= start,
         ReadingSession.started_at < end,
@@ -235,10 +247,46 @@ async def get_reading_calendar(
             'sessions': int(row[3]),
         }
 
+    # Build calendar array matching frontend StreakCalendar shape
+    calendar = [
+        {'date': d, 'pages': v['pagesRead'], 'minutes': v['minutes']}
+        for d, v in sorted(days.items())
+    ]
+
+    # Compute streaks
+    sorted_dates = sorted(days.keys())
+    current_streak = 0
+    longest_streak = 0
+    if sorted_dates:
+        streak = 1
+        longest_streak = 1
+        today = date.today()
+        # Check current streak from today backward
+        d = today
+        while True:
+            key = d.isoformat()
+            if key in days:
+                current_streak += 1
+                d -= timedelta(days=1)
+            else:
+                break
+        # Longest streak
+        for i in range(1, len(sorted_dates)):
+            prev = date.fromisoformat(sorted_dates[i - 1])
+            curr = date.fromisoformat(sorted_dates[i])
+            if (curr - prev).days == 1:
+                streak += 1
+                longest_streak = max(longest_streak, streak)
+            else:
+                streak = 1
+
     return {
         'success': True,
         'data': {
-            'days': days,
+            'calendar': calendar,
+            'currentStreak': current_streak,
+            'longestStreak': longest_streak,
+            'totalDaysActive': len(days),
             'year': year,
             'month': month,
         },

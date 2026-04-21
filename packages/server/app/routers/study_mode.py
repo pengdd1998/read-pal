@@ -247,7 +247,7 @@ async def save_concept_checks(
     await db.flush()
     logger.info('Saved %d concept checks for book %s', saved_count, book_id)
 
-    return {'success': True, 'data': {'message': 'Results saved'}}
+    return {'success': True, 'data': {'message': t('errors.results_saved')}}
 
 
 # ---------------------------------------------------------------------------

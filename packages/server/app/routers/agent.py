@@ -61,7 +61,8 @@ async def _sse_stream(
         yield error_msg.encode('utf-8')
     except Exception:
         logger.exception('Streaming error in agent chat')
-        error_msg = 'data: {"error": "Internal server error"}\n\n'
+        internal_msg = t('errors.internal_error')
+        error_msg = f'data: {{"error": "{internal_msg}"}}\n\n'
         yield error_msg.encode('utf-8')
 
 

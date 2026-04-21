@@ -501,7 +501,7 @@ export function ReaderView({
               aria-label={t('reader_open_chapter_list')}
               aria-expanded={showChapterMenu}
             >
-              <span>Ch. {currentPage + 1}/{totalPages}</span>
+              <span>{t('chapter_abbr')} {currentPage + 1}/{totalPages}</span>
               <span className="hidden sm:inline opacity-50 truncate max-w-[140px]">
                 {chapters[currentPage]?.title || ''}
               </span>

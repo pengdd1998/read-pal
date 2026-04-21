@@ -60,7 +60,8 @@
     "webhook_not_found": "Webhook 未找到",
     "results_saved": "结果已保存",
     "ai_unavailable": "AI 服务不可用",
-    "no_active_plan": "未找到活跃的阅读计划"
+    "no_active_plan": "未找到活跃的阅读计划",
+    "notifications_marked_read": "{count} 条通知已标记为已读"
   },
   "companion": {
     "fallback_error": "AI 服务暂时无法连接，请稍后再试。",
