@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
 // ---------------------------------------------------------------------------
@@ -26,8 +27,8 @@ type ActivityLevel = 0 | 1 | 2 | 3 | 4;
 // Helpers
 // ---------------------------------------------------------------------------
 
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
-const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''] as const;
+const MONTH_KEYS = ['month_jan', 'month_feb', 'month_mar', 'month_apr', 'month_may', 'month_jun', 'month_jul', 'month_aug', 'month_sep', 'month_oct', 'month_nov', 'month_dec'] as const;
+const DAY_KEYS = ['', 'day_mon', '', 'day_wed', '', 'day_fri', ''] as const;
 
 function parseISO(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
@@ -136,6 +137,9 @@ function SkeletonHeatmap() {
 // ---------------------------------------------------------------------------
 
 export default function StreakCalendar() {
+  const t = useTranslations('stats');
+  const monthLabels = MONTH_KEYS.map(k => t(k));
+  const dayLabels = DAY_KEYS.map(k => k ? t(k) : '');
   const [data, setData] = useState<ReadingCalendarData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -212,7 +216,7 @@ export default function StreakCalendar() {
         if (day) {
           const m = getMonth(parseISO(day.date));
           if (m !== lastMonth) {
-            markers.push({ label: MONTH_LABELS[m], col });
+            markers.push({ label: monthLabels[m], col });
             lastMonth = m;
           }
           break;
@@ -234,7 +238,7 @@ export default function StreakCalendar() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            Reading Streak
+            {t('streak_title')}
           </h3>
           {loading ? (
             <div className="mt-1 h-4 w-40 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
@@ -242,7 +246,7 @@ export default function StreakCalendar() {
             <p className="text-sm text-red-500 mt-1">{error}</p>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {data?.totalDaysActive ?? 0}/{totalDays} active days
+              {t('active_days', { active: data?.totalDaysActive ?? 0, total: totalDays })}
             </p>
           )}
         </div>
@@ -251,7 +255,7 @@ export default function StreakCalendar() {
           <div className="flex items-center gap-4">
             <div className="text-center">
               <div className="text-xs text-gray-400 uppercase tracking-wide font-medium">
-                Best
+                {t('streak_longest')}
               </div>
               <div className="text-lg font-bold text-gray-700 dark:text-gray-300 tabular-nums">
                 {data.longestStreak}
@@ -260,7 +264,7 @@ export default function StreakCalendar() {
             <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
             <div className="text-center">
               <div className="text-xs text-gray-400 uppercase tracking-wide font-medium">
-                Current
+                {t('streak_current')}
               </div>
               <div className="flex items-center justify-center gap-1">
                 <span className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">
@@ -307,7 +311,7 @@ export default function StreakCalendar() {
           <div className="flex gap-0">
             {/* Day-of-week labels */}
             <div className="flex flex-col gap-[3px] mr-1">
-              {DAY_LABELS.map((label, i) => (
+              {dayLabels.map((label, i) => (
                 <div
                   key={i}
                   className="h-[13px] flex items-center text-[10px] text-gray-400 dark:text-gray-500 font-medium leading-none pr-1"
@@ -343,13 +347,13 @@ export default function StreakCalendar() {
       {/* Legend */}
       {!loading && !error && (
         <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-400 dark:text-gray-500">
-          <span>Less</span>
+          <span>{t('heatmap_less')}</span>
           <div className="w-[13px] h-[13px] rounded-[3px] bg-gray-100 dark:bg-gray-800" />
           <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-200 dark:bg-amber-900/50" />
           <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-300 dark:bg-amber-700/60" />
           <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-500 dark:bg-amber-600/80" />
           <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-700 dark:bg-amber-500" />
-          <span>More</span>
+          <span>{t('heatmap_more')}</span>
         </div>
       )}
     </div>

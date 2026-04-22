@@ -46,7 +46,7 @@ export default function PersonalBookPage() {
   usePageTitle(t('detailPageTitle'));
   const params = useParams();
   const router = useRouter();
-  const bookId = params.bookId as string;
+  const bookId = (params?.bookId ?? '') as string;
 
   const [book, setBook] = useState<PersonalBook | null>(null);
   const [loading, setLoading] = useState(true);

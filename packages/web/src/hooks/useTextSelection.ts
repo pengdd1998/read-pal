@@ -20,16 +20,19 @@ const EMPTY_SELECTION: TextSelection = {
  * Tracks the user's text selection within a container element.
  * Returns the selected text, bounding rect, and Range object.
  * Automatically clears when the selection collapses or user clicks outside.
+ *
+ * Key design: only triggers React state updates on mouseup/touchend,
+ * NOT during active text selection. This prevents re-renders that would
+ * disrupt the browser's native selection mechanism.
  */
 export function useTextSelection(containerRef: RefObject<HTMLElement | null>): TextSelection {
   const [selection, setSelection] = useState<TextSelection>(EMPTY_SELECTION);
   const rafRef = useRef<number | null>(null);
 
-  const updateSelection = useCallback(() => {
-    // Cancel any pending update
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-    }
+  // Read current selection from browser and update React state.
+  // Only called on pointer-up to avoid re-renders during drag-to-select.
+  const captureSelection = useCallback(() => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
 
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null;
@@ -39,14 +42,11 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
         return;
       }
 
-      // Read containerRef.current at invocation time (not capture time)
       const container = containerRef.current;
       if (!container) return;
 
       const anchorNode = sel.anchorNode;
-      if (!anchorNode || !container.contains(anchorNode)) {
-        return;
-      }
+      if (!anchorNode || !container.contains(anchorNode)) return;
 
       const text = sel.toString().trim();
       if (!text) {
@@ -82,34 +82,29 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
   }, []);
 
   useEffect(() => {
+    // Capture selection ONLY on pointer-up — this is when the user
+    // finishes their selection. We do NOT update during selectionchange
+    // to avoid React re-renders that would break the browser's selection.
+    document.addEventListener('mouseup', captureSelection);
+    document.addEventListener('touchend', captureSelection);
+
+    // selectionchange is used ONLY to detect when selection collapses
+    // (user clicks to deselect, or selection is programmatically cleared).
     const handleSelectionChange = () => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || !sel.toString().trim()) {
-        setSelection(EMPTY_SELECTION);
-        return;
+        clearSelection();
       }
-      // Read containerRef.current at invocation time to handle remounts
-      const container = containerRef.current;
-      if (container && sel.anchorNode && !container.contains(sel.anchorNode)) {
-        return;
-      }
-      updateSelection();
     };
 
-    // Also listen for mouseup/touchend as fallback
-    document.addEventListener('mouseup', updateSelection);
-    document.addEventListener('touchend', updateSelection);
     document.addEventListener('selectionchange', handleSelectionChange);
 
     // Clear selection when clicking outside the container AND not on the toolbar.
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Don't clear if clicking on the selection toolbar itself
       if (target.closest('[data-selection-toolbar]')) return;
-      // Read containerRef.current at invocation time to handle remounts
       const container = containerRef.current;
       if (container && container.contains(target)) return;
-      // Don't clear if there's an active selection (user might be interacting with toolbar)
       const sel = window.getSelection();
       if (sel && !sel.isCollapsed && sel.toString().trim()) return;
       clearSelection();
@@ -118,15 +113,13 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
     document.addEventListener('mousedown', handleMouseDown);
 
     return () => {
-      document.removeEventListener('mouseup', updateSelection);
-      document.removeEventListener('touchend', updateSelection);
+      document.removeEventListener('mouseup', captureSelection);
+      document.removeEventListener('touchend', captureSelection);
       document.removeEventListener('selectionchange', handleSelectionChange);
       document.removeEventListener('mousedown', handleMouseDown);
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [containerRef, updateSelection, clearSelection]);
+  }, [containerRef, captureSelection, clearSelection]);
 
   return selection;
 }

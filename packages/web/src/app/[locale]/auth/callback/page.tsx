@@ -13,6 +13,7 @@ function OAuthCallback() {
   const { oauthLogin } = useAuth();
 
   useEffect(() => {
+    if (!searchParams) return;
     const token = searchParams.get('token');
     const userStr = searchParams.get('user');
     const error = searchParams.get('error');

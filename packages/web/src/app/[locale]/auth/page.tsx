@@ -40,6 +40,7 @@ function AuthForm() {
 
   // Read mode from URL param, default to register for new users
   useEffect(() => {
+    if (!searchParams) return;
     const m = searchParams.get('mode');
     if (m === 'login') setMode('login');
     else if (m === 'register') setMode('register');
@@ -48,7 +49,7 @@ function AuthForm() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      const next = searchParams.get('next') || '/dashboard';
+      const next = searchParams?.get('next') || '/dashboard';
       router.push(next);
     }
   }, [isAuthenticated, router, searchParams]);
@@ -67,7 +68,7 @@ function AuthForm() {
     try {
       if (mode === 'login') {
         await login(email, password);
-        const next = searchParams.get('next') || '/dashboard';
+        const next = searchParams?.get('next') || '/dashboard';
         router.push(next);
       } else {
         await register(name, email, password);
@@ -94,7 +95,7 @@ function AuthForm() {
     setError('');
     setPassword('');
     setConfirmPassword('');
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() || '');
     params.set('mode', newMode);
     router.replace(`/auth?${params.toString()}`, { scroll: false });
   };

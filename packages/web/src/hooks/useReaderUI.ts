@@ -32,6 +32,7 @@ interface ReaderUIState {
   setMilestone: React.Dispatch<React.SetStateAction<string | null>>;
   resetAutoHideTimer: () => void;
   handleToggleControls: () => void;
+  closeToc: () => void;
 }
 
 export function useReaderUI(): ReaderUIState {
@@ -117,6 +118,8 @@ export function useReaderUI(): ReaderUIState {
     });
   }, [resetAutoHideTimer]);
 
+  const closeToc = useCallback(() => setTocOpen(false), []);
+
   return {
     showControls, sidebarOpen, synthesisOpen, searchOpen, searchQuery,
     showMobileSettings, tocOpen, showSettingsMenu, showTimeline,
@@ -125,6 +128,6 @@ export function useReaderUI(): ReaderUIState {
     setShowControls, setSidebarOpen, setSynthesisOpen, setSearchOpen, setSearchQuery,
     setShowMobileSettings, setTocOpen, setShowSettingsMenu, setShowTimeline,
     setShowShortcutsHelp, setShowCompletion, setMilestone,
-    resetAutoHideTimer, handleToggleControls,
+    resetAutoHideTimer, handleToggleControls, closeToc,
   };
 }

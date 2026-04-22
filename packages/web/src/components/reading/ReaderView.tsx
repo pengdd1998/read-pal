@@ -38,14 +38,6 @@ interface ChapterItem {
   title: string;
 }
 
-interface HighlightAnnotation {
-  id: string;
-  content: string;
-  color?: string;
-  type: string;
-  location?: { pageIndex?: number; [k: string]: unknown };
-}
-
 interface ReaderViewProps {
   bookId: string;
   chapterContent: string;
@@ -66,10 +58,9 @@ interface ReaderViewProps {
   highlightMode?: boolean;
   highlightCount?: number;
   bookmarkCount?: number;
-  highlights?: HighlightAnnotation[];
 }
 
-export function ReaderView({
+export const ReaderView = React.memo(function ReaderView({
   bookId,
   chapterContent,
   chapterTitle,
@@ -89,7 +80,6 @@ export function ReaderView({
   highlightMode: _highlightMode,
   highlightCount = 0,
   bookmarkCount = 0,
-  highlights = [],
 }: ReaderViewProps) {
   const t = useTranslations('reader');
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -116,12 +106,27 @@ export function ReaderView({
   // Ref to the article element for code highlighting
   const articleRef = useRef<HTMLElement | null>(null);
 
+  // Ref to the content div — we set innerHTML imperatively so React re-renders
+  // never touch the content DOM (which would destroy browser text selections).
+  const contentDivRef = useRef<HTMLDivElement | null>(null);
+
   // Memoize sanitized content to avoid re-sanitizing on every render
   // Uses purifySync which falls back to script-stripping if DOMPurify hasn't loaded yet
   const sanitizedContent = useMemo(
     () => purifySync(chapterContent, PURIFY_CONFIG),
     [chapterContent],
   );
+
+  // Set innerHTML imperatively — only updates when sanitizedContent changes.
+  // This prevents React's reconciliation from wiping the DOM during re-renders
+  // triggered by selection state changes, which would destroy text selections.
+  const prevContentRef = useRef<string>('');
+  useEffect(() => {
+    const el = contentDivRef.current;
+    if (!el || sanitizedContent === prevContentRef.current) return;
+    prevContentRef.current = sanitizedContent;
+    el.innerHTML = sanitizedContent;
+  }, [sanitizedContent]);
 
   // Sync with external TOC control
   useEffect(() => {
@@ -159,59 +164,6 @@ export function ReaderView({
     if (!el) return;
     highlightCodeBlocks(el).catch(() => { /* non-critical — graceful degradation */ });
   }, [sanitizedContent, chapterKey]);
-
-  // Render inline highlight annotations in the DOM
-  useEffect(() => {
-    const el = articleRef.current;
-    if (!el || highlights.length === 0) return;
-
-    const proseEl = el.querySelector('.reader-content');
-    if (!proseEl) return;
-
-    const colorMap: Record<string, string> = {
-      yellow: 'rgba(250, 204, 21, 0.35)',
-      green: 'rgba(74, 222, 128, 0.35)',
-      blue: 'rgba(96, 165, 250, 0.35)',
-      pink: 'rgba(244, 114, 182, 0.35)',
-      purple: 'rgba(192, 132, 252, 0.35)',
-    };
-
-    highlights.forEach((ann) => {
-      if (!ann.content || ann.content.length < 3) return;
-      const text = ann.content.trim();
-      const bgColor = colorMap[ann.color || 'yellow'] || colorMap.yellow;
-
-      const walker = document.createTreeWalker(proseEl, NodeFilter.SHOW_TEXT);
-      const textNodes: Text[] = [];
-      while (walker.nextNode()) {
-        const node = walker.currentNode as Text;
-        if (node.textContent && node.textContent.includes(text)) {
-          textNodes.push(node);
-        }
-      }
-
-      textNodes.forEach((node) => {
-        const idx = node.textContent!.indexOf(text);
-        if (idx === -1) return;
-        const range = document.createRange();
-        range.setStart(node, idx);
-        range.setEnd(node, idx + text.length);
-
-        const mark = document.createElement('mark');
-        mark.setAttribute('data-annotation-id', ann.id);
-        mark.style.backgroundColor = bgColor;
-        mark.style.borderRadius = '2px';
-        mark.style.padding = '0 1px';
-        mark.style.cursor = 'pointer';
-
-        try {
-          range.surroundContents(mark);
-        } catch {
-          // Cross-element text — skip gracefully
-        }
-      });
-    });
-  }, [highlights, sanitizedContent, chapterKey]);
 
   // Save scroll position before chapter changes or component unmounts
   const scrollKey = `scroll-${bookId}-ch${currentPage}`;
@@ -438,8 +390,9 @@ export function ReaderView({
           )}
 
           <div
+            ref={contentDivRef}
             className="prose prose-lg max-w-none dark:prose-invert reader-content"
-            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+            suppressHydrationWarning
           />
 
           {/* End-of-chapter marker */}
@@ -599,6 +552,6 @@ export function ReaderView({
       </footer>
     </div>
   );
-}
+});
 
 export type { ReaderViewProps };

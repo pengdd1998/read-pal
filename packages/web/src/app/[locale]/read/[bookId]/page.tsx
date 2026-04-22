@@ -169,7 +169,7 @@ export default function ReadPage() {
   usePageTitle(t('page_title'));
   const params = useParams();
   const router = useRouter();
-  const bookId = params.bookId as string;
+  const bookId = (params?.bookId ?? '') as string;
   const { toast } = useToast();
 
   // --- Extracted hooks ---
@@ -432,12 +432,8 @@ export default function ReadPage() {
             highlightMode={highlightMode}
             highlightCount={annotationActions.highlightCount}
             bookmarkCount={annotationActions.bookmarkCount}
-            highlights={annotations
-              .filter(a => (a.type === 'highlight' || a.type === 'note') && (a.location?.pageIndex == null || a.location.pageIndex === currentChapter))
-              .map(a => ({ id: a.id, content: a.content, color: a.color, type: a.type, location: { pageIndex: a.location?.pageIndex } }))
-            }
             externalTocOpen={ui.tocOpen}
-            onTocClose={() => ui.setTocOpen(false)}
+            onTocClose={ui.closeToc}
           />
         </div>
       </div>

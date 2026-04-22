@@ -18,7 +18,7 @@ function LoginRedirect() {
   useEffect(() => {
     const params = new URLSearchParams();
     params.set('mode', 'login');
-    const next = searchParams.get('next');
+    const next = searchParams?.get('next');
     if (next) params.set('next', next);
     window.location.href = `/${locale}/auth?${params.toString()}`;
   }, [searchParams, locale]);

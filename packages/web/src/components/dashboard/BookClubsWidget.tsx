@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 
@@ -62,6 +63,7 @@ function Skeleton() {
 // ---------------------------------------------------------------------------
 
 export default function BookClubsWidget() {
+  const t = useTranslations('bookClubs');
   const [clubs, setClubs] = useState<BookClub[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -105,7 +107,7 @@ export default function BookClubsWidget() {
         setNewDesc('');
       }
     } catch {
-      setError('Failed to create club');
+      setError(t('failedToLoad'));
     } finally {
       setCreating(false);
     }
@@ -130,7 +132,7 @@ export default function BookClubsWidget() {
         setJoinCode('');
       }
     } catch {
-      setError('Invalid invite code or club not found');
+      setError(t('clubNotFound'));
     } finally {
       setJoining(false);
     }
@@ -144,20 +146,20 @@ export default function BookClubsWidget() {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <span className="text-xl">{'\uD83D\uDCDA'}</span>
-          Book Clubs
+          {t('pageTitle')}
         </h3>
         <div className="flex items-center gap-2">
           <button
             onClick={() => { setShowJoin(!showJoin); setShowCreate(false); setError(null); }}
             className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            Join
+            {t('join')}
           </button>
           <button
             onClick={() => { setShowCreate(!showCreate); setShowJoin(false); setError(null); }}
             className="text-xs px-3 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
           >
-            + Create
+            + {t('create')}
           </button>
         </div>
       </div>
@@ -167,14 +169,14 @@ export default function BookClubsWidget() {
         <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 space-y-3">
           <input
             type="text"
-            placeholder="Club name"
+            placeholder={t('clubName')}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
             maxLength={100}
           />
           <textarea
-            placeholder="Description (optional)"
+            placeholder={t('descriptionOptional')}
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
@@ -187,7 +189,7 @@ export default function BookClubsWidget() {
               disabled={creating || !newName.trim()}
               className="text-xs px-4 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
             >
-              {creating ? 'Creating...' : 'Create Club'}
+              {creating ? t('creating') : t('createClub')}
             </button>
             <button
               onClick={() => { setShowCreate(false); setNewName(''); setNewDesc(''); }}
@@ -204,7 +206,7 @@ export default function BookClubsWidget() {
         <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 space-y-3">
           <input
             type="text"
-            placeholder="Enter 6-character invite code"
+            placeholder={t('enterCode')}
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white tracking-widest text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
@@ -216,7 +218,7 @@ export default function BookClubsWidget() {
               disabled={joining || joinCode.length < 6}
               className="text-xs px-4 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
             >
-              {joining ? 'Joining...' : 'Join Club'}
+              {joining ? t('joining') : t('joinClub')}
             </button>
             <button
               onClick={() => { setShowJoin(false); setJoinCode(''); }}
@@ -236,10 +238,10 @@ export default function BookClubsWidget() {
       {clubs.length === 0 ? (
         <div className="text-center py-6">
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-2">
-            No book clubs yet
+            {t('noClubsYet')}
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-600">
-            Create a club or join one with an invite code
+            {t('noClubsHint')}
           </p>
         </div>
       ) : (
@@ -267,18 +269,18 @@ export default function BookClubsWidget() {
                   )}
                   {club.currentUserRole === 'admin' && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">
-                      Admin
+                      {t('adminBadge')}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-3 mt-0.5">
                   <span className="text-xs text-gray-400">
-                    {(club.clubMembers || []).length} member{(club.clubMembers || []).length !== 1 ? 's' : ''}
+                    {(club.clubMembers || []).length} {(club.clubMembers || []).length !== 1 ? t('memberCountPlural', { count: (club.clubMembers || []).length }) : t('memberCount', { count: 1 })}
                   </span>
                   {club.currentBookId && (
                     <span className="text-xs text-primary-600 dark:text-primary-400 flex items-center gap-1">
                       <span className="w-1 h-1 rounded-full bg-green-500" />
-                      Reading
+                      {t('reading')}
                     </span>
                   )}
                 </div>
@@ -298,7 +300,7 @@ export default function BookClubsWidget() {
         href="/book-clubs"
         className="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
       >
-        Discover public clubs
+        {t('discoverClubs')}
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>

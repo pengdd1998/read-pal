@@ -3,7 +3,7 @@ const withNextIntl = require('next-intl/plugin')();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
+  // output: 'standalone', // disabled for dev — causes vendor-chunks MODULE_NOT_FOUND in dev mode
   transpilePackages: ['@read-pal/shared'],
   compiler: {
     // Strip console.error and console.warn in production (keeps console.log for debugging)

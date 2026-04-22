@@ -81,7 +81,7 @@ export default function SearchPage() {
       try {
         const [bookRes, annRes, semRes] = await Promise.all([
           api.get<Book[]>('/api/discovery/search', { q: query }),
-          api.get<{ id: string; content: string; note?: string; type: string; bookId: string; createdAt: string }[]>('/api/annotations/search', { q: query, limit: 20 }),
+          api.get<Record<string, unknown>[]>('/api/annotations/search', { q: query, limit: 20 }),
           api.get<Passage[]>('/api/discovery/semantic', { q: query, topK: 10, minScore: 0.3 }).catch(() => ({ success: false, data: [] as Passage[] })),
         ]);
 
@@ -93,12 +93,12 @@ export default function SearchPage() {
 
         if (annRes.success && annRes.data) {
           setHighlights((annRes.data )
-            .map((a) => ({
-              id: a.id,
-              content: a.content || a.note || '',
-              type: a.type,
-              bookId: a.bookId,
-              createdAt: a.createdAt,
+            .map((a: Record<string, unknown>) => ({
+              id: a.id as string,
+              content: (a.content as string) || (a.note as string) || '',
+              type: a.type as string,
+              bookId: (a.bookId ?? a.book_id) as string,
+              createdAt: (a.createdAt ?? a.created_at) as string,
             })));
         } else {
           setHighlights([]);

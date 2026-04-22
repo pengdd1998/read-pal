@@ -161,6 +161,23 @@ const DashboardChallenges = memo(function DashboardChallenges() {
   }
   if (active.length === 0) return null;
 
+  const challengeTitleMap: Record<string, string> = {
+    'daily-reading': t('challenge_daily_reading'),
+    'weekly-pages': t('challenge_weekly_pages'),
+    'highlight-streak': t('challenge_highlight_streak'),
+    'book-completion': t('challenge_book_completion'),
+    'flashcard-review': t('challenge_flashcard_review'),
+    'monthly-books': t('challenge_monthly_books'),
+  };
+  const unitMap: Record<string, string> = {
+    minutes: t('challenge_unit_minutes'),
+    pages: t('challenge_unit_pages'),
+    days: t('challenge_unit_days'),
+    percent: t('challenge_unit_percent'),
+    cards: t('challenge_unit_cards'),
+    books: t('challenge_unit_books'),
+  };
+
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
@@ -173,9 +190,9 @@ const DashboardChallenges = memo(function DashboardChallenges() {
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                 <span>{c.icon}</span>
-                <span className="font-medium">{c.title}</span>
+                <span className="font-medium">{challengeTitleMap[c.id] ?? c.title}</span>
               </span>
-              <span className="text-[10px] text-gray-400 tabular-nums">{t('challenges_progress', { progress: c.progress, target: c.target, unit: c.unit })}</span>
+              <span className="text-[10px] text-gray-400 tabular-nums">{t('challenges_progress', { progress: c.progress, target: c.target, unit: unitMap[c.unit] ?? c.unit })}</span>
             </div>
             <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
               <div

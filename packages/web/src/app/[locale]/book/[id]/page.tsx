@@ -45,7 +45,7 @@ export default function BookDetailPage() {
   usePageTitle(t('pageTitle'));
   const params = useParams();
   const router = useRouter();
-  const bookId = params.id as string;
+  const bookId = (params?.id ?? '') as string;
 
   const [book, setBook] = useState<BookData | null>(null);
   const [annotationStats, setAnnotationStats] = useState<AnnotationStats>({ highlights: 0, notes: 0, bookmarks: 0 });

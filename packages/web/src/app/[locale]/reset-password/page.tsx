@@ -21,7 +21,7 @@ function ResetPasswordForm() {
   const [error, setError] = useState('');
   const [tokenValid, setTokenValid] = useState(true);
 
-  const token = searchParams.get('token');
+  const token = searchParams?.get('token') ?? null;
 
   useEffect(() => {
     if (!token) {

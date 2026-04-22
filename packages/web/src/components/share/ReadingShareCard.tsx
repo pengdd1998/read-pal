@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { copyToClipboard } from '@/lib/clipboard';
 import { useToast } from '@/components/Toast';
@@ -24,6 +25,7 @@ interface ReadingCardData {
 }
 
 export function ShareReadingCard() {
+  const t = useTranslations('shareCard');
   const { toast } = useToast();
   const [card, setCard] = useState<ReadingCardData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,17 +39,25 @@ export function ShareReadingCard() {
         setCard(res.data);
       }
     } catch {
-      toast('Failed to generate reading card', 'error');
+      toast(t('failed_generate'), 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const shareText = card
-    ? `My Reading Journey on read-pal:\n`
-      + `${card.stats.booksCompleted} books completed | ${card.stats.totalPages} pages read | ${card.stats.highlights} highlights\n`
+    ? t('share_text_intro') + '\n'
+      + t('share_text_stats', {
+          books: card.stats.booksCompleted,
+          pages: card.stats.totalPages,
+          highlights: card.stats.highlights,
+        }) + '\n'
       + (card.currentlyReading
-        ? `\nCurrently reading: "${card.currentlyReading.title}" by ${card.currentlyReading.author} (${card.currentlyReading.progress}%)`
+        ? '\n' + t('share_text_reading', {
+            title: card.currentlyReading.title,
+            author: card.currentlyReading.author,
+            progress: card.currentlyReading.progress,
+          })
         : '')
     : '';
 
@@ -63,12 +73,12 @@ export function ShareReadingCard() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'My Reading Progress — read-pal',
+          title: t('share_title'),
           text: shareText,
         });
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
-          toast('Sharing failed', 'error');
+          toast(t('share_failed'), 'error');
         }
       }
     } else {
@@ -84,7 +94,7 @@ export function ShareReadingCard() {
           disabled={loading}
           className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200 disabled:opacity-50"
         >
-          {loading ? 'Generating...' : 'Share My Reading Progress'}
+          {loading ? t('generating') : t('button_generate')}
         </button>
       ) : (
         <div className="space-y-4">
@@ -93,8 +103,8 @@ export function ShareReadingCard() {
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">{'\uD83D\uDCDA'}</span>
               <div>
-                <div className="font-bold text-gray-900 dark:text-white">{card.user.name}&apos;s Reading Journey</div>
-                <div className="text-xs text-gray-500">read-pal</div>
+                <div className="font-bold text-gray-900 dark:text-white">{t('reading_journey', { name: card.user.name })}</div>
+                <div className="text-xs text-gray-500">{t('brand')}</div>
               </div>
             </div>
 
@@ -102,22 +112,22 @@ export function ShareReadingCard() {
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-xl">
                 <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{card.stats.booksCompleted}</div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-wide">Books</div>
+                <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('books')}</div>
               </div>
               <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-xl">
                 <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{card.stats.totalPages}</div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-wide">Pages</div>
+                <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('pages')}</div>
               </div>
               <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-xl">
                 <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{card.stats.highlights}</div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-wide">Highlights</div>
+                <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('highlights_label')}</div>
               </div>
             </div>
 
             {/* Currently reading */}
             {card.currentlyReading && (
               <div className="bg-white/70 dark:bg-gray-700/70 rounded-xl p-3 mb-3">
-                <div className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Currently Reading</div>
+                <div className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">{t('currently_reading')}</div>
                 <div className="font-medium text-sm text-gray-900 dark:text-white">{card.currentlyReading.title}</div>
                 <div className="text-xs text-gray-500 mb-2">{card.currentlyReading.author}</div>
                 <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -126,13 +136,13 @@ export function ShareReadingCard() {
                     style={{ width: `${Math.min(100, Math.max(0, card.currentlyReading.progress))}%` }}
                   />
                 </div>
-                <div className="text-[10px] text-gray-400 mt-1">{card.currentlyReading.progress}% complete</div>
+                <div className="text-[10px] text-gray-400 mt-1">{card.currentlyReading.progress}% {t('complete')}</div>
               </div>
             )}
 
             {/* Recent books */}
             {card.recentBooks && card.recentBooks.length > 1 && (
-              <div className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Recently Read</div>
+              <div className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">{t('recently_read')}</div>
             )}
             {card.recentBooks && card.recentBooks.slice(card.currentlyReading ? 1 : 0, 3).map((book) => (
               <div key={book.title} className="flex items-center gap-2 py-1">
@@ -149,13 +159,13 @@ export function ShareReadingCard() {
               onClick={handleNativeShare}
               className="btn btn-primary flex-1 text-sm"
             >
-              {'Share'}
+              {t('share')}
             </button>
             <button
               onClick={handleCopy}
               className="btn flex-1 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
             >
-              {copied ? 'Copied!' : 'Copy to Clipboard'}
+              {copied ? t('copied') : t('copy_clipboard')}
             </button>
           </div>
 
@@ -163,7 +173,7 @@ export function ShareReadingCard() {
             onClick={() => setCard(null)}
             className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
-            Dismiss
+            {t('dismiss')}
           </button>
         </div>
       )}

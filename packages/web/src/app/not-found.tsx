@@ -1,25 +1,17 @@
-import { Link } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
-
-export default function NotFound() {
-  const t = useTranslations('common');
-
+export default function RootNotFound() {
   return (
     <html lang="en">
       <body>
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center px-4">
-            <h1 className="text-5xl font-bold">404</h1>
-            <h2 className="mt-4 text-xl font-semibold">{t('not_found_title')}</h2>
-            <p className="mt-2 text-gray-600 max-w-md mx-auto">
-              {t('not_found_desc')}
-            </p>
-            <Link
-              href="/"
-              className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            <h1 className="text-6xl font-bold text-gray-900">404</h1>
+            <p className="mt-4 text-lg text-gray-600">Page not found</p>
+            <a
+              href="/en"
+              className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors"
             >
-              {t('back_to_home')}
-            </Link>
+              Go Home
+            </a>
           </div>
         </div>
       </body>

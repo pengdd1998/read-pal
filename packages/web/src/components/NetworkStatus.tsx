@@ -16,6 +16,9 @@ export function NetworkStatus() {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<SyncResult | null>(null);
 
+  // Don't render for unauthenticated users
+  if (!getAuthToken()) return null;
+
   // Check IndexedDB mutation queue count
   const checkQueueCount = useCallback(async () => {
     try {
