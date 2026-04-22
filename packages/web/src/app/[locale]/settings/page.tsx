@@ -48,11 +48,11 @@ export default function SettingsPage() {
         setError(t('failed_load'));
       }
       // Load user profile
-      const meRes = await api.get<{ user: { name: string; email: string } }>('/api/auth/me');
+      const meRes = await api.get<{ name: string; email: string }>('/api/auth/me');
       if (meRes.success && meRes.data) {
         const d = meRes.data;
-        setUserName(d.user?.name || '');
-        setUserEmail(d.user?.email || '');
+        setUserName(d.name || '');
+        setUserEmail(d.email || '');
       }
     } catch {
       setError(t('failed_load_retry'));

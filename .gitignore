@@ -172,3 +172,14 @@ packages/shared/src/**/*.js.map
 # Local-only docs and scripts (not source code)
 docs/
 scripts/
+
+# Debug screenshots and test artifacts
+.pal-test/
+packages/debug_screenshots/
+chat-opened.png
+chat-response.png
+homepage-check.png
+login-page.png
+
+# Local npm config
+.npmrc

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { LoadingSpinner } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 /**
@@ -10,12 +10,20 @@ import { usePageTitle } from '@/hooks/usePageTitle';
  */
 export default function RegisterPage() {
   const t = useTranslations('auth');
+  const tc = useTranslations('common');
   usePageTitle(t('page_title_register'));
-  const router = useRouter();
+  const locale = useLocale();
 
   useEffect(() => {
-    router.replace('/auth?mode=register');
-  }, [router]);
+    window.location.href = `/${locale}/auth?mode=register`;
+  }, [locale]);
 
-  return null;
+  return (
+    <main className="min-h-[80vh] flex items-center justify-center">
+      <div className="flex items-center gap-2 text-gray-500">
+        <LoadingSpinner />
+        {tc('loading')}
+      </div>
+    </main>
+  );
 }

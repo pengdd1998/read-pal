@@ -3,14 +3,16 @@
 import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { LoadingSpinner } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 function LoginRedirect() {
   const t = useTranslations('auth');
+  const tc = useTranslations('common');
   usePageTitle(t('page_title_login'));
   const router = useRouter();
+  const locale = useLocale();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -18,10 +20,17 @@ function LoginRedirect() {
     params.set('mode', 'login');
     const next = searchParams.get('next');
     if (next) params.set('next', next);
-    router.replace(`/auth?${params.toString()}`);
-  }, [router, searchParams]);
+    window.location.href = `/${locale}/auth?${params.toString()}`;
+  }, [searchParams, locale]);
 
-  return null;
+  return (
+    <main className="min-h-[80vh] flex items-center justify-center">
+      <div className="flex items-center gap-2 text-gray-500">
+        <LoadingSpinner />
+        {tc('loading')}
+      </div>
+    </main>
+  );
 }
 
 export default function LoginPage() {

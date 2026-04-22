@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.services.upload_service import (
+    MAX_FILE_SIZE,
     create_book_with_content,
     get_file_type,
     validate_file,
@@ -39,6 +40,8 @@ async def upload_book(
 
     file_size = 0
     suffix = Path(file.filename).suffix.lower()
+
+    # Validate filename/extension before reading any data
     error = validate_file(file.filename, 0)
     if error:
         raise HTTPException(
@@ -48,18 +51,25 @@ async def upload_book(
 
     file_type = get_file_type(file.filename)
 
-    # Save to temp file
+    # Save to temp file with streaming size validation
     with tempfile.NamedTemporaryFile(
         delete=False,
         suffix=suffix,
     ) as tmp:
         while chunk := await file.read(1024 * 1024):  # 1MB chunks
             file_size += len(chunk)
+            if file_size > MAX_FILE_SIZE:
+                tmp.close()
+                os.unlink(tmp.name)
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f'File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB',
+                )
             tmp.write(chunk)
         tmp_path = tmp.name
 
     try:
-        # Validate size after reading
+        # Final validation (extension + size check)
         error = validate_file(file.filename, file_size)
         if error:
             raise HTTPException(
