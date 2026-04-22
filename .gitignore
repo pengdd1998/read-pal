@@ -110,6 +110,7 @@ private/
 *.bak
 *.backup
 *.local.*
+backups/
 
 # Session data
 sessions/

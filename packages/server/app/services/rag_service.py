@@ -80,16 +80,16 @@ async def _get_chapter_embedding(chapter: dict) -> list[float] | None:
         cached = await r.get(cache_key)
         if cached:
             return json.loads(cached)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning('Redis embedding cache read failed: %s', exc)
 
     text = f"{title} {chapter.get('content', '')}"[:2000]
     emb = await _get_embedding(text)
     if emb:
         try:
             await r.setex(cache_key, EMBED_CACHE_TTL, json.dumps(emb))
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning('Redis embedding cache write failed: %s', exc)
     return emb
 
 
@@ -124,8 +124,8 @@ async def get_book_context(
         cached = await get_redis().get(cache_key)
         if cached:
             return cached[:max_chars]
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning('Redis RAG cache read failed: %s', exc)
 
     # Load book
     result = await db.execute(
@@ -167,8 +167,8 @@ async def get_book_context(
     if combined:
         try:
             await get_redis().setex(cache_key, RAG_CACHE_TTL, combined)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning('Redis RAG cache write failed: %s', exc)
 
     return combined
 

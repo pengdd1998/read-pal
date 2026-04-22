@@ -111,7 +111,7 @@ async def test_list_annotations_filter_by_book(client):
     data = resp.json()
     assert data['total'] >= 1
     for ann in data['data']:
-        assert ann['book_id'] == book_a['id']
+        assert ann['bookId'] == book_a['id']
 
 
 @pytest.mark.asyncio

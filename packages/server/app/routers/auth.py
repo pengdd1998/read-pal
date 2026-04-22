@@ -261,9 +261,9 @@ async def logout(
             exp = decoded.get('exp')
             if jti and exp:
                 await revoke_token(jti, exp)
-        except Exception:
+        except Exception as exc:
             # Token may be invalid/expired — still return success for idempotent logout
-            pass
+            logger.warning('Logout token revocation skipped: %s', exc)
 
     return MessageResponse(data={'message': t('errors.logged_out', lang)})
 
