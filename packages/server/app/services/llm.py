@@ -1,7 +1,8 @@
 """LLM service — resilient wrapper around langchain-openai for GLM.
 
 Features: connection pooling, circuit breaker, multi-model fallback,
-health check, and timeout management.
+health check, timeout management, and observability (token tracking,
+latency, cost estimation, request tracing).
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ import enum
 import json
 import logging
 import time
+import uuid
 from typing import Any
 
 from langchain_core.messages import BaseMessage, HumanMessage
@@ -19,6 +21,84 @@ from langchain_openai import ChatOpenAI
 from app.config import get_settings
 
 logger = logging.getLogger('read-pal.llm')
+
+# ---------------------------------------------------------------------------
+# Observability — structured call logging
+# ---------------------------------------------------------------------------
+
+# Rough cost per 1K tokens (USD) for GLM models
+_COST_PER_1K: dict[str, dict[str, float]] = {
+    'glm-4.7-flash': {'input': 0.0001, 'output': 0.0001},
+    'glm-4-flash': {'input': 0.0001, 'output': 0.0001},
+    'glm-4': {'input': 0.001, 'output': 0.001},
+}
+
+# Heuristic: chars per token for estimation when response_metadata is absent
+_CHARS_PER_TOKEN = 4
+
+
+def _estimate_tokens_from_chars(text: str) -> int:
+    return max(len(text) // _CHARS_PER_TOKEN, 1)
+
+
+def _extract_usage(response: Any) -> dict[str, int]:
+    """Extract token usage from LLM response metadata."""
+    usage = {}
+    # langchain-openai stores usage in response_metadata
+    meta = getattr(response, 'response_metadata', {}) or {}
+    token_usage = meta.get('token_usage', {})
+    if token_usage:
+        usage['prompt_tokens'] = token_usage.get('prompt_tokens', 0)
+        usage['completion_tokens'] = token_usage.get('completion_tokens', 0)
+        usage['total_tokens'] = token_usage.get('total_tokens', 0)
+    if not usage.get('total_tokens'):
+        # Fallback: estimate from content length
+        content = getattr(response, 'content', '') or ''
+        usage['completion_tokens'] = _estimate_tokens_from_chars(content)
+        usage['total_tokens'] = usage['completion_tokens']
+    return usage
+
+
+def _estimate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float:
+    """Estimate USD cost for a single call."""
+    rates = _COST_PER_1K.get(model, _COST_PER_1K['glm-4.7-flash'])
+    return (
+        prompt_tokens / 1000 * rates['input']
+        + completion_tokens / 1000 * rates['output']
+    )
+
+
+def _log_call(
+    *,
+    request_id: str,
+    model: str,
+    label: str,
+    latency_ms: int,
+    usage: dict[str, int],
+    success: bool,
+    fallback_used: bool = False,
+) -> None:
+    """Structured log for every LLM call."""
+    cost = _estimate_cost(
+        model,
+        usage.get('prompt_tokens', 0),
+        usage.get('completion_tokens', 0),
+    )
+    logger.info(
+        'LLM_CALL req=%s model=%s label=%s latency=%dms '
+        'prompt_tok=%d completion_tok=%d total_tok=%d '
+        'cost=%.6f success=%s fallback=%s',
+        request_id,
+        model,
+        label,
+        latency_ms,
+        usage.get('prompt_tokens', 0),
+        usage.get('completion_tokens', 0),
+        usage.get('total_tokens', 0),
+        cost,
+        success,
+        fallback_used,
+    )
 
 # ---------------------------------------------------------------------------
 # Connection pool — cache ChatOpenAI per (model, temperature) tuple
@@ -179,12 +259,14 @@ async def _invoke_with_circuit(
     *,
     log_label: str = 'LLM',
 ) -> Any:
-    """Low-level invoke with circuit breaker + fallback model.
+    """Low-level invoke with circuit breaker + fallback model + observability.
 
     Returns the raw response object on success, or None on total failure.
-    Records circuit breaker state transitions as a side-effect.
+    Records circuit breaker state transitions and structured call logs.
     """
     settings = get_settings()
+    request_id = uuid.uuid4().hex[:12]
+    start = time.monotonic()
 
     # Circuit breaker gate
     if not await circuit.allow_request():
@@ -195,23 +277,53 @@ async def _invoke_with_circuit(
     try:
         llm = get_llm()
         response = await llm.ainvoke(messages)
+        latency_ms = int((time.monotonic() - start) * 1000)
         await circuit.record_success()
+        usage = _extract_usage(response)
+        _log_call(
+            request_id=request_id,
+            model=model_used,
+            label=log_label,
+            latency_ms=latency_ms,
+            usage=usage,
+            success=True,
+        )
     except Exception as exc:
+        latency_ms = int((time.monotonic() - start) * 1000)
         logger.error('%s primary (%s) failed: %s', log_label, model_used, exc)
         await circuit.record_failure()
+        _log_call(
+            request_id=request_id,
+            model=model_used,
+            label=log_label,
+            latency_ms=latency_ms,
+            usage={},
+            success=False,
+        )
         # Try fallback model
         try:
+            fb_start = time.monotonic()
             fallback_model = settings.fallback_model
             logger.info('%s retrying with fallback model %s', log_label, fallback_model)
             llm = get_llm(model=fallback_model)
             response = await llm.ainvoke(messages)
+            fb_latency_ms = int((time.monotonic() - fb_start) * 1000)
             await circuit.record_success()
+            usage = _extract_usage(response)
+            _log_call(
+                request_id=request_id,
+                model=fallback_model,
+                label=log_label,
+                latency_ms=fb_latency_ms,
+                usage=usage,
+                success=True,
+                fallback_used=True,
+            )
         except Exception as fb_exc:
             logger.error('%s fallback also failed: %s', log_label, fb_exc)
             await circuit.record_failure()
             return None
 
-    logger.debug('%s served by model=%s', log_label, model_used)
     return response
 
 
@@ -220,26 +332,63 @@ async def safe_llm_invoke(
     *,
     fallback: Any = None,
     log_label: str = 'LLM',
+    schema_class: type | None = None,
 ) -> Any:
     """Invoke LLM with circuit breaker, fallback model, and JSON parsing.
 
     On primary model failure the configured ``fallback_model`` is tried.
-    Returns parsed JSON, stripped markdown fences, or *fallback* on failure.
+    Returns parsed JSON (optionally validated against *schema_class*),
+    stripped markdown fences, or *fallback* on failure.
     """
     response = await _invoke_with_circuit(messages, log_label=log_label)
     if response is None:
         return fallback
 
     content = response.content.strip()
-    if content.startswith('```'):
-        lines = content.split('\n')
-        content = '\n'.join(lines[1:-1])
+    content = _strip_markdown_fences(content)
 
     try:
-        return json.loads(content)
+        parsed = json.loads(content)
     except json.JSONDecodeError:
-        logger.warning('Failed to parse %s response as JSON', log_label)
+        logger.warning(
+            '%s: failed to parse LLM response as JSON (first 200 chars): %.200s',
+            log_label, content,
+        )
         return fallback
+
+    if schema_class is not None:
+        parsed = _validate_parsed(parsed, schema_class, log_label)
+
+    return parsed
+
+
+def _strip_markdown_fences(content: str) -> str:
+    """Strip ```json ... ``` and ``` ... ``` wrappers from LLM output."""
+    if not content.startswith('```'):
+        return content
+    lines = content.split('\n')
+    # First line is ```json or ``` — skip it
+    # Last line is ``` — skip it
+    if len(lines) >= 2:
+        return '\n'.join(lines[1:-1])
+    return content
+
+
+def _validate_parsed(
+    data: Any,
+    schema_class: type,
+    log_label: str,
+) -> Any:
+    """Validate parsed JSON against a Pydantic schema. Returns validated data or raw data."""
+    try:
+        result = schema_class.model_validate(data)
+        return result.model_dump()
+    except Exception as exc:
+        logger.warning(
+            '%s: schema validation failed (%s). Returning raw parsed data.',
+            log_label, exc,
+        )
+        return data
 
 
 async def safe_llm_call(
@@ -252,8 +401,15 @@ async def safe_llm_call(
 
     Unlike ``safe_llm_invoke``, this does NOT attempt JSON parsing.
     Returns the response content as a string, or *fallback* on failure.
+    Applies output safety filtering.
     """
     response = await _invoke_with_circuit(messages, log_label=log_label)
     if response is None:
         return fallback
-    return response.content.strip()
+    content = response.content.strip()
+
+    # Apply output filter
+    from app.utils.output_filter import filter_output
+    content = filter_output(content, context=log_label)
+
+    return content

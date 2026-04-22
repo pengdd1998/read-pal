@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 from uuid import UUID
@@ -12,9 +13,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
 from app.models.flashcard import Flashcard
+from app.prompts import (
+    STUDY_CONCEPT_CHECKS_HUMAN,
+    STUDY_CONCEPT_CHECKS_SYSTEM,
+    STUDY_OBJECTIVES_HUMAN,
+    STUDY_OBJECTIVES_SYSTEM,
+)
+from app.schemas.llm_outputs import ConceptCheckList, StudyObjectiveList
 from app.services.llm import safe_llm_invoke
 from app.utils import utcnow
 from app.utils.i18n import t
+from app.utils.sanitizer import sanitize_user_input
+from app.utils.token_budget import TokenBudget
+
+logger = logging.getLogger('read-pal.study_mode')
 
 
 # ---------------------------------------------------------------------------
@@ -45,6 +57,37 @@ def _generic_checks(chapter_title: str) -> list[dict[str, Any]]:
     ]
 
 
+def _extract_items(result: Any, wrapper_key: str) -> list[dict[str, Any]]:
+    """Extract a list of items from LLM result, handling both wrapped and bare lists.
+
+    The LLM may return either:
+    - A bare list: [{...}, {...}]
+    - A wrapped dict: {"objectives": [{...}]} or {"checks": [{...}]}
+    """
+    if isinstance(result, list):
+        items = result
+    elif isinstance(result, dict):
+        # Try the expected wrapper key first, then fall back to any list value
+        items = result.get(wrapper_key, [])
+        if not items and isinstance(items, list):
+            for value in result.values():
+                if isinstance(value, list):
+                    items = value
+                    break
+    else:
+        return []
+
+    # Ensure each item is a dict with an id
+    clean: list[dict[str, Any]] = []
+    for item in items[:5]:
+        if not isinstance(item, dict):
+            continue
+        if 'id' not in item or not item['id']:
+            item['id'] = str(uuid.uuid4())
+        clean.append(item)
+    return clean
+
+
 # ---------------------------------------------------------------------------
 # Objectives
 # ---------------------------------------------------------------------------
@@ -55,27 +98,42 @@ async def generate_objectives(
     chapter_index: int | None,
 ) -> dict[str, Any]:
     """Generate study objectives for a chapter using LLM."""
+    # Sanitize user-provided inputs
+    safe_title = sanitize_user_input(chapter_title, max_length=500, context='chapter_title')
+
+    # Token budget
+    budget = TokenBudget()
+
+    # Build messages from centralized prompts
+    system_text = STUDY_OBJECTIVES_SYSTEM.template
+    budget.add(system_text, label='study-objectives-system')
+
+    human_text = STUDY_OBJECTIVES_HUMAN.template.format(
+        chapter_index=chapter_index or 1,
+        chapter_title=safe_title,
+    )
+    human_text = budget.add(human_text, label='study-objectives-human')
+
+    if budget.truncations:
+        logger.warning(
+            'study-objectives: token budget truncations: %s',
+            ', '.join(budget.truncations),
+        )
+
     messages = [
-        SystemMessage(
-            content=(
-                'You are a study assistant. Generate 3-5 concise learning objectives '
-                'for the given chapter. Return ONLY a JSON array of objects with '
-                '"id" (uuid string), "text" (the objective), and "completed" (false). '
-                'Example: [{"id":"...","text":"...","completed":false}]'
-            ),
-        ),
-        HumanMessage(
-            content=f'Generate learning objectives for chapter {chapter_index}: "{chapter_title}"',
-        ),
+        SystemMessage(content=system_text),
+        HumanMessage(content=human_text),
     ]
 
     result = await safe_llm_invoke(
         messages,
         fallback=None,
         log_label='study-objectives',
+        schema_class=StudyObjectiveList,
     )
 
-    objectives = _parse_list_result(result, ['id', 'text', 'completed'])
+    # Extract objectives — handle both bare list and {"objectives": [...]} shapes
+    objectives = _extract_items(result, 'objectives')
     if not objectives:
         objectives = _generic_objectives(chapter_title)
 
@@ -96,35 +154,53 @@ async def generate_concept_checks(
     chapter_content: str,
 ) -> dict[str, Any]:
     """Generate concept check questions with answers and hints."""
+    # Sanitize user-provided inputs
+    safe_title = sanitize_user_input(chapter_title, max_length=500, context='chapter_title')
+    safe_content = sanitize_user_input(
+        chapter_content[:2000] if chapter_content else '',
+        max_length=2000,
+        context='chapter_content',
+    )
+
+    # Token budget
+    budget = TokenBudget()
+
+    # Build content hint from sanitized content
     content_hint = ''
-    if chapter_content:
-        content_hint = f'\n\nChapter excerpt (first 2000 chars):\n{chapter_content[:2000]}'
+    if safe_content:
+        content_hint = f'\n\nChapter excerpt (first 2000 chars):\n{safe_content}'
+
+    # Build messages from centralized prompts
+    system_text = STUDY_CONCEPT_CHECKS_SYSTEM.template
+    budget.add(system_text, label='study-concept-checks-system')
+
+    human_text = STUDY_CONCEPT_CHECKS_HUMAN.template.format(
+        chapter_index=chapter_index or 1,
+        chapter_title=safe_title,
+        content_hint=content_hint,
+    )
+    human_text = budget.add(human_text, label='study-concept-checks-human')
+
+    if budget.truncations:
+        logger.warning(
+            'study-concept-checks: token budget truncations: %s',
+            ', '.join(budget.truncations),
+        )
 
     messages = [
-        SystemMessage(
-            content=(
-                'You are a study assistant. Generate 3-5 concept check questions for '
-                'the given chapter. Return ONLY a JSON array of objects, each with: '
-                '"id" (uuid string), "question", "hint", "answer", and "position" '
-                '(one of "start", "middle", "end"). '
-                'Example: [{"id":"...","question":"...","hint":"...","answer":"...","position":"start"}]'
-            ),
-        ),
-        HumanMessage(
-            content=(
-                f'Generate concept check questions for chapter {chapter_index}: '
-                f'"{chapter_title}"{content_hint}'
-            ),
-        ),
+        SystemMessage(content=system_text),
+        HumanMessage(content=human_text),
     ]
 
     result = await safe_llm_invoke(
         messages,
         fallback=None,
         log_label='study-concept-checks',
+        schema_class=ConceptCheckList,
     )
 
-    checks = _parse_list_result(result, ['id', 'question', 'hint', 'answer', 'position'])
+    # Extract checks — handle both bare list and {"checks": [...]} shapes
+    checks = _extract_items(result, 'checks')
     if not checks:
         checks = _generic_checks(chapter_title)
 
@@ -295,42 +371,3 @@ async def get_mastery(
         'strongAreas': strong_areas[:5],
         'cardsDue': cards_due,
     }
-
-
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
-
-def _parse_list_result(
-    result: Any,
-    expected_keys: list[str],
-) -> list[dict[str, Any]]:
-    """Parse LLM result into a list of dicts with expected keys."""
-    items: list[dict[str, Any]] = []
-
-    if isinstance(result, list):
-        for item in result[:5]:
-            parsed = {}
-            for key in expected_keys:
-                parsed[key] = item.get(key) if isinstance(item, dict) else None
-            if 'id' not in parsed or not parsed['id']:
-                parsed['id'] = str(uuid.uuid4())
-            items.append(parsed)
-    elif isinstance(result, dict) and 'objectives' in result:
-        for item in result['objectives'][:5]:
-            parsed = {}
-            for key in expected_keys:
-                parsed[key] = item.get(key) if isinstance(item, dict) else None
-            if 'id' not in parsed or not parsed['id']:
-                parsed['id'] = str(uuid.uuid4())
-            items.append(parsed)
-    elif isinstance(result, dict) and 'checks' in result:
-        for item in result['checks'][:5]:
-            parsed = {}
-            for key in expected_keys:
-                parsed[key] = item.get(key) if isinstance(item, dict) else None
-            if 'id' not in parsed or not parsed['id']:
-                parsed['id'] = str(uuid.uuid4())
-            items.append(parsed)
-
-    return items

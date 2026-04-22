@@ -2,6 +2,8 @@
 
 import json
 import logging
+import time
+import uuid
 from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
@@ -15,6 +17,9 @@ from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.services.llm import circuit, get_llm, safe_llm_call
 from app.utils.i18n import t
+from app.utils.sanitizer import sanitize_chat_message, sanitize_annotations, sanitize_user_input
+from app.utils.token_budget import TokenBudget
+from app.utils.output_filter import filter_output
 
 logger = logging.getLogger('read-pal.companion')
 
@@ -98,30 +103,40 @@ def _build_system_prompt(
     companion_mode: str = 'casual',
     context: dict | None = None,
     lang: str = 'en',
+    budget: TokenBudget | None = None,
 ) -> str:
-    """Build the system prompt from all available context."""
+    """Build the system prompt from all available context with token budgeting."""
     prompt_key = 'companion.socratic_prompt' if companion_mode == 'socratic' else 'companion.system_prompt'
     prompt = t(prompt_key, lang,
                title=book.title, author=book.author,
                progress=book.progress, current_page=book.current_page,
                total_pages=book.total_pages)
     if annotations_ctx:
-        prompt += t('companion.annotations_context', lang, annotations=annotations_ctx)
+        safe_annotations = sanitize_annotations(annotations_ctx)
+        prompt += t('companion.annotations_context', lang, annotations=safe_annotations)
     if rag_ctx:
-        prompt += t('companion.rag_context', lang, context=rag_ctx)
+        safe_rag = sanitize_user_input(rag_ctx, max_length=3000, context='rag_context')
+        prompt += t('companion.rag_context', lang, context=safe_rag)
     if memory_summary:
         prompt += t('companion.memory_context', lang, summary=memory_summary)
     if context:
         extra_parts: list[str] = []
         if context.get('chapterContent'):
-            content = context['chapterContent'][:3000]
+            content = sanitize_user_input(context['chapterContent'], max_length=3000, context='chapter_content')
             extra_parts.append(t('companion.chapter_content', lang, content=content))
         if context.get('nearbyCode'):
-            extra_parts.append(t('companion.nearby_code', lang, code=context['nearbyCode']))
+            safe_code = sanitize_user_input(context.get('nearbyCode', ''), max_length=2000, context='nearby_code')
+            extra_parts.append(t('companion.nearby_code', lang, code=safe_code))
         if context.get('bookDescription'):
-            extra_parts.append(t('companion.book_description', lang, description=context['bookDescription']))
+            safe_desc = sanitize_user_input(context.get('bookDescription', ''), max_length=1000, context='book_description')
+            extra_parts.append(t('companion.book_description', lang, description=safe_desc))
         if extra_parts:
             prompt += '\n\n' + '\n\n'.join(extra_parts)
+
+    # Enforce token budget
+    if budget:
+        prompt = budget.add(prompt, 'system_prompt')
+
     return prompt
 
 
@@ -171,13 +186,19 @@ async def chat(
     except Exception as exc:
         logger.warning('Memory summary retrieval failed: %s', exc)
 
+    budget = TokenBudget()
     system_text = _build_system_prompt(
         book, annotations_ctx, rag_ctx, memory_summary,
         companion_mode=companion_mode, context=context, lang=lang,
+        budget=budget,
     )
 
+    sanitized_message = sanitize_chat_message(message)
     messages = [SystemMessage(content=system_text)] + history
-    messages.append(HumanMessage(content=message))
+    messages.append(HumanMessage(content=sanitized_message))
+
+    if budget.truncations:
+        logger.warning('Companion chat budget truncations: %s', ', '.join(budget.truncations))
 
     fallback_text = t('companion.fallback_error', lang)
     assistant_content = await safe_llm_call(
@@ -201,7 +222,9 @@ async def stream_chat(
     companion_mode: str = 'casual',
     lang: str = 'en',
 ) -> AsyncGenerator[str, None]:
-    """Stream companion chat as SSE chunks and persist messages after."""
+    """Stream companion chat as SSE chunks with circuit breaker + observability."""
+    from app.config import get_settings
+
     book = await _load_book(db, user_id, book_id)
     annotations_ctx = await _load_annotations_context(db, user_id, book_id)
     history = await _load_history(db, user_id, book_id)
@@ -220,41 +243,85 @@ async def stream_chat(
     except Exception as exc:
         logger.warning('Memory summary retrieval failed: %s', exc)
 
+    budget = TokenBudget()
     system_text = _build_system_prompt(
         book, annotations_ctx, rag_ctx, memory_summary,
         companion_mode=companion_mode, context=context, lang=lang,
+        budget=budget,
     )
+
+    sanitized_message = sanitize_chat_message(message)
     messages = [SystemMessage(content=system_text)] + history
-    messages.append(HumanMessage(content=message))
+    messages.append(HumanMessage(content=sanitized_message))
 
-    llm = get_llm()
+    if budget.truncations:
+        logger.warning('Companion stream budget truncations: %s', ', '.join(budget.truncations))
+
     collected_parts: list[str] = []
+    request_id = uuid.uuid4().hex[:12]
+    start_time = time.monotonic()
+    settings = get_settings()
+    model_used = settings.default_model
 
-    # Circuit breaker gate for streaming
+    # Shared circuit breaker gate
     if not await circuit.allow_request():
-        logger.warning('Companion stream blocked by circuit breaker')
+        logger.warning('Companion stream %s blocked by circuit breaker', request_id)
         fallback = t('companion.fallback_error', lang)
         yield f'data: {json.dumps({"content": fallback})}\n\n'
     else:
         try:
+            llm = get_llm()
             async for chunk in llm.astream(messages):
                 token = chunk.content
                 if token:
                     collected_parts.append(token)
                     yield f'data: {json.dumps({"content": token})}\n\n'
             await circuit.record_success()
+            latency_ms = int((time.monotonic() - start_time) * 1000)
+            logger.info(
+                'LLM_STREAM req=%s model=%s label=Companion_stream latency=%dms '
+                'chunks=%d success=True',
+                request_id, model_used, latency_ms, len(collected_parts),
+            )
         except Exception as exc:
-            logger.error('GLM streaming failed: %s', exc)
+            latency_ms = int((time.monotonic() - start_time) * 1000)
+            logger.error(
+                'LLM_STREAM req=%s model=%s label=Companion_stream latency=%dms '
+                'success=False error=%s',
+                request_id, model_used, latency_ms, exc,
+            )
             await circuit.record_failure()
-            # Try fallback model for error signal
-            fallback = t('companion.fallback_error', lang)
-            yield f'data: {json.dumps({"content": fallback})}\n\n'
+            # Try fallback model
+            try:
+                fallback_model = settings.fallback_model
+                logger.info('Companion stream %s retrying with fallback %s', request_id, fallback_model)
+                llm_fb = get_llm(model=fallback_model)
+                async for chunk in llm_fb.astream(messages):
+                    token = chunk.content
+                    if token:
+                        collected_parts.append(token)
+                        yield f'data: {json.dumps({"content": token})}\n\n'
+                await circuit.record_success()
+                logger.info(
+                    'LLM_STREAM req=%s model=%s label=Companion_stream fallback=True success=True',
+                    request_id, fallback_model,
+                )
+            except Exception as fb_exc:
+                logger.error('Companion stream %s fallback also failed: %s', request_id, fb_exc)
+                await circuit.record_failure()
+                fallback = t('companion.fallback_error', lang)
+                yield f'data: {json.dumps({"content": fallback})}\n\n'
 
     yield 'data: [DONE]\n\n'
 
     assistant_content = ''.join(collected_parts)
+    if assistant_content:
+        assistant_content = filter_output(assistant_content, context='companion_stream')
     await _save_message(db, user_id, book_id, 'user', message)
-    await _save_message(db, user_id, book_id, 'assistant', assistant_content)
+    if assistant_content:
+        await _save_message(db, user_id, book_id, 'assistant', assistant_content)
+    else:
+        logger.warning('Stream %s produced empty response for book %s — skipping save', request_id, book_id)
 
 
 async def summarize(
@@ -276,9 +343,13 @@ async def summarize(
         )
     prompt_parts.append(t('companion.summarize_instruction', lang))
 
+    budget = TokenBudget()
+    system_msg = budget.add(t('companion.summarize_system', lang), 'summarize_system')
+    human_msg = budget.add(' '.join(prompt_parts), 'summarize_human')
+
     messages = [
-        SystemMessage(content=t('companion.summarize_system', lang)),
-        HumanMessage(content=' '.join(prompt_parts)),
+        SystemMessage(content=system_msg),
+        HumanMessage(content=human_msg),
     ]
 
     fallback_text = t('companion.summary_error', lang)
@@ -302,12 +373,17 @@ async def explain(
     """Explain a passage from a book."""
     book = await _load_book(db, user_id, book_id)
 
-    prompt = t('companion.explain_prompt', lang, title=book.title, author=book.author, text=text)
+    safe_text = sanitize_user_input(text, max_length=3000, context='explain_text')
+    prompt = t('companion.explain_prompt', lang, title=book.title, author=book.author, text=safe_text)
     if context:
-        prompt += t('companion.explain_extra_context', lang, context=context)
+        safe_context = sanitize_user_input(context, max_length=2000, context='explain_context')
+        prompt += t('companion.explain_extra_context', lang, context=safe_context)
+
+    budget = TokenBudget()
+    system_msg = budget.add(t('companion.explain_system', lang), 'explain_system')
 
     messages = [
-        SystemMessage(content=t('companion.explain_system', lang)),
+        SystemMessage(content=system_msg),
         HumanMessage(content=prompt),
     ]
 

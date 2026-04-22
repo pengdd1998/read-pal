@@ -1,5 +1,6 @@
 """Conversation memory — rolling summarization for long-term chat context."""
 
+import json
 import logging
 from uuid import UUID
 
@@ -8,7 +9,11 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat_message import ChatMessage
-from app.services.llm import safe_llm_call
+from app.prompts import CONVERSATION_SUMMARY_HUMAN, CONVERSATION_SUMMARY_SYSTEM
+from app.schemas.llm_outputs import ConversationSummaryData
+from app.services.llm import safe_llm_invoke
+from app.utils.sanitizer import sanitize_chat_message
+from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.memory')
 
@@ -86,39 +91,45 @@ async def _generate_summary(
 
     older = all_messages[:-MAX_RECENT]
 
-    # Build conversation text for LLM
+    # Build conversation text with sanitization and token budgeting
     conversation_text = _format_conversation(older)
 
     existing_summary = existing.summary if existing else ''
 
-    prompt_parts = [
-        'You are summarizing a conversation between a reader and their AI reading companion.',
-        'Create a concise summary (3-5 sentences) capturing:',
-        '- Key topics discussed',
-        '- Important insights or questions raised',
-        '- Any unresolved questions or themes the user was exploring',
-    ]
+    # Build system prompt from centralized template
+    system_content = CONVERSATION_SUMMARY_SYSTEM.template
 
+    # Build human prompt with context
+    human_parts: list[str] = []
     if existing_summary:
-        prompt_parts.append(
-            f'\nExisting summary:\n{existing_summary}\n\n'
+        human_parts.append(
+            f'Existing summary:\n{existing_summary}\n\n'
             'Update this summary to incorporate the new conversation below:'
         )
     else:
-        prompt_parts.append('\nNew conversation to summarize:')
+        human_parts.append('New conversation to summarize:')
 
-    prompt_parts.append(f'\n{conversation_text}')
+    human_parts.append(f'\n{conversation_text}')
+    human_content = CONVERSATION_SUMMARY_HUMAN.template + '\n' + '\n'.join(human_parts)
 
     messages = [
-        SystemMessage(content='\n'.join(prompt_parts)),
-        HumanMessage(content='Generate the updated conversation summary.'),
+        SystemMessage(content=system_content),
+        HumanMessage(content=human_content),
     ]
 
-    summary_text = await safe_llm_call(
+    # Use safe_llm_invoke with Pydantic output validation
+    summary_data = await safe_llm_invoke(
         messages,
-        fallback=existing_summary,
+        fallback=None,
         log_label='Conversation summary',
+        schema_class=ConversationSummaryData,
     )
+
+    # Convert structured output to text summary for storage
+    if summary_data and isinstance(summary_data, dict):
+        summary_text = _summarize_to_text(summary_data)
+    else:
+        summary_text = existing_summary
 
     # Save/update in DB
     from app.models.conversation_summary import ConversationSummary
@@ -140,11 +151,37 @@ async def _generate_summary(
 
 
 def _format_conversation(messages: list[ChatMessage]) -> str:
-    """Format chat messages into readable text for summarization."""
+    """Format chat messages into readable text for summarization.
+
+    Applies input sanitization and token budgeting.
+    """
+    budget = TokenBudget(model='glm-4.7-flash', response_reserve=4000)
     parts: list[str] = []
     for msg in messages:
         role = 'User' if msg.role == 'user' else 'Companion'
-        # Truncate long messages
-        content = msg.content[:500]
-        parts.append(f'{role}: {content}')
+        # Sanitize each message against prompt injection
+        content = sanitize_chat_message(msg.content[:500])
+        line = f'{role}: {content}'
+        # Apply token budget
+        line = budget.add(line, label=f'conversation_msg_{msg.id}')
+        if not line:
+            break
+        parts.append(line)
     return '\n'.join(parts)
+
+
+def _summarize_to_text(data: dict) -> str:
+    """Convert structured ConversationSummaryData to a readable text summary."""
+    topics = data.get('key_topics', [])
+    insights = data.get('insights', [])
+    questions = data.get('unresolved_questions', [])
+
+    parts: list[str] = []
+    if topics:
+        parts.append(f'Key topics: {", ".join(topics)}.')
+    if insights:
+        parts.append(f'Insights: {" ".join(insights)}.')
+    if questions:
+        parts.append(f'Unresolved: {" ".join(questions)}.')
+
+    return ' '.join(parts) if parts else json.dumps(data)

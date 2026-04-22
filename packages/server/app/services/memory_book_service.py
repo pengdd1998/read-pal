@@ -17,43 +17,31 @@ from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.memory_book import MemoryBook
 from app.models.reading_session import ReadingSession
+from app.prompts import MEMORY_BOOK_CHAPTERS, MEMORY_BOOK_SYSTEM
+from app.schemas.llm_outputs import (
+    ConversationsData,
+    CoverData,
+    HighlightsData,
+    LookingForwardData,
+    NotesData,
+    ReadingJourneyData,
+)
 from app.schemas.memory_book import MemoryBookResponse
 from app.services.llm import safe_llm_invoke
 from app.utils.annotations import match_annotation_type
+from app.utils.sanitizer import sanitize_user_input
+from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.memory_book')
 
-CHAPTER_PROMPTS = {
-    1: (
-        'Create the Cover chapter. Include a compelling title, reading date range, '
-        'and a stats summary (total highlights, notes, reading time, pages read). '
-        'Return as JSON: {"title": str, "stats": {key: value}}'
-    ),
-    2: (
-        'Create the Reading Journey chapter. Build a timeline from the reading '
-        'sessions showing progress milestones and pace changes. '
-        'Return as JSON: {"title": "Reading Journey", "entries": [{date, event, milestone}]}'
-    ),
-    3: (
-        'Create the Highlights chapter. Select the most impactful highlights '
-        'and add brief AI commentary for each explaining its significance. '
-        'Return as JSON: {"title": "Highlights", "items": [{quote, commentary, location}]}'
-    ),
-    4: (
-        'Create the Notes & Insights chapter. Organize the reader\'s notes '
-        'thematically and draw connections between them. '
-        'Return as JSON: {"title": "Notes & Insights", "themes": [{name, notes: [{content, connection}]}]}'
-    ),
-    5: (
-        'Create the Conversations chapter. Extract key moments from AI chat '
-        'history — questions asked, insights discovered, topics explored. '
-        'Return as JSON: {"title": "Conversations", "moments": [{question, answer, topic}]}'
-    ),
-    6: (
-        'Create the Looking Forward chapter. Based on themes and interests, '
-        'suggest next books to read, topics to explore deeper, and reading goals. '
-        'Return as JSON: {"title": "Looking Forward", "recommendations": [{type, title, reason}]}'
-    ),
+# Map each chapter number to its Pydantic output schema
+CHAPTER_SCHEMAS: dict[int, type] = {
+    1: CoverData,
+    2: ReadingJourneyData,
+    3: HighlightsData,
+    4: NotesData,
+    5: ConversationsData,
+    6: LookingForwardData,
 }
 
 
@@ -87,11 +75,19 @@ async def _collect_book_data(
     )
     annotations = list(result.scalars().all())
     data['highlights'] = [
-        {'content': a.content, 'note': a.note, 'tags': a.tags, 'location': a.location}
+        {
+            'content': sanitize_user_input(a.content, context='highlight_content'),
+            'note': sanitize_user_input(a.note or '', context='highlight_note'),
+            'tags': a.tags, 'location': a.location,
+        }
         for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)
     ]
     data['notes'] = [
-        {'content': a.content, 'note': a.note, 'tags': a.tags}
+        {
+            'content': sanitize_user_input(a.content, context='note_content'),
+            'note': sanitize_user_input(a.note or '', context='note_text'),
+            'tags': a.tags,
+        }
         for a in annotations if match_annotation_type(a.type, AnnotationType.note)
     ]
     # Chat messages (capped at 200)
@@ -103,7 +99,11 @@ async def _collect_book_data(
     )
     messages = list(result.scalars().all())
     data['conversations'] = [
-        {'role': m.role, 'content': m.content} for m in messages
+        {
+            'role': m.role,
+            'content': sanitize_user_input(m.content, context='chat_message'),
+        }
+        for m in messages
     ]
     # Reading sessions (capped at 100)
     result = await db.execute(
@@ -130,40 +130,92 @@ async def _collect_book_data(
     return data
 
 
+def _prepare_relevant_data(
+    chapter_num: int,
+    book_data: dict[str, Any],
+    budget: TokenBudget,
+) -> dict[str, Any]:
+    """Select and budget the relevant data slice for a given chapter."""
+    if chapter_num == 1:
+        return book_data.get('stats', {})
+    elif chapter_num == 2:
+        raw = book_data.get('reading_sessions', [])
+        return _budget_list(raw, budget, 'reading_sessions')
+    elif chapter_num == 3:
+        raw = book_data.get('highlights', [])[:30]
+        return _budget_list(raw, budget, 'highlights')
+    elif chapter_num == 4:
+        raw = book_data.get('notes', [])[:30]
+        return _budget_list(raw, budget, 'notes')
+    elif chapter_num == 5:
+        raw = book_data.get('conversations', [])[:30]
+        return _budget_list(raw, budget, 'conversations')
+    elif chapter_num == 6:
+        return {
+            'themes': _budget_list(
+                book_data.get('highlights', [])[:10], budget, 'themes_highlights',
+            ),
+            'notes': _budget_list(
+                book_data.get('notes', [])[:10], budget, 'themes_notes',
+            ),
+        }
+    return {}
+
+
+def _budget_list(
+    items: list[dict[str, Any]],
+    budget: TokenBudget,
+    label: str,
+) -> list[dict[str, Any]]:
+    """Trim a list of dicts to fit within the token budget."""
+    result: list[dict[str, Any]] = []
+    for item in items:
+        text = json.dumps(item, default=str)
+        if budget.check_fits(text):
+            budget.add(text, label=f'{label}[{len(result)}]')
+            result.append(item)
+        else:
+            break
+    return result
+
+
 async def _generate_chapter(
     chapter_num: int,
     book_data: dict[str, Any],
     book_format: str,
 ) -> dict[str, Any]:
     """Generate a single chapter via LLM."""
-    prompt = CHAPTER_PROMPTS.get(chapter_num, 'Generate chapter content.')
+    chapter_template = MEMORY_BOOK_CHAPTERS.get(chapter_num)
+    if chapter_template is None:
+        logger.warning('No template for chapter %d', chapter_num)
+        return {
+            'chapter': chapter_num,
+            'title': f'Chapter {chapter_num}',
+            'error': 'No template defined for this chapter.',
+        }
+
     book_title = book_data.get('book', {}).get('title', 'Unknown')
     book_author = book_data.get('book', {}).get('author', 'Unknown')
 
-    system_prompt = (
-        f'You are creating a Personal Reading Book for "{book_title}" '
-        f'by {book_author}. Format: {book_format}. '
-        f'{prompt} Return ONLY valid JSON, no markdown fences.'
+    system_prompt = MEMORY_BOOK_SYSTEM.template.format(
+        book_title=book_title,
+        book_author=book_author,
+        book_format=book_format,
+        chapter_prompt=chapter_template.template,
     )
 
-    relevant_data: dict[str, Any] = {}
-    if chapter_num == 1:
-        relevant_data = book_data.get('stats', {})
-    elif chapter_num == 2:
-        relevant_data = book_data.get('reading_sessions', [])
-    elif chapter_num == 3:
-        relevant_data = book_data.get('highlights', [])[:30]
-    elif chapter_num == 4:
-        relevant_data = book_data.get('notes', [])[:30]
-    elif chapter_num == 5:
-        relevant_data = book_data.get('conversations', [])[:30]
-    elif chapter_num == 6:
-        relevant_data = {
-            'themes': book_data.get('highlights', [])[:10],
-            'notes': book_data.get('notes', [])[:10],
-        }
+    # Token-budget the data payload
+    budget = TokenBudget(model='glm-4.7-flash', response_reserve=4_000)
+    relevant_data = _prepare_relevant_data(chapter_num, book_data, budget)
 
     human_prompt = json.dumps(relevant_data, default=str)
+    if budget.truncations:
+        logger.info(
+            'Chapter %d budget truncations: %s',
+            chapter_num,
+            ', '.join(budget.truncations),
+        )
+
     fallback = {
         'chapter': chapter_num,
         'title': f'Chapter {chapter_num}',
@@ -176,6 +228,7 @@ async def _generate_chapter(
         ],
         fallback=fallback,
         log_label=f'Memory book chapter {chapter_num}',
+        schema_class=CHAPTER_SCHEMAS.get(chapter_num),
     )
     if isinstance(result, dict):
         return result

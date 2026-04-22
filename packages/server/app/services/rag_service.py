@@ -22,6 +22,7 @@ from app.config import get_settings
 from app.core.redis import get_redis
 from app.models.annotation import Annotation
 from app.models.book import Book
+from app.models.document import Document
 
 logger = logging.getLogger('read-pal.rag')
 
@@ -71,10 +72,10 @@ async def _get_embedding(text: str) -> list[float] | None:
         return None
 
 
-async def _get_chapter_embedding(chapter: dict) -> list[float] | None:
+async def _get_chapter_embedding(chapter: dict, book_id: UUID) -> list[float] | None:
     """Get cached or fresh embedding for a chapter."""
     title = chapter.get('title', '')
-    cache_key = f'{RAG_EMBED_CACHE_PREFIX}{_stable_hash(title)}'
+    cache_key = f'{RAG_EMBED_CACHE_PREFIX}{book_id}:{_stable_hash(title)}'
     r = get_redis()
     try:
         cached = await r.get(cache_key)
@@ -135,10 +136,10 @@ async def get_book_context(
     if not book:
         return ''
 
-    chapters = _get_chapters(book)
+    chapters = await _get_chapters(db, book_id)
 
     # Try semantic search first
-    relevant_chapters = await _semantic_chapter_search(chapters, query, top_k=3)
+    relevant_chapters = await _semantic_chapter_search(chapters, query, book_id, top_k=3)
 
     # Fallback to keyword matching
     if not relevant_chapters and chapters:
@@ -180,6 +181,7 @@ async def get_book_context(
 async def _semantic_chapter_search(
     chapters: list[dict[str, Any]],
     query: str,
+    book_id: UUID,
     top_k: int = 3,
 ) -> list[dict[str, Any]]:
     """Embedding-based chapter search with cosine similarity."""
@@ -189,7 +191,7 @@ async def _semantic_chapter_search(
 
     # Fetch all chapter embeddings in parallel
     embeddings = await asyncio.gather(
-        *[_get_chapter_embedding(ch) for ch in chapters],
+        *[_get_chapter_embedding(ch, book_id) for ch in chapters],
     )
 
     scored: list[tuple[float, dict]] = []
@@ -209,14 +211,18 @@ def _keyword_chapter_search(
     query: str,
     top_k: int = 3,
 ) -> list[dict[str, Any]]:
-    """Simple keyword-based chapter relevance scoring."""
-    query_words = set(query.lower().split())
-    scored: list[tuple[float, dict]] = []
+    """Keyword-based chapter relevance scoring. Supports both word-level (Latin) and character-level (CJK) matching."""
+    import re
+    query_lower = query.lower()
+    # Split into tokens: CJK characters individually, Latin words by whitespace
+    tokens: set[str] = set()
+    for part in re.findall(r'[\u4e00-\u9fff]|[a-zA-Z0-9]+', query_lower):
+        tokens.add(part)
 
+    scored: list[tuple[float, dict]] = []
     for ch in chapters:
         text = f"{ch.get('title', '')} {ch.get('content', '')}".lower()
-        words = set(text.split())
-        overlap = len(query_words & words)
+        overlap = sum(1 for tok in tokens if tok in text)
         if overlap > 0:
             scored.append((overlap, ch))
 
@@ -228,18 +234,15 @@ def _keyword_chapter_search(
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _get_chapters(book: Book) -> list[dict[str, Any]]:
-    """Extract chapters from book metadata."""
-    metadata = {}
-    if hasattr(book, 'metadata') and book.metadata:
-        if isinstance(book.metadata, dict):
-            metadata = book.metadata
-        elif isinstance(book.metadata, str):
-            try:
-                metadata = json.loads(book.metadata)
-            except (json.JSONDecodeError, TypeError):
-                pass
-    return metadata.get('chapters', [])
+async def _get_chapters(db: AsyncSession, book_id: UUID) -> list[dict[str, Any]]:
+    """Fetch chapters from the Document table (not Book.metadata_)."""
+    result = await db.execute(
+        select(Document.chapters).where(Document.book_id == book_id)
+    )
+    chapters = result.scalar_one_or_none()
+    if isinstance(chapters, list):
+        return chapters
+    return []
 
 
 async def _load_related_annotations(
@@ -250,6 +253,7 @@ async def _load_related_annotations(
     limit: int = 5,
 ) -> list[Annotation]:
     """Load annotations with keyword overlap to the query."""
+    import re
     result = await db.execute(
         select(Annotation)
         .where(
@@ -261,12 +265,15 @@ async def _load_related_annotations(
     )
     all_annotations = list(result.scalars().all())
 
-    query_words = set(query.lower().split())
+    # CJK-aware tokenization: individual CJK chars + Latin words
+    tokens: set[str] = set()
+    for part in re.findall(r'[\u4e00-\u9fff]|[a-zA-Z0-9]+', query.lower()):
+        tokens.add(part)
+
     scored = []
     for ann in all_annotations:
         text = f'{ann.content} {ann.note or ""}'.lower()
-        words = set(text.split())
-        overlap = len(query_words & words)
+        overlap = sum(1 for tok in tokens if tok in text)
         if overlap > 0:
             scored.append((overlap, ann))
 

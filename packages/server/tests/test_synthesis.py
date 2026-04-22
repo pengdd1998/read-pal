@@ -113,12 +113,12 @@ async def test_cross_book_synthesis(client):
     await _create_annotation(client, reg['token'], book2['id'])
 
     mock_response = json.dumps({
-        'themes': [{'name': 'Common theme', 'description': 'Shared', 'books': ['Book A', 'Book B'], 'strength': 0.7}],
-        'connections': [{'book_a': 'Book A', 'book_b': 'Book B', 'description': 'Related themes'}],
-        'book_summaries': [
+        'common_themes': [{'name': 'Common theme', 'description': 'Shared', 'confidence': 0.7}],
+        'unique_perspectives': [
             {'title': 'Book A', 'key_takeaway': 'Takeaway A'},
             {'title': 'Book B', 'key_takeaway': 'Takeaway B'},
         ],
+        'recommended_connections': ['Book A and Book B share related themes'],
     })
 
     with patch('app.services.llm.get_llm', return_value=_mock_llm(mock_response)):
@@ -130,7 +130,7 @@ async def test_cross_book_synthesis(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert 'themes' in body['data']
+    assert 'common_themes' in body['data']
 
 
 @pytest.mark.asyncio
@@ -139,9 +139,9 @@ async def test_cross_book_synthesis_with_seed_book(client):
     reg = await register_user(client)
 
     mock_response = json.dumps({
-        'themes': [{'name': 'American Dream', 'description': 'Central theme', 'books': ['The Great Gatsby'], 'strength': 0.9}],
-        'connections': [],
-        'book_summaries': [{'title': 'The Great Gatsby', 'key_takeaway': 'Pursuit of dreams'}],
+        'common_themes': [{'name': 'American Dream', 'description': 'Central theme', 'confidence': 0.9}],
+        'unique_perspectives': [{'title': 'The Great Gatsby', 'key_takeaway': 'Pursuit of dreams'}],
+        'recommended_connections': [],
     })
 
     with patch('app.services.llm.get_llm', return_value=_mock_llm(mock_response)):
@@ -153,7 +153,7 @@ async def test_cross_book_synthesis_with_seed_book(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert 'themes' in body['data']
+    assert 'common_themes' in body['data']
 
 
 # ---------------------------------------------------------------------------

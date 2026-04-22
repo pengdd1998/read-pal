@@ -12,42 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
 from app.models.friend import FriendConversation, FriendRelationship
-from app.services.llm import get_llm
+from app.prompts import FRIEND_BOOK_CONTEXT, FRIEND_PERSONAS
+from app.services.llm import safe_llm_call
+from app.utils.sanitizer import sanitize_chat_message
+from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.friend')
-
-PERSONA_PROMPTS: dict[str, str] = {
-    'sage': (
-        'You are Sage, a wise and philosophical reading friend. '
-        'You ask deep questions, reference literature and philosophy, '
-        'and help readers see the deeper meaning in what they read. '
-        'Your tone is thoughtful and measured.'
-    ),
-    'penny': (
-        'You are Penny, an enthusiastic and encouraging reading friend! '
-        'You celebrate every reading milestone, suggest fun reading '
-        'challenges, and always keep the conversation upbeat and motivating. '
-        'You love sharing your excitement about books.'
-    ),
-    'alex': (
-        'You are Alex, an analytical and structured reading friend. '
-        'You create summaries and study guides, focus on key concepts, '
-        'and help readers organize their understanding. '
-        'Your tone is clear and systematic.'
-    ),
-    'quinn': (
-        'You are Quinn, a creative reading friend who loves making '
-        'connections between books and life. You suggest writing exercises, '
-        'draw parallels across genres, and inspire creative thinking. '
-        'Your tone is imaginative and playful.'
-    ),
-    'sam': (
-        'You are Sam, a casual and friendly reading buddy. '
-        'You discuss books like you are chatting with a friend at a cafe — '
-        'relaxed, fun, and full of recommendations for similar books. '
-        'Your tone is warm and approachable.'
-    ),
-}
 
 HISTORY_LIMIT = 30
 
@@ -104,8 +74,8 @@ async def _build_system_message(
     book_id: UUID | None = None,
 ) -> SystemMessage:
     """Build the persona system message, optionally with book context."""
-    base = PERSONA_PROMPTS.get(persona, PERSONA_PROMPTS['sage'])
-    parts = [base]
+    persona_template = FRIEND_PERSONAS.get(persona, FRIEND_PERSONAS['sage'])
+    parts = [persona_template.template]
 
     if book_id is not None:
         result = await db.execute(
@@ -116,11 +86,10 @@ async def _build_system_message(
         )
         book = result.scalar_one_or_none()
         if book is not None:
-            parts.append(
-                f'\n\nThe user is currently reading "{book.title}" '
-                f'by {book.author} ({book.progress}% complete). '
-                f'Reference this book when relevant.',
+            context_str = FRIEND_BOOK_CONTEXT.template.format(
+                title=book.title, author=book.author, progress=book.progress or 0,
             )
+            parts.append(context_str)
 
     return SystemMessage(content=''.join(parts))
 
@@ -156,17 +125,34 @@ async def chat(
     rel = await _get_or_create_relationship(db, user_id)
     rel.persona = persona
 
+    sanitized_message = sanitize_chat_message(message)
+
     history = await _load_history(db, user_id, persona)
     system_msg = await _build_system_message(db, user_id, persona, book_id)
 
     messages = [system_msg] + history
-    messages.append(HumanMessage(content=message))
+    messages.append(HumanMessage(content=sanitized_message))
 
-    llm = get_llm()
-    response: AIMessage = await llm.ainvoke(messages)
-    assistant_content = response.content
+    # Enforce token budget before calling the LLM
+    budget = TokenBudget()
+    budget.add(system_msg.content, label='system')
+    for i, msg in enumerate(history):
+        budget.add(msg.content, label=f'history[{i}]')
+    budget.add(sanitized_message, label='user_message')
 
-    await _save_message(db, user_id, persona, 'user', message, book_id)
+    if budget.truncations:
+        logger.warning(
+            'Token budget truncations for user %s: %s',
+            user_id, budget.truncations,
+        )
+
+    assistant_content = await safe_llm_call(
+        messages,
+        fallback="I'm having trouble thinking right now. Please try again in a moment.",
+        log_label='Friend chat',
+    )
+
+    await _save_message(db, user_id, persona, 'user', sanitized_message, book_id)
     await _save_message(
         db, user_id, persona, 'assistant', assistant_content, book_id,
     )

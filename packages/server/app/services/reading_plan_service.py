@@ -1,6 +1,5 @@
 """Reading plan service — AI-generated reading schedules."""
 
-import json
 import logging
 from typing import Any
 from uuid import UUID
@@ -11,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
 from app.models.reading_plan import ReadingPlan
-from app.services.llm import get_llm
+from app.prompts import READING_PLAN_HUMAN, READING_PLAN_SYSTEM
+from app.services.llm import safe_llm_call
+from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.reading_plan')
 
@@ -137,40 +138,51 @@ async def _generate_plan_text(
     remaining = max(0, pages - current)
     pages_per_day = remaining // total_days if total_days > 0 else remaining
 
-    system_prompt = (
-        'You are a reading plan creator. Generate a structured, day-by-day reading plan.\n'
-        'Return the plan as plain text with this format:\n'
-        'Day 1: [Section/chapter] ([estimated pages])\n'
-        '  - Focus: [what to pay attention to]\n'
-        '  - Question to consider: [thought-provoking question]\n\n'
-        'Keep each day concise (2-3 lines). Be specific about the book content.'
+    # Centralized prompt templates (versioned, trackable)
+    system_prompt = READING_PLAN_SYSTEM.template
+
+    human_prompt = READING_PLAN_HUMAN.template.format(
+        total_days=total_days,
+        title=book.title,
+        author=book.author,
+        pages=pages,
+        current_page=current,
+        remaining=remaining,
+        pages_per_day=pages_per_day,
+        daily_minutes=daily_minutes,
+        progress=book.progress or 0,
     )
 
-    human_prompt = (
-        f'Create a {total_days}-day reading plan for "{book.title}" by {book.author}.\n'
-        f'Total pages: {pages}, current page: {current}, remaining: {remaining}\n'
-        f'Pages per day: ~{pages_per_day}\n'
-        f'Daily reading time: ~{daily_minutes} minutes\n'
-        f'Progress so far: {book.progress or 0}%'
-    )
+    # Token budget: ensure prompts fit within context window
+    budget = TokenBudget()
+    budget.add(system_prompt, label='reading_plan_system')
+    budget.add(human_prompt, label='reading_plan_human')
 
-    llm = get_llm(temperature=0.5, max_tokens=2000)
-    try:
-        response = await llm.ainvoke([
+    if budget.truncations:
+        logger.warning(
+            'Reading plan prompts truncated: %s (used %d tokens)',
+            ', '.join(budget.truncations),
+            budget.used,
+        )
+
+    # Build fallback text plan
+    lines = [f'{total_days}-Day Reading Plan for "{book.title}"\n']
+    for day in range(1, total_days + 1):
+        start = current + (day - 1) * pages_per_day
+        end = min(start + pages_per_day, pages)
+        lines.append(
+            f'Day {day}: Pages {start}-{end}\n'
+            f'  - Focus: Read carefully and note key ideas\n'
+            f'  - Question: What surprised you in this section?'
+        )
+    fallback_plan = '\n\n'.join(lines)
+
+    result = await safe_llm_call(
+        [
             SystemMessage(content=system_prompt),
             HumanMessage(content=human_prompt),
-        ])
-        return response.content.strip()
-    except Exception as exc:
-        logger.error('Reading plan generation failed: %s', exc)
-        # Fallback: simple page-based plan
-        lines = [f'{total_days}-Day Reading Plan for "{book.title}"\n']
-        for day in range(1, total_days + 1):
-            start = current + (day - 1) * pages_per_day
-            end = min(start + pages_per_day, pages)
-            lines.append(
-                f'Day {day}: Pages {start}-{end}\n'
-                f'  - Focus: Read carefully and note key ideas\n'
-                f'  - Question: What surprised you in this section?'
-            )
-        return '\n\n'.join(lines)
+        ],
+        fallback=fallback_plan,
+        log_label='Reading plan',
+    )
+    return result if result else fallback_plan

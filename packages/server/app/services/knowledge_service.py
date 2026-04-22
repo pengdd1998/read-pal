@@ -15,13 +15,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.redis import get_redis as _get_redis
 from app.models.annotation import Annotation
 from app.models.book import Book
+from app.prompts import KNOWLEDGE_EXTRACTION_HUMAN, KNOWLEDGE_EXTRACTION_SYSTEM
 from app.schemas.knowledge import (
     ConceptSearchResult,
     GraphData,
     GraphEdge,
     GraphNode,
 )
+from app.schemas.llm_outputs import ConceptList
 from app.services.llm import safe_llm_invoke
+from app.utils.output_filter import filter_output
+from app.utils.sanitizer import sanitize_annotations
+from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.knowledge')
 
@@ -58,19 +63,17 @@ async def _extract_concepts_via_llm(
     if not texts:
         return []
 
-    combined = '\n---\n'.join(texts[:20])  # limit to avoid token overflow
+    combined = '\n---\n'.join(texts[:20])
 
-    system_prompt = (
-        'You are a literary analysis assistant. Given reader highlights and notes, '
-        'extract key concepts, characters, themes, and locations as structured JSON.\n\n'
-        'Return a JSON array. Each element must have:\n'
-        '  "name": string — the concept/character/theme/location name\n'
-        '  "type": one of "concept", "character", "theme", "location"\n'
-        '  "related": array of strings — other extracted names this one relates to\n\n'
-        'Return ONLY the JSON array, no markdown fences.'
-    )
+    # Sanitize input to prevent prompt injection
+    combined = sanitize_annotations(combined)
 
-    human_prompt = f'Analyse these reader annotations and extract concepts:\n\n{combined}'
+    # Enforce token budget to avoid context window overflow
+    budget = TokenBudget()
+    combined = budget.add(combined, 'annotations')
+
+    system_prompt = KNOWLEDGE_EXTRACTION_SYSTEM.template
+    human_prompt = KNOWLEDGE_EXTRACTION_HUMAN.template.format(annotations=combined)
 
     result = await safe_llm_invoke(
         [
@@ -79,10 +82,16 @@ async def _extract_concepts_via_llm(
         ],
         fallback=[],
         log_label='Knowledge concept extraction',
+        schema_class=ConceptList,
     )
 
     if isinstance(result, list):
+        # LLM returned a bare array — wrap in expected container shape
         return result
+
+    if isinstance(result, dict) and 'concepts' in result:
+        # Pydantic-validated ConceptList.model_dump()
+        return result['concepts']
 
     return []
 
