@@ -228,7 +228,7 @@ async def test_get_themes(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert 'themes' in body['data']
+    assert 'themes' in body
 
 
 # ---------------------------------------------------------------------------

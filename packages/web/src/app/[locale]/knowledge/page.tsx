@@ -167,15 +167,15 @@ export default function KnowledgePage() {
     async function load() {
       try {
         const [graphRes, themesRes] = await Promise.all([
-          api.get<{ neo4jAvailable: boolean; nodes: VisualizationNode[]; edges: VisualizationEdge[] }>('/api/knowledge/graph'),
-          api.get<{ neo4jAvailable: boolean; themes: CrossBookTheme[] }>('/api/knowledge/themes'),
+          api.get<{ neo4jAvailable?: boolean; nodes: VisualizationNode[]; edges: VisualizationEdge[] }>('/api/v1/knowledge/graph'),
+          api.get<{ neo4jAvailable?: boolean; themes: CrossBookTheme[] }>('/api/v1/knowledge/themes'),
         ]);
 
-        const available = graphRes.data?.neo4jAvailable ?? false;
+        const available = graphRes.data?.neo4jAvailable ?? true;
         setNeo4jAvailable(available);
         setThemes(themesRes.data?.themes ?? []);
 
-        if (available && graphRes.data) {
+        if (graphRes.data) {
           const rawNodes = graphRes.data.nodes || [];
           const rawEdges = graphRes.data.edges || [];
 

@@ -42,7 +42,19 @@ async def get_all_graphs(
         except Exception:
             logger.warning('Failed to build graph for book %s', bid, exc_info=True)
             continue
-    return {'success': True, 'data': graphs}
+    # Merge all per-book graphs into one combined graph
+    all_nodes: list[dict] = []
+    all_edges: list[dict] = []
+    for g in graphs:
+        all_nodes.extend(g.get('nodes', []))
+        all_edges.extend(g.get('edges', []))
+
+    return {
+        'success': True,
+        'neo4jAvailable': True,
+        'nodes': all_nodes,
+        'edges': all_edges,
+    }
 
 
 @router.get('/themes')
@@ -53,10 +65,9 @@ async def get_themes(
     """Get themes across all books."""
     return {
         'success': True,
-        'data': {
-            'themes': [],
-            'connections': [],
-        },
+        'neo4jAvailable': True,
+        'themes': [],
+        'connections': [],
     }
 
 
