@@ -100,8 +100,14 @@ export const ReaderView = React.memo(function ReaderView({
     return () => document.removeEventListener('selectionchange', onSelectionChange);
   }, []);
 
-  // Preload DOMPurify on mount so purifySync works immediately after
-  useEffect(() => { preloadDOMPurify(); preloadPrism(); }, []);
+  // State to trigger re-sanitization after DOMPurify finishes loading
+  const [purifyReady, setPurifyReady] = useState(false);
+
+  // Preload DOMPurify on mount — when ready, bump state so useMemo re-sanitizes
+  useEffect(() => {
+    preloadDOMPurify(() => setPurifyReady(true));
+    preloadPrism();
+  }, []);
 
   // Ref to the article element for code highlighting
   const articleRef = useRef<HTMLElement | null>(null);
@@ -110,23 +116,14 @@ export const ReaderView = React.memo(function ReaderView({
   // never touch the content DOM (which would destroy browser text selections).
   const contentDivRef = useRef<HTMLDivElement | null>(null);
 
-  // Memoize sanitized content to avoid re-sanitizing on every render
-  // Uses purifySync which falls back to script-stripping if DOMPurify hasn't loaded yet
+  // Memoize sanitized content — recomputes when chapterContent changes
+  // or when DOMPurify finishes loading (purifyReady flips to true).
+  // The fallback in purifySync preserves safe HTML tags, so content is
+  // always readable; re-computing with real DOMPurify adds full sanitization.
   const sanitizedContent = useMemo(
     () => purifySync(chapterContent, PURIFY_CONFIG),
-    [chapterContent],
+    [chapterContent, purifyReady],
   );
-
-  // Set innerHTML imperatively — only updates when sanitizedContent changes.
-  // This prevents React's reconciliation from wiping the DOM during re-renders
-  // triggered by selection state changes, which would destroy text selections.
-  const prevContentRef = useRef<string>('');
-  useEffect(() => {
-    const el = contentDivRef.current;
-    if (!el || sanitizedContent === prevContentRef.current) return;
-    prevContentRef.current = sanitizedContent;
-    el.innerHTML = sanitizedContent;
-  }, [sanitizedContent]);
 
   // Sync with external TOC control
   useEffect(() => {
@@ -393,6 +390,7 @@ export const ReaderView = React.memo(function ReaderView({
             ref={contentDivRef}
             className="prose prose-lg max-w-none dark:prose-invert reader-content"
             suppressHydrationWarning
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
 
           {/* End-of-chapter marker */}

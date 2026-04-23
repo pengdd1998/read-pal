@@ -25,7 +25,7 @@ jobs:
           script: |
             set -euo pipefail
 
-            DEPLOY_PATH="/home/ubuntu/read-pal"
+            DEPLOY_PATH="/home/ubuntu/projects/read-pal"
             cd "$DEPLOY_PATH"
 
             # -------------------------------------------------------

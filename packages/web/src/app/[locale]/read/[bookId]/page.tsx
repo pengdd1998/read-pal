@@ -183,6 +183,23 @@ export default function ReadPage() {
 
   const contentRef = useRef<HTMLElement | null>(null);
   const chatRef = useRef<CompanionChatHandle>(null);
+
+  // Keep contentRef synced with the article element rendered by ReaderView.
+  // dynamic() breaks ref propagation, so we use a MutationObserver + polling fallback.
+  useEffect(() => {
+    const sync = () => {
+      const article = document.querySelector('article.reading-mode');
+      if (article && contentRef.current !== article) {
+        (contentRef as React.MutableRefObject<HTMLElement | null>).current = article as HTMLElement;
+      }
+    };
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const interval = setInterval(sync, 2000);
+    return () => { observer.disconnect(); clearInterval(interval); };
+  }, []);
+
   const selection = useTextSelection(contentRef);
 
   const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight } = useReaderSettings(bookId, loading);
