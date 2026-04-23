@@ -58,6 +58,7 @@ async def export_annotations(
         'apa': f'citation-{book_id}.txt',
         'mla': f'citation-{book_id}.txt',
         'chicago': f'citation-{book_id}.txt',
+        'bibtex': f'citation-{book_id}.bib',
     }
 
     return Response(
@@ -110,6 +111,7 @@ async def export_by_query_params(
         'apa': f'citation-{bookId}.txt',
         'mla': f'citation-{bookId}.txt',
         'chicago': f'citation-{bookId}.txt',
+        'bibtex': f'citation-{bookId}.bib',
     }
 
     return Response(
