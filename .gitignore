@@ -184,3 +184,6 @@ login-page.png
 
 # Local npm config
 .npmrc
+
+# Root-level debug screenshots (not docs/screenshots/*.png)
+/*.png
