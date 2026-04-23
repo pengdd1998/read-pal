@@ -48,6 +48,10 @@ jobs:
             echo ">>> Starting containers..."
             docker compose up -d --remove-orphans
 
+            # Restart nginx to pick up new upstream IPs
+            sleep 3
+            docker compose restart nginx
+
             # -------------------------------------------------------
             # 4. Run database migrations
             # -------------------------------------------------------
@@ -64,7 +68,7 @@ jobs:
               local url="$2"
               local status="000"
               for i in 1 2 3 4 5 6; do
-                status=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo "000")
+                status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo "000")
                 if [ "$status" = "200" ]; then
                   echo "  $name OK (attempt $i)"
                   return 0
