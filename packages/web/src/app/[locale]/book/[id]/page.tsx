@@ -559,7 +559,7 @@ export default function BookDetailPage() {
           <button
             onClick={async () => {
               try {
-                const res = await authFetch(`/api/annotations/export?bookId=${bookId}&format=markdown`);
+                const res = await authFetch(`/api/v1/export/${bookId}/markdown`);
                 const text = await res.text();
                 const blob = new Blob([text], { type: 'text/markdown' });
                 const url = URL.createObjectURL(blob);
@@ -582,7 +582,7 @@ export default function BookDetailPage() {
           <button
             onClick={async () => {
               try {
-                const res = await authFetch(`/api/annotations/export?bookId=${bookId}&format=json`);
+                const res = await authFetch(`/api/v1/export/${bookId}/json`);
                 const text = await res.text();
                 const blob = new Blob([text], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -705,7 +705,7 @@ export default function BookDetailPage() {
             <button
               onClick={async () => {
                 try {
-                  const res = await authFetch(`/api/annotations/export?bookId=${bookId}&format=study_guide`);
+                  const res = await authFetch(`/api/v1/export/${bookId}/study_guide`);
                   if (!res.ok) throw new Error('Export failed');
                   const text = await res.text();
                   const blob = new Blob([text], { type: 'text/markdown; charset=utf-8' });

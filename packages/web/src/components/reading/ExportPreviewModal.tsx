@@ -70,14 +70,16 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
 
   const buildExportUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    const params = new URLSearchParams({ bookId, format });
+    let url = `${baseUrl}/api/v1/export/${bookId}/${format}`;
+    const extraParams = new URLSearchParams();
     if (selectedTypes.size < 3) {
-      params.set('types', [...selectedTypes].join(','));
+      extraParams.set('types', [...selectedTypes].join(','));
     }
     if (selectedTag) {
-      params.set('tags', selectedTag);
+      extraParams.set('tags', selectedTag);
     }
-    return `${baseUrl}/api/annotations/export?${params}`;
+    if (extraParams.toString()) url += `?${extraParams}`;
+    return url;
   };
 
   const toggleType = (type: string) => {

@@ -147,7 +147,7 @@ export function SelectionToolbar({
             {/* Actions */}
             <div className="flex items-center justify-around px-4 py-3">
               <button
-                onClick={() => setShowNote(!showNote)}
+                onMouseDown={(e) => { e.preventDefault(); setShowNote(!showNote); }}
                 className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
                 aria-label={t('toolbar_add_note')}
               >
@@ -170,7 +170,7 @@ export function SelectionToolbar({
               </button>
 
               <button
-                onClick={() => setShowTagPicker(!showTagPicker)}
+                onMouseDown={(e) => { e.preventDefault(); setShowTagPicker(!showTagPicker); }}
                 className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
                   showTagPicker ? 'text-amber-600 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400'
                 }`}
@@ -187,6 +187,7 @@ export function SelectionToolbar({
               </button>
 
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleCopy}
                 className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
                   copied ? 'text-emerald-500' : 'text-gray-600 dark:text-gray-400'
@@ -208,7 +209,7 @@ export function SelectionToolbar({
               </button>
 
               <button
-                onClick={() => setShowQuoteCard(true)}
+                onMouseDown={(e) => { e.preventDefault(); setShowQuoteCard(true); }}
                 className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
                 aria-label={t('toolbar_share_as_quote')}
               >
@@ -308,7 +309,7 @@ export function SelectionToolbar({
 
           {/* Note */}
           <button
-            onClick={() => setShowNote(!showNote)}
+            onMouseDown={(e) => { e.preventDefault(); setShowNote(!showNote); }}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             aria-label={t('toolbar_add_note')}
           >
@@ -322,7 +323,7 @@ export function SelectionToolbar({
 
           {/* Tag */}
           <button
-            onClick={() => setShowTagPicker(!showTagPicker)}
+            onMouseDown={(e) => { e.preventDefault(); setShowTagPicker(!showTagPicker); }}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               showTagPicker
                 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
@@ -340,6 +341,7 @@ export function SelectionToolbar({
 
           {/* Copy */}
           <button
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleCopy}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             aria-label={t('toolbar_copy_text')}
@@ -362,7 +364,7 @@ export function SelectionToolbar({
 
           {/* Share */}
           <button
-            onClick={() => setShowQuoteCard(true)}
+            onMouseDown={(e) => { e.preventDefault(); setShowQuoteCard(true); }}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             aria-label={t('toolbar_share_as_quote')}
           >

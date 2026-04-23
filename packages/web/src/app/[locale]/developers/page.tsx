@@ -35,7 +35,7 @@ const endpoints: Endpoint[] = [
   { method: 'GET', path: '/api/annotations?bookId=', description: 'List annotations for a book', auth: true },
   { method: 'POST', path: '/api/annotations', description: 'Create annotation', auth: true },
   { method: 'DELETE', path: '/api/annotations/:id', description: 'Delete annotation', auth: true },
-  { method: 'GET', path: '/api/annotations/export/:bookId?format=', description: 'Export annotations (markdown, csv, bibtex, apa, etc.)', auth: true },
+  { method: 'GET', path: '/api/v1/export/:bookId/:format', description: 'Export annotations (markdown, csv, bibtex, apa, etc.)', auth: true },
 
   // Reading Sessions
   { method: 'POST', path: '/api/reading-sessions', description: 'Start reading session', auth: true },

@@ -16,7 +16,7 @@
  * - Book content pre-caching for offline reading
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `readpal-${CACHE_VERSION}`;
 const STATIC_CACHE = `readpal-static-${CACHE_VERSION}`;
 const API_CACHE = `readpal-api-${CACHE_VERSION}`;
@@ -24,10 +24,8 @@ const IMAGE_CACHE = `readpal-images-${CACHE_VERSION}`;
 const CONTENT_CACHE = `readpal-content-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
-// Static assets to pre-cache on install
+// Static assets to pre-cache on install (NO HTML pages — those must always be network-fresh)
 const PRECACHE_URLS = [
-  '/',
-  '/dashboard',
   '/offline',
   '/manifest.webmanifest',
   '/icon.svg',
@@ -87,8 +85,8 @@ self.addEventListener('fetch', (event) => {
   } else if (isImageRequest(url.pathname)) {
     event.respondWith(cacheFirst(request, IMAGE_CACHE));
   } else {
-    // HTML pages — network first with offline fallback
-    event.respondWith(networkFirstWithOfflineFallback(request));
+    // HTML pages — always network, never cache (prevents stale HTML + hydration errors)
+    event.respondWith(networkOnlyWithOfflineFallback(request));
   }
 });
 
@@ -218,19 +216,14 @@ async function networkFirstWithCache(request, cacheName, maxAgeSeconds = 30) {
   }
 }
 
-/** Network-first for HTML with offline fallback page */
-async function networkFirstWithOfflineFallback(request) {
+/** Network-only for HTML — always fetch fresh, offline fallback only */
+async function networkOnlyWithOfflineFallback(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
+    // NEVER cache HTML responses — stale HTML causes hydration mismatches
     return response;
   } catch {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    // Return offline page
+    // Network failed — try offline page
     const offlinePage = await caches.match(OFFLINE_URL);
     if (offlinePage) return offlinePage;
     return new Response(

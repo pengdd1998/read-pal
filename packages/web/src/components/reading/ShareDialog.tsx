@@ -128,7 +128,7 @@ export function ShareDialog({
     try {
       const baseUrl = API_BASE_URL || '';
       const res = await fetch(
-        `${baseUrl}/api/annotations/export?bookId=${bookId}&format=${citationFormat}`,
+        `${baseUrl}/api/v1/export/${bookId}/${citationFormat}`,
         { headers: { Authorization: `Bearer ${getAuthToken()}` } },
       );
       if (!res.ok) {

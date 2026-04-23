@@ -63,6 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     if (result.success && result.data) {
       const { token: newToken, user: newUser } = result.data;
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      clearAuthCookie();
       localStorage.setItem('auth_token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
       setAuthCookie(newToken);
@@ -80,6 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     if (result.success && result.data) {
       const { token: newToken, user: newUser } = result.data;
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      clearAuthCookie();
       localStorage.setItem('auth_token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
       setAuthCookie(newToken);
@@ -99,6 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const oauthLogin = useCallback((newToken: string, newUser: User) => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    clearAuthCookie();
     localStorage.setItem('auth_token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
     setAuthCookie(newToken);
