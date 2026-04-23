@@ -7,7 +7,7 @@
 Your AI reading companion — ask questions, explore ideas, and remember every insight.
 
 [![CI](https://github.com/pengdd1998/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd1998/read-pal/actions)
-[![Tests](https://img.shields.io/badge/tests-320%20passing-brightgreen)](packages/server/tests)
+[![Tests](https://img.shields.io/badge/tests-326%20passing-brightgreen)](packages/server/tests)
 [![Backend](https://img.shields.io/badge/backend-Python%203.12%20%7C%20FastAPI-blue)](packages/server)
 [![Frontend](https://img.shields.io/badge/frontend-Next.js%2014%20%7C%20TypeScript-black)](packages/web)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -44,11 +44,11 @@ Think of it as a friend who's always read the same book and loves talking about 
   </tr>
   <tr>
     <td align="center"><b>Knowledge Graph</b></td>
-    <td align="center"><b>Memory Book</b></td>
+    <td align="center"><b>Landing Page</b></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/knowledge-graph.png" alt="Knowledge Graph" width="480" /></td>
-    <td><img src="docs/screenshots/memory-book.png" alt="Memory Book" width="480" /></td>
+    <td><img src="docs/screenshots/landing-page.png" alt="Landing Page" width="480" /></td>
   </tr>
 </table>
 
@@ -115,20 +115,20 @@ read-pal/
 | Layer | Technology |
 |-------|-----------|
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2.0 (async) |
-| AI Engine | GLM (Zhipu AI) via LangChain |
+| AI Engine | GLM (Zhipu AI) via LangChain, OpenAI-compatible API |
 | Frontend | Next.js 14, TypeScript, TailwindCSS |
 | Database | PostgreSQL 16, Redis 7 |
 | Search | Vector-ready (Pinecone configured) |
 | File Processing | ebooklib (EPUB), pypdf (PDF) |
 | Knowledge | NetworkX graph engine |
-| Testing | pytest (320 tests), Vitest (24 tests) |
+| Testing | pytest (326 tests), Vitest (24 tests) |
 
 ## Quickstart
 
 ### Docker (fastest)
 
 ```bash
-git clone https://github.com/pengdd/read-pal.git
+git clone https://github.com/pengdd1998/read-pal.git
 cd read-pal
 cp .env.example .env   # edit with your DB credentials + GLM API key
 docker compose up -d
@@ -147,7 +147,7 @@ Open http://localhost:8090 — that's it.
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/pengdd/read-pal.git
+git clone https://github.com/pengdd1998/read-pal.git
 cd read-pal
 
 # Backend
@@ -190,11 +190,11 @@ Open http://localhost:3000 and start reading!
 ### 5. Run Tests
 
 ```bash
-# Backend (320 tests)
+# Backend (326 tests)
 cd packages/server
 uv run pytest tests/ -v
 
-# Frontend (24 tests)
+# Frontend
 pnpm --filter @read-pal/web test
 ```
 
@@ -248,13 +248,6 @@ NEXT_PUBLIC_API_URL=https://your-api-url pnpm build
 pnpm start
 ```
 
-### PM2 (Self-hosted)
-
-```bash
-pm2 start "uvicorn app.main:app --port 8000" --name read-pal-api
-pm2 start "pnpm start" --name read-pal-web
-```
-
 ## Why Open Source?
 
 Your reading data is personal — highlights, notes, AI conversations. You should own it. read-pal is MIT licensed: self-host, export your data, no lock-in.
@@ -267,7 +260,7 @@ Areas where we'd love help:
 - Mobile responsiveness improvements
 - Browser extension (Chrome/Firefox)
 - E-reader integrations (Kindle, Kobo)
-- Internationalization (i18n)
+- Email service integration (SMTP)
 - Accessibility audit and fixes
 
 ## Roadmap
@@ -278,6 +271,7 @@ Areas where we'd love help:
 - [x] Spaced repetition flashcards
 - [x] Memory books
 - [x] Book clubs and sharing
+- [x] Internationalization (English + Chinese)
 - [ ] 100 beta users
 - [ ] Mobile app (Capacitor)
 
