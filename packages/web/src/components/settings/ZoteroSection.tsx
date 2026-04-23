@@ -13,13 +13,17 @@ export function ZoteroSection() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get<{ connected: boolean; userId: string | null }>('/api/zotero/status')
+    api.get<{ connected: boolean; userId: string | null }>('/api/v1/settings')
       .then((res) => {
         if (res.success && res.data) {
-          setConnected(res.data.connected);
-          if (res.data.userId) setUserId(res.data.userId);
+          const d = res.data as Record<string, unknown>;
+          if (d.zoteroApiKey && d.zoteroUserId) {
+            setConnected(true);
+            setUserId(String(d.zoteroUserId));
+          }
         }
-      });
+      })
+      .catch(() => { /* Zotero not configured */ });
   }, []);
 
   async function handleConnect() {
