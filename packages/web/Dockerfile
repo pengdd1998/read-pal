@@ -20,7 +20,7 @@ COPY packages/shared/ ./packages/shared/
 # Build shared package first, then web
 RUN pnpm --filter @read-pal/shared build
 # API_URL=empty so Next.js rewrites point to same origin (nginx handles proxying)
-RUN NEXT_PUBLIC_API_URL="" API_URL="" pnpm --filter @read-pal/web build
+RUN NEXT_PUBLIC_API_URL="" API_URL="" DOCKER_BUILD=1 pnpm --filter @read-pal/web build
 
 # Production image
 FROM node:20-alpine
