@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.shared_export import SharedExport
 from app.schemas.share import ShareCreate
+from app.services.export_service import export
 
 logger = logging.getLogger('read-pal.share')
 
@@ -23,11 +24,23 @@ async def create_share(
     user_id: UUID,
     data: ShareCreate,
 ) -> SharedExport:
-    """Create a shared export with a secure token."""
+    """Create a shared export with a secure token and actual content."""
     token = secrets.token_urlsafe(32)  # 256-bit entropy
     expires_at = data.expires_at or utcnow() + timedelta(
         days=DEFAULT_EXPIRY_DAYS,
     )
+
+    # Generate actual export content
+    content = ''
+    content_type = data.content_type
+    try:
+        result = await export(db, user_id, data.book_id, data.format)
+        if result is not None:
+            content, content_type = result
+            if isinstance(content, bytes):
+                content = content.decode('utf-8', errors='replace')
+    except Exception:
+        logger.warning('Failed to generate export content for share', exc_info=True)
 
     share = SharedExport(
         user_id=user_id,
@@ -35,8 +48,8 @@ async def create_share(
         token=token,
         format=data.format,
         title=data.title,
-        content_type=data.content_type,
-        content='',
+        content_type=content_type,
+        content=content,
         expires_at=expires_at,
     )
     db.add(share)

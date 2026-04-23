@@ -151,6 +151,48 @@ def _graph_to_data(graph: nx.Graph) -> GraphData:
     return GraphData(nodes=nodes, edges=edges)
 
 
+def _extract_concepts_from_keywords(
+    texts: list[str],
+) -> list[dict[str, Any]]:
+    """Rule-based concept extraction fallback when LLM is unavailable.
+
+    Extracts capitalized phrases and key noun patterns from text.
+    """
+    import re
+
+    concepts: dict[str, dict[str, Any]] = {}
+
+    for text in texts:
+        # Extract capitalized phrases (potential proper nouns/titles)
+        caps = re.findall(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b', text)
+        for phrase in caps:
+            name = phrase.strip()
+            if name in concepts:
+                concepts[name]['size'] = (concepts[name].get('size', 0) or 0) + 1
+            else:
+                concepts[name] = {'name': name, 'type': 'entity', 'related': [], 'size': 1}
+
+        # Extract quoted terms as key concepts
+        quoted = re.findall(r'"([^"]+)"', text)
+        for term in quoted:
+            if len(term) > 3:
+                if term not in concepts:
+                    concepts[term] = {'name': term, 'type': 'theme', 'related': [], 'size': 1}
+                else:
+                    concepts[term]['size'] = (concepts[term].get('size', 0) or 0) + 1
+
+    # Link co-occurring concepts
+    concept_list = list(concepts.values())
+    for i, c1 in enumerate(concept_list):
+        for c2 in concept_list[i + 1:]:
+            if c1.get('related') is not None and len(c1['related']) < 5:
+                c1['related'].append(c2['name'])
+            if c2.get('related') is not None and len(c2['related']) < 5:
+                c2['related'].append(c1['name'])
+
+    return concept_list[:30]  # Cap at 30 concepts
+
+
 async def build_graph(
     db: AsyncSession,
     user_id: UUID,
@@ -179,6 +221,11 @@ async def build_graph(
         return GraphData(nodes=[], edges=[])
 
     concepts = await _extract_concepts_via_llm(texts)
+
+    # Fallback: rule-based concept extraction when LLM fails
+    if not concepts:
+        concepts = _extract_concepts_from_keywords(texts)
+
     graph = _build_nx_graph(concepts)
     data = _graph_to_data(graph)
 

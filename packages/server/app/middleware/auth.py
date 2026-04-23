@@ -7,7 +7,6 @@ Mirrors the Node.js auth system exactly:
   - Fail-closed token revocation when Redis is unavailable
 """
 
-import asyncio
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -182,15 +181,9 @@ async def get_current_user(
                 detail={'code': 'USER_NOT_FOUND', 'message': 'API key owner not found'},
             )
 
-        # Fire-and-forget last_used_at update
-        async def _touch_last_used() -> None:
-            try:
-                api_key.last_used_at = datetime.now(timezone.utc)
-                await db.commit()
-            except Exception:
-                logger.debug('API key last_used_at update failed', exc_info=True)
-
-        asyncio.create_task(_touch_last_used())
+        # Update last_used_at within the request session
+        api_key.last_used_at = datetime.now(timezone.utc)
+        await db.flush()
 
         return {
             'id': str(user.id),

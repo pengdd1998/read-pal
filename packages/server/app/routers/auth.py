@@ -33,6 +33,7 @@ from app.middleware.rate_limiter import (
 from app.models.user import User
 from app.schemas.auth import (
     AuthResponse,
+    ChangePasswordRequest,
     LoginRequest,
     MessageResponse,
     RegisterRequest,
@@ -231,6 +232,40 @@ async def get_me(
             'createdAt': user.created_at.isoformat() if user.created_at else None,
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/auth/change-password
+# ---------------------------------------------------------------------------
+
+@router.post('/change-password')
+async def change_password(
+    body: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponse:
+    """Change password for an authenticated user."""
+    result = await db.execute(
+        select(User).where(User.id == current_user['id']),
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None or user.password_hash is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'User not found'},
+        )
+
+    if not verify_password(body.current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={'code': 'INVALID_PASSWORD', 'message': 'Current password is incorrect'},
+        )
+
+    user.password_hash = hash_password(body.new_password)
+    await db.flush()
+
+    return MessageResponse(data={'message': 'Password changed successfully'})
 
 
 # ---------------------------------------------------------------------------

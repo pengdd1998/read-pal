@@ -13,7 +13,7 @@ class AnnotationCreate(BaseModel):
 
     book_id: UUID
     type: Literal['highlight', 'note', 'bookmark']
-    location: dict
+    location: dict = Field(default_factory=lambda: {'page': 0, 'chapter': 0})
     content: str = Field(min_length=1)
     color: str | None = Field(None, max_length=7)
     note: str | None = None
