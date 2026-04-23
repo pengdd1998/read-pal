@@ -121,6 +121,13 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
         status=BookStatus.reading,
         progress=5,
         tags=['sample', 'classic', 'fiction'],
+        metadata_={
+            'year': 1925,
+            'publisher': "Charles Scribner's Sons",
+            'isbn': '978-0-7432-7356-5',
+            'genre': 'Fiction',
+            'language': 'English',
+        },
     )
     db.add(sample)
     await db.flush()

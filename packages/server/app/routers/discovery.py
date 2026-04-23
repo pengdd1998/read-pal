@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select, distinct
+from sqlalchemy import String, cast, func, select, distinct
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -12,6 +12,15 @@ from app.models.annotation import Annotation
 from app.models.book import Book
 
 router = APIRouter(prefix='/api/v1/discovery', tags=['discovery'])
+
+
+def _tags_search(pattern: str):
+    """Build a tags search expression that works on both SQLite and PostgreSQL.
+
+    SQLite stores ARRAY as a JSON-like string; PostgreSQL uses native arrays.
+    Casting to string and LIKE-ing works for both.
+    """
+    return func.coalesce(cast(Book.tags, String), '').ilike(pattern)
 
 
 def _book_to_dict(book: Book) -> dict:
@@ -62,7 +71,7 @@ async def search(
         pattern = f'%{q.strip()}%'
         base_filter = (
             Book.user_id == user_id,
-            Book.title.ilike(pattern) | Book.author.ilike(pattern),
+            Book.title.ilike(pattern) | Book.author.ilike(pattern) | _tags_search(pattern),
         )
 
         total_q = select(func.count()).select_from(Book).where(*base_filter)
@@ -129,12 +138,13 @@ async def semantic_search(
             )
         )
 
-        # Combined filter: title/author match OR book ID in annotation matches
+        # Combined filter: title/author/tags match OR book ID in annotation matches
         base_filter = (
             Book.user_id == user_id,
             (
                 Book.title.ilike(pattern)
                 | Book.author.ilike(pattern)
+                | _tags_search(pattern)
                 | Book.id.in_(annotation_book_ids)
             ),
         )

@@ -1,4 +1,4 @@
-"""APA, MLA, and Chicago citation exporters."""
+"""APA, MLA, Chicago, and BibTeX citation exporters."""
 
 from __future__ import annotations
 
@@ -99,3 +99,45 @@ def export_citation_chicago(
 
     lines = [citation, ''] + _annotation_lines(annotations)
     return '\n'.join(lines)
+
+
+def export_citation_bibtex(
+    book: Book,
+    annotations: list[Annotation],
+) -> str:
+    """Generate BibTeX entry with annotations as note fields."""
+    author_parts = book.author.split() if book.author else ['Unknown']
+    last_name = author_parts[-1] if author_parts else 'Unknown'
+    year = _get_year(book)
+    publisher = _get_publisher(book)
+
+    # Generate a cite key: last name + year + first word of title
+    title_word = (book.title.split()[0] if book.title else 'untitled').lower()
+    cite_key = f'{last_name.lower()}{year}{title_word}'
+
+    meta = getattr(book, 'metadata_', None) or {}
+    isbn = meta.get('isbn', '')
+
+    entry_lines = [
+        f'@book{{{cite_key},',
+        f'  author = {{{book.author}}},',
+        f'  title = {{{book.title}}},',
+        f'  year = {{{year}}},',
+    ]
+    if publisher:
+        entry_lines.append(f'  publisher = {{{publisher}}},')
+    if isbn:
+        entry_lines.append(f'  isbn = {{{isbn}}},')
+
+    if annotations:
+        notes = []
+        for ann in annotations[:10]:
+            ann_type = annotation_type_value(ann.type)
+            note_text = f'[{ann_type.title()}] {ann.content}'
+            if ann.note:
+                note_text += f' — {ann.note}'
+            notes.append(note_text)
+        entry_lines.append(f'  annote = {{{" | ".join(notes)}}},')
+
+    entry_lines.append('}')
+    return '\n'.join(entry_lines)

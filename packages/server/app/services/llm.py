@@ -1,14 +1,15 @@
 """LLM service — resilient wrapper around langchain-openai for GLM.
 
 Features: connection pooling, circuit breaker, multi-model fallback,
-health check, timeout management, and observability (token tracking,
-latency, cost estimation, request tracing).
+health check, timeout management, response caching, and observability
+(token tracking, latency, cost estimation, request tracing).
 """
 
 from __future__ import annotations
 
 import asyncio
 import enum
+import hashlib
 import json
 import logging
 import time
@@ -207,6 +208,59 @@ circuit = CircuitBreaker()
 
 
 # ---------------------------------------------------------------------------
+# Response cache — Redis-backed with in-memory fallback
+# ---------------------------------------------------------------------------
+
+_CACHE_PREFIX = 'llm:cache:'
+_CACHE_TTL = 600  # 10 minutes
+
+_in_memory_cache: dict[str, tuple[float, str]] = {}
+_MAX_IN_MEMORY_CACHE = 500
+
+
+def _cache_key(messages: list[BaseMessage], label: str) -> str:
+    """Deterministic cache key from messages + label."""
+    parts = [label]
+    for msg in messages:
+        parts.append(msg.content)
+    digest = hashlib.sha256('|'.join(parts).encode()).hexdigest()[:16]
+    return f'{_CACHE_PREFIX}{digest}'
+
+
+async def _cache_get(key: str) -> str | None:
+    """Get cached LLM response from Redis (fallback: in-memory)."""
+    if key in _in_memory_cache:
+        ts, val = _in_memory_cache[key]
+        if time.monotonic() - ts < _CACHE_TTL:
+            return val
+        del _in_memory_cache[key]
+
+    try:
+        from app.core.redis import get_redis as _get_redis
+        r = _get_redis()
+        return await r.get(key)
+    except Exception:
+        return None
+
+
+async def _cache_set(key: str, value: str) -> None:
+    """Store LLM response in Redis (fallback: in-memory)."""
+    _in_memory_cache[key] = (time.monotonic(), value)
+    if len(_in_memory_cache) > _MAX_IN_MEMORY_CACHE:
+        # Evict oldest entries
+        oldest = sorted(_in_memory_cache.items(), key=lambda x: x[1][0])
+        for k, _ in oldest[:len(_in_memory_cache) // 2]:
+            del _in_memory_cache[k]
+
+    try:
+        from app.core.redis import get_redis as _get_redis
+        r = _get_redis()
+        await r.setex(key, _CACHE_TTL, value)
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
 # Health check (cached for 60 s)
 # ---------------------------------------------------------------------------
 
@@ -333,19 +387,38 @@ async def safe_llm_invoke(
     fallback: Any = None,
     log_label: str = 'LLM',
     schema_class: type | None = None,
+    use_cache: bool = True,
 ) -> Any:
-    """Invoke LLM with circuit breaker, fallback model, and JSON parsing.
+    """Invoke LLM with circuit breaker, fallback model, caching, and JSON parsing.
 
     On primary model failure the configured ``fallback_model`` is tried.
     Returns parsed JSON (optionally validated against *schema_class*),
     stripped markdown fences, or *fallback* on failure.
     """
+    key = _cache_key(messages, log_label) if use_cache else ''
+
+    # Try cache first
+    if key:
+        cached = await _cache_get(key)
+        if cached is not None:
+            try:
+                parsed = json.loads(cached)
+                if schema_class is not None:
+                    parsed = _validate_parsed(parsed, schema_class, log_label)
+                return parsed
+            except json.JSONDecodeError:
+                pass
+
     response = await _invoke_with_circuit(messages, log_label=log_label)
     if response is None:
         return fallback
 
     content = response.content.strip()
     content = _strip_markdown_fences(content)
+
+    # Cache the raw content for future use
+    if key:
+        await _cache_set(key, content)
 
     try:
         parsed = json.loads(content)
@@ -396,6 +469,7 @@ async def safe_llm_call(
     *,
     fallback: str = '',
     log_label: str = 'LLM',
+    use_cache: bool = True,
 ) -> str:
     """Invoke LLM with circuit breaker + fallback model, returning raw text.
 
@@ -403,10 +477,23 @@ async def safe_llm_call(
     Returns the response content as a string, or *fallback* on failure.
     Applies output safety filtering.
     """
+    key = _cache_key(messages, log_label) if use_cache else ''
+
+    # Try cache first
+    if key:
+        cached = await _cache_get(key)
+        if cached is not None:
+            from app.utils.output_filter import filter_output
+            return filter_output(cached, context=log_label)
+
     response = await _invoke_with_circuit(messages, log_label=log_label)
     if response is None:
         return fallback
     content = response.content.strip()
+
+    # Cache the raw content for future use
+    if key:
+        await _cache_set(key, content)
 
     # Apply output filter
     from app.utils.output_filter import filter_output

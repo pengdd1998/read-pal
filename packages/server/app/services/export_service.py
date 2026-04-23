@@ -12,6 +12,7 @@ from app.models.annotation import Annotation
 from app.models.book import Book
 from app.services.exporters import (
     export_citation_apa,
+    export_citation_bibtex,
     export_citation_chicago,
     export_citation_mla,
     export_csv,
@@ -23,7 +24,7 @@ from app.services.exporters import (
 logger = logging.getLogger('read-pal.export')
 
 SUPPORTED_FORMATS = ('csv', 'markdown', 'html', 'zotero')
-CITATION_FORMATS = ('apa', 'mla', 'chicago')
+CITATION_FORMATS = ('apa', 'mla', 'chicago', 'bibtex')
 
 
 async def _load_book_and_annotations(
@@ -72,6 +73,7 @@ async def export(
         'apa': (lambda: export_citation_apa(book, annotations), 'text/plain; charset=utf-8'),
         'mla': (lambda: export_citation_mla(book, annotations), 'text/plain; charset=utf-8'),
         'chicago': (lambda: export_citation_chicago(book, annotations), 'text/plain; charset=utf-8'),
+        'bibtex': (lambda: export_citation_bibtex(book, annotations), 'application/x-bibtex; charset=utf-8'),
         'csv': (lambda: export_csv(annotations), 'text/csv; charset=utf-8'),
         'markdown': (lambda: export_markdown(annotations, book_info), 'text/markdown; charset=utf-8'),
         'html': (lambda: export_html(annotations, book_info), 'text/html; charset=utf-8'),
