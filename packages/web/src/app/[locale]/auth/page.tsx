@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
@@ -46,9 +46,10 @@ function AuthForm() {
     else if (m === 'register') setMode('register');
   }, [searchParams]);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (skip if we just registered — handled in handleSubmit)
+  const justRegisteredRef = useRef(false);
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !justRegisteredRef.current) {
       const next = searchParams?.get('next') || '/dashboard';
       router.push(next);
     }
@@ -73,6 +74,7 @@ function AuthForm() {
       } else {
         await register(name, email, password);
         analytics.track('user_registered');
+        justRegisteredRef.current = true;
         // Auto-seed a sample book for the magic first experience
         try {
           await authFetch((process.env.NEXT_PUBLIC_API_URL || '') + '/api/books/seed-sample', {
