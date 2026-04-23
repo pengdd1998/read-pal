@@ -170,9 +170,12 @@ packages/shared/src/**/*.js.map
 # frontend design context
 .impeccable.md
 
-# Local-only docs and scripts (not source code)
-docs/
+# Local-only scripts (not source code)
 scripts/
+
+# Docs — only screenshots are tracked; other docs are local
+docs/*
+!docs/screenshots/
 
 # Debug screenshots and test artifacts
 .pal-test/
