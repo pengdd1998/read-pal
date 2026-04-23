@@ -294,14 +294,19 @@ export default function ReadPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChapter, loading, chapters.length, studyMode.enabled]);
 
-  // Book completion detection
+  // Book completion detection — only when on last chapter AND progress >= 95%
   useEffect(() => {
-    if (!loading && chapters.length > 1 && currentChapter === chapters.length - 1) {
+    if (!loading && chapters.length > 1 && currentChapter === chapters.length - 1 && (book?.progress ?? 0) >= 0.95) {
+      // Dismiss onboarding tour if still running — completion modal takes priority
+      try {
+        localStorage.setItem('read-pal-tour-complete', 'true');
+        localStorage.removeItem('read-pal-tour-step');
+      } catch { /* ignore */ }
       const timer = setTimeout(() => ui.setShowCompletion(true), 3000);
       return () => clearTimeout(timer);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChapter, chapters.length, loading]);
+  }, [currentChapter, chapters.length, loading, book?.progress]);
 
   // Milestone detection
   const shownMilestones = useRef<Set<number>>(new Set());

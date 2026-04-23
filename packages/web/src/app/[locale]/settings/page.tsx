@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { ProfileSection } from '@/components/settings/ProfileSection';
@@ -17,6 +18,7 @@ export default function SettingsPage() {
   const t = useTranslations('settings_page');
   const locale = useLocale();
   const router = useRouter();
+  const { user: authUser } = useAuth();
   usePageTitle(t('page_title'));
   const { toast } = useToast();
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -40,6 +42,11 @@ export default function SettingsPage() {
   }, []);
 
   async function loadSettings() {
+    // Seed profile from AuthContext (already loaded from localStorage)
+    if (authUser) {
+      setUserName(authUser.name || '');
+      setUserEmail(authUser.email || '');
+    }
     try {
       const res = await api.get<UserSettings>('/api/settings');
       if (res.success && res.data) {
@@ -47,12 +54,12 @@ export default function SettingsPage() {
       } else {
         setError(t('failed_load'));
       }
-      // Load user profile
+      // Refresh profile from API for latest data
       const meRes = await api.get<{ name: string; email: string }>('/api/auth/me');
       if (meRes.success && meRes.data) {
         const d = meRes.data;
-        setUserName(d.name || '');
-        setUserEmail(d.email || '');
+        if (d.name) setUserName(d.name);
+        if (d.email) setUserEmail(d.email);
       }
     } catch {
       setError(t('failed_load_retry'));
