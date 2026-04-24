@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
 from app.config import get_settings
+from app.db import async_session
 
 logger = logging.getLogger('read-pal')
 settings = get_settings()
@@ -137,9 +138,30 @@ async def shutdown() -> None:
 
 
 @app.get('/api/v1/health')
-async def health_check() -> dict[str, str]:
-    """Health check endpoint."""
-    return {'status': 'ok', 'version': '0.1.0'}
+async def health_check() -> dict[str, object]:
+    """Health check endpoint — verifies DB and Redis connectivity."""
+    checks: dict[str, dict[str, str]] = {}
+
+    # Database check
+    try:
+        from sqlalchemy import text
+        async with async_session() as session:
+            await session.execute(text('SELECT 1'))
+        checks['database'] = {'status': 'ok'}
+    except Exception as exc:
+        checks['database'] = {'status': 'error', 'detail': str(exc)[:200]}
+
+    # Redis check
+    try:
+        from app.core.redis import get_redis
+        redis = get_redis()
+        await redis.ping()
+        checks['redis'] = {'status': 'ok'}
+    except Exception as exc:
+        checks['redis'] = {'status': 'error', 'detail': str(exc)[:200]}
+
+    overall = 'ok' if all(c['status'] == 'ok' for c in checks.values()) else 'degraded'
+    return {'status': overall, 'version': '0.1.0', 'checks': checks}
 
 
 # --- Router includes ---

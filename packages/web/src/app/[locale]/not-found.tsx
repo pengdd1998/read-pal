@@ -13,12 +13,26 @@ export default function NotFound() {
         <p className="mt-2 text-gray-600 max-w-md mx-auto">
           {t('not_found_desc')}
         </p>
-        <Link
-          href="/"
-          className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-        >
-          {t('back_to_home')}
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          >
+            {t('back_to_home')}
+          </Link>
+          <Link
+            href="/library"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Go to Library
+          </Link>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Dashboard
+          </Link>
+        </div>
       </div>
     </div>
   );

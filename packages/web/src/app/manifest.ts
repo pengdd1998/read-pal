@@ -20,10 +20,34 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       {
-        src: '/icon.svg',
+        src: '/icon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/icon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/icon-maskable.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'maskable',
+      },
+    ],
+    shortcuts: [
+      {
+        name: 'Library',
+        url: '/library',
+        description: 'Browse your book library',
+      },
+      {
+        name: 'AI Chat',
+        url: '/chat',
+        description: 'Chat with your AI companion',
       },
     ],
   };
