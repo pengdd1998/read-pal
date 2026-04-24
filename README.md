@@ -7,7 +7,7 @@
 Your AI reading companion — ask questions, explore ideas, and remember every insight.
 
 [![CI](https://github.com/pengdd1998/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd1998/read-pal/actions)
-[![Tests](https://img.shields.io/badge/tests-326%20passing-brightgreen)](packages/server/tests)
+[![Tests](https://img.shields.io/badge/tests-325%20passing-brightgreen)](packages/server/tests)
 [![Backend](https://img.shields.io/badge/backend-Python%203.12%20%7C%20FastAPI-blue)](packages/server)
 [![Frontend](https://img.shields.io/badge/frontend-Next.js%2014%20%7C%20TypeScript-black)](packages/web)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -44,11 +44,11 @@ Think of it as a friend who's always read the same book and loves talking about 
   </tr>
   <tr>
     <td align="center"><b>Knowledge Graph</b></td>
-    <td align="center"><b>Landing Page</b></td>
+    <td align="center"><b>Library</b></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/knowledge-graph.png" alt="Knowledge Graph" width="480" /></td>
-    <td><img src="docs/screenshots/landing-page.png" alt="Landing Page" width="480" /></td>
+    <td><img src="docs/screenshots/library-page.png" alt="Library" width="480" /></td>
   </tr>
 </table>
 
@@ -95,13 +95,13 @@ read-pal/
 ├── packages/
 │   ├── server/         # Python 3.12 / FastAPI backend
 │   │   ├── app/
-│   │   │   ├── routers/       # 27 routers, 130+ endpoints
+│   │   │   ├── routers/       # 19 routers, 130+ endpoints
 │   │   │   ├── services/      # Business logic (LLM, knowledge, synthesis)
-│   │   │   ├── models/        # SQLAlchemy 2.0 ORM (16 models)
+│   │   │   ├── models/        # SQLAlchemy 2.0 ORM (27 models)
 │   │   │   ├── schemas/       # Pydantic request/response
 │   │   │   └── middleware/    # Auth, rate limiting
 │   │   ├── alembic/           # Database migrations
-│   │   └── tests/             # 320 pytest tests
+│   │   └── tests/             # 325 pytest tests
 │   └── web/           # Next.js 14 / TypeScript frontend
 │       └── src/
 │           ├── app/           # 30+ pages (App Router)
@@ -121,7 +121,7 @@ read-pal/
 | Search | Vector-ready (Pinecone configured) |
 | File Processing | ebooklib (EPUB), pypdf (PDF) |
 | Knowledge | NetworkX graph engine |
-| Testing | pytest (326 tests), Vitest (24 tests) |
+| Testing | pytest (325 tests), Vitest (24 tests) |
 
 ## Quickstart
 
@@ -190,7 +190,7 @@ Open http://localhost:3000 and start reading!
 ### 5. Run Tests
 
 ```bash
-# Backend (326 tests)
+# Backend (325 tests)
 cd packages/server
 uv run pytest tests/ -v
 
