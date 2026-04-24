@@ -8,10 +8,6 @@ WORKDIR /app
 # Use Aliyun mirror for faster downloads in China
 ENV UV_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 
-# Install build deps for psycopg2/asyncpg
-RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev gcc && \
-    rm -rf /var/lib/apt/lists/*
-
 # Install deps first (cache layer)
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
@@ -21,10 +17,6 @@ COPY . .
 
 # --- Runtime ---
 FROM python:3.12-slim
-
-# Only runtime libpq (not dev headers)
-RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && \
-    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
