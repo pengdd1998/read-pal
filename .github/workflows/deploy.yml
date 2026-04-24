@@ -21,7 +21,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 30m
+          command_timeout: 60m
           script: |
             set -euo pipefail
 
@@ -38,6 +38,13 @@ jobs:
             # -------------------------------------------------------
             # 2. Rebuild containers with layer cache
             # -------------------------------------------------------
+            echo ">>> Checking disk space..."
+            DISK_AVAIL=$(df / | tail -1 | awk '{print $4}')
+            if [ "$DISK_AVAIL" -lt 2097152 ]; then
+              echo "⚠ Low disk space, pruning Docker before build..."
+              docker system prune -af 2>/dev/null || true
+            fi
+
             echo ">>> Rebuilding containers..."
             export DOCKER_BUILDKIT=1
             docker compose build
