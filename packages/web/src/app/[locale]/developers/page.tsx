@@ -120,7 +120,7 @@ export default function DevelopersPage() {
       )
     : endpoints;
 
-  const apiBase = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
+  const apiBase = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -396,7 +396,7 @@ export default function DevelopersPage() {
               <h3 className="font-semibold text-stone-800 mb-2">{t('code_python')}</h3>
               <div className="bg-stone-900 rounded-lg p-3 font-mono text-xs overflow-x-auto">
                 <div className="text-stone-400">{'import requests'}</div>
-                <div className="text-stone-400">{'API = "http://localhost:3001"'}</div>
+                <div className="text-stone-400">{"API = 'https://your-readpal-instance.com'"}</div>
                 <div className="text-stone-400">{'KEY = "rpk_YOUR_KEY"'}</div>
                 <div className="text-stone-400">{'h = {"Authorization": f"Bearer {KEY}"}'}</div>
                 <div className="text-stone-400 mt-1">{'# Get all books'}</div>
@@ -410,7 +410,7 @@ export default function DevelopersPage() {
             <div className="bg-white rounded-xl border border-stone-200 p-4">
               <h3 className="font-semibold text-stone-800 mb-2">{t('code_javascript')}</h3>
               <div className="bg-stone-900 rounded-lg p-3 font-mono text-xs overflow-x-auto">
-                <div className="text-stone-400">{'const API = "http://localhost:3001";'}</div>
+                <div className="text-stone-400">{"const API = 'https://your-readpal-instance.com';"}</div>
                 <div className="text-stone-400">{'const KEY = "rpk_YOUR_KEY";'}</div>
                 <div className="text-stone-400 mt-1">{'// List books'}</div>
                 <div className="text-green-400">{'const res = await fetch(`${API}/api/books`, {'}</div>
