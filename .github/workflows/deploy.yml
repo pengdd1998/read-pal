@@ -68,6 +68,9 @@ jobs:
             echo ">>> Running database migrations..."
             docker compose exec -T api alembic upgrade head
 
+            # Vacuum to reclaim space
+            docker compose exec -T postgres psql -U readpal -d readpal -c "VACUUM ANALYZE;" 2>/dev/null || true
+
             # -------------------------------------------------------
             # 5. Health checks with retry
             # -------------------------------------------------------
@@ -97,8 +100,11 @@ jobs:
             # 6. Cleanup temporary files
             # -------------------------------------------------------
             echo ">>> Cleaning up..."
+            # Remove old (untagged) images and stopped containers
+            docker image prune -f 2>/dev/null || true
             docker system prune -f --filter "until=24h" 2>/dev/null || true
-            docker builder prune -f --filter "until=24h" 2>/dev/null || true
+            # Prune builder cache older than 48h (keep recent for fast rebuilds)
+            docker builder prune -f --filter "until=48h" 2>/dev/null || true
 
             DISK_USAGE=$(df -h . | tail -1 | awk '{print $5}')
             echo "✅ Deploy complete — Disk usage: $DISK_USAGE"

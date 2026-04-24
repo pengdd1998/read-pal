@@ -212,7 +212,7 @@ circuit = CircuitBreaker()
 # ---------------------------------------------------------------------------
 
 _CACHE_PREFIX = 'llm:cache:'
-_CACHE_TTL = 600  # 10 minutes
+_CACHE_TTL = 1800  # 30 minutes — reduces redundant GLM calls on free tier
 
 _in_memory_cache: dict[str, tuple[float, str]] = {}
 _MAX_IN_MEMORY_CACHE = 500
@@ -308,6 +308,39 @@ async def check_llm_health() -> dict[str, Any]:
 # Safe invoke with circuit breaker + fallback
 # ---------------------------------------------------------------------------
 
+_RATE_LIMIT_BACKOFFS = [2, 4, 8]  # seconds to wait between 429 retries
+
+
+def _is_rate_limited(exc: Exception) -> bool:
+    """Check if an exception indicates a 429 rate limit response."""
+    msg = str(exc).lower()
+    return '429' in msg or 'rate' in msg
+
+
+async def _invoke_with_retry(
+    llm: ChatOpenAI,
+    messages: list[BaseMessage],
+    log_label: str,
+) -> Any:
+    """Invoke LLM with exponential backoff on 429 rate limit errors."""
+    last_exc: Exception | None = None
+    for attempt, backoff in enumerate(_RATE_LIMIT_BACKOFFS):
+        try:
+            return await llm.ainvoke(messages)
+        except Exception as exc:
+            last_exc = exc
+            if _is_rate_limited(exc) and attempt < len(_RATE_LIMIT_BACKOFFS):
+                logger.warning(
+                    '%s rate limited (attempt %d/%d), retrying in %ds',
+                    log_label, attempt + 1, len(_RATE_LIMIT_BACKOFFS), backoff,
+                )
+                await asyncio.sleep(backoff)
+                continue
+            raise
+    # All retries exhausted
+    raise last_exc  # type: ignore[misc]
+
+
 async def _invoke_with_circuit(
     messages: list[BaseMessage],
     *,
@@ -330,7 +363,7 @@ async def _invoke_with_circuit(
     model_used = settings.default_model
     try:
         llm = get_llm()
-        response = await llm.ainvoke(messages)
+        response = await _invoke_with_retry(llm, messages, log_label)
         latency_ms = int((time.monotonic() - start) * 1000)
         await circuit.record_success()
         usage = _extract_usage(response)
@@ -360,7 +393,7 @@ async def _invoke_with_circuit(
             fallback_model = settings.fallback_model
             logger.info('%s retrying with fallback model %s', log_label, fallback_model)
             llm = get_llm(model=fallback_model)
-            response = await llm.ainvoke(messages)
+            response = await _invoke_with_retry(llm, messages, log_label)
             fb_latency_ms = int((time.monotonic() - fb_start) * 1000)
             await circuit.record_success()
             usage = _extract_usage(response)
