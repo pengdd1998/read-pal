@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import logging
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation, AnnotationType
 from app.models.book import Book, BookFileType, BookStatus
 from app.models.document import Document
+
+logger = logging.getLogger('read-pal.seed')
 
 # Real excerpts from The Great Gatsby (public domain in many jurisdictions)
 GATSBY_CHAPTERS = [
@@ -233,4 +237,82 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
     ]
     db.add_all(sample_annotations)
 
+    # Pre-populate knowledge graph cache so the graph page shows data immediately
+    await _seed_graph_cache(user_id, sample.id)
+
     return sample
+
+
+# ---------------------------------------------------------------------------
+# Pre-built Great Gatsby concepts (avoids needing an LLM call at first load)
+# ---------------------------------------------------------------------------
+
+GATSBY_CONCEPTS = [
+    {'name': 'The Green Light', 'type': 'symbol', 'related': ['American Dream', 'Gatsby', 'Daisy Buchanan', 'Hope']},
+    {'name': 'American Dream', 'type': 'theme', 'related': ['The Green Light', 'Wealth', 'Gatsby', 'Social Class']},
+    {'name': 'Gatsby', 'type': 'character', 'related': ['The Green Light', 'Daisy Buchanan', 'Wealth', 'Jay Gatsby']},
+    {'name': 'Daisy Buchanan', 'type': 'character', 'related': ['Gatsby', 'The Green Light', 'Tom Buchanan', 'Love']},
+    {'name': 'Nick Carraway', 'type': 'character', 'related': ['Gatsby', 'Daisy Buchanan', 'Narrator', 'Moral Decay']},
+    {'name': 'Tom Buchanan', 'type': 'character', 'related': ['Daisy Buchanan', 'Wealth', 'Moral Decay', 'Social Class']},
+    {'name': 'Valley of Ashes', 'type': 'setting', 'related': ['Moral Decay', 'Doctor T.J. Eckleburg', 'Social Class']},
+    {'name': 'Doctor T.J. Eckleburg', 'type': 'symbol', 'related': ['Valley of Ashes', 'Moral Decay', 'God']},
+    {'name': 'Moral Decay', 'type': 'theme', 'related': ['Valley of Ashes', 'Tom Buchanan', 'Jazz Age', 'Doctor T.J. Eckleburg']},
+    {'name': 'Wealth', 'type': 'theme', 'related': ['Gatsby', 'Tom Buchanan', 'American Dream', 'Social Class']},
+    {'name': 'Social Class', 'type': 'theme', 'related': ['Wealth', 'Tom Buchanan', 'Valley of Ashes', 'American Dream']},
+    {'name': 'Jazz Age', 'type': 'theme', 'related': ['Moral Decay', 'Gatsby', 'Wealth', 'Excess']},
+    {'name': 'Hope', 'type': 'theme', 'related': ['The Green Light', 'American Dream', 'Gatsby']},
+    {'name': 'Love', 'type': 'theme', 'related': ['Gatsby', 'Daisy Buchanan', 'The Green Light']},
+    {'name': 'Narrator', 'type': 'concept', 'related': ['Nick Carraway', 'Unreliable Narrator', 'Perspective']},
+    {'name': 'Unreliable Narrator', 'type': 'concept', 'related': ['Nick Carraway', 'Narrator', 'Perspective']},
+    {'name': 'Perspective', 'type': 'concept', 'related': ['Nick Carraway', 'Unreliable Narrator', 'Duality']},
+    {'name': 'Duality', 'type': 'concept', 'related': ['Nick Carraway', 'Perspective', 'Moral Decay']},
+    {'name': 'Excess', 'type': 'theme', 'related': ['Jazz Age', 'Wealth', 'Gatsby']},
+    {'name': 'Time', 'type': 'theme', 'related': ['Gatsby', 'The Green Light', 'American Dream', 'Past']},
+    {'name': 'Past', 'type': 'theme', 'related': ['Time', 'Gatsby', 'Daisy Buchanan']},
+    {'name': 'Jay Gatsby', 'type': 'character', 'related': ['Gatsby', 'American Dream', 'Wealth', 'The Green Light']},
+    {'name': 'God', 'type': 'concept', 'related': ['Doctor T.J. Eckleburg', 'Moral Decay', 'Valley of Ashes']},
+]
+
+
+async def _seed_graph_cache(user_id: UUID, book_id: UUID) -> None:
+    """Write pre-built Gatsby graph data into Redis so the knowledge page renders immediately."""
+    try:
+        from app.core.redis import get_redis
+        from app.services.knowledge_service import GRAPH_CACHE_PREFIX, GRAPH_CACHE_TTL
+
+        # Build GraphData-compatible dict from pre-defined concepts
+        nodes = []
+        edges: list[dict] = []
+        seen_edges: set[tuple[str, str]] = set()
+
+        for concept in GATSBY_CONCEPTS:
+            name = concept['name']
+            nodes.append({
+                'id': name,
+                'label': name,
+                'type': concept['type'],
+                'size': 1,
+                'metadata': {'bookId': str(book_id)},
+            })
+            for related in concept.get('related', []):
+                edge_key = tuple(sorted([name, related]))
+                if edge_key not in seen_edges:
+                    seen_edges.add(edge_key)
+                    edges.append({
+                        'source': name,
+                        'target': related,
+                        'label': 'related',
+                        'weight': 1.0,
+                    })
+
+        graph_data = {
+            'nodes': nodes,
+            'edges': edges,
+        }
+
+        cache_key = f'{GRAPH_CACHE_PREFIX}{user_id}:{book_id}'
+        r = get_redis()
+        await r.setex(cache_key, GRAPH_CACHE_TTL, json.dumps(graph_data))
+        logger.info('Seeded knowledge graph cache for book %s (%d nodes, %d edges)', book_id, len(nodes), len(edges))
+    except Exception:
+        logger.warning('Failed to seed knowledge graph cache', exc_info=True)

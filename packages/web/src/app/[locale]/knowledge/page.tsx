@@ -282,12 +282,43 @@ export default function KnowledgePage() {
   if (!loading && neo4jAvailable && nodes.length === 0) {
     return (
       <div className="min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center">
-        <div className="text-center max-w-md px-6">
-          <div className="text-5xl mb-4">📚</div>
+        <div className="text-center max-w-lg px-6">
+          {/* Decorative mini-graph preview */}
+          <div className="mx-auto mb-6 w-48 h-36 relative opacity-30">
+            <svg viewBox="0 0 200 140" className="w-full h-full">
+              <line x1="60" y1="40" x2="120" y2="70" stroke="#94a3b8" strokeWidth="1.5" />
+              <line x1="120" y1="70" x2="80" y2="110" stroke="#94a3b8" strokeWidth="1.5" />
+              <line x1="60" y1="40" x2="150" y2="35" stroke="#94a3b8" strokeWidth="1.5" />
+              <line x1="120" y1="70" x2="160" y2="100" stroke="#94a3b8" strokeWidth="1.5" />
+              <line x1="80" y1="110" x2="40" y2="80" stroke="#94a3b8" strokeWidth="1.5" />
+              <circle cx="60" cy="40" r="12" fill="#0d9488" opacity="0.6" />
+              <circle cx="120" cy="70" r="16" fill="#7c3aed" opacity="0.6" />
+              <circle cx="80" cy="110" r="10" fill="#ea580c" opacity="0.6" />
+              <circle cx="150" cy="35" r="8" fill="#2563eb" opacity="0.6" />
+              <circle cx="160" cy="100" r="10" fill="#059669" opacity="0.6" />
+              <circle cx="40" cy="80" r="8" fill="#d97706" opacity="0.6" />
+            </svg>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{t('building_title')}</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             {t('building_desc')}
           </p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />
+                <span>{t('tip_highlight')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />
+                <span>{t('tip_annotate')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                <span>{t('tip_chat')}</span>
+              </div>
+            </div>
+          </div>
           <button
             onClick={() => router.push('/library')}
             className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors"

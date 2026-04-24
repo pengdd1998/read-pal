@@ -14,27 +14,18 @@ export function FlashcardEmpty({ variant, reviewedCount = 0, onBackToDecks }: Fl
 
   if (variant === 'no-decks') {
     return (
-      <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
-        <h1 className="sr-only">{t('page_title')}</h1>
-        <div className="mb-6">
-          <button
-            onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            {t('back_to_decks')}
-          </button>
-        </div>
+      <main className="max-w-lg mx-auto px-4 py-8 sm:py-12 animate-fade-in">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          {t('page_title')}
+        </h1>
 
-        <div className="card text-center py-16">
+        <div className="card text-center py-12 sm:py-16">
           <span className="text-5xl block mb-4">{'\uD83D\uDCC7'}</span>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('empty_title')}</h2>
           <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
             {t('empty_desc')}
           </p>
-          <div className="flex flex-col gap-3 max-w-xs mx-auto mb-6 text-left">
+          <div className="flex flex-col gap-3 max-w-xs mx-auto mb-8 text-left">
             {([1, 2, 3] as const).map((step) => (
               <div key={step} className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
