@@ -173,9 +173,10 @@ packages/shared/src/**/*.js.map
 # Local-only scripts (not source code)
 scripts/
 
-# Docs — only screenshots are tracked; other docs are local
+# Docs — screenshots and launch materials tracked; other docs are local
 docs/*
 !docs/screenshots/
+!docs/launch/
 
 # Debug screenshots and test artifacts
 .pal-test/
