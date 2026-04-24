@@ -245,7 +245,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="/search" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">{t('explore')}</Link>
+            <Link href="/terms" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Terms</Link>
+            <Link href="/privacy" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Privacy</Link>
             <Link href="/settings" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">{t('nav_settings')}</Link>
           </div>
         </div>

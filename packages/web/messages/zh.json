@@ -1378,5 +1378,11 @@
     "dismiss": "关闭",
     "share_failed": "分享失败",
     "share_title": "我的阅读进度 — read-pal"
+  },
+  "terms": {
+    "page_title": "服务条款"
+  },
+  "privacy": {
+    "page_title": "隐私政策"
   }
 }

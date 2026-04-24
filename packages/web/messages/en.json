@@ -1378,5 +1378,11 @@
     "dismiss": "Dismiss",
     "share_failed": "Sharing failed",
     "share_title": "My Reading Progress — read-pal"
+  },
+  "terms": {
+    "page_title": "Terms of Service"
+  },
+  "privacy": {
+    "page_title": "Privacy Policy"
   }
 }
