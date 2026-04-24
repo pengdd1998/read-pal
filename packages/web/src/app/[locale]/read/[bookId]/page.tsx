@@ -326,7 +326,7 @@ export default function ReadPage() {
 
   // Genre detection
   const bookGenre: BookGenre = detectGenre(
-    (book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | undefined,
+    (book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | string | undefined,
     book?.title,
     (book?.metadata as Record<string, unknown> | undefined)?.description as string | undefined,
   );
@@ -530,7 +530,7 @@ export default function ReadPage() {
         bookTitle={book?.title || ''}
         author={book?.author || ''}
         chapterContent={chapterContent}
-        genreMetadata={(book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | undefined}
+        genreMetadata={(book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | string | undefined}
         bookDescription={(book?.metadata as Record<string, unknown> | undefined)?.description as string | undefined}
       />
 

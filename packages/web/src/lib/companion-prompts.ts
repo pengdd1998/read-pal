@@ -175,13 +175,20 @@ const ACADEMIC_KEYWORDS = [
  *  3. Default fallback
  */
 export function detectGenre(
-  genreMetadata?: string[],
+  genreMetadata?: string[] | string,
   title?: string,
   description?: string,
 ): BookGenre {
+  // Normalize: genre may be a string or string[] from different book sources
+  const genreList = typeof genreMetadata === 'string'
+    ? [genreMetadata]
+    : Array.isArray(genreMetadata)
+      ? genreMetadata
+      : undefined;
+
   // 1. Check explicit genre metadata
-  if (genreMetadata && genreMetadata.length > 0) {
-    const combined = genreMetadata.join(' ').toLowerCase();
+  if (genreList && genreList.length > 0) {
+    const combined = genreList.join(' ').toLowerCase();
     if (FICTION_KEYWORDS.some((k) => combined.includes(k))) return 'fiction';
     if (TECHNICAL_KEYWORDS.some((k) => combined.includes(k))) return 'technical';
     if (ACADEMIC_KEYWORDS.some((k) => combined.includes(k))) return 'academic';

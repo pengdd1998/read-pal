@@ -70,7 +70,7 @@ async def get_book(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
-    return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
+    return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
 @router.post('', status_code=status.HTTP_201_CREATED)
@@ -83,7 +83,7 @@ async def create_book(
     book = await book_service.create_book(db, UUID(current_user['id']), body)
     return {
         'success': True,
-        'data': BookResponse.model_validate(book).model_dump(mode='json'),
+        'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json'),
     }
 
 
@@ -102,7 +102,7 @@ async def update_book(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
-    return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
+    return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
 @router.delete('/{book_id}')
@@ -146,7 +146,7 @@ async def update_tags(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
-    return {'success': True, 'data': BookResponse.model_validate(book).model_dump(mode='json')}
+    return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
 @router.post('/seed-sample', status_code=status.HTTP_201_CREATED)
@@ -177,5 +177,5 @@ async def seed_sample_book(
     await db.flush()
     return {
         'success': True,
-        'data': BookResponse.model_validate(sample).model_dump(mode='json'),
+        'data': BookResponse.model_validate(sample).model_dump(by_alias=True, mode='json'),
     }

@@ -67,7 +67,7 @@ interface CompanionChatProps {
   bookTitle?: string;
   author?: string;
   chapterContent?: string;
-  genreMetadata?: string[];
+  genreMetadata?: string[] | string;
   bookDescription?: string;
 }
 

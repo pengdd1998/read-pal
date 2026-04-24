@@ -24,6 +24,8 @@ def _serialize_notification(n: object) -> dict:
         'message': n.message,
         'metadata': n.metadata_,
         'read': n.read,
+        'createdAt': n.created_at.isoformat() if n.created_at else None,
+        'updatedAt': n.updated_at.isoformat() if n.updated_at else None,
         'created_at': n.created_at.isoformat() if n.created_at else None,
         'updated_at': n.updated_at.isoformat() if n.updated_at else None,
     }

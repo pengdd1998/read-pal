@@ -42,9 +42,16 @@ export function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadNotifications();
+    // Delay initial load slightly to avoid racing with auth token setup
+    // after registration or page navigation
+    const timer = setTimeout(() => {
+      loadNotifications();
+    }, 500);
     const interval = setInterval(loadNotifications, 60000); // Poll every minute
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
@@ -60,14 +67,14 @@ export function NotificationBell() {
   async function loadNotifications() {
     try {
       const [notifRes, countRes] = await Promise.all([
-        api.get<Notification[]>('/api/notifications?limit=20'),
-        api.get<{ count: number }>('/api/notifications/unread-count'),
+        api.get<{ items: Notification[] }>('/api/notifications?per_page=20'),
+        api.get<number>('/api/notifications/unread-count'),
       ]);
-      if (notifRes.success && notifRes.data) {
-        setNotifications(notifRes.data);
+      if (notifRes.success && notifRes.data?.items) {
+        setNotifications(notifRes.data.items);
       }
-      if (countRes.success && countRes.data) {
-        setUnreadCount(countRes.data.count);
+      if (countRes.success && typeof countRes.data === 'number') {
+        setUnreadCount(countRes.data);
       }
     } catch {
       // Notifications are non-critical

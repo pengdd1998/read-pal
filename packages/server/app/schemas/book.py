@@ -34,6 +34,12 @@ class BookUpdate(BaseModel):
 
 
 class BookResponse(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
     id: UUID
     user_id: UUID
     title: str
@@ -52,8 +58,6 @@ class BookResponse(BaseModel):
     last_read_at: datetime | None
     created_at: datetime
     updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class BookListResponse(BaseModel):

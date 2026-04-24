@@ -58,6 +58,16 @@ class ApiClient {
     );
 
     // Response interceptor - handle 401 (browser only)
+    // Only redirect on 401 from critical endpoints (auth-dependent data).
+    // Non-critical endpoints (notifications, discovery, etc.) should not
+    // trigger a logout redirect — they may fail transiently.
+    const NON_CRITICAL_PREFIXES = [
+      '/api/notifications',
+      '/api/discovery',
+      '/api/challenges',
+      '/api/recommendations',
+    ];
+
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError<ApiResponse>) => {
@@ -66,7 +76,9 @@ class ApiClient {
           error.response?.status === 401 &&
           !window.location.pathname.includes('/auth') &&
           !window.location.pathname.includes('/login') &&
-          !window.location.pathname.includes('/register')
+          !window.location.pathname.includes('/register') &&
+          !window.location.pathname.includes('/welcome') &&
+          !NON_CRITICAL_PREFIXES.some((p) => error.config?.url?.startsWith(p))
         ) {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('user');
