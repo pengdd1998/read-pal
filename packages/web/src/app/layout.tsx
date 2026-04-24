@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   icons: {
     icon: '/icon.svg',
-    apple: '/icon-192.png',
+    apple: '/icon.svg',
   },
   manifest: '/manifest.webmanifest',
 };
