@@ -40,9 +40,12 @@ jobs:
             # -------------------------------------------------------
             echo ">>> Checking disk space..."
             DISK_AVAIL=$(df / | tail -1 | awk '{print $4}')
-            if [ "$DISK_AVAIL" -lt 2097152 ]; then
-              echo "⚠ Low disk space, pruning Docker before build..."
-              docker system prune -af 2>/dev/null || true
+            if [ "$DISK_AVAIL" -lt 1048576 ]; then
+              echo "⚠ Very low disk space, pruning dangling resources..."
+              docker system prune -f 2>/dev/null || true
+              docker builder prune -f --filter "until=48h" 2>/dev/null || true
+            else
+              echo "Disk OK ($DISK_AVAIL KB free)"
             fi
 
             echo ">>> Rebuilding containers..."
