@@ -27,7 +27,9 @@
     "skip_to_content": "Skip to main content",
     "not_found_title": "Page not found",
     "not_found_desc": "The page you're looking for doesn't exist or has been moved. Perhaps it's in another book.",
-    "back_to_home": "Back to Home"
+    "back_to_home": "Back to Home",
+    "go_to_library": "Go to Library",
+    "go_to_dashboard": "Dashboard"
   },
   "landing": {
     "meta_title": "AI Reading Companion | Read Smarter, Remember More",

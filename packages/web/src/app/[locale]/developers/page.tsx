@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api, API_BASE_URL } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -120,7 +120,7 @@ export default function DevelopersPage() {
       )
     : endpoints;
 
-  const apiBase = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
+  const apiBase = API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
   return (
     <div className="min-h-screen bg-stone-50">

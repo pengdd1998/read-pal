@@ -5,7 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
+from sqlalchemy import text
+
 from app.config import get_settings
+from app.core.redis import get_redis
 from app.db import async_session
 
 logger = logging.getLogger('read-pal')
@@ -142,18 +145,14 @@ async def health_check() -> dict[str, object]:
     """Health check endpoint — verifies DB and Redis connectivity."""
     checks: dict[str, dict[str, str]] = {}
 
-    # Database check
     try:
-        from sqlalchemy import text
         async with async_session() as session:
             await session.execute(text('SELECT 1'))
         checks['database'] = {'status': 'ok'}
     except Exception as exc:
         checks['database'] = {'status': 'error', 'detail': str(exc)[:200]}
 
-    # Redis check
     try:
-        from app.core.redis import get_redis
         redis = get_redis()
         await redis.ping()
         checks['redis'] = {'status': 'ok'}

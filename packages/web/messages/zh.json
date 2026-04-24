@@ -27,7 +27,9 @@
     "skip_to_content": "跳到主要内容",
     "not_found_title": "页面未找到",
     "not_found_desc": "您访问的页面不存在或已被移动。也许它在另一本书里。",
-    "back_to_home": "返回首页"
+    "back_to_home": "返回首页",
+    "go_to_library": "前往书库",
+    "go_to_dashboard": "控制台"
   },
   "landing": {
     "meta_title": "AI 阅读伴侣 | 更聪明地阅读，记住更多",

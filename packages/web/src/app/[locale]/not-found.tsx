@@ -3,6 +3,9 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
+const secondaryLinkClass =
+  'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors';
+
 export default function NotFound() {
   const t = useTranslations('common');
   return (
@@ -20,17 +23,11 @@ export default function NotFound() {
           >
             {t('back_to_home')}
           </Link>
-          <Link
-            href="/library"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Go to Library
+          <Link href="/library" className={secondaryLinkClass}>
+            {t('go_to_library')}
           </Link>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Dashboard
+          <Link href="/dashboard" className={secondaryLinkClass}>
+            {t('go_to_dashboard')}
           </Link>
         </div>
       </div>
