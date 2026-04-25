@@ -690,7 +690,21 @@
     "outline_no_items": "No matching items.",
     "outline_chapter": "Chapter {number}",
     "outline_other": "Other",
-    "outline_all": "All ({count})"
+    "outline_all": "All ({count})",
+    "synthesis_title": "Synthesis",
+    "synthesis_close_label": "Close synthesis panel",
+    "synthesis_close_esc": "Close (Esc)",
+    "synthesis_by_author": " by {author}",
+    "synthesis_analyzing": "Analyzing your library...",
+    "synthesis_fill_form": "Fill in the form above and run the analysis.",
+    "synthesis_run": "Run Analysis",
+    "synthesis_analyzing_btn": "Analyzing...",
+    "synthesis_enter_concept": "Enter a concept to cross-reference",
+    "synthesis_enter_topic_map": "Enter a topic for the concept map",
+    "synthesis_enter_query": "Enter a query to synthesize",
+    "synthesis_analysis_failed": "Analysis failed",
+    "synthesis_network_error": "Network error",
+    "synthesis_tab_label": "Analysis modes"
   },
   "stats": {
     "title": "Reading Stats",

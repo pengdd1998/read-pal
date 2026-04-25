@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import {
@@ -22,6 +23,7 @@ export function SynthesisPanel({
   onClose,
 }: SynthesisPanelProps) {
   const { toast } = useToast();
+  const t = useTranslations('reader');
   const [activeTab, setActiveTab] = useState<SynthesisAction>('cross_reference');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -50,17 +52,17 @@ export function SynthesisPanel({
   const buildInput = useCallback((): Record<string, unknown> | null => {
     switch (activeTab) {
       case 'cross_reference':
-        if (!concept.trim()) { setError('Enter a concept to cross-reference'); return null; }
+        if (!concept.trim()) { setError(t('synthesis_enter_concept')); return null; }
         return { concept: concept.trim(), sourceBookId: bookId, analysisType };
       case 'concept_map':
-        if (!topic.trim()) { setError('Enter a topic for the concept map'); return null; }
+        if (!topic.trim()) { setError(t('synthesis_enter_topic_map')); return null; }
         return { topic: topic.trim(), maxNodes: 20 };
       case 'find_contradictions':
         return { ...(topic.trim() ? { topic: topic.trim() } : {}), minSeverity, bookIds: [bookId] };
       case 'summary_report':
         return { bookIds: [bookId], ...(focus.trim() ? { focus: focus.trim() } : {}), format: reportFormat };
       case 'synthesize':
-        if (!query.trim()) { setError('Enter a query to synthesize'); return null; }
+        if (!query.trim()) { setError(t('synthesis_enter_query')); return null; }
         return { query: query.trim(), bookIds: [bookId], depth };
       default: return null;
     }
@@ -91,15 +93,15 @@ export function SynthesisPanel({
       if (response.success && response.data) {
         setResult(response.data as AnalysisResult);
       } else {
-        setError(response.error?.message || 'Analysis failed');
+        setError(response.error?.message || t('synthesis_analysis_failed'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Network error');
-      toast('Analysis failed', 'error');
+      setError(err instanceof Error ? err.message : t('synthesis_network_error'));
+      toast(t('synthesis_analysis_failed'), 'error');
     } finally {
       setLoading(false);
     }
-  }, [activeTab, buildInput, toast]);
+  }, [activeTab, buildInput, toast, t]);
 
   const renderForm = () => {
     switch (activeTab) {
@@ -121,7 +123,7 @@ export function SynthesisPanel({
           onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
           tabIndex={-1}
           role="button"
-          aria-label="Close synthesis panel"
+          aria-label={t('synthesis_close_label')}
         />
       )}
 
@@ -134,9 +136,9 @@ export function SynthesisPanel({
             <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
             </svg>
-            <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">Synthesis</h2>
+            <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">{t('synthesis_title')}</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label="Close synthesis panel (Esc)" title="Close (Esc)">
+          <button onClick={onClose} className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label={t('synthesis_close_label')} title={t('synthesis_close_esc')}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -146,13 +148,13 @@ export function SynthesisPanel({
         {bookTitle && (
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {bookTitle}{author ? ` by ${author}` : ''}
+              {bookTitle}{author ? t('synthesis_by_author', { author }) : ''}
             </p>
           </div>
         )}
 
         {/* Tabs */}
-        <div role="tablist" aria-label="Analysis modes" className="flex border-b border-gray-200 dark:border-gray-700 px-1 overflow-x-auto">
+        <div role="tablist" aria-label={t('synthesis_tab_label')} className="flex border-b border-gray-200 dark:border-gray-700 px-1 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -182,7 +184,7 @@ export function SynthesisPanel({
           {loading && (
             <div className="flex items-center gap-3 py-8 justify-center">
               <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-600 border-t-transparent" />
-              <span className="text-sm text-gray-500 dark:text-gray-400">Analyzing your library...</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t('synthesis_analyzing')}</span>
             </div>
           )}
           {!loading && result && <AnalysisResultView result={result} />}
@@ -191,7 +193,7 @@ export function SynthesisPanel({
               <svg className="w-10 h-10 mx-auto text-amber-400 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
               </svg>
-              <p className="text-xs text-gray-400 dark:text-gray-500">Fill in the form above and run the analysis.</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t('synthesis_fill_form')}</p>
             </div>
           )}
         </div>
@@ -200,13 +202,13 @@ export function SynthesisPanel({
         <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
           <button onClick={handleAnalyze} disabled={loading} className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
             {loading ? (
-              <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />Analyzing...</>
+              <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />{t('synthesis_analyzing_btn')}</>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Run Analysis
+                {t('synthesis_run')}
               </>
             )}
           </button>

@@ -690,7 +690,21 @@
     "outline_no_items": "没有匹配项。",
     "outline_chapter": "第 {number} 章",
     "outline_other": "其他",
-    "outline_all": "全部 ({count})"
+    "outline_all": "全部 ({count})",
+    "synthesis_title": "综合分析",
+    "synthesis_close_label": "关闭综合分析面板",
+    "synthesis_close_esc": "关闭 (Esc)",
+    "synthesis_by_author": " 作者：{author}",
+    "synthesis_analyzing": "正在分析你的书库...",
+    "synthesis_fill_form": "填写上方表单并运行分析。",
+    "synthesis_run": "运行分析",
+    "synthesis_analyzing_btn": "分析中...",
+    "synthesis_enter_concept": "请输入要交叉引用的概念",
+    "synthesis_enter_topic_map": "请输入概念图的主题",
+    "synthesis_enter_query": "请输入要综合分析的查询",
+    "synthesis_analysis_failed": "分析失败",
+    "synthesis_network_error": "网络错误",
+    "synthesis_tab_label": "分析模式"
   },
   "stats": {
     "title": "阅读统计",
