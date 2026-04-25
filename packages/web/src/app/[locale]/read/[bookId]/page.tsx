@@ -389,8 +389,8 @@ export default function ReadPage() {
         onBack={handleBack}
         onToggleBookmark={annotationActions.handleToggleBookmark}
         onToggleSearch={() => ui.setSearchOpen(!ui.searchOpen)}
-        onToggleSidebar={() => { ui.setSidebarOpen(!ui.sidebarOpen); if (ui.sidebarOpen) ui.setSynthesisOpen(false); }}
-        onToggleSynthesis={() => { ui.setSynthesisOpen(!ui.synthesisOpen); if (ui.synthesisOpen) ui.setSidebarOpen(false); }}
+        onToggleSidebar={() => ui.setSidebarOpen(!ui.sidebarOpen)}
+        onToggleSynthesis={() => ui.setSynthesisOpen(!ui.synthesisOpen)}
         onToggleStudyMode={studyMode.toggleStudyMode}
         onShowTimeline={() => ui.setShowTimeline(true)}
         onShowSettings={() => {
