@@ -2,19 +2,49 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations('landing');
+
+  const ogLocale = locale === 'zh' ? 'zh_CN' : 'en_US';
+  const altLocale = locale === 'zh' ? 'en_US' : 'zh_CN';
 
   return {
     title: t('meta_title'),
     description: t('meta_description'),
+    alternates: {
+      canonical: `/${locale}`,
+      languages: {
+        en: '/en',
+        zh: '/zh',
+      },
+    },
     openGraph: {
       title: t('og_title'),
       description: t('og_description'),
+      url: `/${locale}`,
+      locale: ogLocale,
+      alternateLocale: altLocale,
+      type: 'website',
+      siteName: 'read-pal',
+      images: [
+        {
+          url: '/opengraph-image',
+          width: 1200,
+          height: 630,
+          alt: t('og_title'),
+        },
+      ],
     },
     twitter: {
+      card: 'summary_large_image',
       title: t('og_title'),
       description: t('og_description'),
+      images: ['/opengraph-image'],
     },
   };
 }

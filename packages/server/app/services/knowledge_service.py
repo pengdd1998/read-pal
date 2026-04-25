@@ -31,7 +31,7 @@ from app.utils.token_budget import TokenBudget
 logger = logging.getLogger('read-pal.knowledge')
 
 GRAPH_CACHE_PREFIX = 'graph:'
-GRAPH_CACHE_TTL = 3600  # 1 hour
+GRAPH_CACHE_TTL = 86_400  # 24 hours
 
 
 async def _load_annotations(
