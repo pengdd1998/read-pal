@@ -33,19 +33,19 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className={`absolute right-0 top-full mt-1 z-50 w-64 rounded-xl shadow-xl border p-3 space-y-3 ${
+      <div className={`absolute right-0 top-full mt-1 z-50 w-72 rounded-xl shadow-xl border p-3 space-y-3 ${
         theme === 'dark' ? 'bg-gray-800 border-gray-700' : theme === 'sepia' ? 'bg-[#f5f0e6] border-amber-200' : 'bg-white border-gray-200'
       }`}>
         {/* Font size */}
         <div>
           <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">{t('font_size_label')}</label>
           <div className="flex items-center gap-2">
-            <button onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))} className="w-8 h-8 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">A-</button>
+            <button onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">A-</button>
             <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full relative">
               <div className="absolute left-0 top-0 h-full bg-amber-400 rounded-full" style={{ width: `${((fontSize - 12) / 20) * 100}%` }} />
             </div>
             <span className="text-xs font-mono text-amber-600 dark:text-amber-400 w-6 text-center">{fontSize}</span>
-            <button onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))} className="w-8 h-8 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">A+</button>
+            <button onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">A+</button>
           </div>
         </div>
 
@@ -53,12 +53,12 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
         <div>
           <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">{t('line_height_label')}</label>
           <div className="flex items-center gap-2">
-            <button onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))} className="w-8 h-8 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">-</button>
+            <button onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">-</button>
             <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full relative">
               <div className="absolute left-0 top-0 h-full bg-amber-400 rounded-full" style={{ width: `${((lineHeight - 1.2) / 1.0) * 100}%` }} />
             </div>
             <span className="text-xs font-mono text-amber-600 dark:text-amber-400 w-8 text-center">{lineHeight.toFixed(2)}</span>
-            <button onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))} className="w-8 h-8 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">+</button>
+            <button onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center">+</button>
           </div>
         </div>
 
@@ -70,7 +70,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
               <button
                 key={f.label}
                 onClick={() => onFontFamilyChange(f.value)}
-                className={`py-1.5 rounded-lg text-[10px] font-medium transition-all ${
+                className={`py-2.5 rounded-lg text-[10px] font-medium transition-all ${
                   fontFamily === f.value
                     ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 ring-1 ring-amber-300 dark:ring-amber-700'
                     : 'text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
@@ -106,7 +106,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
         <div className="flex gap-1.5">
           <button
             onClick={() => onQuietModeChange(!quietMode)}
-            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
               quietMode ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
@@ -118,7 +118,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
           </button>
           <button
             onClick={() => onBgEnabledChange(!bgEnabled)}
-            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
               bgEnabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
