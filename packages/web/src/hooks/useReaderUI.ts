@@ -40,10 +40,13 @@ export function useReaderUI(): ReaderUIState {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [synthesisOpen, setSynthesisOpen] = useState(false);
 
-  // Enforce mutual exclusion: only one panel open at a time
+  // Enforce mutual exclusion: opening one panel closes the other
   useEffect(() => {
-    if (sidebarOpen && synthesisOpen) setSynthesisOpen(false);
-  }, [sidebarOpen, synthesisOpen]);
+    if (sidebarOpen) setSynthesisOpen(false);
+  }, [sidebarOpen]);
+  useEffect(() => {
+    if (synthesisOpen) setSidebarOpen(false);
+  }, [synthesisOpen]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
