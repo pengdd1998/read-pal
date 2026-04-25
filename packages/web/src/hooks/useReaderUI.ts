@@ -37,24 +37,13 @@ interface ReaderUIState {
 
 export function useReaderUI(): ReaderUIState {
   const [showControls, setShowControls] = useState(true);
-  const [sidebarOpen, _setSidebarOpen] = useState(false);
-  const [synthesisOpen, _setSynthesisOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [synthesisOpen, setSynthesisOpen] = useState(false);
 
-  const setSidebarOpen = useCallback((v: React.SetStateAction<boolean>) => {
-    _setSidebarOpen((prev) => {
-      const next = typeof v === 'function' ? v(prev) : v;
-      if (next) _setSynthesisOpen(false);
-      return next;
-    });
-  }, []);
-
-  const setSynthesisOpen = useCallback((v: React.SetStateAction<boolean>) => {
-    _setSynthesisOpen((prev) => {
-      const next = typeof v === 'function' ? v(prev) : v;
-      if (next) _setSidebarOpen(false);
-      return next;
-    });
-  }, []);
+  // Enforce mutual exclusion: only one panel open at a time
+  useEffect(() => {
+    if (sidebarOpen && synthesisOpen) setSynthesisOpen(false);
+  }, [sidebarOpen, synthesisOpen]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
