@@ -16,11 +16,11 @@ interface MobileSettingsSheetProps {
   onClose: () => void;
 }
 
-const FONT_OPTIONS = [
-  { value: 'system-ui', label: 'System' },
-  { value: "'Literata', 'Source Serif 4', Georgia, serif", label: 'Serif' },
-  { value: "'Inter', system-ui, sans-serif", label: 'Sans' },
-  { value: "'Merriweather', Georgia, serif", label: 'Merri' },
+const FONT_OPTIONS: { value: string; labelKey: string }[] = [
+  { value: 'system-ui', labelKey: 'font_system' },
+  { value: "'Literata', 'Source Serif 4', Georgia, serif", labelKey: 'font_serif' },
+  { value: "'Inter', system-ui, sans-serif", labelKey: 'font_sans' },
+  { value: "'Merriweather', Georgia, serif", labelKey: 'font_merri' },
 ];
 
 export function MobileSettingsSheet({
@@ -99,7 +99,7 @@ export function MobileSettingsSheet({
           <div className="grid grid-cols-4 gap-2">
             {FONT_OPTIONS.map((f) => (
               <button
-                key={f.label}
+                key={f.labelKey}
                 onClick={() => onFontFamilyChange(f.value)}
                 className={`py-2 rounded-xl text-xs font-medium transition-all active:scale-95 ${
                   fontFamily === f.value
@@ -107,7 +107,7 @@ export function MobileSettingsSheet({
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                 }`}
               >
-                {f.label}
+                {t(f.labelKey)}
               </button>
             ))}
           </div>
