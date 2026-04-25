@@ -46,7 +46,7 @@ export function ReaderHeader(props: ReaderHeaderProps) {
   const t = useTranslations('reader');
 
   return (
-    <div className={`relative z-10 flex items-center justify-between px-3 py-2 backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} shrink-0 border-b`}>
+    <div className={`relative z-40 flex items-center justify-between px-3 py-2 backdrop-blur-sm ${HEADER_BG_CLASSES[theme]} shrink-0 border-b`}>
       {/* Left: Back + Book info */}
       <div className="flex items-center gap-2 min-w-0">
         <button onClick={onBack} className="flex items-center justify-center w-11 h-11 -ml-1 rounded-xl text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label={t('back_to_library_label')}>

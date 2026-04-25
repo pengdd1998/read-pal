@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 
 // ---------------------------------------------------------------------------
@@ -52,6 +53,7 @@ export function OutlinePanel({
   bookTitle,
   onScrollToAnnotation,
 }: OutlinePanelProps) {
+  const t = useTranslations('reader');
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'highlight' | 'note' | 'bookmark'>('all');
@@ -88,7 +90,7 @@ export function OutlinePanel({
       .sort(([a], [b]) => a - b)
       .map(([idx, items]) => ({
         chapterIndex: idx,
-        label: `Chapter ${idx + 1}`,
+        label: t('outline_chapter', { number: idx + 1 }),
         highlights: items.filter((a) => a.type === 'highlight'),
         notes: items.filter((a) => a.type === 'note'),
         bookmarks: items.filter((a) => a.type === 'bookmark'),
@@ -98,7 +100,7 @@ export function OutlinePanel({
     if (ungrouped.length > 0) {
       groups.push({
         chapterIndex: -1,
-        label: 'Other',
+        label: t('outline_other'),
         highlights: ungrouped.filter((a) => a.type === 'highlight'),
         notes: ungrouped.filter((a) => a.type === 'note'),
         bookmarks: ungrouped.filter((a) => a.type === 'bookmark'),
@@ -135,7 +137,7 @@ export function OutlinePanel({
       <div className="text-center py-12 px-4">
         <div className="text-4xl opacity-30 mb-3">{'\u{1F4D1}'}</div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No annotations yet. Start highlighting to build your outline.
+          {t('outline_empty')}
         </p>
       </div>
     );
@@ -147,20 +149,20 @@ export function OutlinePanel({
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">
-            Outline View
+            {t('outline_title')}
           </h3>
           <div className="flex gap-1">
             <button
               onClick={expandAll}
               className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
-              Expand all
+              {t('outline_expand_all')}
             </button>
             <button
               onClick={collapseAll}
               className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
-              Collapse all
+              {t('outline_collapse_all')}
             </button>
           </div>
         </div>
@@ -170,14 +172,14 @@ export function OutlinePanel({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search annotations..."
+          placeholder={t('outline_search_placeholder')}
           className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all mb-2"
         />
 
         {/* Type filter */}
         <div className="flex gap-1">
           {[
-            { key: 'all' as const, label: `All (${annotations.length})` },
+            { key: 'all' as const, label: t('outline_all', { count: annotations.length }) },
             { key: 'highlight' as const, label: `${TYPE_ICONS.highlight} ${totalHighlights}` },
             { key: 'note' as const, label: `${TYPE_ICONS.note} ${totalNotes}` },
             { key: 'bookmark' as const, label: `${TYPE_ICONS.bookmark} ${totalBookmarks}` },
@@ -201,7 +203,7 @@ export function OutlinePanel({
       <div className="flex-1 overflow-y-auto">
         {chapters.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-xs text-gray-400">No annotations match your filters.</p>
+            <p className="text-xs text-gray-400">{t('outline_no_match')}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -278,7 +280,7 @@ export function OutlinePanel({
                       ))}
 
                       {totalCount === 0 && (
-                        <p className="text-[10px] text-gray-400 px-8 py-1">No matching items.</p>
+                        <p className="text-[10px] text-gray-400 px-8 py-1">{t('outline_no_items')}</p>
                       )}
                     </div>
                   )}

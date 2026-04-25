@@ -154,7 +154,14 @@ async def start_session(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={'code': 'VALIDATION_ERROR', 'message': t('errors.book_id_required')},
         )
-    session_body = SessionCreate(book_id=UUID(str(book_id)))
+    try:
+        parsed_id = UUID(str(book_id))
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={'code': 'VALIDATION_ERROR', 'message': f'Invalid book_id: {book_id}'},
+        )
+    session_body = SessionCreate(book_id=parsed_id)
     session = await reading_session_service.create_session(
         db, UUID(current_user['id']), session_body,
     )

@@ -1,42 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 
 const TOUR_KEY = 'read-pal-tour-complete';
 const TOUR_STEP_KEY = 'read-pal-tour-step';
 
-export interface TourStep {
-  targetId: string;
-  title: string;
-  description: string;
-  position: 'top' | 'bottom' | 'left' | 'right';
-}
-
-const STEPS: TourStep[] = [
-  {
-    targetId: 'tour-ai-companion',
-    title: 'Your AI Reading Companion',
-    description: 'Chat with your AI companion about the book. Ask questions, get explanations, or discuss themes as you read.',
-    position: 'left',
-  },
-  {
-    targetId: 'tour-annotations',
-    title: 'Highlights & Notes',
-    description: 'Select any text to highlight it, add notes, or ask AI about it. All your annotations are saved automatically.',
-    position: 'bottom',
-  },
-  {
-    targetId: 'tour-reading-book',
-    title: 'Your Personal Reading Book',
-    description: 'When you finish, read-pal creates a unique document from your highlights, notes, and AI conversations. Look for it after completion!',
-    position: 'bottom',
-  },
-  {
-    targetId: 'tour-progress',
-    title: 'Track Your Progress',
-    description: 'Your reading session is tracked automatically. Milestones celebrate your journey through the book.',
-    position: 'bottom',
-  },
+const STEP_KEYS: { targetId: string; titleKey: string; descKey: string; position: 'top' | 'bottom' | 'left' | 'right' }[] = [
+  { targetId: 'tour-ai-companion', titleKey: 'tour_step1_title', descKey: 'tour_step1_desc', position: 'left' },
+  { targetId: 'tour-annotations', titleKey: 'tour_step2_title', descKey: 'tour_step2_desc', position: 'bottom' },
+  { targetId: 'tour-reading-book', titleKey: 'tour_step3_title', descKey: 'tour_step3_desc', position: 'bottom' },
+  { targetId: 'tour-progress', titleKey: 'tour_step4_title', descKey: 'tour_step4_desc', position: 'bottom' },
 ];
 
 /**
@@ -45,6 +19,7 @@ const STEPS: TourStep[] = [
  * Persists completion in localStorage so it only shows once.
  */
 export function FeatureTour() {
+  const t = useTranslations('reader');
   const [step, setStep] = useState<number | null>(null);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
@@ -55,7 +30,7 @@ export function FeatureTour() {
     // Restore saved step or start at 0
     const savedStep = localStorage.getItem(TOUR_STEP_KEY);
     const startStep = savedStep ? parseInt(savedStep, 10) : 0;
-    if (startStep >= STEPS.length) {
+    if (startStep >= STEP_KEYS.length) {
       localStorage.setItem(TOUR_KEY, 'true');
       return;
     }
@@ -69,14 +44,14 @@ export function FeatureTour() {
   useEffect(() => {
     if (step === null) return;
 
-    const el = document.getElementById(STEPS[step].targetId);
+    const el = document.getElementById(STEP_KEYS[step].targetId);
     if (!el) {
       // Target not rendered yet — retry after a short delay
-      const t = setTimeout(() => {
-        const retry = document.getElementById(STEPS[step].targetId);
+      const retryTimer = setTimeout(() => {
+        const retry = document.getElementById(STEP_KEYS[step].targetId);
         if (retry) setTargetRect(retry.getBoundingClientRect());
       }, 500);
-      return () => clearTimeout(t);
+      return () => clearTimeout(retryTimer);
     }
 
     setTargetRect(el.getBoundingClientRect());
@@ -89,7 +64,7 @@ export function FeatureTour() {
 
   const handleNext = useCallback(() => {
     const next = step !== null ? step + 1 : 0;
-    if (next >= STEPS.length) {
+    if (next >= STEP_KEYS.length) {
       localStorage.setItem(TOUR_KEY, 'true');
       localStorage.removeItem(TOUR_STEP_KEY);
       setStep(null);
@@ -117,8 +92,8 @@ export function FeatureTour() {
 
   if (step === null || !targetRect) return null;
 
-  const current = STEPS[step];
-  const isLast = step === STEPS.length - 1;
+  const current = STEP_KEYS[step];
+  const isLast = step === STEP_KEYS.length - 1;
 
   // Compute tooltip position
   const tooltipW = 288; // w-72 = 18rem = 288px
@@ -210,9 +185,9 @@ export function FeatureTour() {
               <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
                 {step + 1}
               </span>
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.title}</h4>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(current.titleKey)}</h4>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{current.description}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{t(current.descKey)}</p>
           </div>
 
           <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
@@ -220,13 +195,13 @@ export function FeatureTour() {
               onClick={handleSkip}
               className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
-              Skip tour
+              {t('tour_skip')}
             </button>
 
             <div className="flex items-center gap-2">
               {/* Step dots */}
               <div className="flex gap-1 mr-2">
-                {STEPS.map((_, i) => (
+                {STEP_KEYS.map((_, i) => (
                   <div
                     key={i}
                     className={`w-1.5 h-1.5 rounded-full transition-colors ${
@@ -240,7 +215,7 @@ export function FeatureTour() {
                 onClick={handleNext}
                 className="px-3 py-1 rounded-lg text-[11px] font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors"
               >
-                {isLast ? 'Got it!' : 'Next'}
+                {isLast ? t('tour_got_it') : t('tour_next')}
               </button>
             </div>
           </div>
