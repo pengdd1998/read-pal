@@ -867,3 +867,21 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================================
+   Mobile Native Support — Safe Area & Viewport Height
+   ============================================================================ */
+
+/* Safe area padding for notched devices (iPhone X+) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Fix 100vh on mobile Safari — use dynamic viewport height */
+@supports (height: 100dvh) {
+  .h-screen { height: 100dvh !important; }
+  .min-h-screen { min-height: 100dvh !important; }
+}

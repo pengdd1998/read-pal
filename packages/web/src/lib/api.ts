@@ -13,7 +13,8 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
 import { queueMutation } from '@/lib/offline-queue';
-import { getAuthToken } from '@/lib/auth-fetch';
+import { getAuthToken, getAuthTokenAsync } from '@/lib/auth-fetch';
+import { isCapacitor } from '@/lib/capacitor';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -47,8 +48,10 @@ class ApiClient {
 
     // Request interceptor - attach auth token (browser only)
     this.client.interceptors.request.use(
-      (config) => {
-        const token = getAuthToken();
+      async (config) => {
+        const token = isCapacitor()
+          ? await getAuthTokenAsync()
+          : getAuthToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }

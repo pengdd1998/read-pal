@@ -1,9 +1,14 @@
 const withNextIntl = require('next-intl/plugin')();
 
+const isStaticExport = process.env.STATIC_EXPORT === '1';
+const isDockerBuild = process.env.DOCKER_BUILD === '1';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: process.env.DOCKER_BUILD === '1' ? 'standalone' : undefined,
+  output: isStaticExport ? 'export' : isDockerBuild ? 'standalone' : undefined,
+  images: { unoptimized: isStaticExport },
+  trailingSlash: isStaticExport ? true : undefined,
   transpilePackages: ['@read-pal/shared'],
   compiler: {
     // Strip console.error and console.warn in production (keeps console.log for debugging)

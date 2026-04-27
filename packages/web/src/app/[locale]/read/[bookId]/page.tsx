@@ -16,6 +16,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBookContent } from '@/hooks/useBookContent';
 import { useAnnotationActions } from '@/hooks/useAnnotationActions';
 import { useReaderUI } from '@/hooks/useReaderUI';
+import { isCapacitor } from '@/lib/capacitor';
 import { api } from '@/lib/api';
 import { detectGenre, type BookGenre } from '@/lib/companion-prompts';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
@@ -283,6 +284,20 @@ export default function ReadPage() {
   });
 
   useAnnotationHighlights(contentRef, annotations, currentChapter, theme);
+
+  // Sync Capacitor status bar with reader theme
+  useEffect(() => {
+    if (!isCapacitor()) return;
+    import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+      StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light });
+      const colors: Record<string, string> = {
+        light: '#fefdfb',
+        dark: '#0f1419',
+        sepia: '#f8f4ec',
+      };
+      StatusBar.setBackgroundColor({ color: colors[theme] || colors.light });
+    }).catch(() => {});
+  }, [theme]);
 
   // Study mode data loading
   useEffect(() => {

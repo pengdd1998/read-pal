@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { isCapacitor } from '@/lib/capacitor';
 
 export function ServiceWorkerRegistrar() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -14,6 +15,8 @@ export function ServiceWorkerRegistrar() {
   }, [registration]);
 
   useEffect(() => {
+    // Skip service worker in Capacitor — native handles caching
+    if (isCapacitor()) return;
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker

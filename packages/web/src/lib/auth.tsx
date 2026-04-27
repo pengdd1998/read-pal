@@ -2,14 +2,18 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { api } from './api';
-import { getAuthToken } from './auth-fetch';
+import { getAuthToken, getAuthTokenAsync } from './auth-fetch';
+import { isCapacitor } from './capacitor';
+import { getItem, setItem, removeItem } from './native-storage';
 
 /** Set a simple cookie so Next.js middleware can detect auth state */
 function setAuthCookie(token: string) {
+  if (isCapacitor()) return; // No server middleware in static export
   document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
 }
 
 function clearAuthCookie() {
+  if (isCapacitor()) return;
   document.cookie = 'auth_token=; path=/; max-age=0';
 }
 
@@ -39,21 +43,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load auth state from localStorage on mount
+  // Load auth state from storage on mount
   useEffect(() => {
-    try {
-      const savedToken = getAuthToken();
-      const savedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-      if (savedToken && savedUser) {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
-        setAuthCookie(savedToken);
+    if (isCapacitor()) {
+      // Async load from Capacitor Preferences
+      getAuthTokenAsync().then(async (savedToken) => {
+        const savedUser = await getItem('user');
+        if (savedToken && savedUser) {
+          setToken(savedToken);
+          setUser(JSON.parse(savedUser));
+        }
+        setLoading(false);
+      });
+    } else {
+      // Sync load from localStorage (web/PWA)
+      try {
+        const savedToken = getAuthToken();
+        const savedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+        if (savedToken && savedUser) {
+          setToken(savedToken);
+          setUser(JSON.parse(savedUser));
+          setAuthCookie(savedToken);
+        }
+      } catch {
+        // Invalid stored data
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      // Invalid stored data
-    } finally {
-      setLoading(false);
     }
+  }, []);
+
+  const persistAuth = useCallback(async (newToken: string, newUser: User) => {
+    await removeItem('auth_token');
+    await removeItem('user');
+    await setItem('auth_token', newToken);
+    await setItem('user', JSON.stringify(newUser));
+    // Also write to localStorage for non-Capacitor code paths
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', newToken);
+      localStorage.setItem('user', JSON.stringify(newUser));
+    }
+    setAuthCookie(newToken);
+    setToken(newToken);
+    setUser(newUser);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -62,19 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       { email, password },
     );
     if (result.success && result.data) {
-      const { token: newToken, user: newUser } = result.data;
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
-      clearAuthCookie();
-      localStorage.setItem('auth_token', newToken);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      setAuthCookie(newToken);
-      setToken(newToken);
-      setUser(newUser);
+      await persistAuth(result.data.token, result.data.user);
     } else {
       throw new Error(result.error?.message || 'Login failed');
     }
-  }, []);
+  }, [persistAuth]);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
     const result = await api.post<{ token: string; user: User }>(
@@ -82,38 +106,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       { name, email, password },
     );
     if (result.success && result.data) {
-      const { token: newToken, user: newUser } = result.data;
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
-      clearAuthCookie();
-      localStorage.setItem('auth_token', newToken);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      setAuthCookie(newToken);
-      setToken(newToken);
-      setUser(newUser);
+      await persistAuth(result.data.token, result.data.user);
     } else {
       throw new Error(result.error?.message || 'Registration failed');
     }
-  }, []);
+  }, [persistAuth]);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
+  const logout = useCallback(async () => {
+    await removeItem('auth_token');
+    await removeItem('user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+    }
     clearAuthCookie();
     setToken(null);
     setUser(null);
   }, []);
 
-  const oauthLogin = useCallback((newToken: string, newUser: User) => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
-    clearAuthCookie();
-    localStorage.setItem('auth_token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    setAuthCookie(newToken);
-    setToken(newToken);
-    setUser(newUser);
-  }, []);
+  const oauthLogin = useCallback(async (newToken: string, newUser: User) => {
+    await persistAuth(newToken, newUser);
+  }, [persistAuth]);
 
   return (
     <AuthContext.Provider

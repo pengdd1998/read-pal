@@ -151,9 +151,13 @@ export function useAnnotationHighlights(
       if (!marksMapRef.current.has(ann.id)) {
         toCreate.push(ann);
       } else {
-        // Annotation still exists — check if style-affecting fields changed
+        // Check if the existing mark element is still in the DOM (not detached)
         const existing = marksMapRef.current.get(ann.id)!;
-        if (
+        if (!container.contains(existing.element)) {
+          // Mark was detached (e.g., by React re-render) — recreate it
+          marksMapRef.current.delete(ann.id);
+          toCreate.push(ann);
+        } else if (
           existing.annotation.color !== ann.color ||
           existing.annotation.note !== ann.note
         ) {

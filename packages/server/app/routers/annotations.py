@@ -65,7 +65,7 @@ async def search_annotations(
     )
     return {
         'success': True,
-        'data': [AnnotationResponse.model_validate(a).model_dump(mode='json') for a in annotations],
+        'data': [AnnotationResponse.model_validate(a).model_dump(mode='json', by_alias=True) for a in annotations],
         'total': len(annotations),
     }
 
@@ -127,7 +127,7 @@ async def get_annotation(
         )
     return {
         'success': True,
-        'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json'),
+        'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json', by_alias=True),
     }
 
 
@@ -143,7 +143,7 @@ async def create_annotation(
     )
     return {
         'success': True,
-        'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json'),
+        'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json', by_alias=True),
     }
 
 
@@ -166,7 +166,7 @@ async def update_annotation(
         )
     return {
         'success': True,
-        'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json'),
+        'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json', by_alias=True),
     }
 
 

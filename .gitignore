@@ -191,3 +191,9 @@ login-page.png
 
 # Root-level debug screenshots (not docs/screenshots/*.png)
 /*.png
+
+# Capacitor native build artifacts
+packages/web/android/app/build/
+packages/web/ios/Pods/
+packages/web/ios/build/
+packages/web/www/

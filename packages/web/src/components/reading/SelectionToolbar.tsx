@@ -6,6 +6,7 @@ import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';
 import { QuoteCard } from './QuoteCard';
 import { copyToClipboard } from '@/lib/clipboard';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 
 const QUICK_TAGS = [
   { id: 'discuss', labelKey: 'tag_discuss', emoji: '\u{1F4AC}' },
@@ -47,7 +48,7 @@ export function SelectionToolbar({
 
   if (!rect || rect.width === 0) return null;
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const isMobile = useIsMobile();
 
   // Desktop positioning
   const toolbarHeight = 44;
@@ -134,6 +135,7 @@ export function SelectionToolbar({
               {ANNOTATION_COLORS.map((color) => (
                 <button
                   key={color}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleHighlight(color)}
                   className="w-9 h-9 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
                   style={{ backgroundColor: color }}
@@ -298,6 +300,7 @@ export function SelectionToolbar({
           {ANNOTATION_COLORS.map((color) => (
             <button
               key={color}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleHighlight(color)}
               className="w-7 h-7 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
               style={{ backgroundColor: color }}
