@@ -203,14 +203,19 @@ jobs:
       - name: Build iOS (no signing — unsigned archive)
         working-directory: packages/web/ios/App
         run: |
+          if [ -d App.xcworkspace ]; then
+            BUILD_SCHEME="-workspace App.xcworkspace"
+          else
+            BUILD_SCHEME="-project App.xcodeproj"
+          fi
           xcodebuild \
-            -workspace App.xcworkspace \
+            $BUILD_SCHEME \
             -scheme App \
             -configuration Release \
             -archivePath build/App.xcarchive \
             archive \
             CODE_SIGNING_ALLOWED=NO \
-            | xcpretty || true
+            | xcpretty
 
       - name: Create IPA from archive
         working-directory: packages/web/ios/App
