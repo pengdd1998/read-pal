@@ -48,7 +48,7 @@ async def test_create_annotation(client):
     ann = await _create_annotation(client, reg['token'], book['id'])
     assert ann['content'] == 'A wonderful quote from the book.'
     assert ann['type'] == 'highlight'
-    assert ann['book_id'] == book['id']
+    assert ann['bookId'] == book['id']
 
 
 @pytest.mark.asyncio
