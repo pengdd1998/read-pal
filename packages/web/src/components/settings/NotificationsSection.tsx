@@ -1,6 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import type { UserSettings } from '@/components/settings/types';
+import { isCapacitor } from '@/lib/capacitor';
+import { isPushEnabled, setPushEnabled } from '@/lib/notifications';
 
 interface NotificationsSectionProps {
   settings: UserSettings;
@@ -43,6 +46,30 @@ function ToggleSwitch({
 }
 
 export function NotificationsSection({ settings, saving, onSave }: NotificationsSectionProps) {
+  const [pushEnabled, setPushState] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const nativeApp = isCapacitor();
+
+  useEffect(() => {
+    if (nativeApp) {
+      isPushEnabled().then(setPushState);
+    }
+  }, [nativeApp]);
+
+  async function handlePushToggle() {
+    if (pushLoading) return;
+    setPushLoading(true);
+    try {
+      const next = !pushEnabled;
+      const ok = await setPushEnabled(next);
+      setPushState(next && ok);
+    } catch {
+      // Permission denied or plugin unavailable — revert
+    } finally {
+      setPushLoading(false);
+    }
+  }
+
   return (
     <section className="mb-6 animate-slide-up stagger-2">
       <div className="flex items-center gap-3 mb-4">
@@ -54,17 +81,34 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
         <h2 className="text-lg font-semibold">Notifications</h2>
       </div>
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
-        {/* Reading Reminders */}
-        <div className="flex items-center justify-between">
-          <div>
-            <label className="text-sm font-medium">Reading Reminders</label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Daily nudge when you haven&apos;t read</p>
+        {/* Push Notifications — native only */}
+        {nativeApp && (
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium">Push Notifications</label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Receive alerts on your device</p>
+            </div>
+            <ToggleSwitch
+              checked={pushEnabled}
+              onChange={handlePushToggle}
+              disabled={pushLoading}
+            />
           </div>
-          <ToggleSwitch
-            checked={settings.notificationsEnabled}
-            onChange={() => onSave({ notificationsEnabled: !settings.notificationsEnabled })}
-            disabled={saving}
-          />
+        )}
+
+        {/* Reading Reminders */}
+        <div className={nativeApp ? 'pt-3 border-t border-gray-100 dark:border-gray-800' : ''}>
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium">Reading Reminders</label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Daily nudge when you haven&apos;t read</p>
+            </div>
+            <ToggleSwitch
+              checked={settings.notificationsEnabled}
+              onChange={() => onSave({ notificationsEnabled: !settings.notificationsEnabled })}
+              disabled={saving}
+            />
+          </div>
         </div>
 
         {/* Streak Alerts */}

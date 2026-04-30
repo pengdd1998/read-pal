@@ -1,17 +1,21 @@
-import { redirect } from 'next/navigation';
+'use client';
 
-interface LoginPageProps {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
+import { useEffect } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 
-export default async function LoginPage({ params, searchParams }: LoginPageProps) {
-  const { locale } = await params;
-  const sp = await searchParams;
-  const paramsStr = new URLSearchParams();
-  paramsStr.set('mode', 'login');
-  const next = typeof sp?.next === 'string' ? sp.next : undefined;
-  if (next) paramsStr.set('next', next);
+export default function LoginPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const locale = params.locale as string;
 
-  redirect(`/${locale}/auth?${paramsStr.toString()}`);
+  useEffect(() => {
+    const paramsStr = new URLSearchParams();
+    paramsStr.set('mode', 'login');
+    const next = searchParams.get('next');
+    if (next) paramsStr.set('next', next);
+    router.replace(`/${locale}/auth?${paramsStr.toString()}`);
+  }, [locale, searchParams, router]);
+
+  return null;
 }

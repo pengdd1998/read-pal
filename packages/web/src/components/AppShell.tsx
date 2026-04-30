@@ -1,17 +1,22 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { usePathname } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ToastProvider } from '@/components/Toast';
+import { ToastProvider, useToast } from '@/components/Toast';
 import { PageTransition } from '@/components/PageTransition';
 import { useTranslations } from 'next-intl';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { OfflineBanner } from '@/components/ui';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { MobileAuthGuard } from '@/components/MobileAuthGuard';
+import { isCapacitor } from '@/lib/capacitor';
+import { useStatusBar } from '@/hooks/useStatusBar';
+import { hapticLight } from '@/hooks/useHaptics';
+import { initializeNotifications } from '@/lib/notifications';
 
 const NAV_ITEMS = [
   { href: '/dashboard', labelKey: 'nav_dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -34,12 +39,34 @@ const BOTTOM_NAV_ITEMS = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <ToastProvider>
+      <AppShellInner>{children}</AppShellInner>
+    </ToastProvider>
+  );
+}
+
+function AppShellInner({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
+  const isNative = isCapacitor();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline } = useOnlineStatus();
+  const { toast } = useToast();
   const t = useTranslations('nav');
   const tc = useTranslations('common');
+  const notificationsInitialized = useRef(false);
+
+  // Configure native status bar (no-op on web)
+  useStatusBar('LIGHT', '#fefdfb');
+
+  // Initialize push notifications once when authenticated in Capacitor
+  useEffect(() => {
+    if (isAuthenticated && isNative && !notificationsInitialized.current) {
+      notificationsInitialized.current = true;
+      initializeNotifications((msg, type) => toast(msg, type));
+    }
+  }, [isAuthenticated, isNative, toast]);
 
   // Immersive reading mode — hide all AppShell chrome
   const isReading = pathname.startsWith('/read/');
@@ -59,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       {/* Header */}
-      {!isReading && <header className="sticky top-0 z-40 border-b border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0]/95 dark:bg-gray-950/95 backdrop-blur-lg">
+      {!isReading && <header className="sticky top-0 z-40 border-b border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0]/95 dark:bg-gray-950/95 backdrop-blur-lg safe-area-top">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
@@ -146,7 +173,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {isAuthenticated && (
                 <button
                   onClick={() => setMobileOpen(!mobileOpen)}
-                  className="md:hidden p-2 rounded-lg text-[#5c5c5c] dark:text-gray-400 hover:bg-[#f0e9e0] dark:hover:bg-gray-800 transition-colors"
+                  className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[#5c5c5c] dark:text-gray-400 hover:bg-[#f0e9e0] dark:hover:bg-gray-800 transition-colors"
                   aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
                   aria-expanded={mobileOpen}
                 >
@@ -196,24 +223,27 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <main id="main-content" className={`flex-1 ${isReading ? '' : 'pb-16 md:pb-0'}`} tabIndex={-1}>
         <ErrorBoundary>
-          <ToastProvider>
+          <MobileAuthGuard>
             <PageTransition>{children}</PageTransition>
-          </ToastProvider>
+          </MobileAuthGuard>
         </ErrorBoundary>
       </main>
 
       {/* Mobile Bottom Nav */}
       {isAuthenticated && !isReading && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 safe-area-inset-bottom" aria-label="Bottom navigation">
-          <div className="flex items-center justify-around h-14">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 safe-area-bottom" aria-label="Bottom navigation">
+          <div className="flex items-center justify-around">
             {BOTTOM_NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => {
+                    if (!active) hapticLight();
+                  }}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-colors ${
+                  className={`flex flex-col items-center justify-center gap-0.5 flex-1 min-h-[48px] py-1.5 transition-colors ${
                     active
                       ? 'text-amber-600 dark:text-amber-400'
                       : 'text-gray-400 dark:text-gray-500'
@@ -234,7 +264,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {!isOnline && !isReading && <OfflineBanner />}
 
       {/* Footer */}
-      {!isReading && <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-8 sm:py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">
+      {!isReading && !isNative && <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-8 sm:py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-md bg-[#d97706] flex items-center justify-center text-white text-xs font-bold">

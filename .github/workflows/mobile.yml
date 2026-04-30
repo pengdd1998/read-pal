@@ -1,29 +1,27 @@
 name: Mobile Build
 
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
-    inputs:
-      server_url:
-        description: 'Server URL for Capacitor (e.g. https://your-server.com)'
-        required: true
-        default: 'http://175.178.66.207:8090'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/web/**'
 
 concurrency:
   group: mobile-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '20'
   PNPM_VERSION: '8.12.0'
+  JAVA_VERSION: '21'
 
 jobs:
   # -------------------------------------------------------------------
-  # Build Android APK/AAB
+  # Build Next.js static export (shared by Android + iOS)
   # -------------------------------------------------------------------
-  build-android:
-    name: Android Build
+  build-web:
+    name: Build Static Web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,67 +35,83 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '21'
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build shared package
         run: pnpm --filter @read-pal/shared build
 
-      - name: Set server URL
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "SERVER_URL=${{ inputs.server_url }}" >> $GITHUB_ENV
-          else
-            echo "SERVER_URL=http://175.178.66.207:8090" >> $GITHUB_ENV
-          fi
-
-      - name: Update Capacitor config for remote URL
+      # Static export produces packages/web/out/ with 60+ HTML pages
+      - name: Build Next.js static export
         working-directory: packages/web
+        run: npx next build
+        env:
+          STATIC_EXPORT: '1'
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
+
+      - name: Verify static output
         run: |
-          cat > capacitor.config.ts << 'CONFIG'
-          import type { CapacitorConfig } from '@capacitor/cli';
+          test -f packages/web/out/index.html && echo "Static export OK" || (echo "FAIL: out/index.html missing" && exit 1)
 
-          const config: CapacitorConfig = {
-            appId: 'com.readpal.app',
-            appName: 'read-pal',
-            webDir: 'www',
-            server: {
-              url: '${{ env.SERVER_URL || 'http://175.178.66.207:8090' }}',
-              androidScheme: 'https',
-              cleartext: true,
-            },
-            plugins: {
-              SplashScreen: {
-                launchShowDuration: 2000,
-                launchAutoHide: true,
-                backgroundColor: '#fefdfb',
-                showSpinner: false,
-                androidScaleType: 'CENTER_CROP',
-              },
-              StatusBar: {
-                style: 'LIGHT',
-                backgroundColor: '#fefdfb',
-              },
-              Keyboard: {
-                resize: 'body',
-                resizeOnFullScreen: true,
-              },
-            },
-          };
+      # Upload the out/ directory for downstream jobs to consume
+      - name: Upload static export
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-export
+          path: packages/web/out/
+          retention-days: 1
 
-          export default config;
-          CONFIG
+  # -------------------------------------------------------------------
+  # Android APK (debug, unsigned)
+  # -------------------------------------------------------------------
+  build-android:
+    name: Android APK
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Create minimal web dir for Capacitor
+      - uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      # Java 21 required for Capacitor 8.x / AGP 8.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('packages/web/android/**/*.gradle*', 'packages/web/android/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Download the pre-built static export into packages/web/out/
+      - name: Download static export
+        uses: actions/download-artifact@v4
+        with:
+          name: static-export
+          path: packages/web/out/
+
+      # Initialize native project if absent (first run on a fresh checkout)
+      - name: Ensure Android project exists
         working-directory: packages/web
-        run: mkdir -p www && echo '<!DOCTYPE html><html><body></body></html>' > www/index.html
+        run: test -d android || npx cap add android
 
-      - name: Sync Capacitor
+      # Sync static assets from out/ into the Android project
+      - name: Capacitor sync Android
         working-directory: packages/web
         run: npx cap sync android
 
@@ -110,24 +124,14 @@ jobs:
         with:
           name: read-pal-android-debug
           path: packages/web/android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
-
-      - name: Build release AAB (unsigned)
-        working-directory: packages/web/android
-        run: ./gradlew bundleRelease
-
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: read-pal-android-aab
-          path: packages/web/android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 90
+          retention-days: 7
 
   # -------------------------------------------------------------------
-  # Build iOS IPA (macOS runner required)
+  # iOS IPA (unsigned archive, macOS runner required)
   # -------------------------------------------------------------------
   build-ios:
-    name: iOS Build
+    name: iOS IPA
+    needs: build-web
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -144,72 +148,29 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared package
-        run: pnpm --filter @read-pal/shared build
+      # Download the pre-built static export into packages/web/out/
+      - name: Download static export
+        uses: actions/download-artifact@v4
+        with:
+          name: static-export
+          path: packages/web/out/
 
-      - name: Set server URL
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "SERVER_URL=${{ inputs.server_url }}" >> $GITHUB_ENV
-          else
-            echo "SERVER_URL=http://175.178.66.207:8090" >> $GITHUB_ENV
-          fi
-
-      - name: Update Capacitor config for remote URL
+      # Initialize native project if absent (first run on a fresh checkout)
+      - name: Ensure iOS project exists
         working-directory: packages/web
-        run: |
-          cat > capacitor.config.ts << 'CONFIG'
-          import type { CapacitorConfig } from '@capacitor/cli';
+        run: test -d ios || npx cap add ios
 
-          const config: CapacitorConfig = {
-            appId: 'com.readpal.app',
-            appName: 'read-pal',
-            webDir: 'www',
-            server: {
-              url: '${{ env.SERVER_URL || 'http://175.178.66.207:8090' }}',
-              androidScheme: 'https',
-              cleartext: true,
-            },
-            plugins: {
-              SplashScreen: {
-                launchShowDuration: 2000,
-                launchAutoHide: true,
-                backgroundColor: '#fefdfb',
-                showSpinner: false,
-                androidScaleType: 'CENTER_CROP',
-              },
-              StatusBar: {
-                style: 'LIGHT',
-                backgroundColor: '#fefdfb',
-              },
-              Keyboard: {
-                resize: 'body',
-                resizeOnFullScreen: true,
-              },
-            },
-          };
-
-          export default config;
-          CONFIG
-
-      - name: Create minimal web dir for Capacitor
-        working-directory: packages/web
-        run: mkdir -p www && echo '<!DOCTYPE html><html><body></html>' > www/index.html
-
-      - name: Sync Capacitor
+      # Sync static assets from out/ into the iOS project
+      - name: Capacitor sync iOS
         working-directory: packages/web
         run: npx cap sync ios
 
-      - name: Build iOS (no signing — unsigned archive)
+      # Build unsigned archive using xcodeproj (no xcworkspace in this project)
+      - name: Build iOS archive (unsigned)
         working-directory: packages/web/ios/App
         run: |
-          if [ -d App.xcworkspace ]; then
-            BUILD_SCHEME="-workspace App.xcworkspace"
-          else
-            BUILD_SCHEME="-project App.xcodeproj"
-          fi
           xcodebuild \
-            $BUILD_SCHEME \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -archivePath build/App.xcarchive \
@@ -217,6 +178,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
+      # Package the archive into an IPA for sideloading / re-signing
       - name: Create IPA from archive
         working-directory: packages/web/ios/App
         run: |
@@ -230,78 +192,4 @@ jobs:
         with:
           name: read-pal-ios-unsigned
           path: packages/web/ios/App/build/App.ipa
-          retention-days: 30
-
-  # -------------------------------------------------------------------
-  # Create GitHub Release with artifacts
-  # -------------------------------------------------------------------
-  release:
-    name: Create Release
-    needs: [build-android, build-ios]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download Android APK
-        uses: actions/download-artifact@v4
-        with:
-          name: read-pal-android-debug
-          path: artifacts/
-
-      - name: Download Android AAB
-        uses: actions/download-artifact@v4
-        with:
-          name: read-pal-android-aab
-          path: artifacts/
-
-      - name: Download iOS IPA
-        uses: actions/download-artifact@v4
-        with:
-          name: read-pal-ios-unsigned
-          path: artifacts/
-
-      - name: Rename artifacts with version
-        run: |
-          VERSION="${GITHUB_REF#refs/tags/}"
-          mv artifacts/app-debug.apk "artifacts/read-pal-${VERSION}-android-debug.apk" 2>/dev/null || true
-          mv artifacts/app-release.aab "artifacts/read-pal-${VERSION}-android.aab" 2>/dev/null || true
-          mv artifacts/App.ipa "artifacts/read-pal-${VERSION}-ios.ipa" 2>/dev/null || true
-          ls -la artifacts/
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          # Get previous tag
-          PREV_TAG=$(git tag --sort=-v:refname | head -2 | tail -1)
-          if [ "$PREV_TAG" = "${GITHUB_REF#refs/tags/}" ]; then
-            PREV_TAG=$(git rev-list --max-parents=0 HEAD | head -1)
-          fi
-
-          # Generate changelog from commits
-          echo "## What's Changed" > changelog.md
-          echo "" >> changelog.md
-          git log ${PREV_TAG}..HEAD --pretty=format:"- %s" >> changelog.md
-          echo "" >> changelog.md
-          echo "## Mobile App Artifacts" >> changelog.md
-          echo "" >> changelog.md
-          echo "| File | Platform | Notes |" >> changelog.md
-          echo "|------|----------|-------|" >> changelog.md
-          echo "| \`read-pal-*.apk\` | Android | Debug build, install directly |" >> changelog.md
-          echo "| \`read-pal-*.aab\` | Android | Release bundle for Play Store |" >> changelog.md
-          echo "| \`read-pal-*.ipa\` | iOS | Unsigned, needs signing for install |" >> changelog.md
-
-          cat changelog.md
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          body_path: changelog.md
-          files: |
-            artifacts/*.apk
-            artifacts/*.aab
-            artifacts/*.ipa
-          draft: false
-          prerelease: false
+          retention-days: 7

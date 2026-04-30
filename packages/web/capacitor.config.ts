@@ -3,17 +3,17 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.readpal.app',
   appName: 'read-pal',
-  webDir: 'www',
+  webDir: 'out',
   server: {
-    // Load from live server — avoids static export limitations with dynamic routes.
-    // Comment out 'url' for local development with bundled assets.
+    // Override with CAPACITOR_SERVER_URL for dev testing with live server.
+    // Default: undefined = load from bundled static assets.
     url: process.env.CAPACITOR_SERVER_URL || undefined,
     androidScheme: 'https',
     cleartext: true,
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 0,
       launchAutoHide: true,
       backgroundColor: '#fefdfb',
       showSpinner: false,
@@ -24,7 +24,7 @@ const config: CapacitorConfig = {
       backgroundColor: '#fefdfb',
     },
     Keyboard: {
-      resize: 'body',
+      resize: 'native',
       resizeOnFullScreen: true,
     },
   },

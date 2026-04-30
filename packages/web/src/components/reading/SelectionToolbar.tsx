@@ -7,6 +7,7 @@ import { NotePopover } from './NotePopover';
 import { QuoteCard } from './QuoteCard';
 import { copyToClipboard } from '@/lib/clipboard';
 import { useIsMobile } from '@/hooks/useMediaQuery';
+import { hapticMedium } from '@/hooks/useHaptics';
 
 const QUICK_TAGS = [
   { id: 'discuss', labelKey: 'tag_discuss', emoji: '\u{1F4AC}' },
@@ -77,6 +78,7 @@ export function SelectionToolbar({
 
   const handleHighlight = useCallback(
     (color: string, tags?: string[]) => {
+      hapticMedium();
       onHighlight(text, color, tags);
       setHighlightToast(true);
       setPendingTag(null);
@@ -88,6 +90,7 @@ export function SelectionToolbar({
 
   const handleTagAndHighlight = useCallback(
     (color: string, tag: string) => {
+      hapticMedium();
       onHighlight(text, color, [tag]);
       setHighlightToast(true);
       setPendingTag(null);
@@ -269,6 +272,7 @@ export function SelectionToolbar({
           <NotePopover
             selectedText={text}
             onSave={(note) => {
+              hapticMedium();
               onNote(text, note);
               setShowNote(false);
             }}

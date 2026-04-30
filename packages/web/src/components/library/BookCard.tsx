@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { isCapacitor } from '@/lib/capacitor';
+import { cacheBook, isCached } from '@/lib/mobile-cache';
 import { cacheBookForOffline } from '@/lib/offline-queue';
 import { CollectionPicker } from './CollectionPicker';
 
@@ -61,17 +63,22 @@ export function BookCard({
 
   async function checkOfflineCache() {
     try {
-      const db = await openOfflineDB();
-      if (!db.objectStoreNames.contains('bookContent')) return;
-      const tx = db.transaction('bookContent', 'readonly');
-      const store = tx.objectStore('bookContent');
-      const result = await new Promise<any>((resolve) => {
-        const req = store.get(id);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(null);
-      });
-      if (result && result.chaptersCached > 0) {
-        setCachedOffline(true);
+      if (isCapacitor()) {
+        const cached = await isCached(id);
+        setCachedOffline(cached);
+      } else {
+        const db = await openOfflineDB();
+        if (!db.objectStoreNames.contains('bookContent')) return;
+        const tx = db.transaction('bookContent', 'readonly');
+        const store = tx.objectStore('bookContent');
+        const result = await new Promise<any>((resolve) => {
+          const req = store.get(id);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+        });
+        if (result && result.chaptersCached > 0) {
+          setCachedOffline(true);
+        }
       }
     } catch { /* ignore */ }
   }
@@ -82,11 +89,19 @@ export function BookCard({
     if (cachingOffline || cachedOffline) return;
     setCachingOffline(true);
     try {
-      // First, get the book's chapters
-      const res = await api.get<{ chapters: Array<{ id: string }> }>(`/api/books/${id}/chapters`);
-      if (res.success && res.data?.chapters) {
-        await cacheBookForOffline(id, res.data.chapters);
-        setCachedOffline(true);
+      if (isCapacitor()) {
+        // Use mobile-cache for Capacitor apps
+        const result = await cacheBook(id);
+        if (result.cached > 0) {
+          setCachedOffline(true);
+        }
+      } else {
+        // Use service worker for PWA
+        const res = await api.get<{ chapters: Array<{ id: string }> }>(`/api/books/${id}/chapters`);
+        if (res.success && res.data?.chapters) {
+          await cacheBookForOffline(id, res.data.chapters);
+          setCachedOffline(true);
+        }
       }
     } catch {
       setCachedOffline(false);
@@ -166,6 +181,16 @@ export function BookCard({
 
           {/* Status dot */}
           <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900" style={{ backgroundColor: cfg.dot }} />
+
+          {/* Offline badge (Capacitor only) */}
+          {cachedOffline && isCapacitor() && (
+            <div className="absolute top-2.5 left-2.5 flex items-center gap-0.5 px-1 py-0.5 rounded bg-emerald-500/90 text-white text-[8px] font-semibold">
+              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              offline
+            </div>
+          )}
 
           {/* Info button - links to detail page */}
           <button

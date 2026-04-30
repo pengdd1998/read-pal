@@ -15,6 +15,7 @@ import type { ApiResponse } from '@read-pal/shared';
 import { queueMutation } from '@/lib/offline-queue';
 import { getAuthToken, getAuthTokenAsync } from '@/lib/auth-fetch';
 import { isCapacitor } from '@/lib/capacitor';
+import { getCachedContent } from '@/lib/mobile-cache';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -231,6 +232,10 @@ class ApiClient {
     const inFlight = this.inFlightRequests.get(cacheKey) as Promise<ApiResponse<T>> | undefined;
     if (inFlight) return inFlight;
 
+    // Offline fallback: if we are in Capacitor and offline, try IndexedDB cache
+    // for book content endpoints before making a network request.
+    const bookContentMatch = url.match(/\/api\/upload\/books\/([^/]+)\/content/);
+
     const requestPromise = this.requestWithRetry<ApiResponse<T>>('get', url, { params })
       .then((data) => {
         if (data.success && ttl > 0) {
@@ -238,7 +243,20 @@ class ApiClient {
         }
         return data;
       })
-      .catch(() => {
+      .catch(async () => {
+        // Offline fallback for Capacitor: try IndexedDB cache for book content
+        if (isCapacitor() && bookContentMatch && typeof window !== 'undefined' && !navigator.onLine) {
+          const cachedBook = await getCachedContent(bookContentMatch[1]);
+          if (cachedBook) {
+            return {
+              success: true as const,
+              data: {
+                book: { title: cachedBook.bookTitle },
+                chapters: cachedBook.chapters,
+              } as unknown as T,
+            };
+          }
+        }
         // Return safe default instead of throwing — prevents console noise
         return { success: false as const, error: { code: 'NETWORK_ERROR', message: 'Request failed' } };
       })

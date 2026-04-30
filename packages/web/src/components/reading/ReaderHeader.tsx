@@ -4,8 +4,10 @@ import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 
 const BookmarkToggle = dynamic(() => import('@/components/reading/BookmarkToggle').then((m) => ({ default: m.BookmarkToggle })), { ssr: false });
+const OfflineSaveButton = dynamic(() => import('@/components/reading/OfflineSaveButton').then((m) => ({ default: m.OfflineSaveButton })), { ssr: false });
 
 interface ReaderHeaderProps {
+  bookId: string;
   bookTitle: string;
   author?: string;
   currentChapter: number;
@@ -38,7 +40,7 @@ const HEADER_BG_CLASSES = {
 
 export function ReaderHeader(props: ReaderHeaderProps) {
   const {
-    bookTitle, author, currentChapter, totalChapters, readingWpm, isPaused,
+    bookId, bookTitle, author, currentChapter, totalChapters, readingWpm, isPaused,
     isBookmarked, annotationsCount, theme, searchOpen, sidebarOpen, synthesisOpen,
     studyModeEnabled, onBack, onToggleBookmark, onToggleSearch, onToggleSidebar,
     onToggleSynthesis, onToggleStudyMode, onShowTimeline, onShowSettings, settingsMenu,
@@ -109,6 +111,9 @@ export function ReaderHeader(props: ReaderHeaderProps) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         </button>
+
+        {/* Offline save (Capacitor only) */}
+        <OfflineSaveButton bookId={bookId} />
 
         {/* Settings */}
         <div className="relative">
