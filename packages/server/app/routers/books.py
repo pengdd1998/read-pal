@@ -16,8 +16,11 @@ from app.schemas.book import (
     BookListResponse,
     BookResponse,
     BookStatsResponse,
+    BookTagsUpdateRequest,
     BookUpdate,
+    SeedSampleBookRequest,
 )
+from app.schemas.common import GenericResponse
 from app.services import book_service
 from app.utils.i18n import _get_user_lang, t
 
@@ -56,7 +59,7 @@ async def get_stats(
     return BookStatsResponse(data=stats)
 
 
-@router.get('/{book_id}')
+@router.get('/{book_id}', response_model=GenericResponse)
 async def get_book(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),
@@ -73,7 +76,7 @@ async def get_book(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_book(
     body: BookCreate,
     current_user: dict = Depends(get_current_user),
@@ -87,7 +90,7 @@ async def create_book(
     }
 
 
-@router.patch('/{book_id}')
+@router.patch('/{book_id}', response_model=GenericResponse)
 async def update_book(
     book_id: UUID,
     body: BookUpdate,
@@ -105,12 +108,12 @@ async def update_book(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
-@router.delete('/{book_id}')
+@router.delete('/{book_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_book(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> None:
     """Delete a book and all associated data."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
     deleted = await book_service.delete_book(db, UUID(current_user['id']), book_id)
@@ -119,27 +122,18 @@ async def delete_book(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
-    return {'success': True, 'data': {'message': t('errors.book_deleted', lang)}}
 
 
-@router.put('/{book_id}/tags')
+@router.put('/{book_id}/tags', response_model=GenericResponse)
 async def update_tags(
     book_id: UUID,
-    body: dict,
+    body: BookTagsUpdateRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Set tags for a book.
-
-    Body: ``{"tags": ["fiction", "sci-fi"]}``
-    """
+    """Set tags for a book."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
-    tags = body.get('tags', [])
-    if not isinstance(tags, list):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'INVALID_INPUT', 'message': t('errors.tags_must_be_list', lang)},
-        )
+    tags = body.tags
     book = await book_service.update_tags(db, UUID(current_user['id']), book_id, tags)
     if book is None:
         raise HTTPException(
@@ -149,18 +143,15 @@ async def update_tags(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
-@router.post('/seed-sample', status_code=status.HTTP_201_CREATED)
+@router.post('/seed-sample', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def seed_sample_book(
-    body: dict | None = None,
+    body: SeedSampleBookRequest | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Create a sample book for testing.
-
-    Body (optional): ``{"title": "...", "author": "..."}``
-    """
-    title = (body or {}).get('title', 'Sample Book')
-    author = (body or {}).get('author', 'Sample Author')
+    """Create a sample book for testing."""
+    title = body.title if body else 'Sample Book'
+    author = body.author if body else 'Sample Author'
 
     sample = Book(
         user_id=UUID(current_user['id']),

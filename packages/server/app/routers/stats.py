@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.schemas.common import GenericResponse
 from app.services import stats_service
 
 router = APIRouter(prefix='/api/v1/stats', tags=['stats'])
@@ -17,7 +18,7 @@ def _user_id(current_user: dict) -> UUID:
     return UUID(current_user['id'])
 
 
-@router.get('/dashboard')
+@router.get('/dashboard', response_model=GenericResponse)
 async def get_dashboard(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -28,7 +29,7 @@ async def get_dashboard(
     return {'success': True, 'data': data}
 
 
-@router.get('/reading-calendar')
+@router.get('/reading-calendar', response_model=GenericResponse)
 async def get_reading_calendar(
     months: int | None = Query(None),
     year: int | None = Query(None),
@@ -42,7 +43,7 @@ async def get_reading_calendar(
     return {'success': True, 'data': data}
 
 
-@router.get('/reading-speed')
+@router.get('/reading-speed', response_model=GenericResponse)
 async def get_reading_speed(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -53,7 +54,7 @@ async def get_reading_speed(
     return {'success': True, 'data': data}
 
 
-@router.get('/reading-speed/by-book')
+@router.get('/reading-speed/by-book', response_model=GenericResponse)
 async def get_reading_speed_by_book(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

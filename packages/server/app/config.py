@@ -56,8 +56,9 @@ class Settings(BaseSettings):
     jwt_secret: str = 'dev-secret-key-change-in-production-32ch'
     jwt_expires_in: str = '7d'
 
-    # Pinecone (optional)
-    pinecone_api_key: str | None = None
+    # Vector search: currently using in-process cosine similarity over Redis-cached embeddings.
+    # For scaling beyond ~100 books, integrate a vector DB (Pinecone, Qdrant, or pgvector).
+    # pinecone_api_key: str | None = None  # Removed — not used. Re-enable when integrating vector DB.
 
     # App
     app_env: str = 'development'
@@ -91,6 +92,20 @@ class Settings(BaseSettings):
     def is_dev(self) -> bool:
         """Whether running in development mode."""
         return self.app_env == 'development'
+
+    def validate_production(self) -> list[str]:
+        """Validate settings for production — returns list of warnings."""
+        warnings: list[str] = []
+        if not self.is_dev:
+            if 'change' in self.jwt_secret.lower() or len(self.jwt_secret) < 32:
+                warnings.append(
+                    'JWT_SECRET must be a strong secret (>= 32 chars) in production'
+                )
+            if self.db_password in ('readpal_dev', 'changeme', 'password'):
+                warnings.append(
+                    'DB_PASSWORD must be changed from default in production'
+                )
+        return warnings
 
 
 @lru_cache

@@ -14,13 +14,14 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.reading_session import ReadingSession
 from app.models.user import User
+from app.schemas.common import GenericResponse
 from app.schemas.settings import SettingsUpdate
 from app.utils.i18n import _get_user_lang, t
 
 router = APIRouter(prefix='/api/v1/settings', tags=['settings'])
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def get_settings(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -43,7 +44,7 @@ async def get_settings(
     return {'success': True, 'data': settings}
 
 
-@router.patch('')
+@router.patch('', response_model=GenericResponse)
 async def update_settings(
     body: SettingsUpdate,
     current_user: dict = Depends(get_current_user),
@@ -72,7 +73,7 @@ async def update_settings(
     return {'success': True, 'data': user.settings}
 
 
-@router.get('/reading-goals')
+@router.get('/reading-goals', response_model=GenericResponse)
 async def get_reading_goals(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

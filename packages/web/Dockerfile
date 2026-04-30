@@ -24,10 +24,12 @@ RUN NEXT_PUBLIC_API_URL="" API_URL="" DOCKER_BUILD=1 pnpm --filter @read-pal/web
 
 # Production image
 FROM node:20-alpine
+RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=builder /app/packages/web/.next/standalone ./
 COPY --from=builder /app/packages/web/.next/static ./packages/web/.next/static
-RUN mkdir -p /app/packages/web/public
+RUN mkdir -p /app/packages/web/public && chown -R app:app /app
+USER app
 EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
 CMD ["node", "packages/web/server.js"]

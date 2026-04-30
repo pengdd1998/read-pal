@@ -112,6 +112,17 @@ def _patch_metadata_for_sqlite():
                         from sqlalchemy import ColumnDefault
 
                         column.default = ColumnDefault(lambda ctx: str(uuid4()))
+                elif 'now(' in clause or 'CURRENT_TIMESTAMP' in clause:
+                    # func.now() / CURRENT_TIMESTAMP — strip for SQLite, add Python-side fallback
+                    column.server_default = None
+                    from datetime import datetime, timezone
+
+                    from sqlalchemy import ColumnDefault
+
+                    if column.default is None:
+                        column.default = ColumnDefault(
+                            lambda ctx: datetime.now(tz=timezone.utc),
+                        )
                 elif '::' in clause:
                     clean = re.sub(r'::[\w]+\b', '', clause)
                     column.server_default = DefaultClause(clean)

@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.book import Book
+from app.schemas.common import GenericResponse
 
 router = APIRouter(prefix='/api/v1/recommendations', tags=['recommendations'])
 
@@ -93,7 +94,7 @@ def _score_book(
     return min(score, 1.0)
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_recommendations(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

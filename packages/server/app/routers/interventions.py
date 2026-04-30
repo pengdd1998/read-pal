@@ -20,6 +20,8 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.utils import utcnow
 from app.models.intervention_feedback import InterventionFeedback
+from app.schemas.common import GenericResponse
+from app.schemas.intervention import InterventionCheckRequest, InterventionFeedbackRequest
 from app.utils.i18n import t
 from app.models.reading_session import ReadingSession
 
@@ -138,16 +140,16 @@ async def _analyze_reading_pattern(
 # ---------------------------------------------------------------------------
 
 
-@router.post('/check')
+@router.post('/check', response_model=GenericResponse)
 async def check_intervention(
-    body: dict,
+    body: InterventionCheckRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Check if a reading intervention is needed based on reading patterns."""
     user_id = UUID(current_user['id'])
-    book_id = body.get('bookId') or body.get('book_id')
-    book_uuid = UUID(book_id) if book_id else None
+    book_id = body.book_id or body.bookId
+    book_uuid = UUID(str(book_id)) if book_id else None
 
     intervention = await _analyze_reading_pattern(db, user_id, book_uuid)
 
@@ -164,26 +166,23 @@ async def check_intervention(
     }
 
 
-@router.post('/feedback')
+@router.post('/feedback', response_model=GenericResponse)
 async def submit_feedback(
-    body: dict,
+    body: InterventionFeedbackRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Store intervention feedback."""
     user_id = UUID(current_user['id'])
-    intervention_type = body.get('type', '')
-    helpful = body.get('helpful', False)
-    dismissed = body.get('dismissed', False)
-    book_id = body.get('bookId') or body.get('book_id')
+    book_id = body.book_id or body.bookId
 
     feedback = InterventionFeedback(
         user_id=user_id,
-        book_id=UUID(book_id) if book_id else None,
-        intervention_type=intervention_type,
-        helpful=helpful,
-        dismissed=dismissed,
-        context=body.get('context'),
+        book_id=UUID(str(book_id)) if book_id else None,
+        intervention_type=body.type,
+        helpful=body.helpful,
+        dismissed=body.dismissed,
+        context=body.context,
     )
     db.add(feedback)
     await db.commit()

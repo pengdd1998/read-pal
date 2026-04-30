@@ -304,8 +304,7 @@ async def test_remove_single_book(client):
         f'/api/v1/collections/{col_id}/books/{BOOK_ID}',
         headers=headers,
     )
-    assert resp.status_code == 200
-    assert BOOK_ID not in resp.json()['data']['book_ids']
+    assert resp.status_code == 204
 
 
 @pytest.mark.asyncio

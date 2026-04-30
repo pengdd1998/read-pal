@@ -22,6 +22,15 @@ class FlashcardReview(BaseModel):
     rating: int = Field(ge=0, le=5)
 
 
+class FlashcardGenerateRequest(BaseModel):
+    """Request body for generating flashcards for a book."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    book_id: UUID | None = None
+    bookId: str | None = None
+
+
 class FlashcardResponse(BaseModel):
     """Flashcard response with camelCase aliases for frontend compatibility."""
 

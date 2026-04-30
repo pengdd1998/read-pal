@@ -8,9 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import ai_heavy_limiter
 from app.models.book import Book
 from app.models.flashcard import Flashcard
-from app.schemas.flashcard import FlashcardCreate, FlashcardResponse, FlashcardReview
+from app.schemas.flashcard import FlashcardCreate, FlashcardGenerateRequest, FlashcardResponse, FlashcardReview
+from app.schemas.common import GenericResponse
 from app.services import flashcard_service
 from app.utils.i18n import t
 
@@ -24,7 +26,7 @@ def _serialize_card(card: object) -> dict:
     )
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_flashcards(
     book_id: UUID | None = Query(None),
     page: int = Query(1, ge=1),
@@ -47,7 +49,7 @@ async def list_flashcards(
     }
 
 
-@router.get('/due')
+@router.get('/due', response_model=GenericResponse)
 async def get_due_cards(
     book_id: UUID | None = Query(None),
     db: AsyncSession = Depends(get_db),
@@ -66,7 +68,7 @@ async def get_due_cards(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_flashcard(
     body: FlashcardCreate,
     db: AsyncSession = Depends(get_db),
@@ -77,7 +79,7 @@ async def create_flashcard(
     return {'success': True, 'data': _serialize_card(card)}
 
 
-@router.post('/{flashcard_id}/review')
+@router.post('/{flashcard_id}/review', response_model=GenericResponse)
 async def review_flashcard(
     flashcard_id: UUID,
     body: FlashcardReview,
@@ -100,7 +102,7 @@ async def review_flashcard(
 # --- Frontend compatibility aliases ---
 
 
-@router.get('/decks')
+@router.get('/decks', response_model=GenericResponse)
 async def list_decks(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -141,7 +143,7 @@ async def list_decks(
     }
 
 
-@router.get('/review')
+@router.get('/review', response_model=GenericResponse)
 async def review_alias(
     book_id: UUID | None = Query(None),
     db: AsyncSession = Depends(get_db),
@@ -164,17 +166,15 @@ async def review_alias(
     }
 
 
-@router.post('/generate')
+@router.post('/generate', response_model=GenericResponse)
 async def generate_flashcards(
-    body: dict,
+    body: FlashcardGenerateRequest,
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
+    limiter=ai_heavy_limiter,
 ) -> dict:
-    """Generate flashcards for a book.
-
-    Body: ``{"book_id": "uuid"}``
-    """
-    book_id = body.get('book_id') or body.get('bookId')
+    """Generate flashcards for a book."""
+    book_id = body.book_id or body.bookId
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

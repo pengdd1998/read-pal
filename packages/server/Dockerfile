@@ -18,6 +18,8 @@ COPY . .
 # --- Runtime ---
 FROM python:3.12-slim
 
+RUN addgroup --system app && adduser --system --ingroup app app
+
 WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
@@ -25,6 +27,8 @@ COPY --from=builder /app /app
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
+
+USER app
 
 EXPOSE 8000
 

@@ -38,3 +38,11 @@ class CollectionResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CollectionBooksBatchRequest(BaseModel):
+    """Request body for batch adding/removing books from a collection."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    book_ids: list[str] = Field(default=[], alias='bookIds')

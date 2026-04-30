@@ -3,11 +3,12 @@
 import hashlib
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -73,13 +74,13 @@ class ApiKey(Base):
     created_at: Mapped[datetime] = mapped_column(
         'created_at',
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        server_default=func.now(),
         nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
         'updated_at',
         DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        server_default=func.now(),
+        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
         nullable=False,
     )

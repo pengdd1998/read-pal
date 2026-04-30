@@ -5,14 +5,16 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import ai_heavy_limiter
 from app.models.book import Book
 from app.schemas.knowledge import ConceptSearchResult, GraphData
+from app.schemas.common import GenericResponse
 from app.services.knowledge_service import (
     build_graph,
     get_concepts,
@@ -24,7 +26,7 @@ logger = logging.getLogger('read-pal.knowledge')
 router = APIRouter(prefix='/api/v1/knowledge', tags=['knowledge'])
 
 
-@router.get('/graph')
+@router.get('/graph', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def get_all_graphs(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -34,30 +36,30 @@ async def get_all_graphs(
         select(Book.id).where(Book.user_id == UUID(current_user['id'])),
     )
     book_ids = [row[0] for row in result.all()]
-    graphs = []
+    all_nodes: list[dict] = []
+    all_edges: list[dict] = []
+
     for bid in book_ids:
         try:
             graph_data = await build_graph(db, UUID(current_user['id']), bid)
-            graphs.append(graph_data.model_dump())
+            for node in graph_data.nodes:
+                all_nodes.append(node.model_dump())
+            for edge in graph_data.edges:
+                all_edges.append(edge.model_dump())
         except Exception:
             logger.warning('Failed to build graph for book %s', bid, exc_info=True)
             continue
-    # Merge all per-book graphs into one combined graph
-    all_nodes: list[dict] = []
-    all_edges: list[dict] = []
-    for g in graphs:
-        all_nodes.extend(g.get('nodes', []))
-        all_edges.extend(g.get('edges', []))
 
     return {
         'success': True,
-        'neo4jAvailable': True,
-        'nodes': all_nodes,
-        'edges': all_edges,
+        'data': {
+            'nodes': all_nodes,
+            'edges': all_edges,
+        },
     }
 
 
-@router.get('/themes')
+@router.get('/themes', response_model=GenericResponse)
 async def get_themes(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -65,27 +67,37 @@ async def get_themes(
     """Get themes across all books."""
     return {
         'success': True,
-        'neo4jAvailable': True,
-        'themes': [],
-        'connections': [],
+        'data': {
+            'themes': [],
+            'connections': [],
+        },
     }
 
 
-@router.get('/graph/{book_id}')
+@router.get('/graph/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def get_graph(
     book_id: UUID,
+    force_rebuild: bool = Query(
+        False,
+        description='Force regeneration of the graph via LLM',
+    ),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Get knowledge graph data for a book."""
-    graph_data = await build_graph(db, UUID(current_user['id']), book_id)
+    graph_data = await build_graph(
+        db,
+        UUID(current_user['id']),
+        book_id,
+        force_rebuild=force_rebuild,
+    )
     return {
         'success': True,
         'data': graph_data.model_dump(),
     }
 
 
-@router.get('/search')
+@router.get('/search', response_model=GenericResponse)
 async def search(
     q: str = Query(..., min_length=1, description='Search query'),
     book_id: UUID = Query(..., description='Book ID to search within'),
@@ -105,7 +117,7 @@ async def search(
     }
 
 
-@router.get('/concepts/{book_id}')
+@router.get('/concepts/{book_id}', response_model=GenericResponse)
 async def list_concepts(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),

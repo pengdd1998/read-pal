@@ -1,13 +1,14 @@
 """Reading session model."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, Index, Integer, Text, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -55,9 +56,11 @@ class ReadingSession(Base):
         index=True,
     )
     started_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
+        DateTime(timezone=True),
+        server_default=func.now(),
     )
     ended_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
     duration: Mapped[int] = mapped_column(
@@ -85,11 +88,13 @@ class ReadingSession(Base):
         default=False,
     )
     created_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
+        DateTime(timezone=True),
+        server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
     )
 
     # relationships

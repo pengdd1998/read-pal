@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.schemas.collection import CollectionCreate, CollectionUpdate
+from app.schemas.collection import CollectionBooksBatchRequest, CollectionCreate, CollectionUpdate
+from app.schemas.common import GenericResponse
 from app.services import collection_service
 from app.utils.i18n import t
 
@@ -29,7 +30,7 @@ def _serialize_collection(col: object) -> dict:
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_collection(
     body: CollectionCreate,
     db: AsyncSession = Depends(get_db),
@@ -40,7 +41,7 @@ async def create_collection(
     return {'success': True, 'data': _serialize_collection(col)}
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_collections(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -53,7 +54,7 @@ async def list_collections(
     }
 
 
-@router.get('/{collection_id}')
+@router.get('/{collection_id}', response_model=GenericResponse)
 async def get_collection(
     collection_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -69,7 +70,7 @@ async def get_collection(
     return {'success': True, 'data': _serialize_collection(col)}
 
 
-@router.patch('/{collection_id}')
+@router.patch('/{collection_id}', response_model=GenericResponse)
 async def update_collection(
     collection_id: UUID,
     body: CollectionUpdate,
@@ -105,7 +106,7 @@ async def delete_collection(
         ) from exc
 
 
-@router.get('/{collection_id}/books')
+@router.get('/{collection_id}/books', response_model=GenericResponse)
 async def get_collection_books(
     collection_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -126,18 +127,15 @@ async def get_collection_books(
     }
 
 
-@router.post('/{collection_id}/books')
+@router.post('/{collection_id}/books', response_model=GenericResponse)
 async def add_books_batch(
     collection_id: UUID,
-    body: dict,
+    body: CollectionBooksBatchRequest,
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """Add multiple books to a collection.
-
-    Body: ``{"bookIds": ["uuid1", "uuid2"]}``
-    """
-    book_ids = body.get('bookIds', [])
+    """Add multiple books to a collection."""
+    book_ids = body.book_ids
     col = None
     for bid_str in book_ids:
         try:
@@ -154,18 +152,15 @@ async def add_books_batch(
     return {'success': True, 'data': _serialize_collection(col)}
 
 
-@router.post('/{collection_id}/books/remove')
+@router.post('/{collection_id}/books/remove', response_model=GenericResponse)
 async def remove_books_batch(
     collection_id: UUID,
-    body: dict,
+    body: CollectionBooksBatchRequest,
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """Remove multiple books from a collection.
-
-    Body: ``{"bookIds": ["uuid1", "uuid2"]}``
-    """
-    book_ids = body.get('bookIds', [])
+    """Remove multiple books from a collection."""
+    book_ids = body.book_ids
     col = None
     for bid_str in book_ids:
         try:
@@ -182,7 +177,7 @@ async def remove_books_batch(
     return {'success': True, 'data': _serialize_collection(col)}
 
 
-@router.post('/{collection_id}/books/{book_id}')
+@router.post('/{collection_id}/books/{book_id}', response_model=GenericResponse)
 async def add_book(
     collection_id: UUID,
     book_id: UUID,
@@ -202,16 +197,16 @@ async def add_book(
     return {'success': True, 'data': _serialize_collection(col)}
 
 
-@router.delete('/{collection_id}/books/{book_id}')
+@router.delete('/{collection_id}/books/{book_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def remove_book(
     collection_id: UUID,
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
-) -> dict:
+) -> None:
     """Remove a book from a collection."""
     try:
-        col = await collection_service.remove_book_from_collection(
+        await collection_service.remove_book_from_collection(
             db, UUID(user['id']), collection_id, book_id,
         )
     except ValueError as exc:
@@ -219,4 +214,3 @@ async def remove_book(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': str(exc)},
         ) from exc
-    return {'success': True, 'data': _serialize_collection(col)}

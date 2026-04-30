@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.api_key import ApiKey, generate_api_key
+from app.schemas.api_key import ApiKeyCreateRequest
+from app.schemas.common import GenericResponse
 from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/api-keys', tags=['api-keys'])
@@ -28,7 +30,7 @@ def _serialize_key(key: ApiKey, include_secret: bool = False) -> dict:
     return data
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_api_keys(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -44,17 +46,14 @@ async def list_api_keys(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_api_key(
-    body: dict,
+    body: ApiKeyCreateRequest,
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """Create a new API key.
-
-    Body: ``{"name": "My Key"}``
-    """
-    name = body.get('name', 'API Key')
+    """Create a new API key."""
+    name = body.name
     plain_key, key_hash, key_prefix = generate_api_key()
 
     api_key = ApiKey(

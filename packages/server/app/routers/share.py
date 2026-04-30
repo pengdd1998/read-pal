@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.schemas.common import GenericResponse
 from app.schemas.share import ShareCreate
 from app.services import share_service
 from app.utils.i18n import t
@@ -34,7 +35,7 @@ def _serialize_share(share: object, include_url: bool = False) -> dict:
     return data
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_share(
     body: ShareCreate,
     db: AsyncSession = Depends(get_db),
@@ -45,7 +46,7 @@ async def create_share(
     return {'success': True, 'data': _serialize_share(share, include_url=True)}
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_shares(
     book_id: UUID | None = Query(None),
     db: AsyncSession = Depends(get_db),
@@ -61,7 +62,7 @@ async def list_shares(
     }
 
 
-@router.get('/s/{token}')
+@router.get('/s/{token}', response_model=GenericResponse)
 async def get_shared_content(
     token: str,
     db: AsyncSession = Depends(get_db),
@@ -101,7 +102,7 @@ async def delete_share(
         ) from exc
 
 
-@router.post('/export', status_code=status.HTTP_201_CREATED)
+@router.post('/export', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def export_share(
     body: ShareCreate,
     db: AsyncSession = Depends(get_db),
@@ -112,7 +113,7 @@ async def export_share(
     return {'success': True, 'data': _serialize_share(share, include_url=True)}
 
 
-@router.get('/reading-card')
+@router.get('/reading-card', response_model=GenericResponse)
 async def get_reading_card(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),

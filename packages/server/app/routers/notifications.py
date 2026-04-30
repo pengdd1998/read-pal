@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.schemas.common import GenericResponse
 from app.schemas.notification import NotificationUpdate
 from app.services import notification_service
 from app.utils.i18n import t
@@ -31,7 +32,7 @@ def _serialize_notification(n: object) -> dict:
     }
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_notifications(
     unread_only: bool = Query(False),
     page: int = Query(1, ge=1),
@@ -54,7 +55,7 @@ async def list_notifications(
     }
 
 
-@router.patch('/{notification_id}')
+@router.patch('/{notification_id}', response_model=GenericResponse)
 async def mark_notification_read(
     notification_id: UUID,
     body: NotificationUpdate,
@@ -73,7 +74,7 @@ async def mark_notification_read(
     return {'success': True, 'data': _serialize_notification(notification)}
 
 
-@router.patch('/{notification_id}/read')
+@router.patch('/{notification_id}/read', response_model=GenericResponse)
 async def mark_read_alias(
     notification_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -91,7 +92,7 @@ async def mark_read_alias(
     return {'success': True, 'data': _serialize_notification(notification)}
 
 
-@router.post('/mark-all-read')
+@router.post('/mark-all-read', response_model=GenericResponse)
 async def mark_all_read(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -104,7 +105,7 @@ async def mark_all_read(
     }
 
 
-@router.get('/unread-count')
+@router.get('/unread-count', response_model=GenericResponse)
 async def unread_count(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),

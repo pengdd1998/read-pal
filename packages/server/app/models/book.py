@@ -1,7 +1,7 @@
 """Book model."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING, Optional
@@ -9,6 +9,7 @@ from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
+    DateTime,
     Enum,
     ForeignKey,
     Index,
@@ -19,6 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -123,15 +125,19 @@ class Book(Base):
         default=[],
     )
     added_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
+        DateTime(timezone=True),
+        server_default=func.now(),
     )
     started_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
     completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
     last_read_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
     metadata_: Mapped[Optional[dict]] = mapped_column(
@@ -140,11 +146,13 @@ class Book(Base):
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
+        DateTime(timezone=True),
+        server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
     )
 
     # relationships

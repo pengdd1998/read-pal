@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.schemas.common import GenericResponse
 from app.middleware.rate_limiter import upload_limiter
 from app.services.upload_service import (
     MAX_FILE_SIZE,
@@ -22,7 +23,7 @@ from app.utils.i18n import _get_user_lang, t
 router = APIRouter(prefix='/api/v1/upload', tags=['upload'])
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, dependencies=[upload_limiter])
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[upload_limiter])
 async def upload_book(
     file: UploadFile,
     db: AsyncSession = Depends(get_db),
@@ -53,23 +54,22 @@ async def upload_book(
     file_type = get_file_type(file.filename)
 
     # Save to temp file with streaming size validation
-    with tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=suffix,
-    ) as tmp:
-        while chunk := await file.read(1024 * 1024):  # 1MB chunks
-            file_size += len(chunk)
-            if file_size > MAX_FILE_SIZE:
-                tmp.close()
-                os.unlink(tmp.name)
-                raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f'File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB',
-                )
-            tmp.write(chunk)
-        tmp_path = tmp.name
-
+    tmp_path: str | None = None
     try:
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=suffix,
+        ) as tmp:
+            tmp_path = tmp.name
+            while chunk := await file.read(1024 * 1024):  # 1MB chunks
+                file_size += len(chunk)
+                if file_size > MAX_FILE_SIZE:
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail=f'File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB',
+                    )
+                tmp.write(chunk)
+
         # Final validation (extension + size check)
         error = validate_file(file.filename, file_size)
         if error:
@@ -105,10 +105,14 @@ async def upload_book(
             },
         }
     finally:
-        os.unlink(tmp_path)
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
 
-@router.get('/books/{book_id}/content')
+@router.get('/books/{book_id}/content', response_model=GenericResponse)
 async def get_book_content(
     book_id: UUID,
     user: dict = Depends(get_current_user),

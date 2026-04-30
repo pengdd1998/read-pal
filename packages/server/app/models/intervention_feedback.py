@@ -5,9 +5,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, String, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -44,7 +45,10 @@ class InterventionFeedback(Base):
     helpful: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     dismissed: Mapped[bool] = mapped_column(Boolean, default=False)
     context: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
 
     user: Mapped['User'] = relationship(
         'User',

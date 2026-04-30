@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import ai_heavy_limiter
 from app.models.book import Book
+from app.schemas.common import GenericResponse
 from app.schemas.synthesis import SynthesisRequest, SynthesisResponse
 from app.services.synthesis_service import cross_book_synthesize, synthesize
 from app.utils.i18n import t
@@ -21,7 +23,7 @@ logger = logging.getLogger('read-pal.synthesis')
 router = APIRouter(prefix='/api/v1/synthesis', tags=['synthesis'])
 
 
-@router.post('/{book_id}')
+@router.post('/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def run_synthesis(
     book_id: UUID,
     body: SynthesisRequest | None = None,
@@ -54,7 +56,7 @@ async def run_synthesis(
     }
 
 
-@router.get('/cross-book')
+@router.get('/cross-book', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def run_cross_book_synthesis(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

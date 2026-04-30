@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,8 @@ from app.db import async_session
 
 logger = logging.getLogger('read-pal')
 settings = get_settings()
+
+_is_production = os.getenv('APP_ENV', 'development') == 'production'
 
 
 class ApiCompatMiddleware:
@@ -66,8 +69,9 @@ class ApiCompatMiddleware:
 app = FastAPI(
     title='Read-Pal API',
     version='0.1.0',
-    docs_url='/api/v1/docs',
-    openapi_url='/api/v1/openapi.json',
+    docs_url=None if _is_production else '/api/v1/docs',
+    redoc_url=None if _is_production else '/api/v1/redoc',
+    openapi_url=None if _is_production else '/api/v1/openapi.json',
     redirect_slashes=True,
 )
 
@@ -111,7 +115,7 @@ app.add_middleware(ApiCompatMiddleware)
 async def startup() -> None:
     """Run on application startup."""
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper(), logging.INFO),
         format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
     )
     from app.utils.i18n import load_translations
@@ -121,6 +125,11 @@ async def startup() -> None:
         settings.app_env,
         settings.default_model,
     )
+
+    # Production safety checks
+    prod_warnings = settings.validate_production()
+    for warning in prod_warnings:
+        logger.warning('PRODUCTION WARNING: %s', warning)
 
     if settings.is_dev:
         try:
@@ -150,14 +159,16 @@ async def health_check() -> dict[str, object]:
             await session.execute(text('SELECT 1'))
         checks['database'] = {'status': 'ok'}
     except Exception as exc:
-        checks['database'] = {'status': 'error', 'detail': str(exc)[:200]}
+        logger.error('Health check — database error: %s', exc)
+        checks['database'] = {'status': 'error'}
 
     try:
         redis = get_redis()
         await redis.ping()
         checks['redis'] = {'status': 'ok'}
     except Exception as exc:
-        checks['redis'] = {'status': 'error', 'detail': str(exc)[:200]}
+        logger.error('Health check — redis error: %s', exc)
+        checks['redis'] = {'status': 'error'}
 
     overall = 'ok' if all(c['status'] == 'ok' for c in checks.values()) else 'degraded'
     return {'status': overall, 'version': '0.1.0', 'checks': checks}

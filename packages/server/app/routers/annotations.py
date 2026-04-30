@@ -19,6 +19,7 @@ from app.schemas.annotation import (
     AnnotationUpdate,
     ChapterStatsResponse,
 )
+from app.schemas.common import GenericResponse
 from app.services import annotation_service
 from app.utils.i18n import _get_user_lang, t
 
@@ -49,7 +50,7 @@ async def list_annotations(
     )
 
 
-@router.get('/search')
+@router.get('/search', response_model=GenericResponse)
 async def search_annotations(
     q: str = Query(..., min_length=1),
     book_id: UUID | None = Query(None),
@@ -65,12 +66,14 @@ async def search_annotations(
     )
     return {
         'success': True,
-        'data': [AnnotationResponse.model_validate(a).model_dump(mode='json', by_alias=True) for a in annotations],
-        'total': len(annotations),
+        'data': {
+            'items': [AnnotationResponse.model_validate(a).model_dump(mode='json', by_alias=True) for a in annotations],
+            'total': len(annotations),
+        },
     }
 
 
-@router.get('/tags')
+@router.get('/tags', response_model=GenericResponse)
 async def get_tags(
     bookId: UUID | None = Query(None, alias='bookId'),
     current_user: dict = Depends(get_current_user),
@@ -109,7 +112,7 @@ async def get_chapter_stats(
     return ChapterStatsResponse(data=stats)
 
 
-@router.get('/{annotation_id}')
+@router.get('/{annotation_id}', response_model=GenericResponse)
 async def get_annotation(
     annotation_id: UUID,
     current_user: dict = Depends(get_current_user),
@@ -131,7 +134,7 @@ async def get_annotation(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_annotation(
     body: AnnotationCreate,
     current_user: dict = Depends(get_current_user),
@@ -147,7 +150,7 @@ async def create_annotation(
     }
 
 
-@router.patch('/{annotation_id}')
+@router.patch('/{annotation_id}', response_model=GenericResponse)
 async def update_annotation(
     annotation_id: UUID,
     body: AnnotationUpdate,
@@ -170,12 +173,12 @@ async def update_annotation(
     }
 
 
-@router.delete('/{annotation_id}')
+@router.delete('/{annotation_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_annotation(
     annotation_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> None:
     """Delete an annotation."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
     deleted = await annotation_service.delete_annotation(
@@ -186,4 +189,3 @@ async def delete_annotation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found', lang)},
         )
-    return {'success': True, 'data': {'message': t('errors.annotation_deleted', lang)}}

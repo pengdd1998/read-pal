@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import ai_heavy_limiter
 from app.models.memory_book import MemoryBook
+from app.schemas.common import GenericResponse
 from app.schemas.memory_book import MemoryBookGenerateRequest, MemoryBookResponse
 from app.services.memory_book_service import generate
 from app.utils.i18n import t
@@ -21,11 +23,12 @@ logger = logging.getLogger('read-pal.reading_book')
 router = APIRouter(prefix='/api/v1/reading-book', tags=['reading-book'])
 
 
-@router.post('/generate')
+@router.post('/generate', response_model=GenericResponse)
 async def generate_memory_book(
     body: MemoryBookGenerateRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate a Personal Reading Book for a given book."""
     try:
@@ -46,7 +49,7 @@ async def generate_memory_book(
         ) from exc
 
 
-@router.get('/{book_id}')
+@router.get('/{book_id}', response_model=GenericResponse)
 async def get_memory_book(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),
@@ -77,7 +80,7 @@ async def get_memory_book(
     }
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_memory_books(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

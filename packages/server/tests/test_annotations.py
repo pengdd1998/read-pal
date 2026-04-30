@@ -213,7 +213,7 @@ async def test_delete_annotation(client):
         f"/api/v1/annotations/{ann['id']}",
         headers=auth_headers(reg['token']),
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 204
 
     # Verify it's gone
     resp = await client.get(
@@ -240,7 +240,7 @@ async def test_search_annotations(client):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert data['total'] >= 1
+    assert data['data']['total'] >= 1
 
 
 # ---------------------------------------------------------------------------

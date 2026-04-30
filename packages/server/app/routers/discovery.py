@@ -10,6 +10,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.models.annotation import Annotation
 from app.models.book import Book
+from app.schemas.common import GenericResponse
 
 router = APIRouter(prefix='/api/v1/discovery', tags=['discovery'])
 
@@ -39,7 +40,7 @@ def _book_to_dict(book: Book) -> dict:
     }
 
 
-@router.get('/search')
+@router.get('/search', response_model=GenericResponse)
 async def search(
     q: str = Query('', max_length=200),
     page: int = Query(1, ge=1),
@@ -98,7 +99,7 @@ async def search(
     }
 
 
-@router.get('/semantic')
+@router.get('/semantic', response_model=GenericResponse)
 async def semantic_search(
     q: str = Query('', max_length=200),
     page: int = Query(1, ge=1),
@@ -173,7 +174,7 @@ async def semantic_search(
     }
 
 
-@router.get('/free-books')
+@router.get('/free-books', response_model=GenericResponse)
 async def get_free_books(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

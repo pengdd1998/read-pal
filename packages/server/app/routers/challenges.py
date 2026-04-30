@@ -17,6 +17,7 @@ from app.models.annotation import Annotation
 from app.models.book import Book, BookStatus
 from app.models.flashcard import Flashcard
 from app.models.reading_session import ReadingSession
+from app.schemas.common import GenericResponse
 from app.utils import utcnow
 
 router = APIRouter(prefix='/api/v1/challenges', tags=['challenges'])
@@ -247,7 +248,7 @@ async def _get_monthly_books(
     )
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_challenges(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

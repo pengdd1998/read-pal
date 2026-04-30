@@ -10,7 +10,8 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import account_limiter
 from app.models.user import User
-from app.schemas.auth import MessageResponse, UpdateProfileRequest
+from app.schemas.auth import UpdateProfileRequest
+from app.schemas.common import GenericResponse
 from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.account')
@@ -22,7 +23,7 @@ router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
 # PATCH /api/v1/auth/me
 # ---------------------------------------------------------------------------
 
-@router.patch('/me')
+@router.patch('/me', response_model=GenericResponse)
 async def update_me(
     body: UpdateProfileRequest,
     current_user: dict = Depends(get_current_user),
@@ -65,11 +66,11 @@ async def update_me(
 # DELETE /api/v1/auth/account
 # ---------------------------------------------------------------------------
 
-@router.delete('/account', dependencies=[account_limiter])
+@router.delete('/account', status_code=status.HTTP_204_NO_CONTENT, dependencies=[account_limiter])
 async def delete_account(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> MessageResponse:
+) -> None:
     """Delete user account and all cascading data."""
     user_id = current_user['id']
 
@@ -86,5 +87,3 @@ async def delete_account(
     await db.flush()
 
     logger.info('Account deleted: %s', user_id)
-
-    return MessageResponse(data={'message': t('errors.account_deleted')})

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.schemas.common import GenericResponse
 from app.schemas.webhook import WebhookCreate, WebhookUpdate
 from app.services import webhook_service
 from app.utils.i18n import t
@@ -14,7 +15,7 @@ from app.utils.i18n import t
 router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'])
 
 
-@router.get('/events')
+@router.get('/events', response_model=GenericResponse)
 async def list_webhook_events(
     user: dict = Depends(get_current_user),
 ) -> dict:
@@ -37,7 +38,7 @@ async def list_webhook_events(
     return {'success': True, 'data': events}
 
 
-@router.post('/{webhook_id}/test')
+@router.post('/{webhook_id}/test', response_model=GenericResponse)
 async def test_webhook(
     webhook_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -64,7 +65,7 @@ async def test_webhook(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_webhook(
     body: WebhookCreate,
     db: AsyncSession = Depends(get_db),
@@ -84,7 +85,7 @@ async def create_webhook(
     }
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_webhooks(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -111,7 +112,7 @@ async def list_webhooks(
     }
 
 
-@router.patch('/{webhook_id}')
+@router.patch('/{webhook_id}', response_model=GenericResponse)
 async def update_webhook(
     webhook_id: UUID,
     body: WebhookUpdate,
@@ -155,7 +156,7 @@ async def delete_webhook(
         ) from exc
 
 
-@router.get('/{webhook_id}/deliveries')
+@router.get('/{webhook_id}/deliveries', response_model=GenericResponse)
 async def get_delivery_logs(
     webhook_id: UUID,
     page: int = Query(1, ge=1),

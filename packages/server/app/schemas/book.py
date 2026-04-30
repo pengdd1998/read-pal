@@ -69,3 +69,16 @@ class BookListResponse(BaseModel):
 class BookStatsResponse(BaseModel):
     success: bool = True
     data: dict  # {total, reading, completed, unread, total_pages_read}
+
+
+class BookTagsUpdateRequest(BaseModel):
+    """Request body for updating book tags."""
+
+    tags: list[str] = []
+
+
+class SeedSampleBookRequest(BaseModel):
+    """Request body for seeding a sample book."""
+
+    title: str = Field(default='Sample Book', max_length=255)
+    author: str = Field(default='Sample Author', max_length=255)

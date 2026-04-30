@@ -1,20 +1,27 @@
-"""Knowledge graph service — NetworkX-based concept extraction and graph building."""
+"""Knowledge graph service — NetworkX-based concept extraction and graph building.
+
+Persistence strategy:
+  - Graphs are cached in Redis for 7 days (key: ``kg:{user_id}:{book_id}:graph``).
+  - A content hash is stored alongside the graph so that annotation changes
+    automatically invalidate the cache.
+  - Callers can pass ``force_rebuild=True`` to skip the cache and regenerate.
+"""
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from typing import Any
 from uuid import UUID
 
 import networkx as nx
-import redis.asyncio as aioredis
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import get_redis as _get_redis
 from app.models.annotation import Annotation
-from app.models.book import Book
 from app.prompts import KNOWLEDGE_EXTRACTION_HUMAN, KNOWLEDGE_EXTRACTION_SYSTEM
 from app.schemas.knowledge import (
     ConceptSearchResult,
@@ -24,14 +31,41 @@ from app.schemas.knowledge import (
 )
 from app.schemas.llm_outputs import ConceptList
 from app.services.llm import safe_llm_invoke
-from app.utils.output_filter import filter_output
 from app.utils.sanitizer import sanitize_annotations
 from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.knowledge')
 
-GRAPH_CACHE_PREFIX = 'graph:'
-GRAPH_CACHE_TTL = 86_400  # 24 hours
+# ---------------------------------------------------------------------------
+# Redis key layout
+# ---------------------------------------------------------------------------
+# kg:{user_id}:{book_id}:graph  – serialised GraphData JSON (7-day TTL)
+# kg:{user_id}:{book_id}:hash   – content hash hex string (7-day TTL)
+# ---------------------------------------------------------------------------
+
+GRAPH_KEY_PREFIX = 'kg:'
+GRAPH_TTL = 7 * 86_400  # 7 days
+
+
+def _graph_cache_key(user_id: UUID, book_id: UUID) -> str:
+    return f'{GRAPH_KEY_PREFIX}{user_id}:{book_id}:graph'
+
+
+def _hash_cache_key(user_id: UUID, book_id: UUID) -> str:
+    return f'{GRAPH_KEY_PREFIX}{user_id}:{book_id}:hash'
+
+
+def _content_hash(texts: list[str]) -> str:
+    """Deterministic SHA-256 hash over the concatenated annotation content."""
+    h = hashlib.sha256()
+    for text in texts:
+        h.update(text.encode())
+    return h.hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# Data loading
+# ---------------------------------------------------------------------------
 
 
 async def _load_annotations(
@@ -51,6 +85,11 @@ async def _load_annotations(
         .limit(limit),
     )
     return list(result.scalars().all())
+
+
+# ---------------------------------------------------------------------------
+# LLM concept extraction
+# ---------------------------------------------------------------------------
 
 
 async def _extract_concepts_via_llm(
@@ -96,59 +135,9 @@ async def _extract_concepts_via_llm(
     return []
 
 
-def _build_nx_graph(concepts: list[dict[str, Any]]) -> nx.Graph:
-    """Build a NetworkX graph from extracted concepts."""
-    graph = nx.Graph()
-
-    for concept in concepts:
-        name = concept.get('name', '').strip()
-        if not name:
-            continue
-
-        node_type = concept.get('type', 'concept')
-        related = concept.get('related', [])
-
-        if not graph.has_node(name):
-            graph.add_node(name, type=node_type, size=1)
-        else:
-            graph.nodes[name]['size'] += 1
-
-        for related_name in related:
-            related_name = related_name.strip()
-            if not related_name or related_name == name:
-                continue
-            if not graph.has_node(related_name):
-                graph.add_node(related_name, type='concept', size=1)
-            if graph.has_edge(name, related_name):
-                graph.edges[name, related_name]['weight'] += 1.0
-            else:
-                graph.add_edge(name, related_name, weight=1.0, label='related')
-
-    return graph
-
-
-def _graph_to_data(graph: nx.Graph) -> GraphData:
-    """Convert NetworkX graph to frontend-friendly GraphData."""
-    nodes = [
-        GraphNode(
-            id=name,
-            label=name,
-            type=data.get('type', 'concept'),
-            size=data.get('size', 1),
-            metadata={},
-        )
-        for name, data in graph.nodes(data=True)
-    ]
-    edges = [
-        GraphEdge(
-            source=source,
-            target=target,
-            label=data.get('label', ''),
-            weight=data.get('weight', 1.0),
-        )
-        for source, target, data in graph.edges(data=True)
-    ]
-    return GraphData(nodes=nodes, edges=edges)
+# ---------------------------------------------------------------------------
+# Rule-based fallback
+# ---------------------------------------------------------------------------
 
 
 def _extract_concepts_from_keywords(
@@ -193,48 +182,179 @@ def _extract_concepts_from_keywords(
     return concept_list[:30]  # Cap at 30 concepts
 
 
+# ---------------------------------------------------------------------------
+# Graph construction helpers
+# ---------------------------------------------------------------------------
+
+
+def _build_nx_graph(concepts: list[dict[str, Any]]) -> nx.Graph:
+    """Build a NetworkX graph from extracted concepts."""
+    graph = nx.Graph()
+
+    for concept in concepts:
+        name = concept.get('name', '').strip()
+        if not name:
+            continue
+
+        node_type = concept.get('type', 'concept')
+        related = concept.get('related', [])
+
+        if not graph.has_node(name):
+            graph.add_node(name, type=node_type, size=1)
+        else:
+            graph.nodes[name]['size'] += 1
+
+        for related_name in related:
+            related_name = related_name.strip()
+            if not related_name or related_name == name:
+                continue
+            if not graph.has_node(related_name):
+                graph.add_node(related_name, type='concept', size=1)
+            if graph.has_edge(name, related_name):
+                graph[name][related_name]['weight'] += 1.0
+            else:
+                graph.add_edge(name, related_name, weight=1.0, label='related')
+
+    return graph
+
+
+def _graph_to_data(graph: nx.Graph) -> GraphData:
+    """Convert NetworkX graph to frontend-friendly GraphData."""
+    nodes = [
+        GraphNode(
+            id=name,
+            label=name,
+            type=data.get('type', 'concept'),
+            size=data.get('size', 1),
+            metadata={},
+        )
+        for name, data in graph.nodes(data=True)
+    ]
+    edges = [
+        GraphEdge(
+            source=source,
+            target=target,
+            label=data.get('label', ''),
+            weight=data.get('weight', 1.0),
+        )
+        for source, target, data in graph.edges(data=True)
+    ]
+    return GraphData(nodes=nodes, edges=edges)
+
+
+# ---------------------------------------------------------------------------
+# Redis persistence
+# ---------------------------------------------------------------------------
+
+
+async def _load_cached_graph(
+    user_id: UUID,
+    book_id: UUID,
+    current_hash: str,
+) -> GraphData | None:
+    """Try to load a cached graph from Redis.
+
+    Returns ``None`` when:
+      - Redis is unavailable
+      - No cached graph exists
+      - The content hash has changed (auto-invalidation)
+    """
+    cache_key = _graph_cache_key(user_id, book_id)
+    hash_key = _hash_cache_key(user_id, book_id)
+
+    try:
+        r = _get_redis()
+        cached_hash, cached_graph = await r.mget(hash_key, cache_key)
+
+        if cached_graph is None:
+            return None
+
+        # Content hash mismatch — annotations changed, invalidate
+        if cached_hash is not None and cached_hash != current_hash:
+            logger.info(
+                'Content hash mismatch for %s:%s, invalidating cache',
+                user_id,
+                book_id,
+            )
+            await r.delete(cache_key, hash_key)
+            return None
+
+        return GraphData.model_validate_json(cached_graph)
+    except Exception:
+        logger.debug('Redis cache read failed, will rebuild graph')
+        return None
+
+
+async def _persist_graph(
+    user_id: UUID,
+    book_id: UUID,
+    graph_data: GraphData,
+    content_hash: str,
+) -> None:
+    """Persist graph data and content hash to Redis with 7-day TTL."""
+    cache_key = _graph_cache_key(user_id, book_id)
+    hash_key = _hash_cache_key(user_id, book_id)
+
+    try:
+        r = _get_redis()
+        pipe = r.pipeline()
+        pipe.setex(cache_key, GRAPH_TTL, graph_data.model_dump_json())
+        pipe.setex(hash_key, GRAPH_TTL, content_hash)
+        await pipe.execute()
+    except Exception:
+        logger.debug('Redis cache write failed')
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+
 async def build_graph(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
+    force_rebuild: bool = False,
 ) -> GraphData:
-    """Build a knowledge graph for a user's annotations on a book.
+    """Build (or load from cache) a knowledge graph for a user's annotations.
 
-    Results are cached in Redis for 1 hour.
+    Args:
+        db: Database session.
+        user_id: Owner of the annotations.
+        book_id: Book whose annotations to process.
+        force_rebuild: When ``True``, skip the cache and regenerate the graph
+            from scratch via LLM.
+
+    Returns:
+        ``GraphData`` with ``nodes`` and ``edges`` lists (always valid, never
+        ``None`` — empty lists when there are no annotations).
     """
-    cache_key = f'{GRAPH_CACHE_PREFIX}{user_id}:{book_id}'
-
-    # Check cache first
-    try:
-        r = _get_redis()
-        cached = await r.get(cache_key)
-        if cached:
-            return GraphData.model_validate_json(cached)
-    except Exception:
-        logger.debug('Redis cache read failed, rebuilding graph')
-
-    # Load annotations and extract concepts
+    # 1. Load annotations and compute content hash --------------------------
     annotations = await _load_annotations(db, user_id, book_id)
     texts = [a.content for a in annotations if a.content.strip()]
+    current_hash = _content_hash(texts)
 
+    # 2. Return empty graph when there is nothing to process ----------------
     if not texts:
         return GraphData(nodes=[], edges=[])
 
+    # 3. Try cache (unless force_rebuild) -----------------------------------
+    if not force_rebuild:
+        cached = await _load_cached_graph(user_id, book_id, current_hash)
+        if cached is not None:
+            return cached
+
+    # 4. Build via LLM (with rule-based fallback) ---------------------------
     concepts = await _extract_concepts_via_llm(texts)
 
-    # Fallback: rule-based concept extraction when LLM fails
     if not concepts:
         concepts = _extract_concepts_from_keywords(texts)
 
     graph = _build_nx_graph(concepts)
     data = _graph_to_data(graph)
 
-    # Cache the result
-    try:
-        r = _get_redis()
-        await r.setex(cache_key, GRAPH_CACHE_TTL, data.model_dump_json())
-    except Exception:
-        logger.debug('Redis cache write failed')
+    # 5. Persist to Redis ---------------------------------------------------
+    await _persist_graph(user_id, book_id, data, current_hash)
 
     return data
 

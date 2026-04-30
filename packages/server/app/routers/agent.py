@@ -11,16 +11,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import ai_heavy_limiter, chat_limiter, stream_limiter
 from app.models.chat_message import ChatMessage
 from app.schemas.agent import (
+    AdvancePlanRequest,
     AIFeedbackRequest,
     ChatRequest,
     ChatResponse,
     ExplainRequest,
+    MoodSceneRequest,
     ReadingPlanRequest,
     ReadingPlanResponse,
     SummarizeRequest,
 )
+from app.schemas.common import GenericResponse
 from app.services import companion_service
 from app.utils.i18n import DEFAULT_LANGUAGE, _get_user_lang, t
 
@@ -66,7 +70,7 @@ async def _sse_stream(
         yield error_msg.encode('utf-8')
 
 
-@router.post('/chat', response_model=ChatResponse)
+@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter])
 async def chat(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -92,7 +96,7 @@ async def chat(
     return ChatResponse(data=result)
 
 
-@router.post('/stream')
+@router.post('/stream', dependencies=[stream_limiter])
 async def stream(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -119,7 +123,7 @@ async def stream(
     )
 
 
-@router.post('/summarize', response_model=ChatResponse)
+@router.post('/summarize', response_model=ChatResponse, dependencies=[ai_heavy_limiter])
 async def summarize(
     body: SummarizeRequest,
     current_user: dict = Depends(get_current_user),
@@ -144,7 +148,7 @@ async def summarize(
     return ChatResponse(data=result)
 
 
-@router.post('/explain', response_model=ChatResponse)
+@router.post('/explain', response_model=ChatResponse, dependencies=[ai_heavy_limiter])
 async def explain(
     body: ExplainRequest,
     current_user: dict = Depends(get_current_user),
@@ -173,7 +177,7 @@ async def explain(
 # --- Frontend compatibility aliases ---
 
 
-@router.post('/chat/stream')
+@router.post('/chat/stream', dependencies=[stream_limiter])
 async def chat_stream_alias(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -200,7 +204,7 @@ async def chat_stream_alias(
     )
 
 
-@router.get('/history')
+@router.get('/history', response_model=GenericResponse)
 async def get_chat_history(
     book_id: UUID | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
@@ -231,7 +235,7 @@ async def get_chat_history(
     }
 
 
-@router.post('/discussion-questions')
+@router.post('/discussion-questions', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def discussion_questions(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -256,23 +260,69 @@ async def discussion_questions(
     return {'success': True, 'data': result}
 
 
-@router.post('/mood/scene')
+@router.post('/mood/scene', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def mood_scene(
-    body: dict,
+    body: MoodSceneRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Return a mood-based scene description."""
-    mood = body.get('mood', 'neutral')
-    return {
-        'success': True,
-        'data': {
-            'mood': mood,
-            'scene': f'A {mood} reading atmosphere',
-            'suggestion': 'Enjoy your reading session',
-            'color': '#4A90D9',
-        },
+    """Generate a mood-based scene description using the LLM."""
+    import json
+
+    from langchain_core.messages import HumanMessage, SystemMessage
+
+    from app.services.llm import safe_llm_call
+
+    lang = await _get_user_lang(db, UUID(current_user['id']))
+    mood = body.mood
+
+    messages = [
+        SystemMessage(content=(
+            'You are an atmospheric reading companion. '
+            'Reply only with valid JSON containing keys: '
+            'scene (string, 2-3 sentence vivid description), '
+            'suggestion (string, one short reading tip), '
+            'color (string, hex color code).'
+        )),
+        HumanMessage(content=(
+            f'The reader is in a "{mood}" mood. '
+            f'Generate a mood-based reading scene. '
+            f'Use language code: {lang}.'
+        )),
+    ]
+
+    fallback = {
+        'mood': mood,
+        'scene': f'A calm, {mood} reading atmosphere.',
+        'suggestion': 'Take a moment to settle in before you start reading.',
+        'color': '#4A90D9',
     }
+
+    try:
+        raw = await safe_llm_call(messages, fallback='', log_label='mood-scene')
+    except Exception:
+        logger.warning('Mood scene LLM call failed, using fallback')
+        raw = ''
+
+    if raw:
+        try:
+            # Strip markdown fences if present
+            text = raw.strip()
+            if text.startswith('```'):
+                text = text.split('\n', 1)[-1].rsplit('```', 1)[0].strip()
+            parsed = json.loads(text)
+            data = {
+                'mood': mood,
+                'scene': parsed.get('scene', fallback['scene']),
+                'suggestion': parsed.get('suggestion', fallback['suggestion']),
+                'color': parsed.get('color', fallback['color']),
+            }
+        except (json.JSONDecodeError, KeyError):
+            data = fallback
+    else:
+        data = fallback
+
+    return {'success': True, 'data': data}
 
 
 # ---------------------------------------------------------------------------
@@ -280,7 +330,7 @@ async def mood_scene(
 # ---------------------------------------------------------------------------
 
 
-@router.post('/feedback')
+@router.post('/feedback', response_model=GenericResponse)
 async def submit_feedback(
     body: AIFeedbackRequest,
     current_user: dict = Depends(get_current_user),
@@ -313,7 +363,7 @@ async def submit_feedback(
 # ---------------------------------------------------------------------------
 
 
-@router.post('/reading-plan', response_model=ReadingPlanResponse)
+@router.post('/reading-plan', response_model=ReadingPlanResponse, dependencies=[ai_heavy_limiter])
 async def create_reading_plan(
     body: ReadingPlanRequest,
     current_user: dict = Depends(get_current_user),
@@ -347,7 +397,7 @@ async def create_reading_plan(
     return ReadingPlanResponse(data=result)
 
 
-@router.get('/reading-plan')
+@router.get('/reading-plan', response_model=GenericResponse)
 async def get_reading_plan(
     book_id: UUID = Query(...),
     current_user: dict = Depends(get_current_user),
@@ -366,9 +416,9 @@ async def get_reading_plan(
     return {'success': True, 'data': result}
 
 
-@router.post('/reading-plan/advance')
+@router.post('/reading-plan/advance', response_model=GenericResponse)
 async def advance_reading_plan(
-    body: dict,
+    body: AdvancePlanRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -377,17 +427,10 @@ async def advance_reading_plan(
 
     lang = await _get_user_lang(db, UUID(current_user['id']))
 
-    book_id = body.get('book_id')
-    if not book_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'MISSING_FIELD', 'message': t('errors.book_id_required', lang)},
-        )
-
     result = await advance_plan(
         db=db,
         user_id=UUID(current_user['id']),
-        book_id=UUID(book_id),
+        book_id=body.book_id,
     )
     if not result:
         return {'success': True, 'data': None, 'message': t('errors.no_active_plan', lang)}

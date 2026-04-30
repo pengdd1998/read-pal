@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import chat_limiter
 from app.schemas.agent import ChatResponse, FriendChatRequest
+from app.schemas.common import GenericResponse
 from app.services import friend_service
 from app.utils.i18n import t
 
@@ -22,6 +24,7 @@ async def chat(
     body: FriendChatRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    limiter=chat_limiter,
 ) -> ChatResponse:
     """Reading friend chat endpoint with persona selection."""
     try:
@@ -45,7 +48,7 @@ async def chat(
     return ChatResponse(data=result)
 
 
-@router.get('/relationship')
+@router.get('/relationship', response_model=GenericResponse)
 async def get_relationship(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

@@ -55,3 +55,21 @@ class SessionListResponse(BaseModel):
 class SessionStatsResponse(BaseModel):
     success: bool = True
     data: dict  # {total_sessions, total_duration, total_pages_read, ...}
+
+
+class SessionStartRequest(BaseModel):
+    """Request body for the /start alias endpoint (accepts both cases)."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    book_id: str | None = None
+    bookId: str | None = None
+
+
+class HeartbeatRequest(BaseModel):
+    """Request body for session heartbeat."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    pages_read: int | None = Field(None, ge=0)
+    pagesRead: int | None = Field(None, ge=0, alias='pagesRead')

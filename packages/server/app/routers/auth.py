@@ -39,6 +39,7 @@ from app.schemas.auth import (
     RegisterRequest,
     UserResponse,
 )
+from app.schemas.common import GenericResponse
 from app.utils.i18n import _get_user_lang, t
 
 logger = logging.getLogger('read-pal.auth')
@@ -50,7 +51,7 @@ router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
 # GET /api/auth/google/status
 # ---------------------------------------------------------------------------
 
-@router.get('/google/status')
+@router.get('/google/status', response_model=GenericResponse)
 async def google_oauth_status() -> dict:
     """Return whether Google OAuth is configured.
 
@@ -203,7 +204,7 @@ async def register(
 # GET /api/v1/auth/me
 # ---------------------------------------------------------------------------
 
-@router.get('/me')
+@router.get('/me', response_model=GenericResponse)
 async def get_me(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -307,7 +308,7 @@ async def logout(
 # POST /api/v1/auth/refresh
 # ---------------------------------------------------------------------------
 
-@router.post('/refresh', dependencies=[refresh_limiter])
+@router.post('/refresh', response_model=GenericResponse, dependencies=[refresh_limiter])
 async def refresh(
     request: Request,
     current_user: dict = Depends(get_current_user),

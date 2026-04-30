@@ -93,10 +93,7 @@ async def test_delete_account(client):
     headers = auth_headers(reg['token'])
 
     resp = await client.delete('/api/v1/auth/account', headers=headers)
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body['success'] is True
-    assert 'deleted' in body['data']['message'].lower()
+    assert resp.status_code == 204
 
     # Subsequent request with the same token should fail (user gone)
     resp2 = await client.get('/api/v1/auth/me', headers=headers)

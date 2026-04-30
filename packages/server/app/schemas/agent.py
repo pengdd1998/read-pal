@@ -87,3 +87,17 @@ class CompanionModeRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     mode: Literal['casual', 'scholar', 'socratic']
+
+
+class MoodSceneRequest(BaseModel):
+    """Request body for mood-based scene."""
+
+    mood: str = Field(default='neutral', max_length=50)
+
+
+class AdvancePlanRequest(BaseModel):
+    """Request body for advancing a reading plan."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    book_id: UUID

@@ -11,15 +11,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import ai_heavy_limiter
 from app.utils import utcnow
 from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import (
+    HeartbeatRequest,
     SessionCreate,
     SessionListResponse,
     SessionResponse,
+    SessionStartRequest,
     SessionStatsResponse,
     SessionUpdate,
 )
+from app.schemas.common import GenericResponse
 from app.services import reading_session_service
 from app.utils.i18n import t
 
@@ -48,7 +52,7 @@ async def list_sessions(
     )
 
 
-@router.get('/active')
+@router.get('/active', response_model=GenericResponse)
 async def get_active_session(
     book_id: UUID = Query(...),
     current_user: dict = Depends(get_current_user),
@@ -76,7 +80,7 @@ async def get_session_stats(
     return SessionStatsResponse(data=stats)
 
 
-@router.get('/{session_id}')
+@router.get('/{session_id}', response_model=GenericResponse)
 async def get_session(
     session_id: UUID,
     current_user: dict = Depends(get_current_user),
@@ -97,7 +101,7 @@ async def get_session(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_session(
     body: SessionCreate,
     current_user: dict = Depends(get_current_user),
@@ -113,7 +117,7 @@ async def create_session(
     }
 
 
-@router.patch('/{session_id}/end')
+@router.patch('/{session_id}/end', response_model=GenericResponse)
 async def end_session(
     session_id: UUID,
     body: SessionUpdate | None = None,
@@ -138,17 +142,14 @@ async def end_session(
 # --- Frontend compatibility aliases ---
 
 
-@router.post('/start', status_code=status.HTTP_201_CREATED)
+@router.post('/start', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def start_session(
-    body: dict,
+    body: SessionStartRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Alias for POST / — create a new reading session.
-
-    Accepts both ``book_id`` and ``bookId`` (camelCase) keys.
-    """
-    book_id = body.get('book_id') or body.get('bookId')
+    """Alias for POST / — create a new reading session."""
+    book_id = body.book_id or body.bookId
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -171,7 +172,7 @@ async def start_session(
     }
 
 
-@router.post('/{session_id}/end')
+@router.post('/{session_id}/end', response_model=GenericResponse)
 async def end_session_post(
     session_id: UUID,
     body: SessionUpdate | None = None,
@@ -193,18 +194,15 @@ async def end_session_post(
     }
 
 
-@router.patch('/{session_id}/heartbeat')
-@router.post('/{session_id}/heartbeat')
+@router.patch('/{session_id}/heartbeat', response_model=GenericResponse)
+@router.post('/{session_id}/heartbeat', response_model=GenericResponse)
 async def heartbeat_session(
     session_id: UUID,
-    body: dict | None = None,
+    body: HeartbeatRequest | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Update session activity timestamp (heartbeat).
-
-    Optionally accepts ``pagesRead`` to track reading progress.
-    """
+    """Update session activity timestamp (heartbeat)."""
     result = await db.execute(
         select(ReadingSession).where(
             ReadingSession.id == session_id,
@@ -218,20 +216,20 @@ async def heartbeat_session(
             detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
         )
     session.updated_at = utcnow()
-    # Accept pagesRead (camelCase) from frontend
     if body:
-        pages_read = body.get('pagesRead') or body.get('pages_read')
+        pages_read = body.pages_read or body.pagesRead
         if pages_read is not None:
             session.pages_read = int(pages_read)
     await db.flush()
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 
 
-@router.post('/{session_id}/summarize')
+@router.post('/{session_id}/summarize', response_model=GenericResponse)
 async def summarize_session(
     session_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate a brief AI summary of the reading session."""
     session = await reading_session_service.get_session(
@@ -270,7 +268,7 @@ async def summarize_session(
     return {'success': True, 'data': {'summary': summary}}
 
 
-@router.get('/book/{book_id}/log')
+@router.get('/book/{book_id}/log', response_model=SessionListResponse)
 async def get_book_session_log(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),

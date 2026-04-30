@@ -16,13 +16,14 @@ from app.schemas.book_club import (
     DiscussionResponse,
     MemberResponse,
 )
+from app.schemas.common import GenericResponse
 from app.services import book_club_service
 from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'])
 
 
-@router.post('', status_code=status.HTTP_201_CREATED)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def create_club(
     body: BookClubCreate,
     db: AsyncSession = Depends(get_db),
@@ -40,7 +41,7 @@ async def create_club(
     }
 
 
-@router.get('/discover')
+@router.get('/discover', response_model=GenericResponse)
 async def discover_clubs(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -60,7 +61,7 @@ async def discover_clubs(
     }
 
 
-@router.get('')
+@router.get('', response_model=GenericResponse)
 async def list_clubs(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -82,7 +83,7 @@ async def list_clubs(
     }
 
 
-@router.get('/{club_id}')
+@router.get('/{club_id}', response_model=GenericResponse)
 async def get_club(
     club_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -98,7 +99,7 @@ async def get_club(
     return {'success': True, 'data': club}
 
 
-@router.patch('/{club_id}')
+@router.patch('/{club_id}', response_model=GenericResponse)
 async def update_club(
     club_id: UUID,
     body: BookClubUpdate,
@@ -143,7 +144,7 @@ async def delete_club(
         ) from exc
 
 
-@router.post('/join')
+@router.post('/join', response_model=GenericResponse)
 async def join_club(
     body: ClubJoinRequest,
     db: AsyncSession = Depends(get_db),
@@ -168,7 +169,7 @@ async def join_club(
     }
 
 
-@router.post('/{club_id}/leave')
+@router.post('/{club_id}/leave', response_model=GenericResponse)
 async def leave_club(
     club_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -185,7 +186,7 @@ async def leave_club(
     return {'success': True, 'data': {'message': t('errors.left_club')}}
 
 
-@router.post('/join-code')
+@router.post('/join-code', response_model=GenericResponse)
 async def join_by_code(
     body: ClubJoinRequest,
     db: AsyncSession = Depends(get_db),
@@ -210,7 +211,7 @@ async def join_by_code(
     }
 
 
-@router.get('/{club_id}/members')
+@router.get('/{club_id}/members', response_model=GenericResponse)
 async def get_members(
     club_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -221,7 +222,7 @@ async def get_members(
     return {'success': True, 'data': members}
 
 
-@router.get('/{club_id}/progress')
+@router.get('/{club_id}/progress', response_model=GenericResponse)
 async def get_club_progress(
     club_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -252,7 +253,7 @@ async def get_club_progress(
     }
 
 
-@router.get('/{club_id}/discussions')
+@router.get('/{club_id}/discussions', response_model=GenericResponse)
 async def get_discussions(
     club_id: UUID,
     page: int = Query(1, ge=1),
@@ -284,7 +285,7 @@ async def get_discussions(
     }
 
 
-@router.post('/{club_id}/discussions', status_code=status.HTTP_201_CREATED)
+@router.post('/{club_id}/discussions', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
 async def add_discussion(
     club_id: UUID,
     body: DiscussionCreate,

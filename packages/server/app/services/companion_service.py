@@ -19,12 +19,13 @@ from app.services.llm import circuit, get_llm, safe_llm_call
 from app.utils.i18n import t
 from app.utils.sanitizer import sanitize_chat_message, sanitize_annotations, sanitize_user_input
 from app.utils.token_budget import TokenBudget
-from app.utils.output_filter import filter_output
+from app.utils.output_filter import filter_output, filter_stream_chunk
 
 logger = logging.getLogger('read-pal.companion')
 
 HISTORY_LIMIT = 20
 ANNOTATION_LIMIT = 10
+STREAM_FLUSH_SIZE = 5  # Check every N tokens for streaming safety
 
 
 async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book:
@@ -271,11 +272,25 @@ async def stream_chat(
     else:
         try:
             llm = get_llm()
+            # Buffer for chunk-level filtering
+            chunk_buffer: list[str] = []
             async for chunk in llm.astream(messages):
                 token = chunk.content
                 if token:
                     collected_parts.append(token)
-                    yield f'data: {json.dumps({"content": token})}\n\n'
+                    chunk_buffer.append(token)
+                    if len(chunk_buffer) >= STREAM_FLUSH_SIZE:
+                        buffered_text = ''.join(chunk_buffer)
+                        safe_text = filter_stream_chunk(buffered_text, context='companion_stream')
+                        if safe_text:
+                            yield f'data: {json.dumps({"content": safe_text})}\n\n'
+                        chunk_buffer = []
+            # Flush remaining buffer
+            if chunk_buffer:
+                buffered_text = ''.join(chunk_buffer)
+                safe_text = filter_stream_chunk(buffered_text, context='companion_stream')
+                if safe_text:
+                    yield f'data: {json.dumps({"content": safe_text})}\n\n'
             await circuit.record_success()
             latency_ms = int((time.monotonic() - start_time) * 1000)
             logger.info(
@@ -296,11 +311,23 @@ async def stream_chat(
                 fallback_model = settings.fallback_model
                 logger.info('Companion stream %s retrying with fallback %s', request_id, fallback_model)
                 llm_fb = get_llm(model=fallback_model)
+                # Buffer for chunk-level filtering (fallback model)
+                fb_chunk_buffer: list[str] = []
                 async for chunk in llm_fb.astream(messages):
                     token = chunk.content
                     if token:
                         collected_parts.append(token)
-                        yield f'data: {json.dumps({"content": token})}\n\n'
+                        fb_chunk_buffer.append(token)
+                        if len(fb_chunk_buffer) >= STREAM_FLUSH_SIZE:
+                            buffered_text = ''.join(fb_chunk_buffer)
+                            if _quick_safety_check(buffered_text):
+                                yield f'data: {json.dumps({"content": buffered_text})}\n\n'
+                            fb_chunk_buffer = []
+                # Flush remaining fallback buffer
+                if fb_chunk_buffer:
+                    buffered_text = ''.join(fb_chunk_buffer)
+                    if _quick_safety_check(buffered_text):
+                        yield f'data: {json.dumps({"content": buffered_text})}\n\n'
                 await circuit.record_success()
                 logger.info(
                     'LLM_STREAM req=%s model=%s label=Companion_stream fallback=True success=True',

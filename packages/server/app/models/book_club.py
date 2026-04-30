@@ -1,13 +1,14 @@
 """Book club models."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from app.db import Base
 
@@ -51,10 +52,14 @@ class BookClub(Base):
         server_default=text("upper(substring(md5(random()::text), 1, 6))"),
     )
     max_members: Mapped[int] = mapped_column(Integer, default=20)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
     )
 
     creator: Mapped['User'] = relationship(
@@ -100,7 +105,10 @@ class BookClubMember(Base):
         index=True,
     )
     role: Mapped[str] = mapped_column(String(20), default='member')
-    joined_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
 
     club: Mapped['BookClub'] = relationship('BookClub', back_populates='members')
     user: Mapped['User'] = relationship('User', back_populates='club_memberships')
@@ -129,7 +137,10 @@ class ClubDiscussion(Base):
         nullable=False,
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
 
     club: Mapped['BookClub'] = relationship('BookClub', back_populates='discussions')
     user: Mapped['User'] = relationship('User')

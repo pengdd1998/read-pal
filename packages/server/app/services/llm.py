@@ -219,8 +219,9 @@ _MAX_IN_MEMORY_CACHE = 500
 
 
 def _cache_key(messages: list[BaseMessage], label: str) -> str:
-    """Deterministic cache key from messages + label."""
-    parts = [label]
+    """Deterministic cache key from messages + label + model version."""
+    settings = get_settings()
+    parts = [label, settings.default_model]
     for msg in messages:
         parts.append(msg.content)
     digest = hashlib.sha256('|'.join(parts).encode()).hexdigest()[:16]
