@@ -90,7 +90,7 @@ jobs:
 
       - run: cd packages/server && uv sync --all-groups --all-extras
 
-      - run: cd packages/server && uv run pytest --tb=short -q --exitfirst --maxfail=5
+      - run: cd packages/server && uv run pytest -n auto --tb=short -q
         env:
           APP_ENV: test
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
