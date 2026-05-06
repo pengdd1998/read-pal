@@ -1,20 +1,21 @@
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
-
-jobs:
-  deploy:
-    name: Deploy to VPS
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-
-    steps:
+# Deploy workflow temporarily disabled for CI debugging
+# name: Deploy
+#
+# on:
+#   push:
+#     branches: [main]
+#
+# concurrency:
+#   group: deploy-${{ github.ref }}
+#   cancel-in-progress: false
+#
+# jobs:
+#   deploy:
+#     name: Deploy to VPS
+#     runs-on: ubuntu-latest
+#     if: github.event_name == 'push'
+#
+#     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
