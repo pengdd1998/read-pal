@@ -68,8 +68,7 @@ jobs:
             echo ">>> Running database migrations..."
             docker compose exec -T api alembic upgrade head
 
-            # Vacuum to reclaim space
-            docker compose exec -T postgres psql -U readpal -d readpal -c "VACUUM ANALYZE;" 2>/dev/null || true
+            # Note: PostgreSQL is external infrastructure, vacuum not needed here
 
             # -------------------------------------------------------
             # 5. Health checks with retry
