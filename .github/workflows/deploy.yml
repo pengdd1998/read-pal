@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:  # Manual trigger only
 
 concurrency:
   group: deploy-${{ github.ref }}
