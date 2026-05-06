@@ -134,6 +134,7 @@ CLAUDE.md
 setup-github.sh
 skills-lock.json
 auto-compact.sh
+.spec-workflow
 
 # Playwright
 .playwright-mcp/

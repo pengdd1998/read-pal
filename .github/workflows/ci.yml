@@ -73,10 +73,10 @@ jobs:
           NEXT_PUBLIC_API_URL: ''
 
   # -------------------------------------------------------------------
-  # Python backend tests
+  # Python backend tests (unit tests with SQLite in-memory)
   # -------------------------------------------------------------------
   test-backend:
-    name: Python Tests
+    name: Python Tests (Unit)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -89,7 +89,40 @@ jobs:
 
       - run: cd packages/server && uv sync --all-groups --all-extras
 
-      - run: cd packages/server && uv run pytest
+      - run: cd packages/server && uv run pytest -m "not integration"
         env:
           APP_ENV: test
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+          TEST_USE_EXTERNAL_INFRA: false
+
+  # -------------------------------------------------------------------
+  # Integration tests (requires external infrastructure)
+  # -------------------------------------------------------------------
+  test-backend-integration:
+    name: Python Tests (Integration)
+    runs-on: ubuntu-latest
+    # Only run integration tests on main branch or when explicitly triggered
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install uv
+
+      - run: cd packages/server && uv sync --all-groups --all-extras
+
+      - name: Run integration tests
+        run: cd packages/server && uv run pytest -m integration
+        env:
+          APP_ENV: test
+          JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+          TEST_USE_EXTERNAL_INFRA: true
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          TEST_REDIS_URL: ${{ secrets.TEST_REDIS_URL }}
+          TEST_MINIO_ENDPOINT: ${{ secrets.TEST_MINIO_ENDPOINT }}
+          TEST_MINIO_PORT: ${{ secrets.TEST_MINIO_PORT }}
+          TEST_MINIO_ACCESS_KEY: ${{ secrets.TEST_MINIO_ACCESS_KEY }}
+          TEST_MINIO_SECRET_KEY: ${{ secrets.TEST_MINIO_SECRET_KEY }}

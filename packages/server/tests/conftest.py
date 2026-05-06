@@ -1,4 +1,10 @@
-"""Shared test fixtures — SQLite in-memory DB, authenticated client, mocks."""
+"""Shared test fixtures — SQLite in-memory DB, authenticated client, mocks.
+
+For integration tests against external infrastructure (PostgreSQL, Redis, MinIO on VPS):
+1. Set TEST_USE_EXTERNAL_INFRA=true in environment
+2. Configure TEST_DATABASE_URL, TEST_REDIS_URL, TEST_MINIO_* variables
+3. Run pytest normally - integration tests will be included
+"""
 
 import json
 import re
