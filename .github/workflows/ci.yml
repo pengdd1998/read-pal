@@ -73,11 +73,12 @@ jobs:
           NEXT_PUBLIC_API_URL: ''
 
   # -------------------------------------------------------------------
-  # Python backend tests (unit tests with SQLite in-memory)
+  # Python backend tests
   # -------------------------------------------------------------------
   test-backend:
-    name: Python Tests (Unit)
+    name: Python Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -89,21 +90,19 @@ jobs:
 
       - run: cd packages/server && uv sync --all-groups --all-extras
 
-      - run: cd packages/server && uv run pytest -m "not integration"
+      - run: cd packages/server && uv run pytest --tb=short -q
         env:
           APP_ENV: test
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
-          TEST_USE_EXTERNAL_INFRA: false
 
   # -------------------------------------------------------------------
-  # Integration tests (requires external infrastructure)
+  # Integration tests (requires external infrastructure - manual only)
   # -------------------------------------------------------------------
   test-backend-integration:
     name: Python Tests (Integration)
     runs-on: ubuntu-latest
-    # Only run integration tests on main branch or when explicitly triggered
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    # Skip if no integration test secrets are configured
+    # Only run when manually triggered with workflow_dispatch
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
 
@@ -115,18 +114,7 @@ jobs:
 
       - run: cd packages/server && uv sync --all-groups --all-extras
 
-      - name: Check if integration tests are available
-        id: check-integration
-        run: |
-          if [ -z "${{ secrets.TEST_DATABASE_URL }}" ]; then
-            echo "status=skip" >> $GITHUB_OUTPUT
-            echo "No integration test secrets configured, skipping integration tests"
-          else
-            echo "status=run" >> $GITHUB_OUTPUT
-          fi
-
       - name: Run integration tests
-        if: steps.check-integration.outputs.status == 'run'
         run: |
           cd packages/server && uv run pytest -m integration -v || {
             echo "Note: Integration tests may not exist yet (exit code 5 = no tests collected)"
