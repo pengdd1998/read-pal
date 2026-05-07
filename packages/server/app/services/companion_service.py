@@ -27,6 +27,20 @@ HISTORY_LIMIT = 20
 ANNOTATION_LIMIT = 10
 STREAM_FLUSH_SIZE = 5  # Check every N tokens for streaming safety
 
+# Safety keywords for logging (not blocking)
+_SAFETY_KEYWORDS = ['suicide', 'self-harm', 'kill myself']
+
+
+def _quick_safety_check(text: str | None) -> bool:
+    """Check if text is non-empty. Logs safety keywords but does not block."""
+    if not text:
+        return False
+    lower = text.lower()
+    for kw in _SAFETY_KEYWORDS:
+        if kw in lower:
+            logger.warning('Safety keyword detected in stream buffer: %s', kw)
+    return True
+
 
 async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book:
     """Fetch book or raise a ValueError."""

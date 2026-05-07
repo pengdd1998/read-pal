@@ -343,7 +343,7 @@ class TestGetBookContext:
     @pytest.mark.asyncio
     async def test_returns_empty_when_no_book(self):
         mock_db = AsyncMock()
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_db.execute = AsyncMock(return_value=mock_result)
 
@@ -356,22 +356,15 @@ class TestGetBookContext:
         user_id = uuid4()
         book_id = uuid4()
 
-        # Mock DB — book exists
+        # Mock DB — book exists, annotations empty
         mock_db = AsyncMock()
-        book_row = AsyncMock()
+        book_row = MagicMock()
         book_row.scalar_one_or_none.return_value = MagicMock()
 
-        # Mock chapters
-        chapters_row = AsyncMock()
-        chapters_row.scalar_one_or_none.return_value = [
-            {'title': 'ML Basics', 'content': 'Machine learning fundamentals and algorithms'},
-        ]
-
-        # Mock annotations
-        ann_row = AsyncMock()
+        ann_row = MagicMock()
         ann_row.scalars.return_value.all.return_value = []
 
-        mock_db.execute = AsyncMock(side_effect=[book_row, chapters_row, ann_row])
+        mock_db.execute = AsyncMock(side_effect=[book_row, ann_row])
 
         with (
             patch('app.services.rag_service.get_redis') as mock_redis,

@@ -22,8 +22,6 @@ class TestSSEFormat:
     @pytest.mark.asyncio
     async def test_sse_data_prefix(self):
         """Each SSE chunk must start with 'data: '."""
-        from app.services.companion_service import _quick_safety_check
-
         content = 'Hello world'
         sse = f'data: {json.dumps({"content": content})}\n\n'
         assert sse.startswith('data: ')
@@ -249,7 +247,7 @@ class TestStreamingErrors:
             patch('app.services.companion_service._load_annotations_context', return_value=''),
             patch('app.services.companion_service.get_llm', return_value=mock_llm),
             patch('app.services.companion_service.circuit') as mock_circuit,
-            patch('app.services.companion_service.get_settings') as mock_settings,
+            patch('app.config.get_settings') as mock_settings,
         ):
             mock_circuit.allow_request = AsyncMock(return_value=True)
             mock_circuit.record_success = AsyncMock()
@@ -294,7 +292,7 @@ class TestStreamingErrors:
             patch('app.services.companion_service._load_annotations_context', return_value=''),
             patch('app.services.companion_service.get_llm', return_value=mock_llm),
             patch('app.services.companion_service.circuit') as mock_circuit,
-            patch('app.services.companion_service.get_settings') as mock_settings,
+            patch('app.config.get_settings') as mock_settings,
             patch('app.services.companion_service._save_message', new_callable=AsyncMock) as mock_save,
         ):
             mock_circuit.allow_request = AsyncMock(return_value=True)
