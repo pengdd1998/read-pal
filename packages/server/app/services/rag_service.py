@@ -68,7 +68,7 @@ def _chunk_text(text: str, chunk_size: int = 2000, overlap: int = 256) -> list[s
                 chunk = chunk[:last_sep + len(sep)]
                 break
         chunks.append(chunk.strip())
-        start += len(chunk) - overlap
+        start += max(len(chunk) - overlap, 1)
         if start >= len(text):
             break
     return [c for c in chunks if len(c) > 50]
