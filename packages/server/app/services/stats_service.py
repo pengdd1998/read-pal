@@ -40,10 +40,10 @@ async def get_dashboard_stats(
         )
     )
 
-    # --- Pages read ---
+    # --- Pages read (from reading sessions) ---
     total_pages = await db.scalar(
-        select(func.coalesce(func.sum(Book.current_page), 0)).where(
-            Book.user_id == uid
+        select(func.coalesce(func.sum(ReadingSession.pages_read), 0)).where(
+            ReadingSession.user_id == uid
         )
     )
 

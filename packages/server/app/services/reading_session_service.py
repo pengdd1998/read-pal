@@ -72,10 +72,12 @@ async def end_session(
     # Apply additional update fields if provided
     current_page_from_client = None
     total_pages_from_client = None
+    scroll_progress_from_client = None
     if data:
         update_data = data.model_dump(exclude_unset=True)
         current_page_from_client = update_data.pop('current_page', None)
         total_pages_from_client = update_data.pop('total_pages', None)
+        scroll_progress_from_client = update_data.pop('scroll_progress', None)
         for field, value in update_data.items():
             if field != 'is_active':
                 setattr(session, field, value)
@@ -99,8 +101,11 @@ async def end_session(
                         book.current_page + session.pages_read,
                         book.total_pages,
                     )
+                # Use scroll progress for finer-grained percentage if available
+                sp = scroll_progress_from_client if scroll_progress_from_client is not None else float(book.scroll_progress or 0)
+                book.scroll_progress = Decimal(str(round(sp, 3)))
                 book.progress = Decimal(
-                    str(round((book.current_page / book.total_pages) * 100, 2)),
+                    str(round(((book.current_page + sp) / book.total_pages) * 100, 2)),
                 )
                 # Auto-complete when all pages read
                 if book.progress >= Decimal('100') and book.status != BookStatus.completed:

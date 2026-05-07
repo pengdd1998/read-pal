@@ -71,7 +71,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         : { start: 0, end: text.length };
 
       const result = await api.post<Annotation>('/api/annotations', {
-        bookId, type: 'highlight', content: text, color,
+        book_id: bookId, type: 'highlight', content: text, color,
         tags: tags || [],
         location: { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: offsets },
       });
@@ -96,7 +96,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         : { start: 0, end: text.length };
 
       const result = await api.post<Annotation>('/api/annotations', {
-        bookId, type: 'note', content: text, note,
+        book_id: bookId, type: 'note', content: text, note,
         location: { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: offsets },
       });
 
@@ -132,7 +132,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
       try {
         const chapter = chapters[currentChapter];
         const result = await api.post<Annotation>('/api/annotations', {
-          bookId, type: 'bookmark',
+          book_id: bookId, type: 'bookmark',
           content: `Bookmark: ${chapter.title}`,
           location: { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: { start: 0, end: 0 } },
         });

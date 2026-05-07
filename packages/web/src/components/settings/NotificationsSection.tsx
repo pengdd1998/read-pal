@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { UserSettings } from '@/components/settings/types';
 import { isCapacitor } from '@/lib/capacitor';
 import { isPushEnabled, setPushEnabled } from '@/lib/notifications';
@@ -46,6 +47,7 @@ function ToggleSwitch({
 }
 
 export function NotificationsSection({ settings, saving, onSave }: NotificationsSectionProps) {
+  const t = useTranslations('settings_page');
   const [pushEnabled, setPushState] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const nativeApp = isCapacitor();
@@ -78,15 +80,15 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
         </div>
-        <h2 className="text-lg font-semibold">Notifications</h2>
+        <h2 className="text-lg font-semibold">{t('notifications_title')}</h2>
       </div>
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
         {/* Push Notifications — native only */}
         {nativeApp && (
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-sm font-medium">Push Notifications</label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Receive alerts on your device</p>
+              <label className="text-sm font-medium">{t('push_notifications_label')}</label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('push_notifications_desc')}</p>
             </div>
             <ToggleSwitch
               checked={pushEnabled}
@@ -100,8 +102,8 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
         <div className={nativeApp ? 'pt-3 border-t border-gray-100 dark:border-gray-800' : ''}>
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-sm font-medium">Reading Reminders</label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Daily nudge when you haven&apos;t read</p>
+              <label className="text-sm font-medium">{t('reading_reminders_label')}</label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('reading_reminders_desc')}</p>
             </div>
             <ToggleSwitch
               checked={settings.notificationsEnabled}
@@ -115,8 +117,8 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
         <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-sm font-medium">Streak Milestones</label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Celebrate 3, 7, 30-day streaks</p>
+              <label className="text-sm font-medium">{t('streak_milestones_label')}</label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('streak_milestones_desc')}</p>
             </div>
             <ToggleSwitch
               checked={settings.streakAlerts !== false}
@@ -131,8 +133,8 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
         <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-sm font-medium">Friend Messages</label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Your reading friend&apos;s insights and tips</p>
+              <label className="text-sm font-medium">{t('friend_messages_label')}</label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('friend_messages_desc')}</p>
             </div>
             <ToggleSwitch
               checked={settings.friendMessages !== false}

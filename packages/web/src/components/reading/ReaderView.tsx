@@ -58,6 +58,7 @@ interface ReaderViewProps {
   highlightMode?: boolean;
   highlightCount?: number;
   bookmarkCount?: number;
+  onScrollProgress?: (progress: number) => void;
 }
 
 export const ReaderView = React.memo(function ReaderView({
@@ -80,6 +81,7 @@ export const ReaderView = React.memo(function ReaderView({
   highlightMode: _highlightMode,
   highlightCount = 0,
   bookmarkCount = 0,
+  onScrollProgress,
 }: ReaderViewProps) {
   const t = useTranslations('reader');
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -148,8 +150,10 @@ export const ReaderView = React.memo(function ReaderView({
     if (!el) return;
     const { scrollTop, scrollHeight, clientHeight } = el;
     const maxScroll = scrollHeight - clientHeight;
-    setScrollProgress(maxScroll > 0 ? scrollTop / maxScroll : 0);
-  }, []);
+    const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
+    setScrollProgress(progress);
+    onScrollProgress?.(progress);
+  }, [onScrollProgress]);
 
   // Reset scroll position on chapter change + animate
   // Also persists scroll position so returning readers don't lose their place
@@ -355,7 +359,7 @@ export const ReaderView = React.memo(function ReaderView({
       {/* Scrollable reading area */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto min-h-0"
+        className="flex-1 overflow-y-auto min-h-0 reading-scroll-container"
         style={{ overscrollBehavior: 'contain' } as React.CSSProperties}
         onScroll={updateScrollProgress}
       >

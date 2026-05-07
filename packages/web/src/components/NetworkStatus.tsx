@@ -15,25 +15,7 @@ export function NetworkStatus() {
   const [queuedCount, setQueuedCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<SyncResult | null>(null);
-
-  // Don't render for unauthenticated users
-  if (!getAuthToken()) return null;
-
-  // Check IndexedDB mutation queue count
-  const checkQueueCount = useCallback(async () => {
-    try {
-      const db = await openDB();
-      const tx = db.transaction('mutations', 'readonly');
-      const store = tx.objectStore('mutations');
-      return new Promise<number>((resolve) => {
-        const req = store.count();
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(0);
-      });
-    } catch {
-      return 0;
-    }
-  }, []);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getAuthToken());
 
   // Sync queued mutations
   const syncQueue = useCallback(async () => {
@@ -82,8 +64,20 @@ export function NetworkStatus() {
       }
 
       setLastSync({ succeeded, failed, total: items.length });
-      const remaining = await checkQueueCount();
-      setQueuedCount(remaining);
+      // Check remaining items in the queue
+      try {
+        const db = await openDB();
+        const tx = db.transaction('mutations', 'readonly');
+        const store = tx.objectStore('mutations');
+        const remaining = await new Promise<number>((resolve) => {
+          const req = store.count();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(0);
+        });
+        setQueuedCount(remaining);
+      } catch {
+        setQueuedCount(0);
+      }
 
       // Invalidate API client caches to show fresh data
       if (succeeded > 0 && typeof window !== 'undefined') {
@@ -94,7 +88,7 @@ export function NetworkStatus() {
       // Sync failed — will retry next time
     }
     setSyncing(false);
-  }, [checkQueueCount]);
+  }, []);
 
   useEffect(() => {
     setOffline(!navigator.onLine);
@@ -113,10 +107,21 @@ export function NetworkStatus() {
       setOffline(false);
       setShowBanner(true);
       // Auto-sync when coming back online
-      const count = await checkQueueCount();
-      setQueuedCount(count);
-      if (count > 0) {
-        syncTimer = setTimeout(() => syncQueue(), 1000);
+      try {
+        const db = await openDB();
+        const tx = db.transaction('mutations', 'readonly');
+        const store = tx.objectStore('mutations');
+        const count = await new Promise<number>((resolve) => {
+          const req = store.count();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(0);
+        });
+        setQueuedCount(count);
+        if (count > 0) {
+          syncTimer = setTimeout(() => syncQueue(), 1000);
+        }
+      } catch {
+        setQueuedCount(0);
       }
       // Auto-hide "back online" after 4s
       hideTimer = setTimeout(() => {
@@ -129,11 +134,37 @@ export function NetworkStatus() {
     window.addEventListener('online', goOnline);
 
     // Initial queue check
-    checkQueueCount().then(setQueuedCount);
+    (async () => {
+      try {
+        const db = await openDB();
+        const tx = db.transaction('mutations', 'readonly');
+        const store = tx.objectStore('mutations');
+        const count = await new Promise<number>((resolve) => {
+          const req = store.count();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(0);
+        });
+        setQueuedCount(count);
+      } catch {
+        setQueuedCount(0);
+      }
+    })();
 
     // Listen for mutation queued events from the page
-    const onMutationQueued = () => {
-      checkQueueCount().then(setQueuedCount);
+    const onMutationQueued = async () => {
+      try {
+        const db = await openDB();
+        const tx = db.transaction('mutations', 'readonly');
+        const store = tx.objectStore('mutations');
+        const count = await new Promise<number>((resolve) => {
+          const req = store.count();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(0);
+        });
+        setQueuedCount(count);
+      } catch {
+        setQueuedCount(0);
+      }
     };
     window.addEventListener('mutation-queued', onMutationQueued);
 
@@ -144,7 +175,10 @@ export function NetworkStatus() {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('mutation-queued', onMutationQueued);
     };
-  }, [checkQueueCount, syncQueue]);
+  }, [syncQueue]);
+
+  // Don't render for unauthenticated users
+  if (!isAuthenticated) return null;
 
   // Don't show banner if nothing to report
   if (!showBanner && queuedCount === 0) return null;

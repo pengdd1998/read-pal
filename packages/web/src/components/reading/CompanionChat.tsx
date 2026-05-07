@@ -84,6 +84,51 @@ const FRIEND_PERSONAS: Record<string, FriendPersona> = {
   sam: { name: 'Sam', emoji: '\uD83C\uDFAF' },
 };
 
+const DRAG_THRESHOLD = 6; // px movement to distinguish drag from click
+const EDGE_MARGIN = 20; // px from viewport edge when snapped
+const BTN_SIZE = 56; // button width/height in px
+const STORAGE_KEY = 'read-pal-chat-btn-pos';
+const SNAP_TRANSITION = 'left 0.25s cubic-bezier(0.16,1,0.3,1), top 0.25s cubic-bezier(0.16,1,0.3,1)';
+
+interface DragPosition {
+  x: number; // left px
+  y: number; // top px
+}
+
+function loadSavedPosition(): DragPosition | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const pos = JSON.parse(raw) as DragPosition;
+    if (typeof pos.x === 'number' && typeof pos.y === 'number') return pos;
+  } catch { /* ignore */ }
+  return null;
+}
+
+function defaultPosition(): DragPosition {
+  return { x: window.innerWidth - BTN_SIZE - EDGE_MARGIN, y: window.innerHeight - BTN_SIZE - EDGE_MARGIN };
+}
+
+/** Snap position to nearest viewport edge with margin. */
+function snapToEdge(pos: DragPosition): DragPosition {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const cx = pos.x + BTN_SIZE / 2;
+  const cy = pos.y + BTN_SIZE / 2;
+
+  const distLeft = cx;
+  const distRight = vw - cx;
+  const distTop = cy;
+  const distBottom = vh - cy;
+
+  const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+  if (minDist === distLeft) return { x: EDGE_MARGIN, y: Math.max(EDGE_MARGIN, Math.min(pos.y, vh - BTN_SIZE - EDGE_MARGIN)) };
+  if (minDist === distRight) return { x: vw - BTN_SIZE - EDGE_MARGIN, y: Math.max(EDGE_MARGIN, Math.min(pos.y, vh - BTN_SIZE - EDGE_MARGIN)) };
+  if (minDist === distTop) return { x: Math.max(EDGE_MARGIN, Math.min(pos.x, vw - BTN_SIZE - EDGE_MARGIN)), y: EDGE_MARGIN };
+  return { x: Math.max(EDGE_MARGIN, Math.min(pos.x, vw - BTN_SIZE - EDGE_MARGIN)), y: vh - BTN_SIZE - EDGE_MARGIN };
+}
+
 const DEFAULT_PERSONA: FriendPersona = { name: 'Penny', emoji: '\u2B50' };
 
 export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent, genreMetadata, bookDescription }, ref) {
@@ -108,6 +153,74 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
+  // --- Draggable button state ---
+  const [btnPos, setBtnPos] = useState<DragPosition>(() => {
+    if (typeof window === 'undefined') return { x: 0, y: 0 };
+    return loadSavedPosition() || defaultPosition();
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSnapping, setIsSnapping] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number; moved: boolean } | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+
+  // Persist position on change
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(btnPos)); } catch { /* ignore */ }
+  }, [btnPos]);
+
+  // Reposition on viewport resize
+  useEffect(() => {
+    const handleResize = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      setBtnPos((prev) => ({
+        x: Math.max(EDGE_MARGIN, Math.min(prev.x, vw - BTN_SIZE - EDGE_MARGIN)),
+        y: Math.max(EDGE_MARGIN, Math.min(prev.y, vh - BTN_SIZE - EDGE_MARGIN)),
+      }));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const onDragStart = useCallback((clientX: number, clientY: number) => {
+    setIsSnapping(false);
+    dragRef.current = { startX: clientX, startY: clientY, originX: btnPos.x, originY: btnPos.y, moved: false };
+  }, [btnPos]);
+
+  const onDragMove = useCallback((clientX: number, clientY: number) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const dx = clientX - d.startX;
+    const dy = clientY - d.startY;
+    if (!d.moved && Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+    d.moved = true;
+    setIsDragging(true);
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    setBtnPos({
+      x: Math.max(EDGE_MARGIN, Math.min(d.originX + dx, vw - BTN_SIZE - EDGE_MARGIN)),
+      y: Math.max(EDGE_MARGIN, Math.min(d.originY + dy, vh - BTN_SIZE - EDGE_MARGIN)),
+    });
+  }, []);
+
+  const onDragEnd = useCallback(() => {
+    const d = dragRef.current;
+    const wasMoved = d?.moved ?? false;
+    dragRef.current = null;
+    setIsDragging(false);
+
+    if (wasMoved) {
+      // Snap to nearest edge with animation
+      setIsSnapping(true);
+      setBtnPos((prev) => snapToEdge(prev));
+      // Remove snap transition after animation completes
+      setTimeout(() => setIsSnapping(false), 260);
+      return wasMoved; // signal to caller: was a drag, not a click
+    }
+    return false;
+  }, []);
+
   // Detect genre for adaptive behavior
   const genre: BookGenre = detectGenre(genreMetadata, bookTitle, bookDescription);
   const genreTemplate = getGenreTemplate(genre);
@@ -115,15 +228,21 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   // Preload DOMPurify on mount
   useEffect(() => { preloadDOMPurify(); }, []);
 
+  // Check if any message is currently streaming (used to suppress duplicate loading dots)
+  const hasStreamingMessage = messages.some((m) => m.streaming);
+
   // Memoize sanitized assistant messages to avoid re-sanitizing on every render
+  // Always sort by timestamp to maintain correct chronological order
   const sanitizedMessages = useMemo(() => {
     const cache = new Map<string, string>();
-    return messages.map((msg) => {
-      if (msg.role === 'assistant' && !cache.has(msg.id)) {
-        cache.set(msg.id, purifySync(renderSimpleMarkdown(msg.content)));
-      }
-      return { ...msg, sanitized: cache.get(msg.id) || '' };
-    });
+    return [...messages]
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .map((msg) => {
+        if (msg.role === 'assistant' && !cache.has(msg.id)) {
+          cache.set(msg.id, purifySync(renderSimpleMarkdown(msg.content)));
+        }
+        return { ...msg, sanitized: cache.get(msg.id) || '' };
+      });
   }, [messages]);
   const pendingMessageRef = useRef<string | null>(null);
 
@@ -411,31 +530,65 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
   return (
     <>
-      {/* Fixed chat button — bottom-right, labeled and discoverable for first-time users */}
+      {/* Draggable chat button — snaps to nearest edge on release */}
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-10 flex flex-col items-end gap-2">
+        <button
+          ref={btnRef}
+          id="tour-ai-companion"
+          onClick={(e) => {
+            // Only open chat if it wasn't a drag
+            if (isDragging) { e.preventDefault(); return; }
+            handleOpenChat();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            onDragStart(e.clientX, e.clientY);
+            const onMouseMove = (ev: MouseEvent) => onDragMove(ev.clientX, ev.clientY);
+            const onMouseUp = () => {
+              const wasDrag = onDragEnd();
+              window.removeEventListener('mousemove', onMouseMove);
+              window.removeEventListener('mouseup', onMouseUp);
+            };
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+          }}
+          onTouchStart={(e) => {
+            const touch = e.touches[0];
+            onDragStart(touch.clientX, touch.clientY);
+          }}
+          onTouchMove={(e) => {
+            const touch = e.touches[0];
+            onDragMove(touch.clientX, touch.clientY);
+            // Prevent page scroll while dragging
+            if (dragRef.current?.moved) e.preventDefault();
+          }}
+          onTouchEnd={() => { onDragEnd(); }}
+          className="fixed z-10 flex items-center justify-center w-14 h-14 rounded-full select-none touch-none"
+          style={{
+            left: btnPos.x,
+            top: btnPos.y,
+            background: 'linear-gradient(135deg, #14b8a6, #10b981)',
+            boxShadow: isDragging
+              ? '0 8px 24px -4px rgba(20, 184, 166, 0.3), 0 4px 12px -2px rgba(16, 185, 129, 0.2)'
+              : '0 4px 14px -2px rgba(30, 42, 56, 0.12), 0 2px 6px -1px rgba(30, 42, 56, 0.06)',
+            transition: isDragging ? 'box-shadow 0.15s ease' : isSnapping ? `box-shadow 0.15s ease, ${SNAP_TRANSITION}` : 'box-shadow 0.15s ease, transform 0.2s ease',
+            transform: isDragging ? 'scale(1.08)' : undefined,
+            cursor: isDragging ? 'grabbing' : 'grab',
+          }}
+          aria-label={t('companion_aria_chat_with', { name: friendName })}
+        >
           {/* First-time tooltip */}
           {isFirstChat && (
-            <div className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px]">
+            <span className="absolute -top-10 right-0 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px] whitespace-nowrap pointer-events-none">
               {genre === 'fiction'
                 ? t('companion_tooltip_fiction', { name: friendName })
                 : t('companion_tooltip_general', { name: friendName })}
-            </div>
+            </span>
           )}
-          <button
-            id="tour-ai-companion"
-            onClick={handleOpenChat}
-            className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-xl relative"
-            style={{
-              background: 'linear-gradient(135deg, #14b8a6, #10b981)',
-            }}
-            aria-label={t('companion_aria_chat_with', { name: friendName })}
-          >
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </button>
-        </div>
+          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </button>
       )}
 
       {/* Chat Panel */}
@@ -580,14 +733,14 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                   </div>
                 ))
               )}
-              {loading && (
+              {loading && !hasStreamingMessage && (
                 <div className="flex justify-start">
                   <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex gap-1.5 items-center">
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDuration: '0.6s' }} />
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '120ms', animationDuration: '0.6s' }} />
                       <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '240ms', animationDuration: '0.6s' }} />
-                      <span className="text-[10px] text-amber-500/80 ml-1">{t('companion_thinking')}</span>
+                      <span className="text-[10px] text-amber-500/80 ml-1">{connecting ? t('companion_connecting') : t('companion_thinking')}</span>
                     </div>
                   </div>
                 </div>

@@ -16,6 +16,7 @@ import type { UserSettings } from '@/components/settings/types';
 
 export default function SettingsPage() {
   const t = useTranslations('settings_page');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const { user: authUser } = useAuth();
@@ -219,7 +220,7 @@ export default function SettingsPage() {
                   : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
-              English
+              {tc('english')}
             </button>
             <button
               onClick={() => handleLanguageChange('zh')}
@@ -229,7 +230,7 @@ export default function SettingsPage() {
                   : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
-              中文
+              {tc('chinese')}
             </button>
           </div>
         </div>

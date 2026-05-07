@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useRouter } from '@/i18n/navigation';
 import { api } from './api';
 import { getAuthToken, getAuthTokenAsync } from './auth-fetch';
 import { isCapacitor } from './capacitor';
@@ -122,6 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAuthCookie();
     setToken(null);
     setUser(null);
+    // Redirect to login page after logout
+    const router = useRouter();
+    router.push('/login');
   }, []);
 
   const oauthLogin = useCallback(async (newToken: string, newUser: User) => {

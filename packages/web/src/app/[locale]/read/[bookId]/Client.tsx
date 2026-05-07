@@ -204,7 +204,9 @@ export default function ReadPage() {
   const selection = useTextSelection(contentRef);
 
   const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight } = useReaderSettings(bookId, loading);
-  const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length, isPaused: ui.isPaused });
+  // Track scroll progress within chapter for fine-grained progress reporting
+  const [chapterScrollProgress, setChapterScrollProgress] = useState(0);
+  const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length, isPaused: ui.isPaused, scrollProgress: chapterScrollProgress });
   const studyMode = useStudyMode(bookId);
 
   const annotationActions = useAnnotationActions({
@@ -472,6 +474,7 @@ export default function ReadPage() {
             bookmarkCount={annotationActions.bookmarkCount}
             externalTocOpen={ui.tocOpen}
             onTocClose={ui.closeToc}
+            onScrollProgress={setChapterScrollProgress}
           />
         </div>
       </div>

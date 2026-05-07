@@ -1,10 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { ZoteroSection } from '@/components/settings/ZoteroSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
 import { OfflineSection } from '@/components/settings/OfflineSection';
 
 export function DeveloperSection() {
+  const t = useTranslations('settings_page');
   return (
     <>
       {/* Integrations — Zotero */}
@@ -13,7 +15,7 @@ export function DeveloperSection() {
           <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
-          Integrations
+          {t('integrations_title')}
         </h2>
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -21,8 +23,8 @@ export function DeveloperSection() {
               Z
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Zotero</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Export highlights & notes to your Zotero library</p>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('zotero_title')}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('zotero_desc')}</p>
             </div>
           </div>
           <ZoteroSection />
@@ -39,8 +41,8 @@ export function DeveloperSection() {
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Developer API</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Access your reading data programmatically</p>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('developer_api_title')}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('developer_api_desc')}</p>
             </div>
           </div>
           <ApiKeysSection />

@@ -17,6 +17,7 @@ import { isCapacitor } from '@/lib/capacitor';
 import { useStatusBar } from '@/hooks/useStatusBar';
 import { hapticLight } from '@/hooks/useHaptics';
 import { initializeNotifications } from '@/lib/notifications';
+import { useLocale } from 'next-intl';
 
 const NAV_ITEMS = [
   { href: '/dashboard', labelKey: 'nav_dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -103,7 +104,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
               {/* Desktop Nav */}
               {isAuthenticated && (
-                <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
+                <nav className="hidden md:flex items-center gap-1" aria-label={tc('main_navigation')}>
                   {NAV_ITEMS.map((item) => {
                     const active = isActive(item.href);
                     return (
@@ -143,7 +144,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                       localStorage.setItem('theme', isDark ? 'dark' : 'light');
                     }}
                     className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                    aria-label="Toggle dark mode"
+                    aria-label={tc('toggle_dark_mode')}
                   >
                     <svg className="w-4 h-4 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
@@ -174,7 +175,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 <button
                   onClick={() => setMobileOpen(!mobileOpen)}
                   className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[#5c5c5c] dark:text-gray-400 hover:bg-[#f0e9e0] dark:hover:bg-gray-800 transition-colors"
-                  aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+                  aria-label={mobileOpen ? tc('close_menu') : tc('open_menu')}
                   aria-expanded={mobileOpen}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -192,7 +193,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
         {/* Mobile Nav */}
         {isAuthenticated && mobileOpen && (
-          <nav className="md:hidden border-t border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0] dark:bg-gray-950 animate-slide-up" aria-label="Mobile navigation">
+          <nav className="md:hidden border-t border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0] dark:bg-gray-950 animate-slide-up" aria-label={tc('mobile_navigation')}>
             <div className="px-4 py-3 space-y-1">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
@@ -231,7 +232,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Mobile Bottom Nav */}
       {isAuthenticated && !isReading && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 safe-area-bottom" aria-label="Bottom navigation">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 safe-area-bottom" aria-label={tc('bottom_navigation')}>
           <div className="flex items-center justify-around">
             {BOTTOM_NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
@@ -275,8 +276,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="/terms" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Terms</Link>
-            <Link href="/privacy" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">Privacy</Link>
+            <Link href="/terms" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">{tc('terms')}</Link>
+            <Link href="/privacy" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">{tc('privacy')}</Link>
             <Link href="/settings" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">{t('nav_settings')}</Link>
           </div>
         </div>

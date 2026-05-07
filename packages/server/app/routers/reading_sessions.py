@@ -14,6 +14,7 @@ from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter
 from app.utils import utcnow
 from app.models.reading_session import ReadingSession
+from app.models.book import Book
 from app.schemas.reading_session import (
     HeartbeatRequest,
     SessionCreate,
@@ -220,6 +221,21 @@ async def heartbeat_session(
         pages_read = body.pages_read or body.pagesRead
         if pages_read is not None:
             session.pages_read = int(pages_read)
+        scroll_progress = body.scroll_progress or body.scrollProgress
+        if scroll_progress is not None:
+            # Update book's scroll_progress for fine-grained tracking
+            book_result = await db.execute(
+                select(Book).where(Book.id == session.book_id, Book.user_id == UUID(current_user['id'])),
+            )
+            book = book_result.scalar_one_or_none()
+            if book and book.total_pages > 0:
+                book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
+                book.current_page = int(pages_read or session.pages_read or 0) - 1
+                if book.current_page < 0:
+                    book.current_page = 0
+                book.progress = Decimal(
+                    str(round(((book.current_page + scroll_progress) / book.total_pages) * 100, 2)),
+                )
     await db.flush()
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 

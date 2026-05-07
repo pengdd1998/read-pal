@@ -9,6 +9,7 @@ interface UseReadingSessionOptions {
   currentChapter: number;
   chaptersLength: number;
   isPaused?: boolean;
+  scrollProgress?: number;
 }
 
 export function useReadingSession({
@@ -17,11 +18,13 @@ export function useReadingSession({
   currentChapter,
   chaptersLength,
   isPaused = false,
+  scrollProgress = 0,
 }: UseReadingSessionOptions) {
   const sessionIdRef = useRef<string | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentChapterRef = useRef(currentChapter);
   const isPausedRef = useRef(isPaused);
+  const scrollProgressRef = useRef(scrollProgress);
 
   // Keep refs in sync
   useEffect(() => {
@@ -31,6 +34,10 @@ export function useReadingSession({
   useEffect(() => {
     isPausedRef.current = isPaused;
   }, [isPaused]);
+
+  useEffect(() => {
+    scrollProgressRef.current = scrollProgress;
+  }, [scrollProgress]);
 
   // Start/end reading session lifecycle
   useEffect(() => {
@@ -52,6 +59,7 @@ export function useReadingSession({
             try {
               await api.patch(`/api/reading-sessions/${sessionIdRef.current}/heartbeat`, {
                 pagesRead: currentChapterRef.current + 1,
+                scrollProgress: scrollProgressRef.current,
               });
             } catch {
               // heartbeat failure is non-critical
@@ -75,6 +83,7 @@ export function useReadingSession({
           pagesRead: finalChapter + 1,
           currentPage: finalChapter,
           totalPages: chaptersLength,
+          scrollProgress: scrollProgressRef.current,
         }).catch((err) => {
           console.warn('Failed to end reading session:', err);
         });
