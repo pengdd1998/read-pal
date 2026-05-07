@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface PageErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -49,14 +51,6 @@ const icons: Record<string, JSX.Element> = {
   ),
 };
 
-/**
- * Shared error boundary UI for Next.js page-level error.tsx files.
- *
- * Features:
- * - Detects network vs. chunk vs. generic errors
- * - Shows contextual title and message per page
- * - Provides "Try again" + "Go Home" / "Reload" recovery options
- */
 export function PageError({
   error,
   reset,
@@ -64,6 +58,7 @@ export function PageError({
   networkMessage,
   icon = 'warning',
 }: PageErrorProps) {
+  const t = useTranslations('errors');
   const msg = error.message?.toLowerCase() || '';
   const isNetworkError =
     msg.includes('network') ||
@@ -76,16 +71,16 @@ export function PageError({
     msg.includes('loading css');
 
   const displayTitle = isNetworkError
-    ? 'Connection problem'
+    ? t('connection_problem')
     : isChunkError
-      ? 'App update available'
-      : title || 'Something went wrong';
+      ? t('app_update')
+      : title || t('something_wrong');
 
   const displayMessage = isNetworkError
-    ? networkMessage || 'Could not reach the server. Please check your connection and try again.'
+    ? networkMessage || t('connection_message')
     : isChunkError
-      ? 'The app has been updated. Please reload to get the latest version.'
-      : error.message || 'An unexpected error occurred. Please try again.';
+      ? t('update_message')
+      : error.message || t('unexpected_error');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -104,24 +99,24 @@ export function PageError({
 
         {error.digest && (
           <p className="text-xs text-gray-400 mb-4">
-            Error ID: {error.digest}
+            {t('error_id', { id: error.digest })}
           </p>
         )}
 
         <div className="flex items-center gap-3">
           <button onClick={reset} className="btn btn-primary">
-            Try again
+            {t('try_again')}
           </button>
           {isChunkError ? (
             <button
               onClick={() => window.location.reload()}
               className="btn btn-secondary"
             >
-              Reload page
+              {t('reload_page')}
             </button>
           ) : (
             <a href="/" className="btn btn-secondary">
-              Go Home
+              {t('go_home')}
             </a>
           )}
         </div>

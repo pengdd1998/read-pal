@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+
 import type { ChapterObjective, ConceptCheck, MasteryReport } from '@/hooks/useStudyMode';
 
 interface StudyModePanelProps {
@@ -26,6 +28,8 @@ export function StudyModePanel({
   onRevealAnswer,
   onSaveChecks,
 }: StudyModePanelProps) {
+  const t = useTranslations('study');
+  const tr = useTranslations('reader');
   const [activeTab, setActiveTab] = useState<'objectives' | 'checks' | 'mastery'>('objectives');
 
   if (!enabled) return null;
@@ -40,11 +44,11 @@ export function StudyModePanel({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">📚</span>
-            <h3 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">Study Mode</h3>
+            <h3 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">{tr('study_mode_title')}</h3>
           </div>
           {mastery && (
             <span className="text-xs text-amber-700 dark:text-amber-400">
-              Mastery: {Math.round(mastery.overallMastery * 100)}%
+              {t('mastery_percent', { pct: Math.round(mastery.overallMastery * 100) })}
             </span>
           )}
         </div>
@@ -61,9 +65,9 @@ export function StudyModePanel({
                   : 'text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-800/50'
               }`}
             >
-              {tab === 'objectives' && `Goals (${completedCount}/${objectives.length})`}
-              {tab === 'checks' && `Checks (${answeredCount}/${checks.length})`}
-              {tab === 'mastery' && 'Progress'}
+              {tab === 'objectives' && t('goals_tab', { done: completedCount, total: objectives.length })}
+              {tab === 'checks' && t('checks_tab', { done: answeredCount, total: checks.length })}
+              {tab === 'mastery' && t('progress_tab')}
             </button>
           ))}
         </div>
@@ -74,7 +78,7 @@ export function StudyModePanel({
         {loading && (
           <div className="flex items-center justify-center py-8">
             <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
-            <span className="ml-2 text-sm text-gray-500">Generating study material...</span>
+            <span className="ml-2 text-sm text-gray-500">{t('generating')}</span>
           </div>
         )}
 
@@ -82,7 +86,7 @@ export function StudyModePanel({
           <div className="space-y-2">
             {objectives.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">
-                Highlight text in this chapter to get personalized objectives
+                {t('highlight_for_objectives')}
               </p>
             ) : (
               objectives.map((obj) => (
@@ -121,7 +125,7 @@ export function StudyModePanel({
           <div className="space-y-3">
             {checks.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">
-                Concept checks will appear as you read
+                {t('checks_appear')}
               </p>
             ) : (
               checks.map((check) => {
@@ -137,7 +141,7 @@ export function StudyModePanel({
                       </p>
                       {!isRevealed && check.hint && (
                         <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 italic">
-                          Hint: {check.hint}
+                          {t('hint_prefix', { hint: check.hint })}
                         </p>
                       )}
                     </div>
@@ -146,7 +150,7 @@ export function StudyModePanel({
                         onClick={() => onRevealAnswer(check.id)}
                         className="w-full px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30 border-t border-gray-200 dark:border-gray-700 transition-colors"
                       >
-                        Reveal Answer
+                        {t('reveal_answer')}
                       </button>
                     ) : (
                       <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 border-t border-emerald-200 dark:border-emerald-800">
@@ -164,7 +168,7 @@ export function StudyModePanel({
                 onClick={() => onSaveChecks(checks)}
                 className="w-full mt-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors"
               >
-                Add to Flashcard Review
+                {t('add_to_flashcard')}
               </button>
             )}
           </div>
@@ -175,7 +179,7 @@ export function StudyModePanel({
             {/* Mastery bar */}
             <div>
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-600 dark:text-gray-400">Overall Mastery</span>
+                <span className="text-gray-600 dark:text-gray-400">{t('overall_mastery')}</span>
                 <span className="font-medium text-amber-700 dark:text-amber-400">
                   {Math.round(mastery.overallMastery * 100)}%
                 </span>
@@ -194,20 +198,20 @@ export function StudyModePanel({
                 <div className="text-lg font-bold text-gray-900 dark:text-white">
                   {mastery.chaptersCompleted}/{mastery.totalChapters}
                 </div>
-                <div className="text-xs text-gray-500">Chapters Read</div>
+                <div className="text-xs text-gray-500">{t('chapters_read')}</div>
               </div>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                 <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
                   {mastery.cardsDue}
                 </div>
-                <div className="text-xs text-gray-500">Cards Due</div>
+                <div className="text-xs text-gray-500">{t('cards_due')}</div>
               </div>
             </div>
 
             {/* Weak/Strong areas */}
             {mastery.strongAreas.length > 0 && (
               <div>
-                <h4 className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">Strong Areas</h4>
+                <h4 className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">{t('strong_areas')}</h4>
                 <div className="space-y-1">
                   {mastery.strongAreas.slice(0, 3).map((area, i) => (
                     <div key={i} className="text-xs text-gray-600 dark:text-gray-400 truncate">
@@ -219,7 +223,7 @@ export function StudyModePanel({
             )}
             {mastery.weakAreas.length > 0 && (
               <div>
-                <h4 className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">Needs Review</h4>
+                <h4 className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">{t('needs_review')}</h4>
                 <div className="space-y-1">
                   {mastery.weakAreas.slice(0, 3).map((area, i) => (
                     <div key={i} className="text-xs text-gray-600 dark:text-gray-400 truncate">

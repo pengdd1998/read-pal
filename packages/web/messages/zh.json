@@ -832,7 +832,26 @@
     "language_en": "English",
     "language_zh": "中文（简体）",
     "save_button": "保存更改",
-    "saved_message": "设置已保存"
+    "saved_message": "设置已保存",
+    "font_size_px": "{size}px",
+    "font_system": "系统",
+    "books_per_week": "每周阅读目标",
+    "daily_reading_time": "每日阅读时间",
+    "min_suffix": " 分钟",
+    "hr_suffix": " 小时",
+    "choose_companion": "选择你的阅读伙伴",
+    "interaction_frequency": "互动频率",
+    "freq_minimal": "安静",
+    "freq_minimal_desc": "仅在提问时回应",
+    "freq_normal": "友好",
+    "freq_normal_desc": "适时提醒",
+    "freq_frequent": "活跃",
+    "freq_frequent_desc": "随时陪伴",
+    "persona_sage_desc": "智慧且深思熟虑",
+    "persona_penny_desc": "热情且充满好奇",
+    "persona_alex_desc": "直接且有挑战性",
+    "persona_quinn_desc": "平静且简约",
+    "persona_sam_desc": "务实且专注"
   },
   "nav": {
     "library": "书架",
@@ -1471,5 +1490,34 @@
   },
   "privacy": {
     "page_title": "隐私政策"
+  },
+  "study": {
+    "mastery_percent": "掌握度：{pct}%",
+    "goals_tab": "目标 ({done}/{total})",
+    "checks_tab": "检查 ({done}/{total})",
+    "progress_tab": "进度",
+    "generating": "正在生成学习材料...",
+    "highlight_for_objectives": "在当前章节中高亮文本以获取个性化学习目标",
+    "checks_appear": "概念检查将随阅读自动出现",
+    "reveal_answer": "查看答案",
+    "add_to_flashcard": "添加到卡片复习",
+    "overall_mastery": "整体掌握度",
+    "chapters_read": "已读章节",
+    "cards_due": "待复习卡片",
+    "strong_areas": "掌握良好",
+    "needs_review": "需要复习",
+    "hint_prefix": "提示：{hint}"
+  },
+  "errors": {
+    "connection_problem": "网络连接问题",
+    "connection_message": "无法连接服务器，请检查网络后重试。",
+    "app_update": "应用已更新",
+    "update_message": "应用已更新，请重新加载以获取最新版本。",
+    "something_wrong": "出了点问题",
+    "unexpected_error": "发生意外错误，请重试。",
+    "try_again": "重试",
+    "reload_page": "重新加载",
+    "go_home": "返回首页",
+    "error_id": "错误 ID：{id}"
   }
 }

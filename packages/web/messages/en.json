@@ -832,7 +832,26 @@
     "language_en": "English",
     "language_zh": "中文（简体）",
     "save_button": "Save Changes",
-    "saved_message": "Settings saved"
+    "saved_message": "Settings saved",
+    "font_size_px": "{size}px",
+    "font_system": "System",
+    "books_per_week": "Books per week",
+    "daily_reading_time": "Daily reading time",
+    "min_suffix": " min",
+    "hr_suffix": " hr",
+    "choose_companion": "Choose your companion",
+    "interaction_frequency": "Interaction frequency",
+    "freq_minimal": "Quiet",
+    "freq_minimal_desc": "Only when asked",
+    "freq_normal": "Friendly",
+    "freq_normal_desc": "Helpful nudges",
+    "freq_frequent": "Active",
+    "freq_frequent_desc": "Always nearby",
+    "persona_sage_desc": "Wise and thoughtful",
+    "persona_penny_desc": "Enthusiastic and curious",
+    "persona_alex_desc": "Challenging and direct",
+    "persona_quinn_desc": "Calm and minimalist",
+    "persona_sam_desc": "Practical and focused"
   },
   "nav": {
     "library": "Library",
@@ -1471,5 +1490,34 @@
   },
   "privacy": {
     "page_title": "Privacy Policy"
+  },
+  "study": {
+    "mastery_percent": "Mastery: {pct}%",
+    "goals_tab": "Goals ({done}/{total})",
+    "checks_tab": "Checks ({done}/{total})",
+    "progress_tab": "Progress",
+    "generating": "Generating study material...",
+    "highlight_for_objectives": "Highlight text in this chapter to get personalized objectives",
+    "checks_appear": "Concept checks will appear as you read",
+    "reveal_answer": "Reveal Answer",
+    "add_to_flashcard": "Add to Flashcard Review",
+    "overall_mastery": "Overall Mastery",
+    "chapters_read": "Chapters Read",
+    "cards_due": "Cards Due",
+    "strong_areas": "Strong Areas",
+    "needs_review": "Needs Review",
+    "hint_prefix": "Hint: {hint}"
+  },
+  "errors": {
+    "connection_problem": "Connection problem",
+    "connection_message": "Could not reach the server. Please check your connection and try again.",
+    "app_update": "App update available",
+    "update_message": "The app has been updated. Please reload to get the latest version.",
+    "something_wrong": "Something went wrong",
+    "unexpected_error": "An unexpected error occurred. Please try again.",
+    "try_again": "Try again",
+    "reload_page": "Reload page",
+    "go_home": "Go Home",
+    "error_id": "Error ID: {id}"
   }
 }
