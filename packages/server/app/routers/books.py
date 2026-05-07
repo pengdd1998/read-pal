@@ -159,7 +159,7 @@ async def seed_sample_book(
         author=author,
         file_type=BookFileType.epub,
         file_size=1024,
-        total_pages=100,
+        total_pages=1,
         current_page=0,
         status=BookStatus.unread,
         tags=['sample'],

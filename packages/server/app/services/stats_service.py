@@ -40,12 +40,20 @@ async def get_dashboard_stats(
         )
     )
 
-    # --- Pages read (from reading sessions) ---
+    # --- Pages read (from reading sessions, fallback to book progress) ---
     total_pages = await db.scalar(
         select(func.coalesce(func.sum(ReadingSession.pages_read), 0)).where(
             ReadingSession.user_id == uid
         )
     )
+    # Fallback: if no session data, sum book current_page as approximate pages read
+    if not total_pages:
+        book_pages = await db.scalar(
+            select(func.coalesce(func.sum(Book.current_page), 0)).where(
+                and_(Book.user_id == uid, Book.current_page > 0)
+            )
+        )
+        total_pages = book_pages or 0
 
     # --- Reading time (seconds -> minutes) ---
     total_seconds = await db.scalar(

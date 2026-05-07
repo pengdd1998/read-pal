@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation, AnnotationType
 from app.models.book import Book, BookFileType, BookStatus
 from app.models.document import Document
+from app.models.reading_session import ReadingSession
 
 logger = logging.getLogger('read-pal.seed')
 
@@ -120,10 +122,10 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
         author='F. Scott Fitzgerald',
         file_type=BookFileType.epub,
         file_size=2048,
-        total_pages=180,
-        current_page=0,
+        total_pages=len(GATSBY_CHAPTERS),  # 5 chapters
+        current_page=1,
         status=BookStatus.reading,
-        progress=5,
+        progress=20,  # 1/5 chapters read
         tags=['sample', 'classic', 'fiction'],
         metadata_={
             'year': 1925,
@@ -237,6 +239,22 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
         ),
     ]
     db.add_all(sample_annotations)
+
+    # Seed a reading session so dashboard stats show meaningful data
+    from datetime import timezone as _tz
+    session_start = datetime.now(_tz.utc) - timedelta(minutes=20)
+    sample_session = ReadingSession(
+        user_id=user_id,
+        book_id=sample.id,
+        started_at=session_start,
+        ended_at=session_start + timedelta(minutes=15),
+        duration=900,  # 15 minutes
+        pages_read=1,
+        highlights=5,
+        notes=2,
+        is_active=False,
+    )
+    db.add(sample_session)
 
     # Pre-populate knowledge graph cache so the graph page shows data immediately
     await _seed_graph_cache(user_id, sample.id)
