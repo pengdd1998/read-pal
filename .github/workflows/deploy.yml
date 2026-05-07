@@ -85,7 +85,7 @@ jobs:
             # 4. Run database migrations
             # -------------------------------------------------------
             echo ">>> Running database migrations..."
-            docker compose exec -T api alembic upgrade head
+            docker compose exec -T api python -m alembic upgrade head
 
             # -------------------------------------------------------
             # 5. Health checks with retry
