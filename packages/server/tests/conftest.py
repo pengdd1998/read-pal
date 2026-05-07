@@ -179,10 +179,17 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     mock_redis.expire.return_value = True
     mock_redis.ttl.return_value = 60
 
+    # Default LLM mock — returns generic JSON to prevent real API calls
+    mock_llm = AsyncMock()
+    mock_llm.ainvoke = AsyncMock(
+        return_value=type('Resp', (), {'content': '{"result": "mocked"}'})()
+    )
+
     with (
         patch('app.middleware.auth._get_redis', return_value=mock_redis),
         patch('app.routers.password_reset._get_redis', return_value=mock_redis),
         patch('redis.asyncio.from_url', return_value=mock_redis),
+        patch('app.services.llm.get_llm', return_value=mock_llm),
     ):
         async with AsyncClient(
             transport=ASGITransport(app=app),
