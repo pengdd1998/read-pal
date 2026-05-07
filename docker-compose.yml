@@ -50,6 +50,9 @@ services:
           memory: 1G
           cpus: '1.0'
     restart: unless-stopped
+    networks:
+      - default
+      - shared-infra
 
   web:
     build:
@@ -80,5 +83,9 @@ services:
           memory: 128M
           cpus: '0.25'
     restart: unless-stopped
+
+networks:
+  shared-infra:
+    external: true
 
 # No local volumes needed - all data services are external infrastructure
