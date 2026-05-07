@@ -179,7 +179,7 @@ async def test_delete_account(client):
         '/api/v1/auth/account',
         headers=auth_headers(reg['token']),
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 204
 
     # Verify user is gone
     resp = await client.get('/api/v1/auth/me', headers=auth_headers(reg['token']))
