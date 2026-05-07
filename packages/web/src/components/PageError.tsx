@@ -13,6 +13,20 @@ interface PageErrorProps {
   icon?: 'warning' | 'book' | 'chat' | 'chart' | 'search' | 'friend' | 'memory';
 }
 
+// Fallback strings when NextIntl provider is unavailable (e.g. error.tsx boundaries)
+const fallbacks: Record<string, string> = {
+  connection_problem: 'Connection problem',
+  connection_message: 'Could not reach the server. Please check your connection and try again.',
+  app_update: 'App update available',
+  update_message: 'The app has been updated. Please reload to get the latest version.',
+  something_wrong: 'Something went wrong',
+  unexpected_error: 'An unexpected error occurred. Please try again.',
+  try_again: 'Try again',
+  reload_page: 'Reload page',
+  go_home: 'Go Home',
+  error_id: 'Error ID: {id}',
+};
+
 const icons: Record<string, JSX.Element> = {
   warning: (
     <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -51,6 +65,23 @@ const icons: Record<string, JSX.Element> = {
   ),
 };
 
+/** Safe translation getter — falls back to English when NextIntl context is unavailable. */
+function useSafeTranslations(namespace: string) {
+  try {
+    return useTranslations(namespace);
+  } catch {
+    return (key: string, params?: Record<string, string>) => {
+      let text = fallbacks[key] || key;
+      if (params) {
+        for (const [k, v] of Object.entries(params)) {
+          text = text.replace(`{${k}}`, v);
+        }
+      }
+      return text;
+    };
+  }
+}
+
 export function PageError({
   error,
   reset,
@@ -58,7 +89,7 @@ export function PageError({
   networkMessage,
   icon = 'warning',
 }: PageErrorProps) {
-  const t = useTranslations('errors');
+  const t = useSafeTranslations('errors');
   const msg = error.message?.toLowerCase() || '';
   const isNetworkError =
     msg.includes('network') ||
