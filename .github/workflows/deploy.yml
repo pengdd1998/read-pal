@@ -78,6 +78,8 @@ jobs:
             echo ">>> Starting containers..."
             docker compose up -d --remove-orphans
 
+            # Connect API to shared infrastructure network (PostgreSQL, Redis, MinIO)
+            docker network connect shared-infra read-pal-api-1 2>/dev/null || true
             sleep 3
             docker compose restart nginx
 
@@ -85,7 +87,7 @@ jobs:
             # 4. Run database migrations
             # -------------------------------------------------------
             echo ">>> Running database migrations..."
-            docker compose exec -T api alembic upgrade head
+            docker compose exec -T -e DB_HOST=infra-postgres -e REDIS_URL=redis://infra-redis:6379 -e MINIO_ENDPOINT=infra-minio api alembic upgrade head
 
             # -------------------------------------------------------
             # 5. Health checks with retry
