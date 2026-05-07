@@ -39,8 +39,8 @@ class AnnotationResponse(BaseModel):
     color: str | None
     note: str | None
     tags: list[str] | None
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True, alias_generator=to_camel)
 

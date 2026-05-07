@@ -282,7 +282,8 @@ async def check_llm_health() -> dict[str, Any]:
     start = time.monotonic()
     try:
         llm = get_llm(temperature=0.0, max_tokens=1)
-        await llm.ainvoke([HumanMessage(content='Hi')])
+        import asyncio
+        await asyncio.wait_for(llm.ainvoke([HumanMessage(content='Hi')]), timeout=5.0)
         latency_ms = int((time.monotonic() - start) * 1000)
         result: dict[str, Any] = {
             'healthy': True,

@@ -43,6 +43,7 @@ async def create_session(
             book.started_at = now
 
     await db.flush()
+    await db.refresh(session)
 
     logger.info('Session created: %s for book %s', session.id, data.book_id)
     return session
@@ -121,15 +122,17 @@ async def end_session(
 async def get_active_session(
     db: AsyncSession,
     user_id: str,
-    book_id: UUID,
+    book_id: UUID | None = None,
 ) -> ReadingSession | None:
-    """Find the active session for a given book."""
+    """Find the active session for a given book, or any active session."""
+    conditions = [
+        ReadingSession.user_id == user_id,
+        ReadingSession.is_active == True,  # noqa: E712
+    ]
+    if book_id is not None:
+        conditions.append(ReadingSession.book_id == book_id)
     result = await db.execute(
-        select(ReadingSession).where(
-            ReadingSession.user_id == user_id,
-            ReadingSession.book_id == book_id,
-            ReadingSession.is_active == True,  # noqa: E712
-        ),
+        select(ReadingSession).where(*conditions),
     )
     return result.scalar_one_or_none()
 

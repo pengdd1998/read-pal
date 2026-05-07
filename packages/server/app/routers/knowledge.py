@@ -26,12 +26,14 @@ logger = logging.getLogger('read-pal.knowledge')
 router = APIRouter(prefix='/api/v1/knowledge', tags=['knowledge'])
 
 
-@router.get('/graph', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.get('/graph', response_model=GenericResponse)
 async def get_all_graphs(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Get all knowledge graphs for the user (one per book)."""
+    """Get all knowledge graphs for the user (cached only, no LLM calls)."""
+    from app.services.knowledge_service import _load_cached_graph, _content_hash, _load_annotations
+
     result = await db.execute(
         select(Book.id).where(Book.user_id == UUID(current_user['id'])),
     )
@@ -39,15 +41,20 @@ async def get_all_graphs(
     all_nodes: list[dict] = []
     all_edges: list[dict] = []
 
+    uid = UUID(current_user['id'])
     for bid in book_ids:
         try:
-            graph_data = await build_graph(db, UUID(current_user['id']), bid)
-            for node in graph_data.nodes:
-                all_nodes.append(node.model_dump())
-            for edge in graph_data.edges:
-                all_edges.append(edge.model_dump())
+            annotations = await _load_annotations(db, uid, bid)
+            texts = [a.content for a in annotations if a.content.strip()]
+            current_hash = _content_hash(texts)
+            cached = await _load_cached_graph(uid, bid, current_hash)
+            if cached is not None:
+                for node in cached.nodes:
+                    all_nodes.append(node.model_dump())
+                for edge in cached.edges:
+                    all_edges.append(edge.model_dump())
         except Exception:
-            logger.warning('Failed to build graph for book %s', bid, exc_info=True)
+            logger.warning('Failed to load cached graph for book %s', bid, exc_info=True)
             continue
 
     return {

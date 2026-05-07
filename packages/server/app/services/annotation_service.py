@@ -83,6 +83,7 @@ async def create_annotation(
     )
     db.add(annotation)
     await db.flush()
+    await db.refresh(annotation)
 
     logger.info(
         'Annotation created: %s (%s) for user %s',

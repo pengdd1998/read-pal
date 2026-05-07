@@ -33,16 +33,16 @@ class SessionResponse(BaseModel):
     id: UUID
     user_id: UUID
     book_id: UUID
-    started_at: datetime
-    ended_at: datetime | None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
     duration: int
     pages_read: int
     highlights: int
     notes: int
     summary: str | None
     is_active: bool
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

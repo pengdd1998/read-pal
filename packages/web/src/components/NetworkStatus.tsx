@@ -133,9 +133,10 @@ export function NetworkStatus() {
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
 
-    // Initial queue check
+    // Initial queue check — purge stale items first, then count remaining
     (async () => {
       try {
+        await purgeStaleQueue();
         const db = await openDB();
         const tx = db.transaction('mutations', 'readonly');
         const store = tx.objectStore('mutations');
@@ -277,6 +278,8 @@ export function NetworkStatus() {
   return null;
 }
 
+const QUEUE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open('readpal-offline', 2);
@@ -292,4 +295,28 @@ function openDB(): Promise<IDBDatabase> {
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+}
+
+async function purgeStaleQueue(): Promise<number> {
+  const cutoff = Date.now() - QUEUE_MAX_AGE_MS;
+  try {
+    const db = await openDB();
+    const tx = db.transaction('mutations', 'readwrite');
+    const store = tx.objectStore('mutations');
+    const items = await new Promise<any[]>((resolve, reject) => {
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    let purged = 0;
+    for (const item of items) {
+      if (item.timestamp < cutoff) {
+        store.delete(item.timestamp);
+        purged++;
+      }
+    }
+    return purged;
+  } catch {
+    return 0;
+  }
 }

@@ -24,19 +24,28 @@ router = APIRouter(prefix='/api/v1/reading-book', tags=['reading-book'])
 
 
 @router.post('/generate', response_model=GenericResponse)
+@router.post('/{book_id}/generate', response_model=GenericResponse)
 async def generate_memory_book(
-    body: MemoryBookGenerateRequest,
+    book_id: UUID | None = None,
+    body: MemoryBookGenerateRequest | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate a Personal Reading Book for a given book."""
+    resolved_id = book_id or (body.book_id if body else None)
+    if resolved_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={'code': 'VALIDATION_ERROR', 'message': 'book_id is required'},
+        )
+    fmt = body.format if body else 'personal_book'
     try:
         result = await generate(
             db,
             UUID(current_user['id']),
-            body.book_id,
-            body.format,
+            resolved_id,
+            fmt,
         )
         return {
             'success': True,

@@ -3,6 +3,7 @@
 All responses follow the shape: ``{"success": true, "data": {...}}``
 """
 
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -55,7 +56,7 @@ async def list_sessions(
 
 @router.get('/active', response_model=GenericResponse)
 async def get_active_session(
-    book_id: UUID = Query(...),
+    book_id: UUID | None = Query(None),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
