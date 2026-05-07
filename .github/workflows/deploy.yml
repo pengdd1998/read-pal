@@ -29,7 +29,13 @@ jobs:
             cd "$DEPLOY_PATH"
 
             # -------------------------------------------------------
-            # 0. Resource guard - abort if VPS is overloaded
+            # 0. Pre-flight checks
+            # -------------------------------------------------------
+
+            # Clear stale ghcr.io credentials (causes 403 on public images)
+            docker logout ghcr.io 2>/dev/null || true
+
+            # Resource guard - abort if VPS is overloaded
             # -------------------------------------------------------
             AVAIL_MEM=$(free -m | awk '/Mem:/{print $7}')
             if [ "$AVAIL_MEM" -lt 300 ]; then
