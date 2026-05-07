@@ -94,8 +94,8 @@ async def end_session(
             book.last_read_at = now
             if book.total_pages > 0:
                 if current_page_from_client is not None:
-                    # Frontend sends absolute page position — use it directly
-                    book.current_page = min(current_page_from_client, book.total_pages)
+                    # Frontend sends 0-indexed chapter position
+                    book.current_page = min(current_page_from_client + 1, book.total_pages)
                 else:
                     # Fallback: add delta
                     book.current_page = min(
@@ -106,10 +106,14 @@ async def end_session(
                 sp = scroll_progress_from_client if scroll_progress_from_client is not None else float(book.scroll_progress or 0)
                 book.scroll_progress = Decimal(str(round(sp, 3)))
                 book.progress = Decimal(
-                    str(round(((book.current_page + sp) / book.total_pages) * 100, 2)),
+                    str(round((book.current_page / book.total_pages) * 100, 2)),
                 )
+                # Cap at 100
+                if book.progress > Decimal('100'):
+                    book.progress = Decimal('100')
                 # Auto-complete when all pages read
-                if book.progress >= Decimal('100') and book.status != BookStatus.completed:
+                if book.current_page >= book.total_pages and book.status != BookStatus.completed:
+                    book.progress = Decimal('100')
                     book.status = BookStatus.completed
                     book.completed_at = now
 
