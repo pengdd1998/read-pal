@@ -176,6 +176,7 @@ async def register(
     )
     db.add(user)
     await db.flush()
+    await db.refresh(user)
 
     # Auto-seed a sample book so new users see content immediately
     from app.services.seed_service import seed_sample_data

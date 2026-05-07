@@ -28,7 +28,7 @@ class UserResponse(BaseModel):
     name: str
     avatar: str | None = None
     settings: dict = {}
-    created_at: datetime
+    created_at: datetime | None = None
 
     model_config = {'from_attributes': True}
 
