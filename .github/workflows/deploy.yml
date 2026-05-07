@@ -6,7 +6,7 @@ on:
 
 concurrency:
   group: deploy-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -21,12 +21,34 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 60m
+          command_timeout: 30m
           script: |
             set -euo pipefail
 
             DEPLOY_PATH="/home/ubuntu/projects/read-pal"
             cd "$DEPLOY_PATH"
+
+            # -------------------------------------------------------
+            # 0. Resource guard - abort if VPS is overloaded
+            # -------------------------------------------------------
+            AVAIL_MEM=$(free -m | awk '/Mem:/{print $7}')
+            if [ "$AVAIL_MEM" -lt 300 ]; then
+              echo "❌ Insufficient memory (${AVAIL_MEM}MB available, need 300MB). Aborting deploy."
+              exit 1
+            fi
+
+            DISK_AVAIL=$(df / | tail -1 | awk '{print $4}')
+            DISK_AVAIL_GB=$((DISK_AVAIL / 1024 / 1024))
+            if [ "$DISK_AVAIL" -lt 524288 ]; then
+              echo "⚠ Low disk (${DISK_AVAIL_GB}GB), pruning..."
+              docker system prune -af 2>/dev/null || true
+              docker builder prune -f --filter "until=24h" 2>/dev/null || true
+              DISK_AVAIL=$(df / | tail -1 | awk '{print $4}')
+              if [ "$DISK_AVAIL" -lt 524288 ]; then
+                echo "❌ Still low disk after prune. Aborting deploy."
+                exit 1
+              fi
+            fi
 
             # -------------------------------------------------------
             # 1. Pull latest code
@@ -36,21 +58,13 @@ jobs:
             git reset --hard origin/main
 
             # -------------------------------------------------------
-            # 2. Rebuild containers with layer cache
+            # 2. Rebuild containers (single-threaded to limit RAM usage)
             # -------------------------------------------------------
-            echo ">>> Checking disk space..."
-            DISK_AVAIL=$(df / | tail -1 | awk '{print $4}')
-            if [ "$DISK_AVAIL" -lt 1048576 ]; then
-              echo "⚠ Very low disk space, pruning dangling resources..."
-              docker system prune -f 2>/dev/null || true
-              docker builder prune -f --filter "until=48h" 2>/dev/null || true
-            else
-              echo "Disk OK ($DISK_AVAIL KB free)"
-            fi
-
-            echo ">>> Rebuilding containers..."
+            echo ">>> Rebuilding containers (sequential to limit RAM)..."
             export DOCKER_BUILDKIT=1
-            docker compose build
+            export COMPOSE_DOCKER_CLI_BUILD=1
+            docker compose build --progress=plain api
+            docker compose build --progress=plain web
 
             # -------------------------------------------------------
             # 3. Start containers (recreates changed services)
@@ -58,7 +72,6 @@ jobs:
             echo ">>> Starting containers..."
             docker compose up -d --remove-orphans
 
-            # Restart nginx to pick up new upstream IPs
             sleep 3
             docker compose restart nginx
 
@@ -67,8 +80,6 @@ jobs:
             # -------------------------------------------------------
             echo ">>> Running database migrations..."
             docker compose exec -T api alembic upgrade head
-
-            # Note: PostgreSQL is external infrastructure, vacuum not needed here
 
             # -------------------------------------------------------
             # 5. Health checks with retry
@@ -96,14 +107,11 @@ jobs:
             check_health "Web" "http://localhost:8090/en"
 
             # -------------------------------------------------------
-            # 6. Cleanup temporary files
+            # 6. Cleanup
             # -------------------------------------------------------
             echo ">>> Cleaning up..."
-            # Remove old (untagged) images and stopped containers
             docker image prune -f 2>/dev/null || true
-            docker system prune -f --filter "until=24h" 2>/dev/null || true
-            # Prune builder cache older than 48h (keep recent for fast rebuilds)
-            docker builder prune -f --filter "until=48h" 2>/dev/null || true
+            docker builder prune -f --filter "until=24h" 2>/dev/null || true
 
             DISK_USAGE=$(df -h . | tail -1 | awk '{print $5}')
             echo "✅ Deploy complete — Disk usage: $DISK_USAGE"
