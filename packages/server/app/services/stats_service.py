@@ -106,7 +106,11 @@ async def get_dashboard_stats(
             'title': book.title,
             'author': book.author,
             'progress': float(book.progress or 0),
-            'lastRead': book.last_read_at.isoformat() if book.last_read_at else book.added_at.isoformat(),
+            'lastRead': (
+                book.last_read_at.isoformat()
+                if book.last_read_at
+                else book.added_at.isoformat() if book.added_at else None
+            ),
             'coverUrl': book.cover_url,
         })
 

@@ -135,6 +135,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
     )
     db.add(sample)
     await db.flush()
+    await db.refresh(sample)
 
     # Create a Document with actual chapter content
     full_content = '\n'.join(ch['content'] for ch in GATSBY_CHAPTERS)

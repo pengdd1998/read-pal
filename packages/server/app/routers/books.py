@@ -166,6 +166,7 @@ async def seed_sample_book(
     )
     db.add(sample)
     await db.flush()
+    await db.refresh(sample)
     return {
         'success': True,
         'data': BookResponse.model_validate(sample).model_dump(by_alias=True, mode='json'),

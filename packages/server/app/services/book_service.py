@@ -73,6 +73,7 @@ async def create_book(
     )
     db.add(book)
     await db.flush()
+    await db.refresh(book)
 
     logger.info('Book created: %s (%s) for user %s', book.title, book.id, user_id)
     return book
