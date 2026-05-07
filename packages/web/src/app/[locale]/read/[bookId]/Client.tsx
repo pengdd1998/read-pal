@@ -183,6 +183,7 @@ export default function ReadPage() {
   const ui = useReaderUI();
 
   const contentRef = useRef<HTMLElement | null>(null);
+  const [contentReady, setContentReady] = useState(false);
   const chatRef = useRef<CompanionChatHandle>(null);
 
   // Keep contentRef synced with the article element rendered by ReaderView.
@@ -192,6 +193,7 @@ export default function ReadPage() {
       const article = document.querySelector('article.reading-mode');
       if (article && contentRef.current !== article) {
         (contentRef as React.MutableRefObject<HTMLElement | null>).current = article as HTMLElement;
+        setContentReady(true);
       }
     };
     sync();
@@ -285,7 +287,7 @@ export default function ReadPage() {
     onSetSynthesisOpen: ui.setSynthesisOpen,
   });
 
-  useAnnotationHighlights(contentRef, annotations, currentChapter, theme);
+  useAnnotationHighlights(contentRef, annotations, currentChapter, theme, contentReady);
 
   // Sync Capacitor status bar with reader theme
   useEffect(() => {

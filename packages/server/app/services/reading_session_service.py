@@ -69,6 +69,8 @@ async def end_session(
     now = utcnow()
     session.ended_at = now
     session.is_active = False
+    if not session.duration and session.started_at:
+        session.duration = int((now - session.started_at).total_seconds())
 
     # Apply additional update fields if provided
     current_page_from_client = None

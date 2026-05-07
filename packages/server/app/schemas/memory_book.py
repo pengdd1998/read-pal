@@ -15,7 +15,7 @@ class MemoryBookGenerateRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    book_id: UUID
+    book_id: UUID | None = None
     format: Literal[
         'scrapbook',
         'journal',

@@ -26,6 +26,7 @@ export function useAnnotationHighlights(
   annotations: Annotation[],
   currentPageIndex: number,
   theme: 'light' | 'dark' | 'sepia' = 'light',
+  contentReady: boolean = true,
 ): void {
   // ── Stable refs that survive across renders ──────────────────────────
   const marksMapRef = useRef<Map<string, MarkEntry>>(new Map());
@@ -115,10 +116,10 @@ export function useAnnotationHighlights(
     );
 
     batchCreateMarks(containerRef, sorted, theme, marksMapRef, applyMarkStyle);
-  }, [containerRef, currentPageIndex, pageAnnotations, theme, clearAllMarks, applyMarkStyle]);
+  }, [containerRef, currentPageIndex, pageAnnotations, theme, clearAllMarks, applyMarkStyle, contentReady]);
 
   // ── Effect 3: Annotation delta — incremental add/remove/style ────────
-  // Only runs when pageAnnotations identity changes (new/removed/updated).
+  // Runs when pageAnnotations identity changes OR container becomes available.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -176,7 +177,7 @@ export function useAnnotationHighlights(
     );
 
     batchCreateMarks(containerRef, sorted, theme, marksMapRef, applyMarkStyle);
-  }, [containerRef, pageAnnotations, pageAnnotationIds, currentPageIndex, theme, applyMarkStyle]);
+  }, [containerRef, pageAnnotations, pageAnnotationIds, currentPageIndex, theme, applyMarkStyle, contentReady]);
 }
 
 // ────────────────────────────────────────────────────────────────────────────
