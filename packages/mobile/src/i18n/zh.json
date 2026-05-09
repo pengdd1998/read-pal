@@ -1,0 +1,68 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "back": "返回",
+    "close": "关闭",
+    "retry": "重试",
+    "error": "出错了"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册",
+    "logout": "退出登录",
+    "email": "邮箱",
+    "password": "密码",
+    "name": "姓名",
+    "loginFailed": "登录失败",
+    "registerFailed": "注册失败",
+    "noAccount": "没有账号？",
+    "hasAccount": "已有账号？",
+    "signUp": "注册",
+    "signIn": "登录",
+    "logoutConfirm": "确定要退出登录吗？"
+  },
+  "library": {
+    "title": "书架",
+    "books": "{count} 本书",
+    "empty": "还没有书籍",
+    "emptySub": "上传 EPUB 或 PDF 开始阅读",
+    "upload": "上传书籍",
+    "uploading": "上传中... {progress}%",
+    "deleteConfirm": "确定要从书架删除「{title}」吗？",
+    "startReading": "开始阅读",
+    "chatWithAI": "AI 对话",
+    "deleteBook": "删除书籍"
+  },
+  "reader": {
+    "settings": "阅读设置",
+    "theme": "主题",
+    "fontSize": "字体大小",
+    "font": "字体",
+    "chapters": "目录",
+    "reading": "阅读中",
+    "highlight": "高亮",
+    "note": "笔记",
+    "askAI": "问 AI",
+    "addNote": "添加笔记...",
+    "light": "浅色",
+    "sepia": "护眼",
+    "dark": "深色"
+  },
+  "chat": {
+    "title": "AI 对话",
+    "placeholder": "关于这本书，你想问什么...",
+    "thinking": "思考中...",
+    "stop": "停止"
+  },
+  "settings": {
+    "title": "设置",
+    "readerSettings": "阅读设置",
+    "readingGoals": "阅读目标",
+    "notifications": "通知",
+    "about": "关于",
+    "version": "版本 1.0.0"
+  }
+}

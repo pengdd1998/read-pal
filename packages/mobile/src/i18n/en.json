@@ -1,0 +1,68 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "back": "Back",
+    "close": "Close",
+    "retry": "Try again",
+    "error": "Something went wrong"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Create Account",
+    "logout": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "loginFailed": "Login failed",
+    "registerFailed": "Registration failed",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signUp": "Sign Up",
+    "signIn": "Sign In",
+    "logoutConfirm": "Are you sure you want to sign out?"
+  },
+  "library": {
+    "title": "Library",
+    "books": "{count} books",
+    "empty": "No books yet",
+    "emptySub": "Upload an EPUB or PDF to get started",
+    "upload": "Upload Book",
+    "uploading": "Uploading... {progress}%",
+    "deleteConfirm": "Remove \"{title}\" from your library?",
+    "startReading": "Start Reading",
+    "chatWithAI": "Chat with AI",
+    "deleteBook": "Delete Book"
+  },
+  "reader": {
+    "settings": "Reader Settings",
+    "theme": "Theme",
+    "fontSize": "Font Size",
+    "font": "Font",
+    "chapters": "Chapters",
+    "reading": "Reading",
+    "highlight": "Highlight",
+    "note": "Note",
+    "askAI": "Ask AI",
+    "addNote": "Add a note...",
+    "light": "Light",
+    "sepia": "Sepia",
+    "dark": "Dark"
+  },
+  "chat": {
+    "title": "AI Chat",
+    "placeholder": "Ask about this book...",
+    "thinking": "Thinking...",
+    "stop": "Stop"
+  },
+  "settings": {
+    "title": "Settings",
+    "readerSettings": "Reader Settings",
+    "readingGoals": "Reading Goals",
+    "notifications": "Notifications",
+    "about": "About",
+    "version": "Version 1.0.0"
+  }
+}
