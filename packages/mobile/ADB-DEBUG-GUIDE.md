@@ -6,13 +6,19 @@
 
 **架构：**
 ```
-VPS (175.178.66.207)              本地电脑                    Android 手机
-┌─────────────────┐    SSH     ┌──────────────┐    USB/ADB   ┌──────────┐
-│ Expo Dev Server  │◄─tunnel──►│ Local Machine │◄────────────►│ Phone    │
-│ :8081            │           │               │  adb reverse │ Dev Build│
-│ FastAPI :8090    │           │               │  tcp:8081    │          │
-└─────────────────┘           └──────────────┘              └──────────┘
+VPS (175.178.66.207)                    本地电脑                    Android 手机
+┌─────────────────┐                  ┌──────────────┐    USB/ADB   ┌──────────┐
+│ FastAPI :8090    │◄─── HTTP API ───│ Metro :8081   │◄────────────►│ Dev Build│
+│ (后端，已运行)    │  (手机直连VPS)   │ (JS 编译+热更新)│  adb reverse │          │
+└─────────────────┘                  └──────────────┘              └──────────┘
 ```
+
+**职责分离：**
+- **VPS**：只跑 FastAPI 后端（已在 Docker 中运行，不动）
+- **本地电脑**：跑 Metro bundler（编译 JS + 热更新）+ 连接手机
+- **手机**：Metro 热更新走 `adb reverse`，API 请求直连 VPS 公网 IP
+
+**不需要 SSH 隧道。** 手机和 Web 端调用同一个后端 `http://175.178.66.207:8090`。
 
 ## 2. 为什么不能用 Expo Go
 
@@ -49,10 +55,10 @@ ReadPal 使用以下原生模块，超出 Expo Go 支持范围：
 - 开启 USB 调试：`设置 → 关于手机 → 软件信息 → 连续点击"版本号"7次 → 开发者选项 → USB 调试`
 - 开启 USB 安装：`开发者选项 → USB 安装`
 
-### 3.3 VPS (已有)
+### 3.3 VPS (已有，无需改动)
 
-- Node.js 22 + pnpm 8
-- Expo Dev Server
+- FastAPI 后端已通过 Docker 运行在 `:8090`
+- 无需在 VPS 上运行 Metro 或任何新增服务
 
 ## 4. 构建步骤
 
@@ -94,12 +100,9 @@ npx expo run:android
 ```bash
 # 从 EAS 下载 APK 后
 adb install -r ./read-pal-development-build.apk
-
-# 或直接从 URL 下载后安装
-# adb install -r /path/to/downloaded.apk
 ```
 
-验证安装：
+验证：
 ```bash
 adb devices
 # 应显示：
@@ -109,76 +112,83 @@ adb devices
 
 ## 5. 调试流程
 
-### Step 5: 启动 VPS 开发服务器
+### Step 5: 本地启动 Metro
 
 ```bash
-# SSH 到 VPS
-ssh ubuntu@175.178.66.207
-
-cd /home/ubuntu/projects/read-pal/packages/mobile
+# 在本地电脑（不是 VPS）
+cd read-pal/packages/mobile
 
 # 启动 Metro bundler
-npx expo start --port 8081
+npx expo start
 ```
 
-### Step 6: 建立连接隧道
+终端会显示 QR 码和连接信息。
+
+### Step 6: ADB 端口转发
 
 ```bash
-# 在本地电脑开第二个终端
+# 另开一个终端，手机已通过 USB 连接
 
-# 方式 A: SSH 本地端口转发
-ssh -L 8081:localhost:8081 ubuntu@175.178.66.207
-
-# 方式 B: 如果在同一局域网
-# 无需隧道，直接用 VPS IP
-```
-
-### Step 7: ADB 端口转发
-
-```bash
-# 在本地电脑（手机已通过 USB 连接）
-
-# 将手机 8081 端口转发到本地 8081
+# 将手机 localhost:8081 转发到本地电脑 :8081（Metro）
 adb reverse tcp:8081 tcp:8081
 
 # 验证转发规则
 adb reverse --list
-
-# 测试连接（手机上访问 localhost:8081 会转发到 VPS）
 ```
 
-### Step 8: 手机上连接开发服务器
+### Step 7: 手机连接开发服务器
 
 1. 打开手机上的 **ReadPal** Dev Build 应用
-2. 应用启动后会显示开发服务器连接界面
+2. 应用启动后显示开发服务器连接界面
 3. 输入：`http://localhost:8081`
 4. 或扫描终端中 Expo 显示的二维码
 
-### Step 9: 开始开发调试
+### Step 8: 开始开发调试
 
-修改 `packages/mobile/` 下的代码 → Metro 自动热更新到手机。
+修改本地 `packages/mobile/` 下的代码 → Metro 自动热更新到手机。
 
-## 6. 调试工具
+## 6. API 连接说明
 
-### 6.1 React DevTools
+手机应用通过 `src/lib/env.ts` 中的 `API_URL` 连接后端：
+
+```typescript
+// 当前配置（手机直连 VPS 公网 IP）
+export const API_URL = 'http://175.178.66.207:8090';
+```
+
+**手机和 Web 端共用同一个后端。** 只要手机能访问 VPS 的公网 IP，API 请求直接可达，无需额外配置。
+
+如果 VPS 不在公网（内网开发环境），改为：
+```bash
+# 电脑上建 SSH 隧道转发后端端口
+ssh -L 8090:localhost:8090 ubuntu@<vps-ip>
+
+# 手机上也需要转发
+adb reverse tcp:8090 tcp:8090
+
+# 然后 env.ts 改为：
+API_URL = 'http://localhost:8090'
+```
+
+## 7. 调试工具
+
+### 7.1 React DevTools
 
 ```bash
-# 在本地电脑安装
 npm install -g react-devtools
-
-# 启动（手机摇一摇 → 打开 Dev Menu → 远程调试）
 react-devtools
+# 手机摇一摇 → Dev Menu → 远程调试
 ```
 
-### 6.2 Chrome 远程调试（WebView / EPUB）
+### 7.2 Chrome 远程调试（WebView / EPUB）
 
-```bash
-# 手机开启：Dev Menu → 远程调试 JS
-# 本地电脑 Chrome 打开：chrome://inspect
-# 可以调试 WebView 中的 EPUB 渲染
+```
+手机：Dev Menu → 远程调试 JS
+电脑：Chrome 打开 chrome://inspect
+→ 可以调试 WebView 中的 EPUB 渲染
 ```
 
-### 6.3 ADB Logcat
+### 7.3 ADB Logcat
 
 ```bash
 # 实时查看日志
@@ -191,32 +201,6 @@ adb logcat *:E | grep -i react
 adb logcat -c && adb logcat
 ```
 
-### 6.4 网络调试
-
-```bash
-# 查看手机端网络请求
-adb logcat | grep "OkHttp"
-
-# Metro bundler 日志在 VPS 终端实时显示
-```
-
-## 7. API 连接配置
-
-手机应用需要连接 VPS 上的 FastAPI 后端：
-
-```
-# packages/mobile/src/lib/env.ts
-# 当前配置：
-API_URL = 'http://175.178.66.207:8090'
-
-# 手机必须能访问此地址
-# 如果在同一网络 → 直接可用
-# 如果不在同一网络 → 需要额外端口转发：
-adb reverse tcp:8090 tcp:8090
-# 然后改为：
-API_URL = 'http://localhost:8090'
-```
-
 ## 8. 常见问题
 
 | 问题 | 原因 | 解决 |
@@ -224,26 +208,28 @@ API_URL = 'http://localhost:8090'
 | `adb: command not found` | 未安装 ADB | 安装 Android SDK Platform-Tools |
 | `adb devices` 显示 `unauthorized` | 手机未授权 | 手机上点击"允许 USB 调试" |
 | APK 安装失败 `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | 签名不一致 | `adb uninstall com.readpal.app` 后重装 |
-| Metro 连接超时 | 端口转发未生效 | 检查 `adb reverse --list` 和 SSH 隧道 |
+| Metro 连接超时 | adb reverse 未生效 | 检查 `adb reverse --list`，确认手机 USB 已连接 |
 | 热更新不生效 | 缓存问题 | `npx expo start --clear` |
-| 原生模块报错 | 未使用 Dev Build | 确认安装的是 development build，不是 Expo Go |
+| 原生模块报错 | 用了 Expo Go | 确认安装的是 development build APK |
 | EPUB 渲染空白 | WebView 桥接问题 | Chrome `chrome://inspect` 调试 WebView |
-| API 请求失败 | 后端不可达 | 确认 API_URL 和网络连通性 |
+| API 请求失败 | 后端不可达 | 确认手机能访问 `http://175.178.66.207:8090` |
+| MMKV 崩溃 | 原生模块未链接 | 使用 `npx expo prebuild --clean` 重新构建 |
 
 ## 9. 快速启动清单
 
 ```
-□ 本地电脑: adb devices (确认手机连接)
-□ 本地电脑: ssh -L 8081:localhost:8081 ubuntu@175.178.66.207 (隧道)
-□ 本地电脑: adb reverse tcp:8081 tcp:8081 (端口转发)
-□ VPS: cd packages/mobile && npx expo start (启动 Metro)
-□ 手机: 打开 ReadPal → 输入 localhost:8081 → 连接
+□ 本地电脑: git clone + pnpm install
+□ 本地电脑: adb devices (确认手机 USB 连接)
+□ 本地电脑: adb reverse tcp:8081 tcp:8081 (Metro 端口转发)
+□ 本地电脑: cd packages/mobile && npx expo start (启动 Metro)
+□ 手机: 打开 ReadPal Dev Build → 连接 localhost:8081
 □ 手机: 摇一摇 → Dev Menu → 确认连接状态
+□ VPS: 无需任何操作（后端已在运行）
 ```
 
 ## 10. 后续迭代
 
-完成核心功能调试后，后续迭代方向：
+完成核心功能调试后：
 
 1. **Phase 6**: 闪屏页、应用图标、启动优化
 2. **Phase 7**: 推送通知 (expo-notifications)
