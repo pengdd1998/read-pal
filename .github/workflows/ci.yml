@@ -39,6 +39,8 @@ jobs:
 
       - run: pnpm --filter @read-pal/web typecheck
 
+      - run: pnpm --filter @read-pal/mobile typecheck
+
   # -------------------------------------------------------------------
   # Build verification
   # -------------------------------------------------------------------

@@ -82,7 +82,18 @@ npx eas login
 ### Step 3: 构建 Development APK
 
 ```bash
-# 方式 A: EAS 云端构建（推荐，无需 Android Studio）
+# 方式 A: GitHub Actions 构建（推荐，自动构建 + artifacts 下载）
+# 1. 触发构建
+gh workflow run mobile.yml
+
+# 2. 等待构建完成，访问 actions 页面下载 APK
+# https://github.com/read-pal-app/read-pal/actions
+
+# 3. 从 artifacts 下载 read-pal-android-*.apk
+```
+
+```bash
+# 方式 B: EAS 云端构建（需要 Expo 账号）
 npx eas build --platform android --profile development
 
 # 构建完成后会输出下载链接，如：
@@ -90,7 +101,7 @@ npx eas build --platform android --profile development
 ```
 
 ```bash
-# 方式 B: 本地构建（需要 Android Studio + JDK 17）
+# 方式 C: 本地构建（需要 Android Studio + JDK 17）
 npx expo prebuild -p android
 npx expo run:android
 ```
@@ -218,11 +229,13 @@ adb logcat -c && adb logcat
 ## 9. 快速启动清单
 
 ```
+□ 获取 APK: gh workflow run mobile.yml → 从 actions 页面下载 artifacts
 □ 本地电脑: git clone + pnpm install
 □ 本地电脑: adb devices (确认手机 USB 连接)
+□ 本地电脑: adb install -r read-pal-android-*.apk
 □ 本地电脑: adb reverse tcp:8081 tcp:8081 (Metro 端口转发)
 □ 本地电脑: cd packages/mobile && npx expo start (启动 Metro)
-□ 手机: 打开 ReadPal Dev Build → 连接 localhost:8081
+□ 手机: 打开 ReadPal → 连接 localhost:8081
 □ 手机: 摇一摇 → Dev Menu → 确认连接状态
 □ VPS: 无需任何操作（后端已在运行）
 ```

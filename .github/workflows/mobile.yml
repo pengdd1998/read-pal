@@ -3,25 +3,26 @@ name: Mobile Build
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    tags:
+      - 'mobile-v*'
+  pull_request:
     paths:
-      - 'packages/web/**'
+      - 'packages/mobile/**'
 
 concurrency:
   group: mobile-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '20'
   PNPM_VERSION: '8.12.0'
-  JAVA_VERSION: '21'
 
 jobs:
   # -------------------------------------------------------------------
-  # Build Next.js static export (shared by Android + iOS)
+  # Typecheck and verify
   # -------------------------------------------------------------------
-  build-web:
-    name: Build Static Web
+  verify:
+    name: Verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,32 +42,15 @@ jobs:
       - name: Build shared package
         run: pnpm --filter @read-pal/shared build
 
-      # Static export produces packages/web/out/ with 60+ HTML pages
-      - name: Build Next.js static export
-        working-directory: packages/web
-        run: npx next build
-        env:
-          STATIC_EXPORT: '1'
-          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
-
-      - name: Verify static output
-        run: |
-          test -f packages/web/out/index.html && echo "Static export OK" || (echo "FAIL: out/index.html missing" && exit 1)
-
-      # Upload the out/ directory for downstream jobs to consume
-      - name: Upload static export
-        uses: actions/upload-artifact@v4
-        with:
-          name: static-export
-          path: packages/web/out/
-          retention-days: 1
+      - name: Typecheck mobile
+        run: pnpm --filter @read-pal/mobile typecheck
 
   # -------------------------------------------------------------------
-  # Android APK (debug, unsigned)
+  # Android APK (local build)
   # -------------------------------------------------------------------
   build-android:
     name: Android APK
-    needs: build-web
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,11 +64,20 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
-      # Java 21 required for Capacitor 8.x / AGP 8.x
-      - uses: actions/setup-java@v4
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @read-pal/shared build
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: ${{ env.JAVA_VERSION }}
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -92,46 +85,38 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('packages/web/android/**/*.gradle*', 'packages/web/android/gradle-wrapper.properties') }}
+          key: gradle-${{ runner.os }}-${{ hashFiles('packages/mobile/**/gradle*', 'packages/mobile/android/**') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
 
-      # Download the pre-built static export into packages/web/out/
-      - name: Download static export
-        uses: actions/download-artifact@v4
-        with:
-          name: static-export
-          path: packages/web/out/
+      - name: Build Android APK (local)
+        working-directory: packages/mobile
+        run: |
+          eas build --platform android --profile development --local --output ./app.apk
+        env:
+          EXPO_NO_GIT_STATUS: 1
 
-      # Initialize native project if absent (first run on a fresh checkout)
-      - name: Ensure Android project exists
-        working-directory: packages/web
-        run: test -d android || npx cap add android
-
-      # Sync static assets from out/ into the Android project
-      - name: Capacitor sync Android
-        working-directory: packages/web
-        run: npx cap sync android
-
-      - name: Build debug APK
-        working-directory: packages/web/android
-        run: ./gradlew assembleDebug
+      - name: Rename APK
+        working-directory: packages/mobile
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          mv app.apk read-pal-android-${VERSION}-development.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: read-pal-android-debug
-          path: packages/web/android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 7
+          name: read-pal-android-apk
+          path: packages/mobile/read-pal-android-*.apk
+          retention-days: 30
 
   # -------------------------------------------------------------------
-  # iOS IPA (unsigned archive, macOS runner required)
+  # iOS IPA (local build, macOS only)
   # -------------------------------------------------------------------
   build-ios:
     name: iOS IPA
-    needs: build-web
+    needs: verify
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -148,48 +133,63 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Download the pre-built static export into packages/web/out/
-      - name: Download static export
-        uses: actions/download-artifact@v4
-        with:
-          name: static-export
-          path: packages/web/out/
+      - name: Build shared package
+        run: pnpm --filter @read-pal/shared build
 
-      # Initialize native project if absent (first run on a fresh checkout)
-      - name: Ensure iOS project exists
-        working-directory: packages/web
-        run: test -d ios || npx cap add ios
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
 
-      # Sync static assets from out/ into the iOS project
-      - name: Capacitor sync iOS
-        working-directory: packages/web
-        run: npx cap sync ios
-
-      # Build unsigned archive using xcodeproj (no xcworkspace in this project)
-      - name: Build iOS archive (unsigned)
-        working-directory: packages/web/ios/App
+      - name: Build iOS IPA (local, unsigned)
+        working-directory: packages/mobile
         run: |
-          xcodebuild \
-            -project App.xcodeproj \
-            -scheme App \
-            -configuration Release \
-            -archivePath build/App.xcarchive \
-            archive \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcpretty
+          eas build --platform ios --profile development --local --output ./app.ipa
+        env:
+          EXPO_NO_GIT_STATUS: 1
 
-      # Package the archive into an IPA for sideloading / re-signing
-      - name: Create IPA from archive
-        working-directory: packages/web/ios/App
+      - name: Rename IPA
+        working-directory: packages/mobile
         run: |
-          mkdir -p build/ipa/Payload
-          cp -r build/App.xcarchive/Products/Applications/App.app build/ipa/Payload/
-          cd build/ipa
-          zip -r ../App.ipa Payload/
+          VERSION=$(node -p "require('./package.json').version")
+          mv app.ipa read-pal-ios-${VERSION}-development.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: read-pal-ios-unsigned
-          path: packages/web/ios/App/build/App.ipa
-          retention-days: 7
+          name: read-pal-ios-ipa
+          path: packages/mobile/read-pal-ios-*.ipa
+          retention-days: 30
+
+  # -------------------------------------------------------------------
+  # Create GitHub Release on tag
+  # -------------------------------------------------------------------
+  release:
+    name: Create Release
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/mobile-v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: read-pal-android-apk
+          path: ./artifacts
+
+      - name: Download iOS IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: read-pal-ios-ipa
+          path: ./artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./artifacts/*
+          generate_release_notes: true
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
