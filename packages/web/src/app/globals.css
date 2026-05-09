@@ -19,7 +19,7 @@
     --gray-100: #f0e9e0;
     --gray-200: #ddd3c5;
     --gray-300: #c5b7a5;
-    --gray-400: #a89782;
+    --gray-400: #7a6b58;
     --gray-500: #8a7b68;
     --gray-600: #6b5e4d;
     --gray-700: #4a3f33;
@@ -32,25 +32,25 @@
   }
 
   .dark {
-    --surface-0: #0f1419;
-    --surface-1: #1a1f26;
-    --surface-2: #242b33;
-    --surface-3: #2f3840;
+    --surface-0: #1a1410;
+    --surface-1: #201a14;
+    --surface-2: #2a2218;
+    --surface-3: #342a1e;
 
-    --gray-50: #1a1f26;
-    --gray-100: #242b33;
-    --gray-200: #2f3840;
-    --gray-300: #4a5568;
-    --gray-400: #6b7a8d;
-    --gray-500: #8a99ae;
-    --gray-600: #b1bbc9;
-    --gray-700: #d8dde5;
-    --gray-800: #e8ecf0;
-    --gray-900: #f0f2f5;
-    --gray-950: #f8f9fb;
+    --gray-50: #201a14;
+    --gray-100: #2a2218;
+    --gray-200: #342a1e;
+    --gray-300: #5a4e40;
+    --gray-400: #8a7b68;
+    --gray-500: #a89782;
+    --gray-600: #c5b7a5;
+    --gray-700: #ddd3c5;
+    --gray-800: #f0e9e0;
+    --gray-900: #f9f5f0;
+    --gray-950: #fefdfb;
 
     --foreground-rgb: 230, 225, 214;
-    --background-rgb: 15, 20, 25;
+    --background-rgb: 26, 20, 16;
   }
 
   body {
@@ -616,7 +616,7 @@
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold text-sm
+    @apply inline-flex items-center justify-center px-4 py-2 min-h-[44px] rounded-xl font-semibold text-sm
            transition-all duration-200 ease-out
            focus-visible:outline-2 focus-visible:outline-offset-2
            disabled:opacity-50 disabled:pointer-events-none;

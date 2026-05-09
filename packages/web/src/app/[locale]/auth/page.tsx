@@ -103,7 +103,7 @@ function AuthForm() {
   };
 
   return (
-    <main className="min-h-[80vh] flex items-center justify-center px-4">
+    <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="max-w-sm w-full animate-fade-in">
         {/* Brand */}
         <header className="text-center mb-6">
@@ -112,7 +112,7 @@ function AuthForm() {
               r
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold font-display text-gray-900 dark:text-white">
             {mode === 'login' ? t('login_title') : t('register_title')}
           </h1>
           <p className="text-sm text-gray-600 mt-1 dark:text-gray-400">
@@ -129,7 +129,7 @@ function AuthForm() {
             onClick={() => switchMode('register')}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               mode === 'register'
-                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-xs'
+                ? 'bg-surface-0 text-gray-900 dark:text-white shadow-xs'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
@@ -140,7 +140,7 @@ function AuthForm() {
             onClick={() => switchMode('login')}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               mode === 'login'
-                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-xs'
+                ? 'bg-surface-0 text-gray-900 dark:text-white shadow-xs'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
@@ -267,7 +267,7 @@ function AuthForm() {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full py-2.5 rounded-xl"
+              className="btn btn-primary w-full rounded-xl"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -288,7 +288,7 @@ function AuthForm() {
                   <div className="w-full border-t border-gray-200 dark:border-gray-700" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white dark:bg-gray-900 px-2 text-gray-400">{t('or_divider')}</span>
+                  <span className="bg-surface-0 px-2 text-gray-400">{t('or_divider')}</span>
                 </div>
               </div>
               <a
@@ -311,7 +311,7 @@ function AuthForm() {
           {t('terms_agreement')}
         </p>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -319,12 +319,12 @@ export default function AuthPage() {
   const tc = useTranslations('common');
   return (
     <Suspense fallback={
-      <main className="min-h-[80vh] flex items-center justify-center">
+      <div className="min-h-[80vh] flex items-center justify-center">
         <div className="flex items-center gap-2 text-gray-500">
           <LoadingSpinner />
           {tc('loading')}
         </div>
-      </main>
+      </div>
     }>
       <AuthForm />
     </Suspense>

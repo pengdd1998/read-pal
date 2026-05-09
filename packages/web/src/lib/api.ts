@@ -243,7 +243,7 @@ class ApiClient {
         }
         return data;
       })
-      .catch(async () => {
+      .catch(async (err: unknown) => {
         // Offline fallback for Capacitor: try IndexedDB cache for book content
         if (isCapacitor() && bookContentMatch && typeof window !== 'undefined' && !navigator.onLine) {
           const cachedBook = await getCachedContent(bookContentMatch[1]);
@@ -256,6 +256,12 @@ class ApiClient {
               } as unknown as T,
             };
           }
+        }
+        // Preserve server error details (e.g., "Book not found") when available
+        const axiosErr = axios.isAxiosError(err) ? err : null;
+        const serverError = axiosErr?.response?.data as ApiResponse<T> | undefined;
+        if (serverError?.error) {
+          return { success: false as const, error: serverError.error };
         }
         // Return safe default instead of throwing — prevents console noise
         return { success: false as const, error: { code: 'NETWORK_ERROR', message: 'Request failed' } };

@@ -38,8 +38,24 @@ function stripLocale(pathname: string): string {
   return pathname;
 }
 
+const STATIC_ASSETS = [
+  '/icon-maskable.svg',
+  '/icon-pwa.svg',
+  '/og-image.svg',
+  '/manifest.webmanifest',
+  '/favicon.ico',
+  '/robots.txt',
+  '/sitemap.xml',
+];
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Skip i18n middleware for static metadata assets (favicon, OG image, etc.)
+  if (STATIC_ASSETS.includes(pathname)) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get('auth_token')?.value;
 
   // Strip locale prefix to check the actual route path
@@ -72,5 +88,15 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(en|zh)/:path*'],
+  matcher: [
+    '/',
+    '/(en|zh)/:path*',
+    '/icon-maskable.svg',
+    '/icon-pwa.svg',
+    '/og-image.svg',
+    '/manifest.webmanifest',
+    '/favicon.ico',
+    '/robots.txt',
+    '/sitemap.xml',
+  ],
 };

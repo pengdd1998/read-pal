@@ -28,7 +28,7 @@ const OFFLINE_URL = '/offline';
 const PRECACHE_URLS = [
   '/offline',
   '/manifest.webmanifest',
-  '/icon.svg',
+  '/icon-pwa.svg',
   '/icon-192.png',
   '/icon-512.png',
 ];

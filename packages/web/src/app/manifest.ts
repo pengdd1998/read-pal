@@ -14,7 +14,7 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['education', 'books', 'productivity'],
     icons: [
       {
-        src: '/icon.svg',
+        src: '/icon-pwa.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any',

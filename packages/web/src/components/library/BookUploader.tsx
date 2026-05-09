@@ -117,6 +117,7 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
         accept=".epub,.pdf,application/epub+zip,application/pdf"
         onChange={handleFileSelect}
         disabled={uploading || success}
+        aria-label="Upload book file"
         className="hidden"
       />
 

@@ -10,7 +10,8 @@ import { getItem, setItem, removeItem } from './native-storage';
 /** Set a simple cookie so Next.js middleware can detect auth state */
 function setAuthCookie(token: string) {
   if (isCapacitor()) return; // No server middleware in static export
-  document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+  const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`;
 }
 
 function clearAuthCookie() {
