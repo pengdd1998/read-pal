@@ -42,7 +42,7 @@ const FeatureTour = dynamic(() => import('@/components/reading/FeatureTour').the
 
 const THEME_CLASSES = {
   light: 'bg-[#fefdfb] text-gray-900',
-  dark: 'bg-[#0f1419] text-gray-100',
+  dark: 'bg-[#1a1410] text-gray-100',
   sepia: 'bg-[#f8f4ec] text-amber-900',
 } as const;
 
@@ -138,7 +138,7 @@ function ShortcutsHelp({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose} tabIndex={-1} role="button" aria-label={t('close_dialog')}>
-      <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm p-5 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-surface-0 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm p-5 animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">{t('keyboard_shortcuts_title')}</h3>
           <button onClick={onClose} className="p-2 -m-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-colors" aria-label={t('close_label')}>
@@ -296,7 +296,7 @@ export default function ReadPage() {
       StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light });
       const colors: Record<string, string> = {
         light: '#fefdfb',
-        dark: '#0f1419',
+        dark: '#1a1410',
         sepia: '#f8f4ec',
       };
       StatusBar.setBackgroundColor({ color: colors[theme] || colors.light });
@@ -527,7 +527,7 @@ export default function ReadPage() {
         <div className="fixed inset-0 z-20 bg-black/40 md:bg-black/20" onClick={studyMode.toggleStudyMode} />
       )}
       <div className={`fixed right-0 top-0 bottom-0 z-20 w-full md:w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="h-full overflow-y-auto px-3 pb-4 bg-white dark:bg-gray-900 md:bg-transparent">
+        <div className="h-full overflow-y-auto px-3 pb-4 bg-surface-0 md:bg-transparent">
           <StudyModePanel
             enabled={studyMode.enabled}
             loading={studyMode.loading}
@@ -611,7 +611,7 @@ export default function ReadPage() {
       {/* Milestone toast */}
       {ui.milestone && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 animate-fade-in">
-          <div className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-amber-700 dark:text-amber-300 text-xs font-medium shadow-md border border-amber-200/50 dark:border-amber-800/50">
+          <div className="px-4 py-1.5 rounded-full bg-surface-0/90 backdrop-blur-sm text-amber-700 dark:text-amber-300 text-xs font-medium shadow-md border border-amber-200/50 dark:border-amber-800/50">
             {ui.milestone} {t('milestone_complete')}
           </div>
         </div>
@@ -637,7 +637,7 @@ export default function ReadPage() {
       {/* Shortcuts help button */}
       <button
         onClick={() => ui.setShowShortcutsHelp(true)}
-        className="hidden sm:flex fixed bottom-5 right-20 z-10 w-9 h-9 rounded-full bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 text-gray-300 dark:text-gray-600 hover:text-amber-500 hover:border-amber-300/50 transition-all items-center justify-center"
+        className="hidden sm:flex fixed bottom-5 right-20 z-10 w-9 h-9 rounded-full bg-surface-0/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 text-gray-300 dark:text-gray-600 hover:text-amber-500 hover:border-amber-300/50 transition-all items-center justify-center"
         aria-label={t('keyboard_shortcuts_help')}
       >
         <span className="text-xs font-bold">?</span>

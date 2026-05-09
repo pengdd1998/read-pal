@@ -1,12 +1,13 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { usePageTitle } from '@/hooks/usePageTitle';
 
-export default function PrivacyPage() {
-  const t = useTranslations('privacy');
-  usePageTitle(t('page_title'));
+export async function generateMetadata() {
+  const t = await getTranslations('privacy');
+  return { title: t('page_title') };
+}
+
+export default async function PrivacyPage() {
+  const t = await getTranslations('privacy');
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-gray-950">

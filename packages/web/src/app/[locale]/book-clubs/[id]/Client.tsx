@@ -216,7 +216,7 @@ export default function BookClubDetailPage() {
         </div>
 
         {/* Club header */}
-        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm mb-6">
+        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-6 shadow-sm mb-6">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3">
@@ -263,7 +263,7 @@ export default function BookClubDetailPage() {
         </div>
 
         {/* Current reading book */}
-        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm mb-6">
+        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-6 shadow-sm mb-6">
           <h2 className="text-base font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
             <span className="text-lg">{'\uD83D\uDCD6'}</span>
             {t('currentlyReading')}
@@ -321,7 +321,7 @@ export default function BookClubDetailPage() {
         </div>
 
         {/* Members */}
-        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm mb-6">
+        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-6 shadow-sm mb-6">
           <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span className="text-lg">{'\uD83D\uDC65'}</span>
             {t('membersTitle', { count: memberCount })}
@@ -356,7 +356,7 @@ export default function BookClubDetailPage() {
         </div>
 
         {/* Discussion */}
-        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm mb-6">
+        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-6 shadow-sm mb-6">
           <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span className="text-lg">{'\uD83D\uDCAC'}</span>
             {t('discussion')}

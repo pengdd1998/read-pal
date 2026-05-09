@@ -7,7 +7,7 @@ export default function BookClubDetailLoading() {
       </div>
 
       {/* Club header skeleton */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
+      <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 mb-6">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
           <div className="flex-1">
@@ -23,7 +23,7 @@ export default function BookClubDetailLoading() {
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5"
+            className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-5"
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />

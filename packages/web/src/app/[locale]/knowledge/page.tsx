@@ -261,7 +261,7 @@ export default function KnowledgePage() {
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             {t('setup_desc')}
           </p>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-500 dark:text-gray-400">
+          <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-500 dark:text-gray-400">
             <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">{t('setup_required')}</p>
             <p>{t('setup_instructions')}</p>
           </div>
@@ -303,7 +303,7 @@ export default function KnowledgePage() {
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             {t('building_desc')}
           </p>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />
@@ -336,7 +336,7 @@ export default function KnowledgePage() {
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-surface-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('header_title')}</h1>
@@ -356,7 +356,7 @@ export default function KnowledgePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Graph visualization */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="lg:col-span-2 bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
             <div className="p-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('concept_map')}</span>
               <span className="text-xs text-gray-400">{t('click_hint')}</span>
@@ -454,7 +454,7 @@ export default function KnowledgePage() {
           <div className="space-y-4">
             {/* Selected node details */}
             {selectedNode && (
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+              <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{selectedNode.label}</h3>
                 {selectedNode.bookTitle && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('from_label', { title: selectedNode.bookTitle })}</p>
@@ -490,7 +490,7 @@ export default function KnowledgePage() {
 
             {/* Cross-book themes */}
             {themes.length > 0 && (
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+              <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('cross_book_themes')}</h3>
                 <div className="space-y-3">
                   {themes.slice(0, 8).map((theme) => (
@@ -509,7 +509,7 @@ export default function KnowledgePage() {
             )}
 
             {/* Legend */}
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('legend_title')}</h3>
               <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                 <div className="flex items-center gap-2">

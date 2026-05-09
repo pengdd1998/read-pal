@@ -1,13 +1,11 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 
 const secondaryLinkClass =
   'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors';
 
-export default function NotFound() {
-  const t = useTranslations('common');
+export default async function NotFound() {
+  const t = await getTranslations('common');
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center px-4">

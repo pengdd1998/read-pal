@@ -15,7 +15,7 @@ export default function StatsLoading() {
       </div>
       <div className="space-y-5">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 animate-pulse">
+          <div key={i} className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6 animate-pulse">
             <div className="h-5 bg-gray-100 dark:bg-gray-800 rounded w-32 mb-4" />
             <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded" />
           </div>

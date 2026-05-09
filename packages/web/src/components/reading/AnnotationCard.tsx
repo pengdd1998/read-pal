@@ -235,7 +235,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
               className="w-full px-2.5 py-1 rounded-md bg-white dark:bg-gray-700/50 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400"
             />
             {tagInput && filteredPresets.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-sm z-10 max-h-24 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-surface-0 border border-gray-200 dark:border-gray-600 rounded-md shadow-sm z-10 max-h-24 overflow-y-auto">
                 {filteredPresets.map((preset) => (
                   <button
                     key={preset}

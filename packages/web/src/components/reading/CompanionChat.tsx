@@ -579,7 +579,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         >
           {/* First-time tooltip */}
           {isFirstChat && (
-            <span className="absolute -top-10 right-0 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px] whitespace-nowrap pointer-events-none">
+            <span className="absolute -top-10 right-0 px-3 py-1.5 rounded-lg bg-surface-0 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px] whitespace-nowrap pointer-events-none">
               {genre === 'fiction'
                 ? t('companion_tooltip_fiction', { name: friendName })
                 : t('companion_tooltip_general', { name: friendName })}
@@ -602,7 +602,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
 
           {/* Mobile: bottom sheet (40vh, no backdrop block) — Desktop: full-height sidebar (400px) */}
           <div
-            className="fixed right-0 bottom-0 max-h-[40vh] md:max-h-none h-auto md:h-full w-full md:top-0 md:bottom-0 md:w-[400px] bg-white dark:bg-gray-800 shadow-2xl z-40 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right overscroll-contain"
+            className="fixed right-0 bottom-0 max-h-[40vh] md:max-h-none h-auto md:h-full w-full md:top-0 md:bottom-0 md:w-[400px] bg-surface-0 shadow-2xl z-40 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right overscroll-contain"
           >
             {/* Mobile drag handle */}
             <div className="flex justify-center pt-2 pb-1 md:hidden">
@@ -627,7 +627,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
               </div>
               <button
                 onClick={toggleCompanionMode}
-                className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                className={`min-w-[44px] min-h-[44px] rounded-lg text-xs font-medium transition-all flex items-center justify-center ${
                   companionMode === 'socratic'
                     ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
                     : companionMode === 'scholar'
@@ -653,7 +653,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-2.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label={t('companion_aria_close')}
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -707,7 +707,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                             <div className="flex gap-1 mt-1.5">
                               <button
                                 onClick={() => submitFeedback(msg.id, true)}
-                                className="p-1 rounded text-amber-400/50 hover:text-green-500 transition-colors"
+                                className="p-2.5 rounded text-amber-400/50 hover:text-green-500 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                 aria-label={t('companion_aria_helpful')}
                               >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -716,7 +716,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                               </button>
                               <button
                                 onClick={() => submitFeedback(msg.id, false)}
-                                className="p-1 rounded text-amber-400/50 hover:text-red-500 transition-colors"
+                                className="p-2.5 rounded text-amber-400/50 hover:text-red-500 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                                 aria-label={t('companion_aria_unhelpful')}
                               >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -757,7 +757,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
                   onKeyDown={handleKeyPress}
                   placeholder={t('companion_placeholder')}
                   aria-label={t('companion_aria_message')}
-                  className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
+                  className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-surface-0 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
                   rows={2}
                   disabled={loading}
                 />

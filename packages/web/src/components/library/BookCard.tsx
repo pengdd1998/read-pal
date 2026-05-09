@@ -306,7 +306,7 @@ export function BookCard({
               onBlur={() => setEditingTags(false)}
               placeholder={t('card_tag_placeholder')}
               aria-label={t('card_add_tag')}
-              className="px-1.5 py-0.5 text-[9px] rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 w-16 focus:outline-none focus:ring-1 focus:ring-amber-400"
+              className="px-1.5 py-0.5 text-[9px] rounded border border-gray-200 dark:border-gray-700 bg-surface-0 w-16 focus:outline-none focus:ring-1 focus:ring-amber-400"
               autoFocus
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
             />

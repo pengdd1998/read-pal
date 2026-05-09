@@ -314,7 +314,7 @@ export default function PersonalBookPage() {
                 iframeRef.current.contentWindow.postMessage({ type: 'scroll-to-section', sectionId: section.id }, '*');
               }
             }}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-surface-0 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
             {navSections.map((section, i) => (
               <option key={section.id} value={i + 1}>

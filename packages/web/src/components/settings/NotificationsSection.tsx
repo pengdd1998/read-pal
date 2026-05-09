@@ -82,7 +82,7 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
         </div>
         <h2 className="text-lg font-semibold">{t('notifications_title')}</h2>
       </div>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+      <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
         {/* Push Notifications — native only */}
         {nativeApp && (
           <div className="flex items-center justify-between">

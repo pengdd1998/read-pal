@@ -62,7 +62,7 @@ export function FlashcardEmpty({ variant, reviewedCount = 0, onBackToDecks }: Fl
             <Link href="/dashboard" className="btn btn-primary">{t('dashboard')}</Link>
             <button
               onClick={onBackToDecks}
-              className="btn bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+              className="btn bg-surface-0 border border-gray-200 dark:border-gray-700"
             >
               {t('back_to_decks')}
             </button>
@@ -85,7 +85,7 @@ export function FlashcardEmpty({ variant, reviewedCount = 0, onBackToDecks }: Fl
         <div className="flex gap-3 justify-center">
           <button
             onClick={onBackToDecks}
-            className="btn bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+            className="btn bg-surface-0 border border-gray-200 dark:border-gray-700"
           >
             {t('back_to_decks')}
           </button>

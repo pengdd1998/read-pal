@@ -120,7 +120,7 @@ export function SelectionToolbar({
           onClick={onDismiss}
         >
           <div
-            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl animate-slide-up-mobile"
+            className="absolute bottom-0 left-0 right-0 bg-surface-0 rounded-t-2xl shadow-2xl animate-slide-up-mobile"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mt-3 mb-2" />
@@ -140,10 +140,11 @@ export function SelectionToolbar({
                   key={color}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleHighlight(color)}
-                  className="w-9 h-9 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
-                  style={{ backgroundColor: color }}
+                  className="min-w-[44px] min-h-[44px] rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center justify-center"
                   aria-label={t('toolbar_highlight_in', { color })}
-                />
+                >
+                  <span className="w-9 h-9 rounded-full" style={{ backgroundColor: color }} />
+                </button>
               ))}
             </div>
 
@@ -235,7 +236,7 @@ export function SelectionToolbar({
                   className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
                   aria-label={t('toolbar_ask_ai_about')}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 flex items-center justify-center shadow-sm">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 flex items-center justify-center shadow-sm">
                     <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
@@ -306,10 +307,11 @@ export function SelectionToolbar({
               key={color}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleHighlight(color)}
-              className="w-7 h-7 rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-125 active:scale-90"
-              style={{ backgroundColor: color }}
+              className="min-w-[44px] min-h-[44px] rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center justify-center"
               aria-label={t('toolbar_highlight_in', { color })}
-            />
+            >
+              <span className="w-7 h-7 rounded-full" style={{ backgroundColor: color }} />
+            </button>
           ))}
 
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-1.5" />
@@ -403,7 +405,7 @@ export function SelectionToolbar({
 
         {/* Tag picker popup — desktop */}
         {showTagPicker && (
-          <div className="absolute top-full mt-2 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 min-w-[220px] z-10 animate-bounce-in">
+          <div className="absolute top-full mt-2 left-0 bg-surface-0 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 min-w-[220px] z-10 animate-bounce-in">
             <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
             <div className="flex flex-wrap gap-1.5">
               {QUICK_TAGS.map((qt) => (

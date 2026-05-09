@@ -191,7 +191,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
     >
-      <div role="dialog" aria-modal="true" aria-label={t('export_title')} className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div role="dialog" aria-modal="true" aria-label={t('export_title')} className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
@@ -291,7 +291,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
                       <select
                         value={selectedTag}
                         onChange={(e) => { setSelectedTag(e.target.value); setPreview(null); }}
-                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
+                        className="w-full px-3 py-1.5 text-xs bg-surface-0 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
                       >
                         <option value="">{t('export_all_tags')}</option>
                         {availableTags.map((tag) => (

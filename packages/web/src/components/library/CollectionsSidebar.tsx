@@ -165,7 +165,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
         <>
           {/* Create form */}
           {showCreate && (
-            <div className="mb-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl space-y-2 animate-slide-up">
+            <div className="mb-3 p-3 bg-surface-0 border border-gray-200 dark:border-gray-700 rounded-xl space-y-2 animate-slide-up">
               <input
                 type="text"
                 value={newName}

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -60,7 +61,7 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
                     {book.coverUrl ? (
-                      <img src={book.coverUrl} alt={`Cover of ${book.title}`} className="w-full h-full object-cover rounded-lg" />
+                      <Image src={book.coverUrl} alt={`Cover of ${book.title}`} width={56} height={80} className="w-full h-full object-cover rounded-lg" />
                     ) : (
                       <span className="text-white text-xl">{'\uD83D\uDCD6'}</span>
                     )}
@@ -108,7 +109,7 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
             <div className="flex items-center gap-4">
               <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
                 {currentBook.coverUrl ? (
-                  <img src={currentBook.coverUrl} alt={`Cover of ${currentBook.title}`} className="w-full h-full object-cover rounded-lg" />
+                  <Image src={currentBook.coverUrl} alt={`Cover of ${currentBook.title}`} width={56} height={80} className="w-full h-full object-cover rounded-lg" />
                 ) : (
                   <span className="text-white text-xl">{'\uD83D\uDCD6'}</span>
                 )}

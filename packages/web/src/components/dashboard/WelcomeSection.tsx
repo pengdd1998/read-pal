@@ -39,7 +39,7 @@ export function WelcomeSection({ onSeedSample, seeding }: WelcomeSectionProps) {
           <button
             onClick={onSeedSample}
             disabled={seeding}
-            className="btn hover:scale-105 active:scale-95 transition-transform duration-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn hover:scale-105 active:scale-95 transition-transform duration-200 bg-surface-0 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {seeding ? t('adding_sample') : t('try_sample')}
           </button>

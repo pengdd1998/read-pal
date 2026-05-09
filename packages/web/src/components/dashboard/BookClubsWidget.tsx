@@ -41,7 +41,7 @@ interface BookClub {
 
 function Skeleton() {
   return (
-    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 sm:p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-5 sm:p-6 shadow-sm">
       <div className="h-5 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-4" />
       <div className="space-y-3">
         {[1, 2].map((i) => (
@@ -141,7 +141,7 @@ export default function BookClubsWidget() {
   if (loading) return <Skeleton />;
 
   return (
-    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 sm:p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-5 sm:p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -172,14 +172,14 @@ export default function BookClubsWidget() {
             placeholder={t('clubName')}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-surface-0 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
             maxLength={100}
           />
           <textarea
             placeholder={t('descriptionOptional')}
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-surface-0 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
             rows={2}
             maxLength={500}
           />
@@ -209,7 +209,7 @@ export default function BookClubsWidget() {
             placeholder={t('enterCode')}
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white tracking-widest text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-surface-0 text-sm text-gray-900 dark:text-white tracking-widest text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
             maxLength={6}
           />
           <div className="flex items-center gap-2">

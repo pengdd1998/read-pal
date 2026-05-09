@@ -75,7 +75,7 @@ export function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
   };
 
   return (
-    <div ref={ref} className="absolute right-0 top-full mt-1 z-50 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg animate-slide-up overflow-hidden">
+    <div ref={ref} className="absolute right-0 top-full mt-1 z-50 w-56 bg-surface-0 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg animate-slide-up overflow-hidden">
       <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Add to collection</p>
       </div>

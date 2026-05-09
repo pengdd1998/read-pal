@@ -26,7 +26,7 @@ export default function BookDetailLoading() {
       {/* Stats skeleton */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+          <div key={i} className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
             <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-12 mx-auto mb-2 animate-pulse" />
             <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 mx-auto animate-pulse" />
           </div>

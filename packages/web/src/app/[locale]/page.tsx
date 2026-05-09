@@ -306,7 +306,7 @@ export default async function HomePage({
             { icon: '\uD83D\uDD25', title: t('feat_streaks_title'), desc: t('feat_streaks_desc') },
             { icon: '\uD83D\uDCD3', title: t('feat_memory_title'), desc: t('feat_memory_desc') },
           ].map((f) => (
-            <div key={f.title} className="flex items-start gap-4 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-shadow">
+            <div key={f.title} className="flex items-start gap-4 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-surface-0 hover:shadow-md transition-shadow">
               <span className="text-3xl flex-shrink-0">{f.icon}</span>
               <div>
                 <h3 className="font-bold text-gray-900 dark:text-white mb-1">{f.title}</h3>
@@ -380,7 +380,7 @@ export default async function HomePage({
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 {[t('oss_tag_python'), t('oss_tag_nextjs'), t('oss_tag_postgres'), t('oss_tag_mit')].map((tag) => (
-                  <span key={tag} className="px-3 py-1.5 text-xs font-medium rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+                  <span key={tag} className="px-3 py-1.5 text-xs font-medium rounded-full bg-surface-0 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300">
                     {tag}
                   </span>
                 ))}
@@ -393,7 +393,7 @@ export default async function HomePage({
                 { value: '140+', label: t('oss_stat_endpoints') },
                 { value: '50+', label: t('oss_stat_components') },
               ].map((stat) => (
-                <div key={stat.label} className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <div key={stat.label} className="p-4 rounded-2xl bg-surface-0 border border-gray-200 dark:border-gray-700">
                   <div className="text-2xl font-bold text-primary-500">{stat.value}</div>
                   <div className="text-xs text-gray-500 mt-1">{stat.label}</div>
                 </div>
@@ -412,7 +412,7 @@ export default async function HomePage({
         </div>
         <div className="space-y-6">
           {FAQS.map((faq) => (
-            <div key={faq.q} className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+            <div key={faq.q} className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-surface-0 p-6">
               <h3 className="font-bold text-gray-900 dark:text-white mb-2">{faq.q}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{faq.a}</p>
             </div>
@@ -428,7 +428,7 @@ export default async function HomePage({
 
       {/* GitHub Star CTA */}
       <section className="max-w-3xl mx-auto px-4 py-12 text-center">
-        <div className="inline-flex items-center gap-4 px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
+        <div className="inline-flex items-center gap-4 px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-surface-0 shadow-sm">
           <span className="text-gray-700 dark:text-gray-300 font-medium">{t('love_text')}</span>
           <a
             href="https://github.com/pengdd1998/read-pal"

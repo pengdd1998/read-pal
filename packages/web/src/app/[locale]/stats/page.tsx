@@ -117,7 +117,7 @@ export default function StatsPage() {
       {loading ? (
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 animate-pulse">
+            <div key={i} className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6 animate-pulse">
               <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-24 mb-4" />
               <div className="grid grid-cols-3 gap-4">
                 {Array.from({ length: 3 }).map((_, j) => (
@@ -168,7 +168,7 @@ export default function StatsPage() {
           </div>
 
           {/* Library Status */}
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+          <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
             <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('library_status')}</h2>
             <div className="space-y-3">
               {[
@@ -189,7 +189,7 @@ export default function StatsPage() {
 
           {/* Weekly Activity */}
           {weekly.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
               <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('weekly_activity')}</h2>
               <div className="flex items-end gap-2 h-32" role="img" aria-label="Weekly reading activity bar chart">
                 {weekly.map((day, i) => {
@@ -214,7 +214,7 @@ export default function StatsPage() {
 
           {/* Reading Velocity Trend — last 14 sessions */}
           {sessions.length > 2 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900 dark:text-white">{t('reading_velocity')}</h2>
                 <span className="text-xs text-gray-400">
@@ -287,7 +287,7 @@ export default function StatsPage() {
 
           {/* Recent Reading Sessions */}
           {sessions.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
               <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('recent_sessions')}</h2>
               <div className="space-y-2">
                 {sessions.slice(0, 10).map((session, i) => (
@@ -310,7 +310,7 @@ export default function StatsPage() {
 
           {/* Book Breakdown */}
           {data?.recentBooks && data.recentBooks.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
               <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('books_progress')}</h2>
               <div className="space-y-3">
                 {data.recentBooks.slice(0, 6).map((book) => (
@@ -339,7 +339,7 @@ export default function StatsPage() {
           )}
 
           {/* Activity Heatmap */}
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+          <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
             <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('activity_title')}</h2>
             <div className="flex flex-wrap gap-1">
               {(() => {
@@ -388,7 +388,7 @@ export default function StatsPage() {
 
           {/* Achievements */}
           {stats && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
               <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('achievements_title')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[

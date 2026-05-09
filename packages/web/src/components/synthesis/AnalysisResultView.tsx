@@ -112,11 +112,11 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2 rounded bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
+                  <div className="p-2 rounded bg-surface-0 border border-gray-100 dark:border-gray-700">
                     <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position1.book.title}</p>
                     <p className="text-gray-500 dark:text-gray-400 line-clamp-3">{c.position1.claim}</p>
                   </div>
-                  <div className="p-2 rounded bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
+                  <div className="p-2 rounded bg-surface-0 border border-gray-100 dark:border-gray-700">
                     <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position2.book.title}</p>
                     <p className="text-gray-500 dark:text-gray-400 line-clamp-3">{c.position2.claim}</p>
                   </div>

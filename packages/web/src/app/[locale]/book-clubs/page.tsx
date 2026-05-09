@@ -79,7 +79,7 @@ export default function BookClubsPage() {
               onClick={() => setTab(tabKey)}
               className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors ${
                 tab === tabKey
-                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  ? 'bg-surface-0 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
@@ -92,7 +92,7 @@ export default function BookClubsPage() {
         {loading && (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 animate-pulse">
+              <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-5 animate-pulse">
                 <div className="h-5 w-40 bg-gray-100 dark:bg-gray-800 rounded mb-2" />
                 <div className="h-3 w-56 bg-gray-100 dark:bg-gray-800 rounded" />
               </div>
@@ -121,7 +121,7 @@ export default function BookClubsPage() {
               <Link
                 key={club.id}
                 href={`/book-clubs/${club.id}`}
-                className="block rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 hover:shadow-md transition-shadow"
+                className="block rounded-xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-5 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">

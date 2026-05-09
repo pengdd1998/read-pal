@@ -163,7 +163,7 @@ export function ShareReadingCard() {
             </button>
             <button
               onClick={handleCopy}
-              className="btn flex-1 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+              className="btn flex-1 text-sm bg-surface-0 border border-gray-200 dark:border-gray-700"
             >
               {copied ? t('copied') : t('copy_clipboard')}
             </button>

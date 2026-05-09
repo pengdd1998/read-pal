@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
@@ -82,7 +83,7 @@ export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: Fl
             <div className="flex items-center gap-3">
               <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {deck.coverUrl ? (
-                  <img src={deck.coverUrl} alt={t('cover_alt', { title: deck.bookTitle })} className="w-full h-full object-cover rounded-lg" />
+                  <Image src={deck.coverUrl} alt={t('cover_alt', { title: deck.bookTitle })} width={40} height={56} className="w-full h-full object-cover rounded-lg" />
                 ) : (
                   <span className="text-lg">{'\uD83D\uDCD6'}</span>
                 )}

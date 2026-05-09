@@ -82,7 +82,7 @@ export function ServiceWorkerRegistrar() {
   if (!updateAvailable) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 max-w-xs animate-fade-in">
+    <div className="fixed bottom-4 right-4 z-50 bg-surface-0 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 max-w-xs animate-fade-in">
       <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
         A new version of read-pal is available.
       </p>

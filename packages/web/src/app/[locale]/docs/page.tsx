@@ -179,7 +179,7 @@ export default async function DocsPage({
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-navy-700 dark:hover:text-white transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-surface-0 hover:text-navy-700 dark:hover:text-white transition-colors"
               >
                 <span className="text-base">{s.icon}</span>
                 {s.title}
@@ -206,7 +206,7 @@ export default async function DocsPage({
                   {section.items.map((item) => (
                     <div
                       key={item.title}
-                      className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5"
+                      className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-5"
                     >
                       <h3 className="font-semibold text-navy-700 dark:text-white mb-2">{item.title}</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.content}</p>

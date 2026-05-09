@@ -11,7 +11,7 @@ export default function DashboardLoading() {
       <div className="space-y-5 animate-fade-in">
         <div>
           <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-3 animate-pulse" />
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+          <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
             <div className="flex items-center gap-4">
               {/* Book cover placeholder */}
               <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400/30 to-primary-600/30 animate-pulse flex-shrink-0" />
@@ -33,7 +33,7 @@ export default function DashboardLoading() {
         </div>
 
         {/* Streak card skeleton */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 flex items-center gap-4">
+        <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-50/50 to-amber-50/50 dark:from-orange-950/20 dark:to-amber-950/20 animate-pulse" />
           <div className="flex-1">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-10 mb-1 animate-pulse" />
@@ -42,7 +42,7 @@ export default function DashboardLoading() {
         </div>
 
         {/* Insight card skeleton */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 border-l-4 border-l-primary-400/30 dark:border-l-primary-600/30 p-6">
+        <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 border-l-4 border-l-primary-400/30 dark:border-l-primary-600/30 p-6">
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
             <div className="flex-1">
@@ -53,7 +53,7 @@ export default function DashboardLoading() {
         </div>
 
         {/* Reading goals skeleton */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+        <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-3 animate-pulse" />
           <div className="grid grid-cols-2 gap-3">
             <div className="text-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">

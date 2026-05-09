@@ -8,7 +8,7 @@ export default function KnowledgeLoading() {
       </div>
 
       {/* Graph placeholder skeleton */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+      <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
         <div className="aspect-[16/9] rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse flex items-center justify-center">
           <div className="space-y-3 text-center">
             <div className="w-12 h-12 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />

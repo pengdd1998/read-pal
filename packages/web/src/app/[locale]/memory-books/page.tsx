@@ -134,7 +134,7 @@ export default function MemoryBooksPage() {
       {loading && (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 animate-pulse">
+            <div key={i} className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-5 animate-pulse">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-16 bg-gray-100 dark:bg-gray-800 rounded-lg" />
                 <div className="flex-1">
@@ -160,7 +160,7 @@ export default function MemoryBooksPage() {
                 <Link
                   key={mb.id}
                   href={isPersonalBook ? `/memory-books/${mb.bookId}` : `/book/${mb.bookId}`}
-                  className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200"
+                  className="block bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200"
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-16 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -208,7 +208,7 @@ export default function MemoryBooksPage() {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('generateNew')}</h2>
           <div className="space-y-2">
             {eligibleBooks.map((book) => (
-              <div key={book.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">
+              <div key={book.id} className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex items-center gap-4">
                 <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-400/30 to-amber-600/50 flex items-center justify-center flex-shrink-0">
                   <span className="text-lg">{'\uD83D\uDCD6'}</span>
                 </div>

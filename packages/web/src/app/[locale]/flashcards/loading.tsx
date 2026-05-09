@@ -12,7 +12,7 @@ export default function FlashcardsLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6"
+            className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">

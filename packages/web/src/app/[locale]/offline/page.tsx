@@ -82,7 +82,7 @@ export default function OfflinePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-6 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-surface-0 px-6 py-12">
       <div className="text-center max-w-md w-full animate-fade-in">
         {/* Icon */}
         <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center">

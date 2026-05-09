@@ -19,7 +19,7 @@ export function ProfileSection({ userName, userEmail }: ProfileSectionProps) {
         </div>
         <h2 className="text-lg font-semibold">{t('profile_title')}</h2>
       </div>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+      <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{t('name_label')}</label>
           <div className="px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm border border-gray-200 dark:border-gray-700">

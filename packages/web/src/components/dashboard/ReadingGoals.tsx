@@ -149,7 +149,7 @@ export function ReadingGoals() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-6">
         <div className="flex items-center gap-2 mb-6">
           <div className="w-5 h-5 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
           <div className="h-5 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
@@ -168,7 +168,7 @@ export function ReadingGoals() {
 
   if (error || !data) {
     return (
-      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-6">
         <div className="flex items-center gap-2 mb-4">
           <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -184,7 +184,7 @@ export function ReadingGoals() {
   const weeklyComplete = data.completed >= data.goal;
 
   return (
-    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-6">
       {/* Header */}
       <div className="flex items-center gap-2 mb-6">
         <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

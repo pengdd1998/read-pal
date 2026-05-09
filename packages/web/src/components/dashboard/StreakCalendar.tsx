@@ -233,7 +233,7 @@ export default function StreakCalendar() {
   const totalDays = data?.calendar.length ?? 180;
 
   return (
-    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 sm:p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-5 sm:p-6 shadow-sm">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>

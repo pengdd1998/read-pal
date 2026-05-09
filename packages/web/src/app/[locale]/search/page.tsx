@@ -156,7 +156,7 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('placeholder')}
-          className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 text-base sm:text-lg shadow-sm transition-all duration-200"
+          className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-surface-0 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 text-base sm:text-lg shadow-sm transition-all duration-200"
           autoFocus
         />
         {searching && (
@@ -210,7 +210,7 @@ export default function SearchPage() {
                 <div className="space-y-3">
                   {filteredResults.map((book) => (
                     <Link key={book.id} href={`/read/${book.id}`}
-                      className="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200">
+                      className="block bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200">
                       <div className="flex justify-between items-center">
                         <div>
                           <h3 className="font-semibold text-gray-900 dark:text-white">{book.title}</h3>
@@ -317,7 +317,7 @@ export default function SearchPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {recentBooks.map((book) => (
                   <Link key={book.id} href={`/read/${book.id}`}
-                    className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200">
+                    className="flex items-center gap-3 bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-3 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200">
                     <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-400/30 to-amber-600/50 flex items-center justify-center flex-shrink-0">
                       <span className="text-lg">{'\uD83D\uDCD6'}</span>
                     </div>

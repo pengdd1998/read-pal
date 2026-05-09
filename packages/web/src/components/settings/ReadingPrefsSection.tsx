@@ -22,7 +22,7 @@ function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) 
   const t = useTranslations('settings');
   const ts = useTranslations('settings_page');
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+    <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
       {/* Theme */}
       <div>
         <label className="block text-sm font-medium mb-2">{t('theme_label')}</label>
@@ -98,7 +98,7 @@ function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) 
 function ReadingGoalsCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
   const t = useTranslations('settings');
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+    <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
       <div>
         <label className="block text-sm font-medium mb-2">{t('books_per_week')}</label>
         <div className="flex items-center gap-3">
@@ -154,7 +154,7 @@ function ReadingGoalsCard({ settings, saving, onSave }: ReadingPrefsSectionProps
 function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
   const t = useTranslations('settings');
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+    <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
       {/* Persona selection */}
       <div>
         <label className="block text-sm font-medium mb-3">{t('choose_companion')}</label>

@@ -12,7 +12,7 @@ export default function DevelopersLoading() {
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5"
+            className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-5"
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="h-5 bg-green-100 dark:bg-green-900/30 rounded w-14 animate-pulse" />

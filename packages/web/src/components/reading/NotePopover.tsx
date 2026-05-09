@@ -27,7 +27,7 @@ export function NotePopover({ selectedText, onSave, onCancel }: NotePopoverProps
   };
 
   return (
-    <div className="mt-2 w-80 max-w-[90vw] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg animate-scale-in p-4">
+    <div className="mt-2 w-80 max-w-[90vw] rounded-xl border border-gray-200 dark:border-gray-700 bg-surface-0 shadow-lg animate-scale-in p-4">
       {/* Selected text quote */}
       <blockquote className="border-l-2 border-primary-500 pl-3 py-1 text-sm italic text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
         {selectedText}

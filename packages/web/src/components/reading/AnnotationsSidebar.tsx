@@ -159,7 +159,7 @@ export function AnnotationsSidebar({
 
       {/* Sidebar */}
       <div
-        className={`fixed right-0 top-0 h-screen w-full md:w-[360px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-lg z-30 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col overscroll-contain ${
+        className={`fixed right-0 top-0 h-screen w-full md:w-[360px] bg-surface-0 border-l border-gray-200 dark:border-gray-700 shadow-lg z-30 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col overscroll-contain ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -170,7 +170,7 @@ export function AnnotationsSidebar({
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+            className="p-2.5 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={t('sidebar_close_esc')}
             title={t('sidebar_close_esc')}
           >

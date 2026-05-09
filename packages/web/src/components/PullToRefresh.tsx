@@ -104,7 +104,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
           }}
         >
           <div
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow-lg"
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-0 shadow-lg"
             style={{
               transform: `scale(${indicatorScale})`,
               transition: isRefreshing ? 'none' : 'transform 0.15s ease-out',

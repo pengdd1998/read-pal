@@ -47,7 +47,7 @@ export function MobileSettingsSheet({
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
       <div
-        className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl p-5 animate-scale-in overscroll-contain max-h-[80vh] overflow-y-auto"
+        className="absolute bottom-0 left-0 right-0 bg-surface-0 rounded-t-2xl shadow-2xl p-5 animate-scale-in overscroll-contain max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mb-4" />
@@ -60,6 +60,7 @@ export function MobileSettingsSheet({
             <button
               onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))}
               className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition-transform"
+              aria-label="Decrease font size"
             >
               A-
             </button>
@@ -67,6 +68,7 @@ export function MobileSettingsSheet({
             <button
               onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))}
               className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition-transform"
+              aria-label="Increase font size"
             >
               A+
             </button>
@@ -80,6 +82,7 @@ export function MobileSettingsSheet({
             <button
               onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))}
               className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition-transform"
+              aria-label="Decrease line height"
             >
               -
             </button>
@@ -87,6 +90,7 @@ export function MobileSettingsSheet({
             <button
               onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))}
               className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition-transform"
+              aria-label="Increase line height"
             >
               +
             </button>

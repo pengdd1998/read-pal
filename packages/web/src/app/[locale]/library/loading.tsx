@@ -9,7 +9,7 @@ export default function LibraryLoading() {
         </div>
         <div className="flex items-center gap-2">
           {/* Search bar skeleton */}
-          <div className="hidden sm:block h-10 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 w-44 animate-pulse" />
+          <div className="hidden sm:block h-10 bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 w-44 animate-pulse" />
           {/* View toggle skeleton */}
           <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700 animate-pulse">
             <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700" />
@@ -20,7 +20,7 @@ export default function LibraryLoading() {
 
       {/* Mobile search bar skeleton */}
       <div className="sm:hidden mb-4">
-        <div className="h-10 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 animate-pulse" />
+        <div className="h-10 bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 animate-pulse" />
       </div>
 
       {/* Book grid skeleton — matches LibraryGrid layout */}

@@ -1,12 +1,13 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { usePageTitle } from '@/hooks/usePageTitle';
 
-export default function TermsPage() {
-  const t = useTranslations('terms');
-  usePageTitle(t('page_title'));
+export async function generateMetadata() {
+  const t = await getTranslations('terms');
+  return { title: t('page_title') };
+}
+
+export default async function TermsPage() {
+  const t = await getTranslations('terms');
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
@@ -26,7 +27,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-lg font-bold font-serif text-stone-900 dark:text-white mb-3">1. Acceptance of Terms</h2>
-          <p>By accessing or using read-pal (&quot;the Service&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.</p>
+          <p>By accessing or using read-pal (&quot;the Service&quot;), you agree to be bound by these Terms of Service. If you do not agree with these terms, please do not use the Service.</p>
         </section>
 
         <section>

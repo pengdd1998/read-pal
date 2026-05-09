@@ -15,7 +15,7 @@ export default function BookClubsLoading() {
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5"
+            className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-5"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse flex-shrink-0" />

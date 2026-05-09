@@ -38,7 +38,7 @@ export function StudyModePanel({
   const answeredCount = revealedAnswers.size;
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-xl overflow-hidden">
+    <div className="bg-surface-0 border border-amber-200 dark:border-amber-800 rounded-xl overflow-hidden">
       {/* Header */}
       <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b border-amber-200 dark:border-amber-800">
         <div className="flex items-center justify-between">

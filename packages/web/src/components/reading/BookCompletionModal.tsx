@@ -51,7 +51,7 @@ export function BookCompletionModal({
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-scale-in text-center"
+        className="bg-surface-0 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-scale-in text-center"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-6xl mb-4">{'\uD83C\uDF89'}</div>

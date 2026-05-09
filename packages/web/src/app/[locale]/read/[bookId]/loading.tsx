@@ -1,8 +1,8 @@
 export default function ReadLoading() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-surface-0">
       {/* Header bar skeleton */}
-      <div className="sticky top-0 z-30 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+      <div className="sticky top-0 z-30 bg-surface-0/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
           <div className="flex-1 min-w-0">
