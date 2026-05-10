@@ -17,7 +17,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#f9f5f0"
       },
-      "package": "com.readpal.app"
+      "package": "com.readpal.app",
+      "usesCleartextTraffic": true
     },
     "plugins": [
       "expo-router",
