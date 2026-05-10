@@ -12,11 +12,22 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@read-pal/shared": ["../shared/src/index.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@read-pal/shared": [
+        "../shared/src/index.ts"
+      ]
     },
     "baseUrl": "."
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-router.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "expo-router.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base"
 }
