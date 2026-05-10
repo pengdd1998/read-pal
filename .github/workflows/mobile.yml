@@ -98,6 +98,13 @@ jobs:
         working-directory: packages/mobile
         run: npx expo prebuild -p android --clean
 
+      - name: Stub react-native-worklets for pnpm compat
+        working-directory: packages/mobile
+        run: |
+          mkdir -p node_modules/react-native-worklets
+          echo '{"name":"react-native-worklets","version":"0.0.0-stub","main":"plugin.js"}' > node_modules/react-native-worklets/package.json
+          echo 'module.exports = function() { return { visitor: {} }; };' > node_modules/react-native-worklets/plugin.js
+
       - name: Bundle JS with Metro
         working-directory: packages/mobile
         env:
