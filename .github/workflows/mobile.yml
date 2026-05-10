@@ -126,9 +126,9 @@ jobs:
             --config metro.config.js \
             --verbose
 
-      - name: Build APK (skip JS bundling)
+      - name: Build APK
         working-directory: packages/mobile/android
-        run: ./gradlew assembleRelease -x createBundleReleaseJsAndAssets -x bundleReleaseJsAndAssets
+        run: ./gradlew assembleRelease
 
       - name: Rename APK
         working-directory: packages/mobile
