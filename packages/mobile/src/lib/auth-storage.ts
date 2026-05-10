@@ -1,84 +1,89 @@
 import * as SecureStore from 'expo-secure-store';
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'user_data';
 const SECURE_STORE_TIMEOUT = 3000;
 
-const mmkv = new MMKV({ id: 'auth-storage' });
-let secureStoreAvailable = true;
+// Use AsyncStorage as primary storage - more reliable than MMKV
+// SecureStore is used as encrypted backup but can hang on some devices
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   const timer = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('SecureStore timeout')), ms)
+    setTimeout(() => reject(new Error('Storage timeout')), ms)
   );
   return Promise.race([promise, timer]);
 }
 
 async function secureGet(key: string): Promise<string | null> {
-  if (!secureStoreAvailable) return null;
   try {
     return await withTimeout(SecureStore.getItemAsync(key), SECURE_STORE_TIMEOUT);
   } catch {
-    secureStoreAvailable = false;
     return null;
   }
 }
 
 async function secureSet(key: string, value: string): Promise<void> {
-  if (!secureStoreAvailable) return;
   try {
     await withTimeout(SecureStore.setItemAsync(key, value), SECURE_STORE_TIMEOUT);
   } catch {
-    secureStoreAvailable = false;
+    // Silently fail - data is still in AsyncStorage
   }
 }
 
 async function secureDelete(key: string): Promise<void> {
-  if (!secureStoreAvailable) return;
   try {
     await withTimeout(SecureStore.deleteItemAsync(key), SECURE_STORE_TIMEOUT);
   } catch {
-    secureStoreAvailable = false;
+    // Silently fail
   }
 }
 
 export async function saveToken(token: string): Promise<void> {
-  mmkv.set(TOKEN_KEY, token);
+  // Save to AsyncStorage (primary) and SecureStore (encrypted backup)
+  await AsyncStorage.setItem(TOKEN_KEY, token);
   await secureSet(TOKEN_KEY, token);
 }
 
 export async function getToken(): Promise<string | null> {
-  const mmkvValue = mmkv.getString(TOKEN_KEY);
-  if (mmkvValue) return mmkvValue;
+  // Try AsyncStorage first (fast, non-blocking)
+  const asyncValue = await AsyncStorage.getItem(TOKEN_KEY);
+  if (asyncValue) return asyncValue;
+
+  // Fallback to SecureStore (encrypted but slower)
   const secureValue = await secureGet(TOKEN_KEY);
   if (secureValue) {
-    mmkv.set(TOKEN_KEY, secureValue);
+    // Migrate to AsyncStorage for future reads
+    AsyncStorage.setItem(TOKEN_KEY, secureValue).catch(() => {});
   }
   return secureValue;
 }
 
 export async function deleteToken(): Promise<void> {
-  mmkv.delete(TOKEN_KEY);
+  await AsyncStorage.removeItem(TOKEN_KEY);
   await secureDelete(TOKEN_KEY);
 }
 
 export async function saveUser(user: string): Promise<void> {
-  mmkv.set(USER_KEY, user);
+  await AsyncStorage.setItem(USER_KEY, user);
   await secureSet(USER_KEY, user);
 }
 
 export async function getUser(): Promise<string | null> {
-  const mmkvValue = mmkv.getString(USER_KEY);
-  if (mmkvValue) return mmkvValue;
+  // Try AsyncStorage first
+  const asyncValue = await AsyncStorage.getItem(USER_KEY);
+  if (asyncValue) return asyncValue;
+
+  // Fallback to SecureStore
   const secureValue = await secureGet(USER_KEY);
   if (secureValue) {
-    mmkv.set(USER_KEY, secureValue);
+    // Migrate to AsyncStorage
+    AsyncStorage.setItem(USER_KEY, secureValue).catch(() => {});
   }
   return secureValue;
 }
 
 export async function deleteUser(): Promise<void> {
-  mmkv.delete(USER_KEY);
+  await AsyncStorage.removeItem(USER_KEY);
   await secureDelete(USER_KEY);
 }
