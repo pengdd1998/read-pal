@@ -99,18 +99,20 @@ jobs:
         run: npx expo prebuild -p android --clean
 
       - name: Bundle JS with Metro (from repo root)
+        working-directory: packages/mobile
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
         run: |
           ENTRY=$(node -e "console.log(require.resolve('expo-router/entry'))")
-          mkdir -p packages/mobile/android/app/src/main/assets
+          mkdir -p android/app/src/main/assets
           npx react-native bundle \
             --platform android \
             --dev false \
             --entry-file "$ENTRY" \
-            --bundle-output packages/mobile/android/app/src/main/assets/index.android.bundle \
-            --assets-dest packages/mobile/android/app/src/main/res \
-            --reset-cache
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res \
+            --reset-cache \
+            --config metro.config.js
 
       - name: Build APK (skip JS bundling)
         working-directory: packages/mobile/android
