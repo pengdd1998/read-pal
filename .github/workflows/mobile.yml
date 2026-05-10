@@ -116,69 +116,11 @@ jobs:
           retention-days: 30
 
   # -------------------------------------------------------------------
-  # iOS IPA (prebuild + xcodebuild, macOS only)
-  # -------------------------------------------------------------------
-  build-ios:
-    name: iOS IPA
-    needs: verify
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared package
-        run: pnpm --filter @read-pal/shared build
-
-      - name: Generate native project
-        working-directory: packages/mobile
-        run: npx expo prebuild -p ios --clean
-
-      - name: Build iOS IPA (unsigned)
-        working-directory: packages/mobile/ios
-        run: |
-          xcodebuild -workspace App.xcworkspace \
-            -scheme App \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            | tail -20
-          mkdir -p Payload
-          cp -r build/Build/Products/Release-iphoneos/App.app Payload/
-          zip -r app.ipa Payload
-
-      - name: Rename IPA
-        working-directory: packages/mobile
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          mv ios/app.ipa read-pal-ios-${VERSION}.ipa
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: read-pal-ios-ipa
-          path: packages/mobile/read-pal-ios-*.ipa
-          retention-days: 30
-
-  # -------------------------------------------------------------------
-  # Create GitHub Release
+  # Create GitHub Release (Android only for now, iOS needs code signing)
   # -------------------------------------------------------------------
   release:
     name: Create Release
-    needs: [build-android, build-ios]
+    needs: [build-android]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/mobile-v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == true)
     permissions:
@@ -190,12 +132,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: read-pal-android-apk
-          path: ./artifacts
-
-      - name: Download iOS IPA
-        uses: actions/download-artifact@v4
-        with:
-          name: read-pal-ios-ipa
           path: ./artifacts
 
       - name: Create Release
