@@ -9,8 +9,9 @@ const config = getDefaultConfig(projectRoot);
 // Monorepo: watch all packages
 config.watchFolders = [monorepoRoot];
 
-// Resolve @read-pal/shared from monorepo
+// Resolve @read-pal/shared and @/* alias from monorepo
 config.resolver.extraNodeModules = {
+  '@': path.resolve(projectRoot, 'src'),
   '@read-pal/shared': path.resolve(monorepoRoot, 'packages/shared/src'),
 };
 
