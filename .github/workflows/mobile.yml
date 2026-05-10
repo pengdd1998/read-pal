@@ -98,9 +98,23 @@ jobs:
         working-directory: packages/mobile
         run: npx expo prebuild -p android --clean
 
-      - name: Build APK
+      - name: Bundle JS with Metro (from repo root)
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: |
+          ENTRY=$(node -e "console.log(require.resolve('expo-router/entry'))")
+          mkdir -p packages/mobile/android/app/src/main/assets
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file "$ENTRY" \
+            --bundle-output packages/mobile/android/app/src/main/assets/index.android.bundle \
+            --assets-dest packages/mobile/android/app/src/main/res \
+            --reset-cache
+
+      - name: Build APK (skip JS bundling)
         working-directory: packages/mobile/android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -x createBundleReleaseJsAndAssets -x bundleReleaseJsAndAssets
 
       - name: Rename APK
         working-directory: packages/mobile
