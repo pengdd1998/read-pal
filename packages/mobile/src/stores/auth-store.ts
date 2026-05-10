@@ -21,6 +21,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: true,
 
   initialize: async () => {
+    const timeout = setTimeout(() => {
+      set({ loading: false });
+    }, 5000);
+
     try {
       const savedToken = await getToken();
       const savedUser = await getUser();
@@ -36,6 +40,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     } catch {
       set({ loading: false });
+    } finally {
+      clearTimeout(timeout);
     }
   },
 
