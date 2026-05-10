@@ -2,6 +2,12 @@ name: Mobile Build
 
 on:
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub Release'
+        required: false
+        default: true
+        type: boolean
   push:
     tags:
       - 'mobile-v*'
@@ -166,7 +172,7 @@ jobs:
     name: Create Release
     needs: [build-android, build-ios]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/mobile-v')
+    if: startsWith(github.ref, 'refs/tags/mobile-v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == true)
     permissions:
       contents: write
     steps:
