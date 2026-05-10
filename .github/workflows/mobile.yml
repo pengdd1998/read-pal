@@ -52,7 +52,7 @@ jobs:
         run: pnpm --filter @read-pal/mobile typecheck
 
   # -------------------------------------------------------------------
-  # Android APK (local build)
+  # Android APK (prebuild + Gradle)
   # -------------------------------------------------------------------
   build-android:
     name: Android APK
@@ -91,24 +91,22 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('packages/mobile/**/gradle*', 'packages/mobile/android/**') }}
+          key: gradle-${{ runner.os }}-${{ hashFiles('packages/mobile/android/**/build.gradle*', 'packages/mobile/android/**/settings.gradle*') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
-
-      - name: Build Android APK (local)
+      - name: Generate native project
         working-directory: packages/mobile
-        run: |
-          eas build --platform android --profile development --local --output ./app.apk
-        env:
-          EXPO_NO_GIT_STATUS: 1
+        run: npx expo prebuild -p android --clean
+
+      - name: Build APK
+        working-directory: packages/mobile/android
+        run: ./gradlew assembleRelease
 
       - name: Rename APK
         working-directory: packages/mobile
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          mv app.apk read-pal-android-${VERSION}-development.apk
+          mv android/app/build/outputs/apk/release/app-release.apk read-pal-android-${VERSION}.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -118,7 +116,7 @@ jobs:
           retention-days: 30
 
   # -------------------------------------------------------------------
-  # iOS IPA (local build, macOS only)
+  # iOS IPA (prebuild + xcodebuild, macOS only)
   # -------------------------------------------------------------------
   build-ios:
     name: iOS IPA
@@ -142,21 +140,31 @@ jobs:
       - name: Build shared package
         run: pnpm --filter @read-pal/shared build
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
-
-      - name: Build iOS IPA (local, unsigned)
+      - name: Generate native project
         working-directory: packages/mobile
+        run: npx expo prebuild -p ios --clean
+
+      - name: Build iOS IPA (unsigned)
+        working-directory: packages/mobile/ios
         run: |
-          eas build --platform ios --profile development --local --output ./app.ipa
-        env:
-          EXPO_NO_GIT_STATUS: 1
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            | tail -20
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -r app.ipa Payload
 
       - name: Rename IPA
         working-directory: packages/mobile
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          mv app.ipa read-pal-ios-${VERSION}-development.ipa
+          mv ios/app.ipa read-pal-ios-${VERSION}.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
@@ -166,7 +174,7 @@ jobs:
           retention-days: 30
 
   # -------------------------------------------------------------------
-  # Create GitHub Release on tag
+  # Create GitHub Release
   # -------------------------------------------------------------------
   release:
     name: Create Release
@@ -193,6 +201,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: mobile-v${{ github.event_name == 'workflow_dispatch' && '1.1.0' || github.ref_name }}
           files: ./artifacts/*
           generate_release_notes: true
           draft: false
