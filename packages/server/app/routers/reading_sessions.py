@@ -119,7 +119,7 @@ async def create_session(
     }
 
 
-@router.patch('/{session_id}/end', response_model=GenericResponse)
+@router.api_route('/{session_id}/end', methods=['PATCH', 'POST'], response_model=GenericResponse)
 async def end_session(
     session_id: UUID,
     body: SessionUpdate | None = None,
@@ -139,9 +139,6 @@ async def end_session(
         'success': True,
         'data': SessionResponse.model_validate(session).model_dump(mode='json'),
     }
-
-
-# --- Frontend compatibility aliases ---
 
 
 @router.post('/start', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
@@ -168,28 +165,6 @@ async def start_session(
     session = await reading_session_service.create_session(
         db, UUID(current_user['id']), session_body,
     )
-    return {
-        'success': True,
-        'data': SessionResponse.model_validate(session).model_dump(mode='json'),
-    }
-
-
-@router.post('/{session_id}/end', response_model=GenericResponse)
-async def end_session_post(
-    session_id: UUID,
-    body: SessionUpdate | None = None,
-    current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    """POST alias for PATCH /{session_id}/end."""
-    session = await reading_session_service.end_session(
-        db, UUID(current_user['id']), session_id, data=body,
-    )
-    if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
-        )
     return {
         'success': True,
         'data': SessionResponse.model_validate(session).model_dump(mode='json'),
@@ -223,6 +198,7 @@ async def heartbeat_session(
         if pages_read is not None:
             session.pages_read = int(pages_read)
         scroll_progress = body.scroll_progress or body.scrollProgress
+        # Only query Book when there's actual progress to update
         if scroll_progress is not None:
             # Update book's scroll_progress for fine-grained tracking
             book_result = await db.execute(

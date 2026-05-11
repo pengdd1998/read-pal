@@ -1,5 +1,6 @@
 """Reading companion agent — AI chat, summarization, explanation, and tools."""
 
+import asyncio
 import json
 import logging
 import time
@@ -173,6 +174,64 @@ async def _save_message(
     await db.flush()
 
 
+async def _prepare_context(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    message: str,
+    context: dict | None = None,
+    companion_mode: str = 'casual',
+    lang: str = 'en',
+) -> tuple[Book, list[HumanMessage | AIMessage], str, TokenBudget]:
+    """Load all chat context in parallel, returning (book, history, system_text, budget)."""
+    book, annotations_ctx, history = await asyncio.gather(
+        _load_book(db, user_id, book_id),
+        _load_annotations_context(db, user_id, book_id),
+        _load_history(db, user_id, book_id),
+    )
+
+    async def _get_rag() -> str:
+        try:
+            from app.services.rag_service import get_book_context
+            return await get_book_context(db, user_id, book_id, message)
+        except Exception as exc:
+            logger.warning('RAG context retrieval failed: %s', exc)
+            return ''
+
+    async def _get_memory() -> str:
+        try:
+            from app.services.conversation_memory import get_or_create_summary
+            return await get_or_create_summary(db, user_id, book_id) or ''
+        except Exception as exc:
+            logger.warning('Memory summary retrieval failed: %s', exc)
+            return ''
+
+    rag_ctx, memory_summary = await asyncio.gather(_get_rag(), _get_memory())
+
+    budget = TokenBudget()
+    system_text = _build_system_prompt(
+        book, annotations_ctx, rag_ctx, memory_summary,
+        companion_mode=companion_mode, context=context, lang=lang,
+        budget=budget,
+    )
+    return book, history, system_text, budget
+
+
+def _build_messages(
+    system_text: str,
+    history: list[HumanMessage | AIMessage],
+    message: str,
+    budget: TokenBudget,
+) -> list[SystemMessage | HumanMessage | AIMessage]:
+    """Build the LLM message list from system prompt, history, and user message."""
+    sanitized_message = sanitize_chat_message(message)
+    messages = [SystemMessage(content=system_text)] + history
+    messages.append(HumanMessage(content=sanitized_message))
+    if budget.truncations:
+        logger.warning('Companion chat budget truncations: %s', ', '.join(budget.truncations))
+    return messages
+
+
 async def chat(
     db: AsyncSession,
     user_id: UUID,
@@ -183,37 +242,10 @@ async def chat(
     lang: str = 'en',
 ) -> dict[str, Any]:
     """Run a single-turn companion chat and return the assistant response."""
-    book = await _load_book(db, user_id, book_id)
-    annotations_ctx = await _load_annotations_context(db, user_id, book_id)
-    history = await _load_history(db, user_id, book_id)
-
-    rag_ctx = ''
-    try:
-        from app.services.rag_service import get_book_context
-        rag_ctx = await get_book_context(db, user_id, book_id, message)
-    except Exception as exc:
-        logger.warning('RAG context retrieval failed: %s', exc)
-
-    memory_summary = ''
-    try:
-        from app.services.conversation_memory import get_or_create_summary
-        memory_summary = await get_or_create_summary(db, user_id, book_id) or ''
-    except Exception as exc:
-        logger.warning('Memory summary retrieval failed: %s', exc)
-
-    budget = TokenBudget()
-    system_text = _build_system_prompt(
-        book, annotations_ctx, rag_ctx, memory_summary,
-        companion_mode=companion_mode, context=context, lang=lang,
-        budget=budget,
+    _, history, system_text, budget = await _prepare_context(
+        db, user_id, book_id, message, context, companion_mode, lang,
     )
-
-    sanitized_message = sanitize_chat_message(message)
-    messages = [SystemMessage(content=system_text)] + history
-    messages.append(HumanMessage(content=sanitized_message))
-
-    if budget.truncations:
-        logger.warning('Companion chat budget truncations: %s', ', '.join(budget.truncations))
+    messages = _build_messages(system_text, history, message, budget)
 
     fallback_text = t('companion.fallback_error', lang)
     assistant_content = await safe_llm_call(
@@ -240,34 +272,10 @@ async def stream_chat(
     """Stream companion chat as SSE chunks with circuit breaker + observability."""
     from app.config import get_settings
 
-    book = await _load_book(db, user_id, book_id)
-    annotations_ctx = await _load_annotations_context(db, user_id, book_id)
-    history = await _load_history(db, user_id, book_id)
-
-    rag_ctx = ''
-    try:
-        from app.services.rag_service import get_book_context
-        rag_ctx = await get_book_context(db, user_id, book_id, message)
-    except Exception as exc:
-        logger.warning('RAG context retrieval failed: %s', exc)
-
-    memory_summary = ''
-    try:
-        from app.services.conversation_memory import get_or_create_summary
-        memory_summary = await get_or_create_summary(db, user_id, book_id) or ''
-    except Exception as exc:
-        logger.warning('Memory summary retrieval failed: %s', exc)
-
-    budget = TokenBudget()
-    system_text = _build_system_prompt(
-        book, annotations_ctx, rag_ctx, memory_summary,
-        companion_mode=companion_mode, context=context, lang=lang,
-        budget=budget,
+    _, history, system_text, budget = await _prepare_context(
+        db, user_id, book_id, message, context, companion_mode, lang,
     )
-
-    sanitized_message = sanitize_chat_message(message)
-    messages = [SystemMessage(content=system_text)] + history
-    messages.append(HumanMessage(content=sanitized_message))
+    messages = _build_messages(system_text, history, message, budget)
 
     if budget.truncations:
         logger.warning('Companion stream budget truncations: %s', ', '.join(budget.truncations))

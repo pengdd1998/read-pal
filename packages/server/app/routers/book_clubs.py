@@ -145,6 +145,7 @@ async def delete_club(
 
 
 @router.post('/join', response_model=GenericResponse)
+@router.post('/join-code', response_model=GenericResponse)
 async def join_club(
     body: ClubJoinRequest,
     db: AsyncSession = Depends(get_db),
@@ -184,31 +185,6 @@ async def leave_club(
             detail={'code': 'BAD_REQUEST', 'message': str(exc)},
         ) from exc
     return {'success': True, 'data': {'message': t('errors.left_club')}}
-
-
-@router.post('/join-code', response_model=GenericResponse)
-async def join_by_code(
-    body: ClubJoinRequest,
-    db: AsyncSession = Depends(get_db),
-    user: dict = Depends(get_current_user),
-) -> dict:
-    """Join a club by invite code (alias for /join)."""
-    try:
-        club = await book_club_service.join_club(
-            db, UUID(user['id']), body.invite_code,
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'BAD_REQUEST', 'message': str(exc)},
-        ) from exc
-    return {
-        'success': True,
-        'data': {
-            'id': str(club.id),
-            'name': club.name,
-        },
-    }
 
 
 @router.get('/{club_id}/members', response_model=GenericResponse)

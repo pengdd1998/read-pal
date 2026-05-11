@@ -20,25 +20,17 @@ async def get_dashboard_stats(
 
     Response shape: ``{stats, recentBooks, weeklyActivity, booksByStatus}``
     """
-    # --- Book counts ---
-    total_books = await db.scalar(
-        select(func.count(Book.id)).where(Book.user_id == uid)
+    # --- Book counts (single GROUP BY query) ---
+    status_rows = await db.execute(
+        select(Book.status, func.count(Book.id))
+        .where(Book.user_id == uid)
+        .group_by(Book.status)
     )
-    books_reading = await db.scalar(
-        select(func.count(Book.id)).where(
-            and_(Book.user_id == uid, Book.status == BookStatus.reading.value)
-        )
-    )
-    books_completed = await db.scalar(
-        select(func.count(Book.id)).where(
-            and_(Book.user_id == uid, Book.status == BookStatus.completed.value)
-        )
-    )
-    books_unread = await db.scalar(
-        select(func.count(Book.id)).where(
-            and_(Book.user_id == uid, Book.status == BookStatus.unread.value)
-        )
-    )
+    status_counts = {row[0]: row[1] for row in status_rows.all()}
+    total_books = sum(status_counts.values())
+    books_reading = status_counts.get(BookStatus.reading.value, 0)
+    books_completed = status_counts.get(BookStatus.completed.value, 0)
+    books_unread = status_counts.get(BookStatus.unread.value, 0)
 
     # --- Pages read (from reading sessions, fallback to book progress) ---
     total_pages = await db.scalar(

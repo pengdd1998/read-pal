@@ -337,12 +337,30 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         }
 
         setConnecting(false);
+        // Throttled streaming: buffer tokens and flush to state every 80ms
+        // to avoid re-rendering on every single token chunk (~20/s).
+        let streamBuffer = '';
+        let flushTimer: ReturnType<typeof setTimeout> | null = null;
+        const flushBuffer = () => {
+          if (streamBuffer) {
+            const chunk = streamBuffer;
+            streamBuffer = '';
+            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m));
+          }
+          flushTimer = null;
+        };
         abortRef.current = consumeSSEStream(
           response,
           (tokenChunk: string) => {
-            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content + tokenChunk } : m));
+            streamBuffer += tokenChunk;
+            if (!flushTimer) {
+              flushTimer = setTimeout(flushBuffer, 80);
+            }
           },
           () => {
+            // Flush any remaining buffered tokens
+            if (flushTimer) clearTimeout(flushTimer);
+            flushBuffer();
             setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, streaming: false, content: m.content || t('companion_no_response') } : m));
             setLoading(false);
             setConnecting(false);

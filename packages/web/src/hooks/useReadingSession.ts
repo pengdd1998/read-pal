@@ -25,6 +25,7 @@ export function useReadingSession({
   const currentChapterRef = useRef(currentChapter);
   const isPausedRef = useRef(isPaused);
   const scrollProgressRef = useRef(scrollProgress);
+  const lastHeartbeatRef = useRef<{ chapter: number; scroll: number } | null>(null);
 
   // Keep refs in sync
   useEffect(() => {
@@ -53,13 +54,18 @@ export function useReadingSession({
           sessionIdRef.current = data.id;
 
           // Heartbeat every 30s to keep session alive and track progress
-          // Skipped when paused (no user activity)
+          // Skipped when paused or when nothing changed since last heartbeat
           heartbeatRef.current = setInterval(async () => {
             if (!sessionIdRef.current || isPausedRef.current) return;
+            const chapter = currentChapterRef.current;
+            const scroll = scrollProgressRef.current;
+            const last = lastHeartbeatRef.current;
+            if (last && last.chapter === chapter && Math.abs(last.scroll - scroll) < 0.001) return;
+            lastHeartbeatRef.current = { chapter, scroll };
             try {
               await api.patch(`/api/reading-sessions/${sessionIdRef.current}/heartbeat`, {
-                pagesRead: currentChapterRef.current + 1,
-                scrollProgress: scrollProgressRef.current,
+                pagesRead: chapter + 1,
+                scrollProgress: scroll,
               });
             } catch {
               // heartbeat failure is non-critical

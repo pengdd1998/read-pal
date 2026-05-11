@@ -187,7 +187,7 @@ export default function ReadPage() {
   const chatRef = useRef<CompanionChatHandle>(null);
 
   // Keep contentRef synced with the article element rendered by ReaderView.
-  // dynamic() breaks ref propagation, so we use a MutationObserver + polling fallback.
+  // Re-sync when chapter changes (article re-renders with new key).
   useEffect(() => {
     const sync = () => {
       const article = document.querySelector('article.reading-mode');
@@ -196,12 +196,10 @@ export default function ReadPage() {
         setContentReady(true);
       }
     };
-    sync();
-    const observer = new MutationObserver(sync);
-    observer.observe(document.body, { childList: true, subtree: true });
-    const interval = setInterval(sync, 2000);
-    return () => { observer.disconnect(); clearInterval(interval); };
-  }, []);
+    // Small delay to let ReaderView render the new article element
+    const raf = requestAnimationFrame(sync);
+    return () => cancelAnimationFrame(raf);
+  }, [chapterContent]);
 
   const selection = useTextSelection(contentRef);
 

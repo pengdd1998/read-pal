@@ -96,7 +96,15 @@ async def chat(
     return ChatResponse(data=result)
 
 
+_SSE_HEADERS = {
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+}
+
+
 @router.post('/stream', dependencies=[stream_limiter])
+@router.post('/chat/stream', dependencies=[stream_limiter])
 async def stream(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -115,11 +123,7 @@ async def stream(
             lang=lang,
         ),
         media_type='text/event-stream',
-        headers={
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'X-Accel-Buffering': 'no',
-        },
+        headers=_SSE_HEADERS,
     )
 
 
@@ -172,36 +176,6 @@ async def explain(
         ) from exc
 
     return ChatResponse(data=result)
-
-
-# --- Frontend compatibility aliases ---
-
-
-@router.post('/chat/stream', dependencies=[stream_limiter])
-async def chat_stream_alias(
-    body: ChatRequest,
-    current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> StreamingResponse:
-    """Alias for POST /stream — streaming chat via /chat/stream path."""
-    companion_mode = (
-        body.context.get('companionMode', 'casual')
-        if body.context else 'casual'
-    )
-    lang = await _get_user_lang(db, UUID(current_user['id']))
-    return StreamingResponse(
-        _sse_stream(
-            db, current_user['id'], body.book_id, body.message,
-            context=body.context, companion_mode=companion_mode,
-            lang=lang,
-        ),
-        media_type='text/event-stream',
-        headers={
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'X-Accel-Buffering': 'no',
-        },
-    )
 
 
 @router.get('/history', response_model=GenericResponse)

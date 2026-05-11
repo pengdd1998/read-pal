@@ -288,56 +288,39 @@ class ApiClient {
       });
   }
 
-  async post<T>(url: string, data?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  /** Shared mutation logic for post/put/patch/delete */
+  private async _mutation<T>(
+    method: 'post' | 'put' | 'patch' | 'delete',
+    url: string,
+    data?: Record<string, unknown>,
+    options?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
     try {
-      const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data, ...options });
+      const result = await this.requestWithRetry<ApiResponse<T>>(method, url, { data, ...options });
       this.invalidateAfterMutation(url);
       return result;
     } catch (err) {
       if (this.isOfflineError(err)) {
-        return this.queueOfflineResponse<T>(url, 'POST', data);
+        return this.queueOfflineResponse<T>(url, method.toUpperCase(), data);
       }
       throw err;
     }
+  }
+
+  async post<T>(url: string, data?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    return this._mutation<T>('post', url, data, options);
   }
 
   async put<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    try {
-      const result = await this.requestWithRetry<ApiResponse<T>>('put', url, { data });
-      this.invalidateAfterMutation(url);
-      return result;
-    } catch (err) {
-      if (this.isOfflineError(err)) {
-        return this.queueOfflineResponse<T>(url, 'PUT', data);
-      }
-      throw err;
-    }
+    return this._mutation<T>('put', url, data);
   }
 
   async patch<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    try {
-      const result = await this.requestWithRetry<ApiResponse<T>>('patch', url, { data });
-      this.invalidateAfterMutation(url);
-      return result;
-    } catch (err) {
-      if (this.isOfflineError(err)) {
-        return this.queueOfflineResponse<T>(url, 'PATCH', data);
-      }
-      throw err;
-    }
+    return this._mutation<T>('patch', url, data);
   }
 
   async delete<T>(url: string): Promise<ApiResponse<T>> {
-    try {
-      const result = await this.requestWithRetry<ApiResponse<T>>('delete', url);
-      this.invalidateAfterMutation(url);
-      return result;
-    } catch (err) {
-      if (this.isOfflineError(err)) {
-        return this.queueOfflineResponse<T>(url, 'DELETE');
-      }
-      throw err;
-    }
+    return this._mutation<T>('delete', url);
   }
 
   /** Check if an error is due to being offline */

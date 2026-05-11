@@ -11,6 +11,7 @@ import hashlib
 import json
 import logging
 import math
+import re
 from typing import Any
 from uuid import UUID
 
@@ -26,6 +27,8 @@ from app.models.document import Document
 from app.utils.sanitizer import sanitize_user_input
 
 logger = logging.getLogger('read-pal.rag')
+
+_CJK_TOKEN_RE = re.compile(r'[一-鿿]|[a-zA-Z0-9]+')
 
 RAG_CACHE_PREFIX = 'rag:'
 RAG_EMBED_CACHE_PREFIX = 'rag:emb:'
@@ -264,18 +267,18 @@ async def _semantic_chapter_search(
     return [item for _, item in scored[:top_k]]
 
 
+def _tokenize_query(query: str) -> set[str]:
+    """CJK-aware tokenization: individual CJK chars + Latin words."""
+    return set(_CJK_TOKEN_RE.findall(query.lower()))
+
+
 def _keyword_chapter_search(
     chapters: list[dict[str, Any]],
     query: str,
     top_k: int = 3,
 ) -> list[dict[str, Any]]:
     """Keyword-based chapter relevance scoring. Supports both word-level (Latin) and character-level (CJK) matching."""
-    import re
-    query_lower = query.lower()
-    # Split into tokens: CJK characters individually, Latin words by whitespace
-    tokens: set[str] = set()
-    for part in re.findall(r'[一-鿿]|[a-zA-Z0-9]+', query_lower):
-        tokens.add(part)
+    tokens = _tokenize_query(query)
 
     scored: list[tuple[float, dict]] = []
     for ch in chapters:
@@ -318,7 +321,6 @@ async def _load_related_annotations(
     limit: int = 5,
 ) -> list[Annotation]:
     """Load annotations with keyword overlap to the query."""
-    import re
     result = await db.execute(
         select(Annotation)
         .where(
@@ -330,10 +332,7 @@ async def _load_related_annotations(
     )
     all_annotations = list(result.scalars().all())
 
-    # CJK-aware tokenization: individual CJK chars + Latin words
-    tokens: set[str] = set()
-    for part in re.findall(r'[一-鿿]|[a-zA-Z0-9]+', query.lower()):
-        tokens.add(part)
+    tokens = _tokenize_query(query)
 
     scored = []
     for ann in all_annotations:
