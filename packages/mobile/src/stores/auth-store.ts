@@ -53,7 +53,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       await saveUser(JSON.stringify(user));
       set({ token, user, isAuthenticated: true });
     } else {
-      throw new Error(result.error?.message || 'Login failed');
+      const code = result.error?.code;
+      const msg = result.error?.message;
+      if (code === 'NETWORK_ERROR') {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
+      }
+      throw new Error(msg || 'Invalid email or password');
     }
   },
 
@@ -65,7 +70,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       await saveUser(JSON.stringify(user));
       set({ token, user, isAuthenticated: true });
     } else {
-      throw new Error(result.error?.message || 'Registration failed');
+      const code = result.error?.code;
+      const msg = result.error?.message;
+      if (code === 'NETWORK_ERROR') {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
+      }
+      throw new Error(msg || 'Registration failed. Please try again.');
     }
   },
 

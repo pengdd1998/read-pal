@@ -20,7 +20,7 @@ interface ReaderState extends ReaderSettings {
   setFontFamily: (family: string) => void;
   setTheme: (theme: ReaderTheme) => void;
   setCurrentBook: (bookId: string | null, chapterIndex?: number) => void;
-  getProgress: (bookId: string) => { chapterIndex: number; scrollPercent: number };
+  getProgress: (bookId: string) => Promise<{ chapterIndex: number; scrollPercent: number }>;
   saveProgress: (bookId: string, chapterIndex: number, scrollPercent: number) => void;
 }
 
@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
 export const useReaderStore = create<ReaderState>((set, get) => {
   // Load settings asynchronously (non-blocking)
   AsyncStorage.getItem(SETTINGS_KEY)
-    .then(saved => {
+    .then((saved: string | null) => {
       if (saved) {
         set({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) });
       }
@@ -83,21 +83,16 @@ export const useReaderStore = create<ReaderState>((set, get) => {
       set({ currentBookId: bookId, currentChapterIndex: chapterIndex });
     },
 
-    getProgress: (bookId: string) => {
-      // Return defaults immediately, will be updated async
-      const result = { chapterIndex: 0, scrollPercent: 0 };
-
-      // Load asynchronously (fire and forget)
-      AsyncStorage.getItem(`progress:${bookId}`)
-        .then(saved => {
-          if (saved) {
-            return JSON.parse(saved);
-          }
-          return result;
-        })
-        .catch(() => result);
-
-      return result;
+    getProgress: async (bookId: string) => {
+      try {
+        const saved = await AsyncStorage.getItem(`progress:${bookId}`);
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch {
+        // Return defaults on error
+      }
+      return { chapterIndex: 0, scrollPercent: 0 };
     },
 
     saveProgress: (bookId: string, chapterIndex: number, scrollPercent: number) => {

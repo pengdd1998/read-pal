@@ -158,7 +158,14 @@ class ApiClient {
         const axiosErr = axios.isAxiosError(err) ? err : null;
         const serverError = axiosErr?.response?.data as ApiResponse<T> | undefined;
         if (serverError?.error) return { success: false as const, error: serverError.error };
-        return { success: false as const, error: { code: 'NETWORK_ERROR', message: 'Request failed' } };
+        const isNetwork = !axiosErr?.response;
+        return {
+          success: false as const,
+          error: {
+            code: isNetwork ? 'NETWORK_ERROR' : 'SERVER_ERROR',
+            message: isNetwork ? 'Unable to connect to server. Check your network connection.' : 'Request failed',
+          },
+        };
       })
       .finally(() => { this.inFlightRequests.delete(cacheKey); });
 
@@ -166,28 +173,58 @@ class ApiClient {
     return requestPromise;
   }
 
+  private handleMutationError<T>(err: unknown): ApiResponse<T> {
+    const axiosErr = axios.isAxiosError(err) ? err : null;
+    const serverError = axiosErr?.response?.data as ApiResponse<T> | undefined;
+    if (serverError?.error) return { success: false as const, error: serverError.error };
+    const isNetwork = !axiosErr?.response;
+    return {
+      success: false as const,
+      error: {
+        code: isNetwork ? 'NETWORK_ERROR' : 'SERVER_ERROR',
+        message: isNetwork ? 'Unable to connect to server. Check your network connection.' : 'Request failed',
+      },
+    };
+  }
+
   async post<T>(url: string, data?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data, ...options });
-    this.invalidateAfterMutation(url);
-    return result;
+    try {
+      const result = await this.requestWithRetry<ApiResponse<T>>('post', url, { data, ...options });
+      this.invalidateAfterMutation(url);
+      return result;
+    } catch (err) {
+      return this.handleMutationError<T>(err);
+    }
   }
 
   async put<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    const result = await this.requestWithRetry<ApiResponse<T>>('put', url, { data });
-    this.invalidateAfterMutation(url);
-    return result;
+    try {
+      const result = await this.requestWithRetry<ApiResponse<T>>('put', url, { data });
+      this.invalidateAfterMutation(url);
+      return result;
+    } catch (err) {
+      return this.handleMutationError<T>(err);
+    }
   }
 
   async patch<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    const result = await this.requestWithRetry<ApiResponse<T>>('patch', url, { data });
-    this.invalidateAfterMutation(url);
-    return result;
+    try {
+      const result = await this.requestWithRetry<ApiResponse<T>>('patch', url, { data });
+      this.invalidateAfterMutation(url);
+      return result;
+    } catch (err) {
+      return this.handleMutationError<T>(err);
+    }
   }
 
   async delete<T>(url: string): Promise<ApiResponse<T>> {
-    const result = await this.requestWithRetry<ApiResponse<T>>('delete', url);
-    this.invalidateAfterMutation(url);
-    return result;
+    try {
+      const result = await this.requestWithRetry<ApiResponse<T>>('delete', url);
+      this.invalidateAfterMutation(url);
+      return result;
+    } catch (err) {
+      return this.handleMutationError<T>(err);
+    }
   }
 
   async upload<T>(

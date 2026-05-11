@@ -8,11 +8,14 @@ import type { Book } from '@read-pal/shared';
 
 export default function LibraryScreen() {
   const queryClient = useQueryClient();
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['books'],
     queryFn: async () => {
       const result = await api.get<Book[]>('/api/books');
-      return result.success ? result.data || [] : [];
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to load books');
+      }
+      return result.data || [];
     },
   });
 
@@ -55,6 +58,30 @@ export default function LibraryScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#d97706" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Library</Text>
+        </View>
+        <View style={styles.center}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>🔌</Text>
+          <Text style={styles.emptyTitle}>Connection Error</Text>
+          <Text style={[styles.emptySub, { textAlign: 'center', paddingHorizontal: 32, marginBottom: 16 }]}>
+            {error.message}
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: '#d97706', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+            onPress={() => refetch()}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: '#fff', fontWeight: '600' }}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
