@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const storage = new MMKV({ id: 'reader-settings' });
+const SETTINGS_KEY = 'reader-settings';
 
 export type ReaderTheme = 'light' | 'dark' | 'sepia';
 
@@ -33,61 +33,80 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   currentChapterIndex: 0,
 };
 
-function loadSettings(): ReaderSettings {
-  try {
-    const saved = storage.getString('settings');
-    return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
+export const useReaderStore = create<ReaderState>((set, get) => {
+  // Load settings asynchronously (non-blocking)
+  AsyncStorage.getItem(SETTINGS_KEY)
+    .then(saved => {
+      if (saved) {
+        set({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) });
+      }
+    })
+    .catch(() => {
+      // Use defaults on error
+    });
 
-function persistSettings(settings: ReaderSettings): void {
-  storage.set('settings', JSON.stringify(settings));
-}
+  // Persist settings helper
+  const persistSettings = (settings: ReaderSettings) => {
+    AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)).catch(() => {
+      // Silently fail
+    });
+  };
 
-export const useReaderStore = create<ReaderState>((set, get) => ({
-  ...loadSettings(),
+  return {
+    ...DEFAULT_SETTINGS,
 
-  setFontSize: (fontSize: number) => {
-    const state = { ...get(), fontSize };
-    persistSettings(state);
-    set({ fontSize });
-  },
+    setFontSize: (fontSize: number) => {
+      const state = { ...get(), fontSize };
+      persistSettings(state);
+      set({ fontSize });
+    },
 
-  setLineHeight: (lineHeight: number) => {
-    const state = { ...get(), lineHeight };
-    persistSettings(state);
-    set({ lineHeight });
-  },
+    setLineHeight: (lineHeight: number) => {
+      const state = { ...get(), lineHeight };
+      persistSettings(state);
+      set({ lineHeight });
+    },
 
-  setFontFamily: (fontFamily: string) => {
-    const state = { ...get(), fontFamily };
-    persistSettings(state);
-    set({ fontFamily });
-  },
+    setFontFamily: (fontFamily: string) => {
+      const state = { ...get(), fontFamily };
+      persistSettings(state);
+      set({ fontFamily });
+    },
 
-  setTheme: (theme: ReaderTheme) => {
-    const state = { ...get(), theme };
-    persistSettings(state);
-    set({ theme });
-  },
+    setTheme: (theme: ReaderTheme) => {
+      const state = { ...get(), theme };
+      persistSettings(state);
+      set({ theme });
+    },
 
-  setCurrentBook: (bookId, chapterIndex = 0) => {
-    set({ currentBookId: bookId, currentChapterIndex: chapterIndex });
-  },
+    setCurrentBook: (bookId, chapterIndex = 0) => {
+      set({ currentBookId: bookId, currentChapterIndex: chapterIndex });
+    },
 
-  getProgress: (bookId: string) => {
-    try {
-      const saved = storage.getString(`progress:${bookId}`);
-      return saved ? JSON.parse(saved) : { chapterIndex: 0, scrollPercent: 0 };
-    } catch {
-      return { chapterIndex: 0, scrollPercent: 0 };
-    }
-  },
+    getProgress: (bookId: string) => {
+      // Return defaults immediately, will be updated async
+      const result = { chapterIndex: 0, scrollPercent: 0 };
 
-  saveProgress: (bookId: string, chapterIndex: number, scrollPercent: number) => {
-    storage.set(`progress:${bookId}`, JSON.stringify({ chapterIndex, scrollPercent }));
-    set({ currentChapterIndex: chapterIndex });
-  },
-}));
+      // Load asynchronously (fire and forget)
+      AsyncStorage.getItem(`progress:${bookId}`)
+        .then(saved => {
+          if (saved) {
+            return JSON.parse(saved);
+          }
+          return result;
+        })
+        .catch(() => result);
+
+      return result;
+    },
+
+    saveProgress: (bookId: string, chapterIndex: number, scrollPercent: number) => {
+      AsyncStorage.setItem(`progress:${bookId}`, JSON.stringify({ chapterIndex, scrollPercent })).catch(
+        () => {
+          // Silently fail
+        }
+      );
+      set({ currentChapterIndex: chapterIndex });
+    },
+  };
+});
