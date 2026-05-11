@@ -9,10 +9,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Check if deploy is needed based on changed files
+  check-changes:
+    name: Check Changes
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.filter.outputs.api == 'true' || steps.filter.outputs.web == 'true' || steps.filter.outputs.deploy == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'packages/server/**'
+              - 'docker-compose.yml'
+              - 'docker/**'
+            web:
+              - 'packages/web/**'
+            deploy:
+              - '.github/workflows/deploy.yml'
+              - 'docker-compose.yml'
+
   deploy:
     name: Deploy to VPS
+    needs: check-changes
+    if: needs.check-changes.outputs.should-deploy == 'true'
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
 
     steps:
       - name: Deploy via SSH
@@ -21,7 +45,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 30m
+          command_timeout: 45m
           script: |
             set -euo pipefail
 
@@ -64,16 +88,41 @@ jobs:
             git reset --hard origin/main
 
             # -------------------------------------------------------
-            # 2. Rebuild containers (single-threaded to limit RAM usage)
+            # 2. Detect which services need rebuild
             # -------------------------------------------------------
-            echo ">>> Rebuilding containers (sequential to limit RAM)..."
-            export DOCKER_BUILDKIT=1
-            export COMPOSE_DOCKER_CLI_BUILD=1
-            docker compose build --progress=plain api
-            docker compose build --progress=plain web
+            CHANGED=$(git diff --name-only HEAD~1 HEAD)
+
+            REBUILD_API=false
+            REBUILD_WEB=false
+
+            echo "$CHANGED" | grep -qE '^(packages/server/|docker-compose\.yml|docker/)' && REBUILD_API=true
+            echo "$CHANGED" | grep -qE '^packages/web/' && REBUILD_WEB=true
+
+            # Also rebuild if deploy config changed
+            echo "$CHANGED" | grep -qE '^\.github/workflows/deploy\.yml$' && REBUILD_API=true && REBUILD_WEB=true
 
             # -------------------------------------------------------
-            # 3. Start containers (recreates changed services)
+            # 3. Rebuild only changed containers
+            # -------------------------------------------------------
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
+
+            if [ "$REBUILD_API" = true ]; then
+              echo ">>> Rebuilding API container..."
+              docker compose build --progress=plain api
+            else
+              echo ">>> Skipping API rebuild (no changes detected)"
+            fi
+
+            if [ "$REBUILD_WEB" = true ]; then
+              echo ">>> Rebuilding Web container..."
+              docker compose build --progress=plain web
+            else
+              echo ">>> Skipping Web rebuild (no changes detected)"
+            fi
+
+            # -------------------------------------------------------
+            # 4. Start containers (recreates changed services)
             # -------------------------------------------------------
             echo ">>> Starting containers..."
             docker compose up -d --remove-orphans
@@ -82,13 +131,17 @@ jobs:
             docker compose restart nginx
 
             # -------------------------------------------------------
-            # 4. Run database migrations
+            # 5. Run database migrations (only if API was rebuilt)
             # -------------------------------------------------------
-            echo ">>> Running database migrations..."
-            docker compose exec -T api python -m alembic upgrade head
+            if [ "$REBUILD_API" = true ]; then
+              echo ">>> Running database migrations..."
+              docker compose exec -T api python -m alembic upgrade head
+            else
+              echo ">>> Skipping migrations (API not rebuilt)"
+            fi
 
             # -------------------------------------------------------
-            # 5. Health checks with retry
+            # 6. Health checks with retry
             # -------------------------------------------------------
             echo ">>> Waiting for services to be ready..."
 
@@ -113,7 +166,7 @@ jobs:
             check_health "Web" "http://localhost:8090/en"
 
             # -------------------------------------------------------
-            # 6. Cleanup
+            # 7. Cleanup
             # -------------------------------------------------------
             echo ">>> Cleaning up..."
             docker image prune -f 2>/dev/null || true
