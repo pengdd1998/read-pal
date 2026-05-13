@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+android/
+ios/
+web-build/
+*.png
+*.jpg
+*.jpeg
+*.apk
+*.log
+.env
+.env.local
+nul
+screenshot*
+BUG-REPORT*
+TEST-RESULTS*

@@ -4,6 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
+    "postinstall": "node postinstall-patches.js",
     "dev": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
