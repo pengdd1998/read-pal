@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { api, API_BASE_URL } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useReaderStore } from '@/stores/reader-store';
 import { useReadingSession } from '@/hooks/useReadingSession';
 import { useAnnotationActions } from '@/hooks/useAnnotationActions';
@@ -91,9 +91,6 @@ export default function ReaderScreen() {
     }
   }, [chapters, currentChapter, toggleBookmark]);
 
-  // Construct book content URL for epub.js
-  const bookContentUrl = `${API_BASE_URL}/api/upload/books/${bookId}/content`;
-
   return (
     <>
       <Stack.Screen options={{ headerShown: false, animation: 'slide_from_right' }} />
@@ -110,8 +107,8 @@ export default function ReaderScreen() {
         />
 
         <EpubReader
-          bookUrl={bookContentUrl}
-          initialChapter={currentChapter}
+          chapters={chapters}
+          currentChapter={currentChapter}
           onChapterChange={handleChapterChange}
           onSelection={handleSelection}
           onProgress={() => {}}
@@ -125,7 +122,6 @@ export default function ReaderScreen() {
           onNote={handleNote}
           onAskAI={() => {
             setSelection(null);
-            // Navigate to chat with context
           }}
           onDismiss={() => setSelection(null)}
         />

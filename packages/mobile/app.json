@@ -2,7 +2,7 @@
   "expo": {
     "name": "ReadPal",
     "slug": "read-pal",
-    "version": "1.1.4",
+    "version": "1.1.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -23,7 +23,8 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-dev-client"
+      "expo-dev-client",
+      "./plugins/withCleartextTraffic"
     ],
     "extra": {
       "router": {
