@@ -36,8 +36,7 @@
   "packageManager": "pnpm@8.12.0",
   "pnpm": {
     "patchedDependencies": {
-      "react-native-css-interop@0.2.3": "patches/react-native-css-interop@0.2.3.patch",
-      "metro-config@0.81.5": "patches/metro-config@0.81.5.patch"
+      "react-native-css-interop@0.2.3": "patches/react-native-css-interop@0.2.3.patch"
     }
   }
 }
