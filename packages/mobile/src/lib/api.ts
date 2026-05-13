@@ -36,6 +36,7 @@ class ApiClient {
     this.client = axios.create({
       baseURL: API_URL,
       headers: { 'Content-Type': 'application/json' },
+      timeout: 60_000,
     });
 
     // Attach auth token to every request

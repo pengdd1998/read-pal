@@ -2,9 +2,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { startSSEStream } from '@/lib/sse';
 import MessageBubble from './MessageBubble';
 
 interface Message {
@@ -22,9 +21,7 @@ interface ChatPanelProps {
 export default function ChatPanel({ bookId, bookTitle }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const [streamContent, setStreamContent] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const abortRef = useRef<AbortController | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   // Load chat history
@@ -61,47 +58,39 @@ export default function ChatPanel({ bookId, bookTitle }: ChatPanelProps) {
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setStreaming(true);
-    setStreamContent('');
 
     const assistantId = `ai-${Date.now()}`;
 
-    abortRef.current = startSSEStream('/api/agents/stream', {
-      book_id: bookId,
-      message: text,
-    }, {
-      onToken: (token) => {
-        setStreamContent((prev) => prev + token);
-      },
-      onDone: () => {
-        setStreamContent((prev) => {
-          const aiMsg: Message = { id: assistantId, role: 'assistant', content: prev, createdAt: new Date() };
-          setMessages((prev2) => [...prev2, aiMsg]);
-          return '';
-        });
-        setStreaming(false);
-      },
-      onError: (err) => {
-        console.error('SSE error:', err);
-        setStreaming(false);
-        setStreamContent('');
-      },
-    });
+    try {
+      const result = await api.post<{ role: string; content: string }>('/api/agents/chat', {
+        book_id: bookId,
+        message: text,
+      });
+      if (result.success && result.data?.content) {
+        const aiMsg: Message = { id: assistantId, role: 'assistant', content: result.data.content, createdAt: new Date() };
+        setMessages((prev) => [...prev, aiMsg]);
+      } else {
+        const errMsg = result.error?.message || 'No response from AI. Please try again.';
+        const aiMsg: Message = { id: assistantId, role: 'assistant', content: errMsg, createdAt: new Date() };
+        setMessages((prev) => [...prev, aiMsg]);
+      }
+    } catch {
+      const aiMsg: Message = { id: assistantId, role: 'assistant', content: 'Failed to get AI response. Please check your connection.', createdAt: new Date() };
+      setMessages((prev) => [...prev, aiMsg]);
+    }
+    setStreaming(false);
   }, [input, bookId, streaming]);
 
   const stopStreaming = useCallback(() => {
-    abortRef.current?.abort();
     setStreaming(false);
   }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [messages, streamContent]);
+  }, [messages]);
 
   const allMessages = [...messages];
-  if (streaming && streamContent) {
-    allMessages.push({ id: 'streaming', role: 'assistant', content: streamContent });
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -128,7 +117,7 @@ export default function ChatPanel({ bookId, bookTitle }: ChatPanelProps) {
       />
 
       {/* Streaming indicator */}
-      {streaming && !streamContent && (
+      {streaming && (
         <View style={styles.typingIndicator}>
           <ActivityIndicator size="small" color="#d97706" />
           <Text style={styles.typingText}>Thinking...</Text>
