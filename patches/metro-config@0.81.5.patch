@@ -1,0 +1,34 @@
+diff --git a/src/loadConfig.js b/src/loadConfig.js
+index ef0db5153c782b325577cd839494fd1debf81032..22ee6357127f1ca05eb95729003efc5a4785e148 100644
+--- a/src/loadConfig.js
++++ b/src/loadConfig.js
+@@ -2,7 +2,7 @@
+ 
+ const getDefaultConfig = require("./defaults");
+ const validConfig = require("./defaults/validConfig");
+-const cosmiconfig = require("cosmiconfig");
++const { cosmiconfig, defaultLoaders } = require("cosmiconfig");
+ const fs = require("fs");
+ const { validate } = require("jest-validate");
+ const MetroCache = require("metro-cache");
+@@ -25,13 +25,13 @@ const explorer = cosmiconfig("metro", {
+     "package.json",
+   ],
+   loaders: {
+-    ".json": cosmiconfig.loadJson,
+-    ".yaml": cosmiconfig.loadYaml,
+-    ".yml": cosmiconfig.loadYaml,
+-    ".js": cosmiconfig.loadJs,
+-    ".cjs": cosmiconfig.loadJs,
+-    ".es6": cosmiconfig.loadJs,
+-    noExt: cosmiconfig.loadYaml,
++    ".json": defaultLoaders[".json"],
++    ".yaml": defaultLoaders[".yaml"],
++    ".yml": defaultLoaders[".yaml"],
++    ".js": defaultLoaders[".js"],
++    ".cjs": defaultLoaders[".js"],
++    ".es6": defaultLoaders[".js"],
++    noExt: defaultLoaders[".yaml"],
+   },
+ });
+ const isFile = (filePath) =>

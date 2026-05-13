@@ -4,6 +4,14 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  metro-config@0.81.5:
+    hash: gwlcx6xjo536sqd3ookkprpmna
+    path: patches/metro-config@0.81.5.patch
+  react-native-css-interop@0.2.3:
+    hash: bux32mr3rzsfbeh672jnz33pzu
+    path: patches/react-native-css-interop@0.2.3.patch
+
 importers:
 
   .:
@@ -97,7 +105,7 @@ importers:
         version: 0.76.9(@babel/core@7.29.0)(@babel/preset-env@7.29.5)(@react-native-community/cli@20.1.3)(@types/react@18.3.28)(react@18.3.1)
       react-native-css-interop:
         specifier: ^0.2.3
-        version: 0.2.3(react-native-reanimated@3.16.7)(react-native-safe-area-context@5.4.0)(react-native-svg@15.11.0)(react-native@0.76.9)(react@18.3.1)(tailwindcss@3.4.19)
+        version: 0.2.3(patch_hash=bux32mr3rzsfbeh672jnz33pzu)(react-native-reanimated@3.16.7)(react-native-safe-area-context@5.4.0)(react-native-svg@15.11.0)(react-native@0.76.9)(react@18.3.1)(tailwindcss@3.4.19)
       react-native-gesture-handler:
         specifier: ~2.24.0
         version: 2.24.0(react-native@0.76.9)(react@18.3.1)
@@ -3212,7 +3220,7 @@ packages:
       execa: 5.1.1
       invariant: 2.2.4
       metro: 0.81.5
-      metro-config: 0.81.5
+      metro-config: 0.81.5(patch_hash=gwlcx6xjo536sqd3ookkprpmna)
       metro-core: 0.81.5
       node-fetch: 2.7.0
       readline: 1.3.0
@@ -7120,7 +7128,7 @@ packages:
       flow-enums-runtime: 0.0.6
       metro-core: 0.81.5
 
-  /metro-config@0.81.5:
+  /metro-config@0.81.5(patch_hash=gwlcx6xjo536sqd3ookkprpmna):
     resolution: {integrity: sha512-oDRAzUvj6RNRxratFdcVAqtAsg+T3qcKrGdqGZFUdwzlFJdHGR9Z413sW583uD2ynsuOjA2QB6US8FdwiBdNKg==}
     engines: {node: '>=18.18'}
     dependencies:
@@ -7136,6 +7144,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    patched: true
 
   /metro-core@0.81.5:
     resolution: {integrity: sha512-+2R0c8ByfV2N7CH5wpdIajCWa8escUFd8TukfoXyBq/vb6yTCsznoA25FhNXJ+MC/cz1L447Zj3vdUfCXIZBwg==}
@@ -7276,7 +7285,7 @@ packages:
       metro-babel-transformer: 0.81.5
       metro-cache: 0.81.5
       metro-cache-key: 0.81.5
-      metro-config: 0.81.5
+      metro-config: 0.81.5(patch_hash=gwlcx6xjo536sqd3ookkprpmna)
       metro-core: 0.81.5
       metro-file-map: 0.81.5
       metro-resolver: 0.81.5
@@ -7471,7 +7480,7 @@ packages:
     dependencies:
       comment-json: 4.6.2
       debug: 4.4.3
-      react-native-css-interop: 0.2.3(react-native-reanimated@3.16.7)(react-native-safe-area-context@5.4.0)(react-native-svg@15.11.0)(react-native@0.76.9)(react@18.3.1)(tailwindcss@3.4.19)
+      react-native-css-interop: 0.2.3(patch_hash=bux32mr3rzsfbeh672jnz33pzu)(react-native-reanimated@3.16.7)(react-native-safe-area-context@5.4.0)(react-native-svg@15.11.0)(react-native@0.76.9)(react@18.3.1)(tailwindcss@3.4.19)
       tailwindcss: 3.4.19
     transitivePeerDependencies:
       - react
@@ -8255,7 +8264,7 @@ packages:
     resolution: {integrity: sha512-XjBR15BhXuylgWGuslhDKqlSayuqvqBX91BP8pauG8kd1zY8kotkNWbXksTCNRarse4kuGbe2kIY05ARtwNIvw==}
     dev: false
 
-  /react-native-css-interop@0.2.3(react-native-reanimated@3.16.7)(react-native-safe-area-context@5.4.0)(react-native-svg@15.11.0)(react-native@0.76.9)(react@18.3.1)(tailwindcss@3.4.19):
+  /react-native-css-interop@0.2.3(patch_hash=bux32mr3rzsfbeh672jnz33pzu)(react-native-reanimated@3.16.7)(react-native-safe-area-context@5.4.0)(react-native-svg@15.11.0)(react-native@0.76.9)(react@18.3.1)(tailwindcss@3.4.19):
     resolution: {integrity: sha512-wc+JI7iUfdFBqnE18HhMTtD0q9vkhuMczToA87UdHGWwMyxdT5sCcNy+i4KInPCE855IY0Ic8kLQqecAIBWz7w==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -8286,6 +8295,7 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: false
+    patched: true
 
   /react-native-gesture-handler@2.24.0(react-native@0.76.9)(react@18.3.1):
     resolution: {integrity: sha512-ZdWyOd1C8axKJHIfYxjJKCcxjWEpUtUWgTOVY2wynbiveSQDm8X/PDyAKXSer/GOtIpjudUbACOndZXCN3vHsw==}

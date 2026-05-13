@@ -24,6 +24,15 @@
       "expo-router",
       "expo-secure-store",
       "expo-dev-client"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "c7e9560e-effd-4979-8d21-e1430d6a55e9"
+      }
+    },
+    "owner": "codelabor"
   }
 }
