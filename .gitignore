@@ -187,8 +187,8 @@ chat-response.png
 homepage-check.png
 login-page.png
 
-# Local npm config
-.npmrc
+# Local npm config (commented out - project needs shamefully-hoist for EAS Build)
+# .npmrc
 
 # Root-level debug screenshots (not docs/screenshots/*.png)
 /*.png
