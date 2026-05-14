@@ -8,7 +8,7 @@ interface EpubReaderProps {
   chapters: Chapter[];
   currentChapter: number;
   onChapterChange?: (index: number) => void;
-  onSelection: (text: string, cfiRange: string, boundingRect: { top: number; left: number }) => void;
+  onSelection: (text: string, cfiRange: string, boundingRect: { top: number; left: number }, offsets?: { start: number; end: number }) => void;
   onProgress: (progress: number) => void;
 }
 
@@ -77,11 +77,23 @@ function buildHtml(
       if (!text) return;
       var range = sel.getRangeAt(0);
       var rect = range.getBoundingClientRect();
+      var container = document.getElementById('chapter-content');
+      var offsets = { start: 0, end: text.length };
+      if (container) {
+        try {
+          var preRange = document.createRange();
+          preRange.selectNodeContents(container);
+          preRange.setEnd(range.startContainer, range.startOffset);
+          offsets.start = preRange.toString().length;
+          offsets.end = offsets.start + range.toString().length;
+        } catch(e) {}
+      }
       window.ReactNativeWebView.postMessage(JSON.stringify({
         type: 'selection',
         text: text,
         cfiRange: '',
         rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+        offsets: offsets,
       }));
     });
   </script>
@@ -115,7 +127,7 @@ export default function EpubReader({
             onProgress?.(data.progress);
             break;
           case 'selection':
-            onSelection?.(data.text, data.cfiRange, data.rect);
+            onSelection?.(data.text, data.cfiRange, data.rect, data.offsets);
             break;
         }
       } catch {

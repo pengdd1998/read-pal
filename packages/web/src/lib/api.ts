@@ -13,7 +13,7 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
 import { queueMutation } from '@/lib/offline-queue';
-import { getAuthToken, getAuthTokenAsync } from '@/lib/auth-fetch';
+import { getAuthToken, getAuthTokenAsync, getRefreshToken, getRefreshTokenAsync, setAuthTokens, clearAuthTokens } from '@/lib/auth-fetch';
 import { isCapacitor } from '@/lib/capacitor';
 import { getCachedContent } from '@/lib/mobile-cache';
 
@@ -39,6 +39,9 @@ class ApiClient {
   private static STALE_TTL = 300_000; // 5 minutes — serve stale while revalidating
   private static MAX_CACHE_SIZE = 200;
 
+  // Token refresh state — prevents concurrent refresh calls
+  private refreshPromise: Promise<boolean> | null = null;
+
   constructor() {
     this.client = axios.create({
       baseURL: API_URL,
@@ -61,10 +64,7 @@ class ApiClient {
       (error: unknown) => Promise.reject(error),
     );
 
-    // Response interceptor - handle 401 (browser only)
-    // Only redirect on 401 from critical endpoints (auth-dependent data).
-    // Non-critical endpoints (notifications, discovery, etc.) should not
-    // trigger a logout redirect — they may fail transiently.
+    // Response interceptor - handle 401 with automatic token refresh
     const NON_CRITICAL_PREFIXES = [
       '/api/notifications',
       '/api/discovery',
@@ -72,27 +72,106 @@ class ApiClient {
       '/api/recommendations',
     ];
 
+    const REFRESH_URL = '/api/auth/refresh';
+
     this.client.interceptors.response.use(
       (response) => response,
-      (error: AxiosError<ApiResponse>) => {
-        if (
-          typeof window !== 'undefined' &&
-          error.response?.status === 401 &&
-          !window.location.pathname.includes('/auth') &&
-          !window.location.pathname.includes('/login') &&
-          !window.location.pathname.includes('/register') &&
-          !window.location.pathname.includes('/welcome') &&
-          !NON_CRITICAL_PREFIXES.some((p) => error.config?.url?.startsWith(p))
-        ) {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('user');
-          // Preserve current locale prefix in redirect
-          const locale = window.location.pathname.split('/')[1] || 'en';
-          window.location.href = `/${locale}/auth?mode=login`;
+      async (error: AxiosError<ApiResponse>) => {
+        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+
+        // Only handle 401 in browser
+        if (typeof window === 'undefined' || error.response?.status !== 401) {
+          return Promise.reject(error);
         }
-        return Promise.reject(error);
+
+        // Don't retry refresh endpoint itself
+        if (originalRequest.url === REFRESH_URL) {
+          return Promise.reject(error);
+        }
+
+        // Don't retry already retried requests
+        if (originalRequest._retry) {
+          return this.handleExpiredSession(error, NON_CRITICAL_PREFIXES);
+        }
+
+        // Check if the error code indicates an expired token (vs. invalid/unauthorized)
+        const errorCode = (error.response?.data as { error?: { code?: string } })?.error?.code;
+        if (errorCode !== 'TOKEN_EXPIRED' && errorCode !== 'TOKEN_REVOKED') {
+          return this.handleExpiredSession(error, NON_CRITICAL_PREFIXES);
+        }
+
+        // Attempt refresh
+        originalRequest._retry = true;
+
+        const refreshed = await this.tryRefreshToken();
+        if (!refreshed) {
+          return this.handleExpiredSession(error, NON_CRITICAL_PREFIXES);
+        }
+
+        // Retry original request with new token
+        const newToken = isCapacitor() ? await getAuthTokenAsync() : getAuthToken();
+        if (newToken && originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+        return this.client.request(originalRequest);
       },
     );
+  }
+
+  /** Attempt to refresh the access token using the stored refresh token. */
+  private async tryRefreshToken(): Promise<boolean> {
+    // Deduplicate concurrent refresh attempts
+    if (this.refreshPromise) return this.refreshPromise;
+
+    this.refreshPromise = this._doRefresh();
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+
+  private async _doRefresh(): Promise<boolean> {
+    const refreshToken = isCapacitor()
+      ? await getRefreshTokenAsync()
+      : getRefreshToken();
+
+    if (!refreshToken) return false;
+
+    try {
+      const response = await this.client.post<ApiResponse<{ token: string; refreshToken: string }>>(
+        '/api/auth/refresh',
+        { refreshToken },
+      );
+      if (response.data.success && response.data.data) {
+        await setAuthTokens(response.data.data.token, response.data.data.refreshToken);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Handle a definitively expired/invalid session — clear storage and redirect. */
+  private handleExpiredSession(
+    error: AxiosError<ApiResponse>,
+    nonCriticalPrefixes: string[],
+  ): Promise<never> {
+    if (
+      !window.location.pathname.includes('/auth') &&
+      !window.location.pathname.includes('/login') &&
+      !window.location.pathname.includes('/register') &&
+      !window.location.pathname.includes('/welcome') &&
+      !nonCriticalPrefixes.some((p) => error.config?.url?.startsWith(p))
+    ) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      const locale = window.location.pathname.split('/')[1] || 'en';
+      window.location.href = `/${locale}/auth?mode=login`;
+    }
+    return Promise.reject(error);
   }
 
   /**

@@ -40,7 +40,7 @@ export default function ReaderScreen() {
   const [showToc, setShowToc] = useState(false);
 
   // Selection state
-  const [selection, setSelection] = useState<{ text: string; cfiRange: string; rect: any } | null>(null);
+  const [selection, setSelection] = useState<{ text: string; cfiRange: string; rect: any; offsets?: { start: number; end: number } } | null>(null);
 
   // Annotations
   const {
@@ -66,21 +66,21 @@ export default function ReaderScreen() {
     setCurrentChapter(index);
   }, []);
 
-  const handleSelection = useCallback((text: string, cfiRange: string, rect: any) => {
-    setSelection({ text, cfiRange, rect });
+  const handleSelection = useCallback((text: string, cfiRange: string, rect: any, offsets?: { start: number; end: number }) => {
+    setSelection({ text, cfiRange, rect, offsets });
   }, []);
 
   const handleHighlight = useCallback(async (color: string) => {
     if (!selection) return;
     const chapter = chapters[currentChapter];
-    await addHighlight(selection.text, color, chapter?.id, currentChapter, selection.cfiRange);
+    await addHighlight(selection.text, color, chapter?.id, currentChapter, selection.cfiRange, selection.offsets);
     setSelection(null);
   }, [selection, chapters, currentChapter, addHighlight]);
 
   const handleNote = useCallback(async (text: string, note: string) => {
     if (!selection) return;
     const chapter = chapters[currentChapter];
-    await addNote(text, note, chapter?.id, currentChapter, selection.cfiRange);
+    await addNote(text, note, chapter?.id, currentChapter, selection.cfiRange, selection.offsets);
     setSelection(null);
   }, [selection, chapters, currentChapter, addNote]);
 

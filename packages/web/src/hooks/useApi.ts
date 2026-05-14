@@ -121,7 +121,7 @@ export function useBackgroundApi() {
     <T>(url: string, setter: (data: T) => void): void => {
       api.get<T>(url)
         .then((res) => {
-          if (!cancelledRef.current && res.success && res.data !== undefined) {
+          if (!cancelledRef.current && res.success && res.data != null) {
             setter(res.data);
           }
         });

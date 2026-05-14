@@ -114,6 +114,56 @@ class LookingForwardData(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Reading Mirror sections (v2)
+# ---------------------------------------------------------------------------
+
+class EncounterPrologue(BaseModel):
+    text: str = ''
+    reading_archetype: str = ''
+    archetype_description: str = ''
+
+
+class EncounterStats(BaseModel):
+    total_reading_time: str = ''
+    session_count: int = 0
+    highlight_count: int = 0
+    longest_session: str = ''
+
+
+class EncounterData(BaseModel):
+    prologue: EncounterPrologue = Field(default_factory=EncounterPrologue)
+    stats: EncounterStats = Field(default_factory=EncounterStats)
+
+
+class HighlightQuote(BaseModel):
+    quote: str = ''
+    page_location: str = ''
+    why_it_mattered: str = ''
+
+
+class HighlightCluster(BaseModel):
+    name: str = ''
+    description: str = ''
+    highlights: list[HighlightQuote] = Field(default_factory=list)
+
+
+class HighlightClusterData(BaseModel):
+    clusters: list[HighlightCluster] = Field(default_factory=list)
+
+
+class GroundedRecommendation(BaseModel):
+    title: str = ''
+    author: str = ''
+    reason: str = ''
+    connection_to_current: str = ''
+    urgency: str = Field('soon', pattern=r'^(now|soon|someday)$')
+
+
+class GroundedRecommendationData(BaseModel):
+    recommendations: list[GroundedRecommendation] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
 # Synthesis
 # ---------------------------------------------------------------------------
 

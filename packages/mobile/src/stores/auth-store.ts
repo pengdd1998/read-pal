@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getToken, saveToken, deleteToken, saveUser, getUser, deleteUser } from '@/lib/auth-storage';
+import { getToken, saveToken, deleteToken, saveUser, getUser, deleteUser, getRefreshToken, saveRefreshToken, deleteRefreshToken } from '@/lib/auth-storage';
 import { api } from '@/lib/api';
 import type { User } from '@read-pal/shared';
 
@@ -46,10 +46,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (email: string, password: string) => {
-    const result = await api.post<{ token: string; user: User }>('/api/auth/login', { email, password });
+    const result = await api.post<{ token: string; refreshToken: string; user: User }>('/api/auth/login', { email, password, platform: 'mobile' });
     if (result.success && result.data) {
-      const { token, user } = result.data;
+      const { token, refreshToken, user } = result.data;
       await saveToken(token);
+      await saveRefreshToken(refreshToken);
       await saveUser(JSON.stringify(user));
       set({ token, user, isAuthenticated: true });
     } else {
@@ -63,10 +64,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   register: async (name: string, email: string, password: string) => {
-    const result = await api.post<{ token: string; user: User }>('/api/auth/register', { name, email, password });
+    const result = await api.post<{ token: string; refreshToken: string; user: User }>('/api/auth/register', { name, email, password, platform: 'mobile' });
     if (result.success && result.data) {
-      const { token, user } = result.data;
+      const { token, refreshToken, user } = result.data;
       await saveToken(token);
+      await saveRefreshToken(refreshToken);
       await saveUser(JSON.stringify(user));
       set({ token, user, isAuthenticated: true });
     } else {
@@ -80,7 +82,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    const refreshToken = await getRefreshToken();
+    try {
+      await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
+    } catch {
+      // Logout is idempotent — ignore errors
+    }
     await deleteToken();
+    await deleteRefreshToken();
     await deleteUser();
     set({ token: null, user: null, isAuthenticated: false });
   },

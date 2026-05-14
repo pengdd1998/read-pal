@@ -20,6 +20,7 @@ from app.models.conversation_summary import ConversationSummary
 from app.models.ai_feedback import AIFeedback
 from app.models.reading_plan import ReadingPlan
 from app.models.book_chunk import BookChunk
+from app.models.llm_trace import LLMCallTrace
 
 __all__ = [
     'User',
@@ -46,4 +47,5 @@ __all__ = [
     'AIFeedback',
     'ReadingPlan',
     'BookChunk',
+    'LLMCallTrace',
 ]

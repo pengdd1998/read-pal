@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { api } from './api';
-import { getAuthToken, getAuthTokenAsync } from './auth-fetch';
+import { getAuthToken, getAuthTokenAsync, setAuthTokens, clearAuthTokens } from './auth-fetch';
 import { isCapacitor } from './capacitor';
 import { getItem, setItem, removeItem } from './native-storage';
 
@@ -75,15 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const persistAuth = useCallback(async (newToken: string, newUser: User) => {
-    await removeItem('auth_token');
+  const persistAuth = useCallback(async (newToken: string, newUser: User, newRefreshToken?: string) => {
     await removeItem('user');
-    await setItem('auth_token', newToken);
     await setItem('user', JSON.stringify(newUser));
-    // Also write to localStorage for non-Capacitor code paths
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', newToken);
-      localStorage.setItem('user', JSON.stringify(newUser));
+    // Store both tokens
+    if (newRefreshToken) {
+      await setAuthTokens(newToken, newRefreshToken);
+    } else {
+      await setItem('auth_token', newToken);
+      if (typeof window !== 'undefined') localStorage.setItem('auth_token', newToken);
     }
     setAuthCookie(newToken);
     setToken(newToken);
@@ -91,40 +91,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const result = await api.post<{ token: string; user: User }>(
+    const result = await api.post<{ token: string; refreshToken: string; user: User }>(
       '/api/auth/login',
-      { email, password },
+      { email, password, platform: 'web' },
     );
     if (result.success && result.data) {
-      await persistAuth(result.data.token, result.data.user);
+      await persistAuth(result.data.token, result.data.user, result.data.refreshToken);
     } else {
       throw new Error(result.error?.message || 'Login failed');
     }
   }, [persistAuth]);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
-    const result = await api.post<{ token: string; user: User }>(
+    const result = await api.post<{ token: string; refreshToken: string; user: User }>(
       '/api/auth/register',
-      { name, email, password },
+      { name, email, password, platform: 'web' },
     );
     if (result.success && result.data) {
-      await persistAuth(result.data.token, result.data.user);
+      await persistAuth(result.data.token, result.data.user, result.data.refreshToken);
     } else {
       throw new Error(result.error?.message || 'Registration failed');
     }
   }, [persistAuth]);
 
   const logout = useCallback(async () => {
-    await removeItem('auth_token');
+    // Get refresh token to send with logout request
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+    try {
+      await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
+    } catch {
+      // Logout is idempotent — ignore errors
+    }
+    await clearAuthTokens();
     await removeItem('user');
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
     }
     clearAuthCookie();
     setToken(null);
     setUser(null);
-    // Redirect to login page after logout
     const router = useRouter();
     router.push('/login');
   }, []);

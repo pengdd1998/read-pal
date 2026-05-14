@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -69,12 +69,19 @@ class MemoryBook(Base):
         Text,
         nullable=True,
     )
+    version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        server_default=text('1'),
+    )
     generated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
+        default=lambda: datetime.now(tz=timezone.utc),
         server_default=func.now(),
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
+        default=lambda: datetime.now(tz=timezone.utc),
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(

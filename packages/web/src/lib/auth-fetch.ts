@@ -7,7 +7,7 @@
  * cannot be used.
  */
 
-import { getItem } from './native-storage';
+import { getItem, setItem, removeItem } from './native-storage';
 import { isCapacitor } from './capacitor';
 
 /** Get the auth token from localStorage (SSR-safe, synchronous). */
@@ -19,6 +19,37 @@ export function getAuthToken(): string | null {
 export async function getAuthTokenAsync(): Promise<string | null> {
   if (isCapacitor()) return getItem('auth_token');
   return getAuthToken();
+}
+
+/** Get the refresh token from localStorage (SSR-safe, synchronous). */
+export function getRefreshToken(): string | null {
+  return typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+}
+
+/** Get the refresh token from native storage when in Capacitor (async). */
+export async function getRefreshTokenAsync(): Promise<string | null> {
+  if (isCapacitor()) return getItem('refresh_token');
+  return getRefreshToken();
+}
+
+/** Store both access and refresh tokens. */
+export async function setAuthTokens(accessToken: string, refreshToken: string): Promise<void> {
+  await setItem('auth_token', accessToken);
+  await setItem('refresh_token', refreshToken);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('auth_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+  }
+}
+
+/** Clear both access and refresh tokens. */
+export async function clearAuthTokens(): Promise<void> {
+  await removeItem('auth_token');
+  await removeItem('refresh_token');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+  }
 }
 
 /** Create headers with Content-Type and optional Bearer token (sync). */

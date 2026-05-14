@@ -186,17 +186,17 @@ export default function ReadPage() {
   const [contentReady, setContentReady] = useState(false);
   const chatRef = useRef<CompanionChatHandle>(null);
 
-  // Keep contentRef synced with the article element rendered by ReaderView.
-  // Re-sync when chapter changes (article re-renders with new key).
+  // Keep contentRef synced with the reader-content div rendered by ReaderView.
+  // Re-sync when chapter changes (content re-renders with new key).
   useEffect(() => {
     const sync = () => {
-      const article = document.querySelector('article.reading-mode');
-      if (article && contentRef.current !== article) {
-        (contentRef as React.MutableRefObject<HTMLElement | null>).current = article as HTMLElement;
+      const contentDiv = document.querySelector('.reader-content');
+      if (contentDiv && contentRef.current !== contentDiv) {
+        (contentRef as React.MutableRefObject<HTMLElement | null>).current = contentDiv as HTMLElement;
         setContentReady(true);
       }
     };
-    // Small delay to let ReaderView render the new article element
+    // Small delay to let ReaderView render the new content element
     const raf = requestAnimationFrame(sync);
     return () => cancelAnimationFrame(raf);
   }, [chapterContent]);

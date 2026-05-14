@@ -139,6 +139,10 @@ async def startup() -> None:
         except Exception as exc:
             logger.warning('Could not auto-create tables: %s', exc)
 
+    from app.services.llm import _trace_writer
+    _trace_writer.start()
+    logger.info('LLM trace writer started')
+
 
 @app.on_event('shutdown')
 async def shutdown() -> None:

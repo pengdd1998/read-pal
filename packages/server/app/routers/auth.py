@@ -19,6 +19,7 @@ from app.config import get_settings
 from app.db import get_db
 from app.middleware.auth import (
     create_access_token,
+    create_token_pair,
     get_current_user,
     hash_password,
     revoke_token,
@@ -35,7 +36,9 @@ from app.schemas.auth import (
     AuthResponse,
     ChangePasswordRequest,
     LoginRequest,
+    LogoutRequest,
     MessageResponse,
+    RefreshTokenRequest,
     RegisterRequest,
     UserResponse,
 )
@@ -114,8 +117,8 @@ async def login(
             },
         )
 
-    # Success — generate token and clear lockout counter
-    token = create_access_token({'userId': str(user.id)})
+    # Success — generate token pair and clear lockout counter
+    access_token, refresh_token = create_token_pair(str(user.id), body.platform)
     await lockout.clear_failed_logins(body.email)
 
     user_data = UserResponse(
@@ -130,7 +133,8 @@ async def login(
     return AuthResponse(
         data={
             'user': user_data.model_dump(mode='json'),
-            'token': token,
+            'token': access_token,
+            'refreshToken': refresh_token,
         },
     )
 
@@ -182,7 +186,7 @@ async def register(
     from app.services.seed_service import seed_sample_data
     await seed_sample_data(db, user.id)
 
-    token = create_access_token({'userId': str(user.id)})
+    access_token, refresh_token = create_token_pair(str(user.id), body.platform)
 
     user_data = UserResponse(
         id=user.id,
@@ -196,7 +200,8 @@ async def register(
     return AuthResponse(
         data={
             'user': user_data.model_dump(mode='json'),
-            'token': token,
+            'token': access_token,
+            'refreshToken': refresh_token,
         },
     )
 
@@ -277,11 +282,14 @@ async def change_password(
 @router.post('/logout')
 async def logout(
     request: Request,
+    body: LogoutRequest | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
-    """Revoke the current JWT token."""
+    """Revoke the current JWT token and optional refresh token."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
+
+    # Revoke access token from Authorization header
     auth_header = request.headers.get('authorization', '')
     if auth_header.startswith('Bearer '):
         token = auth_header[7:]
@@ -300,7 +308,25 @@ async def logout(
                 await revoke_token(jti, exp)
         except Exception as exc:
             # Token may be invalid/expired — still return success for idempotent logout
-            logger.warning('Logout token revocation skipped: %s', exc)
+            logger.warning('Logout access token revocation skipped: %s', exc)
+
+    # Revoke refresh token if provided
+    if body and body.refresh_token:
+        try:
+            from jose import jwt as jose_jwt
+
+            settings = get_settings()
+            decoded = jose_jwt.decode(
+                body.refresh_token,
+                settings.jwt_secret,
+                algorithms=['HS256'],
+            )
+            jti = decoded.get('jti')
+            exp = decoded.get('exp')
+            if jti and exp:
+                await revoke_token(jti, exp)
+        except Exception as exc:
+            logger.warning('Logout refresh token revocation skipped: %s', exc)
 
     return MessageResponse(data={'message': t('errors.logged_out', lang)})
 
@@ -311,50 +337,80 @@ async def logout(
 
 @router.post('/refresh', response_model=GenericResponse, dependencies=[refresh_limiter])
 async def refresh(
-    request: Request,
-    current_user: dict = Depends(get_current_user),
+    body: RefreshTokenRequest,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Revoke the old token and issue a new one."""
-    from jose import jwt as jose_jwt
+    """Exchange a valid refresh token for a new access + refresh token pair.
+
+    The old refresh token is revoked (rotation) to prevent reuse.
+    """
+    from jose import JWTError, jwt as jose_jwt
     from app.middleware.auth import is_token_revoked
 
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    settings = get_settings()
 
-    auth_header = request.headers.get('authorization', '')
-    if auth_header.startswith('Bearer '):
-        old_token = auth_header[7:]
-        try:
-            settings = get_settings()
-            decoded = jose_jwt.decode(
-                old_token,
-                settings.jwt_secret,
-                algorithms=['HS256'],
-            )
+    try:
+        payload = jose_jwt.decode(
+            body.refresh_token,
+            settings.jwt_secret,
+            algorithms=['HS256'],
+        )
+    except JWTError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                'code': 'INVALID_TOKEN',
+                'message': 'Invalid or expired refresh token',
+            },
+        ) from exc
 
-            jti = decoded.get('jti')
-            if jti and await is_token_revoked(jti):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail={
-                        'code': 'TOKEN_REVOKED',
-                        'message': t('errors.token_revoked', lang),
-                    },
-                )
+    # Validate token type
+    if payload.get('type') != 'refresh':
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                'code': 'INVALID_TOKEN',
+                'message': 'Provided token is not a refresh token',
+            },
+        )
 
-            exp = decoded.get('exp')
-            if jti and exp:
-                await revoke_token(jti, exp)
+    # Check revocation
+    jti = payload.get('jti')
+    if jti and await is_token_revoked(jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                'code': 'TOKEN_REVOKED',
+                'message': 'Refresh token has been revoked',
+            },
+        )
 
-        except HTTPException:
-            raise
-        except Exception:
-            logger.warning('Failed to revoke old token during refresh', exc_info=True)
+    # Verify user still exists
+    user_id = payload.get('userId') or payload.get('sub') or ''
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
 
-    # Generate new token
-    token = create_access_token({'userId': current_user['id']})
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                'code': 'USER_NOT_FOUND',
+                'message': 'User account not found',
+            },
+        )
+
+    # Revoke the old refresh token (rotation)
+    exp = payload.get('exp')
+    if jti and exp:
+        await revoke_token(jti, exp)
+
+    # Issue new token pair
+    access_token, new_refresh_token = create_token_pair(str(user.id))
 
     return {
         'success': True,
-        'data': {'token': token},
+        'data': {
+            'token': access_token,
+            'refreshToken': new_refresh_token,
+        },
     }

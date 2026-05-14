@@ -22,7 +22,8 @@ class MemoryBookGenerateRequest(BaseModel):
         'timeline',
         'podcast',
         'personal_book',
-    ] = 'personal_book'
+        'reading_mirror',
+    ] = 'reading_mirror'
 
 
 class MemoryBookResponse(BaseModel):
@@ -35,6 +36,7 @@ class MemoryBookResponse(BaseModel):
     sections: list[dict]
     stats: dict
     html_content: str | None
+    version: int = 1
     generated_at: datetime
 
     model_config = ConfigDict(

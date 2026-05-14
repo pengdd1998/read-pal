@@ -1,4 +1,4 @@
-"""Tests for reading-book endpoints — generate, get, and list memory books."""
+"""Tests for reading-book endpoints — generate, get, and list reading mirrors."""
 
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -15,9 +15,9 @@ def _make_mock_result(book_id: str) -> MagicMock:
     mock_result.model_dump.return_value = {
         'id': str(uuid4()),
         'book_id': book_id,
-        'title': 'My Reading Book',
-        'format': 'personal_book',
-        'sections': [],
+        'title': 'My Reading Mirror',
+        'format': 'reading_mirror',
+        'sections': [{'id': 'section-1', 'type': 'encounter', 'data': {}}],
         'stats': {},
         'html_content': None,
         'generated_at': datetime.now(timezone.utc).isoformat(),
@@ -48,7 +48,7 @@ async def test_generate_returns_success(client):
     body = resp.json()
     assert body['success'] is True
     assert body['data']['book_id'] == book_id
-    assert body['data']['title'] == 'My Reading Book'
+    assert body['data']['title'] == 'My Reading Mirror'
 
 
 @pytest.mark.asyncio
@@ -73,7 +73,7 @@ async def test_generate_returns_404_for_missing_book(client):
 
 
 @pytest.mark.asyncio
-async def test_get_memory_book_returns_404_when_not_found(client):
+async def test_get_memory_book_returns_null_when_not_found(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
 
@@ -82,9 +82,10 @@ async def test_get_memory_book_returns_404_when_not_found(client):
         headers=headers,
     )
 
-    assert resp.status_code == 404
+    assert resp.status_code == 200
     body = resp.json()
-    assert body['detail']['code'] == 'NOT_FOUND'
+    assert body['success'] is True
+    assert body['data'] is None
 
 
 # ---------------------------------------------------------------------------

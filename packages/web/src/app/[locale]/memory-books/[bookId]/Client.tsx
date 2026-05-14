@@ -1,37 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { useRouter } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { api, API_BASE_URL } from '@/lib/api';
-import { getAuthToken } from '@/lib/auth-fetch';
+import { api } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import SectionRenderer, { getSectionTitle, type MirrorSection } from '@/components/reading-mirror/SectionRenderer';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface PersonalBookSection {
-  id: string;
-  title: string;
-  type: string;
-}
-
-interface PersonalBook {
+interface ReadingMirror {
   id: string;
   bookId: string;
   title: string;
   format: string;
-  sections: PersonalBookSection[];
+  sections: MirrorSection[];
   htmlContent: string | null;
-  stats: {
-    pagesRead: number;
-    totalHighlights: number;
-    totalNotes: number;
-    readingDuration: number;
-  };
+  version: number;
+  stats: Record<string, number>;
   generatedAt: string;
 }
 
@@ -41,66 +30,69 @@ type GenerationStep = 'idle' | 'collecting' | 'analyzing' | 'curating' | 'synthe
 // Page
 // ---------------------------------------------------------------------------
 
-export default function PersonalBookPage() {
+export default function ReadingMirrorPage() {
   const t = useTranslations('memoryBooks');
   usePageTitle(t('detailPageTitle'));
   const params = useParams();
-  const router = useRouter();
+  const locale = (params?.locale as string) || 'en';
   const bookId = (params?.bookId ?? '') as string;
 
-  const [book, setBook] = useState<PersonalBook | null>(null);
+  const [mirror, setMirror] = useState<ReadingMirror | null>(null);
+  const [bookTitle, setBookTitle] = useState('');
+  const [bookAuthor, setBookAuthor] = useState('');
+  const [coverUrl, setCoverUrl] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [genStep, setGenStep] = useState<GenerationStep>('idle');
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState(0);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Fetch existing personal book
+  // Fetch existing mirror + book metadata
   useEffect(() => {
     if (!bookId) return;
-    api.get<PersonalBook>(`/api/memory-books/${bookId}`)
-      .then((res) => {
-        if (res.success && res.data && res.data.format === 'personal_book') {
-          setBook(res.data);
-        }
-      })
-      .catch(() => { /* no existing book */ })
-      .finally(() => setLoading(false));
+    Promise.all([
+      api.get<ReadingMirror>(`/api/memory-books/${bookId}`),
+      api.get<{ title: string; author: string; coverUrl?: string }>(`/api/books/${bookId}`),
+    ]).then(([mirrorRes, bookRes]) => {
+      if (mirrorRes.success && mirrorRes.data) {
+        setMirror(mirrorRes.data);
+      }
+      if (bookRes.success && bookRes.data) {
+        setBookTitle(bookRes.data.title);
+        setBookAuthor(bookRes.data.author);
+        setCoverUrl(bookRes.data.coverUrl);
+      }
+    }).catch(() => { /* ignore */ })
+    .finally(() => setLoading(false));
   }, [bookId]);
 
-  // Generate personal book with step feedback
+  // Generate reading mirror
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     setError(null);
 
     const steps: GenerationStep[] = ['collecting', 'analyzing', 'curating', 'synthesizing', 'rendering'];
-
-    // Advance steps on a timer for UX feedback
     let stepIdx = 0;
     const timer = setInterval(() => {
       stepIdx++;
-      if (stepIdx < steps.length) {
-        setGenStep(steps[stepIdx]);
-      }
+      if (stepIdx < steps.length) setGenStep(steps[stepIdx]);
     }, 5000);
     setGenStep(steps[0]);
 
     try {
-      const res = await api.post<PersonalBook>(`/api/memory-books/${bookId}/generate`, {
-        format: 'personal_book',
+      const res = await api.post<ReadingMirror>(`/api/memory-books/${bookId}/generate`, {
+        format: 'reading_mirror',
       });
-
       clearInterval(timer);
       setGenStep('done');
 
       if (res.success && res.data) {
-        setBook(res.data);
+        setMirror(res.data);
       } else {
         setError(t('generationEmpty'));
         setGenStep('error');
       }
-    } catch (err) {
+    } catch {
       clearInterval(timer);
       setError(t('generationFailedError'));
       setGenStep('error');
@@ -109,31 +101,31 @@ export default function PersonalBookPage() {
     }
   }, [bookId, t]);
 
-  // Download as HTML file
+  // Download as HTML (legacy fallback)
   const handleDownload = useCallback(() => {
-    if (!book?.htmlContent) return;
-    const blob = new Blob([book.htmlContent], { type: 'text/html' });
+    if (!mirror?.htmlContent) return;
+    const blob = new Blob([mirror.htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}_personal_book.html`;
+    a.download = `${bookTitle.replace(/[^a-zA-Z0-9]/g, '_')}_reading_mirror.html`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [book]);
+  }, [mirror, bookTitle]);
 
-  // Print / save as PDF
+  // Print
   const handlePrint = useCallback(() => {
-    if (!book?.htmlContent) return;
+    if (!mirror?.htmlContent) return;
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(book.htmlContent);
+      printWindow.document.write(mirror.htmlContent);
       printWindow.document.close();
       printWindow.onload = () => printWindow.print();
     }
-  }, [book]);
+  }, [mirror]);
 
-  // Filter sections for navigation (exclude cover)
-  const navSections = book?.sections?.filter((s) => s.type !== 'cover') || [];
+  // Section navigation
+  const sections = mirror?.sections || [];
 
   // ---------------------------------------------------------------------------
   // Loading state
@@ -167,14 +159,10 @@ export default function PersonalBookPage() {
         <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 flex items-center justify-center">
           <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-          {t('creatingTitle')}
-        </h2>
-        <p className="text-sm text-gray-500 mb-6">
-          {t('creatingDesc')}
-        </p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('creatingTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-6">{t('creatingDesc')}</p>
         <div className="space-y-2">
-          {['collecting', 'analyzing', 'curating', 'synthesizing', 'rendering'].map((step) => (
+          {steps_array.map((step) => (
             <div
               key={step}
               className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-all ${
@@ -199,16 +187,14 @@ export default function PersonalBookPage() {
   // ---------------------------------------------------------------------------
   // Error state
   // ---------------------------------------------------------------------------
-  if (error && !book) {
+  if (error && !mirror) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="text-5xl mb-4">{'\u{1F614}'}</div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('generationFailed')}</h2>
         <p className="text-sm text-gray-500 mb-6">{error}</p>
         <div className="flex gap-3 justify-center">
-          <button onClick={handleGenerate} className="btn btn-primary">
-            {t('tryAgain')}
-          </button>
+          <button onClick={handleGenerate} className="btn btn-primary">{t('tryAgain')}</button>
           <Link href="/memory-books" className="btn bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
             {t('backToMemoryBooks')}
           </Link>
@@ -218,20 +204,16 @@ export default function PersonalBookPage() {
   }
 
   // ---------------------------------------------------------------------------
-  // No book yet — show generate CTA
+  // No mirror yet — generate CTA
   // ---------------------------------------------------------------------------
-  if (!book) {
+  if (!mirror) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center">
-          <span className="text-4xl">{'\u{1F4D5}'}</span>
+          <span className="text-4xl">{'\u{1FA9E}'}</span>
         </div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-          {t('yourPersonalBook')}
-        </h2>
-        <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">
-          {t('yourPersonalBookDesc')}
-        </p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('yourPersonalBook')}</h2>
+        <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">{t('yourPersonalBookDesc')}</p>
         <button
           onClick={handleGenerate}
           className="px-6 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all shadow-lg hover:shadow-xl active:scale-95"
@@ -248,7 +230,7 @@ export default function PersonalBookPage() {
   }
 
   // ---------------------------------------------------------------------------
-  // Book display
+  // Mirror display — React section renderer
   // ---------------------------------------------------------------------------
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 animate-fade-in">
@@ -264,9 +246,10 @@ export default function PersonalBookPage() {
             </svg>
           </Link>
           <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">{book.title}</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">{bookTitle || mirror.title}</h1>
             <p className="text-xs text-gray-400">
-              {t('generatedDate', { date: book.generatedAt ? new Date(book.generatedAt).toLocaleDateString() : '' })}
+              {t('generatedDate', { date: mirror.generatedAt ? new Date(mirror.generatedAt).toLocaleDateString() : '' })}
+              {mirror.version > 1 && <span className="ml-1 opacity-60">(v{mirror.version})</span>}
             </p>
           </div>
         </div>
@@ -302,23 +285,16 @@ export default function PersonalBookPage() {
       </div>
 
       {/* Mobile section dropdown */}
-      {navSections.length > 0 && (
+      {sections.length > 0 && (
         <div className="md:hidden mb-4">
           <select
             value={activeSection}
-            onChange={(e) => {
-              const idx = parseInt(e.target.value, 10);
-              setActiveSection(idx);
-              const section = navSections[idx - 1];
-              if (section && iframeRef.current?.contentWindow) {
-                iframeRef.current.contentWindow.postMessage({ type: 'scroll-to-section', sectionId: section.id }, '*');
-              }
-            }}
+            onChange={(e) => setActiveSection(parseInt(e.target.value, 10))}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-surface-0 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
-            {navSections.map((section, i) => (
-              <option key={section.id} value={i + 1}>
-                {section.title}
+            {sections.map((section, i) => (
+              <option key={section.id || i} value={i}>
+                {getSectionTitle(section.type)}
               </option>
             ))}
           </select>
@@ -326,60 +302,50 @@ export default function PersonalBookPage() {
       )}
 
       {/* Main layout: sidebar + content */}
-      <div className="flex gap-4">
+      <div className="flex gap-6">
         {/* Sidebar navigation (desktop) */}
-        {navSections.length > 0 && (
+        {sections.length > 0 && (
           <nav className="hidden md:block w-52 flex-shrink-0">
             <div className="sticky top-6 space-y-0.5">
-              {navSections.map((section, i) => (
+              {sections.map((section, i) => (
                 <button
-                  key={section.id}
-                  onClick={() => {
-                    setActiveSection(i + 1);
-                    if (iframeRef.current?.contentWindow) {
-                      iframeRef.current.contentWindow.postMessage({ type: 'scroll-to-section', sectionId: section.id }, '*');
-                    }
-                  }}
+                  key={section.id || i}
+                  onClick={() => setActiveSection(i)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                    activeSection === i + 1
+                    activeSection === i
                       ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
                       : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
-                  {section.title}
+                  {getSectionTitle(section.type)}
                 </button>
               ))}
             </div>
           </nav>
         )}
 
-        {/* Book content */}
+        {/* Section content */}
         <div className="flex-1 min-w-0">
-          {book.htmlContent ? (
-            <iframe
-              ref={iframeRef}
-              srcDoc={book.htmlContent}
-              title="Personal Reading Book"
-              className="w-full min-h-[80vh] border border-gray-200 dark:border-gray-700 rounded-xl bg-[#faf7f2]"
-              sandbox="allow-same-origin allow-scripts"
-              onLoad={() => {
-                // Auto-resize iframe to content
-                try {
-                  const doc = iframeRef.current?.contentDocument;
-                  if (doc?.body) {
-                    const height = doc.body.scrollHeight + 40;
-                    iframeRef.current!.style.height = `${height}px`;
-                  }
-                } catch { /* cross-origin fallback */ }
-              }}
-            />
-          ) : (
-            <div className="text-center py-20">
-              <p className="text-gray-500">{t('noContent')}</p>
-            </div>
-          )}
+          <div className="bg-[#fefdfb] dark:bg-[#1a1f26] border border-gray-200 dark:border-gray-700 rounded-xl p-6 md:p-8 shadow-xs">
+            {sections[activeSection] ? (
+              <SectionRenderer
+                section={sections[activeSection]}
+                bookId={bookId}
+                bookTitle={bookTitle}
+                bookAuthor={bookAuthor}
+                coverUrl={coverUrl}
+                locale={locale}
+              />
+            ) : (
+              <div className="text-center py-20">
+                <p className="text-gray-500">{t('noContent')}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
+const steps_array = ['collecting', 'analyzing', 'curating', 'synthesizing', 'rendering'] as const;

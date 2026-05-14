@@ -78,8 +78,9 @@ def _log_call(
     usage: dict[str, int],
     success: bool,
     fallback_used: bool = False,
+    error_message: str | None = None,
 ) -> None:
-    """Structured log for every LLM call."""
+    """Structured log for every LLM call + persist to DB."""
     cost = _estimate_cost(
         model,
         usage.get('prompt_tokens', 0),
@@ -100,6 +101,19 @@ def _log_call(
         success,
         fallback_used,
     )
+    _trace_writer.add({
+        'request_id': request_id,
+        'model': model,
+        'label': label,
+        'latency_ms': latency_ms,
+        'prompt_tokens': usage.get('prompt_tokens', 0),
+        'completion_tokens': usage.get('completion_tokens', 0),
+        'total_tokens': usage.get('total_tokens', 0),
+        'estimated_cost_usd': cost,
+        'success': success,
+        'fallback_used': fallback_used,
+        'error_message': error_message,
+    })
 
 # ---------------------------------------------------------------------------
 # Connection pool — cache ChatOpenAI per (model, temperature) tuple
@@ -135,9 +149,77 @@ def get_llm(
     return _pool[key]
 
 
+# ---------------------------------------------------------------------------
+# Trace writer — async buffered persistence to PostgreSQL
+# ---------------------------------------------------------------------------
+
+class _TraceWriter:
+    """Buffered, fire-and-forget writer for LLM call traces.
+
+    Collects trace dicts in memory and flushes to PostgreSQL in batches.
+    Write failures are logged but never propagated to callers.
+    """
+
+    MAX_BUFFER = 50
+    FLUSH_INTERVAL = 5.0
+
+    def __init__(self) -> None:
+        self._buf: list[dict[str, Any]] = []
+        self._task: asyncio.Task | None = None
+        self._lock = asyncio.Lock()
+
+    def start(self) -> None:
+        """Start the periodic flush background task."""
+        if self._task is None or self._task.done():
+            self._task = asyncio.ensure_future(self._flush_loop())
+
+    def cancel(self) -> None:
+        if self._task and not self._task.done():
+            self._task.cancel()
+
+    def add(self, trace: dict[str, Any]) -> None:
+        """Add a trace record. Flushes immediately if buffer is full."""
+        self._buf.append(trace)
+        if len(self._buf) >= self.MAX_BUFFER:
+            asyncio.ensure_future(self.flush())
+
+    async def flush(self) -> int:
+        """Flush buffered traces to PostgreSQL. Returns count written."""
+        async with self._lock:
+            if not self._buf:
+                return 0
+            batch = self._buf[:self.MAX_BUFFER]
+            self._buf = self._buf[self.MAX_BUFFER:]
+
+        try:
+            from app.db import async_session
+            from app.models.llm_trace import LLMCallTrace
+
+            async with async_session() as session:
+                session.add_all([LLMCallTrace(**t) for t in batch])
+                await session.commit()
+            logger.debug('Trace flush: %d records written', len(batch))
+            return len(batch)
+        except Exception:
+            logger.warning('Trace flush failed (%d records dropped)', len(batch), exc_info=True)
+            return 0
+
+    async def _flush_loop(self) -> None:
+        """Background task: flush on interval."""
+        while True:
+            await asyncio.sleep(self.FLUSH_INTERVAL)
+            if self._buf:
+                await self.flush()
+
+
+_trace_writer = _TraceWriter()
+
+
 async def shutdown_llm() -> None:
-    """Close all pooled HTTP connections. Call on app shutdown."""
+    """Close all pooled HTTP connections and flush traces. Call on app shutdown."""
     _pool.clear()
+    await _trace_writer.flush()
+    _trace_writer.cancel()
     logger.info('LLM connection pool shut down')
 
 
@@ -388,6 +470,7 @@ async def _invoke_with_circuit(
             latency_ms=latency_ms,
             usage={},
             success=False,
+            error_message=str(exc),
         )
         # Try fallback model
         try:
@@ -411,6 +494,16 @@ async def _invoke_with_circuit(
         except Exception as fb_exc:
             logger.error('%s fallback also failed: %s', log_label, fb_exc)
             await circuit.record_failure()
+            _log_call(
+                request_id=request_id,
+                model=fallback_model,
+                label=log_label,
+                latency_ms=int((time.monotonic() - fb_start) * 1000),
+                usage={},
+                success=False,
+                fallback_used=True,
+                error_message=str(fb_exc),
+            )
             return None
 
     return response

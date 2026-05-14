@@ -1,4 +1,4 @@
-"""Tests for memory book (Personal Reading Book) endpoints."""
+"""Tests for Reading Mirror (Memory Book) endpoints — generate, get, and list."""
 
 import json
 from unittest.mock import AsyncMock, patch
@@ -10,7 +10,7 @@ from tests.conftest import auth_headers, register_user
 
 async def _create_book(client, token, **overrides):
     payload = {
-        'title': 'Memory Book Test',
+        'title': 'Reading Mirror Test',
         'author': 'Test Author',
         'file_type': 'epub',
         'file_size': 2048,
@@ -34,13 +34,63 @@ async def _create_annotation(client, token, book_id, atype='highlight', content=
     return resp.json()['data']
 
 
-def _mock_llm_chapter_response(chapter_num):
-    """Return a predictable mock chapter response."""
-    return json.dumps({
-        'chapter': chapter_num,
-        'title': f'Chapter {chapter_num} Title',
-        'data': f'Mock content for chapter {chapter_num}',
-    })
+def _mock_llm_section_response(section_type: str) -> dict:
+    """Return a predictable mock section response matching the schema."""
+    if section_type == 'encounter':
+        return {
+            'prologue': {
+                'text': 'You opened this book on a quiet afternoon...',
+                'reading_archetype': 'The Deep Diver',
+                'archetype_description': 'You read with intent and focus.',
+            },
+            'stats': {
+                'total_reading_time': '2h 30m',
+                'session_count': 5,
+                'highlight_count': 12,
+                'longest_session': '45m',
+            },
+        }
+    if section_type == 'highlights':
+        return {
+            'clusters': [
+                {
+                    'name': 'Identity and Self',
+                    'description': 'Passages about personal growth.',
+                    'highlights': [
+                        {
+                            'quote': 'To be yourself in a world that is constantly trying to make you something else.',
+                            'page_location': 'chapter-1',
+                            'why_it_mattered': 'You highlighted this early in your reading.',
+                        },
+                    ],
+                },
+            ],
+        }
+    if section_type == 'recommendations':
+        return {
+            'recommendations': [
+                {
+                    'title': 'Atomic Habits',
+                    'author': 'James Clear',
+                    'reason': 'Your focus on personal growth suggests interest in practical self-improvement.',
+                    'connection_to_current': 'Both explore the tension between identity and behavior.',
+                    'urgency': 'now',
+                },
+            ],
+        }
+    return {}
+
+
+def _mock_safe_llm_invoke(side_effects: list | None = None):
+    """Create a mock for safe_llm_invoke that returns section data."""
+    if side_effects is None:
+        side_effects = [
+            _mock_llm_section_response('encounter'),
+            _mock_llm_section_response('highlights'),
+            _mock_llm_section_response('recommendations'),
+        ]
+    mock = AsyncMock(side_effect=side_effects)
+    return mock
 
 
 # ---------------------------------------------------------------------------
@@ -49,38 +99,43 @@ def _mock_llm_chapter_response(chapter_num):
 
 
 @pytest.mark.asyncio
-async def test_generate_memory_book(client):
+async def test_generate_reading_mirror(client):
     reg = await register_user(client)
     book = await _create_book(client, reg['token'])
     await _create_annotation(client, reg['token'], book['id'])
 
-    mock_llm = AsyncMock()
-    mock_llm.ainvoke = AsyncMock(side_effect=[
-        type('Resp', (), {'content': _mock_llm_chapter_response(i)})()
-        for i in range(1, 7)
-    ])
-
-    with patch('app.services.llm.get_llm', return_value=mock_llm):
+    with patch('app.services.memory_book_service.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
+        mock_llm.side_effect = [
+            _mock_llm_section_response('encounter'),
+            _mock_llm_section_response('highlights'),
+            _mock_llm_section_response('recommendations'),
+        ]
         resp = await client.post(
             '/api/v1/reading-book/generate',
-            json={'book_id': book['id'], 'format': 'personal_book'},
+            json={'book_id': book['id'], 'format': 'reading_mirror'},
             headers=auth_headers(reg['token']),
         )
 
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert 'htmlContent' in body['data']
-    assert '<html' in body['data']['htmlContent'].lower()
-    assert body['data']['format'] == 'personal_book'
+    assert 'sections' in body['data']
+    assert len(body['data']['sections']) == 10
+    assert body['data']['format'] == 'reading_mirror'
+
+    # Verify section types
+    section_types = [s['type'] for s in body['data']['sections']]
+    assert 'encounter' in section_types
+    assert 'highlights' in section_types
+    assert 'recommendations' in section_types
+    assert 'attention_map' in section_types  # placeholder
 
 
 @pytest.mark.asyncio
 async def test_generate_memory_book_not_found(client):
     reg = await register_user(client)
 
-    mock_llm = AsyncMock()
-    with patch('app.services.llm.get_llm', return_value=mock_llm):
+    with patch('app.services.memory_book_service.safe_llm_invoke', new_callable=AsyncMock):
         resp = await client.post(
             '/api/v1/reading-book/generate',
             json={'book_id': '00000000-0000-0000-0000-000000000000'},
@@ -105,21 +160,20 @@ async def test_generate_memory_book_unauthenticated(client):
 
 
 @pytest.mark.asyncio
-async def test_get_memory_book(client):
+async def test_get_reading_mirror(client):
     reg = await register_user(client)
     book = await _create_book(client, reg['token'])
     await _create_annotation(client, reg['token'], book['id'])
 
-    mock_llm = AsyncMock()
-    mock_llm.ainvoke = AsyncMock(side_effect=[
-        type('Resp', (), {'content': _mock_llm_chapter_response(i)})()
-        for i in range(1, 7)
-    ])
-
-    with patch('app.services.llm.get_llm', return_value=mock_llm):
+    with patch('app.services.memory_book_service.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
+        mock_llm.side_effect = [
+            _mock_llm_section_response('encounter'),
+            _mock_llm_section_response('highlights'),
+            _mock_llm_section_response('recommendations'),
+        ]
         await client.post(
             '/api/v1/reading-book/generate',
-            json={'book_id': book['id'], 'format': 'personal_book'},
+            json={'book_id': book['id'], 'format': 'reading_mirror'},
             headers=auth_headers(reg['token']),
         )
 
@@ -132,6 +186,7 @@ async def test_get_memory_book(client):
     body = resp.json()
     assert body['success'] is True
     assert body['data']['title'] is not None
+    assert len(body['data']['sections']) == 10
 
 
 @pytest.mark.asyncio
@@ -143,7 +198,10 @@ async def test_get_memory_book_not_generated(client):
         f"/api/v1/reading-book/{book['id']}",
         headers=auth_headers(reg['token']),
     )
-    assert resp.status_code == 404
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body['success'] is True
+    assert body['data'] is None
 
 
 # ---------------------------------------------------------------------------
@@ -171,16 +229,15 @@ async def test_list_memory_books_with_data(client):
     book = await _create_book(client, reg['token'])
     await _create_annotation(client, reg['token'], book['id'])
 
-    mock_llm = AsyncMock()
-    mock_llm.ainvoke = AsyncMock(side_effect=[
-        type('Resp', (), {'content': _mock_llm_chapter_response(i)})()
-        for i in range(1, 7)
-    ])
-
-    with patch('app.services.llm.get_llm', return_value=mock_llm):
+    with patch('app.services.memory_book_service.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
+        mock_llm.side_effect = [
+            _mock_llm_section_response('encounter'),
+            _mock_llm_section_response('highlights'),
+            _mock_llm_section_response('recommendations'),
+        ]
         await client.post(
             '/api/v1/reading-book/generate',
-            json={'book_id': book['id'], 'format': 'personal_book'},
+            json={'book_id': book['id'], 'format': 'reading_mirror'},
             headers=auth_headers(reg['token']),
         )
 

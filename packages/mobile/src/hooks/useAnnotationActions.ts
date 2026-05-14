@@ -26,6 +26,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
     chapterId: string | undefined,
     chapterIndex: number,
     cfiRange?: string,
+    offsets?: { start: number; end: number },
   ) => {
     try {
       const result = await api.post<Annotation>('/api/annotations', {
@@ -38,7 +39,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
           chapterId,
           pageIndex: chapterIndex,
           position: 0,
-          selection: { start: 0, end: text.length },
+          selection: offsets || { start: 0, end: text.length },
           cfiRange,
         },
       });
@@ -56,6 +57,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
     chapterId: string | undefined,
     chapterIndex: number,
     cfiRange?: string,
+    offsets?: { start: number; end: number },
   ) => {
     try {
       const result = await api.post<Annotation>('/api/annotations', {
@@ -67,7 +69,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
           chapterId,
           pageIndex: chapterIndex,
           position: 0,
-          selection: { start: 0, end: text.length },
+          selection: offsets || { start: 0, end: text.length },
           cfiRange,
         },
       });

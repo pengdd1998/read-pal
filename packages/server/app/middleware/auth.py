@@ -84,6 +84,35 @@ def create_access_token(
     return jwt.encode(to_encode, settings.jwt_secret, algorithm='HS256')
 
 
+def create_token_pair(
+    user_id: str,
+    platform: str = 'web',
+) -> tuple[str, str]:
+    """Create an access + refresh token pair.
+
+    Returns (access_token, refresh_token).
+    Platform 'mobile' gets longer-lived tokens than 'web'.
+    """
+    settings = get_settings()
+
+    if platform == 'mobile':
+        access_ttl = timedelta(seconds=settings.jwt_access_mobile_seconds)
+        refresh_ttl = timedelta(seconds=settings.jwt_refresh_mobile_seconds)
+    else:
+        access_ttl = timedelta(seconds=settings.jwt_access_web_seconds)
+        refresh_ttl = timedelta(seconds=settings.jwt_refresh_web_seconds)
+
+    access_token = create_access_token(
+        {'userId': user_id, 'type': 'access'},
+        expires_delta=access_ttl,
+    )
+    refresh_token = create_access_token(
+        {'userId': user_id, 'type': 'refresh'},
+        expires_delta=refresh_ttl,
+    )
+    return access_token, refresh_token
+
+
 async def revoke_token(jti: str, exp: int) -> None:
     """Add a token's jti to the Redis blacklist.
 

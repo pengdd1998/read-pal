@@ -1,10 +1,15 @@
-"""Memory book service — 6-chapter Personal Reading Book generation."""
+"""Reading Mirror service -- 10-section personalized reading reflection.
+
+Pipeline: collect enriched data -> generate sections via LLM -> store as JSON.
+HTML rendering is kept for backward compat (mobile iframe) but deprecated.
+"""
 
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -17,14 +22,11 @@ from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.memory_book import MemoryBook
 from app.models.reading_session import ReadingSession
-from app.prompts import MEMORY_BOOK_CHAPTERS, MEMORY_BOOK_SYSTEM
+from app.prompts import MIRROR_SECTIONS, MIRROR_SYSTEM
 from app.schemas.llm_outputs import (
-    ConversationsData,
-    CoverData,
-    HighlightsData,
-    LookingForwardData,
-    NotesData,
-    ReadingJourneyData,
+    EncounterData,
+    GroundedRecommendationData,
+    HighlightClusterData,
 )
 from app.schemas.memory_book import MemoryBookResponse
 from app.services.llm import safe_llm_invoke
@@ -34,23 +36,38 @@ from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.memory_book')
 
-# Map each chapter number to its Pydantic output schema
-CHAPTER_SCHEMAS: dict[int, type] = {
-    1: CoverData,
-    2: ReadingJourneyData,
-    3: HighlightsData,
-    4: NotesData,
-    5: ConversationsData,
-    6: LookingForwardData,
+# Section type constants
+SECTION_TYPES = [
+    'encounter',          # 1: Second-person prologue
+    'attention_map',      # 2: Engagement heatmap (Phase 2)
+    'highlights',         # 3: Themed highlight clusters
+    'annotations_woven',  # 4: Thinking arc (Phase 2)
+    'conversations',      # 5: Breakthrough moments (Phase 2)
+    'concept_web',        # 6: Knowledge graph (Phase 2)
+    'what_stuck',         # 7: Flashcard retention (Phase 2)
+    'threads',            # 8: Cross-book connections (Phase 2)
+    'reader_became',      # 9: Reflective essay (Phase 2)
+    'recommendations',    # 10: Grounded recommendations
+]
+
+# Maps section type -> Pydantic schema for LLM validation
+SECTION_SCHEMAS: dict[str, type] = {
+    'encounter': EncounterData,
+    'highlights': HighlightClusterData,
+    'recommendations': GroundedRecommendationData,
 }
 
+
+# ---------------------------------------------------------------------------
+# Data collection
+# ---------------------------------------------------------------------------
 
 async def _collect_book_data(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
 ) -> dict[str, Any]:
-    """Collect all data needed for memory book generation."""
+    """Collect raw reading data (unchanged from v1)."""
     data: dict[str, Any] = {}
     result = await db.execute(
         select(Book).where(Book.id == book_id, Book.user_id == user_id),
@@ -66,7 +83,6 @@ async def _collect_book_data(
         'started_at': book.started_at.isoformat() if book.started_at else None,
         'completed_at': book.completed_at.isoformat() if book.completed_at else None,
     }
-    # Annotations (capped at 500)
     result = await db.execute(
         select(Annotation)
         .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
@@ -76,21 +92,24 @@ async def _collect_book_data(
     annotations = list(result.scalars().all())
     data['highlights'] = [
         {
+            'id': str(a.id),
             'content': sanitize_user_input(a.content, context='highlight_content'),
             'note': sanitize_user_input(a.note or '', context='highlight_note'),
             'tags': a.tags, 'location': a.location,
+            'created_at': a.created_at.isoformat() if a.created_at else None,
         }
         for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)
     ]
     data['notes'] = [
         {
+            'id': str(a.id),
             'content': sanitize_user_input(a.content, context='note_content'),
             'note': sanitize_user_input(a.note or '', context='note_text'),
             'tags': a.tags,
+            'created_at': a.created_at.isoformat() if a.created_at else None,
         }
         for a in annotations if match_annotation_type(a.type, AnnotationType.note)
     ]
-    # Chat messages (capped at 200)
     result = await db.execute(
         select(ChatMessage)
         .where(ChatMessage.user_id == user_id, ChatMessage.book_id == book_id)
@@ -105,7 +124,6 @@ async def _collect_book_data(
         }
         for m in messages
     ]
-    # Reading sessions (capped at 100)
     result = await db.execute(
         select(ReadingSession)
         .where(ReadingSession.user_id == user_id, ReadingSession.book_id == book_id)
@@ -130,35 +148,132 @@ async def _collect_book_data(
     return data
 
 
-def _prepare_relevant_data(
-    chapter_num: int,
-    book_data: dict[str, Any],
+async def _collect_enriched_data(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> dict[str, Any]:
+    """Collect raw data + enrich with knowledge graph, mastery, and synthesis."""
+    data = await _collect_book_data(db, user_id, book_id)
+    if not data.get('book'):
+        return data
+
+    enriched: dict[str, Any] = {**data}
+
+    # Knowledge graph concepts
+    try:
+        from app.services.knowledge_service import get_concepts
+        concepts = await get_concepts(db, user_id, book_id)
+        enriched['concepts'] = [c.get('label', c.get('name', '')) for c in concepts if c.get('label') or c.get('name')]
+    except Exception:
+        logger.info('Knowledge graph enrichment skipped for book %s', book_id)
+        enriched['concepts'] = []
+
+    # Study mode mastery
+    try:
+        from app.services.study_mode_service import get_mastery
+        mastery = await get_mastery(db, user_id, book_id)
+        enriched['mastery'] = mastery
+    except Exception:
+        logger.info('Mastery enrichment skipped for book %s', book_id)
+        enriched['mastery'] = {}
+
+    # Synthesis themes
+    try:
+        from app.services.synthesis_service import synthesize
+        synthesis = await synthesize(db, user_id, book_id)
+        themes = []
+        syn_data = getattr(synthesis, 'data', None) or (synthesis if isinstance(synthesis, dict) else None)
+        if isinstance(syn_data, dict):
+            theme_list = syn_data.get('themes', [])
+            themes = [t.get('name', '') for t in theme_list if isinstance(t, dict) and t.get('name')]
+        enriched['synthesis_themes'] = themes
+    except Exception:
+        logger.info('Synthesis enrichment skipped for book %s', book_id)
+        enriched['synthesis_themes'] = []
+
+    # Compute reading pace and session details for Encounter section
+    sessions = data.get('reading_sessions', [])
+    if sessions:
+        total_minutes = sum(s.get('duration', 0) for s in sessions) / 60
+        total_pages = sum(s.get('pages_read', 0) for s in sessions)
+        enriched['reading_pace'] = round(total_pages / max(total_minutes / 60, 0.1), 1)
+        enriched['longest_session_minutes'] = max(s.get('duration', 0) for s in sessions) / 60
+        enriched['first_session_date'] = sessions[0].get('started_at')
+        enriched['last_session_date'] = sessions[-1].get('started_at')
+    else:
+        enriched['reading_pace'] = 0
+        enriched['longest_session_minutes'] = 0
+        enriched['first_session_date'] = None
+        enriched['last_session_date'] = None
+
+    # First highlight text (for Encounter prompt)
+    highlights = data.get('highlights', [])
+    enriched['first_highlight'] = highlights[0].get('content', '')[:200] if highlights else ''
+
+    # User's other completed books (for recommendations)
+    try:
+        result = await db.execute(
+            select(Book.title)
+            .where(Book.user_id == user_id, Book.id != book_id, Book.status == 'completed')
+            .limit(20),
+        )
+        enriched['existing_books'] = [r[0] for r in result.all()]
+    except Exception:
+        enriched['existing_books'] = []
+
+    return enriched
+
+
+# ---------------------------------------------------------------------------
+# Section generation
+# ---------------------------------------------------------------------------
+
+def _prepare_section_data(
+    section_type: str,
+    enriched_data: dict[str, Any],
     budget: TokenBudget,
 ) -> dict[str, Any]:
-    """Select and budget the relevant data slice for a given chapter."""
-    if chapter_num == 1:
-        return book_data.get('stats', {})
-    elif chapter_num == 2:
-        raw = book_data.get('reading_sessions', [])
-        return _budget_list(raw, budget, 'reading_sessions')
-    elif chapter_num == 3:
-        raw = book_data.get('highlights', [])[:30]
-        return _budget_list(raw, budget, 'highlights')
-    elif chapter_num == 4:
-        raw = book_data.get('notes', [])[:30]
-        return _budget_list(raw, budget, 'notes')
-    elif chapter_num == 5:
-        raw = book_data.get('conversations', [])[:30]
-        return _budget_list(raw, budget, 'conversations')
-    elif chapter_num == 6:
+    """Prepare the data payload for a specific section type."""
+    if section_type == 'encounter':
+        sessions = enriched_data.get('reading_sessions', [])
+        total_min = enriched_data.get('stats', {}).get('total_reading_minutes', 0)
+        hours = total_min // 60
+        mins = total_min % 60
+        longest = enriched_data.get('longest_session_minutes', 0)
+        lh = int(longest) // 60
+        lm = int(longest) % 60
         return {
-            'themes': _budget_list(
-                book_data.get('highlights', [])[:10], budget, 'themes_highlights',
-            ),
-            'notes': _budget_list(
-                book_data.get('notes', [])[:10], budget, 'themes_notes',
-            ),
+            'total_time': f'{hours}h {mins}m' if hours > 0 else f'{mins}m',
+            'session_count': len(sessions),
+            'first_date': enriched_data.get('first_session_date', 'unknown'),
+            'last_date': enriched_data.get('last_session_date', 'unknown'),
+            'first_highlight': enriched_data.get('first_highlight', ''),
+            'concept_list': ', '.join(enriched_data.get('concepts', [])[:10]),
+            'mastery_score': enriched_data.get('mastery', {}).get('overallMastery', 0),
+            'highlight_count': enriched_data.get('stats', {}).get('total_highlights', 0),
+            'longest_session': f'{lh}h {lm}m' if lh > 0 else f'{lm}m',
         }
+
+    elif section_type == 'highlights':
+        raw_highlights = enriched_data.get('highlights', [])[:30]
+        budgeted = _budget_list(raw_highlights, budget, 'highlights')
+        return {
+            'count': len(enriched_data.get('highlights', [])),
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'concept_list': ', '.join(enriched_data.get('concepts', [])[:10]),
+            'theme_list': ', '.join(enriched_data.get('synthesis_themes', [])[:5]),
+            'highlights': budgeted,
+        }
+
+    elif section_type == 'recommendations':
+        return {
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'top_themes': ', '.join(enriched_data.get('synthesis_themes', [])[:5]),
+            'concept_list': ', '.join(enriched_data.get('concepts', [])[:10]),
+            'existing_books': ', '.join(enriched_data.get('existing_books', [])[:15]),
+        }
+
     return {}
 
 
@@ -179,46 +294,33 @@ def _budget_list(
     return result
 
 
-async def _generate_chapter(
-    chapter_num: int,
-    book_data: dict[str, Any],
-    book_format: str,
+async def _generate_section(
+    section_type: str,
+    enriched_data: dict[str, Any],
 ) -> dict[str, Any]:
-    """Generate a single chapter via LLM."""
-    chapter_template = MEMORY_BOOK_CHAPTERS.get(chapter_num)
-    if chapter_template is None:
-        logger.warning('No template for chapter %d', chapter_num)
-        return {
-            'chapter': chapter_num,
-            'title': f'Chapter {chapter_num}',
-            'error': 'No template defined for this chapter.',
-        }
+    """Generate a single Reading Mirror section via LLM."""
+    section_template = MIRROR_SECTIONS.get(section_type)
+    if section_template is None:
+        return _placeholder_section(section_type)
 
-    book_title = book_data.get('book', {}).get('title', 'Unknown')
-    book_author = book_data.get('book', {}).get('author', 'Unknown')
+    book_title = enriched_data.get('book', {}).get('title', 'Unknown')
+    book_author = enriched_data.get('book', {}).get('author', 'Unknown')
 
-    system_prompt = MEMORY_BOOK_SYSTEM.template.format(
+    budget = TokenBudget(model='glm-4.7-flash', response_reserve=4_000)
+    section_data = _prepare_section_data(section_type, enriched_data, budget)
+
+    system_prompt = MIRROR_SYSTEM.template.format(
         book_title=book_title,
         book_author=book_author,
-        book_format=book_format,
-        chapter_prompt=chapter_template.template,
+        section_prompt=section_template.template,
     )
 
-    # Token-budget the data payload
-    budget = TokenBudget(model='glm-4.7-flash', response_reserve=4_000)
-    relevant_data = _prepare_relevant_data(chapter_num, book_data, budget)
-
-    human_prompt = json.dumps(relevant_data, default=str)
+    human_prompt = json.dumps(section_data, default=str)
     if budget.truncations:
-        logger.info(
-            'Chapter %d budget truncations: %s',
-            chapter_num,
-            ', '.join(budget.truncations),
-        )
+        logger.info('Section %s budget truncations: %s', section_type, ', '.join(budget.truncations))
 
     fallback = {
-        'chapter': chapter_num,
-        'title': f'Chapter {chapter_num}',
+        'type': section_type,
         'error': 'AI generation temporarily unavailable. Try regenerating later.',
     }
     result = await safe_llm_invoke(
@@ -227,13 +329,36 @@ async def _generate_chapter(
             HumanMessage(content=human_prompt),
         ],
         fallback=fallback,
-        log_label=f'Memory book chapter {chapter_num}',
-        schema_class=CHAPTER_SCHEMAS.get(chapter_num),
+        log_label=f'Reading Mirror section {section_type}',
+        schema_class=SECTION_SCHEMAS.get(section_type),
     )
     if isinstance(result, dict):
         return result
     return fallback
 
+
+def _placeholder_section(section_type: str) -> dict[str, Any]:
+    """Return a placeholder section for Phase 2 sections."""
+    section_names = {
+        'attention_map': 'Map of Your Attention',
+        'annotations_woven': 'Your Annotations, Woven',
+        'conversations': 'Conversations That Shifted Your Thinking',
+        'concept_web': 'Your Concept Web',
+        'what_stuck': 'What Stuck',
+        'threads': 'Threads Between Books',
+        'reader_became': 'The Reader You Became',
+    }
+    return {
+        'type': section_type,
+        'title': section_names.get(section_type, section_type),
+        'placeholder': True,
+        'message': 'This section will be available in a future update.',
+    }
+
+
+# ---------------------------------------------------------------------------
+# HTML rendering (legacy, kept for mobile compat)
+# ---------------------------------------------------------------------------
 
 def _esc(text: str) -> str:
     """Escape text for safe HTML embedding."""
@@ -241,15 +366,41 @@ def _esc(text: str) -> str:
 
 
 def _render_chapter_html(section: dict[str, Any]) -> str:
-    """Render a single chapter section into formatted HTML.
-
-    Each chapter type has a different JSON structure returned by the LLM.
-    We detect the structure and render accordingly.
-    """
-    title = section.get('title', 'Chapter')
+    """Render a single section into formatted HTML (legacy renderer)."""
+    title = section.get('title', section.get('type', 'Section'))
     parts: list[str] = [f'<h2>{_esc(title)}</h2>']
 
-    # Chapter 1 — Cover / Stats: {"title": str, "stats": {key: value}}
+    # Encounter data
+    prologue = section.get('prologue')
+    if prologue and isinstance(prologue, dict):
+        parts.append(f'<div class="encounter-text">{_esc(prologue.get("text", ""))}</div>')
+        archetype = prologue.get('reading_archetype', '')
+        if archetype:
+            parts.append(f'<div class="archetype-badge">{_esc(archetype)}</div>')
+
+    # Highlight cluster data
+    clusters = section.get('clusters')
+    if clusters and isinstance(clusters, list):
+        for cl in clusters:
+            parts.append(f'<h3>{_esc(cl.get("name", ""))}</h3>')
+            parts.append(f'<p>{_esc(cl.get("description", ""))}</p>')
+            for h in cl.get('highlights', []):
+                parts.append(
+                    f'<blockquote>{_esc(h.get("quote", ""))}</blockquote>'
+                    f'<p class="highlight-commentary">{_esc(h.get("why_it_mattered", ""))}</p>'
+                )
+
+    # Recommendation data
+    recs = section.get('recommendations')
+    if recs and isinstance(recs, list):
+        for r in recs:
+            parts.append(
+                f'<div class="recommendation"><strong>{_esc(r.get("title", ""))}</strong> '
+                f'by {_esc(r.get("author", ""))}<br>'
+                f'{_esc(r.get("reason", ""))}</div>'
+            )
+
+    # Stats
     stats = section.get('stats')
     if stats and isinstance(stats, dict):
         stat_items = ''.join(
@@ -259,102 +410,58 @@ def _render_chapter_html(section: dict[str, Any]) -> str:
         )
         parts.append(f'<div class="stats-grid">{stat_items}</div>')
 
-    # Chapter 2 — Reading Journey: {"entries": [{date, event, milestone}]}
-    entries = section.get('entries')
+    # Timeline entries (legacy)
+    entries = section.get('entries') or section.get('timeline')
     if entries and isinstance(entries, list):
         entry_parts: list[str] = []
         for e in entries:
-            ms = e.get('milestone', '')
-            ms_html = f'<div class="timeline-milestone">{_esc(str(ms))}</div>' if ms else ''
             entry_parts.append(
                 f'<div class="timeline-entry">'
                 f'<div class="timeline-date">{_esc(str(e.get("date", "")))}</div>'
-                f'<div class="timeline-event">{_esc(str(e.get("event", "")))}</div>'
-                f'{ms_html}</div>'
+                f'<div class="timeline-event">{_esc(str(e.get("event", "")))}</div></div>'
             )
         parts.append(f'<div class="timeline">{"".join(entry_parts)}</div>')
 
-    # Chapter 3 — Highlights: {"items": [{quote, commentary, location}]}
-    items = section.get('items')
-    if items and isinstance(items, list):
-        highlight_parts: list[str] = []
+    # Legacy highlight items
+    items = section.get('items') or section.get('highlights')
+    if items and isinstance(items, list) and all(isinstance(i, dict) and ('passage' in i or 'quote' in i) for i in items):
         for it in items:
-            comm = it.get('commentary', '')
-            comm_html = f'<p class="highlight-commentary">{_esc(str(comm))}</p>' if comm else ''
-            loc = it.get('location', '')
-            loc_html = f'<span class="highlight-location">{_esc(str(loc))}</span>' if loc else ''
-            highlight_parts.append(
-                f'<div class="highlight-item">'
-                f'<blockquote class="highlight-quote">{_esc(str(it.get("quote", "")))}</blockquote>'
-                f'{comm_html}{loc_html}</div>'
-            )
-        parts.append(f'<div class="highlights-list">{"".join(highlight_parts)}</div>')
+            quote = it.get('passage') or it.get('quote', '')
+            comm = it.get('context') or it.get('why_it_mattered') or it.get('commentary', '')
+            parts.append(f'<blockquote>{_esc(str(quote))}</blockquote>')
+            if comm:
+                parts.append(f'<p class="highlight-commentary">{_esc(str(comm))}</p>')
 
-    # Chapter 4 — Notes & Insights: {"themes": [{name, notes: [{content, connection}]}]}
+    # Legacy themes
     themes = section.get('themes')
-    if themes and isinstance(themes, list):
-        theme_parts: list[str] = []
+    if themes and isinstance(themes, list) and themes and isinstance(themes[0], dict):
         for th in themes:
-            note_parts: list[str] = []
-            for n in th.get('notes', []):
-                conn = n.get('connection', '')
-                conn_html = f'<p class="note-connection">{_esc(str(conn))}</p>' if conn else ''
-                note_parts.append(
-                    f'<div class="note-entry">'
-                    f'<p class="note-content">{_esc(str(n.get("content", "")))}</p>'
-                    f'{conn_html}</div>'
-                )
-            theme_parts.append(
-                f'<div class="theme-group">'
-                f'<h3 class="theme-name">{_esc(str(th.get("name", "")))}</h3>'
-                f'{"".join(note_parts)}</div>'
-            )
-        parts.append(f'<div class="themes-list">{"".join(theme_parts)}</div>')
+            parts.append(f'<h3>{_esc(str(th.get("name") or th.get("theme", "")))}</h3>')
+            for n in th.get('notes', th.get('insights', [])):
+                text = n if isinstance(n, str) else n.get('content', n.get('insight', ''))
+                parts.append(f'<p>{_esc(str(text))}</p>')
 
-    # Chapter 5 — Conversations: {"moments": [{question, answer, topic}]}
+    # Conversation moments
     moments = section.get('moments')
     if moments and isinstance(moments, list):
-        moment_items = ''.join(
-            f'<div class="conversation-moment">'
-            f'<div class="moment-topic">{_esc(str(m.get("topic", "")))}</div>'
-            f'<div class="moment-q"><strong>Q:</strong> {_esc(str(m.get("question", "")))}</div>'
-            f'<div class="moment-a"><strong>A:</strong> {_esc(str(m.get("answer", "")))}</div>'
-            f'</div>'
-            for m in moments
-        )
-        parts.append(f'<div class="conversations-list">{moment_items}</div>')
+        for m in moments:
+            parts.append(
+                f'<div class="conversation-moment">'
+                f'<div class="moment-topic">{_esc(str(m.get("topic", "")))}</div>'
+                f'<p>{_esc(str(m.get("insight") or m.get("exchange", "")))}</p></div>'
+            )
 
-    # Chapter 6 — Looking Forward: {"recommendations": [{type, title, reason}]}
-    recommendations = section.get('recommendations')
-    if recommendations and isinstance(recommendations, list):
-        rec_items = ''.join(
-            f'<div class="recommendation">'
-            f'<div class="rec-type">{_esc(str(r.get("type", "")))}</div>'
-            f'<h4 class="rec-title">{_esc(str(r.get("title", "")))}</h4>'
-            f'<p class="rec-reason">{_esc(str(r.get("reason", "")))}</p>'
-            f'</div>'
-            for r in recommendations
-        )
-        parts.append(f'<div class="recommendations-list">{rec_items}</div>')
+    # Placeholder sections
+    if section.get('placeholder'):
+        parts.append(f'<p class="placeholder-text">{_esc(section.get("message", "Coming soon."))}</p>')
 
-    # Fallback: if no structured fields matched, render any remaining text content
+    # Fallback: render any remaining text content
     if len(parts) == 1:
-        # Look for any string fields to display as paragraphs
         for key, val in section.items():
-            if key in ('title', 'chapter', 'error'):
+            if key in ('title', 'chapter', 'error', 'type', 'id', 'generated_at', 'placeholder', 'message'):
                 continue
             if isinstance(val, str) and val.strip():
                 parts.append(f'<p>{_esc(val)}</p>')
-            elif isinstance(val, list) and val:
-                # Generic list rendering
-                for item in val:
-                    if isinstance(item, dict):
-                        item_text = ' — '.join(
-                            _esc(str(v)) for v in item.values() if isinstance(v, (str, int, float))
-                        )
-                        parts.append(f'<p class="generic-item">{item_text}</p>')
-                    elif isinstance(item, str):
-                        parts.append(f'<p>{_esc(item)}</p>')
 
     content = '\n'.join(parts)
     section_id = section.get('id', '')
@@ -367,9 +474,9 @@ def _render_html(
     sections: list[dict[str, Any]],
     stats: dict[str, Any],
 ) -> str:
-    """Render the full memory book as styled HTML."""
+    """Render the full reading mirror as styled HTML (legacy)."""
     book = book_data.get('book', {})
-    book_title = _esc(book.get('title', 'Memory Book'))
+    book_title = _esc(book.get('title', 'Reading Mirror'))
     book_author = _esc(book.get('author', ''))
 
     chapters_html = '\n'.join(_render_chapter_html(s) for s in sections)
@@ -396,37 +503,19 @@ def _render_html(
         '.chapter{margin:2rem 0;padding:1.5rem 2rem;background:#fff;border-radius:8px;border:1px solid #e0d8cf}'
         '.chapter h2{color:#4a3f35;border-bottom:1px solid #e0d8cf;padding-bottom:.5rem;margin-top:0}'
         '.chapter-content{font-size:.95rem;color:#3d3d3d}'
-        '.timeline{position:relative;padding-left:1.5rem;border-left:2px solid #d4c9bc}'
-        '.timeline-entry{margin-bottom:1.5rem;position:relative}'
-        '.timeline-entry::before{content:"";position:absolute;left:-1.75rem;top:4px;'
-        'width:10px;height:10px;border-radius:50%;background:#c4a87c;border:2px solid #fff}'
-        '.timeline-date{font-size:.8rem;color:#8a7e72;font-weight:600}'
-        '.timeline-event{margin:.2rem 0}'
-        '.timeline-milestone{font-size:.85rem;color:#7a6e5f;font-style:italic}'
-        '.highlights-list .highlight-item{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px dashed #e0d8cf}'
-        '.highlight-quote{font-style:italic;font-size:1.05rem;color:#4a3f35;margin:.5rem 0;'
-        'padding:.5rem 1rem;border-left:3px solid #c4a87c;background:#fdf8f0;border-radius:0 4px 4px 0}'
+        '.encounter-text{font-size:1.1rem;line-height:1.8;font-style:italic;color:#3d3d3d;margin:1rem 0}'
+        '.archetype-badge{display:inline-block;padding:.3rem .8rem;background:#fef3c7;border-radius:1rem;'
+        'font-size:.85rem;color:#92400e;margin:.5rem 0}'
+        'blockquote{font-style:italic;font-size:1.05rem;color:#4a3f35;margin:.5rem 0;'
+        'padding:.5rem 1rem;border-left:3px solid #d97706;background:#fdf8f0;border-radius:0 4px 4px 0}'
         '.highlight-commentary{color:#6b5e50;font-size:.9rem;margin:.3rem 0}'
-        '.highlight-location{font-size:.75rem;color:#a09080}'
-        '.themes-list .theme-group{margin-bottom:1.5rem}'
-        '.theme-name{color:#5a4f43;font-size:1.1rem;margin-bottom:.5rem}'
-        '.note-entry{padding:.5rem 0 .5rem 1rem;border-left:2px solid #e0d8cf;margin:.3rem 0}'
-        '.note-content{margin:0}'
-        '.note-connection{color:#7a6e5f;font-size:.85rem;font-style:italic;margin:.2rem 0 0}'
-        '.conversations-list .conversation-moment{margin-bottom:1.25rem;padding:1rem;'
-        'background:#fdf8f0;border-radius:6px}'
+        '.conversation-moment{margin-bottom:1.25rem;padding:1rem;background:#fdf8f0;border-radius:6px}'
         '.moment-topic{font-size:.8rem;color:#a09080;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem}'
-        '.moment-q,.moment-a{margin:.3rem 0}'
-        '.recommendations-list .recommendation{margin-bottom:1rem;padding:1rem;'
-        'background:#f5f0ea;border-radius:6px}'
-        '.rec-type{font-size:.75rem;color:#a09080;text-transform:uppercase;letter-spacing:.5px}'
-        '.rec-title{color:#4a3f35;margin:.3rem 0;font-size:1rem}'
-        '.rec-reason{color:#6b5e50;font-size:.9rem;margin:0}'
-        '.generic-item{padding:.3rem 0;border-bottom:1px dotted #e0d8cf}'
+        '.recommendation{margin-bottom:1rem;padding:1rem;background:#f5f0ea;border-radius:6px}'
+        '.placeholder-text{color:#a09080;font-style:italic;text-align:center;padding:2rem}'
         '@media print{body{background:#fff} .chapter{break-inside:avoid}}'
     )
 
-    # JavaScript for scroll-to-section via postMessage
     scroll_js = (
         'window.addEventListener("message",function(e){'
         'if(e.data&&e.data.type==="scroll-to-section"){'
@@ -436,11 +525,11 @@ def _render_html(
 
     return (
         '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
-        + f'<title>{book_title} — Personal Reading Book</title>'
+        + f'<title>{book_title} — Reading Mirror</title>'
         + f'<style>{css}</style></head><body>'
         + f'<div class="cover"><h1>{book_title}</h1>'
         + f'<h2>by {book_author}</h2>'
-        + '<p>A Personal Reading Book</p></div>'
+        + '<p>Your Reading Mirror</p></div>'
         + f'<div class="stats"><div class="stats-grid">{stats_html}</div></div>'
         + chapters_html
         + f'<script>{scroll_js}</script>'
@@ -448,47 +537,57 @@ def _render_html(
     )
 
 
+# ---------------------------------------------------------------------------
+# Main generation pipeline
+# ---------------------------------------------------------------------------
+
 async def generate(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
-    book_format: str = 'personal_book',
+    book_format: str = 'reading_mirror',
 ) -> MemoryBookResponse:
-    """Generate a 6-chapter Personal Reading Book.
+    """Generate a 10-section Reading Mirror.
 
-    Pipeline: collect data -> generate chapters via LLM -> render HTML -> save.
+    Sections 1, 3, 10 are LLM-generated with enriched prompts.
+    Sections 2, 4, 5, 6, 7, 8, 9 are placeholders for Phase 2.
     """
-    book_data = await _collect_book_data(db, user_id, book_id)
-    if not book_data.get('book'):
+    enriched_data = await _collect_enriched_data(db, user_id, book_id)
+    if not enriched_data.get('book'):
         raise ValueError('Book not found')
 
-    # Chapter type mapping for frontend navigation
-    chapter_types = ['cover', 'reading_journey', 'highlights', 'notes', 'conversations', 'looking_forward']
+    # Sections that use LLM in Phase 1
+    llm_sections = {'encounter', 'highlights', 'recommendations'}
 
-    # Generate all 6 chapters concurrently
-    async def _gen(chapter_num: int) -> dict[str, Any]:
+    async def _gen_section(section_type: str) -> dict[str, Any]:
         try:
-            return await _generate_chapter(chapter_num, book_data, book_format)
+            if section_type in llm_sections:
+                return await _generate_section(section_type, enriched_data)
+            else:
+                return _placeholder_section(section_type)
         except Exception:
-            logger.exception('Failed to generate chapter %d', chapter_num)
-            return {'chapter': chapter_num, 'error': 'Generation failed'}
+            logger.exception('Failed to generate section %s', section_type)
+            return {'type': section_type, 'error': 'Generation failed'}
 
-    chapter_results = await asyncio.gather(*[_gen(n) for n in range(1, 7)])
+    section_results = await asyncio.gather(
+        *[_gen_section(st) for st in SECTION_TYPES]
+    )
 
     sections: list[dict[str, Any]] = []
-    for idx, chapter in enumerate(chapter_results):
-        chapter_num = idx + 1
-        section_type = chapter_types[idx] if idx < len(chapter_types) else f'chapter_{chapter_num}'
-        chapter['id'] = f'section-{chapter_num}'
-        chapter['type'] = section_type
-        sections.append(chapter)
+    now = datetime.now(tz=timezone.utc).isoformat()
+    for idx, section_data in enumerate(section_results):
+        section_type = SECTION_TYPES[idx]
+        section_data['id'] = f'section-{idx + 1}'
+        section_data.setdefault('type', section_type)
+        section_data['generated_at'] = now
+        sections.append(section_data)
 
-    stats = book_data.get('stats', {})
+    stats = enriched_data.get('stats', {})
 
-    # Render HTML
-    html_content = _render_html(book_data, sections, stats)
+    # Render legacy HTML for mobile compat
+    html_content = _render_html(enriched_data, sections, stats)
 
-    # Save to database (upsert)
+    # Upsert
     result = await db.execute(
         select(MemoryBook).where(
             MemoryBook.user_id == user_id,
@@ -497,22 +596,23 @@ async def generate(
     )
     existing = result.scalar_one_or_none()
 
-    book_title = book_data['book']['title']
-    memory_book_title = f'{book_title} — Personal Reading Book'
+    book_title = enriched_data['book']['title']
+    mirror_title = f'{book_title} — Reading Mirror'
 
     if existing:
         existing.sections = sections
         existing.stats = stats
         existing.html_content = html_content
         existing.format = book_format
-        existing.title = memory_book_title
+        existing.title = mirror_title
+        existing.version = (existing.version or 1) + 1
         await db.flush()
         memory_book = existing
     else:
         memory_book = MemoryBook(
             user_id=user_id,
             book_id=book_id,
-            title=memory_book_title,
+            title=mirror_title,
             format=book_format,
             sections=sections,
             stats=stats,

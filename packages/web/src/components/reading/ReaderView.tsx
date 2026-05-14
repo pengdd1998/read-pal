@@ -365,12 +365,7 @@ export const ReaderView = React.memo(function ReaderView({
       >
         <article
           key={chapterKey}
-          ref={(el) => {
-            articleRef.current = el;
-            if (contentRef) {
-              (contentRef as React.MutableRefObject<HTMLElement | null>).current = el;
-            }
-          }}
+          ref={articleRef}
           className="reading-mode select-text animate-chapter-fade"
           data-theme={theme}
           style={{
@@ -391,7 +386,12 @@ export const ReaderView = React.memo(function ReaderView({
           )}
 
           <div
-            ref={contentDivRef}
+            ref={(el) => {
+              contentDivRef.current = el;
+              if (contentRef) {
+                (contentRef as React.MutableRefObject<HTMLElement | null>).current = el;
+              }
+            }}
             className="prose prose-lg max-w-none dark:prose-invert reader-content"
             suppressHydrationWarning
             dangerouslySetInnerHTML={{ __html: sanitizedContent }}

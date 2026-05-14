@@ -176,7 +176,7 @@ KNOWLEDGE_EXTRACTION_HUMAN = PromptTemplate(
 )
 
 # ---------------------------------------------------------------------------
-# Memory book
+# Memory book (v1 -- deprecated, kept for backward compat)
 # ---------------------------------------------------------------------------
 
 MEMORY_BOOK_SYSTEM = PromptTemplate(
@@ -254,6 +254,84 @@ MEMORY_BOOK_CHAPTERS: dict[int, PromptTemplate] = {
             'reading journey. '
             'Return JSON with keys: recommendations (array of {{title, author, reason}}), '
             'next_steps (array of strings).'
+        ),
+        output_format='json',
+    ),
+}
+
+# ---------------------------------------------------------------------------
+# Reading Mirror (v2)
+# ---------------------------------------------------------------------------
+
+MIRROR_SYSTEM = PromptTemplate(
+    key='mirror.generation.system',
+    version=2,
+    template=(
+        'You are writing a "Reading Mirror" for "{book_title}" by {book_author}. '
+        'A Reading Mirror reflects a reader\'s personal intellectual journey through a book. '
+        'Write in second person ("you") to create intimacy. Be specific, observant, and warm. '
+        'Match the book\'s own tone: if philosophical, be contemplative; if suspenseful, be dramatic. '
+        'NEVER use generic phrases like "a remarkable journey", "this book changed everything", '
+        'or "a treasure trove of wisdom". Every sentence must be grounded in the reader\'s actual data. '
+        '{section_prompt} Return ONLY valid JSON, no markdown fences.'
+    ),
+    variables=['book_title', 'book_author', 'section_prompt'],
+    output_format='json',
+)
+
+MIRROR_SECTIONS: dict[str, PromptTemplate] = {
+    'encounter': PromptTemplate(
+        key='mirror.section.encounter',
+        version=2,
+        template=(
+            'Write the ENCOUNTER section -- a 150-word second-person prologue capturing '
+            'the reader\'s relationship with this book. '
+            'Data: They spent {total_time} reading over {session_count} sessions between '
+            '{first_date} and {last_date}. Their first highlight was: "{first_highlight}". '
+            'Knowledge concepts they extracted: {concept_list}. '
+            'Mastery score: {mastery_score}%. '
+            'Write as if addressing the reader directly. Mention specific details from the data. '
+            'Also assign a "reading archetype" based on their pattern: '
+            'e.g. "The Deep Diver" (long focused sessions), "The Pattern Finder" (many thematic highlights), '
+            '"The Questioner" (many notes and chat messages), "The Explorer" (wide-ranging concepts). '
+            'Return JSON: {{"prologue": {{"text": "...", "reading_archetype": "...", '
+            '"archetype_description": "1-sentence explanation"}}, '
+            '"stats": {{"total_reading_time": "...", "session_count": N, '
+            '"highlight_count": N, "longest_session": "..."}}}}'
+        ),
+        output_format='json',
+    ),
+    'highlights': PromptTemplate(
+        key='mirror.section.highlights',
+        version=2,
+        template=(
+            'Write the WHAT YOU MARKED section -- the reader\'s highlights organized into thematic clusters. '
+            'Data: {count} highlighted passages from "{book_title}". '
+            'Knowledge concepts: {concept_list}. '
+            'Themes from synthesis: {theme_list}. '
+            'Group the highlights into 3-5 thematic clusters. For each cluster, write 2-3 sentences '
+            'in the reader\'s voice explaining what drew them to these passages. Use phrases like '
+            '"You were drawn to..." or "Something about this passage made you pause." '
+            'When a highlight connects to a concept, reference it. '
+            'Return JSON: {{"clusters": [{{"name": "...", "description": "...", '
+            '"highlights": [{{"quote": "...", "page_location": "...", "why_it_mattered": "..."}}]}}]}}'
+        ),
+        output_format='json',
+    ),
+    'recommendations': PromptTemplate(
+        key='mirror.section.recommendations',
+        version=2,
+        template=(
+            'Write the WHERE THIS LEADS section -- personalized book recommendations. '
+            'The reader engaged most deeply with these themes in "{book_title}": {top_themes}. '
+            'Their knowledge concepts: {concept_list}. '
+            'Books they\'ve already read: {existing_books}. '
+            'Recommend exactly 3 books. For each, explain specifically what connection to their '
+            'reading of "{book_title}" makes it the right next step. Assign urgency: '
+            '"now" (direct follow-up), "soon" (related expansion), or "someday" (tangential but relevant). '
+            'Do NOT recommend books they\'ve already read. '
+            'Return JSON: {{"recommendations": [{{"title": "...", "author": "...", "reason": "...", '
+            '"connection_to_current": "...", "urgency": "now|soon|someday"}}]}}'
         ),
         output_format='json',
     ),
@@ -381,6 +459,7 @@ def _build_registry() -> None:
     collections: list[dict[str, PromptTemplate] | dict[int, PromptTemplate]] = [
         FRIEND_PERSONAS,
         MEMORY_BOOK_CHAPTERS,  # type: ignore[dict-item]
+        MIRROR_SECTIONS,  # type: ignore[dict-item]
     ]
     singles: list[PromptTemplate] = [
         FRIEND_BOOK_CONTEXT,
@@ -391,6 +470,7 @@ def _build_registry() -> None:
         KNOWLEDGE_EXTRACTION_SYSTEM,
         KNOWLEDGE_EXTRACTION_HUMAN,
         MEMORY_BOOK_SYSTEM,
+        MIRROR_SYSTEM,
         SYNTHESIS_SYSTEM,
         SYNTHESIS_HUMAN,
         CROSS_BOOK_SYNTHESIS_SYSTEM,

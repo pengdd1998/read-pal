@@ -10,7 +10,7 @@
 
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
-import { getToken, deleteToken } from './auth-storage';
+import { getToken, deleteToken, getRefreshToken, saveToken, saveRefreshToken, deleteRefreshToken } from './auth-storage';
 import { API_URL } from './env';
 
 const MAX_RETRIES = 3;
@@ -31,6 +31,9 @@ class ApiClient {
   private cache = new Map<string, { data: unknown; expiry: number }>();
   private inFlightRequests = new Map<string, Promise<unknown>>();
   private static MAX_CACHE_SIZE = 200;
+  private refreshPromise: Promise<boolean> | null = null;
+
+  private static REFRESH_URL = '/api/auth/refresh';
 
   constructor() {
     this.client = axios.create({
@@ -51,16 +54,86 @@ class ApiClient {
       (error: unknown) => Promise.reject(error),
     );
 
-    // Handle 401 — clear stored credentials
+    // Handle 401 with automatic token refresh
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError<ApiResponse>) => {
-        if (error.response?.status === 401) {
-          await deleteToken();
+        if (error.response?.status !== 401) {
+          return Promise.reject(error);
         }
-        return Promise.reject(error);
+
+        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+
+        // Don't retry the refresh endpoint itself
+        if (originalRequest.url === ApiClient.REFRESH_URL) {
+          await this.clearAuth();
+          return Promise.reject(error);
+        }
+
+        // Only retry once
+        if (originalRequest._retry) {
+          await this.clearAuth();
+          return Promise.reject(error);
+        }
+
+        // Check if this is an expired token error (vs invalid/other 401)
+        const errorCode = (error.response?.data as { error?: { code?: string } })?.error?.code;
+        if (errorCode !== 'TOKEN_EXPIRED' && errorCode !== 'TOKEN_REVOKED') {
+          await this.clearAuth();
+          return Promise.reject(error);
+        }
+
+        originalRequest._retry = true;
+        const refreshed = await this.tryRefreshToken();
+
+        if (!refreshed) {
+          await this.clearAuth();
+          return Promise.reject(error);
+        }
+
+        // Retry with new token
+        const newToken = await getToken();
+        if (newToken && originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+        return this.client.request(originalRequest);
       },
     );
+  }
+
+  private async tryRefreshToken(): Promise<boolean> {
+    if (this.refreshPromise) return this.refreshPromise;
+    this.refreshPromise = this._doRefresh();
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+
+  private async _doRefresh(): Promise<boolean> {
+    const refreshToken = await getRefreshToken();
+    if (!refreshToken) return false;
+
+    try {
+      const response = await this.client.post<ApiResponse<{ token: string; refreshToken: string }>>(
+        ApiClient.REFRESH_URL,
+        { refreshToken },
+      );
+      if (response.data.success && response.data.data) {
+        await saveToken(response.data.data.token);
+        await saveRefreshToken(response.data.data.refreshToken);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  private async clearAuth(): Promise<void> {
+    await deleteToken();
+    await deleteRefreshToken();
   }
 
   private async requestWithRetry<T>(

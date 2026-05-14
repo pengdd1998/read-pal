@@ -12,6 +12,7 @@ class LoginRequest(BaseModel):
 
     email: EmailStr
     password: str = Field(max_length=72)
+    platform: str = Field('web', pattern=r'^(web|mobile)$')
 
 
 class RegisterRequest(BaseModel):
@@ -20,6 +21,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
     name: str = Field(min_length=1, max_length=100)
+    platform: str = Field('web', pattern=r'^(web|mobile)$')
 
 
 class UserResponse(BaseModel):
@@ -35,7 +37,7 @@ class UserResponse(BaseModel):
 
 class AuthResponse(BaseModel):
     success: bool = True
-    data: dict  # {user: UserResponse, token: str}
+    data: dict  # {user: UserResponse, token: str, refreshToken: str}
 
 
 class UpdateProfileRequest(BaseModel):
@@ -66,9 +68,21 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(min_length=8, max_length=72)
 
 
+class RefreshTokenRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    refresh_token: str | None = None
+
+
 class RefreshResponse(BaseModel):
     success: bool = True
-    data: dict  # {token: str}
+    data: dict  # {token: str, refreshToken: str}
 
 
 class MessageResponse(BaseModel):

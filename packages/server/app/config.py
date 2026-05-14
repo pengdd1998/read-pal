@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     # JWT
     jwt_secret: str = 'dev-secret-key-change-in-production-32ch'
     jwt_expires_in: str = '7d'
+    jwt_access_web: str = '30m'
+    jwt_access_mobile: str = '2h'
+    jwt_refresh_web: str = '7d'
+    jwt_refresh_mobile: str = '30d'
 
     # Vector search: currently using in-process cosine similarity over Redis-cached embeddings.
     # For scaling beyond ~100 books, integrate a vector DB (Pinecone, Qdrant, or pgvector).
@@ -86,6 +90,26 @@ class Settings(BaseSettings):
     def jwt_expires_seconds(self) -> int:
         """JWT expiration parsed to integer seconds."""
         return _parse_duration(self.jwt_expires_in)
+
+    @computed_field
+    @property
+    def jwt_access_web_seconds(self) -> int:
+        return _parse_duration(self.jwt_access_web)
+
+    @computed_field
+    @property
+    def jwt_access_mobile_seconds(self) -> int:
+        return _parse_duration(self.jwt_access_mobile)
+
+    @computed_field
+    @property
+    def jwt_refresh_web_seconds(self) -> int:
+        return _parse_duration(self.jwt_refresh_web)
+
+    @computed_field
+    @property
+    def jwt_refresh_mobile_seconds(self) -> int:
+        return _parse_duration(self.jwt_refresh_mobile)
 
     @computed_field
     @property
