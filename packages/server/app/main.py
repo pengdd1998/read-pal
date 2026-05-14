@@ -1,6 +1,7 @@
-import logging
+import asyncio
 import os
 
+import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -9,10 +10,12 @@ from fastapi.routing import APIRoute
 from sqlalchemy import text
 
 from app.config import get_settings
+from app.core.logging import setup_logging
 from app.core.redis import get_redis
 from app.db import async_session
+from app.middleware.request_log import RequestLogMiddleware
 
-logger = logging.getLogger('read-pal')
+logger = structlog.get_logger('read-pal')
 settings = get_settings()
 
 _is_production = os.getenv('APP_ENV', 'development') == 'production'
@@ -110,34 +113,55 @@ async def add_security_headers(request: Request, call_next):
 # Rewrite /api/ → /api/v1/ for frontend compatibility
 app.add_middleware(ApiCompatMiddleware)
 
+# Request logging middleware (outermost — logs after CORS/security rewrites)
+app.add_middleware(RequestLogMiddleware)
+
+
+async def _log_cleanup_loop() -> None:
+    """Background task that periodically cleans up old LLM logs."""
+    try:
+        from app.services.llm_log_service import cleanup_old_logs
+    except ImportError:
+        return
+    while True:
+        await asyncio.sleep(86400)  # 24 hours
+        try:
+            async with async_session() as db:
+                deleted = await cleanup_old_logs(db, settings.llm_log_retention_days)
+                if deleted:
+                    logger.info('cleaned_up_llm_logs', deleted=deleted, retention_days=settings.llm_log_retention_days)
+        except Exception as exc:
+            logger.warning('llm_log_cleanup_failed', error=str(exc))
+
 
 @app.on_event('startup')
 async def startup() -> None:
     """Run on application startup."""
-    logging.basicConfig(
-        level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper(), logging.INFO),
-        format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
-    )
+    is_prod = os.getenv('APP_ENV', 'development') == 'production'
+    setup_logging(level=settings.log_level, json_output=is_prod or settings.log_json)
     from app.utils.i18n import load_translations
     load_translations()
     logger.info(
-        'Read-Pal API starting — env=%s, model=%s',
-        settings.app_env,
-        settings.default_model,
+        'api_starting',
+        env=settings.app_env,
+        model=settings.default_model,
     )
 
     # Production safety checks
     prod_warnings = settings.validate_production()
     for warning in prod_warnings:
-        logger.warning('PRODUCTION WARNING: %s', warning)
+        logger.warning('production_warning', detail=warning)
 
     if settings.is_dev:
         try:
             from app.db import init_db
             await init_db()
-            logger.info('Database tables created (dev mode)')
+            logger.info('database_tables_created')
         except Exception as exc:
-            logger.warning('Could not auto-create tables: %s', exc)
+            logger.warning('auto_create_tables_failed', error=str(exc))
+
+    # Start background log cleanup task
+    asyncio.create_task(_log_cleanup_loop())
 
     from app.services.llm import _trace_writer
     _trace_writer.start()
@@ -163,7 +187,7 @@ async def health_check() -> dict[str, object]:
             await session.execute(text('SELECT 1'))
         checks['database'] = {'status': 'ok'}
     except Exception as exc:
-        logger.error('Health check — database error: %s', exc)
+        logger.error('health_check_database_error', error=str(exc))
         checks['database'] = {'status': 'error'}
 
     try:
@@ -171,7 +195,7 @@ async def health_check() -> dict[str, object]:
         await redis.ping()
         checks['redis'] = {'status': 'ok'}
     except Exception as exc:
-        logger.error('Health check — redis error: %s', exc)
+        logger.error('health_check_redis_error', error=str(exc))
         checks['redis'] = {'status': 'error'}
 
     overall = 'ok' if all(c['status'] == 'ok' for c in checks.values()) else 'degraded'
@@ -195,6 +219,7 @@ from app.routers import (
     friend,
     interventions,
     knowledge,
+    logs,
     notifications,
     password_reset,
     reading_book,
@@ -221,6 +246,7 @@ for r in [
     reading_sessions.router,
     settings_router.router,
     knowledge.router,
+    logs.router,
     synthesis.router,
     reading_book.router,
     export.router,

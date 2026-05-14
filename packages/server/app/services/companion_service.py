@@ -2,12 +2,13 @@
 
 import asyncio
 import json
-import logging
 import time
 import uuid
 from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
+
+import structlog
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from sqlalchemy import select
@@ -22,11 +23,38 @@ from app.utils.sanitizer import sanitize_chat_message, sanitize_annotations, san
 from app.utils.token_budget import TokenBudget
 from app.utils.output_filter import filter_output, filter_stream_chunk
 
-logger = logging.getLogger('read-pal.companion')
+logger = structlog.get_logger('read-pal.companion')
 
 HISTORY_LIMIT = 20
 ANNOTATION_LIMIT = 10
 STREAM_FLUSH_SIZE = 5  # Check every N tokens for streaming safety
+
+
+def _persist_stream_log(
+    *,
+    request_id: str,
+    model: str,
+    latency_ms: int,
+    success: bool,
+    error_message: str | None = None,
+    user_id: UUID | None = None,
+    book_id: UUID | None = None,
+) -> None:
+    """Persist streaming LLM call to database (fire-and-forget)."""
+    try:
+        from app.services.llm_log_service import fire_and_forget_log
+        fire_and_forget_log(
+            request_id=request_id,
+            model=model,
+            label='companion.stream',
+            latency_ms=latency_ms,
+            success=success,
+            error_message=error_message,
+            user_id=str(user_id) if user_id else None,
+            book_id=str(book_id) if book_id else None,
+        )
+    except Exception:
+        pass
 
 # Safety keywords for logging (not blocking)
 _SAFETY_KEYWORDS = ['suicide', 'self-harm', 'kill myself']
@@ -39,7 +67,7 @@ def _quick_safety_check(text: str | None) -> bool:
     lower = text.lower()
     for kw in _SAFETY_KEYWORDS:
         if kw in lower:
-            logger.warning('Safety keyword detected in stream buffer: %s', kw)
+            logger.warning('companion.safety_keyword_detected', keyword=kw)
     return True
 
 
@@ -195,7 +223,7 @@ async def _prepare_context(
             from app.services.rag_service import get_book_context
             return await get_book_context(db, user_id, book_id, message)
         except Exception as exc:
-            logger.warning('RAG context retrieval failed: %s', exc)
+            logger.warning('companion.rag_failed', error=str(exc))
             return ''
 
     async def _get_memory() -> str:
@@ -203,7 +231,7 @@ async def _prepare_context(
             from app.services.conversation_memory import get_or_create_summary
             return await get_or_create_summary(db, user_id, book_id) or ''
         except Exception as exc:
-            logger.warning('Memory summary retrieval failed: %s', exc)
+            logger.warning('companion.memory_failed', error=str(exc))
             return ''
 
     rag_ctx, memory_summary = await asyncio.gather(_get_rag(), _get_memory())
@@ -228,7 +256,10 @@ def _build_messages(
     messages = [SystemMessage(content=system_text)] + history
     messages.append(HumanMessage(content=sanitized_message))
     if budget.truncations:
-        logger.warning('Companion chat budget truncations: %s', ', '.join(budget.truncations))
+        logger.warning(
+            'companion.chat.budget_truncated',
+            truncations=', '.join(budget.truncations),
+        )
     return messages
 
 
@@ -242,6 +273,14 @@ async def chat(
     lang: str = 'en',
 ) -> dict[str, Any]:
     """Run a single-turn companion chat and return the assistant response."""
+    t0 = time.monotonic()
+    logger.info(
+        'companion.chat.started',
+        companion_mode=companion_mode,
+        lang=lang,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
     _, history, system_text, budget = await _prepare_context(
         db, user_id, book_id, message, context, companion_mode, lang,
     )
@@ -252,10 +291,22 @@ async def chat(
         messages,
         fallback=fallback_text,
         log_label='Companion chat',
+        user_id=str(user_id),
+        book_id=str(book_id),
     )
 
     await _save_message(db, user_id, book_id, 'user', message)
     await _save_message(db, user_id, book_id, 'assistant', assistant_content)
+
+    elapsed = int((time.monotonic() - t0) * 1000)
+    logger.info(
+        'companion.chat.completed',
+        companion_mode=companion_mode,
+        response_length=len(assistant_content),
+        latency_ms=elapsed,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
 
     return {'role': 'assistant', 'content': assistant_content}
 
@@ -278,7 +329,12 @@ async def stream_chat(
     messages = _build_messages(system_text, history, message, budget)
 
     if budget.truncations:
-        logger.warning('Companion stream budget truncations: %s', ', '.join(budget.truncations))
+        logger.warning(
+            'companion.stream.budget_truncated',
+            truncations=', '.join(budget.truncations),
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
 
     collected_parts: list[str] = []
     request_id = uuid.uuid4().hex[:12]
@@ -288,7 +344,12 @@ async def stream_chat(
 
     # Shared circuit breaker gate
     if not await circuit.allow_request():
-        logger.warning('Companion stream %s blocked by circuit breaker', request_id)
+        logger.warning(
+            'companion.stream.circuit_blocked',
+            request_id=request_id,
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
         fallback = t('companion.fallback_error', lang)
         yield f'data: {json.dumps({"content": fallback})}\n\n'
     else:
@@ -316,22 +377,41 @@ async def stream_chat(
             await circuit.record_success()
             latency_ms = int((time.monotonic() - start_time) * 1000)
             logger.info(
-                'LLM_STREAM req=%s model=%s label=Companion_stream latency=%dms '
-                'chunks=%d success=True',
-                request_id, model_used, latency_ms, len(collected_parts),
+                'companion.stream.completed',
+                request_id=request_id,
+                model=model_used,
+                latency_ms=latency_ms,
+                chunk_count=len(collected_parts),
+                success=True,
+            )
+            _persist_stream_log(
+                request_id=request_id, model=model_used, latency_ms=latency_ms,
+                success=True, user_id=user_id, book_id=book_id,
             )
         except Exception as exc:
             latency_ms = int((time.monotonic() - start_time) * 1000)
             logger.error(
-                'LLM_STREAM req=%s model=%s label=Companion_stream latency=%dms '
-                'success=False error=%s',
-                request_id, model_used, latency_ms, exc,
+                'companion.stream.failed',
+                request_id=request_id,
+                model=model_used,
+                latency_ms=latency_ms,
+                success=False,
+                error=str(exc)[:500],
             )
             await circuit.record_failure()
+            _persist_stream_log(
+                request_id=request_id, model=model_used, latency_ms=latency_ms,
+                success=False, error_message=str(exc)[:500],
+                user_id=user_id, book_id=book_id,
+            )
             # Try fallback model
             try:
                 fallback_model = settings.fallback_model
-                logger.info('Companion stream %s retrying with fallback %s', request_id, fallback_model)
+                logger.info(
+                    'companion.stream.fallback_retry',
+                    request_id=request_id,
+                    fallback_model=fallback_model,
+                )
                 llm_fb = get_llm(model=fallback_model)
                 # Buffer for chunk-level filtering (fallback model)
                 fb_chunk_buffer: list[str] = []
@@ -352,11 +432,18 @@ async def stream_chat(
                         yield f'data: {json.dumps({"content": buffered_text})}\n\n'
                 await circuit.record_success()
                 logger.info(
-                    'LLM_STREAM req=%s model=%s label=Companion_stream fallback=True success=True',
-                    request_id, fallback_model,
+                    'companion.stream.fallback_completed',
+                    request_id=request_id,
+                    model=fallback_model,
+                    fallback=True,
+                    success=True,
                 )
             except Exception as fb_exc:
-                logger.error('Companion stream %s fallback also failed: %s', request_id, fb_exc)
+                logger.error(
+                    'companion.stream.fallback_failed',
+                    request_id=request_id,
+                    error=str(fb_exc)[:500],
+                )
                 await circuit.record_failure()
                 fallback = t('companion.fallback_error', lang)
                 yield f'data: {json.dumps({"content": fallback})}\n\n'
@@ -370,7 +457,11 @@ async def stream_chat(
     if assistant_content:
         await _save_message(db, user_id, book_id, 'assistant', assistant_content)
     else:
-        logger.warning('Stream %s produced empty response for book %s — skipping save', request_id, book_id)
+        logger.warning(
+            'companion.stream.empty_response',
+            request_id=request_id,
+            book_id=str(book_id),
+        )
 
 
 async def summarize(
@@ -381,6 +472,14 @@ async def summarize(
     lang: str = 'en',
 ) -> dict[str, Any]:
     """Summarize a book or specific chapters."""
+    t0 = time.monotonic()
+    logger.info(
+        'companion.summarize.started',
+        chapter_count=len(chapter_ids) if chapter_ids else 0,
+        lang=lang,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
     book = await _load_book(db, user_id, book_id)
 
     prompt_parts = [
@@ -406,6 +505,17 @@ async def summarize(
         messages,
         fallback=fallback_text,
         log_label='Companion summarize',
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
+
+    elapsed = int((time.monotonic() - t0) * 1000)
+    logger.info(
+        'companion.summarize.completed',
+        summary_length=len(content),
+        latency_ms=elapsed,
+        user_id=str(user_id),
+        book_id=str(book_id),
     )
 
     return {'role': 'assistant', 'content': content}
@@ -420,6 +530,13 @@ async def explain(
     lang: str = 'en',
 ) -> dict[str, Any]:
     """Explain a passage from a book."""
+    t0 = time.monotonic()
+    logger.info(
+        'companion.explain.started',
+        lang=lang,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
     book = await _load_book(db, user_id, book_id)
 
     safe_text = sanitize_user_input(text, max_length=3000, context='explain_text')
@@ -441,6 +558,17 @@ async def explain(
         messages,
         fallback=fallback_text,
         log_label='Companion explain',
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
+
+    elapsed = int((time.monotonic() - t0) * 1000)
+    logger.info(
+        'companion.explain.completed',
+        response_length=len(content),
+        latency_ms=elapsed,
+        user_id=str(user_id),
+        book_id=str(book_id),
     )
 
     return {'role': 'assistant', 'content': content}

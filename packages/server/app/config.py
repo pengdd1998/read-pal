@@ -69,6 +69,11 @@ class Settings(BaseSettings):
     frontend_url: str = 'http://localhost:3000'
     cors_origins: str = 'http://localhost:3000'  # Comma-separated allowed origins
 
+    # Logging
+    log_level: str = 'INFO'
+    log_json: bool = False
+    llm_log_retention_days: int = 90
+
     # SMTP (optional — console fallback when unset)
     smtp_host: str | None = None
     smtp_port: int = 587

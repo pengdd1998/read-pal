@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-import logging
+import structlog
+import time
 import uuid
 from typing import Any
 from uuid import UUID
@@ -26,7 +27,7 @@ from app.utils.i18n import t
 from app.utils.sanitizer import sanitize_user_input
 from app.utils.token_budget import TokenBudget
 
-logger = logging.getLogger('read-pal.study_mode')
+logger = structlog.get_logger('read-pal.study_mode')
 
 
 # ---------------------------------------------------------------------------
@@ -96,8 +97,17 @@ async def generate_objectives(
     book_id: str | None,
     chapter_title: str,
     chapter_index: int | None,
+    user_id: UUID | None = None,
 ) -> dict[str, Any]:
     """Generate study objectives for a chapter using LLM."""
+    t0 = time.monotonic()
+    logger.info(
+        'study_mode.generate_objectives.started',
+        book_id=str(book_id) if book_id else None,
+        chapter_title=chapter_title,
+        chapter_index=chapter_index,
+    )
+
     # Sanitize user-provided inputs
     safe_title = sanitize_user_input(chapter_title, max_length=500, context='chapter_title')
 
@@ -116,8 +126,8 @@ async def generate_objectives(
 
     if budget.truncations:
         logger.warning(
-            'study-objectives: token budget truncations: %s',
-            ', '.join(budget.truncations),
+            'study_objectives_token_budget_truncated',
+            truncations=', '.join(budget.truncations),
         )
 
     messages = [
@@ -130,12 +140,22 @@ async def generate_objectives(
         fallback=None,
         log_label='study-objectives',
         schema_class=StudyObjectiveList,
+        user_id=str(user_id) if user_id else None,
+        book_id=str(book_id) if book_id else None,
     )
 
     # Extract objectives — handle both bare list and {"objectives": [...]} shapes
     objectives = _extract_items(result, 'objectives')
     if not objectives:
         objectives = _generic_objectives(chapter_title)
+
+    elapsed = (time.monotonic() - t0) * 1000
+    logger.info(
+        'study_mode.generate_objectives.completed',
+        chapter_title=chapter_title,
+        objective_count=len(objectives),
+        latency_ms=round(elapsed, 1),
+    )
 
     return {
         'bookId': str(book_id) if book_id else None,
@@ -152,8 +172,17 @@ async def generate_concept_checks(
     chapter_title: str,
     chapter_index: int | None,
     chapter_content: str,
+    user_id: UUID | None = None,
 ) -> dict[str, Any]:
     """Generate concept check questions with answers and hints."""
+    t0 = time.monotonic()
+    logger.info(
+        'study_mode.generate_concept_checks.started',
+        book_id=str(book_id) if book_id else None,
+        chapter_title=chapter_title,
+        chapter_index=chapter_index,
+    )
+
     # Sanitize user-provided inputs
     safe_title = sanitize_user_input(chapter_title, max_length=500, context='chapter_title')
     safe_content = sanitize_user_input(
@@ -183,8 +212,8 @@ async def generate_concept_checks(
 
     if budget.truncations:
         logger.warning(
-            'study-concept-checks: token budget truncations: %s',
-            ', '.join(budget.truncations),
+            'study_concept_checks_token_budget_truncated',
+            truncations=', '.join(budget.truncations),
         )
 
     messages = [
@@ -197,12 +226,22 @@ async def generate_concept_checks(
         fallback=None,
         log_label='study-concept-checks',
         schema_class=ConceptCheckList,
+        user_id=str(user_id) if user_id else None,
+        book_id=str(book_id) if book_id else None,
     )
 
     # Extract checks — handle both bare list and {"checks": [...]} shapes
     checks = _extract_items(result, 'checks')
     if not checks:
         checks = _generic_checks(chapter_title)
+
+    elapsed = (time.monotonic() - t0) * 1000
+    logger.info(
+        'study_mode.generate_concept_checks.completed',
+        chapter_title=chapter_title,
+        check_count=len(checks),
+        latency_ms=round(elapsed, 1),
+    )
 
     return {
         'bookId': str(book_id) if book_id else None,
@@ -217,6 +256,13 @@ async def save_checks_as_flashcards(
     checks: list[dict[str, Any]],
 ) -> int:
     """Save concept check results as flashcards. Returns count saved."""
+    logger.info(
+        'study_mode.save_flashcards.started',
+        book_id=str(book_id),
+        user_id=str(user_id),
+        check_count=len(checks),
+    )
+
     if not book_id or not checks:
         return 0
 
@@ -257,6 +303,11 @@ async def save_checks_as_flashcards(
         saved_count += 1
 
     await db.flush()
+    logger.info(
+        'study_mode.save_flashcards.completed',
+        book_id=str(book_id),
+        flashcards_saved=saved_count,
+    )
     return saved_count
 
 
@@ -270,6 +321,12 @@ async def get_mastery(
     book_id: UUID,
 ) -> dict[str, Any]:
     """Return mastery data for a book based on progress and flashcard reviews."""
+    logger.info(
+        'study_mode.get_mastery.started',
+        book_id=str(book_id),
+        user_id=str(user_id),
+    )
+
     # Fetch book
     book_result = await db.execute(
         select(Book).where(
@@ -361,6 +418,14 @@ async def get_mastery(
 
     if cards_due > 0:
         weak_areas.append(f'{cards_due} flashcard(s) due for review')
+
+    logger.info(
+        'study_mode.get_mastery.completed',
+        book_id=str(book_id),
+        mastery_level=overall_mastery,
+        cards_due=cards_due,
+        total_cards=total_cards,
+    )
 
     return {
         'bookId': str(book_id),

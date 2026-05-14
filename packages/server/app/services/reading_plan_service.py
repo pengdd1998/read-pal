@@ -1,6 +1,7 @@
 """Reading plan service — AI-generated reading schedules."""
 
-import logging
+import structlog
+import time
 from typing import Any
 from uuid import UUID
 
@@ -14,7 +15,7 @@ from app.prompts import READING_PLAN_HUMAN, READING_PLAN_SYSTEM
 from app.services.llm import safe_llm_call
 from app.utils.token_budget import TokenBudget
 
-logger = logging.getLogger('read-pal.reading_plan')
+logger = structlog.get_logger('read-pal.reading_plan')
 
 
 async def generate_plan(
@@ -25,6 +26,15 @@ async def generate_plan(
     daily_minutes: int = 30,
 ) -> dict[str, Any]:
     """Generate or regenerate a reading plan for a book."""
+    t0 = time.monotonic()
+    logger.info(
+        'reading_plan.generate.started',
+        book_id=str(book_id),
+        user_id=str(user_id),
+        total_days=total_days,
+        daily_minutes=daily_minutes,
+    )
+
     book = await _load_book(db, user_id, book_id)
 
     # Check for existing active plan
@@ -35,7 +45,7 @@ async def generate_plan(
         await db.flush()
 
     # Generate plan via LLM
-    plan_text = await _generate_plan_text(book, total_days, daily_minutes)
+    plan_text = await _generate_plan_text(book, total_days, daily_minutes, user_id=user_id, book_id=book_id)
 
     # Save to DB
     plan = ReadingPlan(
@@ -46,6 +56,15 @@ async def generate_plan(
     )
     db.add(plan)
     await db.flush()
+
+    elapsed = (time.monotonic() - t0) * 1000
+    logger.info(
+        'reading_plan.generate.completed',
+        plan_id=str(plan.id),
+        book_id=str(book_id),
+        total_days=total_days,
+        latency_ms=round(elapsed, 1),
+    )
 
     return {
         'id': str(plan.id),
@@ -63,9 +82,23 @@ async def get_active_plan(
     book_id: UUID,
 ) -> dict[str, Any] | None:
     """Get the active reading plan for a book."""
+    logger.info(
+        'reading_plan.get_active.started',
+        book_id=str(book_id),
+        user_id=str(user_id),
+    )
+
     plan = await _get_active_plan(db, user_id, book_id)
     if not plan:
+        logger.info('reading_plan.get_active.completed', plan_found=False)
         return None
+
+    logger.info(
+        'reading_plan.get_active.completed',
+        plan_found=True,
+        plan_id=str(plan.id),
+        current_day=plan.current_day,
+    )
     return {
         'id': str(plan.id),
         'book_id': str(plan.book_id),
@@ -82,14 +115,28 @@ async def advance_plan(
     book_id: UUID,
 ) -> dict[str, Any] | None:
     """Mark current day as complete and advance to next day."""
+    logger.info(
+        'reading_plan.advance.started',
+        book_id=str(book_id),
+        user_id=str(user_id),
+    )
+
     plan = await _get_active_plan(db, user_id, book_id)
     if not plan:
+        logger.info('reading_plan.advance.completed', plan_found=False)
         return None
 
     plan.current_day = min(plan.current_day + 1, plan.total_days)
     if plan.current_day >= plan.total_days:
         plan.is_active = False
     await db.flush()
+
+    logger.info(
+        'reading_plan.advance.completed',
+        plan_id=str(plan.id),
+        day_completed=plan.current_day,
+        plan_finished=not plan.is_active,
+    )
 
     return {
         'id': str(plan.id),
@@ -131,6 +178,8 @@ async def _generate_plan_text(
     book: Book,
     total_days: int,
     daily_minutes: int,
+    user_id: UUID | None = None,
+    book_id: UUID | None = None,
 ) -> str:
     """Use LLM to generate a structured reading plan."""
     pages = book.total_pages or 0
@@ -160,9 +209,9 @@ async def _generate_plan_text(
 
     if budget.truncations:
         logger.warning(
-            'Reading plan prompts truncated: %s (used %d tokens)',
-            ', '.join(budget.truncations),
-            budget.used,
+            'reading_plan_prompts_truncated',
+            truncations=', '.join(budget.truncations),
+            used_tokens=budget.used,
         )
 
     # Build fallback text plan
@@ -184,5 +233,7 @@ async def _generate_plan_text(
         ],
         fallback=fallback_plan,
         log_label='Reading plan',
+        user_id=str(user_id) if user_id else None,
+        book_id=str(book_id) if book_id else None,
     )
     return result if result else fallback_plan

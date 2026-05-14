@@ -1,8 +1,10 @@
 """Conversation memory — rolling summarization for long-term chat context."""
 
 import json
-import logging
+import time
 from uuid import UUID
+
+import structlog
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import func, select
@@ -15,7 +17,7 @@ from app.services.llm import safe_llm_invoke
 from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
 
-logger = logging.getLogger('read-pal.memory')
+logger = structlog.get_logger('read-pal.memory')
 
 # When to trigger summarization
 SUMMARY_THRESHOLD = 30  # summarize when more than this many messages exist
@@ -32,6 +34,13 @@ async def get_or_create_summary(
 
     Returns the summary text or None if no summary exists/is needed.
     """
+    t0 = time.monotonic()
+    logger.info(
+        'memory.get_or_create_summary.started',
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
+
     # Check total message count
     count_result = await db.execute(
         select(func.count(ChatMessage.id)).where(
@@ -42,6 +51,13 @@ async def get_or_create_summary(
     total = count_result.scalar() or 0
 
     if total < SUMMARY_THRESHOLD:
+        logger.info(
+            'memory.get_or_create_summary.below_threshold',
+            message_count=total,
+            threshold=SUMMARY_THRESHOLD,
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
         return None
 
     # Load existing summary from DB
@@ -59,10 +75,28 @@ async def get_or_create_summary(
 
     # Check if we need to update the summary
     if existing and existing.message_count >= total - MAX_RECENT:
+        elapsed = int((time.monotonic() - t0) * 1000)
+        logger.info(
+            'memory.get_or_create_summary.cache_hit',
+            message_count=total,
+            summary_length=len(existing.summary),
+            latency_ms=elapsed,
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
         return existing.summary
 
     # Need to generate/update summary
     summary = await _generate_summary(db, user_id, book_id, existing)
+    elapsed = int((time.monotonic() - t0) * 1000)
+    logger.info(
+        'memory.get_or_create_summary.generated',
+        message_count=total,
+        summary_length=len(summary) if summary else 0,
+        latency_ms=elapsed,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
     return summary
 
 
@@ -123,6 +157,8 @@ async def _generate_summary(
         fallback=None,
         log_label='Conversation summary',
         schema_class=ConversationSummaryData,
+        user_id=str(user_id),
+        book_id=str(book_id),
     )
 
     # Convert structured output to text summary for storage

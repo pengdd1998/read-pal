@@ -37,10 +37,12 @@ async def generate_objectives(
     limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate study objectives for a chapter using LLM."""
+    user_id = UUID(current_user['id'])
     data = await svc_generate_objectives(
         book_id=body.book_id or body.bookId,
         chapter_title=body.chapter_title or body.chapterTitle or 'this chapter',
         chapter_index=body.chapter_index if body.chapter_index is not None else body.chapterIndex,
+        user_id=user_id,
     )
     return {'success': True, 'data': data}
 
@@ -52,11 +54,13 @@ async def generate_concept_checks(
     limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate concept check questions with answers and hints."""
+    user_id = UUID(current_user['id'])
     data = await svc_generate_checks(
         book_id=body.book_id or body.bookId,
         chapter_title=body.chapter_title or body.chapterTitle or 'this chapter',
         chapter_index=body.chapter_index if body.chapter_index is not None else body.chapterIndex,
         chapter_content=body.chapter_content or body.chapterContent or '',
+        user_id=user_id,
     )
     return {'success': True, 'data': data}
 

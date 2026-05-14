@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-import logging
+import structlog
+import time
 from typing import Any
 from uuid import UUID
 
@@ -28,7 +29,7 @@ from app.utils.annotations import match_annotation_type
 from app.utils.sanitizer import sanitize_annotations, sanitize_chat_message
 from app.utils.token_budget import TokenBudget
 
-logger = logging.getLogger('read-pal.synthesis')
+logger = structlog.get_logger('read-pal.synthesis')
 
 # Hard caps on data volume passed to the LLM
 _MAX_ANNOTATIONS = 50
@@ -153,6 +154,16 @@ async def synthesize(
 
   Returns structured synthesis with themes, connections, timeline, and insights.
   """
+  t0 = time.monotonic()
+  logger.info(
+    'synthesis.synthesize.started',
+    book_id=str(book_id),
+    user_id=str(user_id),
+    include_highlights=include_highlights,
+    include_notes=include_notes,
+    include_conversations=include_conversations,
+  )
+
   reading_data = await _collect_reading_data(
     db,
     user_id,
@@ -174,7 +185,8 @@ async def synthesize(
   budgeted_data = budget.add(serialized_data, 'reading_data')
   if budget.truncations:
     logger.warning(
-      'Synthesis prompt truncated: %s', ', '.join(budget.truncations),
+      'synthesis_prompt_truncated',
+      truncations=', '.join(budget.truncations),
     )
 
   system_prompt = SYNTHESIS_SYSTEM.template
@@ -195,6 +207,19 @@ async def synthesize(
     fallback=empty_synthesis,
     log_label='Synthesis',
     schema_class=SynthesisResult,
+    user_id=str(user_id),
+    book_id=str(book_id),
+  )
+
+  themes_count = len(synthesis_data.get('themes', []))
+  connections_count = len(synthesis_data.get('connections', []))
+  elapsed = (time.monotonic() - t0) * 1000
+  logger.info(
+    'synthesis.synthesize.completed',
+    book_id=str(book_id),
+    themes_count=themes_count,
+    connections_count=connections_count,
+    latency_ms=round(elapsed, 1),
   )
 
   return SynthesisResponse(success=True, data=synthesis_data)
@@ -206,6 +231,13 @@ async def cross_book_synthesize(
   book_ids: list[UUID],
 ) -> SynthesisResponse:
   """Synthesize across multiple books — find common themes and connections."""
+  t0 = time.monotonic()
+  logger.info(
+    'synthesis.cross_book.started',
+    book_count=len(book_ids),
+    user_id=str(user_id),
+  )
+
   all_book_data: list[dict[str, Any]] = []
 
   for bid in book_ids:
@@ -244,8 +276,8 @@ async def cross_book_synthesize(
   budgeted_condensed = budget.add(serialized_condensed, 'cross_book_data')
   if budget.truncations:
     logger.warning(
-      'Cross-book synthesis prompt truncated: %s',
-      ', '.join(budget.truncations),
+      'cross_book_synthesis_prompt_truncated',
+      truncations=', '.join(budget.truncations),
     )
 
   system_prompt = CROSS_BOOK_SYNTHESIS_SYSTEM.template
@@ -262,6 +294,19 @@ async def cross_book_synthesize(
     fallback=fallback,
     log_label='Cross-book synthesis',
     schema_class=CrossBookComparison,
+    user_id=str(user_id),
+    book_id=None,
+  )
+
+  themes_count = len(synthesis_data.get('themes', []))
+  connections_count = len(synthesis_data.get('connections', []))
+  elapsed = (time.monotonic() - t0) * 1000
+  logger.info(
+    'synthesis.cross_book.completed',
+    book_count=len(book_ids),
+    themes_count=themes_count,
+    connections_count=connections_count,
+    latency_ms=round(elapsed, 1),
   )
 
   return SynthesisResponse(success=True, data=synthesis_data)

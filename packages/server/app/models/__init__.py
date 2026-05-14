@@ -21,6 +21,7 @@ from app.models.ai_feedback import AIFeedback
 from app.models.reading_plan import ReadingPlan
 from app.models.book_chunk import BookChunk
 from app.models.llm_trace import LLMCallTrace
+from app.models.llm_log import LLMLog
 
 __all__ = [
     'User',
@@ -48,4 +49,5 @@ __all__ = [
     'ReadingPlan',
     'BookChunk',
     'LLMCallTrace',
+    'LLMLog',
 ]

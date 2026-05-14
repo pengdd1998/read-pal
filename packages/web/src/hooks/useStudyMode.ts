@@ -53,7 +53,10 @@ export function useStudyMode(bookId: string) {
         chapterTitle,
       });
 
-      const newObjectives = (objRes.success && objRes.data) ? objRes.data : [];
+      const rawObj = (objRes.success && objRes.data) ? objRes.data : {};
+      const newObjectives: ChapterObjective[] = Array.isArray(rawObj)
+        ? rawObj
+        : ((rawObj as Record<string, unknown>).objectives as ChapterObjective[]) ?? [];
       setObjectives(newObjectives);
 
       // Generate concept checks
@@ -65,7 +68,8 @@ export function useStudyMode(bookId: string) {
         objectives: newObjectives.map((o) => o.text),
       });
 
-      setChecks((checkRes.success && checkRes.data) ? checkRes.data : []);
+      const rawChecks = (checkRes.success && checkRes.data) ? checkRes.data : {};
+      setChecks(Array.isArray(rawChecks) ? rawChecks : ((rawChecks as Record<string, unknown>).checks as ConceptCheck[]) ?? []);
       setRevealedAnswers(new Set());
     } catch (err) {
       console.warn('Failed to load study mode data:', err);

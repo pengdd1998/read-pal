@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
+import structlog
+import time
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
@@ -34,7 +35,7 @@ from app.utils.annotations import match_annotation_type
 from app.utils.sanitizer import sanitize_user_input
 from app.utils.token_budget import TokenBudget
 
-logger = logging.getLogger('read-pal.memory_book')
+logger = structlog.get_logger('read-pal.memory_book')
 
 # Section type constants
 SECTION_TYPES = [
@@ -317,7 +318,11 @@ async def _generate_section(
 
     human_prompt = json.dumps(section_data, default=str)
     if budget.truncations:
-        logger.info('Section %s budget truncations: %s', section_type, ', '.join(budget.truncations))
+        logger.info(
+            'section_budget_truncations',
+            section_type=section_type,
+            truncations=', '.join(budget.truncations),
+        )
 
     fallback = {
         'type': section_type,
@@ -331,6 +336,8 @@ async def _generate_section(
         fallback=fallback,
         log_label=f'Reading Mirror section {section_type}',
         schema_class=SECTION_SCHEMAS.get(section_type),
+        user_id=str(user_id),
+        book_id=str(book_id),
     )
     if isinstance(result, dict):
         return result
@@ -552,9 +559,26 @@ async def generate(
     Sections 1, 3, 10 are LLM-generated with enriched prompts.
     Sections 2, 4, 5, 6, 7, 8, 9 are placeholders for Phase 2.
     """
+    t0 = time.monotonic()
+    logger.info(
+        'memory_book.generate.started',
+        book_id=str(book_id),
+        user_id=str(user_id),
+        book_format=book_format,
+    )
+
     enriched_data = await _collect_enriched_data(db, user_id, book_id)
     if not enriched_data.get('book'):
         raise ValueError('Book not found')
+
+    stats = enriched_data.get('stats', {})
+    logger.info(
+        'memory_book.generate.data_collected',
+        book_id=str(book_id),
+        highlights_count=stats.get('total_highlights', 0),
+        notes_count=stats.get('total_notes', 0),
+        sessions_count=stats.get('total_sessions', 0),
+    )
 
     # Sections that use LLM in Phase 1
     llm_sections = {'encounter', 'highlights', 'recommendations'}
@@ -566,7 +590,7 @@ async def generate(
             else:
                 return _placeholder_section(section_type)
         except Exception:
-            logger.exception('Failed to generate section %s', section_type)
+            logger.exception('section_generation_failed', section_type=section_type)
             return {'type': section_type, 'error': 'Generation failed'}
 
     section_results = await asyncio.gather(
@@ -620,5 +644,16 @@ async def generate(
         )
         db.add(memory_book)
         await db.flush()
+        await db.refresh(memory_book)
+
+    elapsed = (time.monotonic() - t0) * 1000
+    html_size_kb = round(len(html_content.encode('utf-8')) / 1024, 1) if html_content else 0
+    logger.info(
+        'memory_book.generate.completed',
+        book_id=str(book_id),
+        chapter_count=len(sections),
+        total_size_kb=html_size_kb,
+        latency_ms=round(elapsed, 1),
+    )
 
     return MemoryBookResponse.model_validate(memory_book)

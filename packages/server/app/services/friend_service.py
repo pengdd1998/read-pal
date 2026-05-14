@@ -1,8 +1,10 @@
 """Reading friend agent — personality-based AI personas."""
 
-import logging
+import time
 from typing import Any
 from uuid import UUID
+
+import structlog
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
@@ -17,7 +19,7 @@ from app.services.llm import safe_llm_call
 from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
 
-logger = logging.getLogger('read-pal.friend')
+logger = structlog.get_logger('read-pal.friend')
 
 HISTORY_LIMIT = 30
 
@@ -122,6 +124,13 @@ async def chat(
     book_id: UUID | None = None,
 ) -> dict[str, Any]:
     """Run a single-turn friend chat and return the assistant response."""
+    t0 = time.monotonic()
+    logger.info(
+        'friend.chat.started',
+        persona=persona,
+        user_id=str(user_id),
+        book_id=str(book_id) if book_id else None,
+    )
     rel = await _get_or_create_relationship(db, user_id)
     rel.persona = persona
 
@@ -142,14 +151,17 @@ async def chat(
 
     if budget.truncations:
         logger.warning(
-            'Token budget truncations for user %s: %s',
-            user_id, budget.truncations,
+            'friend.chat.budget_truncated',
+            truncations=', '.join(budget.truncations),
+            user_id=str(user_id),
         )
 
     assistant_content = await safe_llm_call(
         messages,
         fallback="I'm having trouble thinking right now. Please try again in a moment.",
         log_label='Friend chat',
+        user_id=str(user_id),
+        book_id=str(book_id) if book_id else None,
     )
 
     await _save_message(db, user_id, persona, 'user', sanitized_message, book_id)
@@ -162,6 +174,15 @@ async def chat(
     rel.last_interaction_at = utcnow()
     await db.flush()
 
+    elapsed = int((time.monotonic() - t0) * 1000)
+    logger.info(
+        'friend.chat.completed',
+        persona=persona,
+        total_messages=rel.total_messages,
+        latency_ms=elapsed,
+        user_id=str(user_id),
+    )
+
     return {'role': 'assistant', 'content': assistant_content}
 
 
@@ -170,6 +191,10 @@ async def get_relationship(
     user_id: UUID,
 ) -> dict[str, Any]:
     """Get the friend relationship info for a user."""
+    logger.info(
+        'friend.get_relationship.started',
+        user_id=str(user_id),
+    )
     rel = await _get_or_create_relationship(db, user_id)
     return {
         'persona': rel.persona,

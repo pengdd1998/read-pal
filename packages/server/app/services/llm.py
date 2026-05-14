@@ -11,17 +11,17 @@ import asyncio
 import enum
 import hashlib
 import json
-import logging
 import time
 import uuid
 from typing import Any
 
+import structlog
 from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 
 from app.config import get_settings
 
-logger = logging.getLogger('read-pal.llm')
+logger = structlog.get_logger('read-pal.llm')
 
 # ---------------------------------------------------------------------------
 # Observability — structured call logging
@@ -79,28 +79,31 @@ def _log_call(
     success: bool,
     fallback_used: bool = False,
     error_message: str | None = None,
+    user_id: str | None = None,
+    book_id: str | None = None,
 ) -> None:
-    """Structured log for every LLM call + persist to DB."""
+    """Structured log for every LLM call — console + DB persistence."""
     cost = _estimate_cost(
         model,
         usage.get('prompt_tokens', 0),
         usage.get('completion_tokens', 0),
     )
     logger.info(
-        'LLM_CALL req=%s model=%s label=%s latency=%dms '
-        'prompt_tok=%d completion_tok=%d total_tok=%d '
-        'cost=%.6f success=%s fallback=%s',
-        request_id,
-        model,
-        label,
-        latency_ms,
-        usage.get('prompt_tokens', 0),
-        usage.get('completion_tokens', 0),
-        usage.get('total_tokens', 0),
-        cost,
-        success,
-        fallback_used,
+        'llm_call',
+        request_id=request_id,
+        model=model,
+        label=label,
+        latency_ms=latency_ms,
+        prompt_tokens=usage.get('prompt_tokens', 0),
+        completion_tokens=usage.get('completion_tokens', 0),
+        total_tokens=usage.get('total_tokens', 0),
+        estimated_cost=round(cost, 6),
+        success=success,
+        fallback=fallback_used,
+        user_id=user_id,
+        book_id=book_id,
     )
+    # Persist via buffered trace writer (includes user_id/book_id)
     _trace_writer.add({
         'request_id': request_id,
         'model': model,
@@ -113,6 +116,8 @@ def _log_call(
         'success': success,
         'fallback_used': fallback_used,
         'error_message': error_message,
+        'user_id': user_id,
+        'book_id': book_id,
     })
 
 # ---------------------------------------------------------------------------
@@ -145,7 +150,7 @@ def get_llm(
             max_retries=settings.llm_max_retries,
             request_timeout=settings.llm_timeout_seconds,
         )
-        logger.debug('Created new LLM pool entry for %s @ temp=%.2f', model, temperature)
+        logger.debug('llm_pool_entry_created', model=model, temperature=temperature)
     return _pool[key]
 
 
@@ -220,7 +225,7 @@ async def shutdown_llm() -> None:
     _pool.clear()
     await _trace_writer.flush()
     _trace_writer.cancel()
-    logger.info('LLM connection pool shut down')
+    logger.info('llm_pool_shutdown')
 
 
 # ---------------------------------------------------------------------------
@@ -252,7 +257,7 @@ class CircuitBreaker:
                 elapsed = time.monotonic() - self._opened_at
                 if elapsed >= settings.circuit_reset_timeout_seconds:
                     self.state = CircuitState.HALF_OPEN
-                    logger.info('Circuit breaker → HALF_OPEN (probe allowed)')
+                    logger.info('circuit_breaker_half_open')
                     return True
                 return False
             # HALF_OPEN — allow single probe
@@ -263,7 +268,7 @@ class CircuitBreaker:
             self._failures = 0
             if self.state != CircuitState.CLOSED:
                 self.state = CircuitState.CLOSED
-                logger.info('Circuit breaker → CLOSED (probe succeeded)')
+                logger.info('circuit_breaker_closed')
 
     async def record_failure(self) -> None:
         async with self._lock:
@@ -272,13 +277,13 @@ class CircuitBreaker:
             if self.state == CircuitState.HALF_OPEN:
                 self.state = CircuitState.OPEN
                 self._opened_at = time.monotonic()
-                logger.warning('Circuit breaker → OPEN (probe failed)')
+                logger.warning('circuit_breaker_open_probe_failed')
             elif self._failures >= settings.circuit_failure_threshold:
                 self.state = CircuitState.OPEN
                 self._opened_at = time.monotonic()
                 logger.warning(
-                    'Circuit breaker → OPEN (%d consecutive failures)',
-                    self._failures,
+                    'circuit_breaker_open',
+                    consecutive_failures=self._failures,
                 )
 
     @property
@@ -375,7 +380,7 @@ async def check_llm_health() -> dict[str, Any]:
         }
     except Exception as exc:
         latency_ms = int((time.monotonic() - start) * 1000)
-        logger.error('LLM health check failed: %s', exc)
+        logger.error('llm_health_check_failed', error=str(exc))
         result = {
             'healthy': False,
             'model': settings.default_model,
@@ -415,8 +420,11 @@ async def _invoke_with_retry(
             last_exc = exc
             if _is_rate_limited(exc) and attempt < len(_RATE_LIMIT_BACKOFFS):
                 logger.warning(
-                    '%s rate limited (attempt %d/%d), retrying in %ds',
-                    log_label, attempt + 1, len(_RATE_LIMIT_BACKOFFS), backoff,
+                    'llm_rate_limited',
+                    label=log_label,
+                    attempt=attempt + 1,
+                    max_attempts=len(_RATE_LIMIT_BACKOFFS),
+                    backoff_seconds=backoff,
                 )
                 await asyncio.sleep(backoff)
                 continue
@@ -429,6 +437,8 @@ async def _invoke_with_circuit(
     messages: list[BaseMessage],
     *,
     log_label: str = 'LLM',
+    user_id: str | None = None,
+    book_id: str | None = None,
 ) -> Any:
     """Low-level invoke with circuit breaker + fallback model + observability.
 
@@ -441,7 +451,7 @@ async def _invoke_with_circuit(
 
     # Circuit breaker gate
     if not await circuit.allow_request():
-        logger.warning('%s blocked by circuit breaker', log_label)
+        logger.warning('llm_blocked_by_circuit_breaker', label=log_label)
         return None
 
     model_used = settings.default_model
@@ -458,10 +468,12 @@ async def _invoke_with_circuit(
             latency_ms=latency_ms,
             usage=usage,
             success=True,
+            user_id=user_id,
+            book_id=book_id,
         )
     except Exception as exc:
         latency_ms = int((time.monotonic() - start) * 1000)
-        logger.error('%s primary (%s) failed: %s', log_label, model_used, exc)
+        logger.error('llm_primary_failed', label=log_label, model=model_used, error=str(exc))
         await circuit.record_failure()
         _log_call(
             request_id=request_id,
@@ -470,13 +482,15 @@ async def _invoke_with_circuit(
             latency_ms=latency_ms,
             usage={},
             success=False,
-            error_message=str(exc),
+            error_message=str(exc)[:500],
+            user_id=user_id,
+            book_id=book_id,
         )
         # Try fallback model
         try:
             fb_start = time.monotonic()
             fallback_model = settings.fallback_model
-            logger.info('%s retrying with fallback model %s', log_label, fallback_model)
+            logger.info('llm_fallback_retry', label=log_label, fallback_model=fallback_model)
             llm = get_llm(model=fallback_model)
             response = await _invoke_with_retry(llm, messages, log_label)
             fb_latency_ms = int((time.monotonic() - fb_start) * 1000)
@@ -490,9 +504,11 @@ async def _invoke_with_circuit(
                 usage=usage,
                 success=True,
                 fallback_used=True,
+                user_id=user_id,
+                book_id=book_id,
             )
         except Exception as fb_exc:
-            logger.error('%s fallback also failed: %s', log_label, fb_exc)
+            logger.error('llm_fallback_failed', label=log_label, error=str(fb_exc))
             await circuit.record_failure()
             _log_call(
                 request_id=request_id,
@@ -516,6 +532,8 @@ async def safe_llm_invoke(
     log_label: str = 'LLM',
     schema_class: type | None = None,
     use_cache: bool = True,
+    user_id: str | None = None,
+    book_id: str | None = None,
 ) -> Any:
     """Invoke LLM with circuit breaker, fallback model, caching, and JSON parsing.
 
@@ -537,7 +555,7 @@ async def safe_llm_invoke(
             except json.JSONDecodeError:
                 pass
 
-    response = await _invoke_with_circuit(messages, log_label=log_label)
+    response = await _invoke_with_circuit(messages, log_label=log_label, user_id=user_id, book_id=book_id)
     if response is None:
         return fallback
 
@@ -552,8 +570,9 @@ async def safe_llm_invoke(
         parsed = json.loads(content)
     except json.JSONDecodeError:
         logger.warning(
-            '%s: failed to parse LLM response as JSON (first 200 chars): %.200s',
-            log_label, content,
+            'llm_json_parse_failed',
+            label=log_label,
+            content_preview=content[:200],
         )
         return fallback
 
@@ -586,8 +605,9 @@ def _validate_parsed(
         return result.model_dump()
     except Exception as exc:
         logger.warning(
-            '%s: schema validation failed (%s). Returning raw parsed data.',
-            log_label, exc,
+            'llm_schema_validation_failed',
+            label=log_label,
+            error=str(exc),
         )
         return data
 
@@ -598,6 +618,8 @@ async def safe_llm_call(
     fallback: str = '',
     log_label: str = 'LLM',
     use_cache: bool = True,
+    user_id: str | None = None,
+    book_id: str | None = None,
 ) -> str:
     """Invoke LLM with circuit breaker + fallback model, returning raw text.
 
@@ -614,7 +636,7 @@ async def safe_llm_call(
             from app.utils.output_filter import filter_output
             return filter_output(cached, context=log_label)
 
-    response = await _invoke_with_circuit(messages, log_label=log_label)
+    response = await _invoke_with_circuit(messages, log_label=log_label, user_id=user_id, book_id=book_id)
     if response is None:
         return fallback
     content = response.content.strip()

@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
+import time
 from typing import Any
 from uuid import UUID
+
+import structlog
 
 import networkx as nx
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -34,7 +36,7 @@ from app.services.llm import safe_llm_invoke
 from app.utils.sanitizer import sanitize_annotations
 from app.utils.token_budget import TokenBudget
 
-logger = logging.getLogger('read-pal.knowledge')
+logger = structlog.get_logger('read-pal.knowledge')
 
 # ---------------------------------------------------------------------------
 # Redis key layout
@@ -94,6 +96,8 @@ async def _load_annotations(
 
 async def _extract_concepts_via_llm(
     texts: list[str],
+    user_id: UUID | None = None,
+    book_id: UUID | None = None,
 ) -> list[dict[str, Any]]:
     """Use LLM to extract concepts/entities from annotation texts.
 
@@ -122,6 +126,8 @@ async def _extract_concepts_via_llm(
         fallback=[],
         log_label='Knowledge concept extraction',
         schema_class=ConceptList,
+        user_id=str(user_id) if user_id else None,
+        book_id=str(book_id) if book_id else None,
     )
 
     if isinstance(result, list):
@@ -272,16 +278,16 @@ async def _load_cached_graph(
         # Content hash mismatch — annotations changed, invalidate
         if cached_hash is not None and cached_hash != current_hash:
             logger.info(
-                'Content hash mismatch for %s:%s, invalidating cache',
-                user_id,
-                book_id,
+                'knowledge.cache_hash_mismatch',
+                user_id=str(user_id),
+                book_id=str(book_id),
             )
             await r.delete(cache_key, hash_key)
             return None
 
         return GraphData.model_validate_json(cached_graph)
     except Exception:
-        logger.debug('Redis cache read failed, will rebuild graph')
+        logger.debug('knowledge.cache_read_failed')
         return None
 
 
@@ -302,7 +308,7 @@ async def _persist_graph(
         pipe.setex(hash_key, GRAPH_TTL, content_hash)
         await pipe.execute()
     except Exception:
-        logger.debug('Redis cache write failed')
+        logger.debug('knowledge.cache_write_failed')
 
 
 # ---------------------------------------------------------------------------
@@ -327,8 +333,16 @@ async def build_graph(
 
     Returns:
         ``GraphData`` with ``nodes`` and ``edges`` lists (always valid, never
-        ``None`` — empty lists when there are no annotations).
+        ``None`` -- empty lists when there are no annotations).
     """
+    t0 = time.monotonic()
+    logger.info(
+        'knowledge.build_graph.started',
+        force_rebuild=force_rebuild,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
+
     # 1. Load annotations and compute content hash --------------------------
     annotations = await _load_annotations(db, user_id, book_id)
     texts = [a.content for a in annotations if a.content.strip()]
@@ -336,16 +350,37 @@ async def build_graph(
 
     # 2. Return empty graph when there is nothing to process ----------------
     if not texts:
+        logger.info(
+            'knowledge.build_graph.no_annotations',
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
         return GraphData(nodes=[], edges=[])
 
     # 3. Try cache (unless force_rebuild) -----------------------------------
     if not force_rebuild:
         cached = await _load_cached_graph(user_id, book_id, current_hash)
         if cached is not None:
+            logger.info(
+                'knowledge.build_graph.cache_hit',
+                annotation_count=len(annotations),
+                node_count=len(cached.nodes),
+                edge_count=len(cached.edges),
+                user_id=str(user_id),
+                book_id=str(book_id),
+            )
             return cached
 
+    logger.info(
+        'knowledge.build_graph.cache_miss',
+        force_rebuild=force_rebuild,
+        annotation_count=len(annotations),
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
+
     # 4. Build via LLM (with rule-based fallback) ---------------------------
-    concepts = await _extract_concepts_via_llm(texts)
+    concepts = await _extract_concepts_via_llm(texts, user_id=user_id, book_id=book_id)
 
     if not concepts:
         concepts = _extract_concepts_from_keywords(texts)
@@ -355,6 +390,18 @@ async def build_graph(
 
     # 5. Persist to Redis ---------------------------------------------------
     await _persist_graph(user_id, book_id, data, current_hash)
+
+    elapsed = int((time.monotonic() - t0) * 1000)
+    logger.info(
+        'knowledge.build_graph.completed',
+        annotation_count=len(annotations),
+        concept_count=len(concepts),
+        node_count=len(data.nodes),
+        edge_count=len(data.edges),
+        latency_ms=elapsed,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
 
     return data
 
@@ -366,6 +413,13 @@ async def search_concepts(
     query: str,
 ) -> list[ConceptSearchResult]:
     """Search concepts in the graph matching the given query."""
+    t0 = time.monotonic()
+    logger.info(
+        'knowledge.search_concepts.started',
+        query=query[:100],
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
     graph_data = await build_graph(db, user_id, book_id)
     query_lower = query.lower()
 
@@ -385,6 +439,16 @@ async def search_concepts(
             ))
 
     results.sort(key=lambda r: r.relevance, reverse=True)
+
+    elapsed = int((time.monotonic() - t0) * 1000)
+    logger.info(
+        'knowledge.search_concepts.completed',
+        query=query[:100],
+        result_count=len(results[:10]),
+        latency_ms=elapsed,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
     return results[:10]
 
 
@@ -394,8 +458,13 @@ async def get_concepts(
     book_id: UUID,
 ) -> list[dict[str, Any]]:
     """List all concepts in the knowledge graph."""
+    logger.info(
+        'knowledge.get_concepts.started',
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
     graph_data = await build_graph(db, user_id, book_id)
-    return [
+    concepts = [
         {
             'id': node.id,
             'label': node.label,
@@ -404,3 +473,10 @@ async def get_concepts(
         }
         for node in graph_data.nodes
     ]
+    logger.info(
+        'knowledge.get_concepts.completed',
+        concept_count=len(concepts),
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
+    return concepts
