@@ -1,6 +1,5 @@
 """Tests for RAG service — embedding, chunking, search, caching, cache key isolation."""
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -9,13 +8,12 @@ import pytest
 from app.services.rag_service import (
     RAG_CACHE_PREFIX,
     _chunk_text,
-    _cosine_sim,
-    _get_chunk_embeddings,
     _get_embedding,
     _keyword_chapter_search,
     _semantic_chapter_search,
     _stable_hash,
     get_book_context,
+    precompute_book_embeddings,
 )
 
 
@@ -37,31 +35,6 @@ class TestStableHash:
         assert len(result) == 16
 
 
-class TestCosineSim:
-    def test_identical_vectors(self):
-        vec = [1.0, 2.0, 3.0]
-        assert _cosine_sim(vec, vec) == pytest.approx(1.0)
-
-    def test_orthogonal_vectors(self):
-        a = [1.0, 0.0]
-        b = [0.0, 1.0]
-        assert _cosine_sim(a, b) == pytest.approx(0.0)
-
-    def test_opposite_vectors(self):
-        a = [1.0, 0.0]
-        b = [-1.0, 0.0]
-        assert _cosine_sim(a, b) == pytest.approx(-1.0)
-
-    def test_zero_vector(self):
-        assert _cosine_sim([0.0, 0.0], [1.0, 2.0]) == 0.0
-        assert _cosine_sim([1.0, 2.0], [0.0, 0.0]) == 0.0
-
-    def test_different_magnitudes(self):
-        a = [1.0, 0.0]
-        b = [3.0, 0.0]
-        assert _cosine_sim(a, b) == pytest.approx(1.0)
-
-
 class TestChunkText:
     def test_short_text(self):
         text = 'Hello world'
@@ -76,15 +49,13 @@ class TestChunkText:
         text = 'word ' * 2000  # ~10000 chars
         chunks = _chunk_text(text, chunk_size=2000, overlap=256)
         assert len(chunks) > 1
-        # Each chunk should be <= chunk_size (except possibly last one with overlap)
         for chunk in chunks:
-            assert len(chunk) <= 2200  # Allow slight overshoot from sentence boundaries
+            assert len(chunk) <= 2200
 
     def test_overlap_between_chunks(self):
         text = 'a' * 5000
         chunks = _chunk_text(text, chunk_size=2000, overlap=200)
         if len(chunks) > 1:
-            # Verify overlap exists — end of chunk[i] overlaps with start of chunk[i+1]
             tail = chunks[0][-200:]
             head = chunks[1][:200]
             assert tail == head
@@ -92,16 +63,14 @@ class TestChunkText:
     def test_min_chunk_length(self):
         text = 'a' * 50 + '\n\n' + 'b' * 10
         chunks = _chunk_text(text, chunk_size=2000)
-        # The tiny 'b' chunk should be filtered (< 50 chars)
         for chunk in chunks:
             assert len(chunk) > 50
 
     def test_sentence_boundary_break(self):
         text = 'First paragraph.\n\nSecond paragraph.\n\nThird paragraph.'
         chunks = _chunk_text(text, chunk_size=30, overlap=5)
-        # Should break at paragraph boundaries, not mid-word
         for chunk in chunks:
-            assert not chunk.endswith('pa')  # No mid-word breaks
+            assert not chunk.endswith('pa')
 
 
 class TestKeywordSearch:
@@ -132,7 +101,6 @@ class TestKeywordSearch:
         assert len(results) > 0
 
     def test_cjk_individual_chars(self):
-        """CJK characters are tokenized individually, enabling char-level matching."""
         chapters = [
             {'title': '月亮篇', 'content': '月亮很圆很亮。今晚的月亮特别美丽。'},
         ]
@@ -141,7 +109,6 @@ class TestKeywordSearch:
         assert '月亮' in results[0]['content']
 
     def test_mixed_cjk_latin_query(self):
-        """Mixed CJK and Latin tokens in the same query."""
         chapters = [
             {'title': '技术笔记',
              'content': 'Python is a great language for data science. '
@@ -167,7 +134,6 @@ class TestCacheKeyIsolation:
     """Verify that cache keys are user-scoped to prevent cross-user data leakage."""
 
     def test_cache_key_includes_user_id(self):
-        """Different users querying the same book+query get different cache keys."""
         book_id = uuid4()
         user_a = uuid4()
         user_b = uuid4()
@@ -176,15 +142,12 @@ class TestCacheKeyIsolation:
         key_a = f'{RAG_CACHE_PREFIX}{book_id}:{user_a}:{_stable_hash(query)}'
         key_b = f'{RAG_CACHE_PREFIX}{book_id}:{user_b}:{_stable_hash(query)}'
 
-        # Different users must get different cache keys for the same book+query
         assert key_a != key_b
 
-        # Same user + same query must be deterministic
         key_a2 = f'{RAG_CACHE_PREFIX}{book_id}:{user_a}:{_stable_hash(query)}'
         assert key_a == key_a2
 
     def test_cache_key_includes_book_id(self):
-        """Same user querying different books gets different cache keys."""
         user_id = uuid4()
         book_a = uuid4()
         book_b = uuid4()
@@ -196,7 +159,6 @@ class TestCacheKeyIsolation:
         assert key_a != key_b
 
     def test_cache_key_includes_query_hash(self):
-        """Same user+book but different queries get different cache keys."""
         user_id = uuid4()
         book_id = uuid4()
 
@@ -248,94 +210,74 @@ class TestGetEmbedding:
                 assert result is None
 
 
-class TestGetChunkEmbeddings:
+class TestPrecomputeBookEmbeddings:
     @pytest.mark.asyncio
-    async def test_cache_hit(self):
-        chapter = {'title': 'Test Chapter', 'content': 'Some content here'}
+    async def test_creates_book_chunks(self):
+        from app.models.book_chunk import BookChunk
+
         book_id = uuid4()
-        cached_emb = [0.1, 0.2, 0.3]
+        document_id = uuid4()
+        chapters = [
+            {'title': 'Chapter 1', 'content': 'A' * 100},
+        ]
+        embedding = [0.1] * 2048
 
-        mock_redis = AsyncMock()
-        mock_redis.get = AsyncMock(return_value=json.dumps(cached_emb))
+        # async_session() returns an async context manager yielding session
+        mock_session = MagicMock()
+        mock_session.add_all = MagicMock()
+        mock_session.begin = MagicMock()
 
-        with patch('app.services.rag_service.get_redis', return_value=mock_redis):
-            result = await _get_chunk_embeddings(chapter, book_id)
-            # Should return list of (chunk_text, embedding) tuples
-            assert len(result) >= 1
-            chunk_text, emb = result[0]
-            assert emb == cached_emb
-            assert 'Test Chapter' in chunk_text
+        # session.begin() returns an async context manager
+        mock_begin = MagicMock()
+        mock_begin.__aenter__ = AsyncMock(return_value=None)
+        mock_begin.__aexit__ = AsyncMock(return_value=False)
+        mock_session.begin.return_value = mock_begin
 
-    @pytest.mark.asyncio
-    async def test_cache_miss_fetches_embedding(self):
-        chapter = {'title': 'Test Chapter', 'content': 'Some content'}
-        book_id = uuid4()
-        fresh_emb = [0.5, 0.6, 0.7]
+        # async_session() call returns an async context manager yielding session
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
 
-        mock_redis = AsyncMock()
-        mock_redis.get = AsyncMock(return_value=None)
-        mock_redis.setex = AsyncMock()
+        mock_factory = MagicMock(return_value=mock_ctx)
 
         with (
-            patch('app.services.rag_service.get_redis', return_value=mock_redis),
-            patch('app.services.rag_service._get_embedding', return_value=fresh_emb),
+            patch('app.services.rag_service.get_settings') as mock_settings,
+            patch('app.services.rag_service._get_embedding', return_value=embedding),
+            patch('app.db.async_session', mock_factory),
         ):
-            result = await _get_chunk_embeddings(chapter, book_id)
-            assert len(result) >= 1
-            _, emb = result[0]
-            assert emb == fresh_emb
-            mock_redis.setex.assert_called()
+            mock_settings.return_value.glm_api_key = 'test-key'
+            await precompute_book_embeddings(book_id, document_id, chapters)
+
+            mock_session.add_all.assert_called_once()
+            chunks = mock_session.add_all.call_args[0][0]
+            assert len(chunks) >= 1
+            assert isinstance(chunks[0], BookChunk)
+            assert chunks[0].book_id == book_id
+            assert chunks[0].embedding == embedding
 
     @pytest.mark.asyncio
-    async def test_redis_failure_graceful(self):
-        chapter = {'title': 'Test', 'content': 'Content'}
-        book_id = uuid4()
-        fresh_emb = [0.1, 0.2]
-
-        mock_redis = AsyncMock()
-        mock_redis.get = AsyncMock(side_effect=Exception('Redis down'))
-
-        with (
-            patch('app.services.rag_service.get_redis', return_value=mock_redis),
-            patch('app.services.rag_service._get_embedding', return_value=fresh_emb),
-        ):
-            result = await _get_chunk_embeddings(chapter, book_id)
-            assert len(result) >= 1
-            _, emb = result[0]
-            assert emb == fresh_emb
+    async def test_skips_without_api_key(self):
+        with patch('app.services.rag_service.get_settings') as mock_settings:
+            mock_settings.return_value.glm_api_key = 'dev-key'
+            await precompute_book_embeddings(uuid4(), uuid4(), [{'title': 'T', 'content': 'C'}])
+            # No error, just skips
 
 
 class TestSemanticSearch:
     @pytest.mark.asyncio
-    async def test_returns_relevant_chapters(self):
-        chapters = [
-            {'title': 'ML Intro', 'content': 'Machine learning basics'},
-            {'title': 'Cooking', 'content': 'How to bake a cake'},
-        ]
-        book_id = uuid4()
-        ml_embedding = [0.9, 0.1]
-        cooking_embedding = [0.1, 0.9]
-        query_embedding = [0.8, 0.2]
-
-        with (
-            patch('app.services.rag_service._get_embedding', return_value=query_embedding),
-            patch(
-                'app.services.rag_service._get_chunk_embeddings',
-                side_effect=[
-                    [('ML Intro Machine learning basics', ml_embedding)],
-                    [('Cooking How to bake a cake', cooking_embedding)],
-                ],
-            ),
-        ):
-            results = await _semantic_chapter_search(chapters, 'machine learning', book_id)
-            assert len(results) == 2
-            assert results[0]['title'] == 'ML Intro'
+    async def test_no_query_embedding(self):
+        mock_db = AsyncMock()
+        with patch('app.services.rag_service._get_embedding', return_value=None):
+            results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
+            assert results == []
 
     @pytest.mark.asyncio
-    async def test_no_query_embedding(self):
-        chapters = [{'title': 'Test', 'content': 'Content'}]
-        with patch('app.services.rag_service._get_embedding', return_value=None):
-            results = await _semantic_chapter_search(chapters, 'test', uuid4())
+    async def test_db_failure_returns_empty(self):
+        mock_db = AsyncMock()
+        mock_db.execute = AsyncMock(side_effect=Exception('DB error'))
+
+        with patch('app.services.rag_service._get_embedding', return_value=[0.1] * 2048):
+            results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
             assert results == []
 
 
@@ -356,7 +298,6 @@ class TestGetBookContext:
         user_id = uuid4()
         book_id = uuid4()
 
-        # Mock DB — book exists, annotations empty
         mock_db = AsyncMock()
         book_row = MagicMock()
         book_row.scalar_one_or_none.return_value = MagicMock()
@@ -378,14 +319,11 @@ class TestGetBookContext:
             mock_r.setex.return_value = True
             mock_redis.return_value = mock_r
 
-            # Patch the internal _get_chapters call by going through get_book_context
             result = await get_book_context(mock_db, user_id, book_id, 'machine learning')
-            # Should get context from keyword fallback
             assert 'ML Basics' in result or 'Machine learning' in result
 
     @pytest.mark.asyncio
     async def test_cache_hit_returns_cached_value(self):
-        """Returns cached result from Redis without DB lookup."""
         cached_text = 'Previously cached context about the novel.'
         mock_redis = AsyncMock()
         mock_redis.get.return_value = cached_text
@@ -401,7 +339,6 @@ class TestGetBookContext:
 
     @pytest.mark.asyncio
     async def test_successful_retrieval_writes_to_cache(self):
-        """After retrieving context, the result is written to Redis cache."""
         book_id = uuid4()
         user_id = uuid4()
 

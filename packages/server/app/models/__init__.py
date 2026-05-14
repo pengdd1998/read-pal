@@ -19,6 +19,7 @@ from app.models.webhook import Webhook, WebhookDeliveryLog
 from app.models.conversation_summary import ConversationSummary
 from app.models.ai_feedback import AIFeedback
 from app.models.reading_plan import ReadingPlan
+from app.models.book_chunk import BookChunk
 
 __all__ = [
     'User',
@@ -44,4 +45,5 @@ __all__ = [
     'ConversationSummary',
     'AIFeedback',
     'ReadingPlan',
+    'BookChunk',
 ]

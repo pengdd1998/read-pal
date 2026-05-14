@@ -29,6 +29,7 @@ async def create_collection(
     db.add(collection)
     await db.flush()
     await db.refresh(collection)
+    logger.info('Collection created: id=%s user=%s name=%s', collection.id, user_id, data.name)
     return collection
 
 
@@ -83,6 +84,7 @@ async def update_collection(
 
     await db.flush()
     await db.refresh(collection)
+    logger.info('Collection updated: id=%s user=%s fields=%s', collection_id, user_id, list(update_data.keys()))
     return collection
 
 
@@ -104,6 +106,7 @@ async def delete_collection(
 
     await db.delete(collection)
     await db.flush()
+    logger.info('Collection deleted: id=%s user=%s', collection_id, user_id)
 
 
 async def add_book_to_collection(
@@ -129,6 +132,7 @@ async def add_book_to_collection(
 
     await db.flush()
     await db.refresh(collection)
+    logger.info('Book added to collection: collection=%s user=%s book=%s', collection_id, user_id, book_id)
     return collection
 
 
@@ -155,4 +159,5 @@ async def remove_book_from_collection(
 
     await db.flush()
     await db.refresh(collection)
+    logger.info('Book removed from collection: collection=%s user=%s book=%s', collection_id, user_id, book_id)
     return collection

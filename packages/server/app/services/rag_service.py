@@ -1,22 +1,21 @@
 """RAG service — retrieve relevant book content for AI chat enrichment.
 
 Strategy tiers (auto-degrading):
-  1. Semantic search via GLM embeddings + cosine similarity (passage-level chunks)
+  1. Semantic search via pgVector cosine similarity (pre-computed embeddings)
   2. Keyword matching fallback when embeddings unavailable
 Results are cached in Redis per (book, query) for 30 minutes.
 """
 
 import asyncio
 import hashlib
-import json
 import logging
-import math
 import re
+import time
 from typing import Any
 from uuid import UUID
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -31,11 +30,8 @@ logger = logging.getLogger('read-pal.rag')
 _CJK_TOKEN_RE = re.compile(r'[一-鿿]|[a-zA-Z0-9]+')
 
 RAG_CACHE_PREFIX = 'rag:'
-RAG_EMBED_CACHE_PREFIX = 'rag:emb:'
 RAG_CACHE_TTL = 1800  # 30 min
-EMBED_CACHE_TTL = 86400  # 24 hrs — chunk embeddings are stable
 
-# Pooled HTTP client for embedding requests
 _http_client: httpx.AsyncClient | None = None
 
 
@@ -47,7 +43,6 @@ def _get_http_client() -> httpx.AsyncClient:
 
 
 def _stable_hash(text: str) -> str:
-    """Stable hash for cache keys (survives process restarts)."""
     return hashlib.md5(text.encode()).hexdigest()[:16]
 
 
@@ -64,7 +59,6 @@ def _chunk_text(text: str, chunk_size: int = 2000, overlap: int = 256) -> list[s
     while start < len(text):
         end = start + chunk_size
         chunk = text[start:end]
-        # Try to break at sentence/paragraph boundary
         for sep in ['\n\n', '\n', '. ', '。', '！', '？']:
             last_sep = chunk.rfind(sep)
             if last_sep > chunk_size * 0.5:
@@ -87,76 +81,90 @@ async def _get_embedding(text: str) -> list[float] | None:
     if not settings.glm_api_key or settings.glm_api_key == 'dev-key':
         return None
 
+    t0 = time.monotonic()
     try:
         client = _get_http_client()
         resp = await client.post(
             f'{settings.glm_base_url}/embeddings',
             headers={'Authorization': f'Bearer {settings.glm_api_key}'},
-            json={'model': 'embedding-3', 'input': text[:2000]},
+            json={'model': 'embedding-3', 'input': text[:2000], 'dimensions': 1024},
         )
         resp.raise_for_status()
         data = resp.json()
+        latency_ms = (time.monotonic() - t0) * 1000
+        logger.info(
+            'Embedding API success: model=embedding-3 input_len=%d dims=1024 latency=%.0fms',
+            len(text), latency_ms,
+        )
         return data['data'][0]['embedding']
     except Exception as exc:
-        logger.debug('Embedding request failed: %s', exc)
+        latency_ms = (time.monotonic() - t0) * 1000
+        logger.error(
+            'Embedding API failed: model=embedding-3 input_len=%d latency=%.0fms error=%s',
+            len(text), latency_ms, exc,
+        )
         return None
 
 
-async def _get_chunk_embeddings(
-    chapter: dict,
+# ---------------------------------------------------------------------------
+# Pre-computation (called at upload time)
+# ---------------------------------------------------------------------------
+
+async def precompute_book_embeddings(
     book_id: UUID,
-) -> list[tuple[str, list[float]]]:
-    """Get cached or fresh embeddings for all chunks of a chapter.
+    document_id: UUID,
+    chapters: list[dict],
+) -> None:
+    """Pre-compute and store chunk embeddings for a book.
 
-    Returns a list of (chunk_text, embedding) tuples.
+    Called after book upload. Uses its own DB session so it doesn't
+    interfere with the upload transaction.
     """
-    title = chapter.get('title', '')
-    content = chapter.get('content', '')
-    full_text = f'{title} {content}'
-    chunks = _chunk_text(full_text)
+    from app.db import async_session
+    from app.models.book_chunk import BookChunk
 
-    if not chunks:
-        return []
+    if not chapters:
+        return
 
-    r = get_redis()
-    results: list[tuple[str, list[float]]] = []
+    settings = get_settings()
+    if not settings.glm_api_key or settings.glm_api_key == 'dev-key':
+        logger.debug('Skipping embedding pre-computation: no API key')
+        return
 
-    for idx, chunk in enumerate(chunks):
-        cache_key = (
-            f'{RAG_EMBED_CACHE_PREFIX}{book_id}:'
-            f'{_stable_hash(title)}:{idx}:{_stable_hash(chunk[:500])}'
-        )
-        emb: list[float] | None = None
+    chunks_to_insert: list[BookChunk] = []
 
-        try:
-            cached = await r.get(cache_key)
-            if cached:
-                emb = json.loads(cached)
-        except Exception as exc:
-            logger.warning('Redis embedding cache read failed: %s', exc)
+    for ch_idx, chapter in enumerate(chapters):
+        title = chapter.get('title', '')
+        content = chapter.get('content', '')
+        full_text = f'{title} {content}'
+        text_chunks = _chunk_text(full_text)
 
-        if emb is None:
-            emb = await _get_embedding(chunk)
-            if emb:
-                try:
-                    await r.setex(cache_key, EMBED_CACHE_TTL, json.dumps(emb))
-                except Exception as exc:
-                    logger.warning('Redis embedding cache write failed: %s', exc)
+        for ck_idx, chunk in enumerate(text_chunks):
+            embedding = await _get_embedding(chunk)
+            chunks_to_insert.append(
+                BookChunk(
+                    book_id=book_id,
+                    document_id=document_id,
+                    chapter_index=ch_idx,
+                    chunk_index=ck_idx,
+                    content=chunk,
+                    embedding=embedding,
+                )
+            )
 
-        if emb is not None:
-            results.append((chunk, emb))
+        if ch_idx < len(chapters) - 1:
+            await asyncio.sleep(0.2)
 
-    return results
+    async with async_session() as session:
+        async with session.begin():
+            session.add_all(chunks_to_insert)
 
-
-def _cosine_sim(a: list[float], b: list[float]) -> float:
-    """Compute cosine similarity between two vectors."""
-    dot = sum(x * y for x, y in zip(a, b))
-    mag_a = math.sqrt(sum(x * x for x in a))
-    mag_b = math.sqrt(sum(x * x for x in b))
-    if mag_a == 0 or mag_b == 0:
-        return 0.0
-    return dot / (mag_a * mag_b)
+    logger.info(
+        'Stored %d chunks for book %s (%d with embeddings)',
+        len(chunks_to_insert),
+        book_id,
+        sum(1 for c in chunks_to_insert if c.embedding is not None),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -174,7 +182,6 @@ async def get_book_context(
 
     Tries semantic search first, falls back to keyword matching.
     """
-    # Check Redis cache first
     cache_key = f'{RAG_CACHE_PREFIX}{book_id}:{user_id}:{_stable_hash(query)}'
     try:
         cached = await get_redis().get(cache_key)
@@ -183,7 +190,6 @@ async def get_book_context(
     except Exception as exc:
         logger.warning('Redis RAG cache read failed: %s', exc)
 
-    # Load book
     result = await db.execute(
         select(Book).where(Book.id == book_id, Book.user_id == user_id)
     )
@@ -191,14 +197,12 @@ async def get_book_context(
     if not book:
         return ''
 
-    chapters = await _get_chapters(db, book_id)
+    relevant_chunks = await _semantic_chapter_search(db, book_id, query, top_k=3)
 
-    # Try semantic search first (returns chunks with chapter metadata)
-    relevant_chunks = await _semantic_chapter_search(chapters, query, book_id, top_k=3)
-
-    # Fallback to keyword matching
-    if not relevant_chunks and chapters:
-        relevant_chunks = _keyword_chapter_search(chapters, query, top_k=3)
+    if not relevant_chunks:
+        chapters = await _get_chapters(db, book_id)
+        if chapters:
+            relevant_chunks = _keyword_chapter_search(chapters, query, top_k=3)
 
     context_parts: list[str] = []
 
@@ -212,7 +216,6 @@ async def get_book_context(
         )
         context_parts.append(f'{header}\n{sanitized}')
 
-    # Related annotations
     annotations = await _load_related_annotations(db, user_id, book_id, query, limit=5)
     for ann in annotations:
         label = ann.type.value if hasattr(ann.type, 'value') else str(ann.type)
@@ -223,7 +226,6 @@ async def get_book_context(
 
     combined = '\n\n'.join(context_parts)[:max_chars]
 
-    # Cache result
     if combined:
         try:
             await get_redis().setex(cache_key, RAG_CACHE_TTL, combined)
@@ -238,37 +240,66 @@ async def get_book_context(
 # ---------------------------------------------------------------------------
 
 async def _semantic_chapter_search(
-    chapters: list[dict[str, Any]],
-    query: str,
+    db: AsyncSession,
     book_id: UUID,
+    query: str,
     top_k: int = 3,
 ) -> list[dict[str, Any]]:
-    """Embedding-based passage search across all chapter chunks."""
+    """pgVector cosine distance search over pre-computed chunk embeddings."""
     query_emb = await _get_embedding(query)
     if query_emb is None:
         return []
 
-    # Fetch all chunk embeddings in parallel (one call per chapter)
-    all_chunk_results = await asyncio.gather(
-        *[_get_chunk_embeddings(ch, book_id) for ch in chapters],
-    )
+    emb_literal = '[' + ','.join(str(v) for v in query_emb) + ']'
+    distance_threshold = 0.7  # 1 - similarity_threshold(0.3)
 
-    scored: list[tuple[float, dict]] = []
-    for ch, chunk_list in zip(chapters, all_chunk_results):
-        for chunk_text, chunk_emb in chunk_list:
-            sim = _cosine_sim(query_emb, chunk_emb)
-            if sim > 0.3:
-                scored.append((sim, {
-                    'title': ch.get('title', 'Untitled'),
-                    'content': chunk_text,
-                }))
+    try:
+        stmt = text("""
+            SELECT
+                bc.chapter_index,
+                bc.content,
+                d.chapters,
+                1 - (bc.embedding <=> :query_emb::vector) AS similarity
+            FROM book_chunks bc
+            JOIN documents d ON d.id = bc.document_id
+            WHERE bc.book_id = :book_id
+              AND bc.embedding IS NOT NULL
+              AND (bc.embedding <=> :query_emb::vector) < :distance_threshold
+            ORDER BY bc.embedding <=> :query_emb::vector
+            LIMIT :limit
+        """)
+        result = await db.execute(
+            stmt,
+            {
+                'query_emb': emb_literal,
+                'book_id': str(book_id),
+                'distance_threshold': distance_threshold,
+                'limit': top_k,
+            },
+        )
+        rows = result.fetchall()
+    except Exception as exc:
+        logger.warning('pgVector search failed: %s', exc)
+        return []
 
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [item for _, item in scored[:top_k]]
+    results = []
+    for row in rows:
+        chapter_index = row[0]
+        chapters = row[2]
+        chapter_title = 'Untitled'
+        if isinstance(chapters, list) and 0 <= chapter_index < len(chapters):
+            chapter_title = chapters[chapter_index].get('title', 'Untitled')
+
+        results.append({
+            'title': chapter_title,
+            'content': row[1],
+            'similarity': float(row[3]),
+        })
+
+    return results
 
 
 def _tokenize_query(query: str) -> set[str]:
-    """CJK-aware tokenization: individual CJK chars + Latin words."""
     return set(_CJK_TOKEN_RE.findall(query.lower()))
 
 
@@ -277,7 +308,7 @@ def _keyword_chapter_search(
     query: str,
     top_k: int = 3,
 ) -> list[dict[str, Any]]:
-    """Keyword-based chapter relevance scoring. Supports both word-level (Latin) and character-level (CJK) matching."""
+    """Keyword-based chapter relevance scoring."""
     tokens = _tokenize_query(query)
 
     scored: list[tuple[float, dict]] = []
@@ -303,7 +334,7 @@ def _keyword_chapter_search(
 # ---------------------------------------------------------------------------
 
 async def _get_chapters(db: AsyncSession, book_id: UUID) -> list[dict[str, Any]]:
-    """Fetch chapters from the Document table (not Book.metadata_)."""
+    """Fetch chapters from the Document table."""
     result = await db.execute(
         select(Document.chapters).where(Document.book_id == book_id)
     )

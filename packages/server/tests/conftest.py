@@ -98,6 +98,11 @@ def _patch_metadata_for_sqlite():
     from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
     from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
+    try:
+        from pgvector.sqlalchemy import Vector as PG_VECTOR
+    except ImportError:
+        PG_VECTOR = None
+
     for table in Base.metadata.tables.values():
         for column in table.columns:
             col_type = column.type
@@ -107,6 +112,8 @@ def _patch_metadata_for_sqlite():
                 column.type = _UuidSafeJSON()
             elif isinstance(col_type, PG_UUID):
                 column.type = _UUIDAsString()
+            elif PG_VECTOR is not None and isinstance(col_type, PG_VECTOR):
+                column.type = _UuidSafeJSON()
 
             # Replace PostgreSQL server_defaults
             if column.server_default is not None:

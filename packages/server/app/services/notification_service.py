@@ -78,6 +78,7 @@ async def mark_read(
     notification.read = True
     await db.flush()
     await db.refresh(notification)
+    logger.info('Notification marked read: id=%s user=%s', notification_id, user_id)
     return notification
 
 
@@ -97,6 +98,7 @@ async def mark_all_read(
     )
     rows = result.fetchall()
     await db.flush()
+    logger.info('All notifications marked read: user=%s count=%d', user_id, len(rows))
     return len(rows)
 
 
@@ -119,4 +121,5 @@ async def create_notification(
     db.add(notification)
     await db.flush()
     await db.refresh(notification)
+    logger.info('Notification created: id=%s user=%s type=%s', notification.id, user_id, type)
     return notification

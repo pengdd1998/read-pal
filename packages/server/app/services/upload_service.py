@@ -1,5 +1,6 @@
 """File upload and content processing service."""
 
+import asyncio
 import logging
 import re
 from pathlib import Path
@@ -202,4 +203,25 @@ async def create_book_with_content(
         result['total_pages'],
         len(result['chapters']),
     )
+
+    asyncio.create_task(
+        _safe_precompute(book.id, document.id, result['chapters'])
+    )
+
     return book
+
+
+async def _safe_precompute(
+    book_id: UUID,
+    document_id: UUID,
+    chapters: list[dict],
+) -> None:
+    """Fire-and-forget embedding pre-computation."""
+    try:
+        from app.services.rag_service import precompute_book_embeddings
+        await precompute_book_embeddings(book_id, document_id, chapters)
+    except Exception as exc:
+        logger.error(
+            'Background embedding pre-computation failed for book %s: %s',
+            book_id, exc,
+        )

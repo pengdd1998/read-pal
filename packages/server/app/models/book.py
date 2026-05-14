@@ -27,6 +27,7 @@ from app.db import Base
 if TYPE_CHECKING:
     from app.models.ai_feedback import AIFeedback
     from app.models.annotation import Annotation
+    from app.models.book_chunk import BookChunk
     from app.models.chat_message import ChatMessage
     from app.models.conversation_summary import ConversationSummary
     from app.models.document import Document
@@ -216,6 +217,11 @@ class Book(Base):
     )
     reading_plans: Mapped[list['ReadingPlan']] = relationship(
         'ReadingPlan',
+        back_populates='book',
+        cascade='all, delete-orphan',
+    )
+    chunks: Mapped[list['BookChunk']] = relationship(
+        'BookChunk',
         back_populates='book',
         cascade='all, delete-orphan',
     )

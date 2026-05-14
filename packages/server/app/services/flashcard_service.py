@@ -38,6 +38,7 @@ async def create_flashcard(
     db.add(card)
     await db.flush()
     await db.refresh(card)
+    logger.info('Flashcard created: id=%s user=%s book=%s', card.id, user_id, data.book_id)
     return card
 
 
@@ -90,6 +91,7 @@ async def review_flashcard(
 
     await db.flush()
     await db.refresh(card)
+    logger.info('Flashcard reviewed: id=%s user=%s rating=%d interval=%d ef=%.2f', flashcard_id, user_id, rating, new_interval, new_ef)
     return card
 
 

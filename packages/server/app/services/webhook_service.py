@@ -34,6 +34,7 @@ async def create_webhook(
     db.add(webhook)
     await db.flush()
     await db.refresh(webhook)
+    logger.info('Webhook created: id=%s user=%s url=%s events=%s', webhook.id, user_id, webhook.url, webhook.events)
     return webhook
 
 
@@ -76,6 +77,7 @@ async def update_webhook(
 
     await db.flush()
     await db.refresh(webhook)
+    logger.info('Webhook updated: id=%s user=%s fields=%s', webhook_id, user_id, list(update_data.keys()))
     return webhook
 
 
@@ -97,6 +99,7 @@ async def delete_webhook(
 
     await db.delete(webhook)
     await db.flush()
+    logger.info('Webhook deleted: id=%s user=%s', webhook_id, user_id)
 
 
 async def get_delivery_logs(
@@ -167,9 +170,11 @@ async def deliver_webhook(
                 headers=headers,
             )
         duration_ms = int((time.monotonic() - start) * 1000)
+        logger.info('Webhook delivered: url=%s event=%s status=%d duration=%dms', webhook.url, event, response.status_code, duration_ms)
         return response.status_code, duration_ms, None
     except Exception as exc:
         duration_ms = int((time.monotonic() - start) * 1000)
+        logger.error('Webhook delivery failed: url=%s event=%s duration=%dms error=%s', webhook.url, event, duration_ms, exc)
         return None, duration_ms, str(exc)
 
 

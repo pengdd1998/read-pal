@@ -22,7 +22,7 @@ dependencies = [
     "networkx>=3.4.0",
     "langchain>=0.3.0",
     "langchain-openai>=0.2.0",
-    # "pinecone>=5.0.0",  # add when needed
+    "pgvector>=0.3.6",
     "numpy>=2.1.0",
     "email-validator>=2.3.0",
 ]

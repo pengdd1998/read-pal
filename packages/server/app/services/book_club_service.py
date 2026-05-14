@@ -209,6 +209,7 @@ async def leave_club(
 
     await db.delete(member)
     await db.flush()
+    logger.info('User left club: user=%s club=%s', user_id, club_id)
 
 
 async def update_club(
@@ -245,6 +246,7 @@ async def update_club(
 
     await db.flush()
     await db.refresh(club)
+    logger.info('Club updated: id=%s user=%s fields=%s', club_id, user_id, list(update_data.keys()))
     return club
 
 
@@ -302,6 +304,7 @@ async def add_discussion(
     db.add(discussion)
     await db.flush()
     await db.refresh(discussion)
+    logger.info('Discussion added: id=%s club=%s user=%s', discussion.id, club_id, user_id)
     return discussion
 
 

@@ -86,7 +86,7 @@ async def send_password_reset_email(email: str, token: str) -> None:
         logger.info('Password reset email sent to %s', email)
 
     except Exception:
-        logger.warning(
+        logger.error(
             'Failed to send password reset email to %s',
             email,
             exc_info=True,

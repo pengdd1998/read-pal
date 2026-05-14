@@ -55,6 +55,7 @@ async def create_share(
     db.add(share)
     await db.flush()
     await db.refresh(share)
+    logger.info('Share created: id=%s user=%s book=%s format=%s', share.id, user_id, data.book_id, data.format)
     return share
 
 
@@ -82,6 +83,7 @@ async def get_share(
     share.view_count = (share.view_count or 0) + 1
     await db.flush()
     await db.refresh(share)
+    logger.info('Share accessed: id=%s views=%d', share.id, share.view_count)
     return share
 
 
@@ -121,3 +123,4 @@ async def delete_share(
 
     await db.delete(share)
     await db.flush()
+    logger.info('Share deleted: id=%s user=%s', share_id, user_id)
