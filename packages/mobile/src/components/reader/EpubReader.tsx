@@ -2,7 +2,7 @@ import React, { useRef, useCallback, useState } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useReaderStore, type ReaderTheme } from '@/stores/reader-store';
-import type { Chapter } from '@read-pal/shared';
+import type { Chapter, Annotation } from '@read-pal/shared';
 
 interface EpubReaderProps {
   chapters: Chapter[];
@@ -10,6 +10,7 @@ interface EpubReaderProps {
   onChapterChange?: (index: number) => void;
   onSelection: (text: string, cfiRange: string, boundingRect: { top: number; left: number }, offsets?: { start: number; end: number }) => void;
   onProgress: (progress: number) => void;
+  annotations?: Annotation[];
 }
 
 const THEME_BG: Record<ReaderTheme, string> = {
