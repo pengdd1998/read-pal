@@ -149,8 +149,8 @@ export default function BookClubsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4 mt-3 text-xs text-gray-400 dark:text-gray-500">
-                  <span>{club.memberCount ?? '—'} {t('members')}</span>
-                  <span>{t('max', { count: club.maxMembers })}</span>
+                  <span>{club.memberCount != null ? t(club.memberCount === 1 ? 'memberCount' : 'memberCountPlural', { count: club.memberCount }) : `— ${t('members')}`}</span>
+                  {club.maxMembers != null && <span>{t('max', { count: club.maxMembers })}</span>}
                 </div>
               </Link>
             ))}

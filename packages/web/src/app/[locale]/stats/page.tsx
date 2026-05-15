@@ -219,14 +219,14 @@ export default function StatsPage() {
                 <h2 className="font-semibold text-gray-900 dark:text-white">{t('reading_velocity')}</h2>
                 <span className="text-xs text-gray-400">
                   {sessions.length > 0
-                    ? t('avg_pages_session', { count: (sessions.reduce((a, s) => a + s.pagesRead, 0) / sessions.length).toFixed(1) })
+                    ? t('avg_pages_session', { count: (sessions.reduce((a, s) => a + (s.pagesRead || 0), 0) / sessions.length).toFixed(1) })
                     : ''}
                 </span>
               </div>
               <svg viewBox="0 0 300 80" className="w-full h-24" preserveAspectRatio="none" role="img" aria-label="Reading velocity trend chart">
                 {(() => {
                   const data = sessions.slice(0, 14).reverse();
-                  const maxPages = Math.max(...data.map((s) => s.pagesRead), 1);
+                  const maxPages = Math.max(...data.map((s) => s.pagesRead || 0), 1);
                   const maxDuration = Math.max(...data.map((s) => s.duration || 1), 1);
                   const w = 300;
                   const h = 70;
@@ -235,7 +235,7 @@ export default function StatsPage() {
                   // Area fill for pages
                   const points = data.map((s, i) => {
                     const x = (i / Math.max(data.length - 1, 1)) * w;
-                    const y = h - padY - ((s.pagesRead / maxPages) * (h - padY * 2));
+                    const y = h - padY - (((s.pagesRead || 0) / maxPages) * (h - padY * 2));
                     return { x, y };
                   });
                   const areaPath = `M${points[0].x},${h} ${points.map((p) => `L${p.x},${p.y}`).join(' ')} L${points[points.length - 1].x},${h} Z`;

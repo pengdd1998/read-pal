@@ -11,9 +11,9 @@ export interface RelativeTimeLabels {
 
 const DEFAULT_LABELS: RelativeTimeLabels = {
   just_now: 'Just now',
-  minutes_ago: '{n}m ago',
-  hours_ago: '{n}h ago',
-  days_ago: '{n}d ago',
+  minutes_ago: '%nm ago',
+  hours_ago: '%nh ago',
+  days_ago: '%nd ago',
 };
 
 /**
@@ -28,11 +28,11 @@ export function formatRelativeTime(dateStr: string, labels?: RelativeTimeLabels)
     const diffMs = Date.now() - date.getTime();
     const diffMin = Math.floor(diffMs / 60000);
     if (diffMin < 1) return l.just_now;
-    if (diffMin < 60) return l.minutes_ago.replace('{n}', String(diffMin));
+    if (diffMin < 60) return l.minutes_ago.replace('%n', String(diffMin));
     const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return l.hours_ago.replace('{n}', String(diffHr));
+    if (diffHr < 24) return l.hours_ago.replace('%n', String(diffHr));
     const diffDay = Math.floor(diffHr / 24);
-    if (diffDay < 7) return l.days_ago.replace('{n}', String(diffDay));
+    if (diffDay < 7) return l.days_ago.replace('%n', String(diffDay));
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   } catch {
     return dateStr;
