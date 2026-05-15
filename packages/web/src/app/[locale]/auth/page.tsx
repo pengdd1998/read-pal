@@ -13,6 +13,11 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 
 type AuthMode = 'login' | 'register';
 
+/** Strip locale prefix from a path so next-intl's router.push doesn't double-prefix. */
+function stripLocale(path: string): string {
+  return path.replace(/^\/(en|zh)(\/|$)/, '/');
+}
+
 function AuthForm() {
   const t = useTranslations('auth');
   const tc = useTranslations('common');
@@ -51,7 +56,7 @@ function AuthForm() {
   useEffect(() => {
     if (isAuthenticated && !justRegisteredRef.current) {
       const next = searchParams?.get('next') || '/dashboard';
-      router.push(next);
+      router.push(stripLocale(next));
     }
   }, [isAuthenticated, router, searchParams]);
 
@@ -70,7 +75,7 @@ function AuthForm() {
       if (mode === 'login') {
         await login(email, password);
         const next = searchParams?.get('next') || '/dashboard';
-        router.push(next);
+        router.push(stripLocale(next));
       } else {
         await register(name, email, password);
         analytics.track('user_registered');

@@ -56,7 +56,7 @@ export default function MemoryBooksPage() {
 
   useEffect(() => {
     Promise.all([
-      api.get<MemoryBook[]>('/api/memory-books'),
+      api.get<MemoryBook[]>('/api/v1/reading-book'),
       api.get<Book[]>('/api/books'),
     ])
       .then(([mbRes, booksRes]) => {
@@ -75,7 +75,7 @@ export default function MemoryBooksPage() {
   const handleGenerate = async (bookId: string) => {
     setGenerating(bookId);
     try {
-      const res = await api.post<MemoryBook>('/api/memory-books/generate', {
+      const res = await api.post<MemoryBook>('/api/v1/reading-book/generate', {
         book_id: bookId,
         format: 'personal_book',
       });

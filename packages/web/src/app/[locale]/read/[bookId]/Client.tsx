@@ -25,7 +25,7 @@ import { ReaderSettingsMenu } from '@/components/reading/ReaderSettingsMenu';
 
 // Lazy-load heavy reading components
 const ReaderView = dynamic(() => import('@/components/reading/ReaderView').then((m) => ({ default: m.ReaderView })), { ssr: false });
-const CompanionChat = dynamic(() => import('@/components/reading/CompanionChat').then((m) => ({ default: m.CompanionChat })), { ssr: false });
+const CompanionChatDynamic = dynamic(() => import('@/components/reading/CompanionChat').then((m) => ({ default: m.CompanionChat })), { ssr: false });
 const SelectionToolbar = dynamic(() => import('@/components/reading/SelectionToolbar').then((m) => ({ default: m.SelectionToolbar })), { ssr: false });
 const AnnotationsSidebar = dynamic(() => import('@/components/reading/AnnotationsSidebar').then((m) => ({ default: m.AnnotationsSidebar })), { ssr: false });
 const ReadingBackground = dynamic(() => import('@/components/reading/ReadingBackground').then((m) => ({ default: m.ReadingBackground })), { ssr: false });
@@ -184,7 +184,7 @@ export default function ReadPage() {
 
   const contentRef = useRef<HTMLElement | null>(null);
   const [contentReady, setContentReady] = useState(false);
-  const chatRef = useRef<CompanionChatHandle>(null);
+  const chatHandleRef = useRef<CompanionChatHandle | null>(null);
 
   // Keep contentRef synced with the reader-content div rendered by ReaderView.
   // Re-sync when chapter changes (content re-renders with new key).
@@ -496,7 +496,7 @@ export default function ReadPage() {
           onDismiss={annotationActions.dismissSelection}
           onAskAI={(text) => {
             const truncated = text.length > 200 ? text.slice(0, 200) + '...' : text;
-            chatRef.current?.openWithMessage(`Can you explain this passage: '${truncated}'`);
+            chatHandleRef.current?.openWithMessage(`Can you explain this passage: '${truncated}'`);
           }}
         />
       )}
@@ -541,8 +541,8 @@ export default function ReadPage() {
       </div>
 
       {/* Companion chat */}
-      <CompanionChat
-        ref={chatRef}
+      <CompanionChatDynamic
+        onReady={(handle: CompanionChatHandle) => { chatHandleRef.current = handle; }}
         bookId={bookId}
         currentPage={currentChapter}
         totalPages={chapters.length}
@@ -559,7 +559,7 @@ export default function ReadPage() {
           chapterContent={chapterContent}
           chapterIndex={currentChapter}
           onAskAboutCharacter={(name) => {
-            chatRef.current?.openWithMessage(`Tell me about ${name} — their role, motivations, and how they've developed so far.`);
+            chatHandleRef.current?.openWithMessage(`Tell me about ${name} — their role, motivations, and how they've developed so far.`);
           }}
         />
       )}

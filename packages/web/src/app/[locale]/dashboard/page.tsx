@@ -30,7 +30,7 @@ const INSIGHTS_POOL_KEYS: InsightKey[] = [
   { agentKey: 'agent_coach', icon: '\uD83C\uDFAF', key: 'insight_coach' },
   { agentKey: 'agent_synthesis', icon: '\uD83E\uDDE0', key: 'insight_synthesis' },
   { agentKey: 'agent_friend', icon: '\uD83E\uDD1D', key: 'insight_friend' },
-];
+] as const;
 
 function getTimeGreetingKey(): string {
   const hour = new Date().getHours();

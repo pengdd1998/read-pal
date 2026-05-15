@@ -69,6 +69,8 @@ interface CompanionChatProps {
   chapterContent?: string;
   genreMetadata?: string[] | string;
   bookDescription?: string;
+  /** Callback invoked with the imperative handle once the component mounts. */
+  onReady?: (handle: CompanionChatHandle) => void;
 }
 
 interface FriendPersona {
@@ -131,7 +133,7 @@ function snapToEdge(pos: DragPosition): DragPosition {
 
 const DEFAULT_PERSONA: FriendPersona = { name: 'Penny', emoji: '\u2B50' };
 
-export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent, genreMetadata, bookDescription }, ref) {
+export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent, genreMetadata, bookDescription, onReady }, ref) {
   const { toast } = useToast();
   const t = useTranslations('reader');
   const tc = useTranslations('common');
@@ -254,6 +256,18 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     },
   }), []);
 
+  // Notify parent via callback (works through next/dynamic unlike ref)
+  useEffect(() => {
+    if (onReady) {
+      onReady({
+        openWithMessage: (message: string) => {
+          pendingMessageRef.current = message;
+          setIsOpen(true);
+        },
+      });
+    }
+  }, [onReady]);
+
   // Auto-open chat for first-time readers after a brief delay (the "aha moment")
   // Genre-aware: auto-opens for non-fiction/technical/academic; stays closed for fiction
   // Skip if FeatureTour hasn't completed — avoid competing overlays on first visit
@@ -319,7 +333,6 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             },
           }),
         });
-
         if (!response.ok) {
           // Retry on 5xx or 429, not on 4xx client errors
           if ((response.status >= 500 || response.status === 429) && attempt < MAX_RETRIES) {

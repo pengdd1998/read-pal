@@ -80,19 +80,23 @@ export default function SearchPage() {
       setSearched(false);
       try {
         const [bookRes, annRes, semRes] = await Promise.all([
-          api.get<Book[]>('/api/discovery/search', { q: query }),
-          api.get<Record<string, unknown>[]>('/api/annotations/search', { q: query, limit: 20 }),
-          api.get<Passage[]>('/api/discovery/semantic', { q: query, topK: 10, minScore: 0.3 }).catch(() => ({ success: false, data: [] as Passage[] })),
+          api.get<Book[]>('/api/discovery/search', { q: query }).catch(() => ({ success: false as const, data: [] as Book[] })),
+          api.get<Record<string, unknown>[]>('/api/annotations/search', { q: query, limit: 20 }).catch(() => ({ success: false as const, data: [] as Record<string, unknown>[] })),
+          api.get<Passage[]>('/api/discovery/semantic', { q: query, topK: 10, minScore: 0.3 }).catch(() => ({ success: false as const, data: [] as Passage[] })),
         ]);
 
         if (bookRes.success && bookRes.data) {
-          setResults(Array.isArray(bookRes.data) ? bookRes.data : []);
+          const raw = bookRes.data as unknown;
+          const books = Array.isArray(raw) ? raw : (raw as Record<string, unknown>)?.items;
+          setResults(Array.isArray(books) ? books : []);
         } else {
           setResults([]);
         }
 
         if (annRes.success && annRes.data) {
-          setHighlights((annRes.data )
+          const raw = annRes.data as unknown;
+          const annItems = Array.isArray(raw) ? raw : ((raw as Record<string, unknown>)?.items ?? []);
+          setHighlights((annItems as Record<string, unknown>[])
             .map((a: Record<string, unknown>) => ({
               id: a.id as string,
               content: (a.content as string) || (a.note as string) || '',
@@ -105,7 +109,9 @@ export default function SearchPage() {
         }
 
         if (semRes.success && semRes.data) {
-          setPassages(Array.isArray(semRes.data) ? semRes.data : []);
+          const raw = semRes.data as unknown;
+          const items = Array.isArray(raw) ? raw : (raw as Record<string, unknown>)?.items;
+          setPassages(Array.isArray(items) ? items : []);
         } else {
           setPassages([]);
         }

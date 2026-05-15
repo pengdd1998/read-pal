@@ -16,7 +16,7 @@
  * - Book content pre-caching for offline reading
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `readpal-${CACHE_VERSION}`;
 const STATIC_CACHE = `readpal-static-${CACHE_VERSION}`;
 const API_CACHE = `readpal-api-${CACHE_VERSION}`;
@@ -75,7 +75,11 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== location.origin) return;
 
   // Route to appropriate strategy
-  if (isStaticAsset(url.pathname)) {
+  if (isAppChunk(url.pathname)) {
+    // JS/CSS chunks: stale-while-revalidate — serve cached instantly, fetch fresh in background
+    event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
+  } else if (isStaticAsset(url.pathname)) {
+    // Fonts, images, etc.: cache-first (rarely change)
     event.respondWith(cacheFirst(request, STATIC_CACHE));
   } else if (isBookContent(url.pathname)) {
     // Book content: cache-first with very long TTL — critical for offline reading
@@ -107,6 +111,21 @@ async function cacheFirst(request, cacheName) {
   } catch {
     return new Response('', { status: 503, statusText: 'Offline' });
   }
+}
+
+/** Stale-while-revalidate: serve cache instantly, update in background */
+async function staleWhileRevalidate(request, cacheName) {
+  const cached = await caches.match(request);
+
+  const fetchPromise = fetch(request).then((response) => {
+    if (response.ok) {
+      const cache = caches.open(cacheName);
+      cache.then((c) => c.put(request, response.clone()));
+    }
+    return response;
+  }).catch(() => cached || new Response('', { status: 503, statusText: 'Offline' }));
+
+  return cached || fetchPromise;
 }
 
 /** Cache-first with TTL check — serves from cache if fresh, refreshes in background */
@@ -240,9 +259,14 @@ async function networkOnlyWithOfflineFallback(request) {
 
 // --- Helpers ---
 
+function isAppChunk(pathname) {
+  return pathname.startsWith('/_next/static/chunks/') ||
+    (pathname.startsWith('/_next/static/') && /\.(js|css)$/i.test(pathname));
+}
+
 function isStaticAsset(pathname) {
-  return /\.(js|css|woff2?|ttf|eot|svg|ico|woff)$/i.test(pathname) ||
-    pathname.startsWith('/_next/static/');
+  return /\.(woff2?|ttf|eot|svg|ico|woff)$/i.test(pathname) ||
+    (pathname.startsWith('/_next/static/') && !isAppChunk(pathname));
 }
 
 function isBookContent(pathname) {

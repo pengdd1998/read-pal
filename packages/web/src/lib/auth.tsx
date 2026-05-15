@@ -3,9 +3,37 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { api } from './api';
-import { getAuthToken, getAuthTokenAsync, setAuthTokens, clearAuthTokens } from './auth-fetch';
 import { isCapacitor } from './capacitor';
 import { getItem, setItem, removeItem } from './native-storage';
+import { clearQueue } from './offline-queue';
+
+/** Inline token helpers — avoids webpack tree-shaking bug in dev mode */
+function getAuthToken(): string | null {
+  return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+}
+
+async function getAuthTokenAsync(): Promise<string | null> {
+  if (isCapacitor()) return getItem('auth_token');
+  return getAuthToken();
+}
+
+async function storeTokens(access: string, refresh: string): Promise<void> {
+  await setItem('auth_token', access);
+  await setItem('refresh_token', refresh);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('auth_token', access);
+    localStorage.setItem('refresh_token', refresh);
+  }
+}
+
+async function clearTokens(): Promise<void> {
+  await removeItem('auth_token');
+  await removeItem('refresh_token');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+  }
+}
 
 /** Set a simple cookie so Next.js middleware can detect auth state */
 function setAuthCookie(token: string) {
@@ -41,6 +69,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,9 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const persistAuth = useCallback(async (newToken: string, newUser: User, newRefreshToken?: string) => {
     await removeItem('user');
     await setItem('user', JSON.stringify(newUser));
-    // Store both tokens
     if (newRefreshToken) {
-      await setAuthTokens(newToken, newRefreshToken);
+      await storeTokens(newToken, newRefreshToken);
     } else {
       await setItem('auth_token', newToken);
       if (typeof window !== 'undefined') localStorage.setItem('auth_token', newToken);
@@ -115,14 +143,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [persistAuth]);
 
   const logout = useCallback(async () => {
-    // Get refresh token to send with logout request
     const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
     try {
       await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
     } catch {
       // Logout is idempotent — ignore errors
     }
-    await clearAuthTokens();
+    await clearTokens();
     await removeItem('user');
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user');
@@ -130,9 +157,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAuthCookie();
     setToken(null);
     setUser(null);
-    const router = useRouter();
-    router.push('/login');
-  }, []);
+    // Clear offline mutation queue — prevents stale mutations from previous sessions
+    clearQueue().catch(() => {});
+    router.push('/auth?mode=login');
+  }, [router]);
 
   const oauthLogin = useCallback(async (newToken: string, newUser: User) => {
     await persistAuth(newToken, newUser);

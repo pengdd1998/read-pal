@@ -51,7 +51,7 @@ export default function ReadingMirrorPage() {
   useEffect(() => {
     if (!bookId) return;
     Promise.all([
-      api.get<ReadingMirror>(`/api/memory-books/${bookId}`),
+      api.get<ReadingMirror>(`/api/v1/reading-book/${bookId}`),
       api.get<{ title: string; author: string; coverUrl?: string }>(`/api/books/${bookId}`),
     ]).then(([mirrorRes, bookRes]) => {
       if (mirrorRes.success && mirrorRes.data) {
@@ -80,7 +80,7 @@ export default function ReadingMirrorPage() {
     setGenStep(steps[0]);
 
     try {
-      const res = await api.post<ReadingMirror>(`/api/memory-books/${bookId}/generate`, {
+      const res = await api.post<ReadingMirror>(`/api/v1/reading-book/${bookId}/generate`, {
         format: 'reading_mirror',
       });
       clearInterval(timer);

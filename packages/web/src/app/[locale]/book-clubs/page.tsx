@@ -34,8 +34,14 @@ export default function BookClubsPage() {
           api.get<ClubListItem[]>('/api/book-clubs/discover'),
         ]);
         if (!cancelled) {
-          if (myRes.success && myRes.data) setMyClubs(myRes.data);
-          if (discRes.success && discRes.data) setDiscoverClubs(discRes.data as ClubListItem[]);
+          if (myRes.success && myRes.data) {
+            const d = myRes.data as unknown;
+            setMyClubs(Array.isArray(d) ? d : ((d as Record<string, unknown>)?.items as ClubListItem[]) || []);
+          }
+          if (discRes.success && discRes.data) {
+            const d = discRes.data as unknown;
+            setDiscoverClubs(Array.isArray(d) ? d : ((d as Record<string, unknown>)?.items as ClubListItem[]) || []);
+          }
         }
       } catch {
         // ignore

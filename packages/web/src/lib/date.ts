@@ -1,7 +1,5 @@
 /**
  * Date formatting utilities
- *
- * Shared date formatting functions used across the app.
  */
 
 export interface RelativeTimeLabels {
