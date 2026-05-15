@@ -14,6 +14,13 @@ depends_on = None
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+    exists = conn.execute(
+        sa.text("SELECT to_regclass('book_chunks')")
+    ).scalar()
+    if exists:
+        return
+
     op.execute('CREATE EXTENSION IF NOT EXISTS vector')
 
     op.create_table(
