@@ -158,7 +158,7 @@ async def test_refresh_token(client):
     reg = await register_user(client)
     resp = await client.post(
         '/api/v1/auth/refresh',
-        headers=auth_headers(reg['token']),
+        json={'refreshToken': reg['refreshToken']},
     )
     assert resp.status_code == 200
     data = resp.json()['data']
