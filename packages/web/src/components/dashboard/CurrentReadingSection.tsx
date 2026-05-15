@@ -8,10 +8,8 @@ import { formatRelativeTime } from '@/lib/date';
 import { SkeletonPulse } from './SkeletonPulse';
 import type { RecentBook, DashboardStats } from './types';
 
-const formatLastRead = formatRelativeTime;
-
 export interface InsightKey {
-  agent: string;
+  agentKey: string;
   icon: string;
   key: string;
 }
@@ -25,6 +23,14 @@ interface CurrentReadingSectionProps {
 
 export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDayKey }: CurrentReadingSectionProps) {
   const t = useTranslations('dashboard');
+  const tc = useTranslations('common');
+
+  const fmtTime = (d: string) => formatRelativeTime(d, {
+    just_now: tc('just_now'),
+    minutes_ago: tc('minutes_ago'),
+    hours_ago: tc('hours_ago'),
+    days_ago: tc('days_ago'),
+  });
 
   const currentBook = recentBooks.length > 0 ? recentBooks[0] : null;
   const activeBooks = useMemo(
@@ -89,7 +95,7 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <span className="text-[10px] text-gray-400 whitespace-nowrap">{formatLastRead(book.lastRead)}</span>
+                    <span className="text-[10px] text-gray-400 whitespace-nowrap">{fmtTime(book.lastRead)}</span>
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
                       {t('continue_button')}
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -132,9 +138,9 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                <span className="text-[10px] text-gray-400 whitespace-nowrap">{formatLastRead(currentBook.lastRead)}</span>
+                <span className="text-[10px] text-gray-400 whitespace-nowrap">{fmtTime(currentBook.lastRead)}</span>
                 <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
-                  Continue
+                  {t('continue_button')}
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
@@ -257,7 +263,7 @@ function InsightCard({ insightKey }: { insightKey: InsightKey | null }) {
         <span className="text-2xl leading-none mt-0.5">{insightKey?.icon}</span>
         <div>
           <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
-            {insightKey?.agent}
+            {insightKey ? t(insightKey.agentKey) : ''}
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
             {insightKey ? t(insightKey.key) : ''}

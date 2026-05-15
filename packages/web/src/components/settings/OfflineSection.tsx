@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { getQueueCount, clearQueue, cacheBookForOffline } from '@/lib/offline-queue';
@@ -13,6 +14,7 @@ interface CachedBook {
 
 export function OfflineSection() {
   const { toast } = useToast();
+  const t = useTranslations('settings_page');
   const [queueCount, setQueueCount] = useState(0);
   const [cachedBooks, setCachedBooks] = useState<CachedBook[]>([]);
   const [books, setBooks] = useState<Array<{ id: string; title: string; author: string }>>([]);
@@ -55,7 +57,7 @@ export function OfflineSection() {
       for (const book of booksToCache) {
         await cacheBookForOffline(book.id, [{ id: '1' }]);
       }
-      toast(`${booksToCache.length} book${booksToCache.length > 1 ? 's' : ''} cached for offline`, 'success');
+      toast(t('offline_cache_success', { count: booksToCache.length }), 'success');
       setSelectedBooks(new Set());
       const dbReq = indexedDB.open('readpal-offline', 2);
       dbReq.onsuccess = () => {
@@ -68,7 +70,7 @@ export function OfflineSection() {
         }
       };
     } catch {
-      toast('Failed to cache books', 'error');
+      toast(t('offline_cache_failed'), 'error');
     } finally {
       setCaching(false);
     }
@@ -83,11 +85,11 @@ export function OfflineSection() {
         tx.objectStore('bookContent').delete(bookId);
         tx.oncomplete = () => {
           setCachedBooks((prev) => prev.filter((b) => b.bookId !== bookId));
-          toast('Removed from offline cache', 'success');
+          toast(t('offline_remove_success'), 'success');
         };
       };
     } catch {
-      toast('Failed to remove', 'error');
+      toast(t('offline_remove_failed'), 'error');
     }
   }
 
@@ -95,9 +97,9 @@ export function OfflineSection() {
     try {
       await clearQueue();
       setQueueCount(0);
-      toast('Pending sync queue cleared', 'success');
+      toast(t('offline_queue_cleared'), 'success');
     } catch {
-      toast('Failed to clear queue', 'error');
+      toast(t('offline_clear_failed'), 'error');
     }
   }
 
@@ -109,11 +111,11 @@ export function OfflineSection() {
         {/* Status */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Sync Status</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('offline_sync_status')}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {queueCount > 0
-                ? `${queueCount} change${queueCount !== 1 ? 's' : ''} pending sync`
-                : 'All changes synced'}
+                ? t('offline_queue_pending', { count: queueCount })
+                : t('offline_all_synced')}
             </p>
           </div>
           {queueCount > 0 && (
@@ -121,16 +123,16 @@ export function OfflineSection() {
               onClick={handleClearQueue}
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
-              Clear Queue
+              {t('offline_clear_queue')}
             </button>
           )}
         </div>
 
         {/* Cached books */}
         <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Cached Books</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{t('offline_cached_books')}</h3>
           {cachedBooks.length === 0 ? (
-            <p className="text-xs text-gray-400 dark:text-gray-500">No books cached for offline reading yet.</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{t('offline_no_cached')}</p>
           ) : (
             <div className="space-y-2">
               {cachedBooks.map((cb) => (
@@ -143,7 +145,7 @@ export function OfflineSection() {
                     onClick={() => handleRemoveCached(cb.bookId)}
                     className="text-xs text-gray-400 hover:text-red-500 transition-colors"
                   >
-                    Remove
+                    {t('offline_remove')}
                   </button>
                 </div>
               ))}
@@ -154,8 +156,8 @@ export function OfflineSection() {
         {/* Cache more books */}
         {books.length > 0 && (
           <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Cache for Offline</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Select books to make available without internet.</p>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{t('offline_cache_heading')}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t('offline_cache_desc')}</p>
             <div className="space-y-1.5 max-h-48 overflow-y-auto">
               {books
                 .filter((b) => !cachedIds.has(b.id))
@@ -177,7 +179,7 @@ export function OfflineSection() {
                   </label>
                 ))}
               {books.filter((b) => !cachedIds.has(b.id)).length === 0 && (
-                <p className="text-xs text-gray-400">All current books are already cached.</p>
+                <p className="text-xs text-gray-400">{t('offline_all_cached')}</p>
               )}
             </div>
             {selectedBooks.size > 0 && (
@@ -186,7 +188,7 @@ export function OfflineSection() {
                 disabled={caching}
                 className="mt-3 px-4 py-2 rounded-lg text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-50 transition-colors"
               >
-                {caching ? 'Caching...' : `Cache ${selectedBooks.size} Book${selectedBooks.size > 1 ? 's' : ''}`}
+                {caching ? t('offline_caching') : t('offline_cache_button', { count: selectedBooks.size })}
               </button>
             )}
           </div>

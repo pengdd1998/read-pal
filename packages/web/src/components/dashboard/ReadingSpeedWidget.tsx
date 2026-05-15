@@ -52,7 +52,7 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
           <div key={b.bookId}>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[60%]">{b.title}</span>
-              <span className="text-xs tabular-nums text-gray-500">{b.wpm} wpm</span>
+              <span className="text-xs tabular-nums text-gray-500">{b.wpm} {t('words_min')}</span>
             </div>
             <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
               <div

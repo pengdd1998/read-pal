@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { Component, ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Props {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  children: ReactNode;
+  fallback?: ReactNode;
   /** Optional label for debugging — shown in error message */
   label?: string;
 }
@@ -15,8 +16,8 @@ interface State {
   errorInfo: React.ErrorInfo | null;
 }
 
-export class ErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
+class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Record<string, string>) => string }, State> {
+  constructor(props: Props & { t: (key: string, vars?: Record<string, string>) => string }) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
   }
@@ -42,7 +43,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
 
-      const errorMessage = this.state.error?.message || 'This section encountered an error';
+      const { t } = this.props;
+      const errorMessage = this.state.error?.message || t('section_error');
       const isChunkError = errorMessage.toLowerCase().includes('chunk') ||
         errorMessage.toLowerCase().includes('loading css') ||
         errorMessage.toLowerCase().includes('dynamically imported');
@@ -57,14 +59,14 @@ export class ErrorBoundary extends React.Component<Props, State> {
             </div>
 
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-              {this.props.label ? `Error in ${this.props.label}` : 'Something went wrong'}
+              {this.props.label ? t('in_section', { label: this.props.label }) : t('something_wrong')}
             </h3>
 
             <p className="text-xs text-gray-500 mb-3">{errorMessage}</p>
 
             {isChunkError && (
               <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
-                This may be caused by a stale page after a recent update.
+                {t('stale_page')}
               </p>
             )}
 
@@ -73,28 +75,28 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 onClick={this.handleRetry}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 active:scale-[0.98] transition-all"
               >
-                Try again
+                {t('try_again')}
               </button>
               {isChunkError ? (
                 <button
                   onClick={() => window.location.reload()}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all"
                 >
-                  Reload page
+                  {t('reload_page')}
                 </button>
               ) : (
                 <button
                   onClick={this.handleGoHome}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all"
                 >
-                  Go Home
+                  {t('go_home')}
                 </button>
               )}
             </div>
 
             {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
               <details className="mt-4 text-left">
-                <summary className="text-xs text-gray-400 cursor-pointer">Stack trace</summary>
+                <summary className="text-xs text-gray-400 cursor-pointer">{t('stack_trace')}</summary>
                 <pre className="mt-2 text-[10px] text-red-500 overflow-auto max-h-32 bg-red-50 dark:bg-red-950/20 p-2 rounded-lg">
                   {this.state.errorInfo.componentStack}
                 </pre>
@@ -106,4 +108,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
     }
     return this.props.children;
   }
+}
+
+export function ErrorBoundary(props: Props) {
+  const t = useTranslations('errors');
+  return <ErrorBoundaryInner {...props} t={t} />;
 }

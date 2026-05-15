@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
 
@@ -9,6 +10,7 @@ interface BookUploaderProps {
 }
 
 export function BookUploader({ onUploadComplete }: BookUploaderProps) {
+  const t = useTranslations('library');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [success, setSuccess] = useState(false);
@@ -49,8 +51,8 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       }
     } catch (err) {
       const msg = err instanceof TypeError && err.message.includes('fetch')
-        ? 'Network error — please check your connection and try again.'
-        : 'Failed to upload file. It may be corrupted or in an unsupported format.';
+        ? t('upload_network_error')
+        : t('upload_failed');
       setError(msg);
     } finally {
       setUploading(false);
@@ -69,11 +71,11 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
       ext === 'pdf';
 
     if (!isValid) {
-      setError('Only EPUB and PDF files are supported');
+      setError(t('upload_format_error'));
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      setError('File size must be less than 50MB');
+      setError(t('upload_size_error'));
       return;
     }
     uploadFile(file);
@@ -117,7 +119,7 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
         accept=".epub,.pdf,application/epub+zip,application/pdf"
         onChange={handleFileSelect}
         disabled={uploading || success}
-        aria-label="Upload book file"
+        aria-label={t('upload_aria_label')}
         className="hidden"
       />
 
@@ -129,8 +131,8 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-300">Book uploaded!</h3>
-          <p className="text-teal-600 dark:text-teal-400 text-sm mt-1">Adding to your library...</p>
+          <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-300">{t('upload_success')}</h3>
+          <p className="text-teal-600 dark:text-teal-400 text-sm mt-1">{t('upload_adding')}</p>
         </div>
       ) : (
         <>
@@ -147,10 +149,10 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
             </svg>
           </div>
           <h3 className="text-lg font-semibold mb-1">
-            {uploading ? 'Uploading...' : 'Click or drag your book here to upload'}
+            {uploading ? 'Uploading...' : t('upload_drag_here')}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 text-sm">
-            EPUB or PDF, max 50MB
+            {t('upload_format_hint')}
           </p>
 
           {uploading && (
@@ -162,7 +164,7 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                {uploadProgress < 100 ? `${uploadProgress}% uploaded...` : 'Processing your book...'}
+                {uploadProgress < 100 ? t('upload_progress', { progress: uploadProgress }) : t('upload_processing')}
               </p>
             </div>
           )}

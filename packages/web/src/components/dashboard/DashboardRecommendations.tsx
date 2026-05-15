@@ -69,7 +69,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
               <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{r.title}</p>
               <p className="text-[10px] text-gray-400 truncate">{r.author}</p>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 whitespace-nowrap">{r.genre}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 whitespace-nowrap">{r.genre ? t(`genre_${r.genre.toLowerCase().replace('-', '_')}`) || r.genre : ''}</span>
           </div>
         ))}
       </div>

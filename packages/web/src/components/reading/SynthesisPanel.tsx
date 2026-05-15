@@ -166,7 +166,7 @@ export function SynthesisPanel({
               }`}
             >
               {tab.icon}
-              {tab.label}
+              {t(tab.label)}
               {activeTab === tab.key && <span className="absolute bottom-0 left-1 right-1 h-0.5 bg-amber-500 rounded-full" />}
             </button>
           ))}
@@ -175,7 +175,7 @@ export function SynthesisPanel({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {TABS.find((t) => t.key === activeTab)?.description}
+            {t(TABS.find((t) => t.key === activeTab)?.description ?? '')}
           </p>
           {renderForm()}
           {error && (

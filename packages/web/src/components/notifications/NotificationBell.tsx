@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { formatRelativeTime } from '@/lib/date';
 
 interface Notification {
   id: string;
@@ -24,18 +26,15 @@ function getNotificationIcon(type: string) {
   }
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
-
 export function NotificationBell() {
+  const t = useTranslations('common');
+
+  const fmtTime = (d: string) => formatRelativeTime(d, {
+    just_now: t('just_now'),
+    minutes_ago: t('minutes_ago'),
+    hours_ago: t('hours_ago'),
+    days_ago: t('days_ago'),
+  });
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -108,7 +107,7 @@ export function NotificationBell() {
       <button
         onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadNotifications(); }}
         className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        aria-label="Notifications"
+        aria-label={t('notifications')}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -123,13 +122,13 @@ export function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('notifications')}</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
                 className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
               >
-                Mark all read
+                {t('notifications_mark_all_read')}
               </button>
             )}
           </div>
@@ -137,7 +136,7 @@ export function NotificationBell() {
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-6 text-center text-sm text-gray-400">
-                No notifications yet
+                {t('notifications_no_notifications')}
               </div>
             ) : (
               notifications.map((notif) => (
@@ -163,7 +162,7 @@ export function NotificationBell() {
                         {notif.message}
                       </p>
                       <span className="text-[10px] text-gray-400 mt-1 block">
-                        {timeAgo(notif.createdAt)}
+                        {fmtTime(notif.createdAt)}
                       </span>
                     </div>
                   </div>

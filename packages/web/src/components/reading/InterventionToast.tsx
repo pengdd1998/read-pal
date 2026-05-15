@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
 interface InterventionToastProps {
@@ -39,6 +40,7 @@ export function InterventionToast({
   sessionDuration,
   highlightCount,
 }: InterventionToastProps) {
+  const t = useTranslations('common');
   const [intervention, setIntervention] = useState<Intervention | null>(null);
   const [visible, setVisible] = useState(false);
   const dismissedRef = useRef<Set<string>>(new Set());
@@ -134,20 +136,20 @@ export function InterventionToast({
                 onClick={handleHelpful}
                 className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
               >
-                Thanks
+                {t('thanks')}
               </button>
               <button
                 onClick={handleDismiss}
                 className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
-                Dismiss
+                {t('dismiss')}
               </button>
             </div>
           </div>
           <button
             onClick={handleDismiss}
             className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors flex-shrink-0 p-2 -m-2"
-            aria-label="Dismiss"
+            aria-label={t('dismiss')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

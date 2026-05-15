@@ -1,14 +1,16 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
 import { useToast } from '@/components/Toast';
 
 export function AccountSection() {
   const { toast } = useToast();
+  const t = useTranslations('settings_page');
 
   async function handleDeleteAccount() {
-    if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+    if (!confirm(t('account_delete_confirm'))) return;
     try {
       const res = await authFetch(`${API_BASE_URL}/api/auth/account`, {
         method: 'DELETE',
@@ -18,7 +20,7 @@ export function AccountSection() {
         window.location.href = '/';
       }
     } catch {
-      toast('Failed to delete account. Please try again.', 'error');
+      toast(t('account_delete_failed'), 'error');
     }
   }
 
@@ -33,7 +35,7 @@ export function AccountSection() {
         <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
-        Account
+        {t('account_title')}
       </h2>
       <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
         <div className="space-y-4">
@@ -42,7 +44,7 @@ export function AccountSection() {
               onClick={handleSignOut}
               className="px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors"
             >
-              Sign Out
+              {t('account_sign_out')}
             </button>
           </div>
           <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
@@ -51,18 +53,18 @@ export function AccountSection() {
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Delete account
+                {t('account_delete_heading')}
               </summary>
               <div className="mt-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30">
                 <p className="text-xs text-red-600 dark:text-red-400 mb-3">
-                  This will permanently delete your account and all your data, including books, highlights, and reading history. This cannot be undone.
+                  {t('account_delete_warning')}
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={handleDeleteAccount}
                     className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
                   >
-                    Delete my account
+                    {t('account_delete_button')}
                   </button>
                 </div>
               </div>

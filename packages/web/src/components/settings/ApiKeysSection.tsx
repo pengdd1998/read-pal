@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 
@@ -14,6 +15,7 @@ interface ApiKeyData {
 
 export function ApiKeysSection() {
   const { toast } = useToast();
+  const t = useTranslations('settings_page');
   const [keys, setKeys] = useState<ApiKeyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -49,10 +51,10 @@ export function ApiKeysSection() {
         setNewKeyName('');
         setShowCreate(false);
         await loadKeys();
-        toast('API key created. Copy it now \u2014 it won\'t be shown again.', 'success');
+        toast(t('api_key_created_toast'), 'success');
       }
     } catch {
-      toast('Failed to create API key', 'error');
+      toast(t('api_key_create_failed'), 'error');
     }
     setCreating(false);
   }
@@ -62,16 +64,16 @@ export function ApiKeysSection() {
       const res = await api.delete(`/api/api-keys/${id}`);
       if (res.success) {
         setKeys(keys.filter((k) => k.id !== id));
-        toast('API key revoked', 'success');
+        toast(t('api_key_revoked_toast'), 'success');
       }
     } catch {
-      toast('Failed to revoke API key', 'error');
+      toast(t('api_key_revoke_failed'), 'error');
     }
   }
 
   function copyKey(key: string) {
     navigator.clipboard.writeText(key);
-    toast('API key copied to clipboard', 'success');
+    toast(t('api_key_copied_toast'), 'success');
   }
 
   return (
@@ -79,7 +81,7 @@ export function ApiKeysSection() {
       {newKey && (
         <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
           <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-2">
-            New API key created. Copy it now — it won&apos;t be shown again.
+            {t('api_key_new_warning')}
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 text-xs bg-surface-0 px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 break-all font-mono">
@@ -89,14 +91,14 @@ export function ApiKeysSection() {
               onClick={() => copyKey(newKey)}
               className="px-3 py-2 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex-shrink-0"
             >
-              Copy
+              {t('api_key_copy')}
             </button>
           </div>
           <button
             onClick={() => setNewKey(null)}
             className="mt-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
-            Dismiss
+            {t('api_key_dismiss')}
           </button>
         </div>
       )}
@@ -115,22 +117,22 @@ export function ApiKeysSection() {
                 <div className="text-sm font-medium truncate">{k.name}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
                   <code className="font-mono">{k.keyPrefix}...</code>
-                  <span>Created {new Date(k.createdAt).toLocaleDateString()}</span>
-                  {k.lastUsedAt && <span>Last used {new Date(k.lastUsedAt).toLocaleDateString()}</span>}
+                  <span>{t('api_key_created_label')} {new Date(k.createdAt).toLocaleDateString()}</span>
+                  {k.lastUsedAt && <span>{t('api_key_last_used')} {new Date(k.lastUsedAt).toLocaleDateString()}</span>}
                 </div>
               </div>
               <button
                 onClick={() => handleRevoke(k.id)}
                 className="ml-3 px-2.5 py-1 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors flex-shrink-0"
               >
-                Revoke
+                {t('api_key_revoke')}
               </button>
             </div>
           ))}
         </div>
       ) : (
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No API keys yet. Create one to access your reading data programmatically.
+          {t('api_key_empty')}
         </p>
       )}
 
@@ -140,7 +142,7 @@ export function ApiKeysSection() {
             type="text"
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
-            placeholder="Key name (e.g., My Script)"
+            placeholder={t('api_key_name_placeholder')}
             className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             autoFocus
@@ -150,13 +152,13 @@ export function ApiKeysSection() {
             disabled={creating || !newKeyName.trim()}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {creating ? 'Creating...' : 'Create'}
+            {creating ? t('api_key_creating') : t('api_key_create')}
           </button>
           <button
             onClick={() => { setShowCreate(false); setNewKeyName(''); }}
             className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
-            Cancel
+            {t('api_key_cancel')}
           </button>
         </div>
       ) : (
@@ -165,13 +167,13 @@ export function ApiKeysSection() {
           disabled={keys.length >= 5}
           className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors disabled:opacity-50"
         >
-          Create API Key {keys.length >= 5 && '(max 5)'}
+          {t('api_key_create_button')} {keys.length >= 5 && t('api_key_max')}
         </button>
       )}
 
       {/* Usage example */}
       <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Usage example:</p>
+        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{t('api_key_usage_example')}</p>
         <code className="text-xs text-gray-700 dark:text-gray-300 font-mono block whitespace-pre-wrap">
 {`curl -H "Authorization: Bearer rpk_..." \\
   ${typeof window !== 'undefined' ? window.location.origin : ''}/api/books`}

@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 
 export function ZoteroSection() {
   const { toast } = useToast();
+  const t = useTranslations('settings_page');
   const [connected, setConnected] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [userId, setUserId] = useState('');
@@ -28,7 +30,7 @@ export function ZoteroSection() {
 
   async function handleConnect() {
     if (!apiKey.trim() || !userId.trim()) {
-      toast('Enter both API Key and User ID', 'error');
+      toast(t('zotero_enter_both'), 'error');
       return;
     }
     setValidating(true);
@@ -38,7 +40,7 @@ export function ZoteroSection() {
         userId: userId.trim(),
       });
       if (!valRes.success || !valRes.data?.valid) {
-        toast(valRes.data?.error || 'Invalid Zotero credentials', 'error');
+        toast(valRes.data?.error || t('zotero_invalid_credentials'), 'error');
         return;
       }
       const saveRes = await api.patch('/api/settings', {
@@ -47,10 +49,10 @@ export function ZoteroSection() {
       });
       if (saveRes.success) {
         setConnected(true);
-        toast(`Connected to Zotero${valRes.data.username ? ` (${valRes.data.username})` : ''}`, 'success');
+        toast(t('zotero_connected') + (valRes.data.username ? ` (${valRes.data.username})` : ''), 'success');
       }
     } catch {
-      toast('Failed to connect to Zotero', 'error');
+      toast(t('zotero_connect_failed'), 'error');
     } finally {
       setValidating(false);
     }
@@ -63,9 +65,9 @@ export function ZoteroSection() {
       setConnected(false);
       setApiKey('');
       setUserId('');
-      toast('Zotero disconnected', 'success');
+      toast(t('zotero_disconnected'), 'success');
     } catch {
-      toast('Failed to disconnect', 'error');
+      toast(t('zotero_disconnect_failed'), 'error');
     } finally {
       setSaving(false);
     }
@@ -78,17 +80,17 @@ export function ZoteroSection() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          Connected {userId && <span className="text-gray-400">(User {userId})</span>}
+          {t('zotero_connected_label')} {userId && <span className="text-gray-400">{t('zotero_user_label', { userId })}</span>}
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Export highlights and notes from any book to your Zotero library using the &quot;Export to Zotero&quot; button on the book detail page.
+          {t('zotero_export_desc')}
         </p>
         <button
           onClick={handleDisconnect}
           disabled={saving}
           className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors"
         >
-          {saving ? 'Disconnecting...' : 'Disconnect'}
+          {saving ? t('zotero_disconnecting') : t('zotero_disconnect')}
         </button>
       </div>
     );
@@ -98,35 +100,35 @@ export function ZoteroSection() {
     <div className="space-y-3">
       <div className="space-y-2">
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">API Key</label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_api_key_label')}</label>
           <input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Your Zotero API key"
+            placeholder={t('zotero_api_key_placeholder')}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">User ID</label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_user_id')}</label>
           <input
             type="text"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
-            placeholder="Your Zotero user ID (numeric)"
+            placeholder={t('zotero_user_id_placeholder')}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           />
         </div>
       </div>
       <p className="text-[10px] text-gray-400 dark:text-gray-500">
-        Get your API key at <span className="text-blue-500">zotero.org/settings/keys</span>
+        {t('zotero_get_key')} <span className="text-blue-500">zotero.org/settings/keys</span>
       </p>
       <button
         onClick={handleConnect}
         disabled={validating || !apiKey.trim() || !userId.trim()}
         className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
       >
-        {validating ? 'Validating...' : 'Connect Zotero'}
+        {validating ? t('zotero_validating') : t('zotero_connect')}
       </button>
     </div>
   );

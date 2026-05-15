@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 
 export function LoadingSpinner({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -64,9 +65,10 @@ export function getUserFriendlyError(err: unknown): string {
  * Dismissable, auto-reappears on next offline event.
  */
 export function OfflineBanner() {
+  const t = useTranslations('common');
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium animate-slide-up">
-      You&apos;re offline. Some features may be unavailable.
+      {t('offline_banner')}
     </div>
   );
 }

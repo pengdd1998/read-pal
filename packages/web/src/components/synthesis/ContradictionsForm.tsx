@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 // ============================================================================
 // Contradictions Tab Form
 // ============================================================================
@@ -17,23 +19,25 @@ export function ContradictionsForm({
   minSeverity,
   onMinSeverityChange,
 }: ContradictionsFormProps) {
+  const t = useTranslations('reader');
+
   return (
     <div className="space-y-3">
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-          Topic (optional)
+          {t('synthesis_contradictions_topic')}
         </label>
         <input
           type="text"
           value={topic}
           onChange={(e) => onTopicChange(e.target.value)}
-          placeholder="Leave empty for general analysis"
+          placeholder={t('synthesis_contradictions_placeholder')}
           className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
         />
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-          Minimum severity
+          {t('synthesis_min_severity')}
         </label>
         <div className="flex gap-1.5">
           {(['low', 'medium', 'high'] as const).map((s) => (
@@ -50,7 +54,7 @@ export function ContradictionsForm({
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
               }`}
             >
-              {s.charAt(0).toUpperCase() + s.slice(1)}
+              {t('synthesis_severity_' + s)}
             </button>
           ))}
         </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 // ============================================================================
 // Synthesize Tab Form
 // ============================================================================
@@ -17,23 +19,25 @@ export function SynthesizeForm({
   depth,
   onDepthChange,
 }: SynthesizeFormProps) {
+  const t = useTranslations('reader');
+
   return (
     <div className="space-y-3">
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-          Synthesis query
+          {t('synthesis_query_label')}
         </label>
         <textarea
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="e.g., How do these books approach decision making?"
+          placeholder={t('synthesis_query_placeholder')}
           rows={3}
           className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all resize-none"
         />
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-          Depth
+          {t('synthesis_depth_label')}
         </label>
         <div className="flex gap-1.5">
           {(['brief', 'standard', 'deep'] as const).map((d) => (
@@ -46,7 +50,7 @@ export function SynthesizeForm({
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
               }`}
             >
-              {d.charAt(0).toUpperCase() + d.slice(1)}
+              {t('synthesis_depth_' + d)}
             </button>
           ))}
         </div>
