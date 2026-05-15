@@ -1,6 +1,13 @@
-"""Full-path integration test — exercises all API endpoints with correct routes."""
+"""Full-path integration test — exercises all API endpoints with correct routes.
+
+Run manually: python -m tests.test_full_paths (requires live server on localhost:8000)
+"""
 
 from __future__ import annotations
+
+import pytest
+
+pytest.skip(allow_module_level=True, reason='Standalone script — requires live server')
 
 import json
 import sys
