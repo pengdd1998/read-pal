@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     # App
     app_env: str = 'development'
     frontend_url: str = 'http://localhost:3000'
-    cors_origins: str = 'http://localhost:3000'  # Comma-separated allowed origins
+    cors_origins: str = 'http://localhost:3000,http://localhost:3001'  # Comma-separated allowed origins
 
     # Logging
     log_level: str = 'INFO'
