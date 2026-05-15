@@ -1,14 +1,14 @@
 """Add version column to memory_books
 
 Revision ID: 0005
-Revises: 0004
+Revises: 0004b
 """
 
 from alembic import op
 import sqlalchemy as sa
 
 revision = '0005'
-down_revision = '0004'
+down_revision = '0004b'
 branch_labels = None
 depends_on = None
 

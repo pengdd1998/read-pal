@@ -1,14 +1,14 @@
 """Add book_chunks table with pgvector extension for embedding storage.
 
-Revision ID: 0004
-Revises: 0003
+Revision ID: 0004b
+Revises: 0004
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
-revision = '0004'
-down_revision = '0003'
+revision = '0004b'
+down_revision = '0004'
 branch_labels = None
 depends_on = None
 
