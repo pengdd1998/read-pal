@@ -257,22 +257,24 @@ async def change_password(
     )
     user = result.scalar_one_or_none()
 
+    lang = await _get_user_lang(db, UUID(current_user['id']))
+
     if user is None or user.password_hash is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': 'User not found'},
+            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found', lang)},
         )
 
     if not verify_password(body.current_password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'INVALID_PASSWORD', 'message': 'Current password is incorrect'},
+            detail={'code': 'INVALID_PASSWORD', 'message': t('errors.invalid_password', lang)},
         )
 
     user.password_hash = hash_password(body.new_password)
     await db.flush()
 
-    return MessageResponse(data={'message': 'Password changed successfully'})
+    return MessageResponse(data={'message': t('errors.password_changed', lang)})
 
 
 # ---------------------------------------------------------------------------
@@ -360,7 +362,7 @@ async def refresh(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 'code': 'INVALID_TOKEN',
-                'message': 'Invalid or expired refresh token',
+                'message': t('errors.invalid_refresh_token'),
             },
         ) from exc
 
@@ -370,7 +372,7 @@ async def refresh(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 'code': 'INVALID_TOKEN',
-                'message': 'Provided token is not a refresh token',
+                'message': t('errors.not_refresh_token'),
             },
         )
 
@@ -381,7 +383,7 @@ async def refresh(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 'code': 'TOKEN_REVOKED',
-                'message': 'Refresh token has been revoked',
+                'message': t('errors.refresh_token_revoked'),
             },
         )
 
@@ -395,7 +397,7 @@ async def refresh(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 'code': 'USER_NOT_FOUND',
-                'message': 'User account not found',
+                'message': t('errors.user_account_not_found'),
             },
         )
 

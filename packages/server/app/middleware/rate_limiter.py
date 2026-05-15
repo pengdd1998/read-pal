@@ -15,6 +15,7 @@ from fastapi import Depends, HTTPException, Request, status
 
 from app.core.redis import get_redis
 from app.config import get_settings
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.rate-limit')
 
@@ -153,7 +154,7 @@ def _make_rate_limit_dependency(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail={
                     'code': 'RATE_LIMIT_EXCEEDED',
-                    'message': 'Too many requests. Please try again later.',
+                    'message': t('errors.rate_limited'),
                 },
                 headers=headers,
             )

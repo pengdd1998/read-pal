@@ -48,6 +48,34 @@ def t(key: str, lang: str = DEFAULT_LANGUAGE, **kwargs) -> str:
     return msg.format(**kwargs) if kwargs else msg
 
 
+# Map ValueError messages from services to i18n keys
+_VALUE_ERROR_KEY_MAP: dict[str, str] = {
+    'Collection not found': 'errors.collection_not_found',
+    'Book not found': 'errors.book_not_found',
+    'Club not found': 'errors.club_not_found',
+    'Club is full': 'errors.club_full',
+    'Already a member of this club': 'errors.already_member',
+    'Not a member of this club': 'errors.not_member',
+    'Invalid invite code': 'errors.invalid_invite_code',
+    'Cannot leave — you are the last admin. Delete the club instead.': 'errors.cannot_leave_last_admin',
+    'Only admin or moderator can update the club': 'errors.only_admin_moderator_update',
+    'Only admin can delete the club': 'errors.only_admin_delete',
+    'Must be a member to post discussions': 'errors.must_be_member_post',
+    'Webhook not found': 'errors.webhook_not_found',
+    'Flashcard not found': 'errors.flashcard_not_found',
+    'Share not found': 'errors.share_not_found',
+    'Reading book not found': 'errors.reading_book_not_found',
+}
+
+
+def translate_error(exc: ValueError, lang: str = DEFAULT_LANGUAGE) -> str:
+    """Translate a ValueError message from a service layer into the user's language."""
+    key = _VALUE_ERROR_KEY_MAP.get(str(exc))
+    if key:
+        return t(key, lang)
+    return str(exc)
+
+
 def get_supported_languages() -> list[str]:
     return SUPPORTED_LANGUAGES
 

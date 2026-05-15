@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function AuthCallbackError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Login failed"
-      networkMessage="Could not complete sign-in. Please check your connection and try again."
+      title={t('login_failed')}
+      networkMessage={t('network_login')}
     />
   );
 }

@@ -72,7 +72,8 @@
     "error_server": "服务器出错。",
     "error_rate_limit": "尝试次数过多。",
     "error_generic": "出了点问题。请重试。",
-    "offline_banner": "你已离线。部分功能可能不可用。"
+    "offline_banner": "你已离线。部分功能可能不可用。",
+    "toast_dismiss_aria": "关闭通知"
   },
   "landing": {
     "meta_title": "AI 阅读伴侣 | 更聪明地阅读，记住更多",
@@ -399,7 +400,12 @@
     "upload_format_hint": "EPUB 或 PDF，最大 50MB",
     "upload_processing": "正在处理你的书籍...",
     "upload_progress": "{progress}% 已上传...",
-    "card_offline_badge": "离线"
+    "card_offline_badge": "离线",
+    "collection_picker_title": "添加到收藏夹",
+    "collection_picker_empty": "还没有收藏夹",
+    "collection_picker_placeholder": "名称...",
+    "collection_picker_add": "添加",
+    "collection_picker_new": "新建收藏夹"
   },
   "reader": {
     "companion_title": "阅读伴侣",
@@ -802,7 +808,19 @@
     "synthesis_type_all": "全部",
     "synthesis_type_supporting": "支持",
     "synthesis_type_contradicting": "矛盾",
-    "synthesis_type_extending": "延伸"
+    "synthesis_type_extending": "延伸",
+    "settings_decrease_font": "减小字号",
+    "settings_increase_font": "增大字号",
+    "settings_decrease_line_height": "减小行高",
+    "settings_increase_line_height": "增大行高",
+    "offline_remove_aria": "移除离线副本",
+    "offline_saving_aria": "正在保存离线 {progress}%",
+    "offline_save_aria": "保存以供离线阅读",
+    "offline_available_title": "已离线可用 — 点击移除",
+    "offline_save_title": "保存以供离线阅读",
+    "remove_tag_aria": "移除标签 {tag}",
+    "quote_by_author": "作者：{author}",
+    "share_close_quote": "关闭引用卡片"
   },
   "stats": {
     "title": "阅读统计",
@@ -881,7 +899,9 @@
     "achievement_memory_keeper": "记忆守护者",
     "achievement_memory_keeper_desc": "生成一本阅读笔记",
     "achievement_champion": "冠军读者",
-    "achievement_champion_desc": "完成 10 本书"
+    "achievement_champion_desc": "完成 10 本书",
+    "calendar_load_error": "无法加载日历数据。",
+    "fire_streak_aria": "连续阅读"
   },
   "settings": {
     "title": "设置",
@@ -929,7 +949,8 @@
     "knowledge": "知识图谱",
     "bookclubs": "读书会",
     "flashcards": "闪卡",
-    "memory_books": "阅读镜像",    "search": "搜索",
+    "memory_books": "阅读镜像",
+    "search": "搜索",
     "settings": "设置",
     "nav_dashboard": "仪表盘",
     "nav_library": "书架",
@@ -1048,10 +1069,6 @@
     "genre_mystery": "悬疑",
     "genre_fantasy": "奇幻",
     "genre_romance": "爱情",
-    "agent_research": "研究助手",
-    "agent_coach": "阅读教练",
-    "agent_synthesis": "知识综合",
-    "agent_friend": "阅读好友",
     "insight_companion": "你上次阅读中最大的收获是什么？",
     "insight_research": "试着把你刚读到的内容与已有知识联系起来。",
     "insight_coach": "坚持比强度更重要。今天即使只读 10 分钟也很有价值。",
@@ -1467,7 +1484,10 @@
     "generatedDate": "生成于 {date}",
     "noContent": "暂无内容",
     "generationEmpty": "生成返回了空结果",
-    "generationFailedError": "生成你的阅读镜像失败，请重试。"
+    "generationFailedError": "生成你的阅读镜像失败，请重试。",
+    "regenerate_title": "重新生成",
+    "download_html_title": "下载 HTML",
+    "print_save_pdf": "打印 / 保存 PDF"
   },
   "welcome": {
     "page_title": "欢迎",
@@ -1495,7 +1515,19 @@
     "persona_quinn_personality": "安静 & 智慧",
     "persona_quinn_desc": "只在最关键的时候发言。",
     "persona_sam_personality": "实用 & 专注",
-    "persona_sam_desc": "帮助你从每一页中获得最大的收获。"
+    "persona_sam_desc": "帮助你从每一页中获得最大的收获。",
+    "onboarding_aria_label": "欢迎来到 read-pal",
+    "onboarding_skip": "跳过",
+    "onboarding_welcome_title": "欢迎来到 read-pal",
+    "onboarding_welcome_desc": "你的 AI 阅读伴侣。上传任何书籍，高亮段落，与陪你一起阅读的朋友聊天。",
+    "onboarding_lets_go": "开始吧",
+    "onboarding_pick_title": "选择你的阅读伙伴",
+    "onboarding_pick_subtitle": "每个伙伴都有独特的风格。你可以随时更改。",
+    "onboarding_continue_with": "选择{name}继续",
+    "onboarding_ready_title": "{name}准备好陪你阅读了",
+    "onboarding_ready_desc": "前往书库上传书籍或试试示例。{name}会一直陪着你。",
+    "onboarding_saving": "保存中...",
+    "onboarding_skip_for_now": "暂时跳过"
   },
   "docs": {
     "meta_title": "文档 — read-pal 使用指南",
@@ -1682,6 +1714,44 @@
     "in_section": "{label} 中发生错误",
     "stale_page": "这可能是因为最近更新后的页面过期。",
     "stack_trace": "堆栈跟踪",
-    "page_not_found": "页面未找到"
+    "page_not_found": "页面未找到",
+    "failed_load_dashboard": "加载仪表盘失败",
+    "network_dashboard": "无法加载仪表盘，请检查网络后重试。",
+    "failed_load_flashcards": "加载闪卡失败",
+    "network_flashcards": "无法加载闪卡，请检查网络后重试。",
+    "failed_load_docs": "加载文档失败",
+    "network_docs": "无法加载文档，请检查网络后重试。",
+    "failed_load_memory_books": "加载阅读笔记失败",
+    "network_memory_books": "无法加载阅读笔记，请检查网络后重试。",
+    "failed_load_memory_book": "加载阅读笔记失败",
+    "network_memory_book": "无法加载此阅读笔记，请检查网络后重试。",
+    "failed_load_page": "加载页面失败",
+    "network_forgot_password": "无法加载密码重置页面，请检查网络后重试。",
+    "failed_load_book_detail": "加载书籍失败",
+    "network_book_detail": "无法加载书籍详情，请检查网络后重试。",
+    "failed_load_settings": "加载设置失败",
+    "network_settings": "无法加载设置，请检查网络后重试。",
+    "failed_load_offline": "加载离线队列失败",
+    "network_offline": "无法加载离线队列，请重试。",
+    "failed_load_book_clubs": "加载读书会失败",
+    "network_book_clubs": "无法加载读书会，请检查网络后重试。",
+    "failed_load_book_club": "加载读书会失败",
+    "network_book_club": "无法加载此读书会，请检查网络后重试。",
+    "failed_load_knowledge": "加载知识图谱失败",
+    "network_knowledge": "无法加载知识图谱，请检查网络后重试。",
+    "failed_load_developers": "加载开发者文档失败",
+    "network_developers": "无法加载开发者文档，请检查网络后重试。",
+    "search_unavailable": "搜索不可用",
+    "network_search": "暂时无法搜索，请检查网络后重试。",
+    "failed_load_stats": "加载统计数据失败",
+    "network_stats": "无法加载阅读统计，请检查网络后重试。",
+    "auth_error": "身份验证错误",
+    "network_auth": "无法连接到认证服务器，请重试。",
+    "login_failed": "登录失败",
+    "network_login": "无法完成登录，请检查网络后重试。",
+    "password_reset_failed": "密码重置失败",
+    "network_password_reset": "无法处理密码重置请求，请重试。",
+    "network_welcome": "无法完成引导流程，请检查网络后重试。",
+    "global_update": "应用可能已更新，请刷新页面获取最新版本。"
   }
 }

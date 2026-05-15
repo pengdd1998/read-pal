@@ -26,7 +26,7 @@ from app.schemas.agent import (
 )
 from app.schemas.common import GenericResponse
 from app.services import companion_service
-from app.utils.i18n import DEFAULT_LANGUAGE, _get_user_lang, t
+from app.utils.i18n import DEFAULT_LANGUAGE, _get_user_lang, translate_error, t
 
 logger = logging.getLogger('read-pal.agent')
 
@@ -90,7 +90,7 @@ async def chat(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
 
     return ChatResponse(data=result)
@@ -146,7 +146,7 @@ async def summarize(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
 
     return ChatResponse(data=result)
@@ -172,7 +172,7 @@ async def explain(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
 
     return ChatResponse(data=result)
@@ -229,7 +229,7 @@ async def discussion_questions(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
     return {'success': True, 'data': result}
 
@@ -359,7 +359,7 @@ async def create_reading_plan(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
     except Exception as exc:
         logger.error('Reading plan generation failed: %s', exc)

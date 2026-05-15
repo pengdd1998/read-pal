@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function MemoryBookDetailError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Failed to load memory book"
-      networkMessage="Could not load this memory book. Please check your connection and try again."
+      title={t('failed_load_memory_book')}
+      networkMessage={t('network_memory_book')}
       icon="memory"
     />
   );

@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function AuthError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Authentication error"
-      networkMessage="Could not reach the authentication server. Please try again."
+      title={t('auth_error')}
+      networkMessage={t('network_auth')}
     />
   );
 }

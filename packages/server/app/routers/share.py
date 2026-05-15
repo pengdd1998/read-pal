@@ -10,7 +10,7 @@ from app.middleware.auth import get_current_user
 from app.schemas.common import GenericResponse
 from app.schemas.share import ShareCreate
 from app.services import share_service
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, translate_error
 
 router = APIRouter(prefix='/api/v1/share', tags=['share'])
 
@@ -93,12 +93,13 @@ async def delete_share(
     user: dict = Depends(get_current_user),
 ) -> None:
     """Delete a shared export."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await share_service.delete_share(db, UUID(user['id']), share_id)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
 
 

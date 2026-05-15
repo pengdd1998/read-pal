@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookFileType
 from app.models.document import Document
+from app.utils.i18n import t, DEFAULT_LANGUAGE
 
 if TYPE_CHECKING:
     pass
@@ -21,13 +22,13 @@ ALLOWED_EXTENSIONS = {'.epub', '.pdf'}
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 
 
-def validate_file(filename: str, file_size: int) -> str | None:
+def validate_file(filename: str, file_size: int, lang: str = DEFAULT_LANGUAGE) -> str | None:
     """Validate file before processing. Returns error message or None."""
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
-        return f'Unsupported file type: {ext}. Allowed: {ALLOWED_EXTENSIONS}'
+        return t('errors.invalid_file_type_ext', lang, ext=ext, allowed=', '.join(sorted(ALLOWED_EXTENSIONS)))
     if file_size > MAX_FILE_SIZE:
-        return f'File too large: {file_size} bytes. Max: {MAX_FILE_SIZE} bytes'
+        return t('errors.file_too_large_mb', lang, max_size=MAX_FILE_SIZE // (1024 * 1024))
     return None
 
 

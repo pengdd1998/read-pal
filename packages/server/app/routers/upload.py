@@ -44,7 +44,7 @@ async def upload_book(
     suffix = Path(file.filename).suffix.lower()
 
     # Validate filename/extension before reading any data
-    error = validate_file(file.filename, 0)
+    error = validate_file(file.filename, 0, lang)
     if error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -66,12 +66,12 @@ async def upload_book(
                 if file_size > MAX_FILE_SIZE:
                     raise HTTPException(
                         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                        detail=f'File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB',
+                        detail=t('errors.file_too_large_mb', lang, max_size=MAX_FILE_SIZE // (1024 * 1024)),
                     )
                 tmp.write(chunk)
 
         # Final validation (extension + size check)
-        error = validate_file(file.filename, file_size)
+        error = validate_file(file.filename, file_size, lang)
         if error:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -96,12 +96,14 @@ async def upload_book(
         return {
             'success': True,
             'data': {
-                'id': str(book.id),
-                'title': book.title,
-                'author': book.author,
-                'file_type': book.file_type.value,
-                'total_pages': book.total_pages,
-                'status': book.status.value,
+                'book': {
+                    'id': str(book.id),
+                    'title': book.title,
+                    'author': book.author,
+                    'fileType': book.file_type.value,
+                    'totalPages': book.total_pages,
+                    'status': book.status.value,
+                },
             },
         }
     finally:
@@ -158,23 +160,17 @@ async def get_book_content(
             if isinstance(ch, dict):
                 chapters.append({
                     'id': ch.get('id', str(i)),
-                    'title': ch.get('title', f'Chapter {i + 1}'),
+                    'title': ch.get('title', t('errors.chapter_title', lang, index=i + 1)),
                     'content': ch.get('content', ''),
                     'rawContent': ch.get('rawContent', ch.get('content', '')),
                 })
 
     # For books without uploaded content (e.g. sample books), provide a placeholder chapter
     if not chapters and not content:
-        content = (
-            f'<h1>{book.title}</h1>'
-            f'<p><em>by {book.author}</em></p>'
-            f'<p>This is a sample book. Upload an EPUB or PDF to get the full reading experience '
-            f'with AI companion, highlights, and notes.</p>'
-            f'<p>To upload a real book, go to your Library and use the upload area.</p>'
-        )
+        content = t('errors.sample_content', lang, title=book.title, author=book.author)
         chapters = [{
             'id': 'sample-0',
-            'title': f'{book.title} — Sample',
+            'title': t('errors.sample_title', lang, title=book.title),
             'content': content,
             'rawContent': content,
         }]

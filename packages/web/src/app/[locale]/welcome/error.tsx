@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function WelcomeError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Something went wrong"
-      networkMessage="Could not complete onboarding. Please check your connection and try again."
+      title={t('something_wrong')}
+      networkMessage={t('network_welcome')}
     />
   );
 }

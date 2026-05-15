@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Check } from '@/components/icons';
 import { authFetch } from '@/lib/auth-fetch';
@@ -8,11 +9,11 @@ import { authFetch } from '@/lib/auth-fetch';
 const STORAGE_KEY = 'read-pal-onboarding-complete';
 
 const PERSONAS = [
-  { id: 'sage', name: 'Sage', emoji: '\uD83E\uDD89', personality: 'Thoughtful & patient', desc: 'Asks deep questions that make you think.' },
-  { id: 'penny', name: 'Penny', emoji: '\u2B50', personality: 'Warm & curious', desc: 'Gets excited about ideas and connections.' },
-  { id: 'alex', name: 'Alex', emoji: '\uD83D\uDD0D', personality: 'Sharp & challenging', desc: 'Pushes your thinking in new directions.' },
-  { id: 'quinn', name: 'Quinn', emoji: '\uD83C\uDF0A', personality: 'Quiet & wise', desc: 'Speaks only when it matters most.' },
-  { id: 'sam', name: 'Sam', emoji: '\uD83C\uDFAF', personality: 'Practical & focused', desc: 'Helps you get the most from every page.' },
+  { id: 'sage', name: 'Sage', emoji: '🦉', personalityKey: 'persona_sage_personality', descKey: 'persona_sage_desc' },
+  { id: 'penny', name: 'Penny', emoji: '⭐', personalityKey: 'persona_penny_personality', descKey: 'persona_penny_desc' },
+  { id: 'alex', name: 'Alex', emoji: '🔍', personalityKey: 'persona_alex_personality', descKey: 'persona_alex_desc' },
+  { id: 'quinn', name: 'Quinn', emoji: '🌊', personalityKey: 'persona_quinn_personality', descKey: 'persona_quinn_desc' },
+  { id: 'sam', name: 'Sam', emoji: '🎯', personalityKey: 'persona_sam_personality', descKey: 'persona_sam_desc' },
 ] as const;
 
 type Step = 'welcome' | 'companion' | 'ready';
@@ -24,6 +25,8 @@ type Step = 'welcome' | 'companion' | 'ready';
  */
 export function OnboardingWalkthrough() {
   const router = useRouter();
+  const t = useTranslations('welcome');
+  const tc = useTranslations('common');
   const [step, setStep] = useState<Step>('welcome');
   const [mounted, setMounted] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
@@ -125,7 +128,7 @@ export function OnboardingWalkthrough() {
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label="Welcome to read-pal"
+      aria-label={t('onboarding_aria_label')}
     >
       {/* Backdrop */}
       <div
@@ -147,7 +150,7 @@ export function OnboardingWalkthrough() {
           onClick={complete}
           className="absolute top-4 right-4 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
         >
-          Skip
+          {t('onboarding_skip')}
         </button>
 
         {/* Content */}
@@ -155,18 +158,18 @@ export function OnboardingWalkthrough() {
           {/* Step 1: Welcome */}
           {step === 'welcome' && (
             <div className="text-center">
-              <div className="text-6xl mb-6">{'\uD83D\uDCDA'}</div>
+              <div className="text-6xl mb-6">{'📚'}</div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                Welcome to read-pal
+                {t('onboarding_welcome_title')}
               </h2>
               <p className="text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm mx-auto mb-8">
-                Your AI reading companion. Upload any book, highlight passages, and chat with a friend who reads alongside you.
+                {t('onboarding_welcome_desc')}
               </p>
               <button
                 onClick={() => goTo('companion')}
                 className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98]"
               >
-                Let&apos;s go
+                {t('onboarding_lets_go')}
               </button>
             </div>
           )}
@@ -176,10 +179,10 @@ export function OnboardingWalkthrough() {
             <div>
               <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  Pick your reading companion
+                  {t('onboarding_pick_title')}
                 </h2>
                 <p className="text-sm text-gray-500">
-                  Each one has their own style. You can change this anytime.
+                  {t('onboarding_pick_subtitle')}
                 </p>
               </div>
 
@@ -200,9 +203,9 @@ export function OnboardingWalkthrough() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-gray-900 dark:text-white">{p.name}</span>
-                          <span className="text-xs text-gray-400">{p.personality}</span>
+                          <span className="text-xs text-gray-400">{t(p.personalityKey)}</span>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{p.desc}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t(p.descKey)}</p>
                       </div>
                       {isSelected && (
                         <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
@@ -219,13 +222,13 @@ export function OnboardingWalkthrough() {
                   onClick={() => goTo('welcome')}
                   className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 >
-                  Back
+                  {tc('back')}
                 </button>
                 <button
                   onClick={() => goTo('ready')}
                   className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98]"
                 >
-                  Continue with {persona.name}
+                  {t('onboarding_continue_with', { name: persona.name })}
                 </button>
               </div>
             </div>
@@ -238,24 +241,24 @@ export function OnboardingWalkthrough() {
                 <span className="text-4xl">{persona.emoji}</span>
               </div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                {persona.name} is ready to read with you
+                {t('onboarding_ready_title', { name: persona.name })}
               </h2>
               <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">
-                Head to your library to upload a book or try a sample. {persona.name} will be right there with you.
+                {t('onboarding_ready_desc', { name: persona.name })}
               </p>
               <div className="flex flex-col gap-3 max-w-xs mx-auto">
                 <button
                   onClick={goToWelcome}
                   className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] text-center"
                 >
-                  Get Started
+                  {tc('getStarted')}
                 </button>
                 <button
                   onClick={handleFinish}
                   disabled={saving}
                   className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
-                  {saving ? 'Saving...' : 'Skip for now'}
+                  {saving ? t('onboarding_saving') : t('onboarding_skip_for_now')}
                 </button>
               </div>
             </div>

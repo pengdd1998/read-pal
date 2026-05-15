@@ -10,7 +10,7 @@ from app.middleware.auth import get_current_user
 from app.schemas.common import GenericResponse
 from app.schemas.webhook import WebhookCreate, WebhookUpdate
 from app.services import webhook_service
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, translate_error
 
 router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'])
 
@@ -53,7 +53,7 @@ async def test_webhook(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
     return {
         'success': True,
@@ -127,7 +127,7 @@ async def update_webhook(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
     return {
         'success': True,
@@ -152,7 +152,7 @@ async def delete_webhook(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
 
 
@@ -172,7 +172,7 @@ async def get_delivery_logs(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
     return {
         'success': True,

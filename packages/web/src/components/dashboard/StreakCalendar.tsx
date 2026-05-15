@@ -155,7 +155,7 @@ export default function StreakCalendar() {
         }
       })
       .catch(() => {
-        if (!cancelled) setError('Unable to load calendar data.');
+        if (!cancelled) setError(t('calendar_load_error'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -271,7 +271,7 @@ export default function StreakCalendar() {
                   {data.currentStreak}
                 </span>
                 {data.currentStreak > 0 && (
-                  <span className="text-xl" role="img" aria-label="fire streak">
+                  <span className="text-xl" role="img" aria-label={t('fire_streak_aria')}>
                     {'\uD83D\uDD25'}
                   </span>
                 )}

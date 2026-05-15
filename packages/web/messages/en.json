@@ -72,7 +72,8 @@
     "error_server": "Something went wrong on our end.",
     "error_rate_limit": "Too many attempts.",
     "error_generic": "Something went wrong. Please try again.",
-    "offline_banner": "You're offline. Some features may be unavailable."
+    "offline_banner": "You're offline. Some features may be unavailable.",
+    "toast_dismiss_aria": "Dismiss notification"
   },
   "landing": {
     "meta_title": "AI Reading Companion | Read Smarter, Remember More",
@@ -399,7 +400,12 @@
     "upload_format_hint": "EPUB or PDF, max 50MB",
     "upload_processing": "Processing your book...",
     "upload_progress": "{progress}% uploaded...",
-    "card_offline_badge": "offline"
+    "card_offline_badge": "offline",
+    "collection_picker_title": "Add to collection",
+    "collection_picker_empty": "No collections yet",
+    "collection_picker_placeholder": "Name...",
+    "collection_picker_add": "Add",
+    "collection_picker_new": "New collection"
   },
   "reader": {
     "companion_title": "Reading Companion",
@@ -802,7 +808,19 @@
     "synthesis_type_all": "All",
     "synthesis_type_supporting": "Supporting",
     "synthesis_type_contradicting": "Contradicting",
-    "synthesis_type_extending": "Extending"
+    "synthesis_type_extending": "Extending",
+    "settings_decrease_font": "Decrease font size",
+    "settings_increase_font": "Increase font size",
+    "settings_decrease_line_height": "Decrease line height",
+    "settings_increase_line_height": "Increase line height",
+    "offline_remove_aria": "Remove offline copy",
+    "offline_saving_aria": "Saving for offline {progress}%",
+    "offline_save_aria": "Save for offline reading",
+    "offline_available_title": "Available offline — tap to remove",
+    "offline_save_title": "Save for offline reading",
+    "remove_tag_aria": "Remove tag {tag}",
+    "quote_by_author": "by {author}",
+    "share_close_quote": "Close quote card"
   },
   "stats": {
     "title": "Reading Stats",
@@ -881,7 +899,9 @@
     "achievement_memory_keeper": "Memory Keeper",
     "achievement_memory_keeper_desc": "Generate a memory book",
     "achievement_champion": "Champion",
-    "achievement_champion_desc": "Complete 10 books"
+    "achievement_champion_desc": "Complete 10 books",
+    "calendar_load_error": "Unable to load calendar data.",
+    "fire_streak_aria": "fire streak"
   },
   "settings": {
     "title": "Settings",
@@ -1312,7 +1332,19 @@
     "persona_quinn_personality": "Quiet & wise",
     "persona_quinn_desc": "Speaks only when it matters most.",
     "persona_sam_personality": "Practical & focused",
-    "persona_sam_desc": "Helps you get the most from every page."
+    "persona_sam_desc": "Helps you get the most from every page.",
+    "onboarding_aria_label": "Welcome to read-pal",
+    "onboarding_skip": "Skip",
+    "onboarding_welcome_title": "Welcome to read-pal",
+    "onboarding_welcome_desc": "Your AI reading companion. Upload any book, highlight passages, and chat with a friend who reads alongside you.",
+    "onboarding_lets_go": "Let's go",
+    "onboarding_pick_title": "Pick your reading companion",
+    "onboarding_pick_subtitle": "Each one has their own style. You can change this anytime.",
+    "onboarding_continue_with": "Continue with {name}",
+    "onboarding_ready_title": "{name} is ready to read with you",
+    "onboarding_ready_desc": "Head to your library to upload a book or try a sample. {name} will be right there with you.",
+    "onboarding_saving": "Saving...",
+    "onboarding_skip_for_now": "Skip for now"
   },
   "docs": {
     "meta_title": "Documentation — Getting Started with read-pal",
@@ -1617,7 +1649,10 @@
     "generatedDate": "Generated {date}",
     "noContent": "No content available",
     "generationEmpty": "Generation returned empty result",
-    "generationFailedError": "Failed to generate your Reading Mirror. Please try again."
+    "generationFailedError": "Failed to generate your Reading Mirror. Please try again.",
+    "regenerate_title": "Regenerate",
+    "download_html_title": "Download HTML",
+    "print_save_pdf": "Print / Save PDF"
   },
   "shareCard": {
     "button_generate": "Share My Reading Progress",
@@ -1679,6 +1714,44 @@
     "in_section": "Error in {label}",
     "stale_page": "This may be caused by a stale page after a recent update.",
     "stack_trace": "Stack trace",
-    "page_not_found": "Page not found"
+    "page_not_found": "Page not found",
+    "failed_load_dashboard": "Failed to load dashboard",
+    "network_dashboard": "Could not load your dashboard. Please check your connection and try again.",
+    "failed_load_flashcards": "Failed to load flashcards",
+    "network_flashcards": "Could not load your flashcards. Please check your connection and try again.",
+    "failed_load_docs": "Failed to load documentation",
+    "network_docs": "Could not load the documentation. Please check your connection and try again.",
+    "failed_load_memory_books": "Failed to load memory books",
+    "network_memory_books": "Could not load your memory books. Please check your connection and try again.",
+    "failed_load_memory_book": "Failed to load memory book",
+    "network_memory_book": "Could not load this memory book. Please check your connection and try again.",
+    "failed_load_page": "Failed to load page",
+    "network_forgot_password": "Could not load the password reset page. Please check your connection and try again.",
+    "failed_load_book_detail": "Failed to load book",
+    "network_book_detail": "Could not load this book's details. Please check your connection and try again.",
+    "failed_load_settings": "Failed to load settings",
+    "network_settings": "Could not load your settings. Please check your connection and try again.",
+    "failed_load_offline": "Failed to load offline queue",
+    "network_offline": "Could not load the offline queue. Please try again.",
+    "failed_load_book_clubs": "Failed to load book clubs",
+    "network_book_clubs": "Could not load your book clubs. Please check your connection and try again.",
+    "failed_load_book_club": "Failed to load book club",
+    "network_book_club": "Could not load this book club. Please check your connection and try again.",
+    "failed_load_knowledge": "Failed to load knowledge graph",
+    "network_knowledge": "Could not load your knowledge graph. Please check your connection and try again.",
+    "failed_load_developers": "Failed to load developer docs",
+    "network_developers": "Could not load the developer documentation. Please check your connection and try again.",
+    "search_unavailable": "Search unavailable",
+    "network_search": "Could not search right now. Please check your connection and try again.",
+    "failed_load_stats": "Failed to load statistics",
+    "network_stats": "Could not load your reading stats. Please check your connection and try again.",
+    "auth_error": "Authentication error",
+    "network_auth": "Could not reach the authentication server. Please try again.",
+    "login_failed": "Login failed",
+    "network_login": "Could not complete sign-in. Please check your connection and try again.",
+    "password_reset_failed": "Password reset failed",
+    "network_password_reset": "Could not process your password reset. Please try again.",
+    "network_welcome": "Could not complete onboarding. Please check your connection and try again.",
+    "global_update": "The app may have been updated. Please reload to get the latest version."
   }
 }

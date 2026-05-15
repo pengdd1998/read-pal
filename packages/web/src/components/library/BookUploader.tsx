@@ -35,12 +35,12 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
         (percent) => setUploadProgress(percent),
       );
 
-      if (result.success && result.data) {
-        const data = result.data;
+      if (result.success && result.data?.book) {
+        const { book } = result.data;
         setUploadProgress(100);
         setSuccess(true);
         setTimeout(() => {
-          onUploadComplete(data.book);
+          onUploadComplete(book);
           setSuccess(false);
         }, 1500);
         if (fileInputRef.current) {

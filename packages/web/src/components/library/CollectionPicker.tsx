@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Collection } from '@read-pal/shared';
 
@@ -10,6 +11,7 @@ interface CollectionPickerProps {
 }
 
 export function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
+  const t = useTranslations('library');
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -77,7 +79,7 @@ export function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
   return (
     <div ref={ref} className="absolute right-0 top-full mt-1 z-50 w-56 bg-surface-0 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg animate-slide-up overflow-hidden">
       <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Add to collection</p>
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('collection_picker_title')}</p>
       </div>
 
       {loading ? (
@@ -106,7 +108,7 @@ export function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
           })}
 
           {collections.length === 0 && !showCreate && (
-            <p className="text-xs text-gray-400 px-2.5 py-2">No collections yet</p>
+            <p className="text-xs text-gray-400 px-2.5 py-2">{t('collection_picker_empty')}</p>
           )}
         </div>
       )}
@@ -120,11 +122,11 @@ export function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setShowCreate(false); }}
-              placeholder="Name..."
+              placeholder={t('collection_picker_placeholder')}
               className="flex-1 px-2 py-1 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded outline-none focus:ring-1 focus:ring-primary-400/50"
               autoFocus
             />
-            <button onClick={handleCreate} className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors">Add</button>
+            <button onClick={handleCreate} className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors">{t('collection_picker_add')}</button>
           </div>
         ) : (
           <button
@@ -134,7 +136,7 @@ export function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            New collection
+            {t('collection_picker_new')}
           </button>
         )}
       </div>

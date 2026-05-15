@@ -18,7 +18,7 @@ from app.schemas.book_club import (
 )
 from app.schemas.common import GenericResponse
 from app.services import book_club_service
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, t, translate_error
 
 router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'])
 
@@ -107,6 +107,7 @@ async def update_club(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Update club details. Admin or moderator only."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         club = await book_club_service.update_club(
             db, UUID(user['id']), club_id, body,
@@ -114,7 +115,7 @@ async def update_club(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={'code': 'FORBIDDEN', 'message': str(exc)},
+            detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},
         ) from exc
     return {
         'success': True,
@@ -135,12 +136,13 @@ async def delete_club(
     user: dict = Depends(get_current_user),
 ) -> None:
     """Delete a club. Admin only."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await book_club_service.delete_club(db, UUID(user['id']), club_id)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={'code': 'FORBIDDEN', 'message': str(exc)},
+            detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},
         ) from exc
 
 
@@ -152,6 +154,7 @@ async def join_club(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Join a club by invite code."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         club = await book_club_service.join_club(
             db, UUID(user['id']), body.invite_code,
@@ -159,7 +162,7 @@ async def join_club(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'BAD_REQUEST', 'message': str(exc)},
+            detail={'code': 'BAD_REQUEST', 'message': translate_error(exc, lang)},
         ) from exc
     return {
         'success': True,
@@ -177,12 +180,13 @@ async def leave_club(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Leave a club."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await book_club_service.leave_club(db, UUID(user['id']), club_id)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'BAD_REQUEST', 'message': str(exc)},
+            detail={'code': 'BAD_REQUEST', 'message': translate_error(exc, lang)},
         ) from exc
     return {'success': True, 'data': {'message': t('errors.left_club')}}
 
@@ -269,6 +273,7 @@ async def add_discussion(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Add a discussion post to a club."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         discussion = await book_club_service.add_discussion(
             db, UUID(user['id']), club_id, body.content,
@@ -276,7 +281,7 @@ async def add_discussion(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={'code': 'FORBIDDEN', 'message': str(exc)},
+            detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},
         ) from exc
     return {
         'success': True,

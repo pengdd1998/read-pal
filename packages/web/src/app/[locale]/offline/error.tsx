@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function OfflineError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Failed to load offline queue"
-      networkMessage="Could not load the offline queue. Please try again."
+      title={t('failed_load_offline')}
+      networkMessage={t('network_offline')}
       icon="book"
     />
   );

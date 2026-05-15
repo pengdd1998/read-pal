@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { copyToClipboard } from '@/lib/clipboard';
 
 interface QuoteCardProps {
@@ -205,6 +206,8 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const t = THEMES[theme];
+  const tc = useTranslations('common');
+  const tr = useTranslations('reader');
 
   const handleDownload = useCallback(() => {
     const canvas = canvasRef.current ?? document.createElement('canvas');
@@ -306,7 +309,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
-      aria-label="Share quote card"
+      aria-label={tc('share_quote_card')}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm" />
@@ -356,7 +359,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
                 {bookTitle}
               </span>
               <span className={`block text-xs mt-0.5 ${t.titleColor} opacity-70`}>
-                by {author}
+                {tr('quote_by_author', { author })}
               </span>
             </cite>
 
@@ -374,7 +377,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
           {/* Theme selector */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">
-              Theme
+              {tr('theme_label')}
             </span>
             <button
               onClick={() => setTheme('warm')}
@@ -383,7 +386,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
                   ? 'border-amber-500 scale-110 shadow-glow-amber'
                   : 'border-transparent hover:border-amber-300 hover:scale-105'
               }`}
-              aria-label="Warm theme"
+              aria-label={tc('warm_theme')}
             />
             <button
               onClick={() => setTheme('dark')}
@@ -392,7 +395,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
                   ? 'border-amber-500 scale-110 shadow-glow-amber'
                   : 'border-transparent hover:border-gray-500 hover:scale-105'
               }`}
-              aria-label="Dark theme"
+              aria-label={tc('dark_theme')}
             />
           </div>
 
@@ -402,21 +405,21 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
             <button
               onClick={handleCopyImage}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 hover:bg-white/20 border border-white/10 hover:border-white/20"
-              title="Copy image to clipboard"
+              title={tc('copy_image_to_clipboard')}
             >
               {copied ? (
                 <>
                   <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-emerald-400">Copied!</span>
+                  <span className="text-emerald-400">{tr('toolbar_copied')}</span>
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <span className="hidden sm:inline">Copy Image</span>
+                  <span className="hidden sm:inline">{tr('toolbar_copy')}</span>
                 </>
               )}
             </button>
@@ -425,12 +428,12 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
             <button
               onClick={handleNativeShare}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md hover:shadow-lg"
-              title={typeof navigator.share === 'function' ? 'Share via apps' : 'Download image'}
+              title={typeof navigator.share === 'function' ? tc('share_via_apps') : tc('download_image')}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
-              <span>{typeof navigator.share === 'function' ? 'Share' : 'Download'}</span>
+              <span>{typeof navigator.share === 'function' ? tr('toolbar_share') : tc('download_image')}</span>
             </button>
 
             {/* Download Image */}
@@ -438,7 +441,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
               onClick={handleDownload}
               disabled={downloading}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 hover:bg-white/20 border border-white/10 hover:border-white/20 disabled:opacity-60 disabled:cursor-not-allowed"
-              title="Download as PNG"
+              title={tc('download_as_png')}
             >
               {downloading ? (
                 <>
@@ -460,7 +463,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
             <button
               onClick={onClose}
               className="flex items-center justify-center w-11 h-11 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 border border-white/5 transition-all duration-200 active:scale-95"
-              aria-label="Close"
+              aria-label={tr('share_close_quote')}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function KnowledgeError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Failed to load knowledge graph"
-      networkMessage="Could not load your knowledge graph. Please check your connection and try again."
+      title={t('failed_load_knowledge')}
+      networkMessage={t('network_knowledge')}
       icon="search"
     />
   );

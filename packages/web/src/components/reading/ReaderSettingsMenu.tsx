@@ -40,12 +40,12 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
         <div>
           <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">{t('font_size_label')}</label>
           <div className="flex items-center gap-2">
-            <button onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label="Decrease font size">A-</button>
+            <button onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_decrease_font')}>A-</button>
             <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full relative">
               <div className="absolute left-0 top-0 h-full bg-amber-400 rounded-full" style={{ width: `${((fontSize - 12) / 20) * 100}%` }} />
             </div>
             <span className="text-xs font-mono text-amber-600 dark:text-amber-400 w-6 text-center">{fontSize}</span>
-            <button onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label="Increase font size">A+</button>
+            <button onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_increase_font')}>A+</button>
           </div>
         </div>
 
@@ -53,12 +53,12 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
         <div>
           <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1.5 block">{t('line_height_label')}</label>
           <div className="flex items-center gap-2">
-            <button onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label="Decrease line height">-</button>
+            <button onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_decrease_line_height')}>-</button>
             <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full relative">
               <div className="absolute left-0 top-0 h-full bg-amber-400 rounded-full" style={{ width: `${((lineHeight - 1.2) / 1.0) * 100}%` }} />
             </div>
             <span className="text-xs font-mono text-amber-600 dark:text-amber-400 w-8 text-center">{lineHeight.toFixed(2)}</span>
-            <button onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label="Increase line height">+</button>
+            <button onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_increase_line_height')}>+</button>
           </div>
         </div>
 

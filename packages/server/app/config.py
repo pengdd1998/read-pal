@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     llm_max_retries: int = 3
     circuit_failure_threshold: int = 5
     circuit_reset_timeout_seconds: int = 30
+    max_embedding_calls: int = 300
 
     # JWT
     jwt_secret: str = 'dev-secret-key-change-in-production-32ch'

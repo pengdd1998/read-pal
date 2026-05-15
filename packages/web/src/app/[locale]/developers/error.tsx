@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function DevelopersError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Failed to load developer docs"
-      networkMessage="Could not load the developer documentation. Please check your connection and try again."
+      title={t('failed_load_developers')}
+      networkMessage={t('network_developers')}
       icon="chart"
     />
   );

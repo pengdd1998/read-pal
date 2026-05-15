@@ -25,6 +25,7 @@ const fallbacks: Record<string, string> = {
   reload_page: 'Reload page',
   go_home: 'Go Home',
   error_id: 'Error ID: {id}',
+  global_update: 'The app may have been updated. Please reload to get the latest version.',
 };
 
 const icons: Record<string, JSX.Element> = {

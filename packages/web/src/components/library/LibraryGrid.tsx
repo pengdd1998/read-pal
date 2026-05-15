@@ -88,6 +88,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
   }, [loadLibrary]);
 
   const handleUploadComplete = (newBook: Book) => {
+    if (!newBook?.id) return;
     setBooks((prev) => [newBook, ...prev]);
   };
 

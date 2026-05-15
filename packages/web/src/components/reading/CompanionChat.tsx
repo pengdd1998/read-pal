@@ -464,7 +464,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     let greetTimer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
       try {
-        const result = await api.get<Message[]>('/api/agents/history', { bookId, limit: 50 });
+        const result = await api.get<Message[]>('/api/agents/history', { book_id: bookId, limit: 50 });
         if (!cancelled && result.success && result.data) {
           const raw = result.data;
           if (Array.isArray(raw) && raw.length > 0) {

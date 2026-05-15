@@ -10,7 +10,7 @@ from app.middleware.auth import get_current_user
 from app.schemas.collection import CollectionBooksBatchRequest, CollectionCreate, CollectionUpdate
 from app.schemas.common import GenericResponse
 from app.services import collection_service
-from app.utils.i18n import t
+from app.utils.i18n import _get_user_lang, t, translate_error
 
 router = APIRouter(prefix='/api/v1/collections', tags=['collections'])
 
@@ -78,6 +78,7 @@ async def update_collection(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Update a collection."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         col = await collection_service.update_collection(
             db, UUID(user['id']), collection_id, body,
@@ -85,7 +86,7 @@ async def update_collection(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
     return {'success': True, 'data': _serialize_collection(col)}
 
@@ -97,12 +98,13 @@ async def delete_collection(
     user: dict = Depends(get_current_user),
 ) -> None:
     """Delete a collection."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await collection_service.delete_collection(db, UUID(user['id']), collection_id)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
 
 
@@ -185,6 +187,7 @@ async def add_book(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Add a book to a collection."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         col = await collection_service.add_book_to_collection(
             db, UUID(user['id']), collection_id, book_id,
@@ -192,7 +195,7 @@ async def add_book(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
     return {'success': True, 'data': _serialize_collection(col)}
 
@@ -205,6 +208,7 @@ async def remove_book(
     user: dict = Depends(get_current_user),
 ) -> None:
     """Remove a book from a collection."""
+    lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await collection_service.remove_book_from_collection(
             db, UUID(user['id']), collection_id, book_id,
@@ -212,5 +216,5 @@ async def remove_book(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc

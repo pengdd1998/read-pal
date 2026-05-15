@@ -25,6 +25,7 @@ from app.core.redis import get_redis as _get_redis
 from app.db import get_db
 from app.models.api_key import ApiKey, hash_api_key, is_api_key_format
 from app.models.user import User
+from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.auth')
 
@@ -180,7 +181,7 @@ async def get_current_user(
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'code': 'UNAUTHORIZED', 'message': 'Missing or invalid authorization header'},
+            detail={'code': 'UNAUTHORIZED', 'message': t('errors.missing_auth')},
         )
 
     token = credentials.credentials
@@ -196,7 +197,7 @@ async def get_current_user(
         if api_key is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={'code': 'INVALID_API_KEY', 'message': 'Invalid API key'},
+                detail={'code': 'INVALID_API_KEY', 'message': t('errors.invalid_api_key')},
             )
 
         result = await db.execute(
@@ -207,7 +208,7 @@ async def get_current_user(
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={'code': 'USER_NOT_FOUND', 'message': 'API key owner not found'},
+                detail={'code': 'USER_NOT_FOUND', 'message': t('errors.api_key_owner_not_found')},
             )
 
         # Update last_used_at within the request session
@@ -226,8 +227,9 @@ async def get_current_user(
         payload = jwt.decode(token, settings.jwt_secret, algorithms=['HS256'])
     except JWTError as exc:
         # Distinguish expired vs invalid for better client handling
-        error_msg = 'Token has expired' if 'expired' in str(exc).lower() else 'Invalid token'
-        error_code = 'TOKEN_EXPIRED' if 'expired' in str(exc).lower() else 'INVALID_TOKEN'
+        is_expired = 'expired' in str(exc).lower()
+        error_msg = t('errors.token_expired') if is_expired else t('errors.token_invalid')
+        error_code = 'TOKEN_EXPIRED' if is_expired else 'INVALID_TOKEN'
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={'code': error_code, 'message': error_msg},
@@ -237,7 +239,7 @@ async def get_current_user(
     if jti and await is_token_revoked(jti):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'code': 'TOKEN_REVOKED', 'message': 'Token has been revoked'},
+            detail={'code': 'TOKEN_REVOKED', 'message': t('errors.token_revoked')},
         )
 
     user_id = payload.get('userId') or payload.get('sub') or ''
@@ -250,7 +252,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 'code': 'USER_NOT_FOUND',
-                'message': 'User account not found. Please sign in again.',
+                'message': t('errors.user_sign_in_again'),
             },
         )
 

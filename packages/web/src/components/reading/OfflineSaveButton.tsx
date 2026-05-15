@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { isCapacitor } from '@/lib/capacitor';
 import { cacheBook, isCached, removeCachedBook } from '@/lib/mobile-cache';
 import { hapticSuccess, hapticMedium } from '@/hooks/useHaptics';
@@ -12,6 +13,7 @@ interface OfflineSaveButtonProps {
 type SaveState = 'idle' | 'cached' | 'saving' | 'error';
 
 export function OfflineSaveButton({ bookId }: OfflineSaveButtonProps) {
+  const t = useTranslations('reader');
   const [state, setState] = useState<SaveState>('idle');
   const [progress, setProgress] = useState(0);
 
@@ -89,15 +91,15 @@ export function OfflineSaveButton({ bookId }: OfflineSaveButtonProps) {
       className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors relative ${buttonClass}`}
       aria-label={
         state === 'cached'
-          ? 'Remove offline copy'
+          ? t('offline_remove_aria')
           : state === 'saving'
-            ? `Saving for offline ${progress}%`
-            : 'Save for offline reading'
+            ? t('offline_saving_aria', { progress })
+            : t('offline_save_aria')
       }
       title={
         state === 'cached'
-          ? 'Available offline — tap to remove'
-          : 'Save for offline reading'
+          ? t('offline_available_title')
+          : t('offline_save_title')
       }
     >
       {state === 'cached' ? (

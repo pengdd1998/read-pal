@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function SearchError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Search unavailable"
-      networkMessage="Could not search right now. Please check your connection and try again."
+      title={t('search_unavailable')}
+      networkMessage={t('network_search')}
       icon="search"
     />
   );

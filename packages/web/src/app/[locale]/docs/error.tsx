@@ -1,13 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PageError } from '@/components/PageError';
 
-export default function DocsError(props: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage(props: { error: Error & { digest?: string }; reset: () => void }) {
+  const t = useTranslations('errors');
   return (
     <PageError
       {...props}
-      title="Failed to load documentation"
-      networkMessage="Could not load the documentation. Please check your connection and try again."
+      title={t('failed_load_docs')}
+      networkMessage={t('network_docs')}
       icon="book"
     />
   );

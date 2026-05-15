@@ -6,7 +6,6 @@ Strategy tiers (auto-degrading):
 Results are cached in Redis per (book, query) for 30 minutes.
 """
 
-import asyncio
 import hashlib
 import logging
 import re
@@ -131,39 +130,54 @@ async def precompute_book_embeddings(
         logger.debug('Skipping embedding pre-computation: no API key')
         return
 
-    chunks_to_insert: list[BookChunk] = []
-
+    # Phase 1: collect all text chunks
+    all_chunks: list[tuple[int, int, str]] = []
     for ch_idx, chapter in enumerate(chapters):
         title = chapter.get('title', '')
         content = chapter.get('content', '')
         full_text = f'{title} {content}'
-        text_chunks = _chunk_text(full_text)
+        for ck_idx, chunk in enumerate(_chunk_text(full_text)):
+            all_chunks.append((ch_idx, ck_idx, chunk))
 
-        for ck_idx, chunk in enumerate(text_chunks):
+    # Phase 2: generate embeddings up to the cap
+    max_calls = settings.max_embedding_calls
+    chunks_to_insert: list[BookChunk] = []
+    api_calls = 0
+    capped = False
+
+    for ch_idx, ck_idx, chunk in all_chunks:
+        embedding = None
+        if not capped:
             embedding = await _get_embedding(chunk)
-            chunks_to_insert.append(
-                BookChunk(
-                    book_id=book_id,
-                    document_id=document_id,
-                    chapter_index=ch_idx,
-                    chunk_index=ck_idx,
-                    content=chunk,
-                    embedding=embedding,
+            api_calls += 1
+            if api_calls >= max_calls:
+                capped = True
+                logger.warning(
+                    'Embedding cap reached (%d) for book %s — remaining chunks stored without embeddings',
+                    max_calls, book_id,
                 )
-            )
 
-        if ch_idx < len(chapters) - 1:
-            await asyncio.sleep(0.2)
+        chunks_to_insert.append(
+            BookChunk(
+                book_id=book_id,
+                document_id=document_id,
+                chapter_index=ch_idx,
+                chunk_index=ck_idx,
+                content=chunk,
+                embedding=embedding,
+            ),
+        )
 
     async with async_session() as session:
         async with session.begin():
             session.add_all(chunks_to_insert)
 
     logger.info(
-        'Stored %d chunks for book %s (%d with embeddings)',
+        'Stored %d chunks for book %s (%d with embeddings, cap=%d)',
         len(chunks_to_insert),
         book_id,
         sum(1 for c in chunks_to_insert if c.embedding is not None),
+        max_calls,
     )
 
 

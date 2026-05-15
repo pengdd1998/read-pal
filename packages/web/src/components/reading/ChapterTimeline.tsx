@@ -34,7 +34,7 @@ export function ChapterTimeline({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<ChapterStat[]>(`/api/annotations/stats/chapters?bookId=${bookId}`)
+    api.get<ChapterStat[]>(`/api/annotations/stats/chapters?book_id=${bookId}`)
       .then((res) => {
         if (res.success && res.data) setStats(res.data);
       })

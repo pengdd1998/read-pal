@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Toast {
   id: string;
@@ -20,6 +21,7 @@ export function useToast() {
 }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const tc = useTranslations('common');
   const [toasts, setToasts] = useState<Toast[]>([]);
   const idRef = useRef(0);
 
@@ -36,7 +38,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast: addToast }}>
       {children}
       {/* Toast container */}
-      <div role="status" aria-live="polite" aria-label="Notifications" className="fixed bottom-20 md:bottom-6 right-4 z-50 flex flex-col gap-2 max-w-sm">
+      <div role="status" aria-live="polite" aria-label={tc('notifications')} className="fixed bottom-20 md:bottom-6 right-4 z-50 flex flex-col gap-2 max-w-sm">
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onDismiss={removeToast} />
         ))}
@@ -46,6 +48,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
+  const tc = useTranslations('common');
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -73,7 +76,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
     >
       <span className="text-base flex-shrink-0">{icon}</span>
       <span className="flex-1">{toast.message}</span>
-      <button onClick={() => { setVisible(false); setTimeout(() => onDismiss(toast.id), 300); }} aria-label="Dismiss notification" className="text-current opacity-50 hover:opacity-100 transition-opacity flex-shrink-0">
+      <button onClick={() => { setVisible(false); setTimeout(() => onDismiss(toast.id), 300); }} aria-label={tc('toast_dismiss_aria')} className="text-current opacity-50 hover:opacity-100 transition-opacity flex-shrink-0">
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
