@@ -30,7 +30,7 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
     minutes_ago: tc('minutes_ago'),
     hours_ago: tc('hours_ago'),
     days_ago: tc('days_ago'),
-  });
+  } as const);
 
   const currentBook = recentBooks.length > 0 ? recentBooks[0] : null;
   const activeBooks = useMemo(

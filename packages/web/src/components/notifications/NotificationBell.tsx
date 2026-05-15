@@ -34,7 +34,7 @@ export function NotificationBell() {
     minutes_ago: t('minutes_ago'),
     hours_ago: t('hours_ago'),
     days_ago: t('days_ago'),
-  });
+  } as const);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);

@@ -24,13 +24,13 @@ const ShareReadingCard = dynamic(() => import('@/components/share/ReadingShareCa
 const StreakCalendar = dynamic(() => import('@/components/dashboard/StreakCalendar'), { ssr: false });
 const BookClubsWidget = dynamic(() => import('@/components/dashboard/BookClubsWidget'), { ssr: false });
 
-const INSIGHTS_POOL_KEYS = [
-  { agent: 'Companion', icon: '\uD83D\uDCD6', key: 'insight_companion' },
-  { agent: 'Research', icon: '\uD83D\uDD2C', key: 'insight_research' },
-  { agent: 'Coach', icon: '\uD83C\uDFAF', key: 'insight_coach' },
-  { agent: 'Synthesis', icon: '\uD83E\uDDE0', key: 'insight_synthesis' },
-  { agent: 'Friend', icon: '\uD83E\uDD1D', key: 'insight_friend' },
-] as const;
+const INSIGHTS_POOL_KEYS: InsightKey[] = [
+  { agentKey: 'agent_companion', icon: '\uD83D\uDCD6', key: 'insight_companion' },
+  { agentKey: 'agent_research', icon: '\uD83D\uDD2C', key: 'insight_research' },
+  { agentKey: 'agent_coach', icon: '\uD83C\uDFAF', key: 'insight_coach' },
+  { agentKey: 'agent_synthesis', icon: '\uD83E\uDDE0', key: 'insight_synthesis' },
+  { agentKey: 'agent_friend', icon: '\uD83E\uDD1D', key: 'insight_friend' },
+];
 
 function getTimeGreetingKey(): string {
   const hour = new Date().getHours();
