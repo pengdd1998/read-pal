@@ -108,10 +108,44 @@ function AuthForm() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="max-w-sm w-full animate-fade-in">
-        {/* Brand */}
-        <header className="text-center mb-6">
+    <div className="min-h-[80vh] lg:min-h-screen grid lg:grid-cols-[1fr_520px] xl:grid-cols-[1fr_560px] animate-fade-in">
+      {/* Left — Brand panel (desktop) — full bleed with gradient */}
+      <div className="hidden lg:flex flex-col justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 dark:from-gray-900 dark:via-gray-900 dark:to-amber-950 px-12 xl:px-20 2xl:px-28 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+        <div className="relative z-10 max-w-lg">
+          <Link href="/" className="inline-flex items-center gap-3 mb-10">
+            <span className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+              r
+            </span>
+            <span className="text-2xl font-display font-bold text-gray-900 dark:text-white">read-pal</span>
+          </Link>
+          <h2 className="text-4xl xl:text-5xl font-bold font-display text-gray-900 dark:text-white leading-tight mb-5">
+            {mode === 'login' ? t('login_title') : t('register_title')}
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+            {mode === 'login'
+              ? t('login_subtitle_alt')
+              : t('register_subtitle_alt')}
+          </p>
+          <div className="mt-14 grid grid-cols-3 gap-8">
+            {[
+              { emoji: '📖', label: 'Smart Reader' },
+              { emoji: '🤖', label: 'AI Companion' },
+              { emoji: '💡', label: 'Knowledge Graph' },
+            ].map((f) => (
+              <div key={f.label} className="text-center p-4 rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-sm">
+                <div className="text-3xl mb-3">{f.emoji}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-semibold">{f.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right — Form panel */}
+      <div className="flex flex-col justify-center px-6 sm:px-10 lg:px-12 xl:px-16 py-10 lg:py-0 bg-surface-0 dark:bg-gray-950">
+        {/* Mobile brand */}
+        <div className="lg:hidden text-center mb-6">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
             <span className="w-12 h-12 rounded-xl bg-primary-600 flex items-center justify-center text-white text-xl font-bold shadow-soft" aria-hidden="true">
               r
@@ -121,11 +155,9 @@ function AuthForm() {
             {mode === 'login' ? t('login_title') : t('register_title')}
           </h1>
           <p className="text-sm text-gray-600 mt-1 dark:text-gray-400">
-            {mode === 'login'
-              ? t('login_subtitle_alt')
-              : t('register_subtitle_alt')}
+            {mode === 'login' ? t('login_subtitle_alt') : t('register_subtitle_alt')}
           </p>
-        </header>
+        </div>
 
         {/* Mode Toggle */}
         <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">

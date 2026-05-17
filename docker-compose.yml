@@ -32,19 +32,32 @@ services:
       GLM_API_KEY: ${GLM_API_KEY}
       GLM_BASE_URL: ${GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-glm-4.7-flash}
+      FALLBACK_MODEL: ${FALLBACK_MODEL:-glm-4-flash}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-15}
+      LLM_MAX_RETRIES: ${LLM_MAX_RETRIES:-3}
+      CIRCUIT_FAILURE_THRESHOLD: ${CIRCUIT_FAILURE_THRESHOLD:-5}
+      CIRCUIT_RESET_TIMEOUT_SECONDS: ${CIRCUIT_RESET_TIMEOUT_SECONDS:-30}
+      MAX_EMBEDDING_CALLS: ${MAX_EMBEDDING_CALLS:-300}
       # JWT Configuration
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      JWT_ACCESS_WEB: ${JWT_ACCESS_WEB:-30m}
+      JWT_ACCESS_MOBILE: ${JWT_ACCESS_MOBILE:-2h}
+      JWT_REFRESH_WEB: ${JWT_REFRESH_WEB:-7d}
+      JWT_REFRESH_MOBILE: ${JWT_REFRESH_MOBILE:-30d}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8090}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8090,capacitor://localhost,https://localhost}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_JSON: ${LOG_JSON:-true}
+      LLM_LOG_ENABLED: ${LLM_LOG_ENABLED:-true}
+      LLM_LOG_RETENTION_DAYS: ${LLM_LOG_RETENTION_DAYS:-90}
       # SMTP Configuration (optional)
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@read-pal.com}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8090,capacitor://localhost,https://localhost}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      LOG_JSON: ${LOG_JSON:-true}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
       interval: 10s

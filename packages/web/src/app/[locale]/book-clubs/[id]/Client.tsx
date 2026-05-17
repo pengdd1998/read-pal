@@ -176,7 +176,7 @@ export default function BookClubDetailPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
-        <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse space-y-4">
             <div className="h-8 w-48 bg-gray-100 dark:bg-gray-800 rounded" />
             <div className="h-4 w-64 bg-gray-100 dark:bg-gray-800 rounded" />
@@ -190,7 +190,7 @@ export default function BookClubDetailPage() {
   if (error || !club) {
     return (
       <main className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
-        <div className="max-w-3xl mx-auto px-4 py-8 text-center">
+        <div className="px-4 sm:px-6 lg:px-8 py-8 text-center">
           <p className="text-gray-500 dark:text-gray-400">{error || t('clubNotFound')}</p>
           <Link href="/book-clubs" className="text-sm text-primary-600 hover:underline mt-2 inline-block">
             {t('backToBookClubs')}
@@ -205,7 +205,7 @@ export default function BookClubDetailPage() {
 
   return (
     <main className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 mb-6">
           <Link href="/dashboard" className="hover:text-gray-600 dark:hover:text-gray-300">{t('dashboard')}</Link>

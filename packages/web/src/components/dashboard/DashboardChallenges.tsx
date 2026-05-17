@@ -74,7 +74,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('challenges_title')}</h3>
-        <span className="text-[10px] text-gray-400">{t('challenges_done', { completed: completedCount, total: challenges.length })}</span>
+        <span className="text-[10px] text-gray-400">{t('challenges_done', { completed: completedCount, total: completedCount + active.length })}</span>
       </div>
       <div className="space-y-3">
         {active.map((c) => (

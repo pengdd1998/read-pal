@@ -158,7 +158,7 @@ export default async function DocsPage({
     <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
       {/* Header */}
       <header className="bg-navy-700 dark:bg-navy-900 text-white">
-        <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center gap-2 text-sm text-amber-200 mb-4">
             <Link href="/" className="hover:text-white">{t('breadcrumb_home')}</Link>
             <span>/</span>
@@ -171,7 +171,7 @@ export default async function DocsPage({
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid lg:grid-cols-[220px_1fr] gap-8">
           {/* Sidebar nav */}
           <nav className="hidden lg:block space-y-1 sticky top-8 self-start">

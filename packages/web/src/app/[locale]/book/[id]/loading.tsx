@@ -1,6 +1,6 @@
 export default function BookDetailLoading() {
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-10 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
       {/* Back link skeleton */}
       <div className="mb-6">
         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />

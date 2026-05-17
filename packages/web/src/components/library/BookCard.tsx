@@ -39,7 +39,8 @@ export function BookCard({
   onDelete,
   onTagsChange,
 }: BookCardProps) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [cachingOffline, setCachingOffline] = useState(false);
@@ -122,21 +123,23 @@ export function BookCard({
     });
   }
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      setTimeout(() => setConfirmDelete(false), 3000);
-      return;
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
     }
-    try {
-      await api.delete(`/api/books/${id}`);
-      onDelete?.(id);
-    } catch {
-      setConfirmDelete(false);
-      // Keep silent — user can retry
-    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleting) return;
+    setDeleting(true);
+    setShowDeleteConfirm(false);
+    onDelete?.(id);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
   };
 
   const handleAddTag = async (e: React.KeyboardEvent) => {
@@ -192,84 +195,106 @@ export function BookCard({
             </div>
           )}
 
-          {/* Info button - links to detail page */}
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/book/${id}`); }}
-            className="absolute bottom-1 right-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50 transition-all duration-200"
-            aria-label={t('card_book_details')}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-
-          {/* Offline cache button */}
-          <button
-            onClick={handleCacheOffline}
-            aria-label={cachedOffline ? t('card_available_offline') : t('card_save_offline')}
-            className={`absolute bottom-1 left-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all duration-200 ${
-              cachedOffline
-                ? 'bg-emerald-500/80 text-white opacity-100'
-                : cachingOffline
-                  ? 'bg-amber-500/80 text-white opacity-100 animate-pulse'
-                  : 'bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50'
-            }`}
-          >
-            {cachedOffline ? (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-            )}
-          </button>
-
-          {/* Delete button - shows on hover */}
-          <button
-            onClick={handleDelete}
-            aria-label={confirmDelete ? t('card_confirm_delete') : t('card_delete_book')}
-            className={`absolute top-2 left-2.5 p-2 rounded-lg transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center ${
-              confirmDelete
-                ? 'bg-red-500 text-white opacity-100'
-                : 'bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-red-500'
-            }`}
-            title={confirmDelete ? t('card_click_confirm') : t('card_delete_book')}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-
-          {/* Collection picker */}
-          <div className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Bottom action bar */}
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-around bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-200 py-1 z-10">
+            {/* Info */}
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowCollectionPicker((v) => !v); }}
-              aria-label={t('card_add_to_collection')}
-              className="p-2 rounded-lg bg-black/40 text-white hover:bg-black/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
-              title={t('card_add_to_collection')}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/book/${id}`); }}
+              className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
+              aria-label={t('card_book_details')}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
-            {showCollectionPicker && (
-              <CollectionPicker bookId={id} onClose={() => setShowCollectionPicker(false)} />
-            )}
+
+            {/* Offline cache */}
+            <button
+              onClick={handleCacheOffline}
+              aria-label={cachedOffline ? t('card_available_offline') : t('card_save_offline')}
+              className={`min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors ${
+                cachedOffline
+                  ? 'text-emerald-400'
+                  : cachingOffline
+                    ? 'text-amber-400 animate-pulse'
+                    : 'text-white/80 hover:text-white hover:bg-white/20'
+              }`}
+            >
+              {cachedOffline ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              )}
+            </button>
+
+            {/* Collection picker */}
+            <div className="relative">
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowCollectionPicker((v) => !v); }}
+                aria-label={t('card_add_to_collection')}
+                className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+              </button>
+              {showCollectionPicker && (
+                <CollectionPicker bookId={id} onClose={() => setShowCollectionPicker(false)} />
+              )}
+            </div>
+
+            {/* Delete */}
+            <div className="relative">
+              <button
+                onClick={handleDeleteClick}
+                disabled={deleting}
+                aria-label={t('card_delete_book')}
+                className={`min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors ${
+                  deleting
+                    ? 'text-white/40 cursor-wait'
+                    : 'text-white/80 hover:text-red-400 hover:bg-red-500/20'
+                }`}
+              >
+                {deleting ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
+              </button>
+              {showDeleteConfirm && (
+                <div
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-36 rounded-lg bg-gray-900 dark:bg-gray-800 shadow-xl border border-gray-700 p-2 z-50 animate-in fade-in duration-150"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                >
+                  <p className="text-[10px] text-gray-300 text-center mb-2">{t('card_confirm_delete')}</p>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCancelDelete(); }}
+                      className="flex-1 px-2 py-1 rounded text-[10px] font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+                    >
+                      {t('card_cancel')}
+                    </button>
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleConfirmDelete(); }}
+                      className="flex-1 px-2 py-1 rounded text-[10px] font-medium bg-red-600 text-white hover:bg-red-500 transition-colors"
+                    >
+                      {t('card_delete')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Reading progress overlay bar at bottom of cover */}
-          {status !== 'unread' && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/10">
-              <div
-                className={`h-full transition-all duration-500 ease-out ${
-                  status === 'completed' ? 'bg-emerald-400' : 'bg-amber-400'
-                }`}
-                style={{ width: `${Math.min(100, progress)}%` }}
-              />
-            </div>
-          )}
         </div>
 
         {/* Title & Author */}

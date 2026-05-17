@@ -28,9 +28,9 @@ async def get_dashboard_stats(
     )
     status_counts = {row[0]: row[1] for row in status_rows.all()}
     total_books = sum(status_counts.values())
-    books_reading = status_counts.get(BookStatus.reading.value, 0)
-    books_completed = status_counts.get(BookStatus.completed.value, 0)
-    books_unread = status_counts.get(BookStatus.unread.value, 0)
+    books_reading = status_counts.get(BookStatus.reading, 0)
+    books_completed = status_counts.get(BookStatus.completed, 0)
+    books_unread = status_counts.get(BookStatus.unread, 0)
 
     # --- Pages read (from reading sessions, fallback to book progress) ---
     total_pages = await db.scalar(

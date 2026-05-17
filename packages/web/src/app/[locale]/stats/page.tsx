@@ -91,7 +91,7 @@ export default function StatsPage() {
   const totalPages = sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
 
   return (
-    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
+    <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
       {/* Back */}
       <div className="mb-6">
         <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">

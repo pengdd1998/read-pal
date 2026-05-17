@@ -104,21 +104,22 @@ def _log_call(
         book_id=book_id,
     )
     # Persist via buffered trace writer (includes user_id/book_id)
-    _trace_writer.add({
-        'request_id': request_id,
-        'model': model,
-        'label': label,
-        'latency_ms': latency_ms,
-        'prompt_tokens': usage.get('prompt_tokens', 0),
-        'completion_tokens': usage.get('completion_tokens', 0),
-        'total_tokens': usage.get('total_tokens', 0),
-        'estimated_cost_usd': cost,
-        'success': success,
-        'fallback_used': fallback_used,
-        'error_message': error_message,
-        'user_id': user_id,
-        'book_id': book_id,
-    })
+    if get_settings().llm_log_enabled:
+        _trace_writer.add({
+            'request_id': request_id,
+            'model': model,
+            'label': label,
+            'latency_ms': latency_ms,
+            'prompt_tokens': usage.get('prompt_tokens', 0),
+            'completion_tokens': usage.get('completion_tokens', 0),
+            'total_tokens': usage.get('total_tokens', 0),
+            'estimated_cost_usd': cost,
+            'success': success,
+            'fallback_used': fallback_used,
+            'error_message': error_message,
+            'user_id': user_id,
+            'book_id': book_id,
+        })
 
 # ---------------------------------------------------------------------------
 # Connection pool — cache ChatOpenAI per (model, temperature) tuple

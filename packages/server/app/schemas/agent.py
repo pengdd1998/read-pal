@@ -93,6 +93,7 @@ class MoodSceneRequest(BaseModel):
     """Request body for mood-based scene."""
 
     mood: str = Field(default='neutral', max_length=50)
+    text: str = Field(default='', max_length=50000)
 
 
 class AdvancePlanRequest(BaseModel):

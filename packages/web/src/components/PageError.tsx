@@ -115,7 +115,7 @@ export function PageError({
       : error.message || t('unexpected_error');
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
         <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
           {icons[icon]}

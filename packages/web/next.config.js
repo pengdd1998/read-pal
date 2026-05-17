@@ -17,9 +17,11 @@ const nextConfig = {
       : false,
   },
   async rewrites() {
-    // In Docker, nginx handles API proxying — skip rewrites when API_URL is empty
-    const apiTarget = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
-    if (!apiTarget) return [];
+    // Docker: nginx handles proxying, skip rewrites.
+    // Dev: always proxy /api/* to backend, even when NEXT_PUBLIC_API_URL is empty
+    // (empty NEXT_PUBLIC_API_URL = relative client URLs = no CORS).
+    const apiTarget = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:8000';
+    if (process.env.DOCKER_BUILD === '1') return [];
     return [
       {
         source: '/api/:path*',

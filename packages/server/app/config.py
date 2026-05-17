@@ -25,7 +25,11 @@ def _parse_duration(value: str) -> int:
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables."""
+    """Application settings — all values loaded from .env / environment variables.
+
+    No defaults here: .env is the single source of truth.
+    See .env.example for required variables.
+    """
 
     model_config = SettingsConfigDict(
         env_file='.env',
@@ -33,47 +37,45 @@ class Settings(BaseSettings):
     )
 
     # Database
-    db_host: str = 'localhost'
-    db_port: int = 5432
-    db_name: str = 'readpal'
-    db_user: str = 'readpal'
-    db_password: str = 'readpal_dev'
+    db_host: str
+    db_port: int
+    db_name: str
+    db_user: str
+    db_password: str
 
     # Redis
-    redis_url: str = 'redis://localhost:6379'
+    redis_url: str
 
     # GLM AI
-    glm_api_key: str = 'dev-key'
-    glm_base_url: str = 'https://open.bigmodel.cn/api/paas/v4'
-    default_model: str = 'glm-4.7-flash'
-    fallback_model: str = 'glm-4-flash'
-    llm_timeout_seconds: int = 15
-    llm_max_retries: int = 3
-    circuit_failure_threshold: int = 5
-    circuit_reset_timeout_seconds: int = 30
-    max_embedding_calls: int = 300
+    glm_api_key: str
+    glm_base_url: str
+    default_model: str
+    fallback_model: str
+    llm_timeout_seconds: int
+    llm_max_retries: int
+    circuit_failure_threshold: int
+    circuit_reset_timeout_seconds: int
+    max_embedding_calls: int
+    embedding_enabled: bool = True
 
     # JWT
-    jwt_secret: str = 'dev-secret-key-change-in-production-32ch'
-    jwt_expires_in: str = '7d'
-    jwt_access_web: str = '30m'
-    jwt_access_mobile: str = '2h'
-    jwt_refresh_web: str = '7d'
-    jwt_refresh_mobile: str = '30d'
-
-    # Vector search: currently using in-process cosine similarity over Redis-cached embeddings.
-    # For scaling beyond ~100 books, integrate a vector DB (Pinecone, Qdrant, or pgvector).
-    # pinecone_api_key: str | None = None  # Removed — not used. Re-enable when integrating vector DB.
+    jwt_secret: str
+    jwt_expires_in: str
+    jwt_access_web: str
+    jwt_access_mobile: str
+    jwt_refresh_web: str
+    jwt_refresh_mobile: str
 
     # App
-    app_env: str = 'development'
-    frontend_url: str = 'http://localhost:3000'
-    cors_origins: str = 'http://localhost:3000,http://localhost:3001'  # Comma-separated allowed origins
+    app_env: str
+    frontend_url: str
+    cors_origins: str
 
     # Logging
-    log_level: str = 'INFO'
-    log_json: bool = False
-    llm_log_retention_days: int = 90
+    log_level: str
+    log_json: bool
+    llm_log_enabled: bool
+    llm_log_retention_days: int
 
     # SMTP (optional — console fallback when unset)
     smtp_host: str | None = None

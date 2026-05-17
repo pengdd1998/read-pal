@@ -23,7 +23,7 @@ export default async function PrivacyPage() {
       </header>
 
       {/* TODO: i18n — body text below is English-only for now. Add translation keys when needed. */}
-      <div className="max-w-3xl mx-auto px-6 py-10 space-y-10 text-stone-700 dark:text-gray-300 text-sm leading-relaxed">
+      <div className="max-w-4xl mx-auto px-6 py-10 space-y-10 text-stone-700 dark:text-gray-300 text-sm leading-relaxed">
 
         <section>
           <h2 className="text-lg font-bold font-serif text-stone-900 dark:text-white mb-3">1. Information We Collect</h2>

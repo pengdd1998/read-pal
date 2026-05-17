@@ -26,6 +26,13 @@ export function ErrorAlert({ message }: { message: string }) {
  * Avoids exposing internal details like status codes or stack traces.
  */
 export function getUserFriendlyError(err: unknown): string {
+  // Extract server error message from AxiosError response body
+  const axiosErr = (err as { isAxiosError?: boolean; response?: { data?: { error?: { message?: string }; detail?: { message?: string } } } });
+  if (axiosErr?.isAxiosError) {
+    const serverMsg = axiosErr.response?.data?.error?.message || axiosErr.response?.data?.detail?.message;
+    if (serverMsg && serverMsg.length < 200) return serverMsg;
+  }
+
   if (err instanceof Error) {
     const msg = err.message.toLowerCase();
 
@@ -37,8 +44,8 @@ export function getUserFriendlyError(err: unknown): string {
       return 'The request timed out. Please try again.';
     }
 
-    // Auth
-    if (msg.includes('invalid email or password') || msg.includes('unauthorized')) {
+    // Auth — include raw status code patterns from axios
+    if (msg.includes('invalid email or password') || msg.includes('unauthorized') || msg.includes('status code 401')) {
       return 'Invalid email or password. Please try again.';
     }
     if (msg.includes('email already') || msg.includes('already registered')) {
@@ -46,10 +53,10 @@ export function getUserFriendlyError(err: unknown): string {
     }
 
     // Server
-    if (msg.includes('internal server') || msg.includes('server error')) {
+    if (msg.includes('internal server') || msg.includes('server error') || msg.includes('status code 5')) {
       return 'Something went wrong on our end. Please try again in a moment.';
     }
-    if (msg.includes('too many') || msg.includes('rate limit')) {
+    if (msg.includes('too many') || msg.includes('rate limit') || msg.includes('status code 429')) {
       return 'Too many attempts. Please wait a moment and try again.';
     }
 

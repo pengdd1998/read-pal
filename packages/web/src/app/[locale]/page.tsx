@@ -118,7 +118,7 @@ export default async function HomePage({
           <div className="hero-orb hero-orb-3" />
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 pt-28 pb-24 text-center">
+        <div className="relative z-10 px-4 sm:px-6 lg:px-8 pt-28 pb-24 text-center">
           {/* Animated gradient badge */}
           <div className="animate-fade-in">
             <span className="badge-gradient inline-flex items-center gap-2 px-5 py-2 text-white text-sm font-semibold rounded-full shadow-glow">
@@ -159,7 +159,7 @@ export default async function HomePage({
 
       {/* Social Proof Stats */}
       <section className="bg-surface-1 pt-8 pb-4">
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center py-6">
             {[
               { value: '140+', label: t('stats_endpoints') },
@@ -179,7 +179,7 @@ export default async function HomePage({
       {/* How It Works */}
       <section className="bg-surface-1 pt-4 pb-20">
         {/* Trust bar */}
-        <div className="max-w-5xl mx-auto px-4 mb-16">
+        <div className="px-4 sm:px-6 lg:px-8 mb-16">
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1.5">
               <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
@@ -199,7 +199,7 @@ export default async function HomePage({
             </span>
           </div>
         </div>
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
               {t('how_title')}
@@ -227,7 +227,7 @@ export default async function HomePage({
 
       {/* Reading Experience */}
       <section className="bg-gradient-to-b from-surface-1 to-transparent py-20">
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight mb-4 font-display">
               {t('reading_better_title')}
@@ -266,7 +266,7 @@ export default async function HomePage({
       </section>
 
       {/* Reading Friends */}
-      <section className="max-w-7xl mx-auto px-4 py-20">
+      <section className="px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
             {t('personas_title')}
@@ -288,7 +288,7 @@ export default async function HomePage({
       </section>
 
       {/* Features Grid */}
-      <section className="max-w-5xl mx-auto px-4 py-20">
+      <section className="px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
             {t('everything_title')}
@@ -319,7 +319,7 @@ export default async function HomePage({
 
       {/* Built For */}
       <section className="bg-surface-1 py-20">
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
               {t('built_for_title')}
@@ -368,7 +368,7 @@ export default async function HomePage({
       </section>
 
       {/* Open Source */}
-      <section className="max-w-5xl mx-auto px-4 py-20">
+      <section className="px-4 sm:px-6 lg:px-8 py-20">
         <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-navy-700/5 to-primary-500/5 dark:from-navy-700/20 dark:to-primary-500/10 p-10 sm:p-14">
           <div className="grid sm:grid-cols-2 gap-8 items-center">
             <div>

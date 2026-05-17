@@ -52,11 +52,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isNative = isCapacitor();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { isOnline } = useOnlineStatus();
   const { toast } = useToast();
   const t = useTranslations('nav');
   const tc = useTranslations('common');
   const notificationsInitialized = useRef(false);
+
+  // Defer auth-dependent rendering to avoid SSR/client hydration mismatch
+  useEffect(() => { setMounted(true); }, []);
 
   // Configure native status bar (no-op on web)
   useStatusBar('LIGHT', '#fefdfb');
@@ -88,12 +92,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Header */}
       {!isReading && <header className="sticky top-0 z-40 border-b border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0]/95 dark:bg-gray-950/95 backdrop-blur-lg safe-area-top">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
             <div className="flex items-center gap-4 sm:gap-6">
               <Link
-                href={isAuthenticated ? '/dashboard' : '/'}
+                href="/dashboard"
                 className="flex items-center gap-2 text-base sm:text-lg font-display font-bold tracking-tight text-[#1e3a5f] dark:text-white"
               >
                 <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#d97706] flex items-center justify-center text-white text-xs sm:text-sm font-bold">
@@ -103,7 +107,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               </Link>
 
               {/* Desktop Nav */}
-              {isAuthenticated && (
+              {mounted && isAuthenticated && (
                 <nav className="hidden md:flex items-center gap-1" aria-label={tc('main_navigation')}>
                   {NAV_ITEMS.map((item) => {
                     const active = isActive(item.href);
@@ -133,7 +137,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
             {/* Right side */}
             <div className="flex items-center gap-2 sm:gap-3">
-              {isAuthenticated ? (
+              {mounted && isAuthenticated ? (
                 <>
                   <LanguageSwitcher />
                   {/* Dark mode toggle */}
@@ -171,7 +175,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               )}
 
               {/* Mobile menu button */}
-              {isAuthenticated && (
+              {mounted && isAuthenticated && (
                 <button
                   onClick={() => setMobileOpen(!mobileOpen)}
                   className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[#5c5c5c] dark:text-gray-400 hover:bg-[#f0e9e0] dark:hover:bg-gray-800 transition-colors"
@@ -192,7 +196,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
         </div>
 
         {/* Mobile Nav */}
-        {isAuthenticated && mobileOpen && (
+        {mounted && isAuthenticated && mobileOpen && (
           <nav className="md:hidden border-t border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0] dark:bg-gray-950 animate-slide-up" aria-label={tc('mobile_navigation')}>
             <div className="px-4 py-3 space-y-1">
               {NAV_ITEMS.map((item) => {
@@ -231,7 +235,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       </main>
 
       {/* Mobile Bottom Nav */}
-      {isAuthenticated && !isReading && (
+      {mounted && isAuthenticated && !isReading && (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 safe-area-bottom" aria-label={tc('bottom_navigation')}>
           <div className="flex items-center justify-around">
             {BOTTOM_NAV_ITEMS.map((item) => {
@@ -266,7 +270,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       {!isReading && !isNative && <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-8 sm:py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-md bg-[#d97706] flex items-center justify-center text-white text-xs font-bold">
               r

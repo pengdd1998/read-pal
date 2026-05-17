@@ -108,12 +108,12 @@ async def update_book(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
-@router.delete('/{book_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{book_id}', response_model=GenericResponse)
 async def delete_book(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> None:
+) -> GenericResponse:
     """Delete a book and all associated data."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
     deleted = await book_service.delete_book(db, UUID(current_user['id']), book_id)
@@ -122,6 +122,7 @@ async def delete_book(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
+    return GenericResponse(success=True)
 
 
 @router.put('/{book_id}/tags', response_model=GenericResponse)

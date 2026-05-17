@@ -126,7 +126,7 @@ export default function DevelopersPage() {
     <div className="min-h-screen bg-stone-50">
       {/* Header */}
       <header className="bg-amber-800 text-white">
-        <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
           <Link href="/dashboard" className="text-amber-200 hover:text-white text-sm mb-2 inline-block">
             {t('back_dashboard')}
           </Link>
@@ -137,7 +137,7 @@ export default function DevelopersPage() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-10">
+      <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-10">
         {/* Quick Start */}
         <section>
           <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('quick_start')}</h2>

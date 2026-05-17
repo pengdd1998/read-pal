@@ -77,6 +77,8 @@ def _chunk_text(text: str, chunk_size: int = 2000, overlap: int = 256) -> list[s
 async def _get_embedding(text: str) -> list[float] | None:
     """Get embedding vector from GLM API (OpenAI-compatible /embeddings)."""
     settings = get_settings()
+    if not settings.embedding_enabled:
+        return None
     if not settings.glm_api_key or settings.glm_api_key == 'dev-key':
         return None
 
@@ -126,6 +128,9 @@ async def precompute_book_embeddings(
         return
 
     settings = get_settings()
+    if not settings.embedding_enabled:
+        logger.debug('Skipping embedding pre-computation: disabled by config')
+        return
     if not settings.glm_api_key or settings.glm_api_key == 'dev-key':
         logger.debug('Skipping embedding pre-computation: no API key')
         return

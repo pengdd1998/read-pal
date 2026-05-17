@@ -108,7 +108,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
+      <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
         {/* Header skeleton */}
         <div className="mb-8">
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-32 animate-pulse" />
@@ -156,7 +156,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-fade-in">
+    <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
       {/* Header */}
       <div className="mb-6 sm:mb-8 animate-slide-up">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('page_title')}</h1>

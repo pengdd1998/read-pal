@@ -11,6 +11,7 @@ from uuid import UUID
 from sqlalchemy import and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.db import async_session
 from app.models.llm_log import LLMLog
 
@@ -35,6 +36,8 @@ def fire_and_forget_log(
     extra: dict[str, Any] | None = None,
 ) -> None:
     """Persist an LLM log entry via fire-and-forget (no await needed at call site)."""
+    if not get_settings().llm_log_enabled:
+        return
     try:
         import asyncio
 

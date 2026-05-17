@@ -249,6 +249,9 @@ async def mood_scene(
 
     lang = await _get_user_lang(db, UUID(current_user['id']))
     mood = body.mood
+    if not mood or mood == 'neutral':
+        if body.text:
+            mood = 'contemplative'
 
     messages = [
         SystemMessage(content=(

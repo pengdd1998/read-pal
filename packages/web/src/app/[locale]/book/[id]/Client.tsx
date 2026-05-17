@@ -206,7 +206,7 @@ export default function BookDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
+      <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
         {/* Back link skeleton */}
         <div className="mb-8">
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-20 animate-pulse" />
@@ -319,7 +319,7 @@ export default function BookDetailPage() {
   })();
 
   return (
-    <main className="max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in">
+    <main className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
       {/* Error banner */}
       {error && (
         <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center justify-between animate-scale-in">

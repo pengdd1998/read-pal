@@ -1,6 +1,6 @@
 export default function StatsLoading() {
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
       <div className="mb-8">
         <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-56 mt-2 animate-pulse" />

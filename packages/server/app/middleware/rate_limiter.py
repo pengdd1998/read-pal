@@ -168,12 +168,12 @@ def _ip_key(request: Request) -> str:
     return request.client.host if request.client else 'unknown'
 
 
-login_limiter = Depends(_make_rate_limit_dependency(10, 60, _ip_key))
-register_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key))
-password_reset_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key))
-refresh_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key))
-account_limiter = Depends(_make_rate_limit_dependency(3, 60, _ip_key))
-upload_limiter = Depends(_make_rate_limit_dependency(10, 3600, _ip_key))
+login_limiter = Depends(_make_rate_limit_dependency(100, 60, _ip_key))
+register_limiter = Depends(_make_rate_limit_dependency(50, 60, _ip_key))
+password_reset_limiter = Depends(_make_rate_limit_dependency(50, 60, _ip_key))
+refresh_limiter = Depends(_make_rate_limit_dependency(50, 60, _ip_key))
+account_limiter = Depends(_make_rate_limit_dependency(30, 60, _ip_key))
+upload_limiter = Depends(_make_rate_limit_dependency(50, 3600, _ip_key))
 
 
 # --- AI endpoint rate limiters (per-user) ---
@@ -186,6 +186,6 @@ def _user_key(request: Request) -> str:
     return request.client.host if request.client else 'unknown'
 
 
-chat_limiter = Depends(_make_rate_limit_dependency(30, 60, _user_key))
-stream_limiter = Depends(_make_rate_limit_dependency(20, 60, _user_key))
-ai_heavy_limiter = Depends(_make_rate_limit_dependency(6, 60, _user_key))
+chat_limiter = Depends(_make_rate_limit_dependency(100, 60, _user_key))
+stream_limiter = Depends(_make_rate_limit_dependency(60, 60, _user_key))
+ai_heavy_limiter = Depends(_make_rate_limit_dependency(30, 60, _user_key))

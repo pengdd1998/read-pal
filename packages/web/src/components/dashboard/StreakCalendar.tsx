@@ -229,8 +229,8 @@ export default function StreakCalendar() {
 
   const todayStr = todayISO();
 
-  // Total days in the period
-  const totalDays = data?.calendar.length ?? 180;
+  // Total days in the period (6 months = ~180 days)
+  const totalDays = 180;
 
   return (
     <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-surface-0 p-5 sm:p-6 shadow-sm">

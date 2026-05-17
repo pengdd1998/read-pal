@@ -132,7 +132,7 @@ export default function ReadingMirrorPage() {
   // ---------------------------------------------------------------------------
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+      <div className="px-4 sm:px-6 lg:px-8 py-12 text-center">
         <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-gray-500">{t('loading')}</p>
       </div>
@@ -233,7 +233,7 @@ export default function ReadingMirrorPage() {
   // Mirror display — React section renderer
   // ---------------------------------------------------------------------------
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 animate-fade-in">
       {/* Top bar */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">

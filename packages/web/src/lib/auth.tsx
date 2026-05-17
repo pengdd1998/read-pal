@@ -70,14 +70,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // Load auth state from storage on mount
+  // Eager initialization from localStorage — survives HMR remount without auth gap
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined' || isCapacitor()) return null;
+    return localStorage.getItem('auth_token');
+  });
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined' || isCapacitor()) return null;
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const [loading, setLoading] = useState(() => {
+    // Already hydrated from localStorage on web; Capacitor needs async load
+    if (typeof window === 'undefined') return true;
+    return isCapacitor();
+  });
+
+  // Restore auth cookie + handle Capacitor async hydration
   useEffect(() => {
     if (isCapacitor()) {
-      // Async load from Capacitor Preferences
       getAuthTokenAsync().then(async (savedToken) => {
         const savedUser = await getItem('user');
         if (savedToken && savedUser) {
@@ -86,22 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setLoading(false);
       });
-    } else {
-      // Sync load from localStorage (web/PWA)
-      try {
-        const savedToken = getAuthToken();
-        const savedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-        if (savedToken && savedUser) {
-          setToken(savedToken);
-          setUser(JSON.parse(savedUser));
-          setAuthCookie(savedToken);
-        }
-      } catch {
-        // Invalid stored data
-      } finally {
-        setLoading(false);
-      }
+      return;
     }
+    // Web: restore cookie so Next.js middleware sees auth state immediately
+    const savedToken = localStorage.getItem('auth_token');
+    if (savedToken) setAuthCookie(savedToken);
   }, []);
 
   const persistAuth = useCallback(async (newToken: string, newUser: User, newRefreshToken?: string) => {
