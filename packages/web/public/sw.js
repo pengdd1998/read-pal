@@ -16,7 +16,7 @@
  * - Book content pre-caching for offline reading
  */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `readpal-${CACHE_VERSION}`;
 const STATIC_CACHE = `readpal-static-${CACHE_VERSION}`;
 const API_CACHE = `readpal-api-${CACHE_VERSION}`;

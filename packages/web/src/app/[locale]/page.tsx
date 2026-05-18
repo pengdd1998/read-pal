@@ -404,13 +404,13 @@ export default async function HomePage({
       </section>
 
       {/* FAQ */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section className="px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-navy-700 dark:text-white tracking-tight font-display">
             {t('faq_title')}
           </h2>
         </div>
-        <div className="space-y-6">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
           {FAQS.map((faq) => (
             <div key={faq.q} className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-surface-0 p-6">
               <h3 className="font-bold text-gray-900 dark:text-white mb-2">{faq.q}</h3>
@@ -427,7 +427,7 @@ export default async function HomePage({
       </section>
 
       {/* GitHub Star CTA */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+      <section className="px-4 sm:px-6 lg:px-8 py-12 text-center">
         <div className="inline-flex items-center gap-4 px-6 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-surface-0 shadow-sm">
           <span className="text-gray-700 dark:text-gray-300 font-medium">{t('love_text')}</span>
           <a
@@ -445,7 +445,7 @@ export default async function HomePage({
       {/* CTA */}
       <section className="relative overflow-hidden bg-gradient-to-br from-navy-700 via-navy-800 to-navy-900 dark:from-navy-900 dark:via-gray-950 dark:to-navy-900 py-24 noise-overlay">
         <div className="hero-orb hero-orb-1 opacity-30" />
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative z-10 px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-5 font-display">
             {t('cta_join_title')}
           </h2>
