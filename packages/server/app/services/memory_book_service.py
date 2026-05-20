@@ -298,6 +298,8 @@ def _budget_list(
 async def _generate_section(
     section_type: str,
     enriched_data: dict[str, Any],
+    user_id: UUID | None = None,
+    book_id: UUID | None = None,
 ) -> dict[str, Any]:
     """Generate a single Reading Mirror section via LLM."""
     section_template = MIRROR_SECTIONS.get(section_type)
@@ -336,8 +338,8 @@ async def _generate_section(
         fallback=fallback,
         log_label=f'Reading Mirror section {section_type}',
         schema_class=SECTION_SCHEMAS.get(section_type),
-        user_id=str(user_id),
-        book_id=str(book_id),
+        user_id=str(user_id) if user_id else None,
+        book_id=str(book_id) if book_id else None,
     )
     if isinstance(result, dict):
         return result
@@ -586,7 +588,7 @@ async def generate(
     async def _gen_section(section_type: str) -> dict[str, Any]:
         try:
             if section_type in llm_sections:
-                return await _generate_section(section_type, enriched_data)
+                return await _generate_section(section_type, enriched_data, user_id=user_id, book_id=book_id)
             else:
                 return _placeholder_section(section_type)
         except Exception:

@@ -117,8 +117,6 @@ def _log_call(
             'success': success,
             'fallback_used': fallback_used,
             'error_message': error_message,
-            'user_id': user_id,
-            'book_id': book_id,
         })
 
 # ---------------------------------------------------------------------------

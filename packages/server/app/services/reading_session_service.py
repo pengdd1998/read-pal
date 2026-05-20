@@ -96,8 +96,8 @@ async def end_session(
             book.last_read_at = now
             if book.total_pages > 0:
                 if current_page_from_client is not None:
-                    # Frontend sends 0-indexed chapter position
-                    book.current_page = min(current_page_from_client + 1, book.total_pages)
+                    # Frontend sends 0-indexed chapter position — store as-is
+                    book.current_page = min(max(current_page_from_client, 0), book.total_pages)
                 else:
                     # Fallback: add delta
                     book.current_page = min(

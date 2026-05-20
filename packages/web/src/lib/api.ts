@@ -266,9 +266,11 @@ class ApiClient {
     if (url.includes('/api/collections')) {
       this.invalidateCache('/api/collections');
     }
-    // Clear specific data
-    const prefixes = url.split('/').slice(0, 4).join('/'); // e.g., /api/books or /api/annotations
-    this.invalidateCache(prefixes);
+    // Clear specific data — invalidate both the resource-level and collection-level cache
+    const resourcePrefix = url.split('/').slice(0, 4).join('/'); // e.g., /api/annotations/123
+    const collectionPrefix = url.split('/').slice(0, 3).join('/'); // e.g., /api/annotations
+    this.invalidateCache(resourcePrefix);
+    this.invalidateCache(collectionPrefix);
     // Settings changes
     if (url.includes('/api/settings')) {
       this.invalidateCache('/api/settings');

@@ -113,11 +113,11 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
 
   const handleToggleBookmark = useCallback(async () => {
     const isBookmarked = annotations.some(
-      (a) => a.type === 'bookmark' && a.location?.pageIndex === currentChapter,
+      (a) => a.type === 'bookmark' && Number(a.location?.pageIndex) === currentChapter,
     );
     if (isBookmarked) {
       const bookmark = annotations.find(
-        (a) => a.type === 'bookmark' && a.location?.pageIndex === currentChapter,
+        (a) => a.type === 'bookmark' && Number(a.location?.pageIndex) === currentChapter,
       );
       if (bookmark) {
         try {
@@ -180,7 +180,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
   const totalHighlights = useMemo(() => annotations.filter((a) => a.type === 'highlight').length, [annotations]);
   const totalNotes = useMemo(() => annotations.filter((a) => a.type === 'note').length, [annotations]);
   const isBookmarked = useMemo(
-    () => annotations.some((a) => a.type === 'bookmark' && a.location?.pageIndex === currentChapter),
+    () => annotations.some((a) => a.type === 'bookmark' && Number(a.location?.pageIndex) === currentChapter),
     [annotations, currentChapter],
   );
 

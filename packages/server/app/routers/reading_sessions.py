@@ -207,10 +207,9 @@ async def heartbeat_session(
             book = book_result.scalar_one_or_none()
             if book and book.total_pages > 0:
                 book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
-                # pagesRead from frontend is 1-indexed (currentChapter + 1)
-                book.current_page = min(int(pages_read or session.pages_read or 0), book.total_pages)
-                if book.current_page < 0:
-                    book.current_page = 0
+                # pagesRead from frontend is 1-indexed (currentChapter + 1), convert to 0-indexed
+                pages_read_val = int(pages_read or session.pages_read or 0)
+                book.current_page = max(0, min(pages_read_val - 1, book.total_pages))
                 book.progress = Decimal(
                     str(round((book.current_page / book.total_pages) * 100, 2)),
                 )
