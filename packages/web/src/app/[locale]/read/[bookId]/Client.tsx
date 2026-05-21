@@ -186,19 +186,22 @@ export default function ReadPage() {
   const [contentReady, setContentReady] = useState(false);
   const chatHandleRef = useRef<CompanionChatHandle | null>(null);
 
-  // Keep contentRef synced with the reader-content div rendered by ReaderView.
-  // Re-sync when chapter changes (content re-renders with new key).
+  // Signal that the content div is ready after each chapter content change.
+  // ReaderView is dynamically imported, so the container ref may not be set
+  // when this effect first runs. Poll until the element is actually mounted.
   useEffect(() => {
-    const sync = () => {
-      const contentDiv = document.querySelector('.reader-content');
-      if (contentDiv && contentRef.current !== contentDiv) {
-        (contentRef as React.MutableRefObject<HTMLElement | null>).current = contentDiv as HTMLElement;
+    setContentReady(false);
+    let elapsed = 0;
+    const id = setInterval(() => {
+      elapsed += 100;
+      if (contentRef.current) {
+        clearInterval(id);
         setContentReady(true);
+      } else if (elapsed > 5000) {
+        clearInterval(id);
       }
-    };
-    // Small delay to let ReaderView render the new content element
-    const raf = requestAnimationFrame(sync);
-    return () => cancelAnimationFrame(raf);
+    }, 100);
+    return () => clearInterval(id);
   }, [chapterContent]);
 
   const selection = useTextSelection(contentRef);
@@ -211,6 +214,7 @@ export default function ReadPage() {
 
   const annotationActions = useAnnotationActions({
     bookId, currentChapter, chapters, contentRef, selectionRange: selection.range,
+    selectionOffsets: selection.offsets,
     annotations, setAnnotations,
     toastError: (msg: string) => toast(msg, 'error'),
     toast: {
@@ -404,12 +408,14 @@ export default function ReadPage() {
         sidebarOpen={ui.sidebarOpen}
         synthesisOpen={ui.synthesisOpen}
         studyModeEnabled={studyMode.enabled}
+        settingsMenuOpen={ui.showSettingsMenu}
+        timelineOpen={ui.showTimeline}
         onBack={handleBack}
         onToggleBookmark={annotationActions.handleToggleBookmark}
         onToggleSearch={() => ui.setSearchOpen(!ui.searchOpen)}
         onToggleSidebar={() => ui.setSidebarOpen(!ui.sidebarOpen)}
         onToggleSynthesis={() => ui.setSynthesisOpen(!ui.synthesisOpen)}
-        onToggleStudyMode={studyMode.toggleStudyMode}
+        onToggleStudyMode={() => { if (!studyMode.enabled) ui.closeAllPanels(); studyMode.toggleStudyMode(); }}
         onShowTimeline={() => ui.setShowTimeline(true)}
         onShowSettings={() => {
           if (window.innerWidth < 640) {
@@ -475,6 +481,8 @@ export default function ReadPage() {
             externalTocOpen={ui.tocOpen}
             onTocClose={ui.closeToc}
             onScrollProgress={setChapterScrollProgress}
+            onPauseAutoHide={ui.pauseAutoHide}
+            onResumeAutoHide={ui.resumeAutoHide}
           />
         </div>
       </div>
@@ -524,7 +532,7 @@ export default function ReadPage() {
       {studyMode.enabled && (
         <div className="fixed inset-0 z-20 bg-black/40 md:bg-black/20" onClick={studyMode.toggleStudyMode} />
       )}
-      <div className={`fixed right-0 top-0 bottom-0 z-20 w-full md:w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed right-0 top-[61px] bottom-0 z-20 w-full md:w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="h-full overflow-y-auto px-3 pb-4 bg-surface-0 md:bg-transparent">
           <StudyModePanel
             enabled={studyMode.enabled}

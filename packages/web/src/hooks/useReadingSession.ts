@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { api } from '@/lib/api';
+import { API_BASE_URL, api } from '@/lib/api';
 
 interface UseReadingSessionOptions {
   bookId: string;
@@ -11,6 +11,11 @@ interface UseReadingSessionOptions {
   isPaused?: boolean;
   scrollProgress?: number;
 }
+
+// Inline token helper — avoids webpack dev-mode tree-shaking bug on auth-fetch
+const getAuthToken = typeof window !== 'undefined'
+  ? () => localStorage.getItem('auth_token')
+  : () => null as string | null;
 
 export function useReadingSession({
   bookId,
@@ -26,6 +31,7 @@ export function useReadingSession({
   const isPausedRef = useRef(isPaused);
   const scrollProgressRef = useRef(scrollProgress);
   const lastHeartbeatRef = useRef<{ chapter: number; scroll: number } | null>(null);
+  const chaptersLengthRef = useRef(chaptersLength);
 
   // Keep refs in sync
   useEffect(() => {
@@ -39,6 +45,36 @@ export function useReadingSession({
   useEffect(() => {
     scrollProgressRef.current = scrollProgress;
   }, [scrollProgress]);
+
+  useEffect(() => {
+    chaptersLengthRef.current = chaptersLength;
+  }, [chaptersLength]);
+
+  // Save progress via heartbeat (doesn't end session)
+  const saveProgressNow = useRef(() => {});
+  saveProgressNow.current = () => {
+    const sid = sessionIdRef.current;
+    if (!sid) return;
+    const token = typeof window !== 'undefined' ? getAuthToken() : null;
+    const url = `${API_BASE_URL}/api/reading-sessions/${sid}/heartbeat`;
+    const data = {
+      pagesRead: currentChapterRef.current + 1,
+      scrollProgress: scrollProgressRef.current,
+    };
+    try {
+      fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(data),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      // fetch itself threw (rare) — ignore
+    }
+  };
 
   // Start/end reading session lifecycle
   useEffect(() => {
@@ -79,20 +115,48 @@ export function useReadingSession({
 
     startSession();
 
+    // Save progress when tab becomes hidden or page is unloading
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveProgressNow.current();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      saveProgressNow.current();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (sessionIdRef.current) {
         const sid = sessionIdRef.current;
         const finalChapter = currentChapterRef.current;
-        api.post(`/api/reading-sessions/${sid}/end`, {
-          pagesRead: finalChapter + 1,
-          currentPage: finalChapter,
-          totalPages: chaptersLength,
-          scrollProgress: scrollProgressRef.current,
-        }).catch((err) => {
-          console.warn('Failed to end reading session:', err);
-        });
+        const token = typeof window !== 'undefined' ? getAuthToken() : null;
+        // End session + save final progress
+        try {
+          fetch(`${API_BASE_URL}/api/reading-sessions/${sid}/end`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              pagesRead: finalChapter + 1,
+              currentPage: finalChapter,
+              totalPages: chaptersLengthRef.current,
+              scrollProgress: scrollProgressRef.current,
+            }),
+            keepalive: true,
+          }).catch(() => {});
+        } catch {
+          // ignore
+        }
         sessionIdRef.current = null;
       }
     };

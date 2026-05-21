@@ -33,7 +33,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className={`absolute right-0 top-full mt-1 z-50 w-72 rounded-xl shadow-xl border p-3 space-y-3 ${
+      <div className={`absolute right-0 top-full mt-1 z-50 w-72 max-h-[calc(100vh-80px)] overflow-y-auto rounded-xl shadow-xl border p-3 space-y-3 ${
         theme === 'dark' ? 'bg-gray-800 border-gray-700' : theme === 'sepia' ? 'bg-[#f5f0e6] border-amber-200' : 'bg-white border-gray-200'
       }`}>
         {/* Font size */}

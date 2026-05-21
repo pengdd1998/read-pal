@@ -50,7 +50,7 @@ export function ChapterTimeline({
   return (
     <div className="fixed inset-0 z-40 bg-black/30 animate-fade-in" onClick={onClose}>
       <div
-        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-surface-0 shadow-2xl animate-slide-in-right overflow-y-auto"
+        className="absolute right-0 top-[61px] bottom-0 w-full max-w-sm bg-surface-0 shadow-2xl animate-slide-in-right overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-surface-0 border-b border-gray-200 dark:border-gray-800 p-4 flex items-center justify-between z-10">

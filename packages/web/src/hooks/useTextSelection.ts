@@ -7,6 +7,8 @@ export interface TextSelection {
   rect: DOMRect | null;
   range: Range | null;
   isCollapsed: boolean;
+  /** Character offsets relative to the container, computed at capture time. */
+  offsets: { start: number; end: number } | null;
 }
 
 const EMPTY_SELECTION: TextSelection = {
@@ -14,6 +16,7 @@ const EMPTY_SELECTION: TextSelection = {
   rect: null,
   range: null,
   isCollapsed: true,
+  offsets: null,
 };
 
 /**
@@ -38,6 +41,11 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
       rafRef.current = null;
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+        // Don't clear if user is interacting with the selection toolbar
+        // (note popover textarea, save button, tag picker, etc.)
+        const active = document.activeElement as HTMLElement | null;
+        if (active?.closest('[data-selection-toolbar]')) return;
+        if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return;
         setSelection(EMPTY_SELECTION);
         return;
       }
@@ -58,10 +66,27 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
       let range: Range | null = null;
 
       try {
-        range = sel.getRangeAt(0);
+        // Clone the range so it's independent of the browser selection.
+        // Without cloning, the Range is a live reference that mutates when
+        // the selection collapses (e.g. focus moves to a textarea).
+        range = sel.getRangeAt(0).cloneRange();
         rect = range.getBoundingClientRect();
       } catch {
         // getRangeAt can fail in some edge cases
+      }
+
+      // Compute character offsets NOW, before any DOM mutations from mark
+      // creation invalidate text node references in the Range.
+      let offsets: { start: number; end: number } | null = null;
+      if (range && container) {
+        try {
+          const preRange = document.createRange();
+          preRange.selectNodeContents(container);
+          preRange.setEnd(range.startContainer, range.startOffset);
+          const start = preRange.toString().length;
+          const end = start + range.toString().length;
+          offsets = { start, end };
+        } catch { /* ignore */ }
       }
 
       setSelection({
@@ -69,6 +94,7 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
         rect: rect && rect.width > 0 ? rect : null,
         range,
         isCollapsed: false,
+        offsets,
       });
     });
   }, [containerRef]);
@@ -93,6 +119,10 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
     const handleSelectionChange = () => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+        // Don't clear if user is interacting with the toolbar (note popover, etc.)
+        const active = document.activeElement as HTMLElement | null;
+        if (active?.closest('[data-selection-toolbar]')) return;
+        if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return;
         clearSelection();
       }
     };

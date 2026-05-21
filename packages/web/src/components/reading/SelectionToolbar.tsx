@@ -116,11 +116,12 @@ export function SelectionToolbar({
     return (
       <>
         <div
+          data-selection-toolbar
           className="fixed inset-0 z-40 bg-black/20 animate-fade-in"
-          onClick={onDismiss}
+          onClick={() => { if (!showNote && !showQuoteCard) onDismiss(); }}
         >
           <div
-            className="absolute bottom-0 left-0 right-0 bg-surface-0 rounded-t-2xl shadow-2xl animate-slide-up-mobile"
+            className="absolute bottom-0 left-0 right-0 bg-surface-0 rounded-t-2xl shadow-2xl animate-slide-up-mobile max-h-[70vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mt-3 mb-2" />
@@ -266,28 +267,32 @@ export function SelectionToolbar({
                 </div>
               </div>
             )}
+
+            {showNote && (
+              <div className="px-4 pb-4">
+                <NotePopover
+                  selectedText={text}
+                  onSave={(note) => {
+                    hapticMedium();
+                    onNote(text, note);
+                    setShowNote(false);
+                  }}
+                  onCancel={() => setShowNote(false)}
+                />
+              </div>
+            )}
+            {showQuoteCard && (
+              <div className="px-4 pb-4">
+                <QuoteCard
+                  text={text}
+                  bookTitle={bookTitle || ''}
+                  author={author || ''}
+                  onClose={() => setShowQuoteCard(false)}
+                />
+              </div>
+            )}
           </div>
         </div>
-
-        {showNote && (
-          <NotePopover
-            selectedText={text}
-            onSave={(note) => {
-              hapticMedium();
-              onNote(text, note);
-              setShowNote(false);
-            }}
-            onCancel={() => setShowNote(false)}
-          />
-        )}
-        {showQuoteCard && (
-          <QuoteCard
-            text={text}
-            bookTitle={bookTitle || ''}
-            author={author || ''}
-            onClose={() => setShowQuoteCard(false)}
-          />
-        )}
       </>
     );
   }
@@ -433,26 +438,26 @@ export function SelectionToolbar({
             </div>
           </div>
         )}
-      </div>
 
-      {showNote && (
-        <NotePopover
-          selectedText={text}
-          onSave={(note) => {
-            onNote(text, note);
-            setShowNote(false);
-          }}
-          onCancel={() => setShowNote(false)}
-        />
-      )}
-      {showQuoteCard && (
-        <QuoteCard
-          text={text}
-          bookTitle={bookTitle || ''}
-          author={author || ''}
-          onClose={() => setShowQuoteCard(false)}
-        />
-      )}
+        {showNote && (
+          <NotePopover
+            selectedText={text}
+            onSave={(note) => {
+              onNote(text, note);
+              setShowNote(false);
+            }}
+            onCancel={() => setShowNote(false)}
+          />
+        )}
+        {showQuoteCard && (
+          <QuoteCard
+            text={text}
+            bookTitle={bookTitle || ''}
+            author={author || ''}
+            onClose={() => setShowQuoteCard(false)}
+          />
+        )}
+      </div>
     </>
   );
 }

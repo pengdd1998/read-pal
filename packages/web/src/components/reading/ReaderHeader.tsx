@@ -21,6 +21,8 @@ interface ReaderHeaderProps {
   sidebarOpen: boolean;
   synthesisOpen: boolean;
   studyModeEnabled: boolean;
+  settingsMenuOpen: boolean;
+  timelineOpen: boolean;
   onBack: () => void;
   onToggleBookmark: () => void;
   onToggleSearch: () => void;
@@ -42,8 +44,9 @@ export function ReaderHeader(props: ReaderHeaderProps) {
   const {
     bookId, bookTitle, author, currentChapter, totalChapters, readingWpm, isPaused,
     isBookmarked, annotationsCount, theme, searchOpen, sidebarOpen, synthesisOpen,
-    studyModeEnabled, onBack, onToggleBookmark, onToggleSearch, onToggleSidebar,
-    onToggleSynthesis, onToggleStudyMode, onShowTimeline, onShowSettings, settingsMenu,
+    studyModeEnabled, settingsMenuOpen, timelineOpen, onBack, onToggleBookmark,
+    onToggleSearch, onToggleSidebar, onToggleSynthesis, onToggleStudyMode,
+    onShowTimeline, onShowSettings, settingsMenu,
   } = props;
   const t = useTranslations('reader');
 
@@ -106,7 +109,7 @@ export function ReaderHeader(props: ReaderHeaderProps) {
         </button>
 
         {/* Chapter Timeline */}
-        <button onClick={onShowTimeline} className="w-11 h-11 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20" aria-label={t('chapter_timeline_label')} title={t('chapter_timeline_title')}>
+        <button onClick={onShowTimeline} className={`w-11 h-11 hidden sm:flex items-center justify-center rounded-lg text-sm transition-colors ${timelineOpen ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`} aria-label={t('chapter_timeline_label')} title={t('chapter_timeline_title')}>
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
@@ -119,7 +122,7 @@ export function ReaderHeader(props: ReaderHeaderProps) {
         <div className="relative">
           <button
             onClick={onShowSettings}
-            className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors ${props.searchOpen ? '' : ''} text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20`}
+            className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors ${settingsMenuOpen ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
             aria-label={t('settings_label')}
           >
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

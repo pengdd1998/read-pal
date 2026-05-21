@@ -59,6 +59,8 @@ interface ReaderViewProps {
   highlightCount?: number;
   bookmarkCount?: number;
   onScrollProgress?: (progress: number) => void;
+  onPauseAutoHide?: () => void;
+  onResumeAutoHide?: () => void;
 }
 
 export const ReaderView = React.memo(function ReaderView({
@@ -82,6 +84,8 @@ export const ReaderView = React.memo(function ReaderView({
   highlightCount = 0,
   bookmarkCount = 0,
   onScrollProgress,
+  onPauseAutoHide,
+  onResumeAutoHide,
 }: ReaderViewProps) {
   const t = useTranslations('reader');
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -102,12 +106,10 @@ export const ReaderView = React.memo(function ReaderView({
     return () => document.removeEventListener('selectionchange', onSelectionChange);
   }, []);
 
-  // State to trigger re-sanitization after DOMPurify finishes loading
-  const [purifyReady, setPurifyReady] = useState(false);
-
-  // Preload DOMPurify on mount — when ready, bump state so useMemo re-sanitizes
+  // Preload DOMPurify on mount (no state bump — re-sanitizing would destroy
+  // annotation marks inserted by useAnnotationHighlights outside React).
   useEffect(() => {
-    preloadDOMPurify(() => setPurifyReady(true));
+    preloadDOMPurify();
     preloadPrism();
   }, []);
 
@@ -115,17 +117,28 @@ export const ReaderView = React.memo(function ReaderView({
   const articleRef = useRef<HTMLElement | null>(null);
 
   // Ref to the content div — we set innerHTML imperatively so React re-renders
-  // never touch the content DOM (which would destroy browser text selections).
+  // never touch the content DOM (which would destroy annotation <mark> elements
+  // that useAnnotationHighlights inserts outside React's control).
   const contentDivRef = useRef<HTMLDivElement | null>(null);
 
-  // Memoize sanitized content — recomputes when chapterContent changes
-  // or when DOMPurify finishes loading (purifyReady flips to true).
-  // The fallback in purifySync preserves safe HTML tags, so content is
-  // always readable; re-computing with real DOMPurify adds full sanitization.
+  // Memoize sanitized content — recomputes only when chapterContent changes.
   const sanitizedContent = useMemo(
     () => purifySync(chapterContent, PURIFY_CONFIG),
-    [chapterContent, purifyReady],
+    [chapterContent],
   );
+
+  // Track the last sanitizedContent we wrote to the DOM, so we only update
+  // when the actual content changes (not on every re-render).
+  const lastWrittenHtmlRef = useRef<string>('');
+
+  // Set innerHTML imperatively — React never reconciles this div's children.
+  useEffect(() => {
+    const el = contentDivRef.current;
+    if (!el) return;
+    if (lastWrittenHtmlRef.current === sanitizedContent) return;
+    el.innerHTML = sanitizedContent;
+    lastWrittenHtmlRef.current = sanitizedContent;
+  }, [sanitizedContent]);
 
   // Sync with external TOC control
   useEffect(() => {
@@ -156,15 +169,13 @@ export const ReaderView = React.memo(function ReaderView({
   }, [onScrollProgress]);
 
   // Reset scroll position on chapter change + animate
-  // Also persists scroll position so returning readers don't lose their place
-  const [chapterKey, setChapterKey] = useState(0);
 
   // Apply Prism.js syntax highlighting to code blocks after content renders
   useEffect(() => {
     const el = articleRef.current;
     if (!el) return;
     highlightCodeBlocks(el).catch(() => { /* non-critical — graceful degradation */ });
-  }, [sanitizedContent, chapterKey]);
+  }, [sanitizedContent]);
 
   // Save scroll position before chapter changes or component unmounts
   const scrollKey = `scroll-${bookId}-ch${currentPage}`;
@@ -196,7 +207,14 @@ export const ReaderView = React.memo(function ReaderView({
   useEffect(() => {
     // Save previous chapter's scroll position before switching
     saveScrollPosition();
-    setChapterKey((k) => k + 1);
+    // Re-trigger chapter fade animation without remounting the article
+    // (remounting via key would destroy annotation <mark> elements)
+    if (articleRef.current) {
+      articleRef.current.classList.remove('animate-chapter-fade');
+      // Force reflow to restart the animation
+      void articleRef.current.offsetWidth;
+      articleRef.current.classList.add('animate-chapter-fade');
+    }
     let outerRaf: number | undefined;
     let innerRaf: number | undefined;
     outerRaf = requestAnimationFrame(() => {
@@ -364,7 +382,6 @@ export const ReaderView = React.memo(function ReaderView({
         onScroll={updateScrollProgress}
       >
         <article
-          key={chapterKey}
           ref={articleRef}
           className="reading-mode select-text animate-chapter-fade"
           data-theme={theme}
@@ -394,7 +411,6 @@ export const ReaderView = React.memo(function ReaderView({
             }}
             className="prose prose-lg max-w-none dark:prose-invert reader-content"
             suppressHydrationWarning
-            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
 
           {/* End-of-chapter marker */}
@@ -414,6 +430,8 @@ export const ReaderView = React.memo(function ReaderView({
             : 'opacity-0 pointer-events-none shrink-0'
         }`}
         onClick={(e) => e.stopPropagation()}
+        onMouseEnter={onPauseAutoHide}
+        onMouseLeave={onResumeAutoHide}
       >
         {/* Progress bar — overall book progress */}
         <div className={`h-0.5 ${progressBg[theme]}`}>

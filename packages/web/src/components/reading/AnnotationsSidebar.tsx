@@ -159,7 +159,7 @@ export function AnnotationsSidebar({
 
       {/* Sidebar */}
       <div
-        className={`fixed right-0 top-0 h-screen w-full md:w-[360px] bg-surface-0 border-l border-gray-200 dark:border-gray-700 shadow-lg z-30 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col overscroll-contain ${
+        className={`fixed right-0 top-[61px] bottom-0 w-full md:w-[360px] bg-surface-0 border-l border-gray-200 dark:border-gray-700 shadow-lg z-30 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col overscroll-contain ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

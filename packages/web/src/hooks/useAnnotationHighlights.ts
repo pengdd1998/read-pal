@@ -28,18 +28,17 @@ export function useAnnotationHighlights(
   theme: 'light' | 'dark' | 'sepia' = 'light',
   contentReady: boolean = true,
 ): void {
-  // ── Stable refs that survive across renders ──────────────────────────
   const marksMapRef = useRef<Map<string, MarkEntry>>(new Map());
   const prevThemeRef = useRef(theme);
   const prevPageRef = useRef(currentPageIndex);
 
-  // ── Memoized page-filtered annotations (stable reference via useMemo) ──
+  // Memoized page-filtered annotations
   const pageAnnotations = useMemo(
     () =>
       annotations.filter(
         (a) =>
           a.type !== 'bookmark' &&
-          a.location?.pageIndex === currentPageIndex &&
+          Number(a.location?.pageIndex) === currentPageIndex &&
           a.location?.selection &&
           typeof a.location.selection.start === 'number' &&
           typeof a.location.selection.end === 'number',
@@ -47,13 +46,11 @@ export function useAnnotationHighlights(
     [annotations, currentPageIndex],
   );
 
-  // Stable ID set for quick membership checks
   const pageAnnotationIds = useMemo(
     () => new Set(pageAnnotations.map((a) => a.id)),
     [pageAnnotations],
   );
 
-  // ── Helper: compute style for a mark based on annotation + theme ─────
   const applyMarkStyle = useCallback(
     (mark: HTMLElement, annotation: Annotation, currentTheme: string) => {
       const color = annotation.color || '#FFEB3B';
@@ -68,7 +65,6 @@ export function useAnnotationHighlights(
     [],
   );
 
-  // ── Helper: completely remove all marks from the DOM and clear the map ──
   const clearAllMarks = useCallback((container: HTMLElement) => {
     container.querySelectorAll(`.${MARK_CLASS}`).forEach((el) => {
       const parent = el.parentNode;
@@ -83,7 +79,7 @@ export function useAnnotationHighlights(
     marksMapRef.current.clear();
   }, []);
 
-  // ── Effect 1: Theme-only update (fast path, no DOM rebuild) ──────────
+  // Effect 1: Theme-only update (fast path, no DOM rebuild)
   useEffect(() => {
     if (prevThemeRef.current === theme) return;
 
@@ -96,18 +92,15 @@ export function useAnnotationHighlights(
     prevThemeRef.current = theme;
   }, [theme]);
 
-  // ── Effect 2: Page change — full nuke-and-rebuild ────────────────────
-  // Separated from annotation delta so page flips don't re-run diff logic.
+  // Effect 2: Page change — full nuke-and-rebuild
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     if (prevPageRef.current === currentPageIndex) return;
 
-    // Page changed — offsets are page-relative so all marks are invalid
     clearAllMarks(container);
     prevPageRef.current = currentPageIndex;
 
-    // Rebuild marks for the new page (pageAnnotations already filtered by memo)
     if (pageAnnotations.length === 0) return;
 
     const sorted = [...pageAnnotations].sort(
@@ -118,20 +111,17 @@ export function useAnnotationHighlights(
     batchCreateMarks(containerRef, sorted, theme, marksMapRef, applyMarkStyle);
   }, [containerRef, currentPageIndex, pageAnnotations, theme, clearAllMarks, applyMarkStyle, contentReady]);
 
-  // ── Effect 3: Annotation delta — incremental add/remove/style ────────
-  // Runs when pageAnnotations identity changes OR container becomes available.
+  // Effect 3: Annotation delta — incremental add/remove/style
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    // Skip on page change — handled by Effect 2
     if (prevPageRef.current !== currentPageIndex) return;
 
-    // ── Fast path: nothing to render, just clear stale marks ──────────
     if (pageAnnotations.length === 0 && marksMapRef.current.size === 0) {
       return;
     }
 
-    // ── Remove marks for deleted annotations ──────────────────────────
+    // Remove marks for deleted annotations
     for (const [id, entry] of marksMapRef.current) {
       if (!pageAnnotationIds.has(id)) {
         const parent = entry.element.parentNode;
@@ -146,16 +136,15 @@ export function useAnnotationHighlights(
       }
     }
 
-    // ── Determine which annotations need a fresh mark created ─────────
+    // Determine which annotations need a fresh mark created
     const toCreate: Annotation[] = [];
     for (const ann of pageAnnotations) {
       if (!marksMapRef.current.has(ann.id)) {
         toCreate.push(ann);
       } else {
-        // Check if the existing mark element is still in the DOM (not detached)
         const existing = marksMapRef.current.get(ann.id)!;
         if (!container.contains(existing.element)) {
-          // Mark was detached (e.g., by React re-render) — recreate it
+          // Mark was detached — recreate
           marksMapRef.current.delete(ann.id);
           toCreate.push(ann);
         } else if (
@@ -170,7 +159,6 @@ export function useAnnotationHighlights(
 
     if (toCreate.length === 0) return;
 
-    // ── Sort descending by start offset so we insert end-to-start ──────
     const sorted = toCreate.sort(
       (a, b) =>
         (b.location?.selection?.start ?? 0) - (a.location?.selection?.start ?? 0),
@@ -178,15 +166,48 @@ export function useAnnotationHighlights(
 
     batchCreateMarks(containerRef, sorted, theme, marksMapRef, applyMarkStyle);
   }, [containerRef, pageAnnotations, pageAnnotationIds, currentPageIndex, theme, applyMarkStyle, contentReady]);
+
+  // Effect 4: Content mutation guard — if the container's innerHTML is replaced
+  // (e.g., by React reconciliation), rebuild all marks.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || pageAnnotations.length === 0) return;
+
+    const observer = new MutationObserver(() => {
+      // Check if any marks were removed from the DOM
+      let needsRebuild = false;
+      for (const [id, entry] of marksMapRef.current) {
+        if (!container.contains(entry.element)) {
+          needsRebuild = true;
+          break;
+        }
+      }
+      if (!needsRebuild) return;
+
+      // Marks were removed — clear stale map entries and rebuild
+      marksMapRef.current.clear();
+      if (pageAnnotations.length === 0) return;
+
+      const sorted = [...pageAnnotations].sort(
+        (a, b) =>
+          (b.location?.selection?.start ?? 0) - (a.location?.selection?.start ?? 0),
+      );
+
+      // Use rAF to ensure the DOM has settled after the mutation
+      requestAnimationFrame(() => {
+        batchCreateMarks(containerRef, sorted, theme, marksMapRef, applyMarkStyle);
+      });
+    });
+
+    observer.observe(container, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [containerRef, pageAnnotations, theme, applyMarkStyle]);
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Pure helpers (not hooks, safe to extract)
+// Pure helpers
 // ────────────────────────────────────────────────────────────────────────────
 
-/**
- * Create marks in batches via rAF for large sets, synchronously for small.
- */
 function batchCreateMarks(
   containerRef: RefObject<HTMLElement | null>,
   sorted: Annotation[],
@@ -220,13 +241,6 @@ function batchCreateMarks(
   requestAnimationFrame(processBatch);
 }
 
-/**
- * Create a single <mark> element for an annotation and insert it into the
- * container DOM. Returns the mark element or null if it could not be placed.
- *
- * Handles cross-element boundaries by splitting the range into multiple
- * <mark> elements that share a common annotation ID.
- */
 function createMark(
   container: HTMLElement,
   annotation: Annotation,
@@ -247,7 +261,6 @@ function createMark(
     range.setStart(startNode, startOffset);
     range.setEnd(endNode, endOffset);
 
-    // Try surroundContents first (works when range is within a single element)
     const mark = document.createElement('mark');
     mark.className = MARK_CLASS;
     mark.setAttribute(DATA_ATTR, annotation.id);
@@ -260,8 +273,6 @@ function createMark(
     try {
       range.surroundContents(mark);
     } catch {
-      // surroundContents fails when range crosses element boundaries.
-      // Fall back to extractContents + wrap approach.
       const fragment = range.extractContents();
       mark.appendChild(fragment);
       range.insertNode(mark);
@@ -274,10 +285,6 @@ function createMark(
   }
 }
 
-/**
- * Walk text nodes in the container and find the DOM position
- * corresponding to the given character offset and length.
- */
 function findTextOffset(
   container: HTMLElement,
   offset: number,
@@ -313,12 +320,9 @@ function findTextOffset(
   };
 }
 
-/**
- * Convert a hex color to rgba string with given alpha.
- */
 function hexToRgba(hex: string, alpha: number): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return `rgba(255, 235, 59, ${alpha})`; // fallback yellow
+  if (!result) return `rgba(255, 235, 59, ${alpha})`;
   const r = parseInt(result[1], 16);
   const g = parseInt(result[2], 16);
   const b = parseInt(result[3], 16);

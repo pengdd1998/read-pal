@@ -31,22 +31,17 @@ interface ReaderUIState {
   setShowCompletion: React.Dispatch<React.SetStateAction<boolean>>;
   setMilestone: React.Dispatch<React.SetStateAction<string | null>>;
   resetAutoHideTimer: () => void;
+  pauseAutoHide: () => void;
+  resumeAutoHide: () => void;
   handleToggleControls: () => void;
   closeToc: () => void;
+  closeAllPanels: () => void;
 }
 
 export function useReaderUI(): ReaderUIState {
   const [showControls, setShowControls] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [synthesisOpen, setSynthesisOpen] = useState(false);
-
-  // Enforce mutual exclusion: opening one panel closes the other
-  useEffect(() => {
-    if (sidebarOpen) setSynthesisOpen(false);
-  }, [sidebarOpen]);
-  useEffect(() => {
-    if (synthesisOpen) setSidebarOpen(false);
-  }, [synthesisOpen]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
@@ -58,6 +53,23 @@ export function useReaderUI(): ReaderUIState {
   const [isPaused, setIsPaused] = useState(false);
   const [sessionElapsed, setSessionElapsed] = useState(0);
   const [milestone, setMilestone] = useState<string | null>(null);
+
+  // Mutual exclusion: opening one header-triggered panel closes all others
+  useEffect(() => {
+    if (sidebarOpen) { setSearchOpen(false); setSynthesisOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
+  }, [sidebarOpen]);
+  useEffect(() => {
+    if (synthesisOpen) { setSearchOpen(false); setSidebarOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
+  }, [synthesisOpen]);
+  useEffect(() => {
+    if (searchOpen) { setSidebarOpen(false); setSynthesisOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
+  }, [searchOpen]);
+  useEffect(() => {
+    if (showSettingsMenu) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setShowTimeline(false); }
+  }, [showSettingsMenu]);
+  useEffect(() => {
+    if (showTimeline) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setShowSettingsMenu(false); }
+  }, [showTimeline]);
 
   const sessionStartRef = useRef<number>(Date.now());
   const pausedAtRef = useRef<number | null>(null);
@@ -108,6 +120,17 @@ export function useReaderUI(): ReaderUIState {
     autoHideTimerRef.current = setTimeout(() => setShowControls(false), 3000);
   }, []);
 
+  const pauseAutoHide = useCallback(() => {
+    if (autoHideTimerRef.current) {
+      clearTimeout(autoHideTimerRef.current);
+      autoHideTimerRef.current = null;
+    }
+  }, []);
+
+  const resumeAutoHide = useCallback(() => {
+    resetAutoHideTimer();
+  }, [resetAutoHideTimer]);
+
   useEffect(() => {
     resetAutoHideTimer();
     return () => { if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current); };
@@ -128,6 +151,14 @@ export function useReaderUI(): ReaderUIState {
 
   const closeToc = useCallback(() => setTocOpen(false), []);
 
+  const closeAllPanels = useCallback(() => {
+    setSidebarOpen(false);
+    setSynthesisOpen(false);
+    setSearchOpen(false);
+    setShowSettingsMenu(false);
+    setShowTimeline(false);
+  }, []);
+
   return {
     showControls, sidebarOpen, synthesisOpen, searchOpen, searchQuery,
     showMobileSettings, tocOpen, showSettingsMenu, showTimeline,
@@ -136,6 +167,6 @@ export function useReaderUI(): ReaderUIState {
     setShowControls, setSidebarOpen, setSynthesisOpen, setSearchOpen, setSearchQuery,
     setShowMobileSettings, setTocOpen, setShowSettingsMenu, setShowTimeline,
     setShowShortcutsHelp, setShowCompletion, setMilestone,
-    resetAutoHideTimer, handleToggleControls, closeToc,
+    resetAutoHideTimer, pauseAutoHide, resumeAutoHide, handleToggleControls, closeToc, closeAllPanels,
   };
 }

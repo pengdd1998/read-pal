@@ -89,6 +89,7 @@ const FRIEND_PERSONAS: Record<string, FriendPersona> = {
 const DRAG_THRESHOLD = 6; // px movement to distinguish drag from click
 const EDGE_MARGIN = 20; // px from viewport edge when snapped
 const BTN_SIZE = 56; // button width/height in px
+const HEADER_MIN_Y = 64; // minimum Y position — button must stay below the reader header
 const STORAGE_KEY = 'read-pal-chat-btn-pos';
 const SNAP_TRANSITION = 'left 0.25s cubic-bezier(0.16,1,0.3,1), top 0.25s cubic-bezier(0.16,1,0.3,1)';
 
@@ -111,23 +112,24 @@ function defaultPosition(): DragPosition {
   return { x: window.innerWidth - BTN_SIZE - EDGE_MARGIN, y: window.innerHeight - BTN_SIZE - EDGE_MARGIN };
 }
 
-/** Snap position to nearest viewport edge with margin. */
+/** Snap position to nearest viewport edge with margin, clamped below the header. */
 function snapToEdge(pos: DragPosition): DragPosition {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const minY = HEADER_MIN_Y;
   const cx = pos.x + BTN_SIZE / 2;
   const cy = pos.y + BTN_SIZE / 2;
 
   const distLeft = cx;
   const distRight = vw - cx;
-  const distTop = cy;
+  const distTop = cy - minY; // measure from header bottom, not viewport top
   const distBottom = vh - cy;
 
   const minDist = Math.min(distLeft, distRight, distTop, distBottom);
 
-  if (minDist === distLeft) return { x: EDGE_MARGIN, y: Math.max(EDGE_MARGIN, Math.min(pos.y, vh - BTN_SIZE - EDGE_MARGIN)) };
-  if (minDist === distRight) return { x: vw - BTN_SIZE - EDGE_MARGIN, y: Math.max(EDGE_MARGIN, Math.min(pos.y, vh - BTN_SIZE - EDGE_MARGIN)) };
-  if (minDist === distTop) return { x: Math.max(EDGE_MARGIN, Math.min(pos.x, vw - BTN_SIZE - EDGE_MARGIN)), y: EDGE_MARGIN };
+  if (minDist === distTop) return { x: Math.max(EDGE_MARGIN, Math.min(pos.x, vw - BTN_SIZE - EDGE_MARGIN)), y: minY };
+  if (minDist === distLeft) return { x: EDGE_MARGIN, y: Math.max(minY, Math.min(pos.y, vh - BTN_SIZE - EDGE_MARGIN)) };
+  if (minDist === distRight) return { x: vw - BTN_SIZE - EDGE_MARGIN, y: Math.max(minY, Math.min(pos.y, vh - BTN_SIZE - EDGE_MARGIN)) };
   return { x: Math.max(EDGE_MARGIN, Math.min(pos.x, vw - BTN_SIZE - EDGE_MARGIN)), y: vh - BTN_SIZE - EDGE_MARGIN };
 }
 
@@ -163,6 +165,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const [isDragging, setIsDragging] = useState(false);
   const [isSnapping, setIsSnapping] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number; moved: boolean } | null>(null);
+  const wasDragRef = useRef(false); // survives the sync gap between mouseup and click
   const btnRef = useRef<HTMLButtonElement | null>(null);
 
   // Persist position on change
@@ -177,7 +180,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       const vh = window.innerHeight;
       setBtnPos((prev) => ({
         x: Math.max(EDGE_MARGIN, Math.min(prev.x, vw - BTN_SIZE - EDGE_MARGIN)),
-        y: Math.max(EDGE_MARGIN, Math.min(prev.y, vh - BTN_SIZE - EDGE_MARGIN)),
+        y: Math.max(HEADER_MIN_Y, Math.min(prev.y, vh - BTN_SIZE - EDGE_MARGIN)),
       }));
     };
     window.addEventListener('resize', handleResize);
@@ -202,7 +205,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     const vh = window.innerHeight;
     setBtnPos({
       x: Math.max(EDGE_MARGIN, Math.min(d.originX + dx, vw - BTN_SIZE - EDGE_MARGIN)),
-      y: Math.max(EDGE_MARGIN, Math.min(d.originY + dy, vh - BTN_SIZE - EDGE_MARGIN)),
+      y: Math.max(HEADER_MIN_Y, Math.min(d.originY + dy, vh - BTN_SIZE - EDGE_MARGIN)),
     });
   }, []);
 
@@ -211,6 +214,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     const wasMoved = d?.moved ?? false;
     dragRef.current = null;
     setIsDragging(false);
+    wasDragRef.current = wasMoved;
 
     if (wasMoved) {
       // Snap to nearest edge with animation
@@ -218,7 +222,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       setBtnPos((prev) => snapToEdge(prev));
       // Remove snap transition after animation completes
       setTimeout(() => setIsSnapping(false), 260);
-      return wasMoved; // signal to caller: was a drag, not a click
+      return wasMoved;
     }
     return false;
   }, []);
@@ -567,8 +571,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
           ref={btnRef}
           id="tour-ai-companion"
           onClick={(e) => {
-            // Only open chat if it wasn't a drag
-            if (isDragging) { e.preventDefault(); return; }
+            // Only open chat if the last interaction was NOT a drag
+            if (wasDragRef.current) { e.preventDefault(); wasDragRef.current = false; return; }
             handleOpenChat();
           }}
           onMouseDown={(e) => {
@@ -608,14 +612,6 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
           }}
           aria-label={t('companion_aria_chat_with', { name: friendName })}
         >
-          {/* First-time tooltip */}
-          {isFirstChat && (
-            <span className="absolute -top-10 right-0 px-3 py-1.5 rounded-lg bg-surface-0 shadow-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 animate-fade-in max-w-[200px] whitespace-nowrap pointer-events-none">
-              {genre === 'fiction'
-                ? t('companion_tooltip_fiction', { name: friendName })
-                : t('companion_tooltip_general', { name: friendName })}
-            </span>
-          )}
           <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
