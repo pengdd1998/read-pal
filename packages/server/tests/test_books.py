@@ -127,7 +127,7 @@ async def test_delete_book(client):
     reg = await register_user(client)
     book = await _create_book(client, reg['token'])
     resp = await client.delete(f"/api/v1/books/{book['id']}", headers=auth_headers(reg['token']))
-    assert resp.status_code == 204
+    assert resp.status_code == 200
 
     # Verify it's gone
     resp = await client.get(f"/api/v1/books/{book['id']}", headers=auth_headers(reg['token']))

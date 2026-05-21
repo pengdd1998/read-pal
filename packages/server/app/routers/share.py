@@ -10,7 +10,7 @@ from app.middleware.auth import get_current_user
 from app.schemas.common import GenericResponse
 from app.schemas.share import ShareCreate
 from app.services import share_service
-from app.utils.i18n import _get_user_lang, translate_error
+from app.utils.i18n import _get_user_lang, t, translate_error
 
 router = APIRouter(prefix='/api/v1/share', tags=['share'])
 

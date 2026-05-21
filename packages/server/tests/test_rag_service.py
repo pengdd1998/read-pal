@@ -246,6 +246,8 @@ class TestPrecomputeBookEmbeddings:
             patch('app.db.async_session', mock_factory),
         ):
             mock_settings.return_value.glm_api_key = 'test-key'
+            mock_settings.return_value.max_embedding_calls = 100
+            mock_settings.return_value.embedding_enabled = True
             await precompute_book_embeddings(book_id, document_id, chapters)
 
             mock_session.add_all.assert_called_once()

@@ -125,7 +125,7 @@ jobs:
           # Logging
           LOG_LEVEL: WARNING
           LOG_JSON: false
-          LLM_LOG_ENABLED: false
+          LLM_LOG_ENABLED: true
           LLM_LOG_RETENTION_DAYS: 7
 
   # -------------------------------------------------------------------
