@@ -29,6 +29,17 @@ async def get_dashboard(
     return {'success': True, 'data': data}
 
 
+@router.get('/weekly-summary', response_model=GenericResponse)
+async def get_weekly_summary(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return weekly reading summary (Mon-Sun of the current week)."""
+    uid = _user_id(current_user)
+    data = await stats_service.get_weekly_summary(db, uid)
+    return {'success': True, 'data': data}
+
+
 @router.get('/reading-calendar', response_model=GenericResponse)
 async def get_reading_calendar(
     months: int | None = Query(None),

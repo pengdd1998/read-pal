@@ -17,6 +17,7 @@ import { useBookContent } from '@/hooks/useBookContent';
 import { useAnnotationActions } from '@/hooks/useAnnotationActions';
 import { useReaderUI } from '@/hooks/useReaderUI';
 import { isCapacitor } from '@/lib/capacitor';
+import { getAuthToken } from '@/lib/auth-fetch';
 import { api } from '@/lib/api';
 import { detectGenre, type BookGenre } from '@/lib/companion-prompts';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
@@ -211,6 +212,33 @@ export default function ReadPage() {
   const [chapterScrollProgress, setChapterScrollProgress] = useState(0);
   const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length, isPaused: ui.isPaused, scrollProgress: chapterScrollProgress });
   const studyMode = useStudyMode(bookId);
+
+  // Save reading progress on page leave — direct PATCH to book with keepalive
+  // This runs on component unmount (navigation, tab close) as a guaranteed save.
+  const currentChapterRef = useRef(currentChapter);
+  const scrollProgressRef = useRef(chapterScrollProgress);
+  useEffect(() => { currentChapterRef.current = currentChapter; }, [currentChapter]);
+  useEffect(() => { scrollProgressRef.current = chapterScrollProgress; }, [chapterScrollProgress]);
+
+  useEffect(() => {
+    if (loading || !bookId) return;
+    return () => {
+      const token = getAuthToken();
+      const chapter = currentChapterRef.current;
+      const scroll = scrollProgressRef.current;
+      try {
+        fetch(`/api/books/${bookId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ current_page: chapter, scroll_progress: scroll }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch { /* ignore */ }
+    };
+  }, [bookId, loading]);
 
   const annotationActions = useAnnotationActions({
     bookId, currentChapter, chapters, contentRef, selectionRange: selection.range,

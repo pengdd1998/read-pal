@@ -6,34 +6,7 @@ import { api } from './api';
 import { isCapacitor } from './capacitor';
 import { getItem, setItem, removeItem } from './native-storage';
 import { clearQueue } from './offline-queue';
-
-/** Inline token helpers — avoids webpack tree-shaking bug in dev mode */
-function getAuthToken(): string | null {
-  return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-}
-
-async function getAuthTokenAsync(): Promise<string | null> {
-  if (isCapacitor()) return getItem('auth_token');
-  return getAuthToken();
-}
-
-async function storeTokens(access: string, refresh: string): Promise<void> {
-  await setItem('auth_token', access);
-  await setItem('refresh_token', refresh);
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('auth_token', access);
-    localStorage.setItem('refresh_token', refresh);
-  }
-}
-
-async function clearTokens(): Promise<void> {
-  await removeItem('auth_token');
-  await removeItem('refresh_token');
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
-  }
-}
+import { getAuthTokenAsync, setAuthTokens, clearAuthTokens } from './auth-fetch';
 
 /** Set a simple cookie so Next.js middleware can detect auth state */
 function setAuthCookie(token: string) {
@@ -111,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await removeItem('user');
     await setItem('user', JSON.stringify(newUser));
     if (newRefreshToken) {
-      await storeTokens(newToken, newRefreshToken);
+      await setAuthTokens(newToken, newRefreshToken);
     } else {
       await setItem('auth_token', newToken);
       if (typeof window !== 'undefined') localStorage.setItem('auth_token', newToken);
@@ -152,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Logout is idempotent — ignore errors
     }
-    await clearTokens();
+    await clearAuthTokens();
     await removeItem('user');
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user');

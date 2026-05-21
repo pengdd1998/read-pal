@@ -114,8 +114,6 @@ async def update_book(
             book.completed_at = now
 
     await db.flush()
-
-    logger.info('Book updated: %s for user %s', book_id, user_id)
     return book
 
 

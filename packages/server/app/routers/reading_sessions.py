@@ -198,27 +198,31 @@ async def heartbeat_session(
         if pages_read is not None:
             session.pages_read = int(pages_read)
         scroll_progress = body.scroll_progress or body.scrollProgress
-        # Only query Book when there's actual progress to update
+        # Update book's scroll_progress for fine-grained tracking.
+        # Do NOT update book.current_page here — handleChapterChange
+        # and the Client.tsx unload save handle that directly via PATCH /api/books/{id},
+        # which avoids race conditions from out-of-order keepalive requests.
         if scroll_progress is not None:
-            # Update book's scroll_progress for fine-grained tracking
             book_result = await db.execute(
                 select(Book).where(Book.id == session.book_id, Book.user_id == UUID(current_user['id'])),
             )
             book = book_result.scalar_one_or_none()
             if book and book.total_pages > 0:
                 book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
-                # pagesRead from frontend is 1-indexed (currentChapter + 1), convert to 0-indexed
+                # Only update current_page if heartbeat is ahead (forward progress only)
                 pages_read_val = int(pages_read or session.pages_read or 0)
-                book.current_page = max(0, min(pages_read_val - 1, book.total_pages))
-                book.progress = Decimal(
-                    str(round((book.current_page / book.total_pages) * 100, 2)),
-                )
-                if book.progress > Decimal('100'):
-                    book.progress = Decimal('100')
-                if book.current_page >= book.total_pages and book.status != BookStatus.completed:
-                    book.progress = Decimal('100')
-                    book.status = BookStatus.completed
-                    book.completed_at = utcnow()
+                heartbeat_page = max(0, min(pages_read_val - 1, book.total_pages))
+                if heartbeat_page > book.current_page:
+                    book.current_page = heartbeat_page
+                    book.progress = Decimal(
+                        str(round((book.current_page / book.total_pages) * 100, 2)),
+                    )
+                    if book.progress > Decimal('100'):
+                        book.progress = Decimal('100')
+                    if book.current_page >= book.total_pages and book.status != BookStatus.completed:
+                        book.progress = Decimal('100')
+                        book.status = BookStatus.completed
+                        book.completed_at = utcnow()
     await db.flush()
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 

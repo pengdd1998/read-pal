@@ -64,9 +64,10 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
 
   const loadCollections = useCallback(async () => {
     try {
-      const res = await api.get<Collection[]>('/api/collections');
+      const res = await api.get<{ items: Collection[] }>('/api/collections');
       if (res.success && res.data) {
-        setCollections(Array.isArray(res.data) ? res.data : []);
+        const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
+        setCollections(items);
       }
     } catch {
       // Silent fail — collections are optional
@@ -248,9 +249,12 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
                   />
                 </div>
               ) : (
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onSelectCollection(activeCollectionId === col.id ? null : col.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectCollection(activeCollectionId === col.id ? null : col.id); } }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
                     activeCollectionId === col.id
                       ? 'bg-primary-50 dark:bg-primary-900/20 font-medium'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -281,7 +285,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
                       </svg>
                     </button>
                   </div>
-                </button>
+                </div>
               )}
             </div>
           ))}

@@ -45,12 +45,14 @@ export function ShareReadingCard() {
     }
   };
 
+  const stats = card?.stats ?? { booksCompleted: 0, totalPages: 0, highlights: 0 };
+
   const shareText = card
     ? t('share_text_intro') + '\n'
       + t('share_text_stats', {
-          books: card.stats.booksCompleted,
-          pages: card.stats.totalPages,
-          highlights: card.stats.highlights,
+          books: stats.booksCompleted,
+          pages: stats.totalPages,
+          highlights: stats.highlights,
         }) + '\n'
       + (card.currentlyReading
         ? '\n' + t('share_text_reading', {
@@ -111,15 +113,15 @@ export function ShareReadingCard() {
             {/* Stats grid */}
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-xl">
-                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{card.stats.booksCompleted}</div>
+                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.booksCompleted}</div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('books')}</div>
               </div>
               <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-xl">
-                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{card.stats.totalPages}</div>
+                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.totalPages}</div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('pages')}</div>
               </div>
               <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-xl">
-                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{card.stats.highlights}</div>
+                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.highlights}</div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('highlights_label')}</div>
               </div>
             </div>

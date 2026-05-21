@@ -68,14 +68,6 @@ export function SynthesisPanel({
     }
   }, [activeTab, bookId, concept, topic, query, focus, depth, analysisType, minSeverity, reportFormat]);
 
-  const API_PATHS: Record<SynthesisAction, string> = {
-    cross_reference: 'cross-reference',
-    concept_map: 'concept_map',
-    find_contradictions: 'contradictions',
-    summary_report: 'report',
-    synthesize: 'synthesize',
-  };
-
   const handleAnalyze = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -88,7 +80,12 @@ export function SynthesisPanel({
         return;
       }
 
-      const response = await api.post<AnalysisResult>(`/api/synthesis/${API_PATHS[activeTab]}`, input);
+      const response = await api.post<AnalysisResult>(`/api/synthesis/${bookId}`, {
+        includeHighlights: true,
+        includeNotes: true,
+        includeConversations: true,
+        ...input,
+      });
 
       if (response.success && response.data) {
         setResult(response.data as AnalysisResult);

@@ -20,9 +20,10 @@ export function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api.get<Collection[]>('/api/collections').then((res) => {
+    api.get<{ items: Collection[] }>('/api/collections').then((res) => {
       if (res.success && res.data) {
-        setCollections(Array.isArray(res.data) ? res.data : []);
+        const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
+        setCollections(items);
       }
     }).finally(() => setLoading(false));
   }, []);

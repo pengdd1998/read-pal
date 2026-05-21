@@ -275,6 +275,89 @@ async def get_reading_calendar(
     }
 
 
+async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
+    """Return weekly reading summary (Mon-Sun of the current week)."""
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+    dt_start = datetime.combine(week_start, datetime.min.time())
+    dt_end = datetime.combine(week_end + timedelta(days=1), datetime.min.time())
+
+    # Aggregate sessions for the week
+    day_col = func.date(ReadingSession.started_at).label('day')
+    sess_rows = await db.execute(
+        select(
+            day_col,
+            func.coalesce(func.sum(ReadingSession.duration), 0).label('seconds'),
+            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
+        )
+        .where(and_(
+            ReadingSession.user_id == uid,
+            ReadingSession.started_at >= dt_start,
+            ReadingSession.started_at < dt_end,
+        ))
+        .group_by(day_col)
+    )
+    daily_map: dict[str, dict] = {}
+    for row in sess_rows.all():
+        key = row[0].isoformat() if isinstance(row[0], date) else str(row[0])
+        daily_map[key] = {'minutes': int(row[1]) // 60, 'pages': int(row[2])}
+
+    # Annotations counts for the week
+    hl_count = await db.scalar(
+        select(func.count(Annotation.id)).where(and_(
+            Annotation.user_id == uid, Annotation.type == 'highlight',
+            Annotation.created_at >= dt_start, Annotation.created_at < dt_end,
+        ))
+    )
+    note_count = await db.scalar(
+        select(func.count(Annotation.id)).where(and_(
+            Annotation.user_id == uid, Annotation.type == 'note',
+            Annotation.created_at >= dt_start, Annotation.created_at < dt_end,
+        ))
+    )
+
+    # Active books this week
+    active_books = await db.scalar(
+        select(func.count(func.distinct(ReadingSession.book_id))).where(and_(
+            ReadingSession.user_id == uid,
+            ReadingSession.started_at >= dt_start,
+            ReadingSession.started_at < dt_end,
+        ))
+    )
+
+    # Streaks (reuse calendar logic)
+    cal = await get_reading_calendar(db, uid, months=1, year=None, month=None)
+    current_streak = cal['currentStreak']
+    longest_streak = cal['longestStreak']
+
+    # Build daily breakdown
+    daily_breakdown = []
+    total_minutes, total_pages, streak_days = 0, 0, 0
+    for i in range(7):
+        d = (week_start + timedelta(days=i)).isoformat()
+        entry = daily_map.get(d, {'minutes': 0, 'pages': 0})
+        total_minutes += entry['minutes']
+        total_pages += entry['pages']
+        if d in daily_map:
+            streak_days += 1
+        daily_breakdown.append({'date': d, 'minutes': entry['minutes'], 'pages': entry['pages']})
+
+    return {
+        'weekStart': week_start.isoformat(),
+        'weekEnd': week_end.isoformat(),
+        'minutesRead': total_minutes,
+        'pagesRead': total_pages,
+        'highlightsCount': hl_count or 0,
+        'notesCount': note_count or 0,
+        'booksActive': active_books or 0,
+        'streakDays': streak_days,
+        'currentStreak': current_streak,
+        'longestStreak': longest_streak,
+        'dailyBreakdown': daily_breakdown,
+    }
+
+
 async def get_reading_speed(
     db: AsyncSession,
     uid: UUID,

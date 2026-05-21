@@ -177,6 +177,24 @@ export default function LibraryPage() {
             activeCollectionId={activeCollectionId}
             onSelectCollection={handleSelectCollection}
           />
+
+          {/* Reading Mirrors link */}
+          <div className="mt-4">
+            <Link
+              href="/memory-books"
+              className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-800/40 hover:shadow-sm transition-all group"
+            >
+              <span className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 group-hover:scale-105 transition-transform">
+                <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm4 4h4m-4 4h4m-4 4h2" />
+                </svg>
+              </span>
+              <div>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{t('memory_books_link_title')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('memory_books_link_desc')}</p>
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Main grid */}
@@ -191,6 +209,22 @@ export default function LibraryPage() {
           activeCollectionId={activeCollectionId}
           onSelectCollection={handleSelectCollection}
         />
+        <div className="mt-4">
+          <Link
+            href="/memory-books"
+            className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-800/40 hover:shadow-sm transition-all group"
+          >
+            <span className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 group-hover:scale-105 transition-transform">
+              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm4 4h4m-4 4h4m-4 4h2" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{t('memory_books_link_title')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('memory_books_link_desc')}</p>
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* Free books to explore */}

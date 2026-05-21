@@ -11,6 +11,7 @@ import { WelcomeSection } from '@/components/dashboard/WelcomeSection';
 import { CurrentReadingSection } from '@/components/dashboard/CurrentReadingSection';
 import type { InsightKey } from '@/components/dashboard/CurrentReadingSection';
 import { ReadingGoalsWidget } from '@/components/dashboard/ReadingGoalsWidget';
+import { WeeklySummaryWidget } from '@/components/dashboard/WeeklySummaryWidget';
 import { ReadingSpeedWidget } from '@/components/dashboard/ReadingSpeedWidget';
 import { DashboardChallenges } from '@/components/dashboard/DashboardChallenges';
 import { DashboardRecommendations } from '@/components/dashboard/DashboardRecommendations';
@@ -156,6 +157,13 @@ export default function DashboardPage() {
           loading={loading}
           insightOfDayKey={insightOfDayKey}
         />
+      )}
+
+      {/* Weekly Reading Summary */}
+      {hasData && !loading && (
+        <div className="mt-5 animate-fade-in">
+          <WeeklySummaryWidget />
+        </div>
       )}
 
       {/* Reading Goals */}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { API_BASE_URL, api } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth-fetch';
 
 interface UseReadingSessionOptions {
   bookId: string;
@@ -11,11 +12,6 @@ interface UseReadingSessionOptions {
   isPaused?: boolean;
   scrollProgress?: number;
 }
-
-// Inline token helper — avoids webpack dev-mode tree-shaking bug on auth-fetch
-const getAuthToken = typeof window !== 'undefined'
-  ? () => localStorage.getItem('auth_token')
-  : () => null as string | null;
 
 export function useReadingSession({
   bookId,
@@ -49,32 +45,6 @@ export function useReadingSession({
   useEffect(() => {
     chaptersLengthRef.current = chaptersLength;
   }, [chaptersLength]);
-
-  // Save progress via heartbeat (doesn't end session)
-  const saveProgressNow = useRef(() => {});
-  saveProgressNow.current = () => {
-    const sid = sessionIdRef.current;
-    if (!sid) return;
-    const token = typeof window !== 'undefined' ? getAuthToken() : null;
-    const url = `${API_BASE_URL}/api/reading-sessions/${sid}/heartbeat`;
-    const data = {
-      pagesRead: currentChapterRef.current + 1,
-      scrollProgress: scrollProgressRef.current,
-    };
-    try {
-      fetch(url, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(data),
-        keepalive: true,
-      }).catch(() => {});
-    } catch {
-      // fetch itself threw (rare) — ignore
-    }
-  };
 
   // Start/end reading session lifecycle
   useEffect(() => {
@@ -115,30 +85,15 @@ export function useReadingSession({
 
     startSession();
 
-    // Save progress when tab becomes hidden or page is unloading
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        saveProgressNow.current();
-      }
-    };
-
-    const handleBeforeUnload = () => {
-      saveProgressNow.current();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       cancelled = true;
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       if (sessionIdRef.current) {
         const sid = sessionIdRef.current;
-        const finalChapter = currentChapterRef.current;
-        const token = typeof window !== 'undefined' ? getAuthToken() : null;
-        // End session + save final progress
+        const token = getAuthToken();
+        // End session (duration tracking only — do NOT send progress data here
+        // to avoid racing with the Client.tsx unload save that writes the
+        // correct progress via PATCH /api/books/{id}).
         try {
           fetch(`${API_BASE_URL}/api/reading-sessions/${sid}/end`, {
             method: 'POST',
@@ -146,12 +101,7 @@ export function useReadingSession({
               'Content-Type': 'application/json',
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({
-              pagesRead: finalChapter + 1,
-              currentPage: finalChapter,
-              totalPages: chaptersLengthRef.current,
-              scrollProgress: scrollProgressRef.current,
-            }),
+            body: JSON.stringify({ pagesRead: 0 }),
             keepalive: true,
           }).catch(() => {});
         } catch {

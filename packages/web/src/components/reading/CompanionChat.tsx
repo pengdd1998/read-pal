@@ -6,10 +6,8 @@ import { api, API_BASE_URL } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
 import { useToast } from '@/components/Toast';
 import { renderSimpleMarkdown } from '@/lib/markdown';
-import { consumeSSEStream } from '@/lib/sse';
 import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
 import { generateId } from '@read-pal/shared';
-import { authFetch } from '@/lib/auth-fetch';
 import {
   detectGenre,
   getGenreTemplate,
@@ -17,6 +15,8 @@ import {
   shouldAutoOpen,
   type BookGenre,
 } from '@/lib/companion-prompts';
+import { useDraggable } from '@/hooks/useDraggable';
+import { useStreamingChat, type Message } from '@/hooks/useStreamingChat';
 
 /** Extract code blocks from raw HTML chapter content for technical context. */
 function extractCodeBlocks(html: string, maxChars = 2000): string {
@@ -48,14 +48,6 @@ function extractCodeBlocks(html: string, maxChars = 2000): string {
   return blocks.join('\n\n');
 }
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-  streaming?: boolean;
-}
-
 export interface CompanionChatHandle {
   openWithMessage: (message: string) => void;
 }
@@ -79,72 +71,31 @@ interface FriendPersona {
 }
 
 const FRIEND_PERSONAS: Record<string, FriendPersona> = {
-  sage: { name: 'Sage', emoji: '\uD83E\uDD89' },
-  penny: { name: 'Penny', emoji: '\u2B50' },
-  alex: { name: 'Alex', emoji: '\uD83D\uDD0D' },
-  quinn: { name: 'Quinn', emoji: '\uD83C\uDF0A' },
-  sam: { name: 'Sam', emoji: '\uD83C\uDFAF' },
+  sage: { name: 'Sage', emoji: '🦉' },
+  penny: { name: 'Penny', emoji: '⭐' },
+  alex: { name: 'Alex', emoji: '🔍' },
+  quinn: { name: 'Quinn', emoji: '🌊' },
+  sam: { name: 'Sam', emoji: '🎯' },
 };
 
-const DRAG_THRESHOLD = 6; // px movement to distinguish drag from click
-const EDGE_MARGIN = 20; // px from viewport edge when snapped
-const BTN_SIZE = 56; // button width/height in px
-const HEADER_MIN_Y = 64; // minimum Y position — button must stay below the reader header
-const STORAGE_KEY = 'read-pal-chat-btn-pos';
-const SNAP_TRANSITION = 'left 0.25s cubic-bezier(0.16,1,0.3,1), top 0.25s cubic-bezier(0.16,1,0.3,1)';
+const DEFAULT_PERSONA: FriendPersona = { name: 'Penny', emoji: '⭐' };
 
-interface DragPosition {
-  x: number; // left px
-  y: number; // top px
-}
-
-function loadSavedPosition(): DragPosition | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const pos = JSON.parse(raw) as DragPosition;
-    if (typeof pos.x === 'number' && typeof pos.y === 'number') return pos;
-  } catch { /* ignore */ }
-  return null;
-}
-
-function defaultPosition(): DragPosition {
-  return { x: window.innerWidth - BTN_SIZE - EDGE_MARGIN, y: window.innerHeight - BTN_SIZE - EDGE_MARGIN };
-}
-
-/** Snap position to nearest viewport edge with margin, clamped below the header. */
-function snapToEdge(pos: DragPosition): DragPosition {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const minY = HEADER_MIN_Y;
-  const cx = pos.x + BTN_SIZE / 2;
-  const cy = pos.y + BTN_SIZE / 2;
-
-  const distLeft = cx;
-  const distRight = vw - cx;
-  const distTop = cy - minY; // measure from header bottom, not viewport top
-  const distBottom = vh - cy;
-
-  const minDist = Math.min(distLeft, distRight, distTop, distBottom);
-
-  if (minDist === distTop) return { x: Math.max(EDGE_MARGIN, Math.min(pos.x, vw - BTN_SIZE - EDGE_MARGIN)), y: minY };
-  if (minDist === distLeft) return { x: EDGE_MARGIN, y: Math.max(minY, Math.min(pos.y, vh - BTN_SIZE - EDGE_MARGIN)) };
-  if (minDist === distRight) return { x: vw - BTN_SIZE - EDGE_MARGIN, y: Math.max(minY, Math.min(pos.y, vh - BTN_SIZE - EDGE_MARGIN)) };
-  return { x: Math.max(EDGE_MARGIN, Math.min(pos.x, vw - BTN_SIZE - EDGE_MARGIN)), y: vh - BTN_SIZE - EDGE_MARGIN };
-}
-
-const DEFAULT_PERSONA: FriendPersona = { name: 'Penny', emoji: '\u2B50' };
-
-export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({ bookId, currentPage, totalPages, bookTitle, author, chapterContent, genreMetadata, bookDescription, onReady }, ref) {
+export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({
+  bookId,
+  currentPage,
+  totalPages,
+  bookTitle,
+  author,
+  chapterContent,
+  genreMetadata,
+  bookDescription,
+  onReady,
+}, ref) {
   const { toast } = useToast();
   const t = useTranslations('reader');
-  const tc = useTranslations('common');
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [connecting, setConnecting] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [isFirstChat] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -156,76 +107,49 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   const [aiHealthy, setAiHealthy] = useState<boolean | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const pendingMessageRef = useRef<string | null>(null);
 
-  // --- Draggable button state ---
-  const [btnPos, setBtnPos] = useState<DragPosition>(() => {
-    if (typeof window === 'undefined') return { x: 0, y: 0 };
-    return loadSavedPosition() || defaultPosition();
+  // --- Draggable floating button ---
+  const {
+    btnPos,
+    isDragging,
+    isSnapping,
+    onDragStart,
+    onDragMove,
+    onDragEnd,
+    wasDragRef,
+    btnRef,
+    snapTransition,
+    dragRef,
+  } = useDraggable({
+    storageKey: 'read-pal-chat-btn-pos',
+    btnSize: 56,
+    edgeMargin: 20,
+    headerMinY: 64,
   });
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSnapping, setIsSnapping] = useState(false);
-  const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number; moved: boolean } | null>(null);
-  const wasDragRef = useRef(false); // survives the sync gap between mouseup and click
-  const btnRef = useRef<HTMLButtonElement | null>(null);
 
-  // Persist position on change
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(btnPos)); } catch { /* ignore */ }
-  }, [btnPos]);
-
-  // Reposition on viewport resize
-  useEffect(() => {
-    const handleResize = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      setBtnPos((prev) => ({
-        x: Math.max(EDGE_MARGIN, Math.min(prev.x, vw - BTN_SIZE - EDGE_MARGIN)),
-        y: Math.max(HEADER_MIN_Y, Math.min(prev.y, vh - BTN_SIZE - EDGE_MARGIN)),
-      }));
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const onDragStart = useCallback((clientX: number, clientY: number) => {
-    setIsSnapping(false);
-    dragRef.current = { startX: clientX, startY: clientY, originX: btnPos.x, originY: btnPos.y, moved: false };
-  }, [btnPos]);
-
-  const onDragMove = useCallback((clientX: number, clientY: number) => {
-    const d = dragRef.current;
-    if (!d) return;
-    const dx = clientX - d.startX;
-    const dy = clientY - d.startY;
-    if (!d.moved && Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
-    d.moved = true;
-    setIsDragging(true);
-
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    setBtnPos({
-      x: Math.max(EDGE_MARGIN, Math.min(d.originX + dx, vw - BTN_SIZE - EDGE_MARGIN)),
-      y: Math.max(HEADER_MIN_Y, Math.min(d.originY + dy, vh - BTN_SIZE - EDGE_MARGIN)),
-    });
-  }, []);
-
-  const onDragEnd = useCallback(() => {
-    const d = dragRef.current;
-    const wasMoved = d?.moved ?? false;
-    dragRef.current = null;
-    setIsDragging(false);
-    wasDragRef.current = wasMoved;
-
-    if (wasMoved) {
-      // Snap to nearest edge with animation
-      setIsSnapping(true);
-      setBtnPos((prev) => snapToEdge(prev));
-      // Remove snap transition after animation completes
-      setTimeout(() => setIsSnapping(false), 260);
-      return wasMoved;
-    }
-    return false;
-  }, []);
+  // --- Streaming chat ---
+  const createAssistantMessage = useCallback(() => generateId(), []);
+  const {
+    sendStreamMessage,
+    loading,
+    connecting,
+    stopStreaming,
+  } = useStreamingChat({
+    bookId,
+    currentPage,
+    totalPages,
+    bookTitle,
+    author,
+    chapterContent,
+    genreMetadata,
+    bookDescription,
+    companionMode,
+    onMessagesUpdate: setMessages,
+    createAssistantMessage,
+    extractCodeBlocks,
+    t: t as (key: string, params?: Record<string, unknown>) => string,
+  });
 
   // Detect genre for adaptive behavior
   const genre: BookGenre = detectGenre(genreMetadata, bookTitle, bookDescription);
@@ -234,11 +158,10 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   // Preload DOMPurify on mount
   useEffect(() => { preloadDOMPurify(); }, []);
 
-  // Check if any message is currently streaming (used to suppress duplicate loading dots)
+  // Check if any message is currently streaming
   const hasStreamingMessage = messages.some((m) => m.streaming);
 
-  // Memoize sanitized assistant messages to avoid re-sanitizing on every render
-  // Always sort by timestamp to maintain correct chronological order
+  // Memoize sanitized assistant messages
   const sanitizedMessages = useMemo(() => {
     const cache = new Map<string, string>();
     return [...messages]
@@ -250,7 +173,6 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         return { ...msg, sanitized: cache.get(msg.id) || '' };
       });
   }, [messages]);
-  const pendingMessageRef = useRef<string | null>(null);
 
   // Expose imperative handle so parent can open chat with a pre-filled message
   useImperativeHandle(ref, () => ({
@@ -260,7 +182,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     },
   }), []);
 
-  // Notify parent via callback (works through next/dynamic unlike ref)
+  // Notify parent via callback
   useEffect(() => {
     if (onReady) {
       onReady({
@@ -272,20 +194,15 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     }
   }, [onReady]);
 
-  // Auto-open chat for first-time readers after a brief delay (the "aha moment")
-  // Genre-aware: auto-opens for non-fiction/technical/academic; stays closed for fiction
-  // Skip if FeatureTour hasn't completed — avoid competing overlays on first visit
+  // Auto-open chat for first-time readers after a brief delay
   useEffect(() => {
     if (!isFirstChat || !bookId) return;
     if (localStorage.getItem('read-pal-tour-complete') !== 'true') return;
-
-    // Fiction: don't auto-open — it breaks immersion. Show tooltip hint instead.
     if (!shouldAutoOpen(genre)) return;
 
     const timer = setTimeout(() => {
       setIsOpen(true);
       localStorage.setItem('read-pal-chat-opened', 'true');
-
       const greeting = genreTemplate.greeting(friendName, bookTitle);
       setMessages([{
         id: generateId(),
@@ -302,117 +219,6 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     localStorage.setItem('read-pal-chat-opened', 'true');
     setIsOpen(true);
   }, []);
-
-  // Helper to send a message via SSE streaming with automatic retry
-  const sendStreamMessage = useCallback(async (msg: string, retryCount = 0) => {
-    const assistantMsgId = generateId();
-    const MAX_RETRIES = 2;
-
-    setMessages((prev) => [
-      ...prev,
-      { id: generateId(), role: 'user', content: msg, timestamp: Date.now() },
-      { id: assistantMsgId, role: 'assistant', content: '', timestamp: Date.now(), streaming: true },
-    ]);
-    setLoading(true);
-    setConnecting(true);
-
-    const attemptStream = async (attempt: number): Promise<void> => {
-      try {
-        const response = await authFetch(`${API_BASE_URL}/api/agents/chat/stream`, {
-          method: 'POST',
-          body: JSON.stringify({
-            book_id: bookId,
-            message: msg,
-            context: {
-              bookId,
-              currentPage,
-              totalPages: totalPages ?? 0,
-              bookTitle: bookTitle ?? '',
-              author: author ?? '',
-              chapterContent: chapterContent ? purifySync(chapterContent).slice(0, 3000) : '',
-              nearbyCode: extractCodeBlocks(chapterContent ?? ''),
-              genres: genreMetadata,
-              bookDescription,
-              companionMode,
-            },
-          }),
-        });
-        if (!response.ok) {
-          // Retry on 5xx or 429, not on 4xx client errors
-          if ((response.status >= 500 || response.status === 429) && attempt < MAX_RETRIES) {
-            const delay = Math.pow(2, attempt) * 1000;
-            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_retrying', { seconds: delay / 1000 }) } : m));
-            await new Promise((r) => setTimeout(r, delay));
-            return attemptStream(attempt + 1);
-          }
-          let errorMsg = t('companion_server_error', { status: response.status });
-          try { const errData = await response.json() as { error?: { message?: string } }; errorMsg = errData.error?.message || errorMsg; } catch { /* use default */ }
-          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_error_prefix', { message: errorMsg }), streaming: false } : m));
-          setLoading(false);
-          setConnecting(false);
-          return;
-        }
-
-        setConnecting(false);
-        // Throttled streaming: buffer tokens and flush to state every 80ms
-        // to avoid re-rendering on every single token chunk (~20/s).
-        let streamBuffer = '';
-        let flushTimer: ReturnType<typeof setTimeout> | null = null;
-        const flushBuffer = () => {
-          if (streamBuffer) {
-            const chunk = streamBuffer;
-            streamBuffer = '';
-            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m));
-          }
-          flushTimer = null;
-        };
-        abortRef.current = consumeSSEStream(
-          response,
-          (tokenChunk: string) => {
-            streamBuffer += tokenChunk;
-            if (!flushTimer) {
-              flushTimer = setTimeout(flushBuffer, 80);
-            }
-          },
-          () => {
-            // Flush any remaining buffered tokens
-            if (flushTimer) clearTimeout(flushTimer);
-            flushBuffer();
-            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, streaming: false, content: m.content || t('companion_no_response') } : m));
-            setLoading(false);
-            setConnecting(false);
-            abortRef.current = null;
-          },
-          (errMsg: string) => {
-            // Retry on stream errors
-            if (attempt < MAX_RETRIES) {
-              const delay = Math.pow(2, attempt) * 1000;
-              setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_connection_lost', { seconds: delay / 1000 }) } : m));
-              setTimeout(() => attemptStream(attempt + 1), delay);
-              return;
-            }
-            setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: m.content || t('companion_stream_failed', { message: errMsg }), streaming: false } : m));
-            setLoading(false);
-            setConnecting(false);
-            abortRef.current = null;
-          },
-        );
-      } catch {
-        // Network error — retry with backoff
-        if (attempt < MAX_RETRIES) {
-          const delay = Math.pow(2, attempt) * 1000;
-          setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_network_error', { seconds: delay / 1000 }) } : m));
-          await new Promise((r) => setTimeout(r, delay));
-          return attemptStream(attempt + 1);
-        }
-        setMessages((prev) => prev.map((m) => m.id === assistantMsgId ? { ...m, content: t('companion_connect_failed'), streaming: false } : m));
-        setLoading(false);
-        setConnecting(false);
-      }
-    };
-
-    await attemptStream(retryCount);
-  }, [bookId, currentPage, totalPages, bookTitle, author, chapterContent]);
 
   // Auto-send pending message after chat opens
   useEffect(() => {
@@ -464,7 +270,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       }
     };
     checkHealth();
-    const interval = setInterval(checkHealth, 60000); // re-check every 60s
+    const interval = setInterval(checkHealth, 60000);
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
@@ -488,9 +294,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             const history = raw.map((m) => ({ id: m.id || generateId(), role: m.role, content: m.content, timestamp: m.timestamp || Date.now() }));
             setMessages(history);
 
-            // Add a contextual greeting after loading history
             const lastMsg = history[history.length - 1];
-            const isReturning = lastMsg && (Date.now() - lastMsg.timestamp > 30 * 60 * 1000); // 30 min gap
+            const isReturning = lastMsg && (Date.now() - lastMsg.timestamp > 30 * 60 * 1000);
             if (isReturning && lastMsg?.role === 'user') {
               const greeting = genreTemplate.returnGreeting(friendName, bookTitle);
               greetTimer = setTimeout(() => {
@@ -506,27 +311,16 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             }
           }
         }
-      } catch { toast(t('companion_history_load_error'), 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
+      } catch { toast('Failed to load chat history', 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
     };
     load();
     return () => {
       cancelled = true;
       if (greetTimer) clearTimeout(greetTimer);
     };
-  }, [isOpen, bookId, historyLoaded, toast]);
+  }, [isOpen, bookId, historyLoaded, toast, genreTemplate, friendName, bookTitle]);
 
   useEffect(() => { setHistoryLoaded(false); setMessages([]); }, [bookId]);
-
-  // Abort stream on unmount
-  useEffect(() => { return () => { abortRef.current?.abort(); }; }, []);
-
-  const stopStreaming = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setMessages((prev) => prev.map((m) => m.streaming ? { ...m, streaming: false } : m));
-    setLoading(false);
-    setConnecting(false);
-  }, []);
 
   const toggleCompanionMode = useCallback(() => {
     const modes: Array<'casual' | 'scholar' | 'socratic'> = ['casual', 'scholar', 'socratic'];
@@ -571,7 +365,6 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
           ref={btnRef}
           id="tour-ai-companion"
           onClick={(e) => {
-            // Only open chat if the last interaction was NOT a drag
             if (wasDragRef.current) { e.preventDefault(); wasDragRef.current = false; return; }
             handleOpenChat();
           }}
@@ -580,7 +373,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             onDragStart(e.clientX, e.clientY);
             const onMouseMove = (ev: MouseEvent) => onDragMove(ev.clientX, ev.clientY);
             const onMouseUp = () => {
-              const wasDrag = onDragEnd();
+              onDragEnd();
               window.removeEventListener('mousemove', onMouseMove);
               window.removeEventListener('mouseup', onMouseUp);
             };
@@ -594,11 +387,10 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
           onTouchMove={(e) => {
             const touch = e.touches[0];
             onDragMove(touch.clientX, touch.clientY);
-            // Prevent page scroll while dragging
             if (dragRef.current?.moved) e.preventDefault();
           }}
           onTouchEnd={() => { onDragEnd(); }}
-          className="fixed z-10 flex items-center justify-center w-14 h-14 rounded-full select-none touch-none"
+          className="fixed z-40 flex items-center justify-center w-14 h-14 rounded-full select-none touch-none"
           style={{
             left: btnPos.x,
             top: btnPos.y,
@@ -606,7 +398,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
             boxShadow: isDragging
               ? '0 8px 24px -4px rgba(20, 184, 166, 0.3), 0 4px 12px -2px rgba(16, 185, 129, 0.2)'
               : '0 4px 14px -2px rgba(30, 42, 56, 0.12), 0 2px 6px -1px rgba(30, 42, 56, 0.06)',
-            transition: isDragging ? 'box-shadow 0.15s ease' : isSnapping ? `box-shadow 0.15s ease, ${SNAP_TRANSITION}` : 'box-shadow 0.15s ease, transform 0.2s ease',
+            transition: isDragging ? 'box-shadow 0.15s ease' : isSnapping ? `box-shadow 0.15s ease, ${snapTransition}` : 'box-shadow 0.15s ease, transform 0.2s ease',
             transform: isDragging ? 'scale(1.08)' : undefined,
             cursor: isDragging ? 'grabbing' : 'grab',
           }}
@@ -621,13 +413,13 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
       {/* Chat Panel */}
       {isOpen && (
         <>
-          {/* Backdrop — desktop only, transparent on mobile so reader stays visible */}
+          {/* Backdrop */}
           <div
             className="fixed inset-0 z-30 hidden md:block md:bg-black/10"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Mobile: bottom sheet (40vh, no backdrop block) — Desktop: full-height sidebar (400px) */}
+          {/* Mobile: bottom sheet — Desktop: sidebar */}
           <div
             className="fixed right-0 bottom-0 max-h-[40vh] md:max-h-none h-auto md:h-full w-full md:top-0 md:bottom-0 md:w-[400px] bg-surface-0 shadow-2xl z-40 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right overscroll-contain"
           >

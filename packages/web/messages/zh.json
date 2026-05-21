@@ -406,7 +406,9 @@
     "collection_picker_empty": "还没有收藏夹",
     "collection_picker_placeholder": "名称...",
     "collection_picker_add": "添加",
-    "collection_picker_new": "新建收藏夹"
+    "collection_picker_new": "新建收藏夹",
+    "memory_books_link_title": "阅读镜像",
+    "memory_books_link_desc": "记录你的阅读旅程"
   },
   "reader": {
     "companion_title": "阅读伴侣",
@@ -1099,7 +1101,16 @@
     "goals_saving": "保存中...",
     "goals_save": "保存",
     "goals_cancel": "取消",
-    "goals_range_hint": "范围：10-120 分钟"
+    "goals_range_hint": "范围：10-120 分钟",
+    "weekly_summary_title": "本周阅读",
+    "weekly_summary_minutes": "阅读时长",
+    "weekly_summary_pages": "阅读页数",
+    "weekly_summary_pages_unit": "页",
+    "weekly_summary_highlights": "高亮",
+    "weekly_summary_streak": "连续天数",
+    "weekly_summary_streak_unit": "天",
+    "weekly_summary_empty": "本周还没有阅读记录，开始阅读来查看你的进展吧！",
+    "weekly_summary_load_failed": "加载周报失败。"
   },
   "settings_page": {
     "page_title": "设置",

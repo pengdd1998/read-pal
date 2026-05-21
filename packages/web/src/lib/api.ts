@@ -13,21 +13,9 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
 import { queueMutation } from '@/lib/offline-queue';
-import { getAuthToken, getAuthTokenAsync, getRefreshToken, getRefreshTokenAsync, clearAuthTokens } from '@/lib/auth-fetch';
+import { getAuthToken, getAuthTokenAsync, getRefreshToken, getRefreshTokenAsync, setAuthTokens, clearAuthTokens } from '@/lib/auth-fetch';
 import { isCapacitor } from '@/lib/capacitor';
 import { getCachedContent } from '@/lib/mobile-cache';
-
-// Inline token helpers — prevents webpack dev-mode tree-shaking bug that strips auth-fetch exports
-const _getAuthToken = typeof window !== 'undefined'
-  ? () => localStorage.getItem('auth_token') : () => null as string | null;
-const _getRefreshToken = typeof window !== 'undefined'
-  ? () => localStorage.getItem('refresh_token') : () => null as string | null;
-function _storeTokens(access: string, refresh: string) {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('auth_token', access);
-    localStorage.setItem('refresh_token', refresh);
-  }
-}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -146,7 +134,7 @@ class ApiClient {
   private async _doRefresh(): Promise<boolean> {
     const refreshToken = isCapacitor()
       ? await getRefreshTokenAsync()
-      : _getRefreshToken();
+      : getRefreshToken();
 
     if (!refreshToken) return false;
 
@@ -156,7 +144,7 @@ class ApiClient {
         { refreshToken },
       );
       if (response.data.success && response.data.data) {
-        _storeTokens(response.data.data.token, response.data.data.refreshToken);
+        setAuthTokens(response.data.data.token, response.data.data.refreshToken);
         return true;
       }
       return false;
@@ -281,7 +269,7 @@ class ApiClient {
   /** Return per-endpoint cache TTL in ms (0 = not cacheable) */
   private getCacheTTL(url: string): number {
     if (url.match(/\/api\/books\/[^?]/) && !url.includes('?')) return 300_000;      // Single book detail: 5 min
-    if (url.includes('/content')) return 3_600_000;                                    // Chapter content: 1 hour
+    if (url.includes('/content')) return 0;                                                 // Book content: never cache (currentPage changes)
     if (url.includes('/api/settings')) return 60_000;                                   // Settings: 1 min
     if (url.includes('/api/stats/dashboard')) return 30_000;                           // Dashboard: 30s
     if (url.includes('/api/stats/reading-calendar')) return 60_000;                    // Calendar: 1 min

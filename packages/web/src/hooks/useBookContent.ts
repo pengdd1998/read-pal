@@ -41,7 +41,7 @@ export function useBookContent(
       try {
         setLoading(true);
         const [bookResult, annotationsResult] = await Promise.all([
-          api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/upload/books/${bookId}/content`),
+          api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/upload/books/${bookId}/content`, { _t: Date.now() }),
           api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch(() => null),
         ]);
         if (cancelled) return;

@@ -105,6 +105,10 @@ async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
+    # Prevent browser/CDN caching of API responses — avoids stale progress data
+    if request.url.path.startswith('/api/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
     if not settings.is_dev:
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return response

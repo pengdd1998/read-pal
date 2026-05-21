@@ -406,7 +406,9 @@
     "collection_picker_empty": "No collections yet",
     "collection_picker_placeholder": "Name...",
     "collection_picker_add": "Add",
-    "collection_picker_new": "New collection"
+    "collection_picker_new": "New collection",
+    "memory_books_link_title": "Reading Mirrors",
+    "memory_books_link_desc": "Your reading journey captured"
   },
   "reader": {
     "companion_title": "Reading Companion",
@@ -1099,7 +1101,16 @@
     "goals_saving": "Saving...",
     "goals_save": "Save",
     "goals_cancel": "Cancel",
-    "goals_range_hint": "Range: 10-120 minutes"
+    "goals_range_hint": "Range: 10-120 minutes",
+    "weekly_summary_title": "This Week",
+    "weekly_summary_minutes": "Minutes Read",
+    "weekly_summary_pages": "Pages Read",
+    "weekly_summary_pages_unit": "pages",
+    "weekly_summary_highlights": "Highlights",
+    "weekly_summary_streak": "Streak",
+    "weekly_summary_streak_unit": "days",
+    "weekly_summary_empty": "No reading activity this week yet. Start a session to see your progress!",
+    "weekly_summary_load_failed": "Failed to load weekly summary."
   },
   "settings_page": {
     "page_title": "Settings",
