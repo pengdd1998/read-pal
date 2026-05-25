@@ -46,7 +46,11 @@ logger = structlog.get_logger('read-pal.knowledge')
 # ---------------------------------------------------------------------------
 
 GRAPH_KEY_PREFIX = 'kg:'
-GRAPH_TTL = 7 * 86_400  # 7 days
+
+
+def _knowledge_cache_ttl() -> int:
+    from app.config import get_settings
+    return get_settings().cache_knowledge_ttl_seconds
 
 
 def _graph_cache_key(user_id: UUID, book_id: UUID) -> str:
@@ -304,8 +308,8 @@ async def _persist_graph(
     try:
         r = _get_redis()
         pipe = r.pipeline()
-        pipe.setex(cache_key, GRAPH_TTL, graph_data.model_dump_json())
-        pipe.setex(hash_key, GRAPH_TTL, content_hash)
+        pipe.setex(cache_key, _knowledge_cache_ttl(), graph_data.model_dump_json())
+        pipe.setex(hash_key, _knowledge_cache_ttl(), content_hash)
         await pipe.execute()
     except Exception:
         logger.debug('knowledge.cache_write_failed')

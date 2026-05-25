@@ -612,6 +612,37 @@
     max-width: 100%;
     height: auto;
   }
+
+  /* Footnotes */
+  .reader-content .rp-footnote {
+    font-size: 0.85em;
+    line-height: 1.5;
+    padding: 0.5em 1em;
+    margin: 1em 0;
+    border-top: 1px solid #d1c7b7;
+    color: #6b5e4f;
+  }
+
+  .reader-content .rp-footnote-ref {
+    font-size: 0.75em;
+    vertical-align: super;
+    color: #d97706;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .reader-content .rp-footnote-ref:hover {
+    text-decoration: underline;
+  }
+
+  .dark .reader-content .rp-footnote {
+    border-top-color: #4a4a4a;
+    color: #9ca3af;
+  }
+
+  .dark .reader-content .rp-footnote-ref {
+    color: #f59e0b;
+  }
 }
 
 @layer components {

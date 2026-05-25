@@ -19,6 +19,7 @@ const PURIFY_CONFIG = {
     'svg', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'g', 'text', 'tspan',
     'del', 'ins', 'abbr', 'cite', 'dfn', 'kbd', 'samp', 'var', 'time',
     'sup', 'sub', 'ruby', 'rt', 'rp',
+    'style',
   ],
   ALLOWED_ATTR: [
     'href', 'src', 'alt', 'title', 'class', 'id', 'style',

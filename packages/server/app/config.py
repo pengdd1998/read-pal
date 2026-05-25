@@ -77,6 +77,12 @@ class Settings(BaseSettings):
     llm_log_enabled: bool
     llm_log_retention_days: int
 
+    # Cache TTL (duration strings — parsed to seconds)
+    cache_llm_ttl: str = '30m'
+    cache_rag_ttl: str = '30m'
+    cache_knowledge_ttl: str = '7d'
+    cache_llm_max_entries: int = 500
+
     # SMTP (optional — console fallback when unset)
     smtp_host: str | None = None
     smtp_port: int = 587
@@ -124,6 +130,21 @@ class Settings(BaseSettings):
     def is_dev(self) -> bool:
         """Whether running in development mode."""
         return self.app_env == 'development'
+
+    @computed_field
+    @property
+    def cache_llm_ttl_seconds(self) -> int:
+        return _parse_duration(self.cache_llm_ttl)
+
+    @computed_field
+    @property
+    def cache_rag_ttl_seconds(self) -> int:
+        return _parse_duration(self.cache_rag_ttl)
+
+    @computed_field
+    @property
+    def cache_knowledge_ttl_seconds(self) -> int:
+        return _parse_duration(self.cache_knowledge_ttl)
 
     def validate_production(self) -> list[str]:
         """Validate settings for production — returns list of warnings."""

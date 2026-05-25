@@ -336,6 +336,23 @@ async def stream_chat(
             book_id=str(book_id),
         )
 
+    # Check cache — if a previous identical stream produced the same response,
+    # return it as a single chunk instead of re-streaming from the LLM.
+    try:
+        from app.services.llm import _cache_key, _cache_get
+        stream_cache_key = _cache_key(messages, 'companion_stream')
+        cached_response = await _cache_get(stream_cache_key)
+        if cached_response:
+            safe = filter_output(cached_response, context='companion_stream')
+            if safe:
+                yield f'data: {json.dumps({"content": safe})}\n\n'
+                yield 'data: [DONE]\n\n'
+                await _save_message(db, user_id, book_id, 'user', message)
+                await _save_message(db, user_id, book_id, 'assistant', safe)
+                return
+    except Exception:
+        pass
+
     collected_parts: list[str] = []
     request_id = uuid.uuid4().hex[:12]
     start_time = time.monotonic()
@@ -453,6 +470,16 @@ async def stream_chat(
     assistant_content = ''.join(collected_parts)
     if assistant_content:
         assistant_content = filter_output(assistant_content, context='companion_stream')
+
+    # Cache the complete response for repeat queries
+    if assistant_content:
+        try:
+            from app.services.llm import _cache_key, _cache_set
+            cache_key = _cache_key(messages, 'companion_stream')
+            await _cache_set(cache_key, assistant_content)
+        except Exception:
+            pass
+
     await _save_message(db, user_id, book_id, 'user', message)
     if assistant_content:
         await _save_message(db, user_id, book_id, 'assistant', assistant_content)

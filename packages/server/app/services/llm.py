@@ -298,10 +298,18 @@ circuit = CircuitBreaker()
 # ---------------------------------------------------------------------------
 
 _CACHE_PREFIX = 'llm:cache:'
-_CACHE_TTL = 1800  # 30 minutes — reduces redundant GLM calls on free tier
 
 _in_memory_cache: dict[str, tuple[float, str]] = {}
-_MAX_IN_MEMORY_CACHE = 500
+
+
+def _cache_ttl() -> int:
+    """Cache TTL in seconds from configuration."""
+    return get_settings().cache_llm_ttl_seconds
+
+
+def _max_in_memory() -> int:
+    """Max in-memory cache entries from configuration."""
+    return get_settings().cache_llm_max_entries
 
 
 def _cache_key(messages: list[BaseMessage], label: str) -> str:
@@ -316,9 +324,10 @@ def _cache_key(messages: list[BaseMessage], label: str) -> str:
 
 async def _cache_get(key: str) -> str | None:
     """Get cached LLM response from Redis (fallback: in-memory)."""
+    ttl = _cache_ttl()
     if key in _in_memory_cache:
         ts, val = _in_memory_cache[key]
-        if time.monotonic() - ts < _CACHE_TTL:
+        if time.monotonic() - ts < ttl:
             return val
         del _in_memory_cache[key]
 
@@ -332,9 +341,10 @@ async def _cache_get(key: str) -> str | None:
 
 async def _cache_set(key: str, value: str) -> None:
     """Store LLM response in Redis (fallback: in-memory)."""
+    ttl = _cache_ttl()
     _in_memory_cache[key] = (time.monotonic(), value)
-    if len(_in_memory_cache) > _MAX_IN_MEMORY_CACHE:
-        # Evict oldest entries
+    max_entries = _max_in_memory()
+    if len(_in_memory_cache) > max_entries:
         oldest = sorted(_in_memory_cache.items(), key=lambda x: x[1][0])
         for k, _ in oldest[:len(_in_memory_cache) // 2]:
             del _in_memory_cache[k]
@@ -342,7 +352,7 @@ async def _cache_set(key: str, value: str) -> None:
     try:
         from app.core.redis import get_redis as _get_redis
         r = _get_redis()
-        await r.setex(key, _CACHE_TTL, value)
+        await r.setex(key, ttl, value)
     except Exception:
         pass
 

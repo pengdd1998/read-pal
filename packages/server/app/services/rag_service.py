@@ -29,7 +29,10 @@ logger = logging.getLogger('read-pal.rag')
 _CJK_TOKEN_RE = re.compile(r'[一-鿿]|[a-zA-Z0-9]+')
 
 RAG_CACHE_PREFIX = 'rag:'
-RAG_CACHE_TTL = 1800  # 30 min
+
+
+def _rag_cache_ttl() -> int:
+    return get_settings().cache_rag_ttl_seconds
 
 _http_client: httpx.AsyncClient | None = None
 
@@ -247,7 +250,7 @@ async def get_book_context(
 
     if combined:
         try:
-            await get_redis().setex(cache_key, RAG_CACHE_TTL, combined)
+            await get_redis().setex(cache_key, _rag_cache_ttl(), combined)
         except Exception as exc:
             logger.warning('Redis RAG cache write failed: %s', exc)
 

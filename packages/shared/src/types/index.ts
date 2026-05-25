@@ -69,6 +69,9 @@ export interface Chapter {
   startIndex: number;
   endIndex: number;
   order: number;
+  tocLevel?: number;
+  images?: number;
+  wordCount?: number;
 }
 
 export interface Annotation {
