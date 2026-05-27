@@ -32,6 +32,7 @@ export interface Book {
   fileSize: number;
   totalPages: number;
   currentPage: number;
+  currentSegment?: number;
   progress: number; // 0-1
   status: 'unread' | 'reading' | 'completed';
   tags: string[];

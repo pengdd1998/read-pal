@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-07T00:00:00Z",
+  "title": "Design System: read-pal",
+  "extensions": {
+    "colorMeta": {
+      "candlelight-gold": {
+        "role": "primary",
+        "displayName": "Candlelight Gold",
+        "canonical": "oklch(67% 0.17 65)",
+        "tonalRamp": ["#2a1002", "#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24"]
+      },
+      "cream-paper": {
+        "role": "neutral",
+        "displayName": "Cream Paper",
+        "canonical": "oklch(99% 0.005 80)",
+        "tonalRamp": ["#1e1812", "#302820", "#4a3f33", "#6b5e4d", "#8a7b68", "#c5b7a5", "#f0e9e0", "#fefdfb"]
+      },
+      "garden-sage": {
+        "role": "secondary",
+        "displayName": "Garden Sage",
+        "canonical": "oklch(65% 0.08 150)",
+        "tonalRamp": ["#1a2e1c", "#2a4430", "#3d5e44", "#537858", "#6b9470", "#7a9e7e", "#8fb895", "#a8d4ae"]
+      },
+      "clay-red": {
+        "role": "secondary",
+        "displayName": "Clay Red",
+        "canonical": "oklch(52% 0.1 20)",
+        "tonalRamp": ["#2a1513", "#4a2420", "#6b3530", "#8a4540", "#a65d57", "#bf7a74", "#d89a95", "#f0bcb8"]
+      },
+      "pine-shadow": {
+        "role": "secondary",
+        "displayName": "Pine Shadow",
+        "canonical": "oklch(40% 0.08 170)",
+        "tonalRamp": ["#0d1f18", "#1a3328", "#2d5a4a", "#3a7560", "#4d9078", "#62ac90", "#7ec8a8", "#9ee4c2"]
+      },
+      "evening-ink": {
+        "role": "neutral",
+        "displayName": "Evening Ink",
+        "canonical": "oklch(22% 0.03 250)",
+        "tonalRamp": ["#0d1219", "#151d28", "#1e2a38", "#2d4060", "#3d5578", "#637793", "#8a99ae", "#b1bbc9"]
+      },
+      "dark-study": {
+        "role": "neutral",
+        "displayName": "Dark Study",
+        "canonical": "oklch(12% 0.02 250)",
+        "tonalRamp": ["#050809", "#0a0f13", "#0f1419", "#1a1f26", "#242b33", "#2f3840", "#4a5568", "#6b7a8d"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Chapter titles and page-level headings in the reading experience. Always Crimson Pro."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings within the app. Crimson Pro for warmth."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles, list items, sidebar sections. DM Sans for tool interface."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All UI text. DM Sans. Capped at 65ch for prose."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "Core reading experience. Literata with generous leading for multi-hour sessions."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Navigation, tabs, chapter numbers, form labels. Uppercase DM Sans."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Code blocks in reader content, API keys. Fira Code."
+      }
+    },
+    "shadows": [
+      {
+        "name": "resting",
+        "value": "0 1px 2px rgba(30, 42, 56, 0.04)",
+        "purpose": "Cards at rest. Barely visible separation from background."
+      },
+      {
+        "name": "hover",
+        "value": "0 2px 8px -2px rgba(30, 42, 56, 0.08), 0 4px 16px -4px rgba(30, 42, 56, 0.04)",
+        "purpose": "Interactive cards on hover. Gentle lift."
+      },
+      {
+        "name": "raised",
+        "value": "0 4px 12px -2px rgba(30, 42, 56, 0.1), 0 8px 24px -4px rgba(30, 42, 56, 0.06)",
+        "purpose": "Modals and expanded panels."
+      },
+      {
+        "name": "elevated",
+        "value": "0 8px 24px -4px rgba(30, 42, 56, 0.12), 0 16px 48px -8px rgba(30, 42, 56, 0.08)",
+        "purpose": "Overlays and popovers above all content."
+      },
+      {
+        "name": "book",
+        "value": "0 2px 4px rgba(30, 42, 56, 0.06), 0 8px 16px rgba(30, 42, 56, 0.08), inset 0 -1px 0 rgba(30, 42, 56, 0.05)",
+        "purpose": "Physical book shadow. Multi-layer with inset bottom edge."
+      },
+      {
+        "name": "amber-glow",
+        "value": "0 0 20px rgba(217, 119, 6, 0.2)",
+        "purpose": "Active streaks, featured elements. Used extremely sparingly."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Default easing for all state transitions. Unhurried, smooth."
+      },
+      {
+        "name": "ease-out-quart",
+        "value": "cubic-bezier(0.25, 1, 0.5, 1)",
+        "purpose": "Slightly snappier easing for interactive feedback."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action. Candlelight Gold with warm shadow.",
+      "html": "<button class=\"ds-btn-primary\">Start Reading</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; background: #d97706; color: #fff; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; border: none; border-radius: 0.75rem; cursor: pointer; transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 8px -2px rgba(30, 42, 56, 0.08), 0 4px 16px -4px rgba(30, 42, 56, 0.04); } .ds-btn-primary:hover { background: #b45309; box-shadow: 0 4px 12px -2px rgba(30, 42, 56, 0.1), 0 8px 24px -4px rgba(30, 42, 56, 0.06); } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid #d97706; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Alternative action. Sandstone background with warm border.",
+      "html": "<button class=\"ds-btn-secondary\">View Details</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; background: #f0e9e0; color: #4a3f33; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; border: 1px solid #ddd3c5; border-radius: 0.75rem; cursor: pointer; transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-secondary:hover { background: #e4dace; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: 2px solid #d97706; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Tertiary action. Transparent until hovered.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; background: transparent; color: #6b5e4d; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; border: none; border-radius: 0.75rem; cursor: pointer; transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-ghost:hover { background: #f0e9e0; } .ds-btn-ghost:active { background: #e4dace; transform: scale(0.98); } .ds-btn-ghost:focus-visible { outline: 2px solid #d97706; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Primary container. Cream Paper with generous rounding and minimal shadow.",
+      "html": "<div class=\"ds-card\">\n  <h3 class=\"ds-card-title\">Book Title</h3>\n  <p class=\"ds-card-body\">A brief description of this item.</p>\n</div>",
+      "css": ".ds-card { background: #fefdfb; border-radius: 1rem; padding: 1.5rem; border: 1px solid rgba(240, 233, 224, 0.5); box-shadow: 0 1px 2px rgba(30, 42, 56, 0.04); transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-card:hover { box-shadow: 0 2px 8px -2px rgba(30, 42, 56, 0.08), 0 4px 16px -4px rgba(30, 42, 56, 0.04); transform: translateY(-2px); } .ds-card-title { font-family: 'DM Sans', system-ui, sans-serif; font-size: 1.125rem; font-weight: 600; color: #1e2a38; margin: 0 0 0.5rem; line-height: 1.35; } .ds-card-body { font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.875rem; font-weight: 400; color: #6b5e4d; margin: 0; line-height: 1.6; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Form input with warm focus ring. Cream Paper background.",
+      "html": "<input type=\"text\" class=\"ds-input\" placeholder=\"Search your library...\" />",
+      "css": ".ds-input { width: 100%; padding: 0.625rem 1rem; background: #fefdfb; color: #1e2a38; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.875rem; border: 1px solid rgba(240, 233, 224, 0.8); border-radius: 0.75rem; transition: border-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1); } .ds-input::placeholder { color: #a89782; } .ds-input:focus { outline: none; border-color: #d97706; box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.3); }"
+    },
+    {
+      "name": "Navigation Link",
+      "kind": "nav",
+      "description": "Top navigation item with active underline indicator.",
+      "html": "<nav class=\"ds-nav\">\n  <a href=\"#\" class=\"ds-nav-link ds-nav-link-active\">Library</a>\n  <a href=\"#\" class=\"ds-nav-link\">Stats</a>\n</nav>",
+      "css": ".ds-nav { display: flex; gap: 0.25rem; } .ds-nav-link { font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; text-decoration: none; color: #6b5e4d; padding: 0.5rem 0.75rem; border-radius: 0.375rem; position: relative; transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-nav-link:hover { background: #f0e9e0; color: #4a3f33; } .ds-nav-link-active { color: #1e2a38; } .ds-nav-link-active::after { content: ''; position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: 20px; height: 2px; background: #d97706; border-radius: 1px; }"
+    },
+    {
+      "name": "Highlight Chip",
+      "kind": "chip",
+      "description": "Semantic annotation highlight color chip.",
+      "html": "<span class=\"ds-chip ds-chip-sage\">Definition</span> <span class=\"ds-chip ds-chip-russet\">Disagree</span> <span class=\"ds-chip ds-chip-forest\">Connection</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.625rem; border-radius: 0.375rem; } .ds-chip-sage { background: rgba(122, 158, 126, 0.15); color: #2d5a4a; } .ds-chip-russet { background: rgba(166, 93, 87, 0.15); color: #8a3530; } .ds-chip-forest { background: rgba(45, 90, 74, 0.15); color: #1a3328; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Reading Nook",
+    "overview": "A favorite reading chair, afternoon light slanting through a window, a friend nearby who asks the right questions at the right time. That is the feeling read-pal's visual system aims to reproduce: unhurried warmth, the texture of paper and wood, the sense that knowledge lives here and someone cares about helping you find it.\n\nThe palette centers on Candlelight Gold (#d97706) as the single saturated accent against warm, paper-derived neutrals. Surfaces progress from cream to sandstone through four tonal tiers, creating depth without shadow. Typography shifts between two worlds: DM Sans handles the tool interface with calm efficiency, while Crimson Pro and Literata carry the reading experience with the warmth of well-set type.\n\nThis system explicitly rejects the generic SaaS dashboard and childish gamification. It is designed for people who read deeply and want to remember what they read.",
+    "keyCharacteristics": [
+      "Warm, tonal surface layering over dramatic shadows",
+      "Single amber accent used sparingly (5-8% of any screen)",
+      "Dual typography registers: tool mode (sans) and reading mode (serif)",
+      "AAA contrast for body text in reading mode",
+      "Gently responsive interactions: unhurried transitions, warm hover states",
+      "Three reading themes (light, dark, sepia) that preserve warmth"
+    ],
+    "rules": [
+      { "name": "The Single Accent Rule", "body": "Candlelight Gold is the only saturated color that appears as a painted element. Sage, Clay Red, and Pine Shadow are supporting voices for semantic meaning, never decoration.", "section": "colors" },
+      { "name": "The Warm Neutral Rule", "body": "Every gray in this system is tinted toward amber. Pure #808080, cool gray, or blue-gray is forbidden.", "section": "colors" },
+      { "name": "The Dark Study Rule", "body": "Dark mode is not inverted light mode. It is the same room after sunset: surfaces darken to deep navy-charcoal, text warms to parchment tones.", "section": "colors" },
+      { "name": "The Two Register Rule", "body": "Sans-serif is the tool interface. Serif is the reading experience. Never mix them within a single component.", "section": "typography" },
+      { "name": "The Generous Leading Rule", "body": "Reading mode line-height is 1.85, not the typical 1.5. This is a product where users read for 30-90 minutes.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only on reading-related elements or as a response to state (hover, focus, raised).", "section": "elevation" },
+      { "name": "The Warm Shadow Rule", "body": "All shadow colors use rgba(30, 42, 56, ...) with warm-tinted navy, never pure black.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Candlelight Gold sparingly. More than 10% of a screen in amber means restraint is lost.",
+      "Do ensure 7:1 contrast ratio for all reading-mode body text (WCAG AAA).",
+      "Do use tonal surface layering for depth instead of shadows on non-reading elements.",
+      "Do respect the two-register typography rule: DM Sans for tools, Crimson Pro / Literata for reading.",
+      "Do use descriptive highlight colors that carry semantic meaning.",
+      "Do include focus-visible states on every interactive element.",
+      "Do animate with cubic-bezier(0.16, 1, 0.3, 1) for unhurried transitions.",
+      "Do respect prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't use pure black (#000) or pure white (#fff). Every neutral must be tinted warm.",
+      "Don't create generic SaaS dashboard layouts with cold grays and blue accents (PRODUCT.md anti-reference).",
+      "Don't add playful gamification: stickers, mascots, confetti (PRODUCT.md anti-reference).",
+      "Don't use border-left or border-right greater than 1px as a colored accent stripe.",
+      "Don't use gradient text (background-clip: text with gradients).",
+      "Don't use glassmorphism decoratively.",
+      "Don't create hero-metric templates (big number, small label, gradient accent).",
+      "Don't build identical card grids. Vary sizes and layouts to reflect content hierarchy."
+    ]
+  }
+}

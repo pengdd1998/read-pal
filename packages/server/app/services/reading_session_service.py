@@ -76,11 +76,13 @@ async def end_session(
     current_page_from_client = None
     total_pages_from_client = None
     scroll_progress_from_client = None
+    current_segment_from_client = None
     if data:
         update_data = data.model_dump(exclude_unset=True)
         current_page_from_client = update_data.pop('current_page', None)
         total_pages_from_client = update_data.pop('total_pages', None)
         scroll_progress_from_client = update_data.pop('scroll_progress', None)
+        current_segment_from_client = update_data.pop('current_segment', None)
         for field, value in update_data.items():
             if field != 'is_active':
                 setattr(session, field, value)
@@ -99,6 +101,8 @@ async def end_session(
                 book.current_page = min(max(current_page_from_client, 0), book.total_pages)
                 sp = scroll_progress_from_client if scroll_progress_from_client is not None else float(book.scroll_progress or 0)
                 book.scroll_progress = Decimal(str(round(sp, 3)))
+                if current_segment_from_client is not None:
+                    book.current_segment = current_segment_from_client
                 book.progress = Decimal(
                     str(round((book.current_page / book.total_pages) * 100, 2)),
                 )
@@ -108,15 +112,18 @@ async def end_session(
                     book.progress = Decimal('100')
                     book.status = BookStatus.completed
                     book.completed_at = now
-    elif scroll_progress_from_client is not None:
-        # Only update scroll_progress without changing current_page
+    elif scroll_progress_from_client is not None or current_segment_from_client is not None:
+        # Only update scroll_progress/current_segment without changing current_page
         book_result = await db.execute(
             select(Book).where(Book.id == session.book_id, Book.user_id == user_id),
         )
         book = book_result.scalar_one_or_none()
         if book:
             book.last_read_at = now
-            book.scroll_progress = Decimal(str(round(scroll_progress_from_client, 3)))
+            if scroll_progress_from_client is not None:
+                book.scroll_progress = Decimal(str(round(scroll_progress_from_client, 3)))
+            if current_segment_from_client is not None:
+                book.current_segment = current_segment_from_client
 
     await db.flush()
     return session

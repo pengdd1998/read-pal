@@ -27,6 +27,7 @@ class SessionUpdate(BaseModel):
     current_page: int | None = Field(None, ge=0)
     total_pages: int | None = Field(None, ge=0)
     scroll_progress: float | None = Field(None, ge=0.0, le=1.0)
+    current_segment: int | None = Field(None, ge=0)
 
 
 class SessionResponse(BaseModel):
@@ -76,3 +77,4 @@ class HeartbeatRequest(BaseModel):
     pagesRead: int | None = Field(None, ge=0, alias='pagesRead')
     scroll_progress: float | None = Field(None, ge=0.0, le=1.0)
     scrollProgress: float | None = Field(None, ge=0.0, le=1.0, alias='scrollProgress')
+    current_segment: int | None = Field(None, ge=0)

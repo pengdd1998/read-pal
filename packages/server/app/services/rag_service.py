@@ -203,15 +203,9 @@ async def get_book_context(
     """Retrieve relevant book content for enriching AI chat.
 
     Tries semantic search first, falls back to keyword matching.
+    Filters results to only include content up to the user's reading
+    position (spoiler prevention). Completed books have no filter.
     """
-    cache_key = f'{RAG_CACHE_PREFIX}{book_id}:{user_id}:{_stable_hash(query)}'
-    try:
-        cached = await get_redis().get(cache_key)
-        if cached:
-            return cached[:max_chars]
-    except Exception as exc:
-        logger.warning('Redis RAG cache read failed: %s', exc)
-
     result = await db.execute(
         select(Book).where(Book.id == book_id, Book.user_id == user_id)
     )
@@ -219,10 +213,25 @@ async def get_book_context(
     if not book:
         return ''
 
-    relevant_chunks = await _semantic_chapter_search(db, book_id, query, top_k=3)
+    # Determine max chapter index for spoiler prevention.
+    # Completed books: no filter (user has read everything).
+    is_completed = book.status == 'completed'
+    max_chapter_index = book.current_page if not is_completed else None
+
+    cache_key = f'{RAG_CACHE_PREFIX}{book_id}:{user_id}:{_stable_hash(query)}:{max_chapter_index}'
+    try:
+        cached = await get_redis().get(cache_key)
+        if cached:
+            return cached[:max_chars]
+    except Exception as exc:
+        logger.warning('Redis RAG cache read failed: %s', exc)
+
+    relevant_chunks = await _semantic_chapter_search(
+        db, book_id, query, top_k=3, max_chapter_index=max_chapter_index,
+    )
 
     if not relevant_chunks:
-        chapters = await _get_chapters(db, book_id)
+        chapters = await _get_chapters(db, book_id, max_chapter_index=max_chapter_index)
         if chapters:
             relevant_chunks = _keyword_chapter_search(chapters, query, top_k=3)
 
@@ -266,6 +275,7 @@ async def _semantic_chapter_search(
     book_id: UUID,
     query: str,
     top_k: int = 3,
+    max_chapter_index: int | None = None,
 ) -> list[dict[str, Any]]:
     """pgVector cosine distance search over pre-computed chunk embeddings."""
     query_emb = await _get_embedding(query)
@@ -275,8 +285,20 @@ async def _semantic_chapter_search(
     emb_literal = '[' + ','.join(str(v) for v in query_emb) + ']'
     distance_threshold = 0.7  # 1 - similarity_threshold(0.3)
 
+    # Build spoiler-prevention WHERE clause
+    chapter_filter = ''
+    params: dict[str, Any] = {
+        'query_emb': emb_literal,
+        'book_id': str(book_id),
+        'distance_threshold': distance_threshold,
+        'limit': top_k,
+    }
+    if max_chapter_index is not None:
+        chapter_filter = 'AND bc.chapter_index <= :max_chapter_index'
+        params['max_chapter_index'] = max_chapter_index
+
     try:
-        stmt = text("""
+        stmt = text(f"""
             SELECT
                 bc.chapter_index,
                 bc.content,
@@ -287,17 +309,13 @@ async def _semantic_chapter_search(
             WHERE bc.book_id = :book_id
               AND bc.embedding IS NOT NULL
               AND (bc.embedding <=> :query_emb::vector) < :distance_threshold
+              {chapter_filter}
             ORDER BY bc.embedding <=> :query_emb::vector
             LIMIT :limit
         """)
         result = await db.execute(
             stmt,
-            {
-                'query_emb': emb_literal,
-                'book_id': str(book_id),
-                'distance_threshold': distance_threshold,
-                'limit': top_k,
-            },
+            params,
         )
         rows = result.fetchall()
     except Exception as exc:
@@ -355,13 +373,19 @@ def _keyword_chapter_search(
 # Helpers
 # ---------------------------------------------------------------------------
 
-async def _get_chapters(db: AsyncSession, book_id: UUID) -> list[dict[str, Any]]:
-    """Fetch chapters from the Document table."""
+async def _get_chapters(
+    db: AsyncSession,
+    book_id: UUID,
+    max_chapter_index: int | None = None,
+) -> list[dict[str, Any]]:
+    """Fetch chapters from the Document table, optionally filtered by position."""
     result = await db.execute(
         select(Document.chapters).where(Document.book_id == book_id)
     )
     chapters = result.scalar_one_or_none()
     if isinstance(chapters, list):
+        if max_chapter_index is not None:
+            return chapters[:max_chapter_index + 1]
         return chapters
     return []
 

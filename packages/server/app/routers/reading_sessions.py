@@ -198,17 +198,21 @@ async def heartbeat_session(
         if pages_read is not None:
             session.pages_read = int(pages_read)
         scroll_progress = body.scroll_progress or body.scrollProgress
-        # Update book's scroll_progress for fine-grained tracking.
+        current_segment = body.current_segment
+        # Update book's scroll_progress and current_segment for fine-grained tracking.
         # Do NOT update book.current_page here — handleChapterChange
         # and the Client.tsx unload save handle that directly via PATCH /api/books/{id},
         # which avoids race conditions from out-of-order keepalive requests.
-        if scroll_progress is not None:
+        if scroll_progress is not None or current_segment is not None:
             book_result = await db.execute(
                 select(Book).where(Book.id == session.book_id, Book.user_id == UUID(current_user['id'])),
             )
             book = book_result.scalar_one_or_none()
             if book and book.total_pages > 0:
-                book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
+                if scroll_progress is not None:
+                    book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
+                if current_segment is not None:
+                    book.current_segment = current_segment
                 # Only update current_page if heartbeat is ahead (forward progress only)
                 pages_read_val = int(pages_read or session.pages_read or 0)
                 heartbeat_page = max(0, min(pages_read_val - 1, book.total_pages))

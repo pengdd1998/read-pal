@@ -179,6 +179,7 @@ export default function ReadPage() {
     book, chapters, currentChapter, annotations, loading, error,
     chapterContent, chapterTitle, setCurrentChapter, setAnnotations,
     setChapterFade, chapterFade,
+    currentSegment, totalSegments, pageContent, setCurrentSegment, segments,
   } = useBookContent(bookId, t('failed_load_book'), t('failed_load_book'), t('failed_connect'));
 
   const ui = useReaderUI();
@@ -217,8 +218,10 @@ export default function ReadPage() {
   // This runs on component unmount (navigation, tab close) as a guaranteed save.
   const currentChapterRef = useRef(currentChapter);
   const scrollProgressRef = useRef(chapterScrollProgress);
+  const currentSegmentRef = useRef(currentSegment);
   useEffect(() => { currentChapterRef.current = currentChapter; }, [currentChapter]);
   useEffect(() => { scrollProgressRef.current = chapterScrollProgress; }, [chapterScrollProgress]);
+  useEffect(() => { currentSegmentRef.current = currentSegment; }, [currentSegment]);
 
   useEffect(() => {
     if (loading || !bookId) return;
@@ -226,6 +229,7 @@ export default function ReadPage() {
       const token = getAuthToken();
       const chapter = currentChapterRef.current;
       const scroll = scrollProgressRef.current;
+      const segment = currentSegmentRef.current;
       try {
         fetch(`/api/books/${bookId}`, {
           method: 'PATCH',
@@ -233,7 +237,7 @@ export default function ReadPage() {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ current_page: chapter, scroll_progress: scroll }),
+          body: JSON.stringify({ current_page: chapter, scroll_progress: scroll, current_segment: segment }),
           keepalive: true,
         }).catch(() => {});
       } catch { /* ignore */ }
@@ -295,7 +299,7 @@ export default function ReadPage() {
     setCurrentChapter(chapterIndex);
     setChapterFade('in');
     try {
-      await api.patch(`/api/books/${bookId}`, { current_page: chapterIndex });
+      await api.patch(`/api/books/${bookId}`, { current_page: chapterIndex, current_segment: 0 });
     } catch (err) {
       console.error('Failed to update progress:', err);
       toast(t('failed_save_progress'), 'error');
@@ -490,7 +494,7 @@ export default function ReadPage() {
         <div className={`h-full ${THEME_CLASSES[theme]} ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
           <ReaderView
             bookId={bookId}
-            chapterContent={chapterContent}
+            chapterContent={pageContent || chapterContent}
             chapterTitle={chapters[currentChapter]?.title || book.title}
             currentPage={currentChapter}
             totalPages={chapters.length || 1}
@@ -511,6 +515,9 @@ export default function ReadPage() {
             onScrollProgress={setChapterScrollProgress}
             onPauseAutoHide={ui.pauseAutoHide}
             onResumeAutoHide={ui.resumeAutoHide}
+            currentSegment={currentSegment}
+            totalSegments={totalSegments}
+            onSegmentChange={setCurrentSegment}
           />
         </div>
       </div>
@@ -584,15 +591,15 @@ export default function ReadPage() {
         totalPages={chapters.length}
         bookTitle={book?.title || ''}
         author={book?.author || ''}
-        chapterContent={chapterContent}
+        chapterContent={pageContent || chapterContent}
         genreMetadata={(book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | string | undefined}
         bookDescription={(book?.metadata as Record<string, unknown> | undefined)?.description as string | undefined}
       />
 
       {/* Fiction panel */}
-      {!loading && isFiction && chapterContent && (
+      {!loading && isFiction && pageContent && (
         <FictionPanel
-          chapterContent={chapterContent}
+          chapterContent={pageContent}
           chapterIndex={currentChapter}
           onAskAboutCharacter={(name) => {
             chatHandleRef.current?.openWithMessage(`Tell me about ${name} — their role, motivations, and how they've developed so far.`);

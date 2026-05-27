@@ -186,6 +186,7 @@ async def get_book_content(
                 'fileSize': book.file_size,
                 'totalPages': book.total_pages,
                 'currentPage': book.current_page,
+                'currentSegment': book.current_segment or 0,
                 'progress': float(book.progress) if book.progress else 0,
                 'status': book.status.value if hasattr(book.status, 'value') else book.status,
                 'tags': book.tags or [],

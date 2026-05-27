@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { splitChapterIntoPages, DEFAULT_MAX_CHARS_PER_PAGE, type PageSegment } from '@/lib/chapter-paginator';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
 
 interface BookContentState {
@@ -18,6 +19,12 @@ interface BookContentState {
   setAnnotations: React.Dispatch<React.SetStateAction<Annotation[]>>;
   setChapterFade: (fade: 'in' | 'out') => void;
   chapterFade: 'in' | 'out';
+  // Pagination
+  segments: PageSegment[];
+  currentSegment: number;
+  totalSegments: number;
+  pageContent: string;
+  setCurrentSegment: (idx: number) => void;
 }
 
 export function useBookContent(
@@ -29,6 +36,7 @@ export function useBookContent(
   const [book, setBook] = useState<Book | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapter, setCurrentChapter] = useState(0);
+  const [currentSegment, setCurrentSegment] = useState(0);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,6 +60,11 @@ export function useBookContent(
           setChapters(chapterList);
           const startPage = data.book.currentPage || 0;
           setCurrentChapter(Math.min(startPage, Math.max(chapterList.length - 1, 0)));
+          // Restore saved segment position
+          const savedSegment = (data.book as unknown as Record<string, unknown>).currentSegment as number | undefined;
+          if (savedSegment && savedSegment > 0) {
+            setCurrentSegment(savedSegment);
+          }
           analytics.track('book_opened', { bookId, title: data.book.title });
         } else {
           setError(bookResult.error?.message || errorMessage);
@@ -73,6 +86,32 @@ export function useBookContent(
   const chapterContent = chapters[currentChapter]?.rawContent || chapters[currentChapter]?.content || '';
   const chapterTitle = chapters[currentChapter]?.title || book?.title || '';
 
+  // Split current chapter into page segments
+  const segments = useMemo(
+    () => splitChapterIntoPages(chapterContent, DEFAULT_MAX_CHARS_PER_PAGE),
+    [chapterContent],
+  );
+  const totalSegments = segments.length;
+
+  // Current page content (single segment)
+  const pageContent = useMemo(
+    () => segments[currentSegment]?.html || '',
+    [segments, currentSegment],
+  );
+
+  // Reset segment when chapter changes
+  const handleSetCurrentChapter = useCallback((idx: number) => {
+    setCurrentChapter(idx);
+    setCurrentSegment(0);
+  }, []);
+
+  // Clamp segment index when segments change (e.g. after chapter switch)
+  useEffect(() => {
+    if (currentSegment >= totalSegments) {
+      setCurrentSegment(Math.max(0, totalSegments - 1));
+    }
+  }, [totalSegments, currentSegment]);
+
   return {
     book,
     chapters,
@@ -82,9 +121,15 @@ export function useBookContent(
     error,
     chapterContent,
     chapterTitle,
-    setCurrentChapter,
+    setCurrentChapter: handleSetCurrentChapter,
     setAnnotations,
     setChapterFade,
     chapterFade,
+    // Pagination
+    segments,
+    currentSegment,
+    totalSegments,
+    pageContent,
+    setCurrentSegment,
   };
 }

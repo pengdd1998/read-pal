@@ -108,6 +108,11 @@ class Book(Base):
         Integer,
         default=0,
     )
+    current_segment: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default='0',
+    )
     scroll_progress: Mapped[Decimal] = mapped_column(
         Numeric(4, 3),
         default=Decimal('0'),

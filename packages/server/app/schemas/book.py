@@ -28,6 +28,7 @@ class BookUpdate(BaseModel):
     author: str | None = Field(None, min_length=1, max_length=255)
     cover_url: str | None = None
     current_page: int | None = Field(None, ge=0)
+    current_segment: int | None = Field(None, ge=0)
     progress: Decimal | None = Field(None, ge=0, le=100)
     status: Literal['unread', 'reading', 'completed'] | None = None
     tags: list[str] | None = None
@@ -49,6 +50,7 @@ class BookResponse(BaseModel):
     file_size: int
     total_pages: int
     current_page: int
+    current_segment: int
     progress: Decimal
     status: str
     tags: list[str]

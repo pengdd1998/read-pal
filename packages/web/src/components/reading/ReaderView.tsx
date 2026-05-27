@@ -62,6 +62,10 @@ interface ReaderViewProps {
   onScrollProgress?: (progress: number) => void;
   onPauseAutoHide?: () => void;
   onResumeAutoHide?: () => void;
+  // Pagination within chapter
+  currentSegment?: number;
+  totalSegments?: number;
+  onSegmentChange?: (segment: number) => void;
 }
 
 export const ReaderView = React.memo(function ReaderView({
@@ -87,6 +91,9 @@ export const ReaderView = React.memo(function ReaderView({
   onScrollProgress,
   onPauseAutoHide,
   onResumeAutoHide,
+  currentSegment = 0,
+  totalSegments = 1,
+  onSegmentChange,
 }: ReaderViewProps) {
   const t = useTranslations('reader');
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -179,7 +186,7 @@ export const ReaderView = React.memo(function ReaderView({
   }, [sanitizedContent]);
 
   // Save scroll position before chapter changes or component unmounts
-  const scrollKey = `scroll-${bookId}-ch${currentPage}`;
+  const scrollKey = `scroll-${bookId}-ch${currentPage}-seg${currentSegment}`;
   const saveScrollPosition = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -248,14 +255,22 @@ export const ReaderView = React.memo(function ReaderView({
     };
   }, [chapterContent, bookId, currentPage, saveScrollPosition]);
 
-  // --- Navigation (direct chapter navigation) ---
+  // --- Navigation (segment within chapter, then chapter) ---
   const goNextPage = useCallback(() => {
-    if (currentPage < totalPages - 1) onPageChange(currentPage + 1);
-  }, [currentPage, totalPages, onPageChange]);
+    if (onSegmentChange && currentSegment < totalSegments - 1) {
+      onSegmentChange(currentSegment + 1);
+    } else if (currentPage < totalPages - 1) {
+      onPageChange(currentPage + 1);
+    }
+  }, [currentSegment, totalSegments, currentPage, totalPages, onPageChange, onSegmentChange]);
 
   const goPrevPage = useCallback(() => {
-    if (currentPage > 0) onPageChange(currentPage - 1);
-  }, [currentPage, onPageChange]);
+    if (onSegmentChange && currentSegment > 0) {
+      onSegmentChange(currentSegment - 1);
+    } else if (currentPage > 0) {
+      onPageChange(currentPage - 1);
+    }
+  }, [currentSegment, currentPage, totalPages, onPageChange, onSegmentChange]);
 
   // --- Keyboard navigation ---
   useEffect(() => {
@@ -266,10 +281,14 @@ export const ReaderView = React.memo(function ReaderView({
       if (e.key === 'ArrowRight') {
         if (e.shiftKey) {
           if (currentPage < totalPages - 1) onPageChange(currentPage + 1);
+        } else {
+          goNextPage();
         }
       } else if (e.key === 'ArrowLeft') {
         if (e.shiftKey) {
           if (currentPage > 0) onPageChange(currentPage - 1);
+        } else {
+          goPrevPage();
         }
       }
     };
@@ -297,10 +316,10 @@ export const ReaderView = React.memo(function ReaderView({
       // Only handle distinct horizontal swipes
       if (Math.abs(deltaX) < 100 || Math.abs(deltaY) > Math.abs(deltaX) * 0.7) return;
 
-      if (deltaX < 0 && currentPage < totalPages - 1) {
-        onPageChange(currentPage + 1);
-      } else if (deltaX > 0 && currentPage > 0) {
-        onPageChange(currentPage - 1);
+      if (deltaX < 0) {
+        goNextPage();
+      } else if (deltaX > 0) {
+        goPrevPage();
       }
     };
 
@@ -475,7 +494,7 @@ export const ReaderView = React.memo(function ReaderView({
               aria-label={t('reader_open_chapter_list')}
               aria-expanded={showChapterMenu}
             >
-              <span>{t('chapter_abbr')} {currentPage + 1}/{totalPages}</span>
+              <span>{t('chapter_abbr')} {currentPage + 1}/{totalPages}{totalSegments > 1 ? ` · ${currentSegment + 1}/${totalSegments}` : ''}</span>
               <span className="hidden sm:inline opacity-50 truncate max-w-[140px]">
                 {chapters[currentPage]?.title || ''}
               </span>
