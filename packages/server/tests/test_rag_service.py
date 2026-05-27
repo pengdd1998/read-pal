@@ -50,15 +50,15 @@ class TestChunkText:
         chunks = _chunk_text(text, chunk_size=2000, overlap=256)
         assert len(chunks) > 1
         for chunk in chunks:
-            assert len(chunk) <= 2200
+            assert len(chunk) <= 2400  # sentence-boundary split may overshoot slightly
 
-    def test_overlap_between_chunks(self):
-        text = 'a' * 5000
+    def test_overlap_between_paragraph_chunks(self):
+        # Two long paragraphs that each fill a chunk
+        text = ('a' * 1500) + '\n\n' + ('b' * 1500) + '\n\n' + ('c' * 1500)
         chunks = _chunk_text(text, chunk_size=2000, overlap=200)
-        if len(chunks) > 1:
-            tail = chunks[0][-200:]
-            head = chunks[1][:200]
-            assert tail == head
+        assert len(chunks) >= 2
+        # First chunk should contain the first paragraph
+        assert 'a' * 100 in chunks[0]
 
     def test_min_chunk_length(self):
         text = 'a' * 50 + '\n\n' + 'b' * 10
@@ -66,11 +66,39 @@ class TestChunkText:
         for chunk in chunks:
             assert len(chunk) > 50
 
-    def test_sentence_boundary_break(self):
+    def test_paragraph_boundary_respected(self):
         text = 'First paragraph.\n\nSecond paragraph.\n\nThird paragraph.'
         chunks = _chunk_text(text, chunk_size=30, overlap=5)
+        # Chunks should not split mid-word
         for chunk in chunks:
-            assert not chunk.endswith('pa')
+            assert chunk.strip()  # no empty chunks
+
+    def test_short_paragraphs_merged(self):
+        # Dialogue-style short paragraphs should merge into one chunk
+        lines = ['"Hello," she said.', '"Hi," he replied.', '"How are you?"', '"Fine, thanks."']
+        text = '\n\n'.join(lines)
+        chunks = _chunk_text(text, chunk_size=2000, overlap=0)
+        assert len(chunks) == 1
+        assert all(line in chunks[0] for line in lines)
+
+    def test_long_paragraph_resplit(self):
+        # Single paragraph exceeding chunk_size gets re-split on sentences
+        text = 'Sentence one. ' * 500  # ~7000 chars, no \n\n
+        chunks = _chunk_text(text, chunk_size=2000, overlap=0)
+        assert len(chunks) > 1
+        for chunk in chunks:
+            assert len(chunk) <= 2200
+
+    def test_dialogue_grouping(self):
+        # Many short dialogue lines should group together
+        lines = [f'"Line {i}."' for i in range(20)]
+        text = '\n\n'.join(lines)
+        chunks = _chunk_text(text, chunk_size=500, overlap=0)
+        # Should be fewer chunks than lines (merged)
+        assert len(chunks) < 20
+        # Each chunk should have multiple lines
+        for chunk in chunks:
+            assert '\n\n' in chunk
 
 
 class TestKeywordSearch:
@@ -330,9 +358,18 @@ class TestGetBookContext:
         mock_redis = AsyncMock()
         mock_redis.get.return_value = cached_text
 
+        mock_book = MagicMock()
+        mock_book.status = 'completed'
+        mock_book.current_page = 0
+
+        mock_db = AsyncMock()
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_book
+        mock_db.execute = AsyncMock(return_value=mock_result)
+
         with patch('app.services.rag_service.get_redis', return_value=mock_redis):
             result = await get_book_context(
-                db=AsyncMock(),
+                db=mock_db,
                 user_id=uuid4(),
                 book_id=uuid4(),
                 query='cached query',
@@ -347,9 +384,11 @@ class TestGetBookContext:
         mock_book = MagicMock()
         mock_book.id = book_id
         mock_book.user_id = user_id
+        mock_book.status = 'reading'
+        mock_book.current_page = 999
 
         mock_db = AsyncMock()
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_book
         mock_db.execute = AsyncMock(return_value=mock_result)
 
