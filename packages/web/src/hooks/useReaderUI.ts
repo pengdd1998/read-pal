@@ -6,6 +6,7 @@ interface ReaderUIState {
   showControls: boolean;
   sidebarOpen: boolean;
   synthesisOpen: boolean;
+  readingPlanOpen: boolean;
   searchOpen: boolean;
   searchQuery: string;
   showMobileSettings: boolean;
@@ -21,6 +22,7 @@ interface ReaderUIState {
   setShowControls: React.Dispatch<React.SetStateAction<boolean>>;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSynthesisOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setReadingPlanOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   setShowMobileSettings: React.Dispatch<React.SetStateAction<boolean>>;
@@ -42,6 +44,7 @@ export function useReaderUI(): ReaderUIState {
   const [showControls, setShowControls] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [synthesisOpen, setSynthesisOpen] = useState(false);
+  const [readingPlanOpen, setReadingPlanOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
@@ -56,19 +59,22 @@ export function useReaderUI(): ReaderUIState {
 
   // Mutual exclusion: opening one header-triggered panel closes all others
   useEffect(() => {
-    if (sidebarOpen) { setSearchOpen(false); setSynthesisOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
+    if (sidebarOpen) { setSearchOpen(false); setSynthesisOpen(false); setReadingPlanOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
   }, [sidebarOpen]);
   useEffect(() => {
-    if (synthesisOpen) { setSearchOpen(false); setSidebarOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
+    if (synthesisOpen) { setSearchOpen(false); setSidebarOpen(false); setReadingPlanOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
   }, [synthesisOpen]);
   useEffect(() => {
-    if (searchOpen) { setSidebarOpen(false); setSynthesisOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
+    if (readingPlanOpen) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
+  }, [readingPlanOpen]);
+  useEffect(() => {
+    if (searchOpen) { setSidebarOpen(false); setSynthesisOpen(false); setReadingPlanOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
   }, [searchOpen]);
   useEffect(() => {
-    if (showSettingsMenu) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setShowTimeline(false); }
+    if (showSettingsMenu) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setReadingPlanOpen(false); setShowTimeline(false); }
   }, [showSettingsMenu]);
   useEffect(() => {
-    if (showTimeline) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setShowSettingsMenu(false); }
+    if (showTimeline) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setReadingPlanOpen(false); setShowSettingsMenu(false); }
   }, [showTimeline]);
 
   const sessionStartRef = useRef<number>(Date.now());
@@ -154,17 +160,18 @@ export function useReaderUI(): ReaderUIState {
   const closeAllPanels = useCallback(() => {
     setSidebarOpen(false);
     setSynthesisOpen(false);
+    setReadingPlanOpen(false);
     setSearchOpen(false);
     setShowSettingsMenu(false);
     setShowTimeline(false);
   }, []);
 
   return {
-    showControls, sidebarOpen, synthesisOpen, searchOpen, searchQuery,
+    showControls, sidebarOpen, synthesisOpen, readingPlanOpen, searchOpen, searchQuery,
     showMobileSettings, tocOpen, showSettingsMenu, showTimeline,
     showShortcutsHelp, showCompletion, isPaused, sessionElapsed, milestone,
     sessionStartRef,
-    setShowControls, setSidebarOpen, setSynthesisOpen, setSearchOpen, setSearchQuery,
+    setShowControls, setSidebarOpen, setSynthesisOpen, setReadingPlanOpen, setSearchOpen, setSearchQuery,
     setShowMobileSettings, setTocOpen, setShowSettingsMenu, setShowTimeline,
     setShowShortcutsHelp, setShowCompletion, setMilestone,
     resetAutoHideTimer, pauseAutoHide, resumeAutoHide, handleToggleControls, closeToc, closeAllPanels,

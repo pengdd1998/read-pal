@@ -10,6 +10,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { ProfileSection } from '@/components/settings/ProfileSection';
 import { ReadingPrefsSection } from '@/components/settings/ReadingPrefsSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
+import { InterventionPrefsSection } from '@/components/settings/InterventionPrefsSection';
 import { DeveloperSection } from '@/components/settings/DeveloperSection';
 import { AccountSection } from '@/components/settings/AccountSection';
 import type { UserSettings } from '@/components/settings/types';
@@ -196,6 +197,7 @@ export default function SettingsPage() {
       <ProfileSection userName={userName} userEmail={userEmail} />
       <ReadingPrefsSection settings={settings} saving={saving} onSave={handleSettingsUpdate} />
       <NotificationsSection settings={settings} saving={saving} onSave={handleSettingsUpdate} />
+      <InterventionPrefsSection />
 
       {/* Language Section */}
       <section className="mb-6 animate-slide-up stagger-3">

@@ -93,18 +93,18 @@ def _fix_garbled_cjk(text: str) -> str:
     """Fix garbled CJK text caused by GBK bytes misinterpreted as Latin-1."""
     cjk_count = len(re.findall(r'[一-鿿]', text))
     total_chars = len(text.replace(' ', ''))
-    if total_chars < 50 or cjk_count / max(total_chars, 1) >= 0.05:
+    if total_chars == 0 or cjk_count / max(total_chars, 1) >= 0.05:
         return text
 
-    latin1_suspicious = len(re.findall(r'[À-ÿ¡-¿]{2,}', text))
-    if latin1_suspicious < 10:
+    latin1_suspicious = len(re.findall(r'[À-ÿ¡-¿]', text))
+    if latin1_suspicious < 3:
         return text
 
     try:
         raw_bytes = text.encode('latin-1', errors='ignore')
         fixed = raw_bytes.decode('gbk', errors='replace')
         fixed_cjk = len(re.findall(r'[一-鿿]', fixed))
-        if fixed_cjk > cjk_count * 5:
+        if fixed_cjk > cjk_count * 2:
             return fixed
     except (UnicodeDecodeError, UnicodeEncodeError):
         pass

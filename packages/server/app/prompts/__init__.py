@@ -2,6 +2,8 @@
 
 from app.prompts.templates import (
     ALL_TEMPLATES,
+    BOOK_COMPARE_HUMAN,
+    BOOK_COMPARE_SYSTEM,
     CONVERSATION_SUMMARY_HUMAN,
     CONVERSATION_SUMMARY_SYSTEM,
     CROSS_BOOK_SYNTHESIS_HUMAN,
@@ -27,6 +29,8 @@ from app.prompts.templates import (
 
 __all__ = [
     'ALL_TEMPLATES',
+    'BOOK_COMPARE_HUMAN',
+    'BOOK_COMPARE_SYSTEM',
     'CONVERSATION_SUMMARY_HUMAN',
     'CONVERSATION_SUMMARY_SYSTEM',
     'CROSS_BOOK_SYNTHESIS_HUMAN',
@@ -39,7 +43,6 @@ __all__ = [
     'MEMORY_BOOK_SYSTEM',
     'MIRROR_SECTIONS',
     'MIRROR_SYSTEM',
-    'PromptTemplate',
     'READING_PLAN_HUMAN',
     'READING_PLAN_SYSTEM',
     'SYNTHESIS_HUMAN',

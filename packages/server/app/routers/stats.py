@@ -74,3 +74,14 @@ async def get_reading_speed_by_book(
     uid = _user_id(current_user)
     data = await stats_service.get_reading_speed_by_book(db, uid)
     return {'success': True, 'data': data}
+
+
+@router.get('/flashcards', response_model=GenericResponse)
+async def get_flashcard_stats(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return flashcard retention metrics for the current user."""
+    uid = _user_id(current_user)
+    data = await stats_service.get_flashcard_stats(db, uid)
+    return {'success': True, 'data': data}

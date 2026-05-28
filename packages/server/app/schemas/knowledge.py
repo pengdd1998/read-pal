@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class GraphNode(BaseModel):
@@ -13,6 +13,10 @@ class GraphNode(BaseModel):
     type: str  # 'concept', 'character', 'theme', 'location'
     size: int = 1
     metadata: dict = {}
+    description: str = ''
+    source_book_ids: list[str] = Field(default_factory=list)
+    annotation_count: int = 0
+    freshness: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
 class GraphEdge(BaseModel):
@@ -38,3 +42,13 @@ class ConceptSearchResult(BaseModel):
     relevance: float
     related: list[str]
     mentions: int
+
+
+class KnowledgeGap(BaseModel):
+    """A detected gap in the user's knowledge graph."""
+
+    concept: str
+    reason: str
+    suggestion: str
+    suggested_action: str = ''
+    connected_clusters: int = 0

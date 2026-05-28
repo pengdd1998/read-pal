@@ -34,6 +34,32 @@ interface SessionData {
   pagesRead: number;
 }
 
+interface FlashcardStats {
+  totalCards: number;
+  reviewedCards: number;
+  averageEaseFactor: number;
+  dueToday: number;
+  accuracy: number;
+  retentionRate: number;
+}
+
+interface SpeedData {
+  averagePagesPerHour: number;
+  averageWordsPerMinute: number;
+  currentWpm: number;
+  speedOverTime: Array<{ date: string; pagesPerHour: number }>;
+}
+
+interface BookSpeed {
+  bookId: string;
+  title: string;
+  author: string;
+  wpm: number;
+  totalSessions: number;
+  totalPagesRead: number;
+  totalMinutes: number;
+}
+
 interface DashboardData {
   stats: ReadingStats;
   recentBooks: BookProgress[];
@@ -61,6 +87,9 @@ export default function StatsPage() {
   const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
+  const [flashcardStats, setFlashcardStats] = useState<FlashcardStats | null>(null);
+  const [speedData, setSpeedData] = useState<SpeedData | null>(null);
+  const [bookSpeeds, setBookSpeeds] = useState<BookSpeed[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,14 +97,26 @@ export default function StatsPage() {
     Promise.all([
       api.get<DashboardData>('/api/stats/dashboard'),
       api.get<SessionData[]>('/api/reading-sessions'),
+      api.get<FlashcardStats>('/api/stats/flashcards'),
+      api.get<SpeedData>('/api/stats/reading-speed'),
+      api.get<BookSpeed[]>('/api/stats/reading-speed/by-book'),
     ])
-      .then(([dashRes, sessRes]) => {
+      .then(([dashRes, sessRes, fcRes, speedRes, bookSpeedRes]) => {
         if (dashRes.success && dashRes.data) {
           setData(dashRes.data);
         }
         if (sessRes.success && sessRes.data) {
           const sessData = sessRes.data;
           setSessions(Array.isArray(sessData) ? sessData.slice(0, 30) : []);
+        }
+        if (fcRes.success && fcRes.data) {
+          setFlashcardStats(fcRes.data);
+        }
+        if (speedRes.success && speedRes.data) {
+          setSpeedData(speedRes.data);
+        }
+        if (bookSpeedRes.success && bookSpeedRes.data) {
+          setBookSpeeds(Array.isArray(bookSpeedRes.data) ? bookSpeedRes.data : []);
         }
       })
       .catch(() => { setError(t('error_load')); toast(t('error_load'), 'error'); })
@@ -167,6 +208,38 @@ export default function StatsPage() {
             ))}
           </div>
 
+          {/* Flashcard Metrics */}
+          {flashcardStats && flashcardStats.totalCards > 0 && (
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+              <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('flashcards_title')}</h2>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {[
+                  { label: t('flashcards_total_cards'), value: flashcardStats.totalCards, sub: `${flashcardStats.reviewedCards} ${t('flashcards_reviewed')}`, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10' },
+                  { label: t('flashcards_due_today'), value: flashcardStats.dueToday, sub: null, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/10' },
+                  { label: t('flashcards_accuracy'), value: `${flashcardStats.accuracy}%`, sub: null, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/10' },
+                ].map((item) => (
+                  <div key={item.label} className={`${item.bg} rounded-xl p-3 text-center`}>
+                    <div className={`text-xl font-bold ${item.color}`}>{item.value}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{item.label}</div>
+                    {item.sub && <div className="text-[10px] text-gray-400 mt-0.5">{item.sub}</div>}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{t('flashcards_retention')}</span>
+                  <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{flashcardStats.retentionRate}%</span>
+                </div>
+                <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-400 to-teal-500 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, flashcardStats.retentionRate)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Library Status */}
           <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
             <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('library_status')}</h2>
@@ -209,6 +282,106 @@ export default function StatsPage() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Reading Speed */}
+          {(speedData || (bookSpeeds && bookSpeeds.length > 0)) && (
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+              <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('speed_title')}</h2>
+
+              {/* Average WPM metric */}
+              {speedData && (
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="bg-teal-50 dark:bg-teal-900/10 rounded-xl p-4 text-center min-w-[120px]">
+                    <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
+                      {Math.round(speedData.averageWordsPerMinute)}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">{t('speed_average_wpm')}</div>
+                    <div className="text-[10px] text-teal-500 dark:text-teal-400 mt-0.5">{t('speed_wpm_unit')}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* WPM Trend sparkline */}
+              {speedData && speedData.speedOverTime.length > 2 && (
+                <div className="mb-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('speed_trend')}</span>
+                  </div>
+                  <svg viewBox="0 0 300 70" className="w-full h-20" preserveAspectRatio="none" role="img" aria-label="Reading speed trend">
+                    {(() => {
+                      const trendData = speedData.speedOverTime;
+                      const wpmValues = trendData.map((d) => d.pagesPerHour * 250 / 60);
+                      const maxWpm = Math.max(...wpmValues, 1);
+                      const w = 300;
+                      const h = 60;
+                      const padY = 5;
+
+                      const points = wpmValues.map((wpm, i) => {
+                        const x = (i / Math.max(wpmValues.length - 1, 1)) * w;
+                        const y = h - padY - ((wpm / maxWpm) * (h - padY * 2));
+                        return { x, y };
+                      });
+
+                      const areaPath = `M${points[0].x},${h} ${points.map((p) => `L${p.x},${p.y}`).join(' ')} L${points[points.length - 1].x},${h} Z`;
+
+                      return (
+                        <>
+                          <path d={areaPath} fill="url(#speedGrad)" opacity={0.25} />
+                          <polyline
+                            points={points.map((p) => `${p.x},${p.y}`).join(' ')}
+                            fill="none" stroke="#14b8a6" strokeWidth={2} strokeLinejoin="round"
+                          />
+                          {points.map((p, i) => (
+                            <circle key={i} cx={p.x} cy={p.y} r={2.5} fill="#14b8a6" />
+                          ))}
+                          <defs>
+                            <linearGradient id="speedGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="#14b8a6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                        </>
+                      );
+                    })()}
+                  </svg>
+                </div>
+              )}
+
+              {/* Per-book WPM comparison */}
+              {bookSpeeds && bookSpeeds.length > 0 && (
+                <div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 mb-3 block">{t('speed_by_book')}</span>
+                  <div className="space-y-2.5">
+                    {bookSpeeds.slice(0, 6).map((book) => {
+                      const maxWpm = Math.max(...bookSpeeds.map((b) => b.wpm), 1);
+                      const pct = Math.max(3, (book.wpm / maxWpm) * 100);
+                      return (
+                        <div key={book.bookId} className="flex items-center gap-3">
+                          <span className="text-xs text-gray-600 dark:text-gray-400 w-28 truncate" title={book.title}>
+                            {book.title}
+                          </span>
+                          <div className="flex-1 h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-semibold text-teal-600 dark:text-teal-400 w-16 text-right">
+                            {Math.round(book.wpm)} {t('speed_wpm_unit')}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* No data hint */}
+              {(!speedData || speedData.averageWordsPerMinute === 0) && (!bookSpeeds || bookSpeeds.length === 0) && (
+                <p className="text-sm text-gray-400">{t('speed_no_data')}</p>
+              )}
             </div>
           )}
 

@@ -14,8 +14,8 @@ from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter
 from app.models.book import Book
 from app.schemas.common import GenericResponse
-from app.schemas.synthesis import SynthesisRequest, SynthesisResponse
-from app.services.synthesis_service import cross_book_synthesize, synthesize
+from app.schemas.synthesis import CompareRequest, SynthesisRequest, SynthesisResponse
+from app.services.synthesis_service import compare_books, cross_book_synthesize, synthesize
 from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.synthesis')
@@ -85,6 +85,32 @@ async def run_cross_book_synthesis(
         UUID(current_user['id']),
         book_ids,
     )
+
+    return {
+        'success': True,
+        'data': response.data,
+    }
+
+
+@router.post('/cross-book/compare', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+async def run_book_comparison(
+    body: CompareRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Compare two books — find common themes, unique perspectives, and connections."""
+    response = await compare_books(
+        db,
+        UUID(current_user['id']),
+        body.book_id_1,
+        body.book_id_2,
+    )
+
+    if not response.success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
+        )
 
     return {
         'success': True,

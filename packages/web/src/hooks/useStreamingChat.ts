@@ -25,6 +25,7 @@ export interface UseStreamingChatOptions {
   genreMetadata?: string[] | string;
   bookDescription?: string;
   companionMode: 'casual' | 'scholar' | 'socratic';
+  persona?: string;
   onMessagesUpdate: (updater: (prev: Message[]) => Message[]) => void;
   createAssistantMessage: () => string; // returns new message ID
   extractCodeBlocks: (html: string) => string;
@@ -56,6 +57,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     genreMetadata,
     bookDescription,
     companionMode,
+    persona,
     onMessagesUpdate,
     createAssistantMessage,
     extractCodeBlocks,
@@ -95,6 +97,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
               genres: genreMetadata,
               bookDescription,
               companionMode,
+              persona,
             },
           }),
         });
@@ -227,6 +230,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     genreMetadata,
     bookDescription,
     companionMode,
+    persona,
     onMessagesUpdate,
     createAssistantMessage,
     extractCodeBlocks,

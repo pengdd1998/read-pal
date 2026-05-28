@@ -15,6 +15,7 @@ class ChatRequest(BaseModel):
     book_id: UUID
     message: str = Field(min_length=1, max_length=4000)
     context: dict | None = None
+    persona: str | None = None
 
 
 class ChatResponse(BaseModel):

@@ -59,3 +59,16 @@ async def get_relationship(
         user_id=current_user['id'],
     )
     return {'success': True, 'data': result}
+
+
+@router.get('/recommend-persona', response_model=GenericResponse)
+async def recommend_persona(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Recommend a persona based on the user's reading behavior."""
+    result = await friend_service.recommend_persona(
+        db=db,
+        user_id=UUID(current_user['id']),
+    )
+    return {'success': True, 'data': result}

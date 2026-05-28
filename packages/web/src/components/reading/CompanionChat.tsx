@@ -103,6 +103,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
   });
   const [friendName, setFriendName] = useState<string>(DEFAULT_PERSONA.name);
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
+  const [friendPersonaKey, setFriendPersonaKey] = useState<string | undefined>(undefined);
   const [companionMode, setCompanionMode] = useState<'casual' | 'scholar' | 'socratic'>('casual');
   const [aiHealthy, setAiHealthy] = useState<boolean | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -145,6 +146,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     genreMetadata,
     bookDescription,
     companionMode,
+    persona: friendPersonaKey,
     onMessagesUpdate: setMessages,
     createAssistantMessage,
     extractCodeBlocks,
@@ -240,9 +242,11 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         const result = await api.get<{ friendPersona?: string; companionMode?: string }>('/api/settings');
         if (!cancelled && result.success && result.data) {
           const data = result.data;
-          const persona = FRIEND_PERSONAS[data.friendPersona ?? ''] ?? DEFAULT_PERSONA;
+          const personaKey = data.friendPersona ?? '';
+          const persona = FRIEND_PERSONAS[personaKey] ?? DEFAULT_PERSONA;
           setFriendName(persona.name);
           setFriendEmoji(persona.emoji);
+          setFriendPersonaKey(personaKey || undefined);
           if (data.companionMode === 'scholar' || data.companionMode === 'casual' || data.companionMode === 'socratic') {
             setCompanionMode(data.companionMode);
           }

@@ -51,13 +51,14 @@ async def _sse_stream(
     message: str,
     context: dict | None = None,
     companion_mode: str = 'casual',
+    persona: str | None = None,
     lang: str = DEFAULT_LANGUAGE,
 ) -> AsyncGenerator[bytes, None]:
     """Wrap companion_service.stream_chat as a bytes SSE generator."""
     try:
         async for chunk in companion_service.stream_chat(
             db, user_id, book_id, message, context=context,
-            companion_mode=companion_mode, lang=lang,
+            companion_mode=companion_mode, persona=persona, lang=lang,
         ):
             yield chunk.encode('utf-8')
     except ValueError as exc:
@@ -85,6 +86,7 @@ async def chat(
             book_id=body.book_id,
             message=body.message,
             context=body.context,
+            persona=body.persona,
             lang=lang,
         )
     except ValueError as exc:
@@ -115,12 +117,15 @@ async def stream(
         body.context.get('companionMode', 'casual')
         if body.context else 'casual'
     )
+    persona = (
+        body.context.get('persona') if body.context else None
+    ) or body.persona
     lang = await _get_user_lang(db, UUID(current_user['id']))
     return StreamingResponse(
         _sse_stream(
             db, current_user['id'], body.book_id, body.message,
             context=body.context, companion_mode=companion_mode,
-            lang=lang,
+            persona=persona, lang=lang,
         ),
         media_type='text/event-stream',
         headers=_SSE_HEADERS,
@@ -224,6 +229,7 @@ async def discussion_questions(
             book_id=body.book_id,
             message=body.message or 'Generate discussion questions for this book',
             context=body.context,
+            persona=body.persona,
             lang=lang,
         )
     except ValueError as exc:

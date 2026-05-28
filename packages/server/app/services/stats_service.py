@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.book import Book, BookStatus
+from app.models.chat_message import ChatMessage
 from app.models.flashcard import Flashcard
+from app.models.memory_book import MemoryBook
 from app.models.reading_session import ReadingSession
 
 
@@ -149,6 +151,14 @@ async def get_dashboard_stats(
     mins = total_minutes % 60
     total_time_str = f'{hours}h {mins}m' if hours > 0 else f'{mins}m'
 
+    # --- Chat messages & Memory books ---
+    chat_message_count = await db.scalar(
+        select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid)
+    )
+    memory_book_count = await db.scalar(
+        select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid)
+    )
+
     stats = {
         'booksRead': books_completed or 0,
         'totalPages': int(total_pages or 0),
@@ -157,6 +167,8 @@ async def get_dashboard_stats(
         'totalTime': total_time_str,
         'conceptsLearned': (total_highlights or 0) + (total_notes or 0),
         'connections': 0,
+        'chatMessageCount': chat_message_count or 0,
+        'memoryBookCount': memory_book_count or 0,
     }
 
     # --- Books by status ---
@@ -467,3 +479,68 @@ async def get_reading_speed_by_book(
         })
 
     return books
+
+
+async def get_flashcard_stats(db: AsyncSession, uid: UUID) -> dict:
+    """Return flashcard retention metrics for a user."""
+    # Total cards
+    total = await db.scalar(
+        select(func.count(Flashcard.id)).where(Flashcard.user_id == uid)
+    )
+    total = total or 0
+
+    # Cards reviewed at least once
+    reviewed = await db.scalar(
+        select(func.count(Flashcard.id)).where(
+            and_(Flashcard.user_id == uid, Flashcard.repetition_count > 0)
+        )
+    )
+    reviewed = reviewed or 0
+
+    # Average ease factor
+    avg_ease = await db.scalar(
+        select(func.avg(Flashcard.ease_factor)).where(Flashcard.user_id == uid)
+    )
+    avg_ease = float(avg_ease) if avg_ease else 0.0
+
+    # Cards due today
+    due_today = await db.scalar(
+        select(func.count(Flashcard.id)).where(
+            and_(
+                Flashcard.user_id == uid,
+                Flashcard.next_review_at <= func.now(),
+            )
+        )
+    )
+    due_today = due_today or 0
+
+    # Accuracy: cards with last_rating >= 3 / total reviewed
+    accurate = await db.scalar(
+        select(func.count(Flashcard.id)).where(
+            and_(
+                Flashcard.user_id == uid,
+                Flashcard.repetition_count > 0,
+                Flashcard.last_rating >= 3,
+            )
+        )
+    )
+    accurate = accurate or 0
+    accuracy = (accurate / reviewed) if reviewed > 0 else 0.0
+
+    # Retention rate: cards with ease_factor >= 2.0 / total cards
+    well_learned = await db.scalar(
+        select(func.count(Flashcard.id)).where(
+            and_(Flashcard.user_id == uid, Flashcard.ease_factor >= 2.0)
+        )
+    )
+    well_learned = well_learned or 0
+    retention = (well_learned / total) if total > 0 else 0.0
+
+    return {
+        'totalCards': total,
+        'reviewedCards': reviewed,
+        'averageEaseFactor': round(avg_ease, 2),
+        'dueToday': due_today,
+        'accuracy': round(accuracy * 100, 1),
+        'retentionRate': round(retention * 100, 1),
+    }

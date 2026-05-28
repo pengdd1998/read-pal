@@ -17,6 +17,11 @@ interface VisualizationNode {
   bookTitle?: string;
   weight: number;
   group?: string;
+  type?: string;
+  description?: string;
+  annotation_count?: number;
+  source_book_ids?: string[];
+  freshness?: number;
 }
 
 interface VisualizationEdge {
@@ -33,6 +38,14 @@ interface CrossBookTheme {
   bookTitles: string[];
   strength: number;
   relatedConcepts: string[];
+}
+
+interface KnowledgeGap {
+  concept: string;
+  reason: string;
+  suggestion: string;
+  suggested_action: string;
+  connected_clusters: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -156,6 +169,7 @@ export default function KnowledgePage() {
   const [nodes, setNodes] = useState<SimNode[]>([]);
   const [edges, setEdges] = useState<VisualizationEdge[]>([]);
   const [themes, setThemes] = useState<CrossBookTheme[]>([]);
+  const [gaps, setGaps] = useState<KnowledgeGap[]>([]);
   const [neo4jAvailable, setNeo4jAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,14 +180,16 @@ export default function KnowledgePage() {
   useEffect(() => {
     async function load() {
       try {
-        const [graphRes, themesRes] = await Promise.all([
+        const [graphRes, themesRes, gapsRes] = await Promise.all([
           api.get<{ neo4jAvailable?: boolean; nodes: VisualizationNode[]; edges: VisualizationEdge[] }>('/api/v1/knowledge/graph'),
           api.get<{ neo4jAvailable?: boolean; themes: CrossBookTheme[] }>('/api/v1/knowledge/themes'),
+          api.get<{ gaps?: KnowledgeGap[] }>('/api/v1/knowledge/gaps').catch(() => ({ data: { gaps: [] } })),
         ]);
 
         const available = graphRes.data?.neo4jAvailable ?? true;
         setNeo4jAvailable(available);
         setThemes(themesRes.data?.themes ?? []);
+        setGaps(gapsRes.data?.gaps ?? []);
 
         if (graphRes.data) {
           const rawNodes = graphRes.data.nodes || [];
@@ -410,6 +426,8 @@ export default function KnowledgePage() {
                   const isDimmed = selectedNode && !isConnected;
                   const radius = Math.max(6, Math.min(20, 6 + node.weight * 2));
                   const color = getColor(node.group);
+                  const freshness = node.freshness ?? 1.0;
+                  const freshnessOpacity = freshness >= 0.7 ? 1.0 : freshness >= 0.3 ? 0.6 : 0.35;
 
                   return (
                     <g
@@ -420,7 +438,7 @@ export default function KnowledgePage() {
                       onClick={() => handleNodeClick(node)}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNodeClick(node); } }}
                       className="cursor-pointer"
-                      opacity={isDimmed ? 0.3 : 1}
+                      opacity={isDimmed ? 0.3 : freshnessOpacity}
                     >
                       {isSelected && (
                         <circle cx={node.x} cy={node.y} r={radius + 4} fill="none" stroke={color} strokeWidth={2} strokeDasharray="4 2" />
@@ -455,14 +473,79 @@ export default function KnowledgePage() {
             {/* Selected node details */}
             {selectedNode && (
               <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{selectedNode.label}</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{selectedNode.label}</h3>
+                  <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                    (selectedNode as VisualizationNode & { type?: string }).type === 'character'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : (selectedNode as VisualizationNode & { type?: string }).type === 'theme'
+                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                        : (selectedNode as VisualizationNode & { type?: string }).type === 'location'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  }`}>
+                    {(selectedNode as VisualizationNode & { type?: string }).type || 'concept'}
+                  </span>
+                </div>
                 {selectedNode.bookTitle && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('from_label', { title: selectedNode.bookTitle })}</p>
                 )}
-                <div className="text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">{t('connections_label')} </span>
-                  <span className="font-medium text-gray-900 dark:text-white">{connectedEdges.length}</span>
-                </div>
+                {(() => {
+                  const nodeData = selectedNode as VisualizationNode & {
+                    description?: string;
+                    annotation_count?: number;
+                    source_book_ids?: string[];
+                    type?: string;
+                  };
+                  return (
+                    <>
+                      {nodeData.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{nodeData.description}</p>
+                      )}
+                      <div className="text-sm space-y-1">
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">{t('connections_label')} </span>
+                          <span className="font-medium text-gray-900 dark:text-white">{connectedEdges.length}</span>
+                        </div>
+                        {(nodeData.annotation_count ?? 0) > 0 && (
+                          <div>
+                            <span className="text-gray-500 dark:text-gray-400">{t('annotation_count_label')} </span>
+                            <span className="font-medium text-gray-900 dark:text-white">{nodeData.annotation_count}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-500 dark:text-gray-400">{t('freshness_label')} </span>
+                          {(() => {
+                            const f = (nodeData as VisualizationNode & { freshness?: number }).freshness ?? 1.0;
+                            const label = f >= 0.7 ? 'freshness_fresh' : f >= 0.3 ? 'freshness_aging' : 'freshness_stale';
+                            const colorClass = f >= 0.7
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : f >= 0.3
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                            return (
+                              <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${colorClass}`}>
+                                {t(label)}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                      {nodeData.source_book_ids && nodeData.source_book_ids.length > 0 && (
+                        <div className="mt-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{t('source_books_label')}</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {nodeData.source_book_ids.map((bid) => (
+                              <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
+                                {bid.slice(0, 8)}...
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
                 {connectedEdges.length > 0 && (
                   <div className="mt-3 space-y-1.5">
                     {connectedEdges.map((e, i) => {
@@ -508,6 +591,37 @@ export default function KnowledgePage() {
               </div>
             )}
 
+            {/* Knowledge Gaps */}
+            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('knowledge_gaps_title')}</h3>
+              {gaps.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('knowledge_gaps_empty')}</p>
+              ) : (
+                <div className="space-y-3">
+                  {gaps.map((gap) => (
+                    <div key={gap.concept} className="rounded-lg border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-900/10 p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{gap.concept}</p>
+                      </div>
+                      <p className="text-xs text-amber-700 dark:text-amber-400 mb-1">{gap.reason}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <span className="font-medium">{t('gap_suggestion')}:</span> {gap.suggestion}
+                      </p>
+                      {gap.suggested_action && (
+                        <p className="text-xs text-teal-700 dark:text-teal-400 flex items-start gap-1">
+                          <span aria-hidden="true" className="shrink-0 mt-px">&#x2192;</span>
+                          <span>
+                            <span className="font-medium">{t('gap_action')}:</span> {gap.suggested_action}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Legend */}
             <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('legend_title')}</h3>
@@ -519,6 +633,14 @@ export default function KnowledgePage() {
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-0.5 bg-gray-300 dark:bg-gray-700" />
                   {t('legend_connection')}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <div className="w-3 h-3 rounded-full bg-teal-500" />
+                    <div className="w-3 h-3 rounded-full bg-teal-500 opacity-60" />
+                    <div className="w-3 h-3 rounded-full bg-teal-500 opacity-35" />
+                  </div>
+                  {t('legend_freshness')}
                 </div>
               </div>
             </div>

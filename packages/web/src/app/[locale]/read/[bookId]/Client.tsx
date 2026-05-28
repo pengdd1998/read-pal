@@ -36,6 +36,7 @@ const BookCompletionModal = dynamic(() => import('@/components/reading/BookCompl
 const MobileSettingsSheet = dynamic(() => import('@/components/reading/MobileSettingsSheet').then((m) => ({ default: m.MobileSettingsSheet })), { ssr: false });
 const SearchOverlay = dynamic(() => import('@/components/reading/SearchOverlay').then((m) => ({ default: m.SearchOverlay })), { ssr: false });
 const SynthesisPanel = dynamic(() => import('@/components/reading/SynthesisPanel').then((m) => ({ default: m.SynthesisPanel })), { ssr: false });
+const ReadingPlanPanel = dynamic(() => import('@/components/reading/ReadingPlanPanel').then((m) => ({ default: m.ReadingPlanPanel })), { ssr: false });
 const StudyModePanel = dynamic(() => import('@/components/reading/StudyModePanel').then((m) => ({ default: m.StudyModePanel })), { ssr: false });
 const FictionPanel = dynamic(() => import('@/components/reading/FictionPanel').then((m) => ({ default: m.FictionPanel })), { ssr: false });
 const ChapterTimeline = dynamic(() => import('@/components/reading/ChapterTimeline').then((m) => ({ default: m.ChapterTimeline })), { ssr: false });
@@ -439,6 +440,7 @@ export default function ReadPage() {
         searchOpen={ui.searchOpen}
         sidebarOpen={ui.sidebarOpen}
         synthesisOpen={ui.synthesisOpen}
+        readingPlanOpen={ui.readingPlanOpen}
         studyModeEnabled={studyMode.enabled}
         settingsMenuOpen={ui.showSettingsMenu}
         timelineOpen={ui.showTimeline}
@@ -447,6 +449,7 @@ export default function ReadPage() {
         onToggleSearch={() => ui.setSearchOpen(!ui.searchOpen)}
         onToggleSidebar={() => ui.setSidebarOpen(!ui.sidebarOpen)}
         onToggleSynthesis={() => ui.setSynthesisOpen(!ui.synthesisOpen)}
+        onToggleReadingPlan={() => ui.setReadingPlanOpen(!ui.readingPlanOpen)}
         onToggleStudyMode={() => { if (!studyMode.enabled) ui.closeAllPanels(); studyMode.toggleStudyMode(); }}
         onShowTimeline={() => ui.setShowTimeline(true)}
         onShowSettings={() => {
@@ -562,6 +565,9 @@ export default function ReadPage() {
 
       {/* Synthesis panel */}
       <SynthesisPanel bookId={bookId} bookTitle={book?.title} author={book?.author} isOpen={ui.synthesisOpen} onClose={() => ui.setSynthesisOpen(false)} />
+
+      {/* Reading plan panel */}
+      <ReadingPlanPanel bookId={bookId} bookTitle={book?.title || ''} isOpen={ui.readingPlanOpen} onClose={() => ui.setReadingPlanOpen(false)} />
 
       {/* Study mode */}
       {studyMode.enabled && (

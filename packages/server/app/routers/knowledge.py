@@ -17,7 +17,9 @@ from app.schemas.knowledge import ConceptSearchResult, GraphData
 from app.schemas.common import GenericResponse
 from app.services.knowledge_service import (
     build_graph,
+    detect_gaps,
     get_concepts,
+    get_cross_book_themes,
     search_concepts,
 )
 
@@ -72,12 +74,10 @@ async def get_themes(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Get themes across all books."""
+    themes = await get_cross_book_themes(db, UUID(current_user['id']))
     return {
         'success': True,
-        'data': {
-            'themes': [],
-            'connections': [],
-        },
+        'data': themes,
     }
 
 
@@ -135,4 +135,17 @@ async def list_concepts(
     return {
         'success': True,
         'data': concepts,
+    }
+
+
+@router.get('/gaps', response_model=GenericResponse)
+async def get_knowledge_gaps(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Detect knowledge gaps in the user's combined knowledge graph."""
+    gaps = await detect_gaps(db, UUID(current_user['id']))
+    return {
+        'success': True,
+        'data': {'gaps': [g.model_dump() for g in gaps]},
     }

@@ -24,6 +24,7 @@ const PROTECTED_PREFIXES = [
   '/flashcards',
   '/book-clubs',
   '/knowledge',
+  '/synthesis',
   '/challenges',
   '/offline',
   '/welcome',

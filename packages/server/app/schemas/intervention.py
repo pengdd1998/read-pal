@@ -28,3 +28,19 @@ class InterventionFeedbackRequest(BaseModel):
     book_id: UUID | None = None
     bookId: str | None = None
     context: Any = None
+
+
+class InterventionPreferencesRequest(BaseModel):
+    """Request body for updating intervention preferences."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    marathon_enabled: bool | None = None
+    long_session_enabled: bool | None = None
+    low_engagement_enabled: bool | None = None
+    welcome_back_enabled: bool | None = None
+    speed_drop_enabled: bool | None = None
+    re_reading_enabled: bool | None = None
+    optimal_timing_enabled: bool | None = None
+    quiet_hours_start: int | None = None
+    quiet_hours_end: int | None = None

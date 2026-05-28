@@ -385,6 +385,34 @@ CROSS_BOOK_SYNTHESIS_HUMAN = PromptTemplate(
     output_format='text',
 )
 
+BOOK_COMPARE_SYSTEM = PromptTemplate(
+    key='synthesis.compare.system',
+    version=1,
+    template=(
+        'You are a literary comparison assistant. Compare exactly two books and '
+        'provide a focused analysis. Return ONLY valid JSON with these keys: '
+        '"common_themes" (array of {{name, description, confidence}} objects '
+        'describing themes shared by both books), '
+        '"unique_perspectives" (array of {{book, perspective}} objects '
+        'describing what each book uniquely contributes), '
+        '"recommended_connections" (array of strings suggesting further '
+        'reading connections between the ideas in these two books).'
+    ),
+    output_format='json',
+)
+
+BOOK_COMPARE_HUMAN = PromptTemplate(
+    key='synthesis.compare.human',
+    version=1,
+    template=(
+        'Compare "{title_1}" by {author_1} and "{title_2}" by {author_2}.\n\n'
+        'Book 1 data:\n{data_1}\n\n'
+        'Book 2 data:\n{data_2}'
+    ),
+    variables=['title_1', 'author_1', 'title_2', 'author_2', 'data_1', 'data_2'],
+    output_format='text',
+)
+
 # ---------------------------------------------------------------------------
 # Reading plan
 # ---------------------------------------------------------------------------
@@ -475,6 +503,8 @@ def _build_registry() -> None:
         SYNTHESIS_HUMAN,
         CROSS_BOOK_SYNTHESIS_SYSTEM,
         CROSS_BOOK_SYNTHESIS_HUMAN,
+        BOOK_COMPARE_SYSTEM,
+        BOOK_COMPARE_HUMAN,
         READING_PLAN_SYSTEM,
         READING_PLAN_HUMAN,
         CONVERSATION_SUMMARY_SYSTEM,

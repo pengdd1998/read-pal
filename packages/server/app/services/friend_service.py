@@ -12,8 +12,13 @@ from app.utils import utcnow
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy import func
+
+from app.models.annotation import Annotation
 from app.models.book import Book
+from app.models.chat_message import ChatMessage
 from app.models.friend import FriendConversation, FriendRelationship
+from app.models.reading_session import ReadingSession
 from app.prompts import FRIEND_BOOK_CONTEXT, FRIEND_PERSONAS
 from app.services.llm import safe_llm_call
 from app.utils.sanitizer import sanitize_chat_message
@@ -206,4 +211,88 @@ async def get_relationship(
             else None
         ),
         'created_at': rel.created_at.isoformat() if rel.created_at else None,
+    }
+
+
+async def recommend_persona(
+    db: AsyncSession,
+    user_id: UUID,
+) -> dict[str, str]:
+    """Analyze user reading behavior and recommend the best persona."""
+    sessions_q = await db.execute(
+        select(func.count()).select_from(ReadingSession).where(
+            ReadingSession.user_id == user_id,
+        ),
+    )
+    total_sessions = sessions_q.scalar() or 0
+
+    annotations_q = await db.execute(
+        select(func.count()).select_from(Annotation).where(
+            Annotation.user_id == user_id,
+        ),
+    )
+    total_annotations = annotations_q.scalar() or 0
+
+    chats_q = await db.execute(
+        select(func.count()).select_from(ChatMessage).where(
+            ChatMessage.user_id == user_id,
+        ),
+    )
+    total_chats = chats_q.scalar() or 0
+
+    books_q = await db.execute(
+        select(func.count(Book.id.distinct())).where(
+            Book.user_id == user_id,
+        ),
+    )
+    distinct_books = books_q.scalar() or 0
+
+    annotation_density = (
+        total_annotations / total_sessions if total_sessions > 0 else 0
+    )
+    chat_propensity = total_chats / total_sessions if total_sessions > 0 else 0
+
+    if annotation_density > 3.0 and total_sessions > 20:
+        return {
+            'recommendedPersona': 'alex',
+            'reason': (
+                'Based on your reading patterns, you annotate heavily '
+                'and study systematically. Alex will match your '
+                'analytical approach.'
+            ),
+        }
+    if chat_propensity > 2.0:
+        return {
+            'recommendedPersona': 'quinn',
+            'reason': (
+                'Based on your reading patterns, you love discussing '
+                'what you read. Quinn will spark creative conversations '
+                'with you.'
+            ),
+        }
+    if distinct_books > 5:
+        return {
+            'recommendedPersona': 'penny',
+            'reason': (
+                'Based on your reading patterns, you read widely across '
+                'many books. Penny shares your enthusiasm for diverse '
+                'reading.'
+            ),
+        }
+    if annotation_density < 1.0 and total_sessions > 10:
+        return {
+            'recommendedPersona': 'sam',
+            'reason': (
+                'Based on your reading patterns, you stay focused on '
+                'the text without many annotations. Sam will respect '
+                'your practical style.'
+            ),
+        }
+    return {
+        'recommendedPersona': 'sage',
+        'reason': (
+            'Based on your reading patterns, Sage is a thoughtful '
+            'companion who offers philosophical insights to deepen '
+            'your reading.'
+        ),
     }

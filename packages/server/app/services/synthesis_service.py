@@ -17,6 +17,8 @@ from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.reading_session import ReadingSession
 from app.prompts import (
+  BOOK_COMPARE_HUMAN,
+  BOOK_COMPARE_SYSTEM,
   CROSS_BOOK_SYNTHESIS_HUMAN,
   CROSS_BOOK_SYNTHESIS_SYSTEM,
   SYNTHESIS_HUMAN,
@@ -310,3 +312,88 @@ async def cross_book_synthesize(
   )
 
   return SynthesisResponse(success=True, data=synthesis_data)
+
+
+async def compare_books(
+  db: AsyncSession,
+  user_id: UUID,
+  book_id_1: UUID,
+  book_id_2: UUID,
+) -> SynthesisResponse:
+  """Compare two books — find common themes and unique perspectives."""
+  t0 = time.monotonic()
+  logger.info(
+    'synthesis.compare.started',
+    book_id_1=str(book_id_1),
+    book_id_2=str(book_id_2),
+    user_id=str(user_id),
+  )
+
+  data_1 = await _collect_reading_data(db, user_id, book_id_1, True, True, False)
+  data_2 = await _collect_reading_data(db, user_id, book_id_2, True, True, False)
+
+  if not data_1.get('book') or not data_2.get('book'):
+    return SynthesisResponse(
+      success=False,
+      data={'error': 'One or both books not found'},
+    )
+
+  def _condense(bd: dict[str, Any]) -> str:
+    book = bd.get('book', {})
+    highlights = [
+      sanitize_annotations(h.get('content', '')[:100])
+      for h in bd.get('highlights', [])[:10]
+    ]
+    notes = [
+      sanitize_annotations(n.get('content', '')[:100])
+      for n in bd.get('notes', [])[:5]
+    ]
+    return json.dumps({
+      'title': book.get('title'),
+      'author': book.get('author'),
+      'highlights': highlights,
+      'notes': notes,
+    }, default=str)
+
+  budget = TokenBudget()
+  condensed_1 = budget.add(_condense(data_1), 'book_1_data')
+  condensed_2 = budget.add(_condense(data_2), 'book_2_data')
+
+  book_1 = data_1['book']
+  book_2 = data_2['book']
+  system_prompt = BOOK_COMPARE_SYSTEM.template
+  human_prompt = BOOK_COMPARE_HUMAN.template.format(
+    title_1=book_1['title'],
+    author_1=book_1['author'],
+    title_2=book_2['title'],
+    author_2=book_2['author'],
+    data_1=condensed_1,
+    data_2=condensed_2,
+  )
+
+  fallback = CrossBookComparison().model_dump()
+  comparison_data = await safe_llm_invoke(
+    [
+      SystemMessage(content=system_prompt),
+      HumanMessage(content=human_prompt),
+    ],
+    fallback=fallback,
+    log_label='Book comparison',
+    schema_class=CrossBookComparison,
+    user_id=str(user_id),
+    book_id=None,
+  )
+
+  themes_count = len(comparison_data.get('common_themes', []))
+  perspectives_count = len(comparison_data.get('unique_perspectives', []))
+  elapsed = (time.monotonic() - t0) * 1000
+  logger.info(
+    'synthesis.compare.completed',
+    book_id_1=str(book_id_1),
+    book_id_2=str(book_id_2),
+    themes_count=themes_count,
+    perspectives_count=perspectives_count,
+    latency_ms=round(elapsed, 1),
+  )
+
+  return SynthesisResponse(success=True, data=comparison_data)

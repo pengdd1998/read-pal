@@ -18,6 +18,7 @@ from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.services.llm import circuit, get_llm, safe_llm_call
+from app.prompts.templates import FRIEND_PERSONAS
 from app.utils.i18n import t
 from app.utils.sanitizer import sanitize_chat_message, sanitize_annotations, sanitize_user_input
 from app.utils.token_budget import TokenBudget
@@ -146,6 +147,7 @@ def _build_system_prompt(
     memory_summary: str = '',
     companion_mode: str = 'casual',
     context: dict | None = None,
+    persona: str | None = None,
     lang: str = 'en',
     budget: TokenBudget | None = None,
 ) -> str:
@@ -176,6 +178,10 @@ def _build_system_prompt(
             extra_parts.append(t('companion.book_description', lang, description=safe_desc))
         if extra_parts:
             prompt += '\n\n' + '\n\n'.join(extra_parts)
+
+    # Apply persona personality if provided
+    if persona and persona in FRIEND_PERSONAS:
+        prompt += '\n\n' + FRIEND_PERSONAS[persona].template
 
     # Enforce token budget
     if budget:
@@ -209,6 +215,7 @@ async def _prepare_context(
     message: str,
     context: dict | None = None,
     companion_mode: str = 'casual',
+    persona: str | None = None,
     lang: str = 'en',
 ) -> tuple[Book, list[HumanMessage | AIMessage], str, TokenBudget]:
     """Load all chat context in parallel, returning (book, history, system_text, budget)."""
@@ -239,8 +246,8 @@ async def _prepare_context(
     budget = TokenBudget()
     system_text = _build_system_prompt(
         book, annotations_ctx, rag_ctx, memory_summary,
-        companion_mode=companion_mode, context=context, lang=lang,
-        budget=budget,
+        companion_mode=companion_mode, context=context, persona=persona,
+        lang=lang, budget=budget,
     )
     return book, history, system_text, budget
 
@@ -270,6 +277,7 @@ async def chat(
     message: str,
     context: dict | None = None,
     companion_mode: str = 'casual',
+    persona: str | None = None,
     lang: str = 'en',
 ) -> dict[str, Any]:
     """Run a single-turn companion chat and return the assistant response."""
@@ -282,7 +290,8 @@ async def chat(
         book_id=str(book_id),
     )
     _, history, system_text, budget = await _prepare_context(
-        db, user_id, book_id, message, context, companion_mode, lang,
+        db, user_id, book_id, message, context, companion_mode,
+        persona=persona, lang=lang,
     )
     messages = _build_messages(system_text, history, message, budget)
 
@@ -318,13 +327,15 @@ async def stream_chat(
     message: str,
     context: dict | None = None,
     companion_mode: str = 'casual',
+    persona: str | None = None,
     lang: str = 'en',
 ) -> AsyncGenerator[str, None]:
     """Stream companion chat as SSE chunks with circuit breaker + observability."""
     from app.config import get_settings
 
     _, history, system_text, budget = await _prepare_context(
-        db, user_id, book_id, message, context, companion_mode, lang,
+        db, user_id, book_id, message, context, companion_mode,
+        persona=persona, lang=lang,
     )
     messages = _build_messages(system_text, history, message, budget)
 
