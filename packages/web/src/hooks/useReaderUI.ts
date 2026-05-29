@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-interface ReaderUIState {
+export interface ReaderUIState {
   showControls: boolean;
   sidebarOpen: boolean;
   synthesisOpen: boolean;

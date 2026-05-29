@@ -309,7 +309,7 @@ class TestCircuitBreaker:
 
     @pytest.mark.asyncio
     async def test_failure_increments_counter(self, cb):
-        with patch('app.services.llm.get_settings') as mock_settings:
+        with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
             mock_settings.return_value.circuit_failure_threshold = 3
             await cb.record_failure()
             assert cb._failures == 1
@@ -317,7 +317,7 @@ class TestCircuitBreaker:
 
     @pytest.mark.asyncio
     async def test_opens_after_threshold(self, cb):
-        with patch('app.services.llm.get_settings') as mock_settings:
+        with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
             mock_settings.return_value.circuit_failure_threshold = 3
             for _ in range(3):
                 await cb.record_failure()
@@ -326,7 +326,7 @@ class TestCircuitBreaker:
 
     @pytest.mark.asyncio
     async def test_blocks_requests_when_open(self, cb):
-        with patch('app.services.llm.get_settings') as mock_settings:
+        with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
             mock_settings.return_value.circuit_failure_threshold = 1
             mock_settings.return_value.circuit_reset_timeout_seconds = 300
             await cb.record_failure()  # Opens the circuit
@@ -334,7 +334,7 @@ class TestCircuitBreaker:
 
     @pytest.mark.asyncio
     async def test_half_open_after_timeout(self, cb):
-        with patch('app.services.llm.get_settings') as mock_settings:
+        with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
             mock_settings.return_value.circuit_failure_threshold = 1
             mock_settings.return_value.circuit_reset_timeout_seconds = 0  # Immediate reset
             await cb.record_failure()  # Opens the circuit
@@ -343,7 +343,7 @@ class TestCircuitBreaker:
 
     @pytest.mark.asyncio
     async def test_success_closes_from_half_open(self, cb):
-        with patch('app.services.llm.get_settings') as mock_settings:
+        with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
             mock_settings.return_value.circuit_failure_threshold = 1
             mock_settings.return_value.circuit_reset_timeout_seconds = 0
             await cb.record_failure()  # Opens
@@ -353,7 +353,7 @@ class TestCircuitBreaker:
 
     @pytest.mark.asyncio
     async def test_probe_failure_reopens(self, cb):
-        with patch('app.services.llm.get_settings') as mock_settings:
+        with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
             mock_settings.return_value.circuit_failure_threshold = 1
             mock_settings.return_value.circuit_reset_timeout_seconds = 0
             await cb.record_failure()  # Opens
@@ -363,7 +363,7 @@ class TestCircuitBreaker:
 
     @pytest.mark.asyncio
     async def test_success_resets_failure_count(self, cb):
-        with patch('app.services.llm.get_settings') as mock_settings:
+        with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
             mock_settings.return_value.circuit_failure_threshold = 5
             await cb.record_failure()
             await cb.record_failure()

@@ -1,235 +1,35 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { api } from '@/lib/api';
+import { useState, useCallback } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useTranslations } from 'next-intl';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface VisualizationNode {
-  id: string;
-  label: string;
-  bookId: string;
-  bookTitle?: string;
-  weight: number;
-  group?: string;
-  type?: string;
-  description?: string;
-  annotation_count?: number;
-  source_book_ids?: string[];
-  freshness?: number;
-}
-
-interface VisualizationEdge {
-  source: string;
-  target: string;
-  label: string;
-  weight: number;
-}
-
-interface CrossBookTheme {
-  concept: string;
-  conceptId: string;
-  bookIds: string[];
-  bookTitles: string[];
-  strength: number;
-  relatedConcepts: string[];
-}
-
-interface KnowledgeGap {
-  concept: string;
-  reason: string;
-  suggestion: string;
-  suggested_action: string;
-  connected_clusters: number;
-}
-
-// ---------------------------------------------------------------------------
-// Force-directed graph (pure SVG, no D3 dependency)
-// ---------------------------------------------------------------------------
-
-interface SimNode extends VisualizationNode {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-}
-
-function runForceSimulation(
-  nodes: SimNode[],
-  edges: VisualizationEdge[],
-  width: number,
-  height: number,
-  iterations = 120,
-): void {
-  const centerX = width / 2;
-  const centerY = height / 2;
-
-  // Build adjacency for quick lookup
-  const edgeMap = new Map<string, string[]>();
-  for (const e of edges) {
-    const sList = edgeMap.get(e.source) || [];
-    sList.push(e.target);
-    edgeMap.set(e.source, sList);
-    const tList = edgeMap.get(e.target) || [];
-    tList.push(e.source);
-    edgeMap.set(e.target, tList);
-  }
-
-  for (let iter = 0; iter < iterations; iter++) {
-    const alpha = 1 - iter / iterations;
-
-    // Repulsion between all nodes
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const dx = nodes[j].x - nodes[i].x;
-        const dy = nodes[j].y - nodes[i].y;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const force = (200 * alpha) / (dist * dist);
-        const fx = (dx / dist) * force;
-        const fy = (dy / dist) * force;
-        nodes[i].vx -= fx;
-        nodes[i].vy -= fy;
-        nodes[j].vx += fx;
-        nodes[j].vy += fy;
-      }
-    }
-
-    // Attraction along edges
-    for (const edge of edges) {
-      const source = nodes.find((n) => n.id === edge.source);
-      const target = nodes.find((n) => n.id === edge.target);
-      if (!source || !target) continue;
-      const dx = target.x - source.x;
-      const dy = target.y - source.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const force = dist * 0.01 * alpha;
-      const fx = (dx / dist) * force;
-      const fy = (dy / dist) * force;
-      source.vx += fx;
-      source.vy += fy;
-      target.vx -= fx;
-      target.vy -= fy;
-    }
-
-    // Center gravity
-    for (const node of nodes) {
-      node.vx += (centerX - node.x) * 0.001 * alpha;
-      node.vy += (centerY - node.y) * 0.001 * alpha;
-    }
-
-    // Apply velocity with damping
-    for (const node of nodes) {
-      node.vx *= 0.6;
-      node.vy *= 0.6;
-      node.x += node.vx;
-      node.y += node.vy;
-      // Keep within bounds
-      node.x = Math.max(40, Math.min(width - 40, node.x));
-      node.y = Math.max(40, Math.min(height - 40, node.y));
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Color palette for groups
-// ---------------------------------------------------------------------------
-
-const GROUP_COLORS = [
-  '#0d9488', // teal
-  '#7c3aed', // violet
-  '#ea580c', // orange
-  '#2563eb', // blue
-  '#dc2626', // red
-  '#059669', // emerald
-  '#d97706', // amber
-  '#9333ea', // purple
-];
-
-function getColor(group?: string): string {
-  if (!group) return GROUP_COLORS[0];
-  const idx = group.charCodeAt(0) % GROUP_COLORS.length;
-  return GROUP_COLORS[idx];
-}
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+import { useKnowledgeGraph } from '@/hooks/useKnowledgeGraph';
+import { KnowledgeGraph } from '@/components/knowledge/KnowledgeGraph';
+import { NodeDetailPanel } from '@/components/knowledge/NodeDetailPanel';
+import { CrossBookThemes } from '@/components/knowledge/CrossBookThemes';
+import { KnowledgeGaps } from '@/components/knowledge/KnowledgeGaps';
+import { KnowledgeLegend } from '@/components/knowledge/KnowledgeLegend';
+import type { SimNode } from '@/types/knowledge';
 
 export default function KnowledgePage() {
   const t = useTranslations('knowledge');
   usePageTitle(t('page_title'));
   const router = useRouter();
-  const svgRef = useRef<SVGSVGElement>(null);
 
-  const [nodes, setNodes] = useState<SimNode[]>([]);
-  const [edges, setEdges] = useState<VisualizationEdge[]>([]);
-  const [themes, setThemes] = useState<CrossBookTheme[]>([]);
-  const [gaps, setGaps] = useState<KnowledgeGap[]>([]);
-  const [neo4jAvailable, setNeo4jAvailable] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<SimNode | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
-  // Fetch graph data
-  useEffect(() => {
-    async function load() {
-      try {
-        const [graphRes, themesRes, gapsRes] = await Promise.all([
-          api.get<{ neo4jAvailable?: boolean; nodes: VisualizationNode[]; edges: VisualizationEdge[] }>('/api/v1/knowledge/graph'),
-          api.get<{ neo4jAvailable?: boolean; themes: CrossBookTheme[] }>('/api/v1/knowledge/themes'),
-          api.get<{ gaps?: KnowledgeGap[] }>('/api/v1/knowledge/gaps').catch(() => ({ data: { gaps: [] } })),
-        ]);
-
-        const available = graphRes.data?.neo4jAvailable ?? true;
-        setNeo4jAvailable(available);
-        setThemes(themesRes.data?.themes ?? []);
-        setGaps(gapsRes.data?.gaps ?? []);
-
-        if (graphRes.data) {
-          const rawNodes = graphRes.data.nodes || [];
-          const rawEdges = graphRes.data.edges || [];
-
-          // Convert to simulation nodes with random initial positions
-          const simNodes: SimNode[] = rawNodes.map((n) => ({
-            ...n,
-            x: dimensions.width / 2 + (Math.random() - 0.5) * 300,
-            y: dimensions.height / 2 + (Math.random() - 0.5) * 300,
-            vx: 0,
-            vy: 0,
-          }));
-
-          runForceSimulation(simNodes, rawEdges, dimensions.width, dimensions.height);
-          setNodes(simNodes);
-          setEdges(rawEdges);
-        }
-      } catch (err) {
-        console.error('Failed to load knowledge graph:', err);
-        setError(t('error_load'));
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [dimensions.width, dimensions.height, t]);
-
-  // Responsive SVG
-  useEffect(() => {
-    function handleResize() {
-      if (svgRef.current?.parentElement) {
-        const rect = svgRef.current.parentElement.getBoundingClientRect();
-        setDimensions({ width: Math.floor(rect.width), height: Math.max(400, Math.floor(rect.width * 0.55)) });
-      }
-    }
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const {
+    nodes,
+    edges,
+    themes,
+    gaps,
+    neo4jAvailable,
+    loading,
+    error,
+    dimensions,
+    svgRef,
+  } = useKnowledgeGraph(t('error_load'));
 
   const handleNodeClick = useCallback((node: SimNode) => {
     setSelectedNode((prev) => (prev?.id === node.id ? null : node));
@@ -255,7 +55,7 @@ export default function KnowledgePage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{t('error_title')}</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <button
-            onClick={() => { setError(null); setLoading(true); window.location.reload(); }}
+            onClick={() => { window.location.reload(); }}
             className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors text-sm"
           >
             {t('try_again')}
@@ -372,278 +172,41 @@ export default function KnowledgePage() {
       <div className="px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Graph visualization */}
-          <div className="lg:col-span-2 bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-            <div className="p-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('concept_map')}</span>
-              <span className="text-xs text-gray-400">{t('click_hint')}</span>
-            </div>
-            {loading ? (
-              <div className="flex items-center justify-center" style={{ height: dimensions.height }}>
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
-              </div>
-            ) : (
-              <svg
-                ref={svgRef}
-                width={dimensions.width}
-                height={dimensions.height}
-                viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-                className="w-full"
-              >
-                <defs>
-                  <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-                    <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
-                  </marker>
-                </defs>
-
-                {/* Edges */}
-                {edges.map((edge, i) => {
-                  const source = nodes.find((n) => n.id === edge.source);
-                  const target = nodes.find((n) => n.id === edge.target);
-                  if (!source || !target) return null;
-
-                  const isHighlighted = selectedNode && connectedEdges.includes(edge);
-                  const isDimmed = selectedNode && !isHighlighted;
-
-                  return (
-                    <line
-                      key={`edge-${i}`}
-                      x1={source.x}
-                      y1={source.y}
-                      x2={target.x}
-                      y2={target.y}
-                      stroke={isDimmed ? '#e5e7eb' : isHighlighted ? '#0d9488' : '#cbd5e1'}
-                      strokeWidth={isHighlighted ? 2 : 1}
-                      strokeOpacity={isDimmed ? 0.3 : 0.7}
-                      markerEnd={isHighlighted ? 'url(#arrowhead)' : undefined}
-                    />
-                  );
-                })}
-
-                {/* Nodes */}
-                {nodes.map((node) => {
-                  const isSelected = selectedNode?.id === node.id;
-                  const isConnected = connectedNodeIds.has(node.id);
-                  const isDimmed = selectedNode && !isConnected;
-                  const radius = Math.max(6, Math.min(20, 6 + node.weight * 2));
-                  const color = getColor(node.group);
-                  const freshness = node.freshness ?? 1.0;
-                  const freshnessOpacity = freshness >= 0.7 ? 1.0 : freshness >= 0.3 ? 0.6 : 0.35;
-
-                  return (
-                    <g
-                      key={node.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`${node.label}${node.bookTitle ? ` from ${node.bookTitle}` : ''}`}
-                      onClick={() => handleNodeClick(node)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNodeClick(node); } }}
-                      className="cursor-pointer"
-                      opacity={isDimmed ? 0.3 : freshnessOpacity}
-                    >
-                      {isSelected && (
-                        <circle cx={node.x} cy={node.y} r={radius + 4} fill="none" stroke={color} strokeWidth={2} strokeDasharray="4 2" />
-                      )}
-                      <circle
-                        cx={node.x}
-                        cy={node.y}
-                        r={radius}
-                        fill={color}
-                        fillOpacity={0.85}
-                        stroke="white"
-                        strokeWidth={1.5}
-                      />
-                      <text
-                        x={node.x}
-                        y={node.y + radius + 14}
-                        textAnchor="middle"
-                        className="text-[10px] fill-gray-700 dark:fill-gray-300 pointer-events-none"
-                        fontWeight="500"
-                      >
-                        {node.label.length > 16 ? node.label.slice(0, 15) + '…' : node.label}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-            )}
-          </div>
+          <KnowledgeGraph
+            ref={svgRef}
+            nodes={nodes}
+            edges={edges}
+            selectedNode={selectedNode}
+            connectedEdges={connectedEdges}
+            connectedNodeIds={connectedNodeIds}
+            dimensions={dimensions}
+            loading={loading}
+            onNodeClick={handleNodeClick}
+            conceptMapLabel={t('concept_map')}
+            clickHintLabel={t('click_hint')}
+          />
 
           {/* Sidebar */}
           <div className="space-y-4">
             {/* Selected node details */}
             {selectedNode && (
-              <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{selectedNode.label}</h3>
-                  <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
-                    (selectedNode as VisualizationNode & { type?: string }).type === 'character'
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : (selectedNode as VisualizationNode & { type?: string }).type === 'theme'
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                        : (selectedNode as VisualizationNode & { type?: string }).type === 'location'
-                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                  }`}>
-                    {(selectedNode as VisualizationNode & { type?: string }).type || 'concept'}
-                  </span>
-                </div>
-                {selectedNode.bookTitle && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('from_label', { title: selectedNode.bookTitle })}</p>
-                )}
-                {(() => {
-                  const nodeData = selectedNode as VisualizationNode & {
-                    description?: string;
-                    annotation_count?: number;
-                    source_book_ids?: string[];
-                    type?: string;
-                  };
-                  return (
-                    <>
-                      {nodeData.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{nodeData.description}</p>
-                      )}
-                      <div className="text-sm space-y-1">
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">{t('connections_label')} </span>
-                          <span className="font-medium text-gray-900 dark:text-white">{connectedEdges.length}</span>
-                        </div>
-                        {(nodeData.annotation_count ?? 0) > 0 && (
-                          <div>
-                            <span className="text-gray-500 dark:text-gray-400">{t('annotation_count_label')} </span>
-                            <span className="font-medium text-gray-900 dark:text-white">{nodeData.annotation_count}</span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">{t('freshness_label')} </span>
-                          {(() => {
-                            const f = (nodeData as VisualizationNode & { freshness?: number }).freshness ?? 1.0;
-                            const label = f >= 0.7 ? 'freshness_fresh' : f >= 0.3 ? 'freshness_aging' : 'freshness_stale';
-                            const colorClass = f >= 0.7
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : f >= 0.3
-                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-                            return (
-                              <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${colorClass}`}>
-                                {t(label)}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                      {nodeData.source_book_ids && nodeData.source_book_ids.length > 0 && (
-                        <div className="mt-2">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{t('source_books_label')}</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {nodeData.source_book_ids.map((bid) => (
-                              <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
-                                {bid.slice(0, 8)}...
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-                {connectedEdges.length > 0 && (
-                  <div className="mt-3 space-y-1.5">
-                    {connectedEdges.map((e, i) => {
-                      const otherId = e.source === selectedNode.id ? e.target : e.source;
-                      const otherNode = nodes.find((n) => n.id === otherId);
-                      return (
-                        <div key={i} className="flex items-center gap-2 text-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-                          <span className="text-gray-600 dark:text-gray-400">{e.label}</span>
-                          <span className="text-gray-900 dark:text-white font-medium">{otherNode?.label || otherId}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <button
-                  onClick={() => setSelectedNode(null)}
-                  aria-label={t('close_details')}
-                  className="mt-3 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {t('deselect')}
-                </button>
-              </div>
+              <NodeDetailPanel
+                node={selectedNode}
+                connectedEdges={connectedEdges}
+                allNodes={nodes}
+                onDeselect={() => setSelectedNode(null)}
+                t={t}
+              />
             )}
 
             {/* Cross-book themes */}
-            {themes.length > 0 && (
-              <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('cross_book_themes')}</h3>
-                <div className="space-y-3">
-                  {themes.slice(0, 8).map((theme) => (
-                    <div key={theme.conceptId} className="flex items-start gap-2">
-                      <div className="w-2 h-2 rounded-full bg-violet-500 mt-1.5 shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{theme.concept}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {t('found_in_books', { count: theme.bookTitles.length })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <CrossBookThemes themes={themes} t={t} />
 
             {/* Knowledge Gaps */}
-            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('knowledge_gaps_title')}</h3>
-              {gaps.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('knowledge_gaps_empty')}</p>
-              ) : (
-                <div className="space-y-3">
-                  {gaps.map((gap) => (
-                    <div key={gap.concept} className="rounded-lg border border-amber-200 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-900/10 p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{gap.concept}</p>
-                      </div>
-                      <p className="text-xs text-amber-700 dark:text-amber-400 mb-1">{gap.reason}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        <span className="font-medium">{t('gap_suggestion')}:</span> {gap.suggestion}
-                      </p>
-                      {gap.suggested_action && (
-                        <p className="text-xs text-teal-700 dark:text-teal-400 flex items-start gap-1">
-                          <span aria-hidden="true" className="shrink-0 mt-px">&#x2192;</span>
-                          <span>
-                            <span className="font-medium">{t('gap_action')}:</span> {gap.suggested_action}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <KnowledgeGaps gaps={gaps} t={t} />
 
             {/* Legend */}
-            <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('legend_title')}</h3>
-              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-teal-500" />
-                  {t('legend_weight')}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-0.5 bg-gray-300 dark:bg-gray-700" />
-                  {t('legend_connection')}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <div className="w-3 h-3 rounded-full bg-teal-500" />
-                    <div className="w-3 h-3 rounded-full bg-teal-500 opacity-60" />
-                    <div className="w-3 h-3 rounded-full bg-teal-500 opacity-35" />
-                  </div>
-                  {t('legend_freshness')}
-                </div>
-              </div>
-            </div>
+            <KnowledgeLegend t={t} />
           </div>
         </div>
       </div>

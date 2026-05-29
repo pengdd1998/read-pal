@@ -62,8 +62,8 @@ async def test_get_graph(client):
     mock_redis.setex.return_value = True
 
     with (
-        patch('app.services.knowledge_service.safe_llm_invoke', _mock_safe_llm_invoke()),
-        patch('app.services.knowledge_service._get_redis', return_value=mock_redis),
+        patch('app.services.knowledge._extraction.safe_llm_invoke', _mock_safe_llm_invoke()),
+        patch('app.services.knowledge._cache._get_redis', return_value=mock_redis),
     ):
         resp = await client.get(
             f"/api/v1/knowledge/graph/{book['id']}",
@@ -85,7 +85,7 @@ async def test_get_graph_no_annotations(client):
     mock_redis = AsyncMock()
     mock_redis.get.return_value = None
 
-    with patch('app.services.knowledge_service._get_redis', return_value=mock_redis):
+    with patch('app.services.knowledge._cache._get_redis', return_value=mock_redis):
         resp = await client.get(
             f"/api/v1/knowledge/graph/{book['id']}",
             headers=auth_headers(reg['token']),
@@ -113,8 +113,8 @@ async def test_list_concepts(client):
     mock_redis.setex.return_value = True
 
     with (
-        patch('app.services.knowledge_service.safe_llm_invoke', _mock_safe_llm_invoke()),
-        patch('app.services.knowledge_service._get_redis', return_value=mock_redis),
+        patch('app.services.knowledge._extraction.safe_llm_invoke', _mock_safe_llm_invoke()),
+        patch('app.services.knowledge._cache._get_redis', return_value=mock_redis),
     ):
         resp = await client.get(
             f"/api/v1/knowledge/concepts/{book['id']}",
@@ -145,8 +145,8 @@ async def test_search_concepts(client):
     mock_redis.setex.return_value = True
 
     with (
-        patch('app.services.knowledge_service.safe_llm_invoke', _mock_safe_llm_invoke()),
-        patch('app.services.knowledge_service._get_redis', return_value=mock_redis),
+        patch('app.services.knowledge._extraction.safe_llm_invoke', _mock_safe_llm_invoke()),
+        patch('app.services.knowledge._cache._get_redis', return_value=mock_redis),
     ):
         resp = await client.get(
             f"/api/v1/knowledge/search?q=resilience&book_id={book['id']}",
@@ -171,8 +171,8 @@ async def test_search_concepts_no_match(client):
     mock_redis.setex.return_value = True
 
     with (
-        patch('app.services.knowledge_service.safe_llm_invoke', _mock_safe_llm_invoke()),
-        patch('app.services.knowledge_service._get_redis', return_value=mock_redis),
+        patch('app.services.knowledge._extraction.safe_llm_invoke', _mock_safe_llm_invoke()),
+        patch('app.services.knowledge._cache._get_redis', return_value=mock_redis),
     ):
         resp = await client.get(
             f"/api/v1/knowledge/search?q=nonexistent&book_id={book['id']}",
@@ -196,7 +196,7 @@ async def test_get_all_graphs(client):
     mock_redis = AsyncMock()
     mock_redis.get.return_value = None
 
-    with patch('app.services.knowledge_service._get_redis', return_value=mock_redis):
+    with patch('app.services.knowledge._cache._get_redis', return_value=mock_redis):
         resp = await client.get(
             '/api/v1/knowledge/graph',
             headers=auth_headers(reg['token']),
@@ -219,7 +219,7 @@ async def test_get_themes(client):
     mock_redis = AsyncMock()
     mock_redis.get.return_value = None
 
-    with patch('app.services.knowledge_service._get_redis', return_value=mock_redis):
+    with patch('app.services.knowledge._cache._get_redis', return_value=mock_redis):
         resp = await client.get(
             '/api/v1/knowledge/themes',
             headers=auth_headers(reg['token']),

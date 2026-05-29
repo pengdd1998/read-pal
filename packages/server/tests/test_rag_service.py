@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.services.rag_service import (
+from app.services.rag import (
     RAG_CACHE_PREFIX,
     _chunk_text,
     _get_embedding,
@@ -213,15 +213,15 @@ class TestGetEmbedding:
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
 
-        with patch('app.services.rag_service._get_http_client', return_value=mock_client):
-            with patch('app.services.rag_service.get_settings') as mock_settings:
+        with patch('app.services.rag.embedding._get_http_client', return_value=mock_client):
+            with patch('app.services.rag.embedding.get_settings') as mock_settings:
                 mock_settings.return_value.glm_api_key = 'test-key'
                 result = await _get_embedding('hello world')
                 assert result == [0.1, 0.2, 0.3]
 
     @pytest.mark.asyncio
     async def test_no_api_key(self):
-        with patch('app.services.rag_service.get_settings') as mock_settings:
+        with patch('app.services.rag.embedding.get_settings') as mock_settings:
             mock_settings.return_value.glm_api_key = 'dev-key'
             result = await _get_embedding('hello world')
             assert result is None
@@ -231,8 +231,8 @@ class TestGetEmbedding:
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(side_effect=Exception('Network error'))
 
-        with patch('app.services.rag_service._get_http_client', return_value=mock_client):
-            with patch('app.services.rag_service.get_settings') as mock_settings:
+        with patch('app.services.rag.embedding._get_http_client', return_value=mock_client):
+            with patch('app.services.rag.embedding.get_settings') as mock_settings:
                 mock_settings.return_value.glm_api_key = 'test-key'
                 result = await _get_embedding('hello world')
                 assert result is None
@@ -269,8 +269,8 @@ class TestPrecomputeBookEmbeddings:
         mock_factory = MagicMock(return_value=mock_ctx)
 
         with (
-            patch('app.services.rag_service.get_settings') as mock_settings,
-            patch('app.services.rag_service._get_embedding', return_value=embedding),
+            patch('app.services.rag.precompute.get_settings') as mock_settings,
+            patch('app.services.rag.precompute._get_embedding', return_value=embedding),
             patch('app.db.async_session', mock_factory),
         ):
             mock_settings.return_value.glm_api_key = 'test-key'
@@ -287,7 +287,7 @@ class TestPrecomputeBookEmbeddings:
 
     @pytest.mark.asyncio
     async def test_skips_without_api_key(self):
-        with patch('app.services.rag_service.get_settings') as mock_settings:
+        with patch('app.services.rag.precompute.get_settings') as mock_settings:
             mock_settings.return_value.glm_api_key = 'dev-key'
             await precompute_book_embeddings(uuid4(), uuid4(), [{'title': 'T', 'content': 'C'}])
             # No error, just skips
@@ -297,7 +297,7 @@ class TestSemanticSearch:
     @pytest.mark.asyncio
     async def test_no_query_embedding(self):
         mock_db = AsyncMock()
-        with patch('app.services.rag_service._get_embedding', return_value=None):
+        with patch('app.services.rag.search._get_embedding', return_value=None):
             results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
             assert results == []
 
@@ -306,7 +306,7 @@ class TestSemanticSearch:
         mock_db = AsyncMock()
         mock_db.execute = AsyncMock(side_effect=Exception('DB error'))
 
-        with patch('app.services.rag_service._get_embedding', return_value=[0.1] * 2048):
+        with patch('app.services.rag.search._get_embedding', return_value=[0.1] * 2048):
             results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
             assert results == []
 
@@ -338,9 +338,9 @@ class TestGetBookContext:
         mock_db.execute = AsyncMock(side_effect=[book_row, ann_row])
 
         with (
-            patch('app.services.rag_service.get_redis') as mock_redis,
-            patch('app.services.rag_service._semantic_chapter_search', return_value=[]),
-            patch('app.services.rag_service._get_chapters', return_value=[
+            patch('app.services.rag.context.get_redis') as mock_redis,
+            patch('app.services.rag.context._semantic_chapter_search', return_value=[]),
+            patch('app.services.rag.context._get_chapters', return_value=[
                 {'title': 'ML Basics', 'content': 'Machine learning fundamentals and algorithms'},
             ]),
         ):
@@ -367,7 +367,7 @@ class TestGetBookContext:
         mock_result.scalar_one_or_none.return_value = mock_book
         mock_db.execute = AsyncMock(return_value=mock_result)
 
-        with patch('app.services.rag_service.get_redis', return_value=mock_redis):
+        with patch('app.services.rag.context.get_redis', return_value=mock_redis):
             result = await get_book_context(
                 db=mock_db,
                 user_id=uuid4(),
@@ -401,14 +401,14 @@ class TestGetBookContext:
         ]
 
         with (
-            patch('app.services.rag_service.get_redis', return_value=mock_redis),
-            patch('app.services.rag_service._get_chapters', return_value=chapters),
-            patch('app.services.rag_service._semantic_chapter_search', return_value=[]),
-            patch('app.services.rag_service._keyword_chapter_search', return_value=[
+            patch('app.services.rag.context.get_redis', return_value=mock_redis),
+            patch('app.services.rag.context._get_chapters', return_value=chapters),
+            patch('app.services.rag.context._semantic_chapter_search', return_value=[]),
+            patch('app.services.rag.context._keyword_chapter_search', return_value=[
                 {'title': 'Chapter 1', 'content': 'The protagonist discovers a hidden garden. ' * 20},
             ]),
-            patch('app.services.rag_service._load_related_annotations', return_value=[]),
-            patch('app.services.rag_service.sanitize_user_input', side_effect=lambda x, **kw: x),
+            patch('app.services.rag.context._load_related_annotations', return_value=[]),
+            patch('app.services.rag.context.sanitize_user_input', side_effect=lambda x, **kw: x),
         ):
             result = await get_book_context(
                 db=mock_db,

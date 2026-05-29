@@ -34,7 +34,6 @@ from app.schemas.llm_outputs import (
 )
 from app.utils.output_filter import filter_output, validate_schema
 from app.utils.sanitizer import (
-    sanitize_annotations,
     sanitize_chat_message,
     sanitize_user_input,
 )

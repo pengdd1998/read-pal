@@ -104,7 +104,7 @@ async def test_generate_reading_mirror(client):
     book = await _create_book(client, reg['token'])
     await _create_annotation(client, reg['token'], book['id'])
 
-    with patch('app.services.memory_book_service.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
+    with patch('app.services.memory_book.section_generation.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
         mock_llm.side_effect = [
             _mock_llm_section_response('encounter'),
             _mock_llm_section_response('highlights'),
@@ -165,7 +165,7 @@ async def test_get_reading_mirror(client):
     book = await _create_book(client, reg['token'])
     await _create_annotation(client, reg['token'], book['id'])
 
-    with patch('app.services.memory_book_service.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
+    with patch('app.services.memory_book.section_generation.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
         mock_llm.side_effect = [
             _mock_llm_section_response('encounter'),
             _mock_llm_section_response('highlights'),
@@ -229,7 +229,7 @@ async def test_list_memory_books_with_data(client):
     book = await _create_book(client, reg['token'])
     await _create_annotation(client, reg['token'], book['id'])
 
-    with patch('app.services.memory_book_service.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
+    with patch('app.services.memory_book.section_generation.safe_llm_invoke', new_callable=AsyncMock) as mock_llm:
         mock_llm.side_effect = [
             _mock_llm_section_response('encounter'),
             _mock_llm_section_response('highlights'),

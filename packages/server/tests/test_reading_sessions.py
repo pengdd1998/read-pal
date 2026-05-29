@@ -259,6 +259,44 @@ async def test_get_book_session_log(client):
     assert body['success'] is True
     assert body['total'] >= 1
     assert len(body['data']) >= 1
+    # Pagination metadata
+    assert body['page'] == 1
+    assert body['per_page'] == 50
+    assert body['has_more'] is False
+
+
+@pytest.mark.asyncio
+async def test_get_book_session_log_pagination(client):
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
+    # Create 3 sessions
+    for _ in range(3):
+        await _create_session(client, reg['token'], book['id'])
+
+    # Page 1, per_page=2 — should have has_more=True
+    resp = await client.get(
+        f"/api/v1/sessions/book/{book['id']}/log?page=1&per_page=2",
+        headers=headers,
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body['total'] == 3
+    assert body['page'] == 1
+    assert body['per_page'] == 2
+    assert len(body['data']) == 2
+    assert body['has_more'] is True
+
+    # Page 2, per_page=2 — should have has_more=False
+    resp2 = await client.get(
+        f"/api/v1/sessions/book/{book['id']}/log?page=2&per_page=2",
+        headers=headers,
+    )
+    assert resp2.status_code == 200
+    body2 = resp2.json()
+    assert body2['page'] == 2
+    assert len(body2['data']) == 1
+    assert body2['has_more'] is False
 
 
 # ---------------------------------------------------------------------------

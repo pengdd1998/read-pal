@@ -3,19 +3,14 @@
 All responses follow the shape: ``{"success": true, "data": {...}}``
 """
 
-from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter
-from app.utils import utcnow
-from app.models.reading_session import ReadingSession
-from app.models.book import Book, BookStatus
 from app.schemas.reading_session import (
     HeartbeatRequest,
     SessionCreate,
@@ -42,15 +37,12 @@ async def list_sessions(
 ) -> SessionListResponse:
     """List reading sessions with optional book filter."""
     sessions, total = await reading_session_service.get_sessions(
-        db,
-        UUID(current_user['id']),
-        book_id=book_id,
-        page=page,
-        per_page=per_page,
+        db, UUID(current_user['id']), book_id=book_id, page=page, per_page=per_page,
     )
     return SessionListResponse(
         data=[SessionResponse.model_validate(s) for s in sessions],
-        total=total,
+        total=total, page=page, per_page=per_page,
+        has_more=(page * per_page) < total,
     )
 
 
@@ -161,9 +153,8 @@ async def start_session(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={'code': 'VALIDATION_ERROR', 'message': t('errors.invalid_book_id', book_id=str(book_id))},
         )
-    session_body = SessionCreate(book_id=parsed_id)
     session = await reading_session_service.create_session(
-        db, UUID(current_user['id']), session_body,
+        db, UUID(current_user['id']), SessionCreate(book_id=parsed_id),
     )
     return {
         'success': True,
@@ -180,54 +171,14 @@ async def heartbeat_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Update session activity timestamp (heartbeat)."""
-    result = await db.execute(
-        select(ReadingSession).where(
-            ReadingSession.id == session_id,
-            ReadingSession.user_id == UUID(current_user['id']),
-        ),
+    session = await reading_session_service.heartbeat_session(
+        db, UUID(current_user['id']), session_id, body,
     )
-    session = result.scalar_one_or_none()
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
         )
-    session.updated_at = utcnow()
-    if body:
-        pages_read = body.pages_read or body.pagesRead
-        if pages_read is not None:
-            session.pages_read = int(pages_read)
-        scroll_progress = body.scroll_progress or body.scrollProgress
-        current_segment = body.current_segment
-        # Update book's scroll_progress and current_segment for fine-grained tracking.
-        # Do NOT update book.current_page here — handleChapterChange
-        # and the Client.tsx unload save handle that directly via PATCH /api/books/{id},
-        # which avoids race conditions from out-of-order keepalive requests.
-        if scroll_progress is not None or current_segment is not None:
-            book_result = await db.execute(
-                select(Book).where(Book.id == session.book_id, Book.user_id == UUID(current_user['id'])),
-            )
-            book = book_result.scalar_one_or_none()
-            if book and book.total_pages > 0:
-                if scroll_progress is not None:
-                    book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
-                if current_segment is not None:
-                    book.current_segment = current_segment
-                # Only update current_page if heartbeat is ahead (forward progress only)
-                pages_read_val = int(pages_read or session.pages_read or 0)
-                heartbeat_page = max(0, min(pages_read_val - 1, book.total_pages))
-                if heartbeat_page > book.current_page:
-                    book.current_page = heartbeat_page
-                    book.progress = Decimal(
-                        str(round((book.current_page / book.total_pages) * 100, 2)),
-                    )
-                    if book.progress > Decimal('100'):
-                        book.progress = Decimal('100')
-                    if book.current_page >= book.total_pages and book.status != BookStatus.completed:
-                        book.progress = Decimal('100')
-                        book.status = BookStatus.completed
-                        book.completed_at = utcnow()
-    await db.flush()
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 
 
@@ -247,55 +198,32 @@ async def summarize_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
         )
-
-    # Build a simple contextual summary based on session data
-    duration_min = (session.duration or 0) // 60
-    pages = session.pages_read or 0
-    highlights = session.highlights or 0
-    notes = session.notes or 0
-
-    parts = []
-    if duration_min > 0:
-        parts.append(f'Read for {duration_min} minute{"s" if duration_min != 1 else ""}')
-    if pages > 0:
-        parts.append(f'covered {pages} page{"s" if pages != 1 else ""}')
-    if highlights > 0:
-        parts.append(f'made {highlights} highlight{"s" if highlights != 1 else ""}')
-    if notes > 0:
-        parts.append(f'wrote {notes} note{"s" if notes != 1 else ""}')
-
-    if parts:
-        summary = 'You ' + ', and '.join([
-            ', '.join(parts[:-1]),
-            parts[-1],
-        ]) + '.' if len(parts) > 1 else parts[0] + '.'
-    else:
-        summary = 'Session recorded successfully.'
-
+    summary = reading_session_service.build_session_summary(session)
     return {'success': True, 'data': {'summary': summary}}
 
 
 @router.get('/book/{book_id}/log', response_model=SessionListResponse)
 async def get_book_session_log(
     book_id: UUID,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=200),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Get all sessions for a specific book."""
-    result = await db.execute(
-        select(ReadingSession)
-        .where(
-            ReadingSession.user_id == UUID(current_user['id']),
-            ReadingSession.book_id == book_id,
-        )
-        .order_by(ReadingSession.started_at.desc()),
+    """Get sessions for a specific book with pagination."""
+    uid = UUID(current_user['id'])
+    sessions, total = await reading_session_service.get_book_session_log(
+        db, uid, book_id, page=page, per_page=per_page,
     )
-    sessions = list(result.scalars().all())
+    offset = (page - 1) * per_page
     return {
         'success': True,
         'data': [
             SessionResponse.model_validate(s).model_dump(mode='json')
             for s in sessions
         ],
-        'total': len(sessions),
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'has_more': (offset + len(sessions)) < total,
     }

@@ -14,7 +14,7 @@ from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter
 from app.models.book import Book
 from app.schemas.common import GenericResponse
-from app.schemas.synthesis import CompareRequest, SynthesisRequest, SynthesisResponse
+from app.schemas.synthesis import CompareRequest, SynthesisRequest
 from app.services.synthesis_service import compare_books, cross_book_synthesize, synthesize
 from app.utils.i18n import t
 

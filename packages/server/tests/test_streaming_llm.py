@@ -202,10 +202,10 @@ class TestStreamingErrors:
         mock_db.flush = AsyncMock()
 
         with (
-            patch('app.services.companion_service._load_book', return_value=mock_book),
-            patch('app.services.companion_service._load_history', return_value=[]),
-            patch('app.services.companion_service._load_annotations_context', return_value=''),
-            patch('app.services.companion_service.circuit') as mock_circuit,
+            patch('app.services.companion.context._load_book', return_value=mock_book),
+            patch('app.services.companion.context._load_history', return_value=[]),
+            patch('app.services.companion.context._load_annotations_context', return_value=''),
+            patch('app.services.companion.streaming.circuit') as mock_circuit,
         ):
             mock_circuit.allow_request = AsyncMock(return_value=False)
 
@@ -242,11 +242,11 @@ class TestStreamingErrors:
         mock_llm.astream = mock_astream
 
         with (
-            patch('app.services.companion_service._load_book', return_value=mock_book),
-            patch('app.services.companion_service._load_history', return_value=[]),
-            patch('app.services.companion_service._load_annotations_context', return_value=''),
-            patch('app.services.companion_service.get_llm', return_value=mock_llm),
-            patch('app.services.companion_service.circuit') as mock_circuit,
+            patch('app.services.companion.context._load_book', return_value=mock_book),
+            patch('app.services.companion.context._load_history', return_value=[]),
+            patch('app.services.companion.context._load_annotations_context', return_value=''),
+            patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
+            patch('app.services.companion.streaming.circuit') as mock_circuit,
             patch('app.config.get_settings') as mock_settings,
         ):
             mock_circuit.allow_request = AsyncMock(return_value=True)
@@ -287,13 +287,13 @@ class TestStreamingErrors:
         mock_llm.astream = mock_astream
 
         with (
-            patch('app.services.companion_service._load_book', return_value=mock_book),
-            patch('app.services.companion_service._load_history', return_value=[]),
-            patch('app.services.companion_service._load_annotations_context', return_value=''),
-            patch('app.services.companion_service.get_llm', return_value=mock_llm),
-            patch('app.services.companion_service.circuit') as mock_circuit,
+            patch('app.services.companion.context._load_book', return_value=mock_book),
+            patch('app.services.companion.context._load_history', return_value=[]),
+            patch('app.services.companion.context._load_annotations_context', return_value=''),
+            patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
+            patch('app.services.companion.streaming.circuit') as mock_circuit,
             patch('app.config.get_settings') as mock_settings,
-            patch('app.services.companion_service._save_message', new_callable=AsyncMock) as mock_save,
+            patch('app.services.companion.streaming._save_message', new_callable=AsyncMock) as mock_save,
         ):
             mock_circuit.allow_request = AsyncMock(return_value=True)
             mock_circuit.record_success = AsyncMock()

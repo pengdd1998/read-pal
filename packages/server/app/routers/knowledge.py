@@ -13,7 +13,6 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter
 from app.models.book import Book
-from app.schemas.knowledge import ConceptSearchResult, GraphData
 from app.schemas.common import GenericResponse
 from app.services.knowledge_service import (
     build_graph,

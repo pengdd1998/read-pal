@@ -35,6 +35,12 @@ class ReadingSession(Base):
             'user_id',
             'started_at',
         ),
+        Index(
+            'ix_reading_sessions_user_book_started',
+            'user_id',
+            'book_id',
+            'started_at',
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(

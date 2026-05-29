@@ -6,7 +6,6 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Callable, MutableMapping
 
 import structlog
 from starlette.types import ASGIApp, Message, Receive, Scope, Send

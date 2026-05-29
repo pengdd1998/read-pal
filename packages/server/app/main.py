@@ -1,5 +1,6 @@
 import asyncio
 import os
+from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI, Request
@@ -69,6 +70,47 @@ class ApiCompatMiddleware:
         await self.app(scope, receive, send)
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: startup + shutdown via modern FastAPI pattern."""
+    # --- Startup ---
+    is_prod = os.getenv('APP_ENV', 'development') == 'production'
+    setup_logging(level=settings.log_level, json_output=is_prod or settings.log_json)
+    from app.utils.i18n import load_translations
+    load_translations()
+    logger.info(
+        'api_starting',
+        env=settings.app_env,
+        model=settings.default_model,
+    )
+
+    prod_warnings = settings.validate_production()
+    for warning in prod_warnings:
+        logger.warning('production_warning', detail=warning)
+
+    if settings.is_dev:
+        try:
+            from app.db import init_db
+            await init_db()
+            logger.info('database_tables_created')
+        except Exception as exc:
+            logger.warning('auto_create_tables_failed', error=str(exc))
+
+    asyncio.create_task(_log_cleanup_loop())
+
+    from app.services.llm import _trace_writer
+    _trace_writer.start()
+    logger.info('LLM trace writer started')
+
+    yield
+
+    # --- Shutdown ---
+    from app.services.llm import shutdown_llm
+    from app.core.redis import close_redis
+    await shutdown_llm()
+    await close_redis()
+
+
 app = FastAPI(
     title='Read-Pal API',
     version='0.1.0',
@@ -76,6 +118,7 @@ app = FastAPI(
     redoc_url=None if _is_production else '/api/v1/redoc',
     openapi_url=None if _is_production else '/api/v1/openapi.json',
     redirect_slashes=True,
+    lifespan=lifespan,
 )
 
 # Global exception handler — always return JSON, never plain text
@@ -136,49 +179,6 @@ async def _log_cleanup_loop() -> None:
                     logger.info('cleaned_up_llm_logs', deleted=deleted, retention_days=settings.llm_log_retention_days)
         except Exception as exc:
             logger.warning('llm_log_cleanup_failed', error=str(exc))
-
-
-@app.on_event('startup')
-async def startup() -> None:
-    """Run on application startup."""
-    is_prod = os.getenv('APP_ENV', 'development') == 'production'
-    setup_logging(level=settings.log_level, json_output=is_prod or settings.log_json)
-    from app.utils.i18n import load_translations
-    load_translations()
-    logger.info(
-        'api_starting',
-        env=settings.app_env,
-        model=settings.default_model,
-    )
-
-    # Production safety checks
-    prod_warnings = settings.validate_production()
-    for warning in prod_warnings:
-        logger.warning('production_warning', detail=warning)
-
-    if settings.is_dev:
-        try:
-            from app.db import init_db
-            await init_db()
-            logger.info('database_tables_created')
-        except Exception as exc:
-            logger.warning('auto_create_tables_failed', error=str(exc))
-
-    # Start background log cleanup task
-    asyncio.create_task(_log_cleanup_loop())
-
-    from app.services.llm import _trace_writer
-    _trace_writer.start()
-    logger.info('LLM trace writer started')
-
-
-@app.on_event('shutdown')
-async def shutdown() -> None:
-    """Clean up resources on application shutdown."""
-    from app.services.llm import shutdown_llm
-    from app.core.redis import close_redis
-    await shutdown_llm()
-    await close_redis()
 
 
 @app.get('/api/v1/health')

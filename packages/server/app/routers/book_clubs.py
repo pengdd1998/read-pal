@@ -9,12 +9,9 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.book_club import (
     BookClubCreate,
-    BookClubResponse,
     BookClubUpdate,
     ClubJoinRequest,
     DiscussionCreate,
-    DiscussionResponse,
-    MemberResponse,
 )
 from app.schemas.common import GenericResponse
 from app.services import book_club_service

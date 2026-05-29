@@ -1,7 +1,6 @@
 """Business logic for reading session operations."""
 
 import logging
-from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -239,3 +238,108 @@ async def get_session_stats(db: AsyncSession, user_id: str) -> dict:
         'total_highlights': int(total_highlights),
         'total_notes': int(total_notes),
     }
+
+
+async def heartbeat_session(
+    db: AsyncSession,
+    user_id: UUID,
+    session_id: UUID,
+    body: 'HeartbeatRequest | None' = None,
+) -> ReadingSession | None:
+    """Update session activity timestamp and book progress on heartbeat."""
+    from app.schemas.reading_session import HeartbeatRequest  # noqa: F811
+
+    result = await db.execute(
+        select(ReadingSession).where(
+            ReadingSession.id == session_id,
+            ReadingSession.user_id == user_id,
+        ),
+    )
+    session = result.scalar_one_or_none()
+    if session is None:
+        return None
+
+    session.updated_at = utcnow()
+    if body:
+        pages_read = body.pages_read or body.pagesRead
+        if pages_read is not None:
+            session.pages_read = int(pages_read)
+        scroll_progress = body.scroll_progress or body.scrollProgress
+        current_segment = body.current_segment
+        if scroll_progress is not None or current_segment is not None:
+            book_result = await db.execute(
+                select(Book).where(Book.id == session.book_id, Book.user_id == user_id),
+            )
+            book = book_result.scalar_one_or_none()
+            if book and book.total_pages > 0:
+                if scroll_progress is not None:
+                    book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
+                if current_segment is not None:
+                    book.current_segment = current_segment
+                pages_read_val = int(pages_read or session.pages_read or 0)
+                heartbeat_page = max(0, min(pages_read_val - 1, book.total_pages))
+                if heartbeat_page > book.current_page:
+                    book.current_page = heartbeat_page
+                    book.progress = Decimal(
+                        str(round((book.current_page / book.total_pages) * 100, 2)),
+                    )
+                    if book.progress > Decimal('100'):
+                        book.progress = Decimal('100')
+                    if book.current_page >= book.total_pages and book.status != BookStatus.completed:
+                        book.progress = Decimal('100')
+                        book.status = BookStatus.completed
+                        book.completed_at = utcnow()
+    await db.flush()
+    return session
+
+
+def build_session_summary(session: ReadingSession) -> str:
+    """Build a human-readable summary of a reading session."""
+    duration_min = (session.duration or 0) // 60
+    pages = session.pages_read or 0
+    highlights = session.highlights or 0
+    notes = session.notes or 0
+
+    parts = []
+    if duration_min > 0:
+        parts.append(f'Read for {duration_min} minute{"s" if duration_min != 1 else ""}')
+    if pages > 0:
+        parts.append(f'covered {pages} page{"s" if pages != 1 else ""}')
+    if highlights > 0:
+        parts.append(f'made {highlights} highlight{"s" if highlights != 1 else ""}')
+    if notes > 0:
+        parts.append(f'wrote {notes} note{"s" if notes != 1 else ""}')
+
+    if parts:
+        return 'You ' + ', and '.join([
+            ', '.join(parts[:-1]),
+            parts[-1],
+        ]) + '.' if len(parts) > 1 else parts[0] + '.'
+    return 'Session recorded successfully.'
+
+
+async def get_book_session_log(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    page: int = 1,
+    per_page: int = 50,
+) -> tuple[list[ReadingSession], int]:
+    """Return paginated session log for a specific book."""
+    base_filter = (
+        ReadingSession.user_id == user_id,
+        ReadingSession.book_id == book_id,
+    )
+    total = await db.scalar(
+        select(func.count(ReadingSession.id)).where(*base_filter),
+    ) or 0
+
+    offset = (page - 1) * per_page
+    result = await db.execute(
+        select(ReadingSession)
+        .where(*base_filter)
+        .order_by(ReadingSession.started_at.desc())
+        .offset(offset)
+        .limit(per_page),
+    )
+    return list(result.scalars().all()), total

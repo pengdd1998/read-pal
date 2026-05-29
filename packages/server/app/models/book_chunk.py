@@ -28,6 +28,7 @@ class BookChunk(Base):
     __tablename__ = 'book_chunks'
     __table_args__ = (
         Index('ix_book_chunks_book_id', 'book_id'),
+        Index('ix_book_chunks_book_chapter', 'book_id', 'chapter_index'),
         Index(
             'ix_book_chunks_embedding_cosine',
             'embedding',

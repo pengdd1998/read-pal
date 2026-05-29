@@ -1,0 +1,44 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
+import type { BookProgress } from './types';
+
+interface BookBreakdownProps {
+  books: BookProgress[];
+}
+
+export function BookBreakdown({ books }: BookBreakdownProps) {
+  const t = useTranslations('stats');
+
+  if (books.length === 0) return null;
+
+  return (
+    <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+      <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('books_progress')}</h2>
+      <div className="space-y-3">
+        {books.slice(0, 6).map((book) => (
+          <Link key={book.id} href={`/read/${book.id}`} className="flex items-center gap-3 group">
+            <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-400/30 to-amber-600/50 flex items-center justify-center flex-shrink-0">
+              <span className="text-sm">{'📖'}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                {book.title}
+              </h3>
+              <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mt-1">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    book.progress >= 100 ? 'bg-emerald-500' : 'bg-amber-500'
+                  }`}
+                  style={{ width: `${Math.min(100, book.progress)}%` }}
+                />
+              </div>
+            </div>
+            <span className="text-xs font-medium text-gray-500 tabular-nums">{Math.round(book.progress)}%</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}

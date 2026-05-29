@@ -7,6 +7,10 @@ import type { Annotation } from '@read-pal/shared';
 import { AnnotationCard } from './AnnotationCard';
 import { ExportPreviewModal } from './ExportPreviewModal';
 import { OutlinePanel } from './OutlinePanel';
+import { SidebarHeader } from './SidebarHeader';
+import { TagFilterChips } from './TagFilterChips';
+import { FilterTabs, type FilterTab } from './FilterTabs';
+import { BulkActionBar } from './BulkActionBar';
 
 // ShareDialog is heavy (~400 lines + export utils) — only load when user clicks Share
 const ShareDialog = dynamic(() => import('./ShareDialog').then((m) => ({ default: m.ShareDialog })), {
@@ -28,10 +32,7 @@ interface AnnotationsSidebarProps {
   onScrollToAnnotation: (annotation: Annotation) => void;
 }
 
-type FilterTab = 'all' | 'highlight' | 'note' | 'bookmark';
 type ViewMode = 'list' | 'outline';
-
-const TAB_KEYS: FilterTab[] = ['all', 'highlight', 'note', 'bookmark'];
 
 export function AnnotationsSidebar({
   annotations,
@@ -80,7 +81,7 @@ export function AnnotationsSidebar({
     return (
       (a.content || '').toLowerCase().includes(q) ||
       (a.note || '').toLowerCase().includes(q) ||
-      (a.tags || []).some((t) => t.toLowerCase().includes(q))
+      (a.tags || []).some((tag) => tag.toLowerCase().includes(q))
     );
   }).filter((a) => {
     if (selectedTags.length === 0) return true;
@@ -90,8 +91,8 @@ export function AnnotationsSidebar({
   // Extract unique tags from current annotations
   const tagCounts: Record<string, number> = {};
   for (const a of annotations) {
-    for (const t of a.tags || []) {
-      tagCounts[t] = (tagCounts[t] || 0) + 1;
+    for (const tag of a.tags || []) {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
     }
   }
   const uniqueTags = Object.entries(tagCounts)
@@ -133,11 +134,11 @@ export function AnnotationsSidebar({
   };
 
   const counts = useMemo(() => {
-    const c = { all: 0, highlight: 0, note: 0, bookmark: 0 };
+    const c: Record<FilterTab, number> = { all: 0, highlight: 0, note: 0, bookmark: 0 };
     for (const a of annotations) {
       c.all++;
       if (a.type === 'highlight' || a.type === 'note' || a.type === 'bookmark') {
-        c[a.type]++;
+        c[a.type as FilterTab]++;
       }
     }
     return c;
@@ -145,7 +146,7 @@ export function AnnotationsSidebar({
 
   return (
     <>
-      {/* Backdrop — always visible when open, click to close */}
+      {/* Backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/30 animate-fade-in z-30"
@@ -163,85 +164,18 @@ export function AnnotationsSidebar({
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/50 dark:border-amber-900/30">
-          <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
-            {t('sidebar_annotations')}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2.5 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            aria-label={t('sidebar_close_esc')}
-            title={t('sidebar_close_esc')}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          {annotations.length > 0 && (
-            <button
-              onClick={() => setViewMode((v) => v === 'list' ? 'outline' : 'list')}
-              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
-                viewMode === 'outline'
-                  ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20'
-                  : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-              }`}
-              title={viewMode === 'list' ? t('sidebar_outline_view') : t('sidebar_list_view')}
-              aria-label={viewMode === 'list' ? t('sidebar_switch_outline') : t('sidebar_switch_list')}
-            >
-              {viewMode === 'list' ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M3 8h12M3 12h18M3 16h12M3 20h18" />
-                </svg>
-              )}
-            </button>
-          )}
-          {annotations.length > 0 && (
-            <button
-              onClick={() => setBulkMode((v) => !v)}
-              className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
-                bulkMode
-                  ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20'
-                  : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-              }`}
-              title={bulkMode ? t('sidebar_cancel_selection') : t('sidebar_select_multiple')}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </button>
-          )}
-          {annotations.length > 0 && (
-            <>
-              <button
-                aria-label={t('sidebar_share_export')}
-                onClick={() => setShowShareDialog(true)}
-                className="p-2 rounded-lg text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title={t('sidebar_share_export')}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              </button>
-              <button
-                aria-label={t('sidebar_export_annotations')}
-                onClick={() => setShowExportModal(true)}
-                className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title={t('sidebar_export_annotations')}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </button>
-            </>
-          )}
-        </div>
+        <SidebarHeader
+          annotationCount={annotations.length}
+          viewMode={viewMode}
+          bulkMode={bulkMode}
+          onClose={onClose}
+          onToggleViewMode={() => setViewMode((v) => v === 'list' ? 'outline' : 'list')}
+          onToggleBulkMode={() => setBulkMode((v) => !v)}
+          onShowShareDialog={() => setShowShareDialog(true)}
+          onShowExportModal={() => setShowExportModal(true)}
+        />
 
-        {/* Filter tabs */}
+        {/* Search */}
         <div className="px-3 pt-3 pb-1">
           <input
             type="text"
@@ -253,109 +187,34 @@ export function AnnotationsSidebar({
           />
         </div>
 
-        {/* Tag filter chips */}
-        {uniqueTags.length > 0 && (
-          <div className="px-3 pt-2 pb-1">
-            <div className="flex flex-wrap gap-1">
-              {uniqueTags.slice(0, 8).map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium transition-all duration-150 active:scale-95 ${
-                    selectedTags.includes(tag)
-                      ? tag === 'discuss'
-                        ? 'bg-teal-500 text-white'
-                        : tag === 'important'
-                        ? 'bg-red-500 text-white'
-                        : tag === 'question'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-amber-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  #{tag}
-                  <span className="ml-1 text-[9px] opacity-60">
-                    {tagCounts[tag]}
-                  </span>
-                </button>
-              ))}
-              {selectedTags.length > 0 && (
-                <button
-                  onClick={() => setSelectedTags([])}
-                  className="px-1.5 py-0.5 rounded-full text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                  {t('sidebar_clear')}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        <TagFilterChips
+          tags={uniqueTags}
+          tagCounts={tagCounts}
+          selectedTags={selectedTags}
+          onToggleTag={toggleTag}
+          onClearTags={() => setSelectedTags([])}
+        />
+
         {viewMode === 'list' && (
-        <div role="tablist" aria-label={t('sidebar_annotations')} className="flex border-b border-gray-200 dark:border-gray-700 px-2">
-          {TAB_KEYS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              role="tab"
-              aria-selected={activeTab === tab}
-              className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative ${
-                activeTab === tab
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              {t({ all: 'sidebar_all', highlight: 'sidebar_highlights', note: 'sidebar_notes', bookmark: 'sidebar_bookmarks' }[tab])}
-              {counts[tab] > 0 && (
-                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] ${
-                  activeTab === tab
-                    ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                }`}>
-                  {counts[tab]}
-                </span>
-              )}
-              {activeTab === tab && (
-                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-500 rounded-full" />
-              )}
-            </button>
-          ))}
-        </div>
+          <FilterTabs
+            activeTab={activeTab}
+            counts={counts}
+            onTabChange={setActiveTab}
+          />
         )}
 
-        {/* Bulk action bar */}
         {viewMode === 'list' && bulkMode && (
-          <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200/50 dark:border-amber-900/30 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
-                {t('sidebar_selected', { count: selectedIds.size })}
-              </span>
-              <button
-                onClick={selectedIds.size === filtered.length ? deselectAll : selectAll}
-                className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline"
-              >
-                {selectedIds.size === filtered.length ? t('sidebar_deselect_all') : t('sidebar_select_all')}
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              {selectedIds.size > 0 && (
-                <button
-                  onClick={bulkDelete}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors active:scale-95"
-                >
-                  {t('sidebar_delete_count', { count: selectedIds.size })}
-                </button>
-              )}
-              <button
-                onClick={exitBulkMode}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                {t('sidebar_done')}
-              </button>
-            </div>
-          </div>
+          <BulkActionBar
+            selectedCount={selectedIds.size}
+            totalCount={filtered.length}
+            onBulkDelete={bulkDelete}
+            onSelectAll={selectAll}
+            onDeselectAll={deselectAll}
+            onExitBulkMode={exitBulkMode}
+          />
         )}
 
-        {/* Annotations content */}
+        {/* Content */}
         {viewMode === 'outline' ? (
           <OutlinePanel
             annotations={filtered}

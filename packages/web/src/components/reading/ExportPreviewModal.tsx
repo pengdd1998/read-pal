@@ -4,44 +4,16 @@ import { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
-import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
-
-type ExportFormat = 'markdown' | 'json' | 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib' | 'study_guide';
-
-interface FormatOption {
-  value: ExportFormat;
-  label: string;
-  description: string;
-  icon: string;
-  category: 'basic' | 'discussion' | 'citation' | 'research';
-}
-
-const FORMATS: FormatOption[] = [
-  { value: 'markdown', label: 'export_format_markdown', description: 'export_format_markdown_desc', icon: 'M', category: 'basic' },
-  { value: 'json', label: 'export_format_json', description: 'export_format_json_desc', icon: '{ }', category: 'basic' },
-  { value: 'bookclub', label: 'export_format_bookclub', description: 'export_format_bookclub_desc', icon: '📖', category: 'discussion' },
-  { value: 'research', label: 'export_format_research', description: 'export_format_research_desc', icon: '🔬', category: 'research' },
-  { value: 'bibtex', label: 'export_format_bibtex', description: 'export_format_bibtex_desc', icon: 'B', category: 'citation' },
-  { value: 'apa', label: 'export_format_apa', description: 'export_format_apa_desc', icon: 'A', category: 'citation' },
-  { value: 'mla', label: 'export_format_mla', description: 'export_format_mla_desc', icon: 'M', category: 'citation' },
-  { value: 'chicago', label: 'export_format_chicago', description: 'export_format_chicago_desc', icon: 'C', category: 'citation' },
-  { value: 'annotated_bib', label: 'export_format_annotated_bib', description: 'export_format_annotated_bib_desc', icon: 'AB', category: 'citation' },
-  { value: 'study_guide', label: 'export_format_study_guide', description: 'export_format_study_guide_desc', icon: 'SG', category: 'discussion' },
-];
-
-const CATEGORIES = [
-  { key: 'basic' as const, labelKey: 'export_category_basic' },
-  { key: 'discussion' as const, labelKey: 'export_category_discussion' },
-  { key: 'research' as const, labelKey: 'export_category_research' },
-  { key: 'citation' as const, labelKey: 'export_category_citation' },
-];
-
-const TYPE_OPTIONS = [
-  { value: 'highlight', labelKey: 'sidebar_highlights', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' },
-  { value: 'note', labelKey: 'sidebar_notes', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
-  { value: 'bookmark', labelKey: 'sidebar_bookmarks', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' },
-];
+import {
+  type ExportFormat,
+  FORMATS,
+  CATEGORIES,
+  CITATION_FORMATS,
+  SHAREABLE_FORMATS,
+} from './ExportPreviewModal.constants';
+import { ExportFilterPanel } from './ExportFilterPanel';
+import { useExportShareLink } from './useExportShareLink';
 
 interface ExportPreviewModalProps {
   bookId: string;
@@ -52,7 +24,6 @@ interface ExportPreviewModalProps {
 
 export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onClose }: ExportPreviewModalProps) {
   const t = useTranslations('reader');
-  const tc = useTranslations('common');
   const [format, setFormat] = useState<ExportFormat>('bookclub');
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,8 +36,16 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
   const { toast } = useToast();
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  const isCitationFormat = ['bibtex', 'apa', 'mla', 'chicago', 'annotated_bib'].includes(format);
+  const isCitationFormat = CITATION_FORMATS.includes(format);
   const hasActiveFilters = selectedTypes.size < 3 || selectedTag !== '';
+  const canShare = SHAREABLE_FORMATS.includes(format);
+
+  const { shareLink, sharing, handleShareLink } = useExportShareLink({
+    bookId,
+    format,
+    selectedTypes,
+    selectedTag,
+  });
 
   const buildExportUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
@@ -151,40 +130,6 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
     );
   };
 
-  // Shareable link state
-  const [shareLink, setShareLink] = useState<string | null>(null);
-  const [sharing, setSharing] = useState(false);
-
-  const canShare = ['markdown', 'json', 'bookclub', 'research'].includes(format);
-
-  const handleShareLink = async () => {
-    setSharing(true);
-    try {
-      const body: Record<string, string> = { bookId, format };
-      if (selectedTypes.size < 3) body.types = [...selectedTypes].join(',');
-      if (selectedTag) body.tags = selectedTag;
-
-      const res = await api.post<{ token: string; url: string; format: string; title: string }>(
-        '/api/share/export',
-        body,
-      );
-
-      if (res.success && res.data) {
-        const baseUrl = window.location.origin;
-        const fullUrl = `${baseUrl}/api/share/s/${res.data.token}`;
-        setShareLink(fullUrl);
-        await navigator.clipboard.writeText(fullUrl);
-        toast(t('export_link_copied_clipboard_msg'), 'success');
-      } else {
-        toast(t('export_failed_share_link'), 'error');
-      }
-    } catch {
-      toast(t('export_failed_share_link'), 'error');
-    } finally {
-      setSharing(false);
-    }
-  };
-
   return (
     <div
       ref={backdropRef}
@@ -247,71 +192,17 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
 
           {/* Filter toggle (hidden for citation formats) */}
           {!isCitationFormat && (
-            <div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 text-xs font-medium transition-colors ${
-                  hasActiveFilters
-                    ? 'text-amber-600 dark:text-amber-400'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                <svg className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-                {t('export_filters')} {hasActiveFilters ? `(${t('export_filters_active')})` : ''}
-              </button>
-
-              {showFilters && (
-                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
-                  {/* Type filters */}
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('export_include_types')}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {TYPE_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => toggleType(opt.value)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                            selectedTypes.has(opt.value)
-                              ? opt.color + ' ring-1 ring-current/20'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
-                          }`}
-                        >
-                          {t(opt.labelKey)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Tag filter */}
-                  {availableTags.length > 0 && (
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('export_filter_by_tag')}</p>
-                      <select
-                        value={selectedTag}
-                        onChange={(e) => { setSelectedTag(e.target.value); setPreview(null); }}
-                        className="w-full px-3 py-1.5 text-xs bg-surface-0 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
-                      >
-                        <option value="">{t('export_all_tags')}</option>
-                        {availableTags.map((tag) => (
-                          <option key={tag} value={tag}>{tag}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {hasActiveFilters && (
-                    <button
-                      onClick={() => { clearFilters(); setPreview(null); }}
-                      className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      {t('export_clear_filters_btn')}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            <ExportFilterPanel
+              selectedTypes={selectedTypes}
+              selectedTag={selectedTag}
+              availableTags={availableTags}
+              showFilters={showFilters}
+              hasActiveFilters={hasActiveFilters}
+              onToggleType={(type) => { toggleType(type); setPreview(null); }}
+              onSetSelectedTag={(tag) => { setSelectedTag(tag); setPreview(null); }}
+              onToggleShowFilters={() => setShowFilters(!showFilters)}
+              onClearFilters={() => { clearFilters(); setPreview(null); }}
+            />
           )}
 
           {/* Preview area */}

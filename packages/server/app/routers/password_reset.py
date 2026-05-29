@@ -8,10 +8,8 @@ import json
 import logging
 import uuid
 
-import redis.asyncio as aioredis
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import get_redis as _get_redis
 from app.middleware.auth import hash_password

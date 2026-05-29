@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -297,7 +297,7 @@ async def _seed_graph_cache(user_id: UUID, book_id: UUID) -> None:
     """Write pre-built Gatsby graph data into Redis so the knowledge page renders immediately."""
     try:
         from app.core.redis import get_redis
-        from app.services.knowledge_service import GRAPH_KEY_PREFIX as GRAPH_CACHE_PREFIX, GRAPH_TTL as GRAPH_CACHE_TTL
+        from app.services.knowledge_service import GRAPH_KEY_PREFIX as GRAPH_CACHE_PREFIX, _knowledge_cache_ttl
 
         # Build GraphData-compatible dict from pre-defined concepts
         nodes = []
@@ -329,9 +329,9 @@ async def _seed_graph_cache(user_id: UUID, book_id: UUID) -> None:
             'edges': edges,
         }
 
-        cache_key = f'{GRAPH_CACHE_PREFIX}{user_id}:{book_id}'
+        cache_key = f'{GRAPH_CACHE_PREFIX}{user_id}:{book_id}:graph'
         r = get_redis()
-        await r.setex(cache_key, GRAPH_CACHE_TTL, json.dumps(graph_data))
+        await r.setex(cache_key, _knowledge_cache_ttl(), json.dumps(graph_data))
         logger.info('Seeded knowledge graph cache for book %s (%d nodes, %d edges)', book_id, len(nodes), len(edges))
     except Exception:
         logger.warning('Failed to seed knowledge graph cache', exc_info=True)

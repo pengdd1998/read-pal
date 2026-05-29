@@ -95,7 +95,8 @@ class TestTraceWriter:
 class TestLogCallIntegration:
     """Test that _log_call triggers trace persistence."""
 
-    def test_log_call_appends_to_trace_writer(self):
+    @patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+    def test_log_call_appends_to_trace_writer(self, mock_settings):
         with patch.object(_trace_writer.__class__, 'add') as mock_add:
             _log_call(
                 request_id='abc123def456',
@@ -113,7 +114,8 @@ class TestLogCallIntegration:
             assert trace['prompt_tokens'] == 100
             assert trace['estimated_cost_usd'] > 0
 
-    def test_log_call_with_error(self):
+    @patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+    def test_log_call_with_error(self, mock_settings):
         with patch.object(_trace_writer.__class__, 'add') as mock_add:
             _log_call(
                 request_id='err0001',

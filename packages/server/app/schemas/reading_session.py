@@ -52,6 +52,9 @@ class SessionListResponse(BaseModel):
     success: bool = True
     data: list[SessionResponse]
     total: int
+    page: int = 1
+    per_page: int = 50
+    has_more: bool = False
 
 
 class SessionStatsResponse(BaseModel):
