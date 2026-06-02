@@ -79,6 +79,7 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
               const source = nodes.find((n) => n.id === edge.source);
               const target = nodes.find((n) => n.id === edge.target);
               if (!source || !target) return null;
+              if (!Number.isFinite(source.x) || !Number.isFinite(source.y) || !Number.isFinite(target.x) || !Number.isFinite(target.y)) return null;
 
               const isHighlighted = selectedNode && connectedEdges.includes(edge);
               const isDimmed = selectedNode && !isHighlighted;
@@ -100,10 +101,13 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
 
             {/* Nodes */}
             {nodes.map((node) => {
+              const nx = Number.isFinite(node.x) ? node.x : 0;
+              const ny = Number.isFinite(node.y) ? node.y : 0;
+              if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) return null;
               const isSelected = selectedNode?.id === node.id;
               const isConnected = connectedNodeIds.has(node.id);
               const isDimmed = selectedNode && !isConnected;
-              const radius = Math.max(6, Math.min(20, 6 + node.weight * 2));
+              const radius = Math.max(6, Math.min(20, 6 + (node.weight ?? 1) * 2));
               const color = getColor(node.group);
               const freshness = node.freshness ?? 1.0;
               const freshnessOpacity = freshness >= 0.7 ? 1.0 : freshness >= 0.3 ? 0.6 : 0.35;
@@ -120,11 +124,11 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
                   opacity={isDimmed ? 0.3 : freshnessOpacity}
                 >
                   {isSelected && (
-                    <circle cx={node.x} cy={node.y} r={radius + 4} fill="none" stroke={color} strokeWidth={2} strokeDasharray="4 2" />
+                    <circle cx={nx} cy={ny} r={radius + 4} fill="none" stroke={color} strokeWidth={2} strokeDasharray="4 2" />
                   )}
                   <circle
-                    cx={node.x}
-                    cy={node.y}
+                    cx={nx}
+                    cy={ny}
                     r={radius}
                     fill={color}
                     fillOpacity={0.85}
@@ -132,8 +136,8 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
                     strokeWidth={1.5}
                   />
                   <text
-                    x={node.x}
-                    y={node.y + radius + 14}
+                    x={nx}
+                    y={ny + radius + 14}
                     textAnchor="middle"
                     className="text-[10px] fill-gray-700 dark:fill-gray-300 pointer-events-none"
                     fontWeight="500"
