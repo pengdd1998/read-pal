@@ -24,10 +24,10 @@ def _max_in_memory() -> int:
     return get_settings().cache_llm_max_entries
 
 
-def _cache_key(messages: list[BaseMessage], label: str) -> str:
-    """Deterministic cache key from messages + label + model version."""
-    settings = get_settings()
-    parts = [label, settings.default_model]
+def _cache_key(messages: list[BaseMessage], label: str, model: str | None = None) -> str:
+    """Deterministic cache key from messages + label + model."""
+    model_name = model or get_settings().default_model
+    parts = [label, model_name]
     for msg in messages:
         parts.append(msg.content)
     digest = hashlib.sha256('|'.join(parts).encode()).hexdigest()[:16]

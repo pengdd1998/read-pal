@@ -1,8 +1,30 @@
+import json
 import re
 from functools import lru_cache
+from typing import Any
 
-from pydantic import computed_field
+from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class ProviderConfig(BaseModel):
+    """Configuration for a single LLM provider."""
+
+    name: str
+    base_url: str
+    api_key: str
+    models: dict[str, str]  # {"default": "model-name", "fallback": "model-name"}
+    priority: int = 1  # lower = preferred
+    cost_weight: float = 0.5  # used for "cheapest" routing
+    max_rpm: int = 0  # 0 = unlimited
+
+    @property
+    def default_model(self) -> str:
+        return self.models.get('default', '')
+
+    @property
+    def fallback_model(self) -> str | None:
+        return self.models.get('fallback')
 
 
 def _parse_duration(value: str) -> int:
@@ -57,6 +79,10 @@ class Settings(BaseSettings):
     circuit_reset_timeout_seconds: int
     max_embedding_calls: int
     embedding_enabled: bool = True
+
+    # Multi-provider LLM routing
+    llm_providers: str = ''  # JSON array of ProviderConfig dicts
+    llm_feature_routing: str = '{}'  # JSON dict: feature -> strategy
 
     # JWT
     jwt_secret: str
@@ -130,6 +156,41 @@ class Settings(BaseSettings):
     def is_dev(self) -> bool:
         """Whether running in development mode."""
         return self.app_env == 'development'
+
+    @computed_field
+    @property
+    def provider_configs(self) -> list[ProviderConfig]:
+        """Parse LLM_PROVIDERS JSON; fall back to legacy GLM config."""
+        if self.llm_providers.strip():
+            try:
+                raw: list[dict[str, Any]] = json.loads(self.llm_providers)
+                return [ProviderConfig(**p) for p in raw]
+            except (json.JSONDecodeError, Exception):
+                pass
+        # Legacy single-provider fallback
+        models: dict[str, str] = {'default': self.default_model}
+        if self.fallback_model:
+            models['fallback'] = self.fallback_model
+        return [ProviderConfig(
+            name='glm',
+            base_url=self.glm_base_url,
+            api_key=self.glm_api_key,
+            models=models,
+            priority=1,
+            cost_weight=0.3,
+            max_rpm=0,
+        )]
+
+    @computed_field
+    @property
+    def feature_routing(self) -> dict[str, str]:
+        """Parse LLM_FEATURE_ROUTING JSON."""
+        if self.llm_feature_routing.strip():
+            try:
+                return json.loads(self.llm_feature_routing)
+            except json.JSONDecodeError:
+                pass
+        return {}
 
     @computed_field
     @property

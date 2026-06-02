@@ -192,11 +192,48 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         return_value=type('Resp', (), {'content': '{"result": "mocked"}'})()
     )
 
+    # Mock provider registry to prevent real provider initialization
+    mock_state = type('ProviderState', (), {
+        'config': type('Config', (), {
+            'name': 'mock',
+            'default_model': 'mock-model',
+            'fallback_model': None,
+            'api_key': 'test',
+            'base_url': 'http://mock',
+            'models': {'default': 'mock-model'},
+            'priority': 1,
+            'cost_weight': 0.5,
+            'max_rpm': 0,
+        })(),
+        'circuit': type('Circuit', (), {
+            'is_open': False,
+            'allow_request': AsyncMock(return_value=True),
+            'record_success': AsyncMock(),
+            'record_failure': AsyncMock(),
+        })(),
+        'pool': {},
+        'call_count': 0,
+        'window_start': 0.0,
+        'avg_latency_ms': 0.0,
+        'rpm_available': lambda self: True,
+        'increment_rpm': lambda self: None,
+        'update_latency': lambda self, *a: None,
+    })()
+
+    mock_registry = type('Registry', (), {
+        'get_provider': lambda self, feature=None: mock_state,
+        'get_provider_by_name': lambda self, name: mock_state,
+        'all_providers': lambda self: [mock_state],
+        'next_provider_after': lambda self, name: None,
+        'record_latency': lambda self, *a: None,
+    })()
+
     with (
         patch('app.middleware.auth._get_redis', return_value=mock_redis),
         patch('app.routers.password_reset._get_redis', return_value=mock_redis),
         patch('redis.asyncio.from_url', return_value=mock_redis),
         patch('app.services.llm.get_llm', return_value=mock_llm),
+        patch('app.services.llm.registry.get_registry', return_value=mock_registry),
     ):
         async with AsyncClient(
             transport=ASGITransport(app=app),

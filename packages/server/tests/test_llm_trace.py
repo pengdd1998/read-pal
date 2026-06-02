@@ -100,7 +100,7 @@ class TestLogCallIntegration:
         with patch.object(_trace_writer.__class__, 'add') as mock_add:
             _log_call(
                 request_id='abc123def456',
-                model='glm-4.7-flash',
+                model='deepseek-chat',
                 label='Companion_stream',
                 latency_ms=250,
                 usage={'prompt_tokens': 100, 'completion_tokens': 200, 'total_tokens': 300},
@@ -109,7 +109,7 @@ class TestLogCallIntegration:
             mock_add.assert_called_once()
             trace = mock_add.call_args[0][0]
             assert trace['request_id'] == 'abc123def456'
-            assert trace['model'] == 'glm-4.7-flash'
+            assert trace['model'] == 'deepseek-chat'
             assert trace['success'] is True
             assert trace['prompt_tokens'] == 100
             assert trace['estimated_cost_usd'] > 0

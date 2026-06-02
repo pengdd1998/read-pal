@@ -37,6 +37,7 @@ class LLMCallTrace(Base):
     success: Mapped[bool] = mapped_column(Boolean, nullable=False)
     fallback_used: Mapped[bool] = mapped_column(Boolean, default=False)
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    provider: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=text('now()'),

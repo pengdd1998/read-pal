@@ -1,10 +1,10 @@
-"""LLM service — resilient wrapper around langchain-openai for GLM.
+"""LLM service — resilient wrapper around langchain-openai for multi-provider routing.
 
 This package re-exports all public and internal symbols so that existing
 imports like ``from app.services.llm import get_llm, circuit`` continue
 to work without changes.
 
-Features: connection pooling, circuit breaker, multi-model fallback,
+Features: multi-provider routing, connection pooling, per-provider circuit breaker,
 health check, timeout management, response caching, and observability
 (token tracking, latency, cost estimation, request tracing).
 """
@@ -53,7 +53,7 @@ from app.services.llm.health import (
     check_llm_health,
 )
 
-# -- Safe invoke (circuit breaker, fallback, caching, JSON parsing) --
+# -- Safe invoke (circuit breaker, multi-provider fallback, caching, JSON parsing) --
 from app.services.llm.safe_invoke import (
     _RATE_LIMIT_BACKOFFS,
     _invoke_with_circuit,
@@ -69,6 +69,14 @@ from app.services.llm.text import (
     _validate_parsed,
 )
 
+# -- Provider registry (multi-provider routing) --
+from app.services.llm.registry import (
+    ProviderRegistry,
+    ProviderState,
+    get_registry,
+    reset_registry,
+)
+
 __all__ = [
     # Public API
     'get_llm',
@@ -79,6 +87,11 @@ __all__ = [
     'check_llm_health',
     'safe_llm_call',
     'safe_llm_invoke',
+    # Provider registry
+    'ProviderRegistry',
+    'ProviderState',
+    'get_registry',
+    'reset_registry',
     # Observability
     '_log_call',
     '_extract_usage',

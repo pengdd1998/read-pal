@@ -201,14 +201,25 @@ class TestStreamingErrors:
         mock_db.execute = AsyncMock()
         mock_db.flush = AsyncMock()
 
+        mock_circuit = AsyncMock()
+        mock_circuit.allow_request = AsyncMock(return_value=False)
+        mock_circuit.is_open = True
+
+        mock_state = MagicMock()
+        mock_state.config.name = 'mock'
+        mock_state.config.default_model = 'mock-model'
+        mock_state.circuit = mock_circuit
+
+        mock_registry = MagicMock()
+        mock_registry.get_provider = MagicMock(return_value=mock_state)
+        mock_registry.next_provider_after = MagicMock(return_value=None)
+
         with (
             patch('app.services.companion.context._load_book', return_value=mock_book),
             patch('app.services.companion.context._load_history', return_value=[]),
             patch('app.services.companion.context._load_annotations_context', return_value=''),
-            patch('app.services.companion.streaming.circuit') as mock_circuit,
+            patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
         ):
-            mock_circuit.allow_request = AsyncMock(return_value=False)
-
             chunks = []
             async for chunk in stream_chat(
                 mock_db, user_id, book_id, 'test message',
@@ -241,19 +252,29 @@ class TestStreamingErrors:
 
         mock_llm.astream = mock_astream
 
+        mock_circuit = AsyncMock()
+        mock_circuit.allow_request = AsyncMock(return_value=True)
+        mock_circuit.record_success = AsyncMock()
+        mock_circuit.record_failure = AsyncMock()
+        mock_circuit.is_open = False
+
+        mock_state = MagicMock()
+        mock_state.config.name = 'mock'
+        mock_state.config.default_model = 'test-model'
+        mock_state.circuit = mock_circuit
+
+        mock_registry = MagicMock()
+        mock_registry.get_provider = MagicMock(return_value=mock_state)
+        mock_registry.next_provider_after = MagicMock(return_value=None)
+        mock_registry.record_latency = MagicMock()
+
         with (
             patch('app.services.companion.context._load_book', return_value=mock_book),
             patch('app.services.companion.context._load_history', return_value=[]),
             patch('app.services.companion.context._load_annotations_context', return_value=''),
             patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
-            patch('app.services.companion.streaming.circuit') as mock_circuit,
-            patch('app.config.get_settings') as mock_settings,
+            patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
         ):
-            mock_circuit.allow_request = AsyncMock(return_value=True)
-            mock_circuit.record_success = AsyncMock()
-            mock_circuit.record_failure = AsyncMock()
-            mock_settings.return_value.default_model = 'test-model'
-            mock_settings.return_value.fallback_model = 'test-fallback'
 
             chunks = []
             async for chunk in stream_chat(
@@ -286,19 +307,29 @@ class TestStreamingErrors:
 
         mock_llm.astream = mock_astream
 
+        mock_circuit = AsyncMock()
+        mock_circuit.allow_request = AsyncMock(return_value=True)
+        mock_circuit.record_success = AsyncMock()
+        mock_circuit.is_open = False
+
+        mock_state = MagicMock()
+        mock_state.config.name = 'mock'
+        mock_state.config.default_model = 'test-model'
+        mock_state.circuit = mock_circuit
+
+        mock_registry = MagicMock()
+        mock_registry.get_provider = MagicMock(return_value=mock_state)
+        mock_registry.next_provider_after = MagicMock(return_value=None)
+        mock_registry.record_latency = MagicMock()
+
         with (
             patch('app.services.companion.context._load_book', return_value=mock_book),
             patch('app.services.companion.context._load_history', return_value=[]),
             patch('app.services.companion.context._load_annotations_context', return_value=''),
             patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
-            patch('app.services.companion.streaming.circuit') as mock_circuit,
-            patch('app.config.get_settings') as mock_settings,
+            patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
             patch('app.services.companion.streaming._save_message', new_callable=AsyncMock) as mock_save,
         ):
-            mock_circuit.allow_request = AsyncMock(return_value=True)
-            mock_circuit.record_success = AsyncMock()
-            mock_settings.return_value.default_model = 'test-model'
-            mock_settings.return_value.fallback_model = 'test-fallback'
 
             chunks = []
             async for chunk in stream_chat(
