@@ -147,10 +147,19 @@ async def generate_flashcards(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={'code': 'INVALID_INPUT', 'message': t('errors.book_id_required', lang)},
         )
+    try:
+        cards = await flashcard_service.generate_flashcards(
+            db, UUID(user['id']), UUID(book_id),
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+        ) from exc
     return {
         'success': True,
         'data': {
-            'message': t('errors.flashcard_generation_queued', lang),
-            'book_id': str(book_id),
+            'generated': len(cards),
+            'items': [_serialize_card(c) for c in cards],
         },
     }

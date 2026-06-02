@@ -150,7 +150,7 @@ export function FlashcardStudy({
       {showAnswer && (
         <div className="animate-slide-up">
           <p className="text-xs text-gray-400 text-center mb-3">{t('how_well')} <span className="hidden sm:inline text-gray-300">{t('keys_hint')}</span></p>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {RATINGS.map(({ value, labelKey, hint, color }) => (
               <button
                 key={value}
@@ -168,7 +168,7 @@ export function FlashcardStudy({
 
       {/* Stats footer */}
       <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800">
-        <div className="grid grid-cols-3 gap-3 text-center max-sm:gap-2 max-sm:text-[10px]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center max-sm:gap-2 max-sm:text-[10px]">
           <div>
             <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{stats.due}</div>
             <div className="text-[10px] text-gray-400 uppercase tracking-wide">{t('due_label')}</div>

@@ -127,7 +127,7 @@ function AuthForm() {
               ? t('login_subtitle_alt')
               : t('register_subtitle_alt')}
           </p>
-          <div className="mt-14 grid grid-cols-3 gap-8">
+          <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
               { emoji: '📖', label: 'Smart Reader' },
               { emoji: '🤖', label: 'AI Companion' },

@@ -39,6 +39,7 @@ SECTION_SCHEMAS: dict[str, type] = {
     'encounter': EncounterData,
     'highlights': HighlightClusterData,
     'recommendations': GroundedRecommendationData,
+    # conversations and annotations_woven use raw JSON (no schema validation)
 }
 
 
@@ -85,6 +86,35 @@ def _prepare_section_data(
             'top_themes': ', '.join(enriched_data.get('synthesis_themes', [])[:5]),
             'concept_list': ', '.join(enriched_data.get('concepts', [])[:10]),
             'existing_books': ', '.join(enriched_data.get('existing_books', [])[:15]),
+        }
+
+    elif section_type == 'conversations':
+        chats = enriched_data.get('conversations', [])
+        excerpts: list[str] = []
+        for msg in chats[:15]:
+            role = msg.get('role', '')
+            content = msg.get('content', '')[:150]
+            if role == 'user' and content:
+                excerpts.append(f'Reader asked: "{content}"')
+            elif role == 'assistant' and content:
+                excerpts.append(f'AI replied: "{content}"')
+        return {
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'chat_count': len(chats),
+            'chat_excerpts': '\n'.join(excerpts[:12]),
+        }
+
+    elif section_type == 'annotations_woven':
+        notes = enriched_data.get('notes', [])
+        notes_text = '\n'.join(
+            f'- "{n.get("note", n.get("content", ""))[:150]}"'
+            for n in notes[:15]
+            if n.get('note') or n.get('content')
+        )
+        return {
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'note_count': len(notes),
+            'notes_data': notes_text,
         }
 
     return {}
@@ -162,8 +192,6 @@ def _placeholder_section(section_type: str) -> dict[str, Any]:
     """Return a placeholder section for Phase 2 sections."""
     section_names = {
         'attention_map': 'Map of Your Attention',
-        'annotations_woven': 'Your Annotations, Woven',
-        'conversations': 'Conversations That Shifted Your Thinking',
         'concept_web': 'Your Concept Web',
         'what_stuck': 'What Stuck',
         'threads': 'Threads Between Books',

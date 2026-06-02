@@ -57,8 +57,8 @@ def _get_pdf_outlines(reader: 'PdfReader') -> list[dict]:
                 page_num = None
                 try:
                     page_num = reader.get_destination_page_number(item)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning('pdf_parser.outline_page_number_failed', error=str(exc)[:200])
                 if title and page_num is not None:
                     results.append({
                         'title': title,

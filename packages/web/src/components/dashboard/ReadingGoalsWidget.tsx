@@ -39,7 +39,7 @@ export const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
     return (
       <div className="card">
         <SkeletonPulse className="h-4 w-28 mb-3" />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <SkeletonPulse className="h-16 w-full" />
           <SkeletonPulse className="h-16 w-full" />
         </div>
@@ -61,7 +61,7 @@ export const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
   return (
     <div className="card">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t('reading_goals_title')}</h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="text-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center justify-center gap-1">
             {goals.onTrack ? (

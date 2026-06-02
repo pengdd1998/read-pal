@@ -49,8 +49,8 @@ async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]
                 cover_uri = extract_cover(
                     zf, opf_data.get('manifest', {}), opf_data, opf_path,
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning('epub_parser.cover_image_extraction_failed', error=str(exc)[:200])
 
     _store_metadata(metadata, cover_uri)
     return chapters, full_text_parts, max(1, len(chapters))

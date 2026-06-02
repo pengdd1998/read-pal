@@ -42,7 +42,7 @@ export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: Fl
 
       {/* Total stats */}
       <div className="card mb-4">
-        <div className="grid grid-cols-3 gap-3 text-center max-sm:gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center max-sm:gap-2">
           <div>
             <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{totalDue}</div>
             <div className="text-[10px] text-gray-400 uppercase tracking-wide">{t('due_label')}</div>

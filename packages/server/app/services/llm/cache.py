@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
+
+logger = logging.getLogger('read-pal.llm.cache')
 
 from langchain_core.messages import BaseMessage
 
@@ -65,5 +68,5 @@ async def _cache_set(key: str, value: str) -> None:
         from app.core.redis import get_redis as _get_redis
         r = _get_redis()
         await r.setex(key, ttl, value)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug('llm.cache_write_failed', error=str(exc)[:200])

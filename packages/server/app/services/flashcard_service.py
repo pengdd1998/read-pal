@@ -1,19 +1,22 @@
 """Flashcard business logic — SM-2 spaced repetition algorithm."""
 
-import logging
+import json
 from datetime import timedelta
 from uuid import UUID
 
-from app.utils import utcnow
-
+import structlog
+from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.flashcard import Flashcard
 from app.schemas.flashcard import FlashcardCreate
+from app.services.llm import safe_llm_call
+from app.utils import utcnow
 
-logger = logging.getLogger('read-pal.flashcards')
+logger = structlog.get_logger('read-pal.flashcards')
 
 DEFAULT_EASE_FACTOR = 2.5
 MIN_EASE_FACTOR = 1.3
@@ -180,3 +183,96 @@ async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
         'totalCards': sum(d['total'] for d in decks),
         'totalDue': sum(d['due'] for d in decks),
     }
+
+
+async def generate_flashcards(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    count: int = 5,
+) -> list[Flashcard]:
+    """Generate flashcards from a book's annotations via LLM."""
+    count = max(1, min(count, 10))
+
+    book_result = await db.execute(
+        select(Book).where(Book.id == book_id, Book.user_id == user_id),
+    )
+    book = book_result.scalar_one_or_none()
+    if not book:
+        raise ValueError(f'Book {book_id} not found for user {user_id}')
+
+    ann_result = await db.execute(
+        select(Annotation)
+        .where(
+            Annotation.book_id == book_id,
+            Annotation.user_id == user_id,
+            Annotation.type.in_(['highlight', 'note']),
+        )
+        .order_by(Annotation.created_at.desc())
+        .limit(20),
+    )
+    annotations = list(ann_result.scalars().all())
+    if not annotations:
+        raise ValueError('No highlights or notes found for this book')
+
+    annotation_text = '\n'.join(
+        f'- [{a.type}] {a.content[:200]}' + (f' (note: {a.note[:100]})' if a.note else '')
+        for a in annotations[:15]
+    )
+
+    system_prompt = (
+        'You are a study assistant. Generate flashcard Q&A pairs from the reading highlights below. '
+        'Return a JSON array of objects with "question" and "answer" fields. '
+        f'Generate exactly {count} cards. Questions should test understanding, not just recall. '
+        'Answers should be concise (1-3 sentences).'
+    )
+    human_prompt = (
+        f'Book: "{book.title}" by {book.author or "Unknown"}\n\n'
+        f'Highlights and notes:\n{annotation_text}'
+    )
+
+    result = await safe_llm_call(
+        [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=human_prompt),
+        ],
+        fallback='[]',
+        log_label='Flashcard generation',
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
+
+    cards: list[Flashcard] = []
+    try:
+        parsed = json.loads(result or '[]')
+        if isinstance(parsed, list):
+            for item in parsed[:count]:
+                q = item.get('question', '').strip()
+                a = item.get('answer', '').strip()
+                if not q or not a:
+                    continue
+                card = Flashcard(
+                    user_id=user_id,
+                    book_id=book_id,
+                    question=q[:2000],
+                    answer=a[:5000],
+                    ease_factor=DEFAULT_EASE_FACTOR,
+                    interval=0,
+                    repetition_count=0,
+                    next_review_at=utcnow(),
+                )
+                db.add(card)
+                cards.append(card)
+            if cards:
+                await db.flush()
+                for c in cards:
+                    await db.refresh(c)
+    except (json.JSONDecodeError, AttributeError) as exc:
+        logger.warning('flashcard.parse_failed', error=str(exc)[:200])
+
+    logger.info(
+        'flashcard.generate.completed',
+        book_id=str(book_id),
+        generated=len(cards),
+    )
+    return cards

@@ -335,6 +335,38 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
         ),
         output_format='json',
     ),
+    'conversations': PromptTemplate(
+        key='mirror.section.conversations',
+        version=1,
+        template=(
+            'Write the CONVERSATIONS THAT SHIFTED YOUR THINKING section. '
+            'The reader had {chat_count} AI chat exchanges while reading "{book_title}". '
+            'Key conversation excerpts: {chat_excerpts}. '
+            'Identify 2-4 "breakthrough moments" where the reader\'s understanding shifted. '
+            'For each, write a short narrative paragraph in second person describing the insight. '
+            'Reference specific questions the reader asked and the ideas that clicked. '
+            'Return JSON: {{"breakthroughs": [{{"title": "...", "narrative": "...", '
+            '"reader_question": "...", "insight": "..."}}], '
+            '"summary": "2-3 sentence overview of how conversation shaped understanding"}}'
+        ),
+        output_format='json',
+    ),
+    'annotations_woven': PromptTemplate(
+        key='mirror.section.annotations_woven',
+        version=1,
+        template=(
+            'Write the YOUR ANNOTATIONS, WOVEN section. '
+            'The reader made {note_count} notes in "{book_title}". '
+            'Notes with context: {notes_data}. '
+            'Weave the reader\'s notes into a coherent narrative showing their intellectual arc. '
+            'Group into phases: "first impressions", "deepening", and "synthesis". '
+            'Use phrases like "At first, you wondered..." then "Later, you realized..." '
+            'Return JSON: {{"phases": [{{"name": "...", "narrative": "...", '
+            '"key_notes": ["quote1", "quote2"]}}], '
+            '"arc_summary": "1-2 sentences tracing the intellectual journey"}}'
+        ),
+        output_format='json',
+    ),
 }
 
 # ---------------------------------------------------------------------------

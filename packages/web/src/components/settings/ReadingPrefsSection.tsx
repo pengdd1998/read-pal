@@ -26,7 +26,7 @@ function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) 
       {/* Theme */}
       <div>
         <label className="block text-sm font-medium mb-2">{t('theme_label')}</label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {(['system', 'light', 'dark'] as const).map((v) => (
             <button
               key={v}
@@ -72,7 +72,7 @@ function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) 
       {/* Font Family */}
       <div>
         <label className="block text-sm font-medium mb-2">{t('font_family_label')}</label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {(['Inter', 'Georgia', 'Merriweather', 'system-ui'] as const).map((f) => (
             <button
               key={f}
@@ -190,7 +190,7 @@ function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProp
       {/* Frequency */}
       <div>
         <label className="block text-sm font-medium mb-2">{t('interaction_frequency')}</label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {([
             ['minimal', 'freq_minimal'],
             ['normal', 'freq_normal'],

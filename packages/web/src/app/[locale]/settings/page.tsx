@@ -125,7 +125,7 @@ export default function SettingsPage() {
             </div>
             <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
               <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-24 animate-pulse" />
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {Array.from({ length: 3 }).map((_, j) => (
                   <div key={j} className="h-10 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
                 ))}

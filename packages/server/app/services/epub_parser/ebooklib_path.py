@@ -225,6 +225,6 @@ def _extract_cover(book) -> str | None:
                     mime = IMAGE_MIME_MAP.get(ext, 'image/jpeg')
                     b64 = base64.b64encode(data).decode('ascii')
                     return f'data:{mime};base64,{b64}'
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning('epub_parser.image_embedding_failed', error=str(exc)[:200])
     return None

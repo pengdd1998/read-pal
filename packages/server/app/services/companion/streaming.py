@@ -184,8 +184,8 @@ async def stream_chat(
                 await _save_message(db, user_id, book_id, 'assistant', safe)
                 cache_hit = True
                 return
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug('companion.streaming.cache_check_failed', error=str(exc)[:200])
 
     collected_parts: list[str] = []
     request_id = uuid.uuid4().hex[:12]
@@ -262,8 +262,8 @@ async def stream_chat(
                 from app.services.llm import _cache_key, _cache_set
                 cache_key = _cache_key(messages, 'companion_stream')
                 await _cache_set(cache_key, assistant_content)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug('companion.streaming.cache_write_failed', error=str(exc)[:200])
 
         await _save_message(db, user_id, book_id, 'user', message)
         if assistant_content:

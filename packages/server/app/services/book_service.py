@@ -141,8 +141,8 @@ async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
         cached = await redis.get(cache_key)
         if cached:
             return json.loads(cached)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug('book_service.cache_read_miss', error=str(exc)[:200])
 
     from sqlalchemy import case
 
@@ -173,8 +173,8 @@ async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
     try:
         redis = get_redis()
         await redis.setex(cache_key, 300, json.dumps(result))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug('book_service.cache_write_failed', error=str(exc)[:200])
 
     return result
 

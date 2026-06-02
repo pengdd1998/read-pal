@@ -111,7 +111,7 @@ export function ShareReadingCard() {
             </div>
 
             {/* Stats grid */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-xl">
                 <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.booksCompleted}</div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('books')}</div>

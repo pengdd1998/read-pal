@@ -268,8 +268,8 @@ async def get_all_challenges(
         cached = await redis.get(cache_key)
         if cached:
             return json.loads(cached)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug('challenge_service.cache_read_miss', error=str(exc)[:200])
 
     result = list(await asyncio.gather(
         get_daily_reading(db, user_id),
@@ -283,7 +283,7 @@ async def get_all_challenges(
     try:
         redis = get_redis()
         await redis.setex(cache_key, 300, json.dumps(result))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug('challenge_service.cache_write_failed', error=str(exc)[:200])
 
     return result

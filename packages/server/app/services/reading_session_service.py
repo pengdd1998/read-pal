@@ -208,8 +208,8 @@ async def get_session_stats(db: AsyncSession, user_id: str) -> dict:
         cached = await redis.get(_stats_cache_key(user_id))
         if cached:
             return json.loads(cached)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug('reading_session.cache_read_miss', error=str(exc)[:200])
 
     row = (await db.execute(
         select(
@@ -232,8 +232,8 @@ async def get_session_stats(db: AsyncSession, user_id: str) -> dict:
     try:
         redis = get_redis()
         await redis.setex(_stats_cache_key(user_id), 300, json.dumps(result))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug('reading_session.cache_write_failed', error=str(exc)[:200])
 
     return result
 
