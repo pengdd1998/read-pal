@@ -262,6 +262,13 @@ async def get_current_user(
     }
 
 
+async def get_current_user_id(
+    user: dict[str, Any] = Depends(get_current_user),
+) -> uuid.UUID:
+    """Return the authenticated user's ID as a UUID directly."""
+    return uuid.UUID(user['id'])
+
+
 async def get_optional_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     db: AsyncSession = Depends(get_db),

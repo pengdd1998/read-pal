@@ -5,7 +5,7 @@ import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';
 import { QuoteCard } from './QuoteCard';
 import { TagPicker } from './TagPicker';
-import { hapticMedium } from '@/hooks/useHaptics';
+import { hapticMedium } from '@/lib/haptics';
 
 interface MobileSelectionToolbarProps {
   text: string;

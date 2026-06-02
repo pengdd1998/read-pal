@@ -13,7 +13,7 @@ export function BookmarkToggle({ isBookmarked, onToggle }: BookmarkToggleProps) 
   return (
     <button
       onClick={onToggle}
-      className={`p-2 rounded-lg transition-all duration-150 active:scale-110 ${
+      className={`p-2 rounded-lg transition-all duration-150 active:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 ${
         isBookmarked
           ? 'text-amber-500 hover:text-amber-600'
           : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'

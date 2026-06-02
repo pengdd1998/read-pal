@@ -29,7 +29,7 @@ export function CompanionNudge() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-24 right-6 z-10 animate-fade-in max-w-[220px]">
+    <div className="fixed bottom-24 right-6 z-10 animate-fade-in max-w-[220px]" role="status" aria-live="polite">
       <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-900/30 dark:to-emerald-900/30 rounded-xl border border-teal-200/60 dark:border-teal-800/40 p-3 shadow-lg">
         <div className="flex items-start gap-2">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center flex-shrink-0">
@@ -41,8 +41,8 @@ export function CompanionNudge() {
             <p className="text-xs font-medium text-teal-800 dark:text-teal-200">{t('companion_nudge_title')}</p>
             <p className="text-[10px] text-teal-600/70 dark:text-teal-400/60 mt-0.5">{t('companion_nudge_desc')}</p>
           </div>
-          <button onClick={handleDismiss} className="text-teal-400 hover:text-teal-600 dark:hover:text-teal-300 transition-colors flex-shrink-0 -mt-0.5" aria-label={t('dismiss_label')}>
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <button onClick={handleDismiss} className="text-teal-400 hover:text-teal-600 dark:hover:text-teal-300 transition-colors flex-shrink-0 -mt-0.5 p-1 min-w-[32px] min-h-[32px] flex items-center justify-center" aria-label={t('dismiss_label')}>
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

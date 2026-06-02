@@ -189,3 +189,5 @@ def _user_key(request: Request) -> str:
 chat_limiter = Depends(_make_rate_limit_dependency(100, 60, _user_key))
 stream_limiter = Depends(_make_rate_limit_dependency(60, 60, _user_key))
 ai_heavy_limiter = Depends(_make_rate_limit_dependency(30, 60, _user_key))
+api_limiter = Depends(_make_rate_limit_dependency(120, 60, _user_key))
+write_limiter = Depends(_make_rate_limit_dependency(60, 60, _user_key))

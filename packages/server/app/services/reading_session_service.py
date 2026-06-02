@@ -1,5 +1,6 @@
 """Business logic for reading session operations."""
 
+import json
 import logging
 from decimal import Decimal
 from uuid import UUID
@@ -14,6 +15,10 @@ from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import SessionCreate, SessionUpdate
 
 logger = logging.getLogger('read-pal.sessions')
+
+
+def _stats_cache_key(uid: str) -> str:
+    return f'stats:sessions:{uid}'
 
 
 async def create_session(
@@ -195,49 +200,42 @@ async def get_session(
 
 
 async def get_session_stats(db: AsyncSession, user_id: str) -> dict:
-    """Return aggregate reading session statistics."""
-    total_result = await db.execute(
-        select(func.count()).select_from(ReadingSession).where(
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    total_sessions = total_result.scalar() or 0
+    """Return aggregate reading session statistics (cached 5 min, single query)."""
+    from app.core.redis import get_redis
 
-    duration_result = await db.execute(
-        select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    total_duration = duration_result.scalar() or 0
+    try:
+        redis = get_redis()
+        cached = await redis.get(_stats_cache_key(user_id))
+        if cached:
+            return json.loads(cached)
+    except Exception:
+        pass
 
-    pages_result = await db.execute(
-        select(func.coalesce(func.sum(ReadingSession.pages_read), 0)).where(
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    total_pages_read = pages_result.scalar() or 0
+    row = (await db.execute(
+        select(
+            func.count().label('sessions'),
+            func.coalesce(func.sum(ReadingSession.duration), 0).label('duration'),
+            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
+            func.coalesce(func.sum(ReadingSession.highlights), 0).label('highlights'),
+            func.coalesce(func.sum(ReadingSession.notes), 0).label('notes'),
+        ).where(ReadingSession.user_id == user_id)
+    )).one()
 
-    highlights_result = await db.execute(
-        select(func.coalesce(func.sum(ReadingSession.highlights), 0)).where(
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    total_highlights = highlights_result.scalar() or 0
-
-    notes_result = await db.execute(
-        select(func.coalesce(func.sum(ReadingSession.notes), 0)).where(
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    total_notes = notes_result.scalar() or 0
-
-    return {
-        'total_sessions': int(total_sessions),
-        'total_duration': int(total_duration),
-        'total_pages_read': int(total_pages_read),
-        'total_highlights': int(total_highlights),
-        'total_notes': int(total_notes),
+    result = {
+        'total_sessions': int(row.sessions),
+        'total_duration': int(row.duration),
+        'total_pages_read': int(row.pages),
+        'total_highlights': int(row.highlights),
+        'total_notes': int(row.notes),
     }
+
+    try:
+        redis = get_redis()
+        await redis.setex(_stats_cache_key(user_id), 300, json.dumps(result))
+    except Exception:
+        pass
+
+    return result
 
 
 async def heartbeat_session(

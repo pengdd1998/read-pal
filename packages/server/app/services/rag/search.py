@@ -23,7 +23,10 @@ async def _semantic_chapter_search(
     if query_emb is None:
         return []
 
-    emb_literal = '[' + ','.join(str(v) for v in query_emb) + ']'
+    emb_literal = '[' + ','.join(
+        ('0.0' if v != v or abs(v) == float('inf') else str(v))
+        for v in query_emb
+    ) + ']'
     distance_threshold = 0.7  # 1 - similarity_threshold(0.3)
 
     # Build spoiler-prevention WHERE clause

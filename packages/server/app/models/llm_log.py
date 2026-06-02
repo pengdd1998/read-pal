@@ -20,6 +20,7 @@ class LLMLog(Base):
         Index('ix_llm_logs_user_created', 'user_id', 'created_at'),
         Index('ix_llm_logs_book_created', 'book_id', 'created_at'),
         Index('ix_llm_logs_label_created', 'label', 'created_at'),
+        Index('ix_llm_logs_user_label_created', 'user_id', 'label', 'created_at'),
     )
 
     id: Mapped[UUID] = mapped_column(

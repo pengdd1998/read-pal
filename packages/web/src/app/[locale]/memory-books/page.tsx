@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -90,8 +90,10 @@ export default function MemoryBooksPage() {
     }
   };
 
-  const existingBookIds = new Set(memoryBooks.map((mb) => mb.bookId));
-  const eligibleBooks = books.filter((b) => !existingBookIds.has(b.id));
+  const eligibleBooks = useMemo(() => {
+    const existingBookIds = new Set(memoryBooks.map((mb) => mb.bookId));
+    return books.filter((b) => !existingBookIds.has(b.id));
+  }, [memoryBooks, books]);
 
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;

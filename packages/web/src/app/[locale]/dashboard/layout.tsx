@@ -1,15 +1,14 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Dashboard',
-  description:
-    'Your reading dashboard — track progress, view stats, reading streaks, and AI agent insights.',
-  openGraph: {
-    title: 'Dashboard | read-pal',
-    description:
-      'Track your reading progress, streaks, and AI-powered insights on your read-pal dashboard.',
-  },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'seo' });
+  return {
+    title: t('dashboard_title'),
+    description: t('dashboard_description'),
+  };
+}
 
 export default function DashboardLayout({
   children,

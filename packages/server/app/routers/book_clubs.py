@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import write_limiter
 from app.schemas.book_club import (
     BookClubCreate,
     BookClubUpdate,
@@ -20,7 +21,7 @@ from app.utils.i18n import _get_user_lang, t, translate_error
 router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'])
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def create_club(
     body: BookClubCreate,
     db: AsyncSession = Depends(get_db),

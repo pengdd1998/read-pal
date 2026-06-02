@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { copyToClipboard } from '@/lib/clipboard';
 import { useIsMobile } from '@/hooks/useMediaQuery';
-import { hapticMedium } from '@/hooks/useHaptics';
+import { hapticMedium } from '@/lib/haptics';
 import { TOOLBAR_HEIGHT, TOOLBAR_GAP } from './SelectionToolbar.constants';
 import { MobileSelectionToolbar } from './MobileSelectionToolbar';
 import { DesktopSelectionToolbar } from './DesktopSelectionToolbar';

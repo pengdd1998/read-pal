@@ -42,5 +42,5 @@ class InterventionPreferencesRequest(BaseModel):
     speed_drop_enabled: bool | None = None
     re_reading_enabled: bool | None = None
     optimal_timing_enabled: bool | None = None
-    quiet_hours_start: int | None = None
-    quiet_hours_end: int | None = None
+    quiet_hours_start: int | None = Field(None, ge=0, le=23)
+    quiet_hours_end: int | None = Field(None, ge=0, le=23)

@@ -28,6 +28,7 @@ export function TagFilterChips({
           <button
             key={tag}
             onClick={() => onToggleTag(tag)}
+            aria-pressed={selectedTags.includes(tag)}
             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium transition-all duration-150 active:scale-95 ${
               selectedTags.includes(tag)
                 ? tag === 'discuss'

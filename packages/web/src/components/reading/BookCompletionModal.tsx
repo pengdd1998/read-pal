@@ -58,7 +58,7 @@ export function BookCompletionModal({
         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{t('completion_title')}</h3>
         <p className="text-gray-500 mb-5">{t('completion_subtitle')} <strong>{bookTitle}</strong></p>
 
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
             <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalHighlights}</div>
             <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_highlights')}</div>

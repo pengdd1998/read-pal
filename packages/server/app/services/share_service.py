@@ -39,8 +39,9 @@ async def create_share(
             content, content_type = result
             if isinstance(content, bytes):
                 content = content.decode('utf-8', errors='replace')
-    except Exception:
+    except Exception as exc:
         logger.warning('Failed to generate export content for share', exc_info=True)
+        raise ValueError('Failed to generate export content') from exc
 
     share = SharedExport(
         user_id=user_id,

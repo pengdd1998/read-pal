@@ -47,7 +47,7 @@ export function WelcomeSection({ onSeedSample, seeding }: WelcomeSectionProps) {
       </div>
 
       {/* Quick feature preview for new users */}
-      <div className="grid grid-cols-3 gap-3 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
         {FEATURE_PREVIEW.map((f, fi) => (
           <Link
             key={f.titleKey}

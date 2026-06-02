@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { LibraryGrid } from '@/components/library/LibraryGrid';
@@ -76,12 +76,15 @@ export default function LibraryPage() {
     }
   };
 
-  const filteredSuggestions = searchQuery.trim()
-    ? suggestions.filter((b) =>
-        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.author.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : suggestions;
+  const filteredSuggestions = useMemo(
+    () => searchQuery.trim()
+      ? suggestions.filter((b) =>
+          b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          b.author.toLowerCase().includes(searchQuery.toLowerCase()),
+        )
+      : suggestions,
+    [searchQuery, suggestions],
+  );
 
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">

@@ -116,9 +116,11 @@ export function FlashcardStudy({
               showAnswer ? 'ring-2 ring-teal-300 dark:ring-teal-700' : ''
             }`}
             onClick={() => onShowAnswer(!showAnswer)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onShowAnswer(!showAnswer); } }}
+            tabIndex={0}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            role="region"
+            role="button"
             aria-live="polite"
             aria-label={showAnswer ? t('answer_label') : t('question_label')}
           >
@@ -166,7 +168,7 @@ export function FlashcardStudy({
 
       {/* Stats footer */}
       <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800">
-        <div className="grid grid-cols-3 gap-3 text-center">
+        <div className="grid grid-cols-3 gap-3 text-center max-sm:gap-2 max-sm:text-[10px]">
           <div>
             <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{stats.due}</div>
             <div className="text-[10px] text-gray-400 uppercase tracking-wide">{t('due_label')}</div>

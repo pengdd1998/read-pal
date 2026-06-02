@@ -31,7 +31,7 @@ export default function EncounterSection({ data, bookTitle, bookAuthor, coverUrl
         {coverUrl && (
           <div className="encounter-cover">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={coverUrl} alt={bookTitle} className="encounter-cover-img" />
+            <img src={coverUrl} alt={bookTitle} className="encounter-cover-img" loading="lazy" />
           </div>
         )}
         <div className="encounter-title-block">

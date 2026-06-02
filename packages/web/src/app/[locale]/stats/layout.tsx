@@ -1,11 +1,15 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Reading Stats',
-  description:
-    'Track your reading habits with detailed stats — reading velocity, streaks, time spent, pages read, and activity heatmaps.',
-  robots: { index: false, follow: true },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'seo' });
+  return {
+    title: t('stats_title'),
+    description: t('stats_description'),
+    robots: { index: false, follow: true },
+  };
+}
 
 export default function StatsLayout({ children }: { children: React.ReactNode }) {
   return children;

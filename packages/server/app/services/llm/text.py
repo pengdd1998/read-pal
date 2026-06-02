@@ -11,12 +11,13 @@ logger = structlog.get_logger('read-pal.llm')
 
 def _strip_markdown_fences(content: str) -> str:
     """Strip ```json ... ``` and ``` ... ``` wrappers from LLM output."""
-    if not content.startswith('```'):
+    stripped = content.strip()
+    if not stripped.startswith('```'):
         return content
-    lines = content.split('\n')
+    lines = stripped.split('\n')
     # First line is ```json or ``` — skip it
     # Last line is ``` — skip it
-    if len(lines) >= 2:
+    if len(lines) >= 2 and lines[-1].strip() == '```':
         return '\n'.join(lines[1:-1])
     return content
 

@@ -95,6 +95,7 @@ async def authenticate_user(
     user = result.scalar_one_or_none()
 
     if user is None or user.password_hash is None:
+        logger.warning('Login failed: unknown email %s', email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -109,6 +110,7 @@ async def authenticate_user(
     # Verify password
     if not verify_password(password, user.password_hash):
         await lockout.record_failed_login(email)
+        logger.warning('Login failed: wrong password for %s (user_id=%s)', email, user.id)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -120,6 +122,7 @@ async def authenticate_user(
     # Success — generate token pair and clear lockout counter
     access_token, refresh_token = create_token_pair(str(user.id), platform)
     await lockout.clear_failed_logins(email)
+    logger.info('Login success: %s (user_id=%s, platform=%s)', email, user.id, platform)
 
     return _build_auth_response(user, access_token, refresh_token)
 
@@ -143,6 +146,7 @@ async def register_user(
     existing = result.scalar_one_or_none()
 
     if existing is not None:
+        logger.warning('Registration failed: email already exists %s', email)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
@@ -169,6 +173,7 @@ async def register_user(
     await seed_sample_data(db, user.id)
 
     access_token, refresh_token = create_token_pair(str(user.id), platform)
+    logger.info('Registration success: %s (user_id=%s)', email, user.id)
     return _build_auth_response(user, access_token, refresh_token)
 
 

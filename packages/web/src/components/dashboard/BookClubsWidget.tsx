@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -62,7 +62,7 @@ function Skeleton() {
 // Main widget
 // ---------------------------------------------------------------------------
 
-export default function BookClubsWidget() {
+function BookClubsWidgetInner() {
   const t = useTranslations('bookClubs');
   const [clubs, setClubs] = useState<BookClub[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +91,7 @@ export default function BookClubsWidget() {
     return () => { cancelled = true; };
   }, []);
 
-  async function handleCreate() {
+  const handleCreate = useCallback(async () => {
     if (!newName.trim()) return;
     setCreating(true);
     setError(null);
@@ -111,9 +111,9 @@ export default function BookClubsWidget() {
     } finally {
       setCreating(false);
     }
-  }
+  }, [newName, newDesc, t]);
 
-  async function handleJoin() {
+  const handleJoin = useCallback(async () => {
     if (!joinCode.trim()) return;
     setJoining(true);
     setError(null);
@@ -136,7 +136,7 @@ export default function BookClubsWidget() {
     } finally {
       setJoining(false);
     }
-  }
+  }, [joinCode, t]);
 
   if (loading) return <Skeleton />;
 
@@ -308,3 +308,5 @@ export default function BookClubsWidget() {
     </div>
   );
 }
+
+export default React.memo(BookClubsWidgetInner);

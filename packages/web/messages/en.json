@@ -1546,7 +1546,9 @@
     "code_python": "Python (requests)",
     "code_javascript": "JavaScript (fetch)",
     "api_key_active": "You have an active API key: {code}.",
-    "api_key_manage": "Manage keys →"
+    "api_key_manage": "Manage keys →",
+    "api_key_fetch_error": "Failed to load API key status. Please refresh the page.",
+    "api_key_loading": "Checking API keys..."
   },
   "bookClubs": {
     "pageTitle": "Book Clubs",
@@ -1805,6 +1807,28 @@
     "compare_book_2": "Second Book",
     "compare_button": "Compare",
     "compare_select": "Select a book..."
+  },
+  "seo": {
+    "knowledge_title": "Knowledge Graph | read-pal",
+    "knowledge_description": "Explore your reading knowledge — visualize concepts, connections, and cross-book themes in an interactive knowledge graph.",
+    "synthesis_title": "Cross-Book Synthesis | read-pal",
+    "synthesis_description": "Discover connections between your books — analyze themes, find contradictions, and synthesize insights across your reading library.",
+    "flashcards_title": "Flashcards | read-pal",
+    "flashcards_description": "Review with spaced repetition — SM-2 flashcards auto-generated from your highlights and notes for lasting retention.",
+    "stats_title": "Reading Stats | read-pal",
+    "stats_description": "Track your reading progress — velocity, streaks, time spent, pages read, and activity heatmaps.",
+    "book_clubs_title": "Book Clubs | read-pal",
+    "book_clubs_description": "Discuss books with friends — create or join book clubs, share progress, and compare notes with other readers.",
+    "memory_books_title": "Memory Books | read-pal",
+    "memory_books_description": "Your personal reading journal — beautiful AI-generated compilations of your reading journeys with highlights and insights.",
+    "developers_title": "Developer API | read-pal",
+    "developers_description": "Build with read-pal API — REST endpoints, webhooks, API keys, and code examples for integrations.",
+    "offline_title": "Offline Library | read-pal",
+    "offline_description": "Read without internet — access cached books, manage offline content, and sync when you're back online.",
+    "dashboard_title": "Dashboard | read-pal",
+    "dashboard_description": "Your reading companion — track progress, view stats, manage reading goals, and get AI-powered insights.",
+    "welcome_title": "Welcome | read-pal",
+    "welcome_description": "Get started with read-pal — meet your AI reading companion and begin your reading journey."
   },
   "errors": {
     "connection_problem": "Connection problem",

@@ -27,6 +27,7 @@ class CircuitBreaker:
         self.state = CircuitState.CLOSED
         self._failures = 0
         self._opened_at: float = 0.0
+        self._probe_in_progress = False
         self._lock = asyncio.Lock()
 
     async def allow_request(self) -> bool:
@@ -39,16 +40,21 @@ class CircuitBreaker:
                 elapsed = time.monotonic() - self._opened_at
                 if elapsed >= settings.circuit_reset_timeout_seconds:
                     self.state = CircuitState.HALF_OPEN
+                    self._probe_in_progress = True
                     logger.info('circuit_breaker_half_open')
                     return True
                 return False
-            # HALF_OPEN — allow single probe
+            # HALF_OPEN — allow single probe only
+            if self._probe_in_progress:
+                return False
+            self._probe_in_progress = True
             return True
 
     async def record_success(self) -> None:
         """Record a successful call and reset failure counter."""
         async with self._lock:
             self._failures = 0
+            self._probe_in_progress = False
             if self.state != CircuitState.CLOSED:
                 self.state = CircuitState.CLOSED
                 logger.info('circuit_breaker_closed')
@@ -57,6 +63,7 @@ class CircuitBreaker:
         """Record a failure; open circuit if threshold is reached."""
         async with self._lock:
             self._failures += 1
+            self._probe_in_progress = False
             settings = get_settings()
             if self.state == CircuitState.HALF_OPEN:
                 self.state = CircuitState.OPEN

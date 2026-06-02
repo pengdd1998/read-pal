@@ -6,7 +6,7 @@ export function StatsLoadingSkeleton() {
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6 animate-pulse">
           <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-24 mb-4" />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, j) => (
               <div key={j}>
                 <div className="h-8 bg-gray-100 dark:bg-gray-800 rounded w-16 mx-auto mb-2" />

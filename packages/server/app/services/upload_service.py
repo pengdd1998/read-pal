@@ -98,7 +98,6 @@ async def create_book_with_content(
     )
     db.add(document)
     await db.flush()
-    await db.commit()
     await db.refresh(book)
 
     logger.info(

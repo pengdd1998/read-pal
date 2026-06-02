@@ -30,11 +30,10 @@ logger = logging.getLogger('read-pal.study')
 router = APIRouter(prefix='/api/v1/study-mode', tags=['study-mode'])
 
 
-@router.post('/objectives', response_model=GenericResponse)
+@router.post('/objectives', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def generate_objectives(
     body: StudyObjectivesRequest,
     current_user: dict = Depends(get_current_user),
-    limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate study objectives for a chapter using LLM."""
     user_id = UUID(current_user['id'])
@@ -47,11 +46,10 @@ async def generate_objectives(
     return {'success': True, 'data': data}
 
 
-@router.post('/concept-checks', response_model=GenericResponse)
+@router.post('/concept-checks', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def generate_concept_checks(
     body: ConceptCheckRequest,
     current_user: dict = Depends(get_current_user),
-    limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate concept check questions with answers and hints."""
     user_id = UUID(current_user['id'])

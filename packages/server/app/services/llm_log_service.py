@@ -177,5 +177,5 @@ async def cleanup_old_logs(db: AsyncSession, retention_days: int) -> int:
         delete(LLMLog).where(LLMLog.created_at < cutoff).returning(LLMLog.id)
     )
     deleted = len(result.all())
-    await db.commit()
+    await db.flush()
     return deleted

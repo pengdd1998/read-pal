@@ -12,8 +12,8 @@ class FlashcardCreate(BaseModel):
 
     book_id: UUID
     annotation_id: UUID | None = None
-    question: str = Field(min_length=1)
-    answer: str = Field(min_length=1)
+    question: str = Field(min_length=1, max_length=2000)
+    answer: str = Field(min_length=1, max_length=5000)
 
 
 class FlashcardReview(BaseModel):

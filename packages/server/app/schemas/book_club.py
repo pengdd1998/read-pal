@@ -12,7 +12,7 @@ class BookClubCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
-    cover_image: str | None = None
+    cover_image: str | None = Field(None, max_length=500)
     is_private: bool = False
     max_members: int = Field(default=20, ge=2, le=100)
 
@@ -22,7 +22,7 @@ class BookClubUpdate(BaseModel):
 
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
-    cover_image: str | None = None
+    cover_image: str | None = Field(None, max_length=500)
     current_book_id: UUID | None = None
     is_private: bool | None = None
     max_members: int | None = Field(None, ge=2, le=100)
@@ -48,7 +48,7 @@ class BookClubResponse(BaseModel):
 class ClubJoinRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    invite_code: str
+    invite_code: str = Field(max_length=20)
 
 
 class DiscussionCreate(BaseModel):

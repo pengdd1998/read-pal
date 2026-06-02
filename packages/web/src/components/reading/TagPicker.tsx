@@ -21,9 +21,10 @@ export function TagPicker({ variant, onTagSelect }: TagPickerProps) {
             <button
               key={qt.id}
               onClick={() => onTagSelect(ANNOTATION_COLORS[0], qt.id)}
+              aria-label={t(qt.labelKey)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 active:scale-95 transition-all hover:border-amber-300 dark:hover:border-amber-700"
             >
-              <span>{qt.emoji}</span>
+              <span aria-hidden="true">{qt.emoji}</span>
               {t(qt.labelKey)}
             </button>
           ))}
@@ -40,9 +41,10 @@ export function TagPicker({ variant, onTagSelect }: TagPickerProps) {
           <button
             key={qt.id}
             onClick={() => onTagSelect(ANNOTATION_COLORS[0], qt.id)}
+            aria-label={t(qt.labelKey)}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-95 transition-all"
           >
-            <span>{qt.emoji}</span>
+            <span aria-hidden="true">{qt.emoji}</span>
             {t(qt.labelKey)}
           </button>
         ))}

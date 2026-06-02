@@ -3,7 +3,7 @@
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -15,14 +15,15 @@ from app.schemas.llm_log import (
     LLMUsageSummaryResponse,
 )
 from app.services import llm_log_service
+from app.utils.i18n import _get_user_lang, t
 
 router = APIRouter(prefix='/api/v1/logs', tags=['logs'])
 
 
 @router.get('/llm', response_model=LLMLogListResponse)
 async def list_llm_logs(
-    model: str | None = Query(None),
-    label: str | None = Query(None),
+    model: str | None = Query(None, max_length=100),
+    label: str | None = Query(None, max_length=100),
     success: bool | None = Query(None),
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
@@ -72,8 +73,12 @@ async def get_llm_log_detail(
     log = await llm_log_service.get_llm_log_by_id(
         db, UUID(current_user['id']), log_id,
     )
+    lang = await _get_user_lang(db, UUID(current_user['id']))
     if log is None:
-        return {'success': True, 'data': None}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': t('errors.llm_log_not_found', lang)},
+        )
     return {
         'success': True,
         'data': LLMLogResponse.model_validate(log).model_dump(mode='json'),

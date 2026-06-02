@@ -15,7 +15,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { MobileAuthGuard } from '@/components/MobileAuthGuard';
 import { isCapacitor } from '@/lib/capacitor';
 import { useStatusBar } from '@/hooks/useStatusBar';
-import { hapticLight } from '@/hooks/useHaptics';
+import { hapticLight } from '@/lib/haptics';
 import { initializeNotifications } from '@/lib/notifications';
 import { useLocale } from 'next-intl';
 
@@ -102,7 +102,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const handleMobileNav = () => setMobileOpen(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f5f0] dark:bg-gray-950">
+    <div className="min-h-screen flex flex-col bg-surface-1 dark:bg-gray-950">
       {/* Skip to main content for accessibility */}
       {!isReading && (
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-amber-500 focus:text-white focus:rounded-lg focus:text-sm focus:font-medium">
@@ -111,7 +111,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       )}
 
       {/* Header */}
-      {!isReading && <header className="sticky top-0 z-40 border-b border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0]/95 dark:bg-gray-950/95 backdrop-blur-lg safe-area-top">
+      {!isReading && <header className="sticky top-0 z-40 border-b border-surface-2 dark:border-gray-800 bg-surface-1/95 dark:bg-gray-950/95 backdrop-blur-lg safe-area-top">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
 
@@ -119,9 +119,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 text-base sm:text-lg font-display font-bold tracking-tight text-[#1e3a5f] dark:text-white shrink-0"
+                className="flex items-center gap-2 text-base sm:text-lg font-display font-bold tracking-tight text-primary-700 dark:text-white shrink-0"
               >
-                <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#d97706] flex items-center justify-center text-white text-xs sm:text-sm font-bold">
+                <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold">
                   r
                 </span>
                 <span className="hidden sm:inline">read-pal</span>
@@ -140,12 +140,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
                         aria-current={active ? 'page' : undefined}
                         className={`nav-link relative px-2 py-2 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out shrink-0 ${
                           active
-                            ? 'nav-link-active text-[#1e3a5f] dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'
-                            : 'text-[#5c5c5c] dark:text-gray-400 hover:text-[#1e3a5f] dark:hover:text-gray-200 hover:bg-[#f0e9e0]/60 dark:hover:bg-gray-800'
+                            ? 'nav-link-active text-primary-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-primary-700 dark:hover:text-gray-200 hover:bg-surface-2/60 dark:hover:bg-gray-800'
                         }`}
                       >
                         <span className="flex items-center gap-1.5">
-                          <svg className={`w-4 h-4 transition-all duration-200 shrink-0 ${active ? 'text-amber-600 dark:text-amber-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+                          <svg aria-hidden="true" className={`w-4 h-4 transition-all duration-200 shrink-0 ${active ? 'text-amber-600 dark:text-amber-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
                             <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                           </svg>
                           {navMode === 'full' && <span className="whitespace-nowrap">{t(item.labelKey)}</span>}
@@ -166,7 +166,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
                     aria-label={t('nav_search')}
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </Link>
@@ -181,22 +181,22 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
                     aria-label={tc('toggle_dark_mode')}
                   >
-                    <svg className="w-4 h-4 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg aria-hidden="true" className="w-4 h-4 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                     </svg>
-                    <svg className="w-4 h-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg aria-hidden="true" className="w-4 h-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                   </button>
                   <NotificationBell />
                   {navMode === 'full' && (
-                    <span className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 truncate max-w-[160px]">
+                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate max-w-[160px]">
                       {user?.name || user?.email}
                     </span>
                   )}
                   <button
                     onClick={logout}
-                    className="btn btn-ghost text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#1e3a5f] dark:hover:text-white"
+                    className="btn btn-ghost text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-700 dark:hover:text-white"
                   >
                     {tc('logout')}
                   </button>
@@ -211,11 +211,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
               {mounted && isAuthenticated && navMode === 'mobile' && (
                 <button
                   onClick={() => setMobileOpen(!mobileOpen)}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[#5c5c5c] dark:text-gray-400 hover:bg-[#f0e9e0] dark:hover:bg-gray-800 transition-colors"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-surface-2 dark:hover:bg-gray-800 transition-colors"
                   aria-label={mobileOpen ? tc('close_menu') : tc('open_menu')}
                   aria-expanded={mobileOpen}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     {mobileOpen ? (
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     ) : (
@@ -230,7 +230,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
         {/* Mobile Nav dropdown */}
         {mounted && isAuthenticated && mobileOpen && navMode === 'mobile' && (
-          <nav className="border-t border-[#f0e9e0] dark:border-gray-800 bg-[#f9f5f0] dark:bg-gray-950 animate-slide-up" aria-label={tc('mobile_navigation')}>
+          <nav className="border-t border-surface-2 dark:border-gray-800 bg-surface-1 dark:bg-gray-950 animate-slide-up" aria-label={tc('mobile_navigation')}>
             <div className="px-4 py-3 space-y-1">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
@@ -242,11 +242,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
                     aria-current={active ? 'page' : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out ${
                       active
-                        ? 'text-[#1e3a5f] dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-l-2 border-amber-500'
-                        : 'text-[#5c5c5c] dark:text-gray-400 hover:bg-[#f0e9e0]/60 dark:hover:bg-gray-800'
+                        ? 'text-primary-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-l-2 border-amber-500'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-surface-2/60 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <svg className={`w-4 h-4 transition-colors duration-200 ${active ? 'text-amber-600 dark:text-amber-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+                    <svg aria-hidden="true" className={`w-4 h-4 transition-colors duration-200 ${active ? 'text-amber-600 dark:text-amber-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                     </svg>
                     {t(item.labelKey)}
@@ -287,7 +287,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                       : 'text-gray-400 dark:text-gray-500'
                   }`}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
+                  <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                   </svg>
                   <span className="text-[10px] font-medium">{t(item.labelKey)}</span>
@@ -302,20 +302,20 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {!isOnline && !isReading && <OfflineBanner />}
 
       {/* Footer */}
-      {!isReading && !isNative && <footer className="border-t border-[#f0e9e0] dark:border-gray-800 py-8 sm:py-10 mt-auto bg-[#f9f5f0] dark:bg-gray-950">
+      {!isReading && !isNative && <footer className="border-t border-surface-2 dark:border-gray-800 py-8 sm:py-10 mt-auto bg-surface-1 dark:bg-gray-950">
         <div className="px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-md bg-[#d97706] flex items-center justify-center text-white text-xs font-bold">
+            <span className="w-6 h-6 rounded-md bg-primary-500 flex items-center justify-center text-white text-xs font-bold">
               r
             </span>
-            <span className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 font-sans">
+            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-sans">
               &copy; 2026 read-pal. {t('footer_companion')}
             </span>
           </div>
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="/terms" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">{tc('terms')}</Link>
-            <Link href="/privacy" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">{tc('privacy')}</Link>
-            <Link href="/settings" className="text-xs sm:text-sm text-[#5c5c5c] dark:text-gray-400 hover:text-[#d97706] dark:hover:text-amber-400 transition-colors duration-200 font-sans">{t('nav_settings')}</Link>
+            <Link href="/terms" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans">{tc('terms')}</Link>
+            <Link href="/privacy" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans">{tc('privacy')}</Link>
+            <Link href="/settings" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans">{t('nav_settings')}</Link>
           </div>
         </div>
       </footer>}

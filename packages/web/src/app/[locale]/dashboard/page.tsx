@@ -24,7 +24,7 @@ import type { DashboardData, DashboardStats } from '@/components/dashboard/types
 const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false });
 const ShareReadingCard = dynamic(() => import('@/components/share/ReadingShareCard').then((m) => ({ default: m.ShareReadingCard })), { ssr: false });
 const StreakCalendar = dynamic(() => import('@/components/dashboard/StreakCalendar'), { ssr: false });
-const BookClubsWidget = dynamic(() => import('@/components/dashboard/BookClubsWidget'), { ssr: false });
+const BookClubsWidget = dynamic(() => import('@/components/dashboard/BookClubsWidget').then((m) => ({ default: m.default })), { ssr: false });
 
 const INSIGHTS_POOL_KEYS: InsightKey[] = [
   { agentKey: 'agent_companion', icon: '\uD83D\uDCD6', key: 'insight_companion' },

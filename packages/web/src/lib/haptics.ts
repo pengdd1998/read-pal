@@ -1,5 +1,3 @@
-'use client';
-
 import { isCapacitor } from '@/lib/capacitor';
 
 let Haptics: typeof import('@capacitor/haptics').Haptics | null = null;

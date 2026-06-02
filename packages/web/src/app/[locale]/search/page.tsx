@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { Link } from '@/i18n/navigation';
@@ -123,12 +123,18 @@ export default function SearchPage() {
 
   const hasResults = results.length > 0 || highlights.length > 0;
 
-  const filteredResults = filter === 'highlights' || filter === 'notes' ? [] : results;
-  const filteredHighlights = filter === 'books' ? [] : highlights.filter((h) => {
-    if (filter === 'notes') return h.type === 'note';
-    if (filter === 'highlights') return h.type === 'highlight';
-    return true;
-  });
+  const filteredResults = useMemo(
+    () => filter === 'highlights' || filter === 'notes' ? [] : results,
+    [filter, results],
+  );
+  const filteredHighlights = useMemo(
+    () => filter === 'books' ? [] : highlights.filter((h) => {
+      if (filter === 'notes') return h.type === 'note';
+      if (filter === 'highlights') return h.type === 'highlight';
+      return true;
+    }),
+    [filter, highlights],
+  );
   const filteredHasResults = filteredResults.length > 0 || filteredHighlights.length > 0;
 
   return (
@@ -151,6 +157,7 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('placeholder')}
+          aria-label={t('placeholder')}
           className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-surface-0 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 text-base sm:text-lg shadow-sm transition-all duration-200"
           autoFocus
         />
@@ -179,6 +186,7 @@ export default function SearchPage() {
           ]).filter((f) => f.key === 'all' || f.key === 'books' || f.count > 0).map((f) => (
             <button
               key={f.key}
+              aria-pressed={filter === f.key}
               onClick={() => setFilter(f.key)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 filter === f.key

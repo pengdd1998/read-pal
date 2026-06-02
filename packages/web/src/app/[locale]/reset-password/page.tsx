@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, FormEvent, useEffect } from 'react';
+import { Suspense, useState, FormEvent, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
@@ -20,6 +20,7 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [tokenValid, setTokenValid] = useState(true);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const token = searchParams?.get('token') ?? null;
 
@@ -28,6 +29,9 @@ function ResetPasswordForm() {
       setTokenValid(false);
       setError(t('reset_missing_token'));
     }
+    return () => {
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    };
   }, [token, t]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -50,7 +54,7 @@ function ResetPasswordForm() {
       const res = await api.post('/api/auth/reset-password', { token, password });
       if (res.success) {
         setSuccess(true);
-        setTimeout(() => router.push('/auth?mode=login'), 3000);
+        redirectTimer.current = setTimeout(() => router.push('/auth?mode=login'), 3000);
       } else {
         setError(res.error?.message || t('reset_failed'));
       }

@@ -42,9 +42,9 @@ async def get_weekly_summary(
 
 @router.get('/reading-calendar', response_model=GenericResponse)
 async def get_reading_calendar(
-    months: int | None = Query(None),
-    year: int | None = Query(None),
-    month: int | None = Query(None),
+    months: int | None = Query(None, ge=1, le=24),
+    year: int | None = Query(None, ge=2000, le=2100),
+    month: int | None = Query(None, ge=1, le=12),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:

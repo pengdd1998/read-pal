@@ -50,8 +50,8 @@ class ExplainRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     book_id: UUID
-    text: str = Field(min_length=1)
-    context: str | None = None
+    text: str = Field(min_length=1, max_length=10000)
+    context: str | None = Field(None, max_length=5000)
 
 
 class AIFeedbackRequest(BaseModel):
@@ -62,7 +62,7 @@ class AIFeedbackRequest(BaseModel):
     book_id: UUID
     message_id: str | None = None
     rating: bool  # True=thumbs up, False=thumbs down
-    comment: str | None = None
+    comment: str | None = Field(None, max_length=1000)
 
 
 class ReadingPlanRequest(BaseModel):

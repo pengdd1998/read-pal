@@ -6,12 +6,11 @@ All responses follow the shape: ``{"success": true, "data": {...}}``
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.models.annotation import Annotation
+from app.middleware.rate_limiter import write_limiter
 from app.schemas.annotation import (
     AnnotationCreate,
     AnnotationListResponse,
@@ -80,20 +79,11 @@ async def get_tags(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Get tags with counts for a user's annotations, optionally filtered by book."""
-    tag_col = func.unnest(Annotation.tags).label('tag')
-    q = (
-        select(
-            tag_col,
-            func.count().label('count'),
-        )
-        .where(Annotation.user_id == UUID(current_user['id']))
-        .group_by(tag_col)
-        .order_by(func.count().desc())
+    tags = await annotation_service.get_tags(
+        db,
+        UUID(current_user['id']),
+        book_id=bookId,
     )
-    if bookId:
-        q = q.where(Annotation.book_id == bookId)
-    result = await db.execute(q)
-    tags = [{'name': row[0], 'count': row[1]} for row in result.all() if row[0]]
     return {'success': True, 'data': tags}
 
 
@@ -134,7 +124,7 @@ async def get_annotation(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def create_annotation(
     body: AnnotationCreate,
     current_user: dict = Depends(get_current_user),

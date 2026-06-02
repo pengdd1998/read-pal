@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import write_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.webhook import WebhookCreate, WebhookUpdate
 from app.services import webhook_service
@@ -65,7 +66,7 @@ async def test_webhook(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def create_webhook(
     body: WebhookCreate,
     db: AsyncSession = Depends(get_db),

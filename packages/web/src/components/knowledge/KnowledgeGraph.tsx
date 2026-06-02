@@ -40,8 +40,25 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
           <span className="text-xs text-gray-400">{clickHintLabel}</span>
         </div>
         {loading ? (
-          <div className="flex items-center justify-center" style={{ height: dimensions.height }}>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+          <div className="relative bg-gray-50 dark:bg-gray-900/50" style={{ height: dimensions.height || 420 }}>
+            <svg className="w-full h-full" viewBox="0 0 600 420">
+              {/* Skeleton connection lines */}
+              <line x1="120" y1="100" x2="300" y2="180" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
+              <line x1="300" y1="180" x2="200" y2="300" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
+              <line x1="300" y1="180" x2="460" y2="120" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
+              <line x1="460" y1="120" x2="500" y2="280" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
+              <line x1="200" y1="300" x2="350" y2="350" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
+              <line x1="120" y1="100" x2="80" y2="250" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
+              <line x1="500" y1="280" x2="350" y2="350" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
+              {/* Skeleton node circles */}
+              <circle cx="120" cy="100" r="14" fill="#0d9488" opacity="0.2" className="animate-pulse" />
+              <circle cx="300" cy="180" r="18" fill="#7c3aed" opacity="0.2" className="animate-pulse" />
+              <circle cx="200" cy="300" r="12" fill="#ea580c" opacity="0.2" className="animate-pulse" />
+              <circle cx="460" cy="120" r="10" fill="#2563eb" opacity="0.2" className="animate-pulse" />
+              <circle cx="500" cy="280" r="13" fill="#059669" opacity="0.2" className="animate-pulse" />
+              <circle cx="350" cy="350" r="9" fill="#d97706" opacity="0.2" className="animate-pulse" />
+              <circle cx="80" cy="250" r="11" fill="#dc2626" opacity="0.2" className="animate-pulse" />
+            </svg>
           </div>
         ) : (
           <svg

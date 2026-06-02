@@ -3,31 +3,16 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.models.api_key import ApiKey, generate_api_key
 from app.schemas.api_key import ApiKeyCreateRequest
 from app.schemas.common import GenericResponse
+from app.services import api_key_service
 from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/api-keys', tags=['api-keys'])
-
-
-def _serialize_key(key: ApiKey, include_secret: bool = False) -> dict:
-    """Convert an ApiKey ORM object to a response dict."""
-    data = {
-        'id': str(key.id),
-        'name': key.name,
-        'key_prefix': key.key_prefix,
-        'last_used_at': key.last_used_at.isoformat() if key.last_used_at else None,
-        'created_at': key.created_at.isoformat() if key.created_at else None,
-    }
-    if include_secret:
-        data['key'] = None  # populated by caller
-    return data
 
 
 @router.get('', response_model=GenericResponse)
@@ -36,14 +21,8 @@ async def list_api_keys(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """List user's API keys (prefixes only, never full keys)."""
-    result = await db.execute(
-        select(ApiKey).where(ApiKey.user_id == UUID(user['id'])),
-    )
-    keys = list(result.scalars().all())
-    return {
-        'success': True,
-        'data': [_serialize_key(k) for k in keys],
-    }
+    keys = await api_key_service.list_keys(db, UUID(user['id']))
+    return {'success': True, 'data': keys}
 
 
 @router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
@@ -53,20 +32,7 @@ async def create_api_key(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Create a new API key."""
-    name = body.name
-    plain_key, key_hash, key_prefix = generate_api_key()
-
-    api_key = ApiKey(
-        user_id=UUID(user['id']),
-        name=name,
-        key_hash=key_hash,
-        key_prefix=key_prefix,
-    )
-    db.add(api_key)
-    await db.flush()
-
-    data = _serialize_key(api_key)
-    data['key'] = plain_key  # only shown once at creation
+    data = await api_key_service.create_key(db, UUID(user['id']), body.name)
     return {'success': True, 'data': data}
 
 
@@ -77,18 +43,9 @@ async def delete_api_key(
     user: dict = Depends(get_current_user),
 ) -> None:
     """Delete an API key."""
-    result = await db.execute(
-        select(ApiKey).where(
-            ApiKey.id == key_id,
-            ApiKey.user_id == UUID(user['id']),
-        ),
-    )
-    key = result.scalar_one_or_none()
-    if key is None:
+    deleted = await api_key_service.delete_key(db, UUID(user['id']), key_id)
+    if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.api_key_not_found')},
         )
-    await db.execute(
-        sa_delete(ApiKey).where(ApiKey.id == key_id),
-    )

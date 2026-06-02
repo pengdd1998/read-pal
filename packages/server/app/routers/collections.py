@@ -136,17 +136,13 @@ async def add_books_batch(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """Add multiple books to a collection."""
-    book_ids = body.book_ids
-    col = None
-    for bid_str in book_ids:
-        try:
-            col = await collection_service.add_book_to_collection(
-                db, UUID(user['id']), collection_id, UUID(bid_str),
-            )
-        except ValueError:
-            continue
-    if col is None:
+    """Add multiple books to a collection (batch — single DB round-trip)."""
+    parsed_ids = [UUID(bid_str) for bid_str in body.book_ids]
+    try:
+        col = await collection_service.add_books_batch(
+            db, UUID(user['id']), collection_id, parsed_ids,
+        )
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
@@ -161,17 +157,13 @@ async def remove_books_batch(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """Remove multiple books from a collection."""
-    book_ids = body.book_ids
-    col = None
-    for bid_str in book_ids:
-        try:
-            col = await collection_service.remove_book_from_collection(
-                db, UUID(user['id']), collection_id, UUID(bid_str),
-            )
-        except ValueError:
-            continue
-    if col is None:
+    """Remove multiple books from a collection (batch — single DB round-trip)."""
+    parsed_ids = [UUID(bid_str) for bid_str in body.book_ids]
+    try:
+        col = await collection_service.remove_books_batch(
+            db, UUID(user['id']), collection_id, parsed_ids,
+        )
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},

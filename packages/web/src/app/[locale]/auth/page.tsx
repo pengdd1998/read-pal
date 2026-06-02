@@ -160,9 +160,11 @@ function AuthForm() {
         </div>
 
         {/* Mode Toggle */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6" role="tablist">
           <button
             type="button"
+            role="tab"
+            aria-selected={mode === 'register'}
             onClick={() => switchMode('register')}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               mode === 'register'
@@ -174,6 +176,8 @@ function AuthForm() {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={mode === 'login'}
             onClick={() => switchMode('login')}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               mode === 'login'
@@ -199,6 +203,7 @@ function AuthForm() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  minLength={2}
                   className="input"
                   placeholder={t('name_placeholder')}
                   autoComplete="name"

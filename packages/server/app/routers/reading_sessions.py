@@ -182,12 +182,11 @@ async def heartbeat_session(
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 
 
-@router.post('/{session_id}/summarize', response_model=GenericResponse)
+@router.post('/{session_id}/summarize', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def summarize_session(
     session_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-    limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate a brief AI summary of the reading session."""
     session = await reading_session_service.get_session(

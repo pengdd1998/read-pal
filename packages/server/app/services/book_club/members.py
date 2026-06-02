@@ -4,6 +4,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClubMember
@@ -50,7 +51,11 @@ async def join_club(
         role='member',
     )
     db.add(member)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        raise ValueError('Already a member of this club') from None
 
     logger.info('User %s joined club %s', user_id, club.id)
     return club

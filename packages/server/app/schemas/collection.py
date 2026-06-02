@@ -45,4 +45,4 @@ class CollectionBooksBatchRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    book_ids: list[str] = Field(default=[], alias='bookIds')
+    book_ids: list[str] = Field(default=[], max_length=100, alias='bookIds')

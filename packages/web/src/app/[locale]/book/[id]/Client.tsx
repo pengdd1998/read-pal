@@ -148,7 +148,7 @@ export default function BookDetailPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-3 gap-3 mb-6 animate-slide-up stagger-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 animate-slide-up stagger-3">
         {[
           { label: t('highlights'), value: annotationStats.highlights, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10' },
           { label: t('notes'), value: annotationStats.notes, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/10' },

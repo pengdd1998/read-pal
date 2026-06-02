@@ -21,7 +21,7 @@ export function FlashcardMetrics({ flashcardStats }: FlashcardMetricsProps) {
   return (
     <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('flashcards_title')}</h2>
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         {metrics.map((item) => (
           <div key={item.label} className={`${item.bg} rounded-xl p-3 text-center`}>
             <div className={`text-xl font-bold ${item.color}`}>{item.value}</div>

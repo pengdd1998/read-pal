@@ -109,7 +109,7 @@ export function ChapterDropdown({
               theme === 'dark'
                 ? 'bg-gray-800 border-gray-700'
                 : theme === 'sepia'
-                  ? 'bg-[#f5f0e6] border-amber-300/60'
+                  ? 'bg-amber-50 border-amber-300/60'
                   : 'bg-white border-amber-200/60'
             }`}
             style={{ overscrollBehavior: 'contain' } as React.CSSProperties}
@@ -119,7 +119,7 @@ export function ChapterDropdown({
               theme === 'dark'
                 ? 'bg-gray-800 text-gray-400 border-gray-700'
                 : theme === 'sepia'
-                  ? 'bg-[#f5f0e6] text-amber-700 border-amber-300/60'
+                  ? 'bg-amber-50 text-amber-700 border-amber-300/60'
                   : 'bg-white text-amber-600 border-amber-200/60'
             }`}>
               {t('toc_title')}

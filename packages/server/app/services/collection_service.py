@@ -109,13 +109,12 @@ async def delete_collection(
     logger.info('Collection deleted: id=%s user=%s', collection_id, user_id)
 
 
-async def add_book_to_collection(
+async def _get_owned_collection(
     db: AsyncSession,
     user_id: UUID,
     collection_id: UUID,
-    book_id: UUID,
 ) -> Collection:
-    """Add a book to a collection."""
+    """Fetch a collection verifying ownership. Raises ValueError if missing."""
     result = await db.execute(
         select(Collection).where(
             Collection.id == collection_id,
@@ -125,6 +124,17 @@ async def add_book_to_collection(
     collection = result.scalar_one_or_none()
     if collection is None:
         raise ValueError('Collection not found')
+    return collection
+
+
+async def add_book_to_collection(
+    db: AsyncSession,
+    user_id: UUID,
+    collection_id: UUID,
+    book_id: UUID,
+) -> Collection:
+    """Add a book to a collection."""
+    collection = await _get_owned_collection(db, user_id, collection_id)
 
     existing_ids = set(collection.book_ids or [])
     existing_ids.add(book_id)
@@ -136,6 +146,28 @@ async def add_book_to_collection(
     return collection
 
 
+async def add_books_batch(
+    db: AsyncSession,
+    user_id: UUID,
+    collection_id: UUID,
+    book_ids: list[UUID],
+) -> Collection:
+    """Add multiple books to a collection in a single DB round-trip."""
+    collection = await _get_owned_collection(db, user_id, collection_id)
+
+    existing_ids = set(collection.book_ids or [])
+    existing_ids.update(book_ids)
+    collection.book_ids = list(existing_ids)
+
+    await db.flush()
+    await db.refresh(collection)
+    logger.info(
+        'Books batch-added to collection: collection=%s user=%s count=%d',
+        collection_id, user_id, len(book_ids),
+    )
+    return collection
+
+
 async def remove_book_from_collection(
     db: AsyncSession,
     user_id: UUID,
@@ -143,15 +175,7 @@ async def remove_book_from_collection(
     book_id: UUID,
 ) -> Collection:
     """Remove a book from a collection."""
-    result = await db.execute(
-        select(Collection).where(
-            Collection.id == collection_id,
-            Collection.user_id == user_id,
-        ),
-    )
-    collection = result.scalar_one_or_none()
-    if collection is None:
-        raise ValueError('Collection not found')
+    collection = await _get_owned_collection(db, user_id, collection_id)
 
     existing_ids = set(collection.book_ids or [])
     existing_ids.discard(book_id)
@@ -160,4 +184,26 @@ async def remove_book_from_collection(
     await db.flush()
     await db.refresh(collection)
     logger.info('Book removed from collection: collection=%s user=%s book=%s', collection_id, user_id, book_id)
+    return collection
+
+
+async def remove_books_batch(
+    db: AsyncSession,
+    user_id: UUID,
+    collection_id: UUID,
+    book_ids: list[UUID],
+) -> Collection:
+    """Remove multiple books from a collection in a single DB round-trip."""
+    collection = await _get_owned_collection(db, user_id, collection_id)
+
+    existing_ids = set(collection.book_ids or [])
+    existing_ids -= set(book_ids)
+    collection.book_ids = list(existing_ids)
+
+    await db.flush()
+    await db.refresh(collection)
+    logger.info(
+        'Books batch-removed from collection: collection=%s user=%s count=%d',
+        collection_id, user_id, len(book_ids),
+    )
     return collection

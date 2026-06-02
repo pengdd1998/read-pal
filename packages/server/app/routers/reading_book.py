@@ -6,31 +6,29 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter
-from app.models.memory_book import MemoryBook
 from app.schemas.common import GenericResponse
-from app.schemas.memory_book import MemoryBookGenerateRequest, MemoryBookResponse
+from app.schemas.memory_book import MemoryBookGenerateRequest
+from app.services import reading_book_service
 from app.services.memory_book_service import generate
-from app.utils.i18n import _get_user_lang, translate_error, t
+from app.utils.i18n import translate_error, t
 
 logger = logging.getLogger('read-pal.reading_book')
 
 router = APIRouter(prefix='/api/v1/reading-book', tags=['reading-book'])
 
 
-@router.post('/generate', response_model=GenericResponse)
-@router.post('/{book_id}/generate', response_model=GenericResponse)
+@router.post('/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.post('/{book_id}/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def generate_memory_book(
     book_id: UUID | None = None,
     body: MemoryBookGenerateRequest | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-    limiter=ai_heavy_limiter,
 ) -> dict:
     """Generate a Reading Mirror for a given book."""
     resolved_id = book_id or (body.book_id if body else None)
@@ -65,22 +63,10 @@ async def get_memory_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Get an existing memory book for a book. Returns data=null if not generated yet."""
-    result = await db.execute(
-        select(MemoryBook).where(
-            MemoryBook.user_id == UUID(current_user['id']),
-            MemoryBook.book_id == book_id,
-        ),
+    data = await reading_book_service.get_memory_book(
+        db, UUID(current_user['id']), book_id,
     )
-    memory_book = result.scalar_one_or_none()
-
-    if memory_book is None:
-        return {'success': True, 'data': None}
-
-    response = MemoryBookResponse.model_validate(memory_book)
-    return {
-        'success': True,
-        'data': response.model_dump(mode='json', by_alias=True),
-    }
+    return {'success': True, 'data': data}
 
 
 @router.get('', response_model=GenericResponse)
@@ -89,17 +75,7 @@ async def list_memory_books(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """List all memory books for the current user."""
-    result = await db.execute(
-        select(MemoryBook)
-        .where(MemoryBook.user_id == UUID(current_user['id']))
-        .order_by(MemoryBook.generated_at.desc()),
+    books = await reading_book_service.list_memory_books(
+        db, UUID(current_user['id']),
     )
-    books = list(result.scalars().all())
-
-    return {
-        'success': True,
-        'data': [
-            MemoryBookResponse.model_validate(mb).model_dump(mode='json', by_alias=True)
-            for mb in books
-        ],
-    }
+    return {'success': True, 'data': books}

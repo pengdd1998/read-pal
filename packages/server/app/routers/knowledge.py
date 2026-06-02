@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import ai_heavy_limiter
+from app.middleware.rate_limiter import ai_heavy_limiter, api_limiter
 from app.models.book import Book
 from app.schemas.common import GenericResponse
 from app.services.knowledge_service import (
@@ -27,25 +27,42 @@ logger = logging.getLogger('read-pal.knowledge')
 router = APIRouter(prefix='/api/v1/knowledge', tags=['knowledge'])
 
 
-@router.get('/graph', response_model=GenericResponse)
+@router.get('/graph', response_model=GenericResponse, dependencies=[api_limiter])
 async def get_all_graphs(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Get all knowledge graphs for the user (cached only, no LLM calls)."""
     from app.services.knowledge_service import _load_cached_graph, _content_hash, _load_annotations
+    from app.models.annotation import Annotation
 
     result = await db.execute(
         select(Book.id).where(Book.user_id == UUID(current_user['id'])),
     )
     book_ids = [row[0] for row in result.all()]
+
+    # Batch-load all annotations in one query (instead of N+1)
+    all_annotations = list((await db.execute(
+        select(Annotation)
+        .where(
+            Annotation.user_id == UUID(current_user['id']),
+            Annotation.book_id.in_(book_ids),
+        )
+        .order_by(Annotation.created_at),
+    )).scalars().all())
+
+    # Group annotations by book_id
+    ann_by_book: dict[UUID, list] = {}
+    for ann in all_annotations:
+        ann_by_book.setdefault(ann.book_id, []).append(ann)
+
     all_nodes: list[dict] = []
     all_edges: list[dict] = []
 
     uid = UUID(current_user['id'])
     for bid in book_ids:
         try:
-            annotations = await _load_annotations(db, uid, bid)
+            annotations = ann_by_book.get(bid, [])
             texts = [a.content for a in annotations if a.content.strip()]
             current_hash = _content_hash(texts)
             cached = await _load_cached_graph(uid, bid, current_hash)
@@ -103,7 +120,7 @@ async def get_graph(
     }
 
 
-@router.get('/search', response_model=GenericResponse)
+@router.get('/search', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
 async def search(
     q: str = Query(..., min_length=1, description='Search query'),
     book_id: UUID = Query(..., description='Book ID to search within'),

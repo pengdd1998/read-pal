@@ -82,7 +82,8 @@
     "cannot_leave_last_admin": "Cannot leave — you are the last admin. Delete the club instead.",
     "only_admin_moderator_update": "Only admin or moderator can update the club",
     "only_admin_delete": "Only admin can delete the club",
-    "must_be_member_post": "Must be a member to post discussions"
+    "must_be_member_post": "Must be a member to post discussions",
+    "llm_log_not_found": "LLM log not found"
   },
   "companion": {
     "fallback_error": "I'm having trouble connecting to my AI service right now. Please try again in a moment.",

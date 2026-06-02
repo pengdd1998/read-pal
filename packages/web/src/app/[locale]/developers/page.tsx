@@ -80,11 +80,11 @@ const endpoints: Endpoint[] = [
 
 function methodColor(method: string): string {
   switch (method) {
-    case 'GET': return 'bg-emerald-100 text-emerald-800';
-    case 'POST': return 'bg-blue-100 text-blue-800';
-    case 'PATCH': return 'bg-amber-100 text-amber-800';
-    case 'DELETE': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'GET': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300';
+    case 'POST': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+    case 'PATCH': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+    case 'DELETE': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
   }
 }
 
@@ -98,20 +98,28 @@ export default function DevelopersPage() {
   const { user } = useAuth();
   const [filter, setFilter] = useState('');
   const [apiKeyHint, setApiKeyHint] = useState<string | null>(null);
+  const [apiKeyLoading, setApiKeyLoading] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if user has API keys
-    if (user) {
-      api.get<Array<{ keyPrefix: string }>>('/api/api-keys')
-        .then((res) => {
-          const keys = res.data;
-          if (keys && keys.length > 0) {
-            setApiKeyHint(keys[0].keyPrefix + '...');
-          }
-        })
-        .catch(() => { /* not authenticated or no keys */ });
-    }
-  }, [user]);
+    if (!user) return;
+
+    setApiKeyLoading(true);
+    setApiKeyError(null);
+    api.get<Array<{ keyPrefix: string }>>('/api/api-keys')
+      .then((res) => {
+        const keys = res.data;
+        if (keys && keys.length > 0) {
+          setApiKeyHint(keys[0].keyPrefix + '...');
+        }
+      })
+      .catch(() => {
+        setApiKeyError(t('api_key_fetch_error'));
+      })
+      .finally(() => {
+        setApiKeyLoading(false);
+      });
+  }, [user, t]);
 
   const filtered = filter
     ? endpoints.filter((e) =>
@@ -123,9 +131,9 @@ export default function DevelopersPage() {
   const apiBase = API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
       {/* Header */}
-      <header className="bg-amber-800 text-white">
+      <header className="bg-amber-800 dark:bg-amber-900 text-white">
         <div className="px-4 sm:px-6 lg:px-8 py-8">
           <Link href="/dashboard" className="text-amber-200 hover:text-white text-sm mb-2 inline-block">
             {t('back_dashboard')}
@@ -140,11 +148,11 @@ export default function DevelopersPage() {
       <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-10">
         {/* Quick Start */}
         <section>
-          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('quick_start')}</h2>
-          <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-4">
+          <h2 className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100 mb-4">{t('quick_start')}</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 p-6 space-y-4">
             <div>
-              <h3 className="font-semibold text-stone-800 mb-2">{t('step1_title')}</h3>
-              <p className="text-sm text-stone-600">
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('step1_title')}</h3>
+              <p className="text-sm text-stone-600 dark:text-stone-400">
                 {t('step1_desc', {
                   link: t('step1_link'),
                   code: 'rpk_',
@@ -152,7 +160,7 @@ export default function DevelopersPage() {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-stone-800 mb-2">{t('step2_title')}</h3>
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('step2_title')}</h3>
               <div className="bg-stone-900 rounded-lg p-4 text-sm font-mono overflow-x-auto">
                 <div className="text-stone-400 mb-1">{t('step2_comment')}</div>
                 <div className="text-green-400">
@@ -164,7 +172,7 @@ export default function DevelopersPage() {
               </div>
             </div>
             <div>
-              <h3 className="font-semibold text-stone-800 mb-2">{t('step3_title')}</h3>
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('step3_title')}</h3>
               <div className="bg-stone-900 rounded-lg p-4 text-sm font-mono overflow-x-auto">
                 <div className="text-stone-400 mb-1">{t('step3_comment')}</div>
                 <div className="text-green-400">
@@ -180,15 +188,15 @@ export default function DevelopersPage() {
 
         {/* Authentication */}
         <section>
-          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('authentication')}</h2>
-          <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-3 text-sm text-stone-700">
+          <h2 className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100 mb-4">{t('authentication')}</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 p-6 space-y-3 text-sm text-stone-700 dark:text-stone-300">
             <p>{t('auth_intro', { code: 'Authorization' })}</p>
             <p><strong>{t('auth_methods')}</strong></p>
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li><strong>{t('auth_jwt', { code: '/api/auth/login', code2: 'Bearer eyJ...' })}</strong></li>
               <li><strong>{t('auth_api_key', { code: 'Bearer rpk_...' })}</strong></li>
             </ul>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <strong>{t('auth_tip')}</strong>
             </div>
           </div>
@@ -196,17 +204,17 @@ export default function DevelopersPage() {
 
         {/* Rate Limits */}
         <section>
-          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('rate_limits')}</h2>
-          <div className="bg-white rounded-xl border border-stone-200 p-6 text-sm text-stone-700 space-y-3">
+          <h2 className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100 mb-4">{t('rate_limits')}</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 p-6 text-sm text-stone-700 dark:text-stone-300 space-y-3 overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-stone-200">
+                <tr className="border-b border-stone-200 dark:border-gray-700">
                   <th className="pb-2 font-semibold">{t('rate_group')}</th>
                   <th className="pb-2 font-semibold">{t('rate_limit')}</th>
                   <th className="pb-2 font-semibold">{t('rate_window')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-stone-100 dark:divide-gray-800">
                 <tr><td className="py-2">{t('rate_ai_chat')}</td><td>10</td><td>{t('rate_minute')}</td></tr>
                 <tr><td className="py-2">{t('rate_data_export')}</td><td>5</td><td>{t('rate_minute')}</td></tr>
                 <tr><td className="py-2">{t('rate_zotero')}</td><td>5</td><td>{t('rate_minute')}</td></tr>
@@ -214,7 +222,7 @@ export default function DevelopersPage() {
               </tbody>
             </table>
             <p>{t('rate_headers_intro')}</p>
-            <div className="bg-stone-100 rounded-lg p-3 font-mono text-xs">
+            <div className="bg-stone-100 dark:bg-gray-800 rounded-lg p-3 font-mono text-xs">
               <div>X-RateLimit-Limit: 10</div>
               <div>X-RateLimit-Remaining: 7</div>
               <div>X-RateLimit-Reset: 1713456789</div>
@@ -225,8 +233,8 @@ export default function DevelopersPage() {
 
         {/* Response Format */}
         <section>
-          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('response_format')}</h2>
-          <div className="bg-white rounded-xl border border-stone-200 p-6 text-sm text-stone-700 space-y-3">
+          <h2 className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100 mb-4">{t('response_format')}</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 p-6 text-sm text-stone-700 dark:text-stone-300 space-y-3">
             <p>{t('response_intro')}</p>
             <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
               <div className="text-stone-400">{t('response_comment_success')}</div>
@@ -240,49 +248,50 @@ export default function DevelopersPage() {
 
         {/* Endpoints Reference */}
         <section>
-          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('endpoints_title')}</h2>
+          <h2 className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100 mb-4">{t('endpoints_title')}</h2>
 
           <input
             type="text"
             placeholder={t('endpoints_filter')}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-full px-4 py-2 border border-stone-300 rounded-lg text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            aria-label={t('endpoints_filter')}
+            className="w-full px-4 py-2 border border-stone-300 dark:border-gray-600 rounded-lg text-sm mb-4 bg-white dark:bg-gray-800 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
 
-          <div className="bg-white rounded-xl border border-stone-200 divide-y divide-stone-100">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 divide-y divide-stone-100 dark:divide-gray-800">
             {filtered.length === 0 && (
-              <div className="p-4 text-sm text-stone-500 text-center">{t('endpoints_no_match')}</div>
+              <div className="p-4 text-sm text-stone-500 dark:text-stone-400 text-center">{t('endpoints_no_match')}</div>
             )}
             {filtered.map((ep, i) => (
-              <div key={i} className="px-4 py-3 flex items-center gap-3 hover:bg-stone-50">
+              <div key={i} className="px-4 py-3 flex items-center gap-3 hover:bg-stone-50 dark:hover:bg-gray-800">
                 <span className={`px-2 py-0.5 rounded text-xs font-bold ${methodColor(ep.method)}`}>
                   {ep.method}
                 </span>
-                <code className="text-sm font-mono text-stone-800 flex-1">{ep.path}</code>
-                <span className="text-xs text-stone-500">{ep.description}</span>
+                <code className="text-sm font-mono text-stone-800 dark:text-stone-200 flex-1">{ep.path}</code>
+                <span className="text-xs text-stone-500 dark:text-stone-400">{ep.description}</span>
                 {ep.auth && (
-                  <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">{t('endpoints_auth_badge')}</span>
+                  <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">{t('endpoints_auth_badge')}</span>
                 )}
               </div>
             ))}
           </div>
-          <p className="text-xs text-stone-400 mt-2">{t('endpoints_count', { count: filtered.length })}</p>
+          <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">{t('endpoints_count', { count: filtered.length })}</p>
         </section>
 
         {/* Export Formats */}
         <section>
-          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('export_formats')}</h2>
-          <div className="bg-white rounded-xl border border-stone-200 p-6 text-sm text-stone-700">
+          <h2 className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100 mb-4">{t('export_formats')}</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 p-6 text-sm text-stone-700 dark:text-stone-300 overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-stone-200">
+                <tr className="border-b border-stone-200 dark:border-gray-700">
                   <th className="pb-2 font-semibold">{t('export_format')}</th>
                   <th className="pb-2 font-semibold">{t('export_type')}</th>
                   <th className="pb-2 font-semibold">{t('export_use_case')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-stone-100 dark:divide-gray-800">
                 <tr><td className="py-2 font-mono">csv</td><td>text/csv</td><td>Data analysis (pandas, Excel, R)</td></tr>
                 <tr><td className="py-2 font-mono">json</td><td>application/json</td><td>Full data portability / backup</td></tr>
                 <tr><td className="py-2 font-mono">bibtex</td><td>application/x-bibtex</td><td>LaTeX bibliographies</td></tr>
@@ -300,14 +309,14 @@ export default function DevelopersPage() {
 
         {/* Webhooks */}
         <section>
-          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('webhooks_title')}</h2>
-          <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-4 text-sm text-stone-700">
+          <h2 className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100 mb-4">{t('webhooks_title')}</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 p-6 space-y-4 text-sm text-stone-700 dark:text-stone-300">
             <p>
               {t('webhooks_intro', { code: 'POST' })}
             </p>
 
             <div>
-              <h3 className="font-semibold text-stone-800 mb-2">{t('webhooks_creating')}</h3>
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('webhooks_creating')}</h3>
               <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
                 <div className="text-stone-400">{t('webhooks_create_comment')}</div>
                 <div className="text-green-400">curl -X POST {apiBase}/api/webhooks \</div>
@@ -315,37 +324,39 @@ export default function DevelopersPage() {
                 <div className="text-green-400 ml-6">-H &quot;Content-Type: application/json&quot; \</div>
                 <div className="text-green-400 ml-6">-d &#123;&quot;url&quot;: &quot;https://example.com/hook&quot;, &quot;events&quot;: [&quot;book.completed&quot;, &quot;session.ended&quot;]&#125;</div>
               </div>
-              <p className="text-xs text-stone-500 mt-2">
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-2">
                 {t('webhooks_secret_note', { code: 'secret' })}
               </p>
             </div>
 
             <div>
-              <h3 className="font-semibold text-stone-800 mb-2">{t('webhooks_events')}</h3>
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-stone-200">
-                    <th className="pb-2 font-semibold">{t('webhooks_event')}</th>
-                    <th className="pb-2 font-semibold">{t('webhooks_trigger')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  <tr><td className="py-1.5 font-mono text-xs">book.started</td><td>Reading session started for a book</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">book.completed</td><td>Book marked as completed</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">book.updated</td><td>Book metadata or progress updated</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">session.started</td><td>New reading session started</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">session.ended</td><td>Reading session ended</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">annotation.created</td><td>Highlight, note, or bookmark created</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">annotation.updated</td><td>Annotation edited</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">annotation.deleted</td><td>Annotation deleted</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">flashcard.created</td><td>Flashcard generated</td></tr>
-                  <tr><td className="py-1.5 font-mono text-xs">flashcard.reviewed</td><td>SM-2 review submitted</td></tr>
-                </tbody>
-              </table>
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('webhooks_events')}</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-stone-200 dark:border-gray-700">
+                      <th className="pb-2 font-semibold">{t('webhooks_event')}</th>
+                      <th className="pb-2 font-semibold">{t('webhooks_trigger')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100 dark:divide-gray-800">
+                    <tr><td className="py-1.5 font-mono text-xs">book.started</td><td>Reading session started for a book</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">book.completed</td><td>Book marked as completed</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">book.updated</td><td>Book metadata or progress updated</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">session.started</td><td>New reading session started</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">session.ended</td><td>Reading session ended</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">annotation.created</td><td>Highlight, note, or bookmark created</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">annotation.updated</td><td>Annotation edited</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">annotation.deleted</td><td>Annotation deleted</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">flashcard.created</td><td>Flashcard generated</td></tr>
+                    <tr><td className="py-1.5 font-mono text-xs">flashcard.reviewed</td><td>SM-2 review submitted</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div>
-              <h3 className="font-semibold text-stone-800 mb-2">{t('webhooks_payload')}</h3>
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('webhooks_payload')}</h3>
               <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
                 <div className="text-green-400">&#123;</div>
                 <div className="text-green-400 ml-4">&quot;event&quot;: &quot;book.completed&quot;,</div>
@@ -361,8 +372,8 @@ export default function DevelopersPage() {
             </div>
 
             <div>
-              <h3 className="font-semibold text-stone-800 mb-2">{t('webhooks_verifying')}</h3>
-              <div className="bg-stone-100 rounded-lg p-3 text-xs space-y-2">
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('webhooks_verifying')}</h3>
+              <div className="bg-stone-100 dark:bg-gray-800 rounded-lg p-3 text-xs space-y-2">
                 <p>{t('webhooks_verify_intro')}</p>
                 <div className="font-mono">
                   <div>X-Webhook-Signature: &lt;HMAC-SHA256 hex&gt;</div>
@@ -374,7 +385,7 @@ export default function DevelopersPage() {
             </div>
 
             <div>
-              <h3 className="font-semibold text-stone-800 mb-2">{t('webhooks_testing')}</h3>
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('webhooks_testing')}</h3>
               <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
                 <div className="text-stone-400">{t('webhooks_test_comment')}</div>
                 <div className="text-green-400">curl -X POST {apiBase}/api/webhooks/WEBHOOK_ID/test \</div>
@@ -382,7 +393,7 @@ export default function DevelopersPage() {
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <strong>{t('webhooks_retry_policy')}</strong>
             </div>
           </div>
@@ -390,10 +401,10 @@ export default function DevelopersPage() {
 
         {/* SDK / Libraries */}
         <section>
-          <h2 className="text-xl font-bold font-serif text-stone-900 mb-4">{t('code_examples')}</h2>
+          <h2 className="text-xl font-bold font-serif text-stone-900 dark:text-stone-100 mb-4">{t('code_examples')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-stone-200 p-4">
-              <h3 className="font-semibold text-stone-800 mb-2">{t('code_python')}</h3>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 p-4">
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('code_python')}</h3>
               <div className="bg-stone-900 rounded-lg p-3 font-mono text-xs overflow-x-auto">
                 <div className="text-stone-400">{'import requests'}</div>
                 <div className="text-stone-400">{"API = 'https://your-readpal-instance.com'"}</div>
@@ -407,8 +418,8 @@ export default function DevelopersPage() {
                 <div className="text-green-400">{'    f.write(csv.text)'}</div>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-stone-200 p-4">
-              <h3 className="font-semibold text-stone-800 mb-2">{t('code_javascript')}</h3>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-stone-200 dark:border-gray-700 p-4">
+              <h3 className="font-semibold text-stone-800 dark:text-stone-200 mb-2">{t('code_javascript')}</h3>
               <div className="bg-stone-900 rounded-lg p-3 font-mono text-xs overflow-x-auto">
                 <div className="text-stone-400">{"const API = 'https://your-readpal-instance.com';"}</div>
                 <div className="text-stone-400">{'const KEY = "rpk_YOUR_KEY";'}</div>
@@ -427,8 +438,18 @@ export default function DevelopersPage() {
         </section>
 
         {/* Status indicator */}
+        {apiKeyLoading && (
+          <div className="bg-stone-100 dark:bg-gray-800 rounded-xl p-4 text-sm text-stone-500 dark:text-stone-400 animate-pulse">
+            {t('api_key_loading')}
+          </div>
+        )}
+        {apiKeyError && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-300">
+            {apiKeyError}
+          </div>
+        )}
         {apiKeyHint && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800">
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-sm text-emerald-800 dark:text-emerald-300">
             {t('api_key_active', { code: apiKeyHint })}
             <Link href="/settings" className="underline ml-1">{t('api_key_manage')}</Link>
           </div>

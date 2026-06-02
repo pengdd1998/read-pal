@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useTranslations } from 'next-intl';
@@ -36,13 +36,19 @@ export default function KnowledgePage() {
   }, []);
 
   // Find connected edges for selected node
-  const connectedEdges = selectedNode
-    ? edges.filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
-    : [];
-  const connectedNodeIds = new Set([
-    selectedNode?.id,
-    ...connectedEdges.map((e) => (e.source === selectedNode?.id ? e.target : e.source)),
-  ]);
+  const connectedEdges = useMemo(
+    () => selectedNode
+      ? edges.filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
+      : [],
+    [selectedNode, edges],
+  );
+  const connectedNodeIds = useMemo(
+    () => new Set([
+      selectedNode?.id,
+      ...connectedEdges.map((e) => (e.source === selectedNode?.id ? e.target : e.source)),
+    ]),
+    [selectedNode, connectedEdges],
+  );
 
   // ---------------------------------------------------------------------------
   // Error state
@@ -188,25 +194,61 @@ export default function KnowledgePage() {
 
           {/* Sidebar */}
           <div className="space-y-4">
-            {/* Selected node details */}
-            {selectedNode && (
-              <NodeDetailPanel
-                node={selectedNode}
-                connectedEdges={connectedEdges}
-                allNodes={nodes}
-                onDeselect={() => setSelectedNode(null)}
-                t={t}
-              />
+            {loading ? (
+              <>
+                {/* Cross-book themes skeleton */}
+                <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28 mb-3 animate-pulse" />
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse" />
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/5 animate-pulse" />
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Knowledge gaps skeleton */}
+                <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-3 animate-pulse" />
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse" />
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3 animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Legend skeleton */}
+                <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-3 animate-pulse" />
+                  <div className="flex flex-wrap gap-2">
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20 animate-pulse" />
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16 animate-pulse" />
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-24 animate-pulse" />
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-18 animate-pulse" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Selected node details */}
+                {selectedNode && (
+                  <NodeDetailPanel
+                    node={selectedNode}
+                    connectedEdges={connectedEdges}
+                    allNodes={nodes}
+                    onDeselect={() => setSelectedNode(null)}
+                    t={t}
+                  />
+                )}
+
+                {/* Cross-book themes */}
+                <CrossBookThemes themes={themes} t={t} />
+
+                {/* Knowledge Gaps */}
+                <KnowledgeGaps gaps={gaps} t={t} />
+
+                {/* Legend */}
+                <KnowledgeLegend t={t} />
+              </>
             )}
-
-            {/* Cross-book themes */}
-            <CrossBookThemes themes={themes} t={t} />
-
-            {/* Knowledge Gaps */}
-            <KnowledgeGaps gaps={gaps} t={t} />
-
-            {/* Legend */}
-            <KnowledgeLegend t={t} />
           </div>
         </div>
       </div>

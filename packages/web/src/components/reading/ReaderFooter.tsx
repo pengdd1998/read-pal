@@ -47,7 +47,7 @@ export function ReaderFooter({
   return (
     <footer
       className={`relative z-30 border-t transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-[#faf6f0]/95' : 'border-gray-200/60 bg-white/95'
+        theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-amber-50/95' : 'border-gray-200/60 bg-white/95'
       } backdrop-blur-sm ${
         showControls
           ? 'opacity-100 shrink-0'

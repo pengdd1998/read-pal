@@ -181,6 +181,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
             <button
               key={c}
               onClick={() => setEditColor(c)}
+              aria-label={`Color ${c}`}
               className={`w-6 h-6 rounded-full border-2 transition-transform ${
                 editColor === c ? 'scale-125 border-gray-800 dark:border-white' : 'border-transparent hover:scale-110'
               }`}

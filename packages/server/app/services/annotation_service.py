@@ -132,6 +132,28 @@ async def delete_annotation(
     return True
 
 
+async def get_tags(
+    db: AsyncSession,
+    user_id: str,
+    book_id: UUID | None = None,
+) -> list[dict]:
+    """Get tags with counts for a user's annotations, optionally filtered by book."""
+    tag_col = func.unnest(Annotation.tags).label('tag')
+    q = (
+        select(
+            tag_col,
+            func.count().label('count'),
+        )
+        .where(Annotation.user_id == user_id)
+        .group_by(tag_col)
+        .order_by(func.count().desc())
+    )
+    if book_id:
+        q = q.where(Annotation.book_id == book_id)
+    result = await db.execute(q)
+    return [{'name': row[0], 'count': row[1]} for row in result.all() if row[0]]
+
+
 async def search_annotations(
     db: AsyncSession,
     user_id: str,
@@ -139,7 +161,8 @@ async def search_annotations(
     book_id: UUID | None = None,
 ) -> list[Annotation]:
     """Full-text search on annotation content and note fields."""
-    pattern = f'%{query}%'
+    escaped = query.replace('%', r'\%').replace('_', r'\_')
+    pattern = f'%{escaped}%'
     base = select(Annotation).where(
         Annotation.user_id == user_id,
         or_(

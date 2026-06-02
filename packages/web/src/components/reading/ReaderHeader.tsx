@@ -37,9 +37,9 @@ interface ReaderHeaderProps {
 }
 
 const HEADER_BG_CLASSES = {
-  light: 'bg-[#fdfbf7]/95 border-amber-200/50',
-  dark: 'bg-[#1a1f26]/95 border-amber-900/30',
-  sepia: 'bg-[#f5f0e6]/95 border-amber-300/50',
+  light: 'bg-surface-1/95 border-amber-200/50',
+  dark: 'bg-gray-900/95 border-amber-900/30',
+  sepia: 'bg-amber-50/95 border-amber-300/50',
 } as const;
 
 export function ReaderHeader(props: ReaderHeaderProps) {

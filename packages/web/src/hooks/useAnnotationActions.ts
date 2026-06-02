@@ -67,14 +67,6 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     try {
       const chapter = chapters[currentChapter];
       if (!chapter) return;
-      console.log('[DEBUG] handleAddHighlight:', {
-        hasRange: !!selectionRange,
-        hasContainer: !!contentRef.current,
-        selectionOffsets,
-        rangeText: selectionRange?.toString()?.slice(0, 50),
-        rangeCollapsed: selectionRange?.collapsed,
-        selectionText: text.slice(0, 50),
-      });
       const offsets = selectionOffsets || (selectionRange && contentRef.current
         ? computeOffsets(selectionRange, contentRef.current)
         : { start: 0, end: text.length });
@@ -86,11 +78,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
       });
 
       if (result.success && result.data) {
-        console.log('[DEBUG] Highlight created:', JSON.stringify(result.data.location));
         setAnnotations((prev) => [...prev, result.data!]);
         analytics.track('annotation_created', { type: 'highlight' });
-      } else {
-        console.warn('[DEBUG] Highlight API returned no data:', result);
       }
     } catch (err) {
       console.error('Failed to add highlight:', err);

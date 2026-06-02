@@ -9,6 +9,7 @@ from app.utils import utcnow
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.book import Book
 from app.models.flashcard import Flashcard
 from app.schemas.flashcard import FlashcardCreate
 
@@ -99,8 +100,9 @@ async def get_due_cards(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID | None = None,
+    limit: int = 200,
 ) -> list[Flashcard]:
-    """Get flashcards due for review."""
+    """Get flashcards due for review (capped at `limit`)."""
     now = utcnow()
     query = (
         select(Flashcard)
@@ -109,6 +111,7 @@ async def get_due_cards(
             Flashcard.next_review_at <= now,
         )
         .order_by(Flashcard.next_review_at.asc())
+        .limit(limit)
     )
     if book_id is not None:
         query = query.where(Flashcard.book_id == book_id)
@@ -145,3 +148,35 @@ async def list_flashcards(
         .limit(per_page),
     )
     return list(result.scalars().all()), total
+
+
+async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
+    """List flashcard decks grouped by book."""
+    result = await db.execute(
+        select(
+            Flashcard.book_id,
+            Book.title.label('book_title'),
+            Book.author,
+            Book.cover_url,
+            func.count(Flashcard.id).label('card_count'),
+        )
+        .join(Book, Book.id == Flashcard.book_id)
+        .where(Flashcard.user_id == user_id)
+        .group_by(Flashcard.book_id, Book.title, Book.author, Book.cover_url),
+    )
+    decks = [
+        {
+            'bookId': str(row.book_id),
+            'bookTitle': row.book_title or '',
+            'author': row.author or '',
+            'coverUrl': row.cover_url,
+            'total': row.card_count,
+            'due': row.card_count,
+        }
+        for row in result.all()
+    ]
+    return {
+        'decks': decks,
+        'totalCards': sum(d['total'] for d in decks),
+        'totalDue': sum(d['due'] for d in decks),
+    }

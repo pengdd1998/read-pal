@@ -37,18 +37,17 @@ async def upload_book(
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t('errors.no_filename', lang),
+            detail={'code': 'VALIDATION_ERROR', 'message': t('errors.no_filename', lang)},
         )
 
     file_size = 0
-    suffix = Path(file.filename).suffix.lower()
 
     # Validate filename/extension before reading any data
     error = validate_file(file.filename, 0, lang)
     if error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error,
+            detail={'code': 'VALIDATION_ERROR', 'message': error},
         )
 
     file_type = get_file_type(file.filename)
@@ -58,7 +57,7 @@ async def upload_book(
     try:
         with tempfile.NamedTemporaryFile(
             delete=False,
-            suffix=suffix,
+            suffix=f'.{file_type}',
         ) as tmp:
             tmp_path = tmp.name
             while chunk := await file.read(1024 * 1024):  # 1MB chunks
@@ -66,7 +65,7 @@ async def upload_book(
                 if file_size > MAX_FILE_SIZE:
                     raise HTTPException(
                         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                        detail=t('errors.file_too_large_mb', lang, max_size=MAX_FILE_SIZE // (1024 * 1024)),
+                        detail={'code': 'FILE_TOO_LARGE', 'message': t('errors.file_too_large_mb', lang, max_size=MAX_FILE_SIZE // (1024 * 1024))},
                     )
                 tmp.write(chunk)
 
@@ -75,10 +74,12 @@ async def upload_book(
         if error:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=error,
+                detail={'code': 'VALIDATION_ERROR', 'message': error},
             )
 
-        book_title = title or Path(file.filename).stem
+        # Sanitize filename for book title (prevent XSS from crafted filenames)
+        import html
+        book_title = title or html.escape(Path(file.filename).stem)
         book_author = author or 'Unknown'
         tag_list = tags.split(',') if tags else []
 

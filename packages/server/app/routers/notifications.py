@@ -16,10 +16,10 @@ router = APIRouter(prefix='/api/v1/notifications', tags=['notifications'])
 
 
 def _serialize_notification(n: object) -> dict:
-    """Convert a Notification ORM object to a response dict."""
+    """Convert a Notification ORM object to a camelCase response dict."""
     return {
         'id': str(n.id),
-        'user_id': str(n.user_id),
+        'userId': str(n.user_id),
         'type': n.type,
         'title': n.title,
         'message': n.message,
@@ -27,8 +27,6 @@ def _serialize_notification(n: object) -> dict:
         'read': n.read,
         'createdAt': n.created_at.isoformat() if n.created_at else None,
         'updatedAt': n.updated_at.isoformat() if n.updated_at else None,
-        'created_at': n.created_at.isoformat() if n.created_at else None,
-        'updated_at': n.updated_at.isoformat() if n.updated_at else None,
     }
 
 

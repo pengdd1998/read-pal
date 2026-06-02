@@ -63,7 +63,7 @@ async def forgot_password(body: ForgotPasswordRequest) -> MessageResponse:
 
     except Exception:
         # Silently ignore errors to prevent enumeration
-        logger.debug('Error during forgot-password flow', exc_info=True)
+        logger.warning('Error during forgot-password flow', exc_info=True)
 
     return MessageResponse(
         data={'message': t('errors.reset_link_sent')},

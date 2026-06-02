@@ -18,7 +18,7 @@ class BookCreate(BaseModel):
     file_type: Literal['epub', 'pdf']
     file_size: int = Field(gt=0)
     total_pages: int = 0
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list, max_length=50)
 
 
 class BookUpdate(BaseModel):
@@ -76,7 +76,7 @@ class BookStatsResponse(BaseModel):
 class BookTagsUpdateRequest(BaseModel):
     """Request body for updating book tags."""
 
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list, max_length=50)
 
 
 class SeedSampleBookRequest(BaseModel):

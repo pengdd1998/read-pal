@@ -40,9 +40,9 @@ export function MobileAuthGuard({ children }: { children: ReactNode }) {
 
   if (isCapacitor() && loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#fefdfb]">
+      <div className="min-h-screen flex items-center justify-center bg-surface-1">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#d97706] flex items-center justify-center text-white text-sm font-bold animate-pulse">
+          <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white text-sm font-bold animate-pulse">
             r
           </div>
           <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />

@@ -344,7 +344,7 @@ async def store_feedback(
         context=context,
     )
     db.add(feedback)
-    await db.commit()
+    await db.flush()
     return {'message': 'Feedback recorded'}
 
 

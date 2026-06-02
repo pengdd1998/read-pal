@@ -82,7 +82,8 @@
     "cannot_leave_last_admin": "无法退出 — 您是最后一个管理员，请改为解散读书会。",
     "only_admin_moderator_update": "仅管理员或版主可以更新读书会",
     "only_admin_delete": "仅管理员可以删除读书会",
-    "must_be_member_post": "必须是成员才能发帖讨论"
+    "must_be_member_post": "必须是成员才能发帖讨论",
+    "llm_log_not_found": "LLM日志未找到"
   },
   "companion": {
     "fallback_error": "AI 服务暂时无法连接，请稍后再试。",

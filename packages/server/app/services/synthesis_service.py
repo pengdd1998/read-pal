@@ -227,6 +227,130 @@ async def synthesize(
   return SynthesisResponse(success=True, data=synthesis_data)
 
 
+async def _batch_collect_reading_data(
+  db: AsyncSession,
+  user_id: UUID,
+  book_ids: list[UUID],
+  include_highlights: bool = True,
+  include_notes: bool = True,
+  include_conversations: bool = True,
+) -> dict[UUID, dict[str, Any]]:
+  """Collect reading data for multiple books using batch queries.
+
+  Replaces N calls to ``_collect_reading_data`` (4 queries each = 4N total)
+  with 4 batch queries total, then partitions results in Python.
+  """
+  # Batch 1: books
+  result = await db.execute(
+    select(Book).where(Book.id.in_(book_ids), Book.user_id == user_id),
+  )
+  books = {b.id: b for b in result.scalars().all()}
+
+  # Batch 2: annotations (capped globally, partitioned per book later)
+  result = await db.execute(
+    select(Annotation)
+    .where(
+      Annotation.user_id == user_id,
+      Annotation.book_id.in_(book_ids),
+    )
+    .order_by(Annotation.book_id, Annotation.created_at),
+  )
+  all_annotations: dict[UUID, list[Annotation]] = {}
+  for ann in result.scalars().all():
+    all_annotations.setdefault(ann.book_id, [])
+    if len(all_annotations[ann.book_id]) < _MAX_ANNOTATIONS:
+      all_annotations[ann.book_id].append(ann)
+
+  # Batch 3: chat messages (only if needed)
+  all_messages: dict[UUID, list[ChatMessage]] = {}
+  if include_conversations:
+    result = await db.execute(
+      select(ChatMessage)
+      .where(
+        ChatMessage.user_id == user_id,
+        ChatMessage.book_id.in_(book_ids),
+      )
+      .order_by(ChatMessage.book_id, ChatMessage.created_at),
+    )
+    for msg in result.scalars().all():
+      all_messages.setdefault(msg.book_id, [])
+      if len(all_messages[msg.book_id]) < _MAX_CHAT_MESSAGES:
+        all_messages[msg.book_id].append(msg)
+
+  # Batch 4: reading sessions
+  result = await db.execute(
+    select(ReadingSession)
+    .where(
+      ReadingSession.user_id == user_id,
+      ReadingSession.book_id.in_(book_ids),
+    )
+    .order_by(ReadingSession.book_id, ReadingSession.started_at),
+  )
+  all_sessions: dict[UUID, list[ReadingSession]] = {}
+  for sess in result.scalars().all():
+    all_sessions.setdefault(sess.book_id, [])
+    if len(all_sessions[sess.book_id]) < _MAX_READING_SESSIONS:
+      all_sessions[sess.book_id].append(sess)
+
+  # Assemble per-book data dicts
+  data_map: dict[UUID, dict[str, Any]] = {}
+  for bid in book_ids:
+    book = books.get(bid)
+    if book is None:
+      continue
+    data: dict[str, Any] = {
+      'book': {
+        'title': book.title,
+        'author': book.author,
+        'progress': float(book.progress),
+        'status': book.status,
+      },
+    }
+    annotations = all_annotations.get(bid, [])
+    if include_highlights:
+      data['highlights'] = [
+        {
+          'content': sanitize_annotations(a.content or ''),
+          'note': sanitize_annotations(a.note or ''),
+          'tags': a.tags,
+        }
+        for a in annotations
+        if match_annotation_type(a.type, AnnotationType.highlight)
+      ]
+    if include_notes:
+      data['notes'] = [
+        {
+          'content': sanitize_annotations(a.content or ''),
+          'note': sanitize_annotations(a.note or ''),
+          'tags': a.tags,
+        }
+        for a in annotations
+        if match_annotation_type(a.type, AnnotationType.note)
+      ]
+    if include_conversations:
+      messages = all_messages.get(bid, [])
+      data['conversations'] = [
+        {
+          'role': m.role,
+          'content': sanitize_chat_message(m.content or ''),
+        }
+        for m in messages
+      ]
+    sessions = all_sessions.get(bid, [])
+    data['reading_sessions'] = [
+      {
+        'started_at': s.started_at.isoformat() if s.started_at else None,
+        'duration': s.duration,
+        'pages_read': s.pages_read,
+        'highlights': s.highlights,
+        'notes': s.notes,
+      }
+      for s in sessions
+    ]
+    data_map[bid] = data
+  return data_map
+
+
 async def cross_book_synthesize(
   db: AsyncSession,
   user_id: UUID,
@@ -240,12 +364,11 @@ async def cross_book_synthesize(
     user_id=str(user_id),
   )
 
-  all_book_data: list[dict[str, Any]] = []
-
-  for bid in book_ids:
-    data = await _collect_reading_data(db, user_id, bid, True, True, False)
-    if data.get('book'):
-      all_book_data.append(data)
+  # Batch-load reading data for all books (4 queries total, not 4N)
+  data_map = await _batch_collect_reading_data(
+    db, user_id, book_ids, True, True, False,
+  )
+  all_book_data = [data_map[bid] for bid in book_ids if bid in data_map]
 
   if not all_book_data:
     return SynthesisResponse(

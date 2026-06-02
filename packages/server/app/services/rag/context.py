@@ -41,8 +41,9 @@ async def get_book_context(
 
     # Determine max chapter index for spoiler prevention.
     # Completed books: no filter (user has read everything).
+    # Use current_segment (chapter-level progress) not current_page (page number).
     is_completed = book.status == 'completed'
-    max_chapter_index = book.current_page if not is_completed else None
+    max_chapter_index = book.current_segment if not is_completed else None
 
     cache_key = f'{RAG_CACHE_PREFIX}{book_id}:{user_id}:{_stable_hash(query)}:{max_chapter_index}'
     try:

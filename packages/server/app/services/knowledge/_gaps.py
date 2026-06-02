@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from uuid import UUID
 
 import networkx as nx
@@ -9,11 +10,37 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.annotation import Annotation
 from app.schemas.knowledge import KnowledgeGap
 from app.services.knowledge._cache import _content_hash, _load_cached_graph
-from app.services.knowledge._loading import _load_annotations
 
 logger = structlog.get_logger('read-pal.knowledge')
+
+
+async def _batch_load_annotations(
+    db: AsyncSession,
+    user_id: UUID,
+    book_ids: list[UUID],
+    limit_per_book: int = 50,
+) -> dict[UUID, list[Annotation]]:
+    """Load annotations for multiple books in a single query, then group by book_id.
+
+    Replaces N individual ``_load_annotations`` calls with one batch query.
+    """
+    if not book_ids:
+        return {}
+    result = await db.execute(
+        select(Annotation)
+        .where(
+            Annotation.user_id == user_id,
+            Annotation.book_id.in_(book_ids),
+        )
+        .order_by(Annotation.book_id, Annotation.created_at),
+    )
+    grouped: dict[UUID, list[Annotation]] = defaultdict(list)
+    for ann in result.scalars().all():
+        grouped[ann.book_id].append(ann)
+    return {bid: anns[:limit_per_book] for bid, anns in grouped.items()}
 
 
 async def detect_gaps(
@@ -34,11 +61,14 @@ async def detect_gaps(
     if not book_ids:
         return []
 
+    # Batch-load annotations for all books in a single DB query
+    annotations_by_book = await _batch_load_annotations(db, user_id, book_ids)
+
     # Merge all cached graphs into a single NetworkX graph
     merged = nx.Graph()
     for bid in book_ids:
         try:
-            annotations = await _load_annotations(db, user_id, bid)
+            annotations = annotations_by_book.get(bid, [])
             texts = [a.content for a in annotations if a.content.strip()]
             if not texts:
                 continue

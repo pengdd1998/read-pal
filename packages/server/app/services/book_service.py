@@ -1,5 +1,6 @@
 """Business logic for book CRUD operations."""
 
+import json
 import logging
 import uuid
 from decimal import Decimal
@@ -131,33 +132,51 @@ async def delete_book(db: AsyncSession, user_id: str, book_id: UUID) -> bool:
 
 
 async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
-    """Return aggregate book statistics for a user."""
-    total_result = await db.execute(
-        select(func.count()).select_from(Book).where(Book.user_id == user_id),
-    )
-    total = total_result.scalar() or 0
+    """Return aggregate book statistics for a user (cached 5 min, single query)."""
+    from app.core.redis import get_redis
 
-    status_counts = await db.execute(
-        select(Book.status, func.count())
-        .where(Book.user_id == user_id)
-        .group_by(Book.status),
-    )
-    counts_by_status = dict(status_counts.all())
+    cache_key = f'stats:books:{user_id}'
+    try:
+        redis = get_redis()
+        cached = await redis.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    except Exception:
+        pass
 
-    pages_result = await db.execute(
-        select(func.coalesce(func.sum(Book.current_page), 0)).where(
-            Book.user_id == user_id,
-        ),
-    )
-    total_pages_read = pages_result.scalar() or 0
+    from sqlalchemy import case
 
-    return {
-        'total': total,
-        'reading': counts_by_status.get('reading', 0),
-        'completed': counts_by_status.get('completed', 0),
-        'unread': counts_by_status.get('unread', 0),
-        'total_pages_read': int(total_pages_read),
+    row = (await db.execute(
+        select(
+            func.count().label('total'),
+            func.coalesce(func.sum(
+                case((Book.status == 'reading', 1), else_=0),
+            ), 0).label('reading'),
+            func.coalesce(func.sum(
+                case((Book.status == 'completed', 1), else_=0),
+            ), 0).label('completed'),
+            func.coalesce(func.sum(
+                case((Book.status == 'unread', 1), else_=0),
+            ), 0).label('unread'),
+            func.coalesce(func.sum(Book.current_page), 0).label('pages'),
+        ).where(Book.user_id == user_id)
+    )).one()
+
+    result = {
+        'total': row.total,
+        'reading': int(row.reading),
+        'completed': int(row.completed),
+        'unread': int(row.unread),
+        'total_pages_read': int(row.pages),
     }
+
+    try:
+        redis = get_redis()
+        await redis.setex(cache_key, 300, json.dumps(result))
+    except Exception:
+        pass
+
+    return result
 
 
 async def update_tags(

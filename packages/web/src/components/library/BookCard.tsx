@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useRouter } from '@/i18n/navigation';
@@ -25,7 +25,7 @@ interface BookCardProps {
   onTagsChange?: (id: string, tags: string[]) => void;
 }
 
-export function BookCard({
+function BookCardInner({
   id,
   title,
   author,
@@ -49,20 +49,28 @@ export function BookCard({
   const router = useRouter();
   const t = useTranslations('library');
 
-  const STATUS_CONFIG = {
+  const STATUS_CONFIG = useMemo(() => ({
     unread: { label: t('card_unread'), dot: 'bg-gray-300', ring: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
     reading: { label: t('card_reading'), dot: 'bg-primary-400', ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
     completed: { label: t('card_completed'), dot: 'bg-emerald-400', ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
-  } as const;
+  } as const), [t]);
 
   const cfg = STATUS_CONFIG[status];
 
-  // Check if book is cached for offline
-  useEffect(() => {
-    checkOfflineCache();
-  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const openOfflineDB = useCallback((): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('readpal-offline', 2);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('mutations')) db.createObjectStore('mutations', { keyPath: 'timestamp' });
+        if (!db.objectStoreNames.contains('bookContent')) db.createObjectStore('bookContent', { keyPath: 'bookId' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }, []);
 
-  async function checkOfflineCache() {
+  const checkOfflineCache = useCallback(async () => {
     try {
       if (isCapacitor()) {
         const cached = await isCached(id);
@@ -82,22 +90,25 @@ export function BookCard({
         }
       }
     } catch { /* ignore */ }
-  }
+  }, [id, openOfflineDB]);
 
-  async function handleCacheOffline(e: React.MouseEvent) {
+  // Check if book is cached for offline
+  useEffect(() => {
+    checkOfflineCache();
+  }, [checkOfflineCache]);
+
+  const handleCacheOffline = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (cachingOffline || cachedOffline) return;
     setCachingOffline(true);
     try {
       if (isCapacitor()) {
-        // Use mobile-cache for Capacitor apps
         const result = await cacheBook(id);
         if (result.cached > 0) {
           setCachedOffline(true);
         }
       } else {
-        // Use service worker for PWA
         const res = await api.get<{ chapters: Array<{ id: string }> }>(`/api/books/${id}/chapters`);
         if (res.success && res.data?.chapters) {
           await cacheBookForOffline(id, res.data.chapters);
@@ -108,41 +119,28 @@ export function BookCard({
       setCachedOffline(false);
     }
     setCachingOffline(false);
-  }
+  }, [id, cachingOffline, cachedOffline]);
 
-  function openOfflineDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open('readpal-offline', 2);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains('mutations')) db.createObjectStore('mutations', { keyPath: 'timestamp' });
-        if (!db.objectStoreNames.contains('bookContent')) db.createObjectStore('bookContent', { keyPath: 'bookId' });
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
+  const handleDeleteClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!showDeleteConfirm) {
       setShowDeleteConfirm(true);
     }
-  };
+  }, [showDeleteConfirm]);
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = useCallback(() => {
     if (deleting) return;
     setDeleting(true);
     setShowDeleteConfirm(false);
     onDelete?.(id);
-  };
+  }, [deleting, id, onDelete]);
 
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setShowDeleteConfirm(false);
-  };
+  }, []);
 
-  const handleAddTag = async (e: React.KeyboardEvent) => {
+  const handleAddTag = useCallback(async (e: React.KeyboardEvent) => {
     if (e.key !== 'Enter') return;
     const tag = tagInput.trim().toLowerCase();
     if (!tag || tags.includes(tag)) { setTagInput(''); return; }
@@ -152,18 +150,19 @@ export function BookCard({
       onTagsChange?.(id, newTags);
       setTagInput('');
     } catch { /* silent */ }
-  };
+  }, [tagInput, tags, id, onTagsChange]);
 
-  const handleRemoveTag = async (tag: string) => {
+  const handleRemoveTag = useCallback(async (tag: string) => {
     const newTags = tags.filter((t) => t !== tag);
     try {
       await api.put(`/api/books/${id}/tags`, { tags: newTags });
       onTagsChange?.(id, newTags);
     } catch { /* silent */ }
-  };
-  const formattedDate = lastReadAt
+  }, [tags, id, onTagsChange]);
+
+  const formattedDate = useMemo(() => lastReadAt
     ? new Date(lastReadAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-    : null;
+    : null, [lastReadAt]);
 
   return (
     <Link href={`/read/${id}`} className="group">
@@ -183,7 +182,7 @@ export function BookCard({
           )}
 
           {/* Status dot */}
-          <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900" style={{ backgroundColor: cfg.dot }} />
+          <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900" style={{ backgroundColor: cfg.dot }} aria-label={cfg.label} title={cfg.label} />
 
           {/* Offline badge (Capacitor only) */}
           {cachedOffline && isCapacitor() && (
@@ -383,3 +382,5 @@ export function BookCard({
     </Link>
   );
 }
+
+export const BookCard = React.memo(BookCardInner);

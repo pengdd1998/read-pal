@@ -137,6 +137,8 @@ async def chat(
         book_id=str(book_id) if book_id else None,
     )
     rel = await _get_or_create_relationship(db, user_id)
+    if persona not in FRIEND_PERSONAS:
+        persona = 'sage'
     rel.persona = persona
 
     sanitized_message = sanitize_chat_message(message)

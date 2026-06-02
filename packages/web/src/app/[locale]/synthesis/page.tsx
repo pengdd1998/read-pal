@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
 
@@ -26,6 +27,7 @@ const MODES: { key: AnalysisMode; icon: string }[] = [
 export default function SynthesisPage() {
   const t = useTranslations('synthesis');
   const { toast } = useToast();
+  usePageTitle(t('page_title'));
   const [books, setBooks] = useState<BookOption[]>([]);
   const [selectedBookId, setSelectedBookId] = useState<string>('');
   const [mode, setMode] = useState<AnalysisMode>('cross_reference');
@@ -41,20 +43,22 @@ export default function SynthesisPage() {
   const [compareError, setCompareError] = useState<string | null>(null);
 
   // Fetch user's books on mount
-  useState(() => {
+  useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const res = await api.get<BookOption[]>('/api/books');
-        if (res.success && res.data) {
+        if (!cancelled && res.success && res.data) {
           setBooks(res.data);
         }
       } catch {
         // Silently fail
       } finally {
-        setBooksLoading(false);
+        if (!cancelled) setBooksLoading(false);
       }
     })();
-  });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleAnalyze = useCallback(async () => {
     if (!selectedBookId || !query.trim()) return;
@@ -276,10 +280,12 @@ export default function SynthesisPage() {
           <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">
             {t('analysis_mode')}
           </label>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('analysis_mode')}>
             {MODES.map((m) => (
               <button
                 key={m.key}
+                role="radio"
+                aria-checked={mode === m.key}
                 onClick={() => setMode(m.key)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   mode === m.key

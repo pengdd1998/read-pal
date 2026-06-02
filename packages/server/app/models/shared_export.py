@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -19,6 +19,10 @@ if TYPE_CHECKING:
 
 class SharedExport(Base):
     __tablename__ = 'shared_exports'
+    __table_args__ = (
+        Index('ix_shared_exports_user_book', 'user_id', 'book_id'),
+        Index('ix_shared_exports_expires_at', 'expires_at'),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),

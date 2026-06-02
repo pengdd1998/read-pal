@@ -78,10 +78,12 @@ export default function BookClubsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl mb-6">
+        <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl mb-6" role="tablist">
           {(['my', 'discover'] as const).map((tabKey) => (
             <button
               key={tabKey}
+              role="tab"
+              aria-selected={tab === tabKey}
               onClick={() => setTab(tabKey)}
               className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors ${
                 tab === tabKey

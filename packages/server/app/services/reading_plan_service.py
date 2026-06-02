@@ -26,6 +26,8 @@ async def generate_plan(
     daily_minutes: int = 30,
 ) -> dict[str, Any]:
     """Generate or regenerate a reading plan for a book."""
+    total_days = max(1, min(total_days, 90))
+    daily_minutes = max(10, min(daily_minutes, 240))
     t0 = time.monotonic()
     logger.info(
         'reading_plan.generate.started',

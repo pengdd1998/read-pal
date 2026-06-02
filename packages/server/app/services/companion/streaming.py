@@ -8,7 +8,6 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.companion.constants import STREAM_FLUSH_SIZE
@@ -152,6 +151,7 @@ async def stream_chat(
         )
 
     # Check cache
+    cache_hit = False
     try:
         from app.services.llm import _cache_key, _cache_get
         stream_cache_key = _cache_key(messages, 'companion_stream')
@@ -163,6 +163,7 @@ async def stream_chat(
                 yield 'data: [DONE]\n\n'
                 await _save_message(db, user_id, book_id, 'user', message)
                 await _save_message(db, user_id, book_id, 'assistant', safe)
+                cache_hit = True
                 return
     except Exception:
         pass
@@ -173,65 +174,70 @@ async def stream_chat(
     settings = get_settings()
     model_used = settings.default_model
 
-    # Circuit breaker gate
-    if not await circuit.allow_request():
-        logger.warning(
-            'companion.stream.circuit_blocked',
-            request_id=request_id,
-            user_id=str(user_id),
-            book_id=str(book_id),
-        )
-        fallback = t('companion.fallback_error', lang)
-        yield f'data: {json.dumps({"content": fallback})}\n\n'
-    else:
-        try:
-            llm = get_llm()
-            async for chunk in _stream_with_llm(
-                llm, messages, collected_parts, request_id,
-                start_time, model_used, user_id, book_id, lang,
-            ):
-                yield chunk
-        except Exception as exc:
-            latency_ms = int((time.monotonic() - start_time) * 1000)
-            logger.error(
-                'companion.stream.failed',
-                request_id=request_id, model=model_used,
-                latency_ms=latency_ms, success=False,
-                error=str(exc)[:500],
+    try:
+        # Circuit breaker gate
+        if not await circuit.allow_request():
+            logger.warning(
+                'companion.stream.circuit_blocked',
+                request_id=request_id,
+                user_id=str(user_id),
+                book_id=str(book_id),
             )
-            await circuit.record_failure()
-            persist_stream_log(
-                request_id=request_id, model=model_used, latency_ms=latency_ms,
-                success=False, error_message=str(exc)[:500],
-                user_id=user_id, book_id=book_id,
+            fallback = t('companion.fallback_error', lang)
+            yield f'data: {json.dumps({"content": fallback})}\n\n'
+        else:
+            try:
+                llm = get_llm()
+                async for chunk in _stream_with_llm(
+                    llm, messages, collected_parts, request_id,
+                    start_time, model_used, user_id, book_id, lang,
+                ):
+                    yield chunk
+            except Exception as exc:
+                latency_ms = int((time.monotonic() - start_time) * 1000)
+                logger.error(
+                    'companion.stream.failed',
+                    request_id=request_id, model=model_used,
+                    latency_ms=latency_ms, success=False,
+                    error=str(exc)[:500],
+                )
+                await circuit.record_failure()
+                persist_stream_log(
+                    request_id=request_id, model=model_used, latency_ms=latency_ms,
+                    success=False, error_message=str(exc)[:500],
+                    user_id=user_id, book_id=book_id,
+                )
+                async for chunk in _stream_fallback(
+                    messages, collected_parts, request_id, start_time,
+                    settings.fallback_model, user_id, book_id, lang,
+                ):
+                    yield chunk
+
+        yield 'data: [DONE]\n\n'
+    finally:
+        # Skip persistence if cache hit already saved messages
+        if cache_hit:
+            return
+
+        # Always persist messages, even if client disconnects mid-stream
+        assistant_content = ''.join(collected_parts)
+        if assistant_content:
+            assistant_content = filter_output(assistant_content, context='companion_stream')
+
+        if assistant_content:
+            try:
+                from app.services.llm import _cache_key, _cache_set
+                cache_key = _cache_key(messages, 'companion_stream')
+                await _cache_set(cache_key, assistant_content)
+            except Exception:
+                pass
+
+        await _save_message(db, user_id, book_id, 'user', message)
+        if assistant_content:
+            await _save_message(db, user_id, book_id, 'assistant', assistant_content)
+        else:
+            logger.warning(
+                'companion.stream.empty_response',
+                request_id=request_id,
+                book_id=str(book_id),
             )
-            async for chunk in _stream_fallback(
-                messages, collected_parts, request_id, start_time,
-                settings.fallback_model, user_id, book_id, lang,
-            ):
-                yield chunk
-
-    yield 'data: [DONE]\n\n'
-
-    assistant_content = ''.join(collected_parts)
-    if assistant_content:
-        assistant_content = filter_output(assistant_content, context='companion_stream')
-
-    # Cache the complete response
-    if assistant_content:
-        try:
-            from app.services.llm import _cache_key, _cache_set
-            cache_key = _cache_key(messages, 'companion_stream')
-            await _cache_set(cache_key, assistant_content)
-        except Exception:
-            pass
-
-    await _save_message(db, user_id, book_id, 'user', message)
-    if assistant_content:
-        await _save_message(db, user_id, book_id, 'assistant', assistant_content)
-    else:
-        logger.warning(
-            'companion.stream.empty_response',
-            request_id=request_id,
-            book_id=str(book_id),
-        )

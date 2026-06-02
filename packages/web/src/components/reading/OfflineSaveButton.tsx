@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { isCapacitor } from '@/lib/capacitor';
 import { cacheBook, isCached, removeCachedBook } from '@/lib/mobile-cache';
-import { hapticSuccess, hapticMedium } from '@/hooks/useHaptics';
+import { hapticSuccess, hapticMedium } from '@/lib/haptics';
 
 interface OfflineSaveButtonProps {
   bookId: string;
