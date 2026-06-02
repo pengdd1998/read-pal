@@ -138,14 +138,20 @@ async def _collect_enriched_data(
 
     enriched: dict[str, Any] = {**data}
 
-    # Knowledge graph concepts
+    # Knowledge graph concepts + edges for concept_web section
     try:
-        from app.services.knowledge_service import get_concepts
+        from app.services.knowledge_service import get_concepts, build_graph
         concepts = await get_concepts(db, user_id, book_id)
         enriched['concepts'] = [c.get('label', c.get('name', '')) for c in concepts if c.get('label') or c.get('name')]
+        # Collect graph edges for concept relationships
+        graph = await build_graph(db, user_id, book_id)
+        enriched['concept_nodes'] = [{'label': n.label, 'type': n.type, 'size': n.size} for n in graph.nodes]
+        enriched['concept_edges'] = [{'source': e.source, 'target': e.target, 'label': e.label} for e in graph.edges if e.label]
     except Exception:
         logger.info('Knowledge graph enrichment skipped for book %s', book_id)
         enriched['concepts'] = []
+        enriched['concept_nodes'] = []
+        enriched['concept_edges'] = []
 
     # Study mode mastery
     try:

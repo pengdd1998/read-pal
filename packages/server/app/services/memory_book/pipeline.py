@@ -61,7 +61,7 @@ async def generate(
     llm_sections = {
         'encounter', 'highlights', 'recommendations',
         'conversations', 'annotations_woven',
-        'attention_map', 'what_stuck',
+        'attention_map', 'what_stuck', 'concept_web',
     }
 
     async def _gen_section(section_type: str) -> dict[str, Any]:

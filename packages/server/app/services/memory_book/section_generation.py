@@ -163,6 +163,18 @@ def _prepare_section_data(
             'weak_areas': ', '.join(mastery.get('weakAreas', [])[:5]),
         }
 
+    elif section_type == 'concept_web':
+        concepts = enriched_data.get('concepts', [])
+        edges = enriched_data.get('concept_edges', [])
+        edge_lines = [f'{e["source"]} → {e["target"]} ({e["label"]})' for e in edges[:20] if e.get('label')]
+        return {
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'concept_count': len(concepts),
+            'concept_list': ', '.join(concepts[:15]),
+            'edge_descriptions': '\n'.join(edge_lines) if edge_lines else 'No explicit connections found',
+            'theme_list': ', '.join(enriched_data.get('synthesis_themes', [])[:5]),
+        }
+
     return {}
 
 
@@ -237,7 +249,6 @@ async def _generate_section(
 def _placeholder_section(section_type: str) -> dict[str, Any]:
     """Return a placeholder section for Phase 2 sections."""
     section_names = {
-        'concept_web': 'Your Concept Web',
         'threads': 'Threads Between Books',
         'reader_became': 'The Reader You Became',
     }

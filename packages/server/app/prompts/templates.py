@@ -404,6 +404,24 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
         ),
         output_format='json',
     ),
+    'concept_web': PromptTemplate(
+        key='mirror.section.concept_web',
+        version=1,
+        template=(
+            'Write the YOUR CONCEPT WEB section — a narrative map of how ideas connect. '
+            'While reading "{book_title}", the reader extracted {concept_count} knowledge concepts. '
+            'Key concepts: {concept_list}. Concept relationships: {edge_descriptions}. '
+            'Themes from synthesis: {theme_list}. '
+            'Describe the conceptual landscape they built. Which ideas are central hubs? '
+            'Which are peripheral? What surprising connections emerged? '
+            'Write as a guided tour through their intellectual map. '
+            'Return JSON: {{"hub_concepts": [{{"name": "...", "why_central": "..."}}], '
+            '"surprising_connections": [{{"from": "...", "to": "...", "insight": "..."}}], '
+            '"peripheral_concepts": ["name1", "name2"], '
+            '"map_narrative": "2-3 sentences describing the overall conceptual architecture"}}'
+        ),
+        output_format='json',
+    ),
 }
 
 # ---------------------------------------------------------------------------
