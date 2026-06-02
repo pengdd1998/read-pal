@@ -52,6 +52,7 @@ __all__ = [
     # Public API functions
     'build_graph',
     'detect_gaps',
+    'get_all_cached_graphs',
     'get_concepts',
     'get_cross_book_themes',
     'search_concepts',
@@ -228,3 +229,57 @@ async def get_concepts(
         book_id=str(book_id),
     )
     return concepts
+
+
+async def get_all_cached_graphs(
+    db: AsyncSession,
+    user_id: UUID,
+) -> dict[str, list[dict]]:
+    """Load all cached knowledge graphs for a user (no LLM calls).
+
+    Returns ``{'nodes': [...], 'edges': [...]}`` merged from every book.
+    """
+    from sqlalchemy import select as sa_select
+    from app.models.annotation import Annotation
+    from app.models.book import Book
+
+    # Get all book IDs for user
+    rows = await db.execute(
+        sa_select(Book.id).where(Book.user_id == user_id),
+    )
+    book_ids = [row[0] for row in rows.all()]
+
+    # Batch-load all annotations
+    all_annotations = list((await db.execute(
+        sa_select(Annotation)
+        .where(
+            Annotation.user_id == user_id,
+            Annotation.book_id.in_(book_ids),
+        )
+        .order_by(Annotation.created_at),
+    )).scalars().all())
+
+    # Group by book
+    ann_by_book: dict[UUID, list] = {}
+    for ann in all_annotations:
+        ann_by_book.setdefault(ann.book_id, []).append(ann)
+
+    all_nodes: list[dict] = []
+    all_edges: list[dict] = []
+
+    for bid in book_ids:
+        try:
+            annotations = ann_by_book.get(bid, [])
+            texts = [a.content for a in annotations if a.content.strip()]
+            current_hash = _content_hash(texts)
+            cached = await _load_cached_graph(user_id, bid, current_hash)
+            if cached is not None:
+                for node in cached.nodes:
+                    all_nodes.append(node.model_dump())
+                for edge in cached.edges:
+                    all_edges.append(edge.model_dump())
+        except Exception:
+            logger.warning('Failed to load cached graph for book %s', bid, exc_info=True)
+            continue
+
+    return {'nodes': all_nodes, 'edges': all_edges}

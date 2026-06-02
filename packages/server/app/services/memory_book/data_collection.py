@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation, AnnotationType
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
+from app.models.flashcard import Flashcard
 from app.models.reading_session import ReadingSession
 from app.utils.annotations import match_annotation_type
 from app.utils.sanitizer import sanitize_user_input
@@ -102,6 +103,26 @@ async def _collect_book_data(
         'total_reading_minutes': sum(s.duration for s in sessions) // 60,
         'total_pages_read': sum(s.pages_read for s in sessions),
     }
+
+    # Flashcards for "What Stuck" section
+    fc_result = await db.execute(
+        select(Flashcard)
+        .where(Flashcard.user_id == user_id, Flashcard.book_id == book_id)
+        .order_by(Flashcard.created_at.desc())
+        .limit(30),
+    )
+    flashcards = list(fc_result.scalars().all())
+    data['flashcards'] = [
+        {
+            'question': fc.question,
+            'answer': fc.answer[:200],
+            'last_rating': fc.last_rating,
+            'repetition_count': fc.repetition_count,
+            'ease_factor': round(float(fc.ease_factor), 2),
+        }
+        for fc in flashcards
+    ]
+    data['stats']['total_flashcards'] = len(flashcards)
     return data
 
 

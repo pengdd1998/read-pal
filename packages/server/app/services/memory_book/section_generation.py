@@ -117,6 +117,52 @@ def _prepare_section_data(
             'notes_data': notes_text,
         }
 
+    elif section_type == 'attention_map':
+        sessions = enriched_data.get('reading_sessions', [])
+        total_min = enriched_data.get('stats', {}).get('total_reading_minutes', 0)
+        hours = total_min // 60
+        mins = total_min % 60
+        session_lines = []
+        reading_days = set()
+        for s in sessions[:20]:
+            started = s.get('started_at', '')[:10]
+            dur = round(s.get('duration', 0) / 60, 1)
+            pages = s.get('pages_read', 0)
+            hl = s.get('highlights', 0)
+            nt = s.get('notes', 0)
+            reading_days.add(started)
+            session_lines.append(f'{started}: {dur}min, {pages}pg, {hl}hl, {nt}notes')
+        longest = enriched_data.get('longest_session_minutes', 0)
+        lh = int(longest) // 60
+        lm = int(longest) % 60
+        return {
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'session_count': len(sessions),
+            'reading_days': len(reading_days),
+            'total_time': f'{hours}h {mins}m' if hours > 0 else f'{mins}m',
+            'session_data': '\n'.join(session_lines),
+            'pace': enriched_data.get('reading_pace', 0),
+            'longest_session': f'{lh}h {lm}m' if lh > 0 else f'{lm}m',
+        }
+
+    elif section_type == 'what_stuck':
+        flashcards = enriched_data.get('flashcards', [])
+        fc_lines = []
+        for fc in flashcards[:15]:
+            q = fc.get('question', '')[:100]
+            rating = fc.get('last_rating', 0)
+            reps = fc.get('repetition_count', 0)
+            fc_lines.append(f'Q: "{q}" | rating: {rating}/5 | reviews: {reps}')
+        mastery = enriched_data.get('mastery', {})
+        return {
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'flashcard_count': len(flashcards),
+            'flashcard_data': '\n'.join(fc_lines),
+            'mastery_score': mastery.get('overallMastery', 0),
+            'strong_areas': ', '.join(mastery.get('strongAreas', [])[:5]),
+            'weak_areas': ', '.join(mastery.get('weakAreas', [])[:5]),
+        }
+
     return {}
 
 
@@ -191,9 +237,7 @@ async def _generate_section(
 def _placeholder_section(section_type: str) -> dict[str, Any]:
     """Return a placeholder section for Phase 2 sections."""
     section_names = {
-        'attention_map': 'Map of Your Attention',
         'concept_web': 'Your Concept Web',
-        'what_stuck': 'What Stuck',
         'threads': 'Threads Between Books',
         'reader_became': 'The Reader You Became',
     }

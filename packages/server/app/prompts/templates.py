@@ -367,6 +367,43 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
         ),
         output_format='json',
     ),
+    'attention_map': PromptTemplate(
+        key='mirror.section.attention_map',
+        version=1,
+        template=(
+            'Write the MAP OF YOUR ATTENTION section — a narrative analysis of reading engagement patterns. '
+            'The reader had {session_count} reading sessions for "{book_title}" '
+            'over {reading_days} distinct days, totaling {total_time}. '
+            'Session data (date, duration_minutes, pages, highlights, notes): {session_data}. '
+            'Reading pace: {pace} pages/hour. Longest session: {longest_session}. '
+            'Analyze their engagement pattern: when were they most absorbed? When did they slow down? '
+            'Identify "peak engagement" sessions (high pages + high annotations) and "slow absorption" '
+            'sessions (long duration, few pages — deep thinking). '
+            'Write in second person, like a literary coach reflecting their reading rhythm back to them. '
+            'Return JSON: {{"peaks": [{{"date": "...", "description": "what drew them in"}}], '
+            '"pattern_analysis": "2-3 sentences about their overall reading rhythm", '
+            '"engagement_score": N (1-10), '
+            '"reading_style": "e.g. Sprint Reader, Deep Diver, Steady Cruiser"}}'
+        ),
+        output_format='json',
+    ),
+    'what_stuck': PromptTemplate(
+        key='mirror.section.what_stuck',
+        version=1,
+        template=(
+            'Write the WHAT STUCK section — analysis of knowledge retention from flashcard review. '
+            'The reader created {flashcard_count} flashcards while reading "{book_title}". '
+            'Flashcard data (question, last_rating 1-5, repetitions): {flashcard_data}. '
+            'Mastery score: {mastery_score}%. Strong areas: {strong_areas}. Weak areas: {weak_areas}. '
+            'Identify the 3-5 concepts that truly stuck (high ratings, many repetitions) and the ones '
+            'that kept slipping away (low ratings). Write in second person with warmth and humor. '
+            'Return JSON: {{"stuck": [{{"concept": "...", "evidence": "why it stuck"}}], '
+            '"slipping": [{{"concept": "...", "tip": "how to reinforce it"}}], '
+            '"retention_summary": "1-2 sentences about overall retention", '
+            '"top_insight": "the single most memorable thing"}}'
+        ),
+        output_format='json',
+    ),
 }
 
 # ---------------------------------------------------------------------------

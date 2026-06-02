@@ -13,6 +13,7 @@ from app.services.knowledge import (  # noqa: F401
     _load_cached_graph,
     build_graph,
     detect_gaps,
+    get_all_cached_graphs,
     get_concepts,
     get_cross_book_themes,
     search_concepts,

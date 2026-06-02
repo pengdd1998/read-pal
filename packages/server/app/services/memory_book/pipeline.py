@@ -57,8 +57,12 @@ async def generate(
         sessions_count=stats.get('total_sessions', 0),
     )
 
-    # Sections that use LLM in Phase 1
-    llm_sections = {'encounter', 'highlights', 'recommendations'}
+    # Sections that use LLM generation
+    llm_sections = {
+        'encounter', 'highlights', 'recommendations',
+        'conversations', 'annotations_woven',
+        'attention_map', 'what_stuck',
+    }
 
     async def _gen_section(section_type: str) -> dict[str, Any]:
         try:
