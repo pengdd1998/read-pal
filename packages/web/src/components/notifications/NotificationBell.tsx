@@ -135,7 +135,7 @@ export function NotificationBell() {
 
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-6 text-center text-sm text-gray-400">
+              <div className="p-6 text-center text-sm text-gray-400 dark:text-gray-500">
                 {t('notifications_no_notifications')}
               </div>
             ) : (
@@ -161,7 +161,7 @@ export function NotificationBell() {
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
                         {notif.message}
                       </p>
-                      <span className="text-[10px] text-gray-400 mt-1 block">
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block">
                         {fmtTime(notif.createdAt)}
                       </span>
                     </div>

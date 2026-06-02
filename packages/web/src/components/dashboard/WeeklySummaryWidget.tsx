@@ -65,7 +65,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
   if (error) {
     return (
       <div className="card text-center py-4">
-        <p className="text-xs text-gray-400 mb-2">{t('weekly_summary_load_failed')}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('weekly_summary_load_failed')}</p>
         <button
           onClick={fetchData}
           className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
@@ -88,14 +88,14 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
           {t('weekly_summary_title')}
         </h3>
-        <span className="text-[10px] text-gray-400">
+        <span className="text-[10px] text-gray-400 dark:text-gray-500">
           {data.weekStart} ~ {data.weekEnd}
         </span>
       </div>
 
       {isEmpty ? (
         <div className="text-center py-6">
-          <p className="text-xs text-gray-400">{t('weekly_summary_empty')}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{t('weekly_summary_empty')}</p>
         </div>
       ) : (
         <>
@@ -129,7 +129,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
                     style={{ height: `${height}%` }}
                     title={`${day.date}: ${day.minutes}m / ${day.pages}p`}
                   />
-                  <span className={`text-[9px] ${isToday ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}>
+                  <span className={`text-[9px] ${isToday ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'}`}>
                     {DAY_LABELS[i]}
                   </span>
                 </div>
@@ -146,8 +146,8 @@ function StatCard({ label, value, unit }: { label: string; value: string; unit?:
   return (
     <div className="text-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
       <span className="text-lg font-bold text-gray-900 dark:text-white">{value}</span>
-      {unit && <span className="text-[10px] text-gray-400 ml-0.5">{unit}</span>}
-      <p className="text-[10px] text-gray-500 mt-0.5">{label}</p>
+      {unit && <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-0.5">{unit}</span>}
+      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
     </div>
   );
 }

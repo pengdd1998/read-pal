@@ -208,7 +208,7 @@ export default function SearchPage() {
             {/* Book results */}
             {filteredResults.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">{t('books_heading', { count: filteredResults.length })}</h2>
+                <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">{t('books_heading', { count: filteredResults.length })}</h2>
                 <div className="space-y-3">
                   {filteredResults.map((book) => (
                     <Link key={book.id} href={`/read/${book.id}`}
@@ -240,7 +240,7 @@ export default function SearchPage() {
             {/* Highlight/Note results */}
             {filteredHighlights.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
                   {filter === 'notes' ? t('notes_heading', { count: filteredHighlights.length }) : filter === 'highlights' ? t('highlights_heading', { count: filteredHighlights.length }) : t('highlights_notes_heading', { count: filteredHighlights.length })}
                 </h2>
                 <div className="space-y-2">
@@ -253,7 +253,7 @@ export default function SearchPage() {
                         </span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{h.content}</p>
-                          <p className="text-xs text-gray-400 mt-1">{h.type} &middot; {new Date(h.createdAt).toLocaleDateString()}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{h.type} &middot; {new Date(h.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                     </Link>
@@ -270,7 +270,7 @@ export default function SearchPage() {
               </svg>
             </div>
             <p className="text-gray-500 dark:text-gray-400 mb-1">{t('no_results', { query })}</p>
-            <p className="text-sm text-gray-400">{t('try_different')}</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">{t('try_different')}</p>
           </div>
         )
       ) : query.trim().length < 2 && !searching ? (
@@ -278,7 +278,7 @@ export default function SearchPage() {
         <div>
           {recentBooks.length > 0 ? (
             <div>
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">{t('your_library')}</h2>
+              <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">{t('your_library')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {recentBooks.map((book) => (
                   <Link key={book.id} href={`/read/${book.id}`}
@@ -288,7 +288,7 @@ export default function SearchPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">{book.title}</h3>
-                      <p className="text-xs text-gray-500 truncate">{book.author}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{book.author}</p>
                       {book.progress > 0 && (
                         <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1 mt-1.5">
                           <div className="bg-amber-400 rounded-full h-1" style={{ width: `${Math.min(100, Math.round(book.progress))}%` }} />

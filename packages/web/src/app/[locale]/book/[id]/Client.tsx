@@ -88,7 +88,7 @@ export default function BookDetailPage() {
       <div className="mb-8 animate-slide-up">
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -110,11 +110,11 @@ export default function BookDetailPage() {
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{book.title}</h1>
-          <p className="text-gray-500 mt-1">{t('by', { author: book.author })}</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{t('by', { author: book.author })}</p>
           <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-3 ${status.color}`}>
             {status.label}
           </span>
-          {lastRead && <p className="text-xs text-gray-400 mt-2">{t('lastRead', { date: lastRead })}</p>}
+          {lastRead && <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{t('lastRead', { date: lastRead })}</p>}
         </div>
       </div>
 
@@ -125,7 +125,7 @@ export default function BookDetailPage() {
           <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-500 transition-all duration-500" style={{ width: `${progressPct}%` }} />
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">{t('chaptersOf', { current: book.currentPage, total: book.totalPages })}</span>
+          <span className="text-gray-500 dark:text-gray-400">{t('chaptersOf', { current: book.currentPage, total: book.totalPages })}</span>
           <span className="font-semibold text-amber-600 dark:text-amber-400">{progressPct}%</span>
         </div>
         {book.status === 'reading' && estimatedMinutesLeft > 0 && (() => {
@@ -138,8 +138,8 @@ export default function BookDetailPage() {
           const finishStr = finishDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
           return (
             <div className="flex items-center justify-between mt-2">
-              <p className="text-xs text-gray-400">{t('remaining', { time: timeStr })}</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t('remaining', { time: timeStr })}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
                 {t('finishBy', { date: finishStr })} {readingWpm > 0 && <span className="text-teal-500">{t('wpm', { wpm: readingWpm })}</span>}
               </p>
             </div>
@@ -156,7 +156,7 @@ export default function BookDetailPage() {
         ].map((item) => (
           <div key={item.label} className={`${item.bg} rounded-xl p-4 text-center`} aria-label={`${item.value} ${item.label.toLowerCase()}`}>
             <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
-            <div className="text-xs text-gray-500 mt-1">{item.label}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.label}</div>
           </div>
         ))}
       </div>
@@ -168,11 +168,11 @@ export default function BookDetailPage() {
             {tags.slice(0, 15).map((tag) => (
               <span key={tag.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-amber-900/20 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-default">
                 {tag.name}
-                <span className="text-[9px] text-gray-400">{tag.count}</span>
+                <span className="text-[9px] text-gray-400 dark:text-gray-500">{tag.count}</span>
               </span>
             ))}
             {tags.length > 15 && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs text-gray-400">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-500">
                 {t('moreTags', { count: tags.length - 15 })}
               </span>
             )}
@@ -190,7 +190,7 @@ export default function BookDetailPage() {
             <span className="text-2xl">{'📕'}</span>
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white">{t('personalReadingBook')}</h2>
-              <p className="text-xs text-gray-500">{t('personalReadingBookDesc')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('personalReadingBookDesc')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -219,7 +219,7 @@ export default function BookDetailPage() {
             <span className="text-2xl">{'🗣️'}</span>
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white">{t('knowledgeGraph')}</h2>
-              <p className="text-xs text-gray-500">{t('knowledgeGraphDesc')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('knowledgeGraphDesc')}</p>
             </div>
           </div>
           <Link href="/knowledge" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-500 hover:bg-violet-600 text-white transition-colors">

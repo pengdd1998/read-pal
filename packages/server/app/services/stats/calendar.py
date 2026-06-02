@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.reading_session import ReadingSession
+from app.services.stats.streaks import compute_streaks
 
 
 async def get_reading_calendar(
@@ -78,32 +79,9 @@ async def get_reading_calendar(
         for d, v in sorted(days.items())
     ]
 
-    # Compute streaks
-    sorted_dates = sorted(days.keys())
-    current_streak = 0
-    longest_streak = 0
-    if sorted_dates:
-        streak = 1
-        longest_streak = 1
-        today = date.today()
-        # Check current streak from today backward
-        d = today
-        while True:
-            key = d.isoformat()
-            if key in days:
-                current_streak += 1
-                d -= timedelta(days=1)
-            else:
-                break
-        # Longest streak
-        for i in range(1, len(sorted_dates)):
-            prev = date.fromisoformat(sorted_dates[i - 1])
-            curr = date.fromisoformat(sorted_dates[i])
-            if (curr - prev).days == 1:
-                streak += 1
-                longest_streak = max(longest_streak, streak)
-            else:
-                streak = 1
+    # Compute streaks via shared utility
+    active_dates = {date.fromisoformat(d) for d in days}
+    current_streak, longest_streak = compute_streaks(active_dates)
 
     return {
         'calendar': calendar,

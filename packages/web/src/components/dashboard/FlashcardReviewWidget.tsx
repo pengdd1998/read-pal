@@ -45,7 +45,7 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
   if (error) {
     return (
       <div className="card text-center py-4">
-        <p className="text-xs text-gray-400 mb-2">{t('failed_load_flashcards')}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('failed_load_flashcards')}</p>
         <button onClick={fetchStats} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">{t('retry')}</button>
       </div>
     );
@@ -70,10 +70,10 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
             {stats.due > 0 ? (
               <>
                 <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{t('due_now', { count: stats.due })}</span>
-                <span className="text-xs text-gray-400">{t('reviewed', { count: stats.reviewed })}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{t('reviewed', { count: stats.reviewed })}</span>
               </>
             ) : (
-              <span className="text-xs text-gray-500">{t('all_caught_up')}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{t('all_caught_up')}</span>
             )}
           </div>
         </div>

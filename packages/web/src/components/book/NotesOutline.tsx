@@ -67,8 +67,8 @@ export function NotesOutline({
   if (allAnnotations.length === 0) {
     return (
       <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 mb-6 animate-slide-up stagger-3 text-center">
-        <p className="text-gray-400 text-sm">{t('noAnnotationsYet')}</p>
-        <p className="text-gray-400 text-xs mt-1">{t('startReadingHint')}</p>
+        <p className="text-gray-400 dark:text-gray-500 text-sm">{t('noAnnotationsYet')}</p>
+        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">{t('startReadingHint')}</p>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export function NotesOutline({
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="font-semibold">{t('notesOutline')}</h2>
-            <p className="text-[10px] text-gray-400 mt-0.5">
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
               {outlineChapters.length === 1
                 ? t('annotationsAcrossChapters', {
                     count: allAnnotations.length,
@@ -164,7 +164,7 @@ export function NotesOutline({
                 className="w-full flex items-center gap-2 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
               >
                 <svg
-                  className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+                  className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -210,7 +210,7 @@ export function NotesOutline({
                             {ann.content}
                           </p>
                           {ann.note && (
-                            <p className="text-[10px] text-gray-400 mt-0.5 italic line-clamp-1">
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic line-clamp-1">
                               {ann.note}
                             </p>
                           )}
@@ -219,7 +219,7 @@ export function NotesOutline({
                               {ann.tags.slice(0, 3).map((tag) => (
                                 <span
                                   key={tag}
-                                  className="text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-500 px-1 py-0.5 rounded"
+                                  className="text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1 py-0.5 rounded"
                                 >
                                   {tag}
                                 </span>
@@ -244,7 +244,7 @@ export function NotesOutline({
                             {ann.content}
                           </p>
                           {ann.note && (
-                            <p className="text-[10px] text-gray-400 mt-0.5 italic line-clamp-1">
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic line-clamp-1">
                               {ann.note}
                             </p>
                           )}
@@ -268,7 +268,7 @@ export function NotesOutline({
                     </div>
                   ))}
                   {totalCount === 0 && (
-                    <p className="text-[10px] text-gray-400 px-7 py-1">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 px-7 py-1">
                       {t('noMatchingItems')}
                     </p>
                   )}

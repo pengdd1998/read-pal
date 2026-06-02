@@ -50,7 +50,7 @@ export const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
   if (error) {
     return (
       <div className="card text-center py-4">
-        <p className="text-xs text-gray-400 mb-2">{t('failed_load_goals')}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('failed_load_goals')}</p>
         <button onClick={fetchGoals} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">{t('retry')}</button>
       </div>
     );
@@ -71,7 +71,7 @@ export const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
             )}
             <span className="text-lg font-bold text-gray-900 dark:text-white">{goals.completed}/{goals.goal}</span>
           </div>
-          <p className="text-[10px] text-gray-500 mt-1">{t('books_this_week')}</p>
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{t('books_this_week')}</p>
         </div>
         <div className="text-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
           <div className="flex items-center justify-center gap-1">
@@ -82,7 +82,7 @@ export const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
             )}
             <span className="text-lg font-bold text-gray-900 dark:text-white">{goals.todayMinutes}/{goals.dailyGoalMinutes}m</span>
           </div>
-          <p className="text-[10px] text-gray-500 mt-1">{t('reading_today')}</p>
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{t('reading_today')}</p>
         </div>
       </div>
     </div>

@@ -4,21 +4,21 @@ Tokens are stored in Redis with a 1-hour TTL.
 Always returns success on forgot-password to prevent email enumeration.
 """
 
-import json
 import logging
-import uuid
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
 
-from app.core.redis import get_redis as _get_redis
-from app.middleware.auth import hash_password
+from app.db import get_db
 from app.middleware.rate_limiter import password_reset_limiter
-from app.models.user import User
 from app.schemas.auth import (
     ForgotPasswordRequest,
     MessageResponse,
     ResetPasswordRequest,
+)
+from app.services.password_reset_service import (
+    create_reset_token,
+    send_reset_email,
+    validate_and_reset,
 )
 from app.utils.i18n import t
 
@@ -27,10 +27,6 @@ logger = logging.getLogger('read-pal.password_reset')
 router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
 
 
-# ---------------------------------------------------------------------------
-# POST /api/v1/auth/forgot-password
-# ---------------------------------------------------------------------------
-
 @router.post('/forgot-password', dependencies=[password_reset_limiter])
 async def forgot_password(body: ForgotPasswordRequest) -> MessageResponse:
     """Generate a password reset token stored in Redis (1hr TTL).
@@ -38,31 +34,14 @@ async def forgot_password(body: ForgotPasswordRequest) -> MessageResponse:
     Always returns success to prevent email enumeration.
     """
     try:
-        r = _get_redis()
-
-        # Check if user exists (silently ignore if not)
         from app.db import async_session
 
         async with async_session() as db:
-            result = await db.execute(
-                select(User).where(User.email == body.email),
-            )
-            user = result.scalar_one_or_none()
+            token = await create_reset_token(db, body.email)
 
-        if user is not None:
-            reset_token = str(uuid.uuid4())
-            await r.set(
-                f'password-reset:{reset_token}',
-                json.dumps({'userId': str(user.id), 'email': user.email}),
-                ex=3600,  # 1 hour
-            )
-            logger.info('Password reset requested for %s', body.email)
-
-            from app.services.email_service import send_password_reset_email
-            await send_password_reset_email(body.email, reset_token)
-
+        if token:
+            await send_reset_email(body.email, token)
     except Exception:
-        # Silently ignore errors to prevent enumeration
         logger.warning('Error during forgot-password flow', exc_info=True)
 
     return MessageResponse(
@@ -70,50 +49,22 @@ async def forgot_password(body: ForgotPasswordRequest) -> MessageResponse:
     )
 
 
-# ---------------------------------------------------------------------------
-# POST /api/v1/auth/reset-password
-# ---------------------------------------------------------------------------
-
 @router.post('/reset-password', dependencies=[password_reset_limiter])
 async def reset_password(body: ResetPasswordRequest) -> MessageResponse:
     """Validate reset token and update the user's password."""
-    r = _get_redis()
-    data = await r.get(f'password-reset:{body.token}')
+    from app.db import async_session
 
-    if not data:
+    try:
+        async with async_session() as db:
+            await validate_and_reset(db, body.token, body.password)
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 'code': 'INVALID_TOKEN',
                 'message': t('errors.reset_token_invalid'),
             },
-        )
-
-    payload = json.loads(data)
-    user_id = payload['userId']
-
-    from app.db import async_session
-
-    async with async_session() as db:
-        result = await db.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    'code': 'INVALID_TOKEN',
-                    'message': t('errors.reset_token_invalid'),
-                },
-            )
-
-        user.password_hash = hash_password(body.password)
-        await db.commit()
-
-    # Consume the token so it cannot be reused
-    await r.delete(f'password-reset:{body.token}')
-
-    logger.info('Password reset successful')
+        ) from exc
 
     return MessageResponse(
         data={'message': t('errors.password_reset_success')},

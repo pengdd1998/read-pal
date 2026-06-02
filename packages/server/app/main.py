@@ -121,9 +121,38 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Global exception handler — always return JSON, never plain text
+# --- Structured exception handlers ---
+# These convert domain exceptions into proper HTTP responses so that
+# ~79 router endpoints without per-endpoint try/except still return
+# meaningful status codes instead of opaque 500s.
+
+@app.exception_handler(ValueError)
+async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
+    """ValueError → 400 Bad Request (or 404 for 'not found' messages)."""
+    msg = str(exc)
+    is_not_found = 'not found' in msg.lower()
+    code = 'NOT_FOUND' if is_not_found else 'INVALID_INPUT'
+    status_code = 404 if is_not_found else 400
+    logger.warning('ValueError on %s: %s', request.url.path, msg[:200])
+    return JSONResponse(
+        status_code=status_code,
+        content={'detail': {'code': code, 'message': msg}},
+    )
+
+
+@app.exception_handler(PermissionError)
+async def permission_error_handler(request: Request, exc: PermissionError) -> JSONResponse:
+    """PermissionError → 403 Forbidden."""
+    logger.warning('PermissionError on %s: %s', request.url.path, str(exc)[:200])
+    return JSONResponse(
+        status_code=403,
+        content={'detail': {'code': 'FORBIDDEN', 'message': str(exc)}},
+    )
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all: genuine unexpected errors → 500."""
     logger.error('Unhandled exception: %s', exc, exc_info=True)
     return JSONResponse(
         status_code=500,

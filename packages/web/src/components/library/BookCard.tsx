@@ -300,7 +300,7 @@ function BookCardInner({
         <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2 leading-snug mb-1 group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">
           {title}
         </h3>
-        <p className="text-xs text-gray-500 mb-2">{author}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{author}</p>
 
         {/* Tags */}
         <div className="flex flex-wrap gap-1 mb-2">
@@ -338,7 +338,7 @@ function BookCardInner({
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingTags(true); }}
               aria-label={t('card_add_tag')}
-              className="px-1.5 py-0.5 rounded text-[9px] text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              className="px-1.5 py-0.5 rounded text-[9px] text-gray-400 dark:text-gray-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
             >
               {t('card_plus_tag')}
             </button>
@@ -362,7 +362,7 @@ function BookCardInner({
               />
             </div>
             <div className="flex items-center justify-between mt-1.5">
-              <p className="text-[10px] text-gray-400 tabular-nums">
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
                 {t('card_pages', { current: currentPage, total: totalPages })}
               </p>
               <p className="text-[10px] text-primary-500 font-semibold tabular-nums">
@@ -374,7 +374,7 @@ function BookCardInner({
 
         {/* Last read */}
         {formattedDate && (
-          <p className="text-[10px] text-gray-400 mt-2">
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
             {formattedDate}
           </p>
         )}

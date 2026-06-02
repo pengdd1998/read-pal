@@ -116,6 +116,88 @@ async def create_book_with_content(
     return book
 
 
+async def get_book_content(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    lang: str = DEFAULT_LANGUAGE,
+) -> dict | None:
+    """Fetch book content and chapters. Returns None if book not found."""
+    from sqlalchemy import select as sa_select
+
+    result = await db.execute(
+        sa_select(Book).where(Book.id == book_id, Book.user_id == user_id),
+    )
+    book = result.scalar_one_or_none()
+    if book is None:
+        return None
+
+    doc_result = await db.execute(
+        sa_select(Document).where(Document.book_id == book_id),
+    )
+    doc = doc_result.scalar_one_or_none()
+
+    content = _extract_content(doc)
+    chapters = _build_chapters(doc, lang)
+
+    if not chapters and not content:
+        content = t('errors.sample_content', lang, title=book.title, author=book.author)
+        chapters = [{
+            'id': 'sample-0',
+            'title': t('errors.sample_title', lang, title=book.title),
+            'content': content,
+            'rawContent': content,
+        }]
+
+    return {
+        'book': {
+            'id': str(book.id),
+            'title': book.title,
+            'author': book.author,
+            'fileType': book.file_type.value if hasattr(book.file_type, 'value') else book.file_type,
+            'fileSize': book.file_size,
+            'totalPages': book.total_pages,
+            'currentPage': book.current_page,
+            'currentSegment': book.current_segment or 0,
+            'progress': float(book.progress) if book.progress else 0,
+            'status': book.status.value if hasattr(book.status, 'value') else book.status,
+            'tags': book.tags or [],
+            'metadata': book.metadata_,
+        },
+        'chapters': chapters,
+        'content': content,
+    }
+
+
+def _extract_content(doc: Document | None) -> str:
+    """Extract plain text content from a Document."""
+    if not doc:
+        return ''
+    if hasattr(doc, 'content') and doc.content:
+        return doc.content
+    if hasattr(doc, 'chapters') and doc.chapters:
+        return '\n'.join(
+            ch.get('content', '') for ch in doc.chapters if isinstance(ch, dict)
+        )
+    return ''
+
+
+def _build_chapters(doc: Document | None, lang: str) -> list[dict]:
+    """Build chapters array from a Document."""
+    if not doc or not hasattr(doc, 'chapters') or not doc.chapters:
+        return []
+    chapters = []
+    for i, ch in enumerate(doc.chapters):
+        if isinstance(ch, dict):
+            chapters.append({
+                'id': ch.get('id', str(i)),
+                'title': ch.get('title', t('errors.chapter_title', lang, index=i + 1)),
+                'content': ch.get('content', ''),
+                'rawContent': ch.get('rawContent', ch.get('content', '')),
+            })
+    return chapters
+
+
 async def _safe_precompute(
     book_id: UUID,
     document_id: UUID,

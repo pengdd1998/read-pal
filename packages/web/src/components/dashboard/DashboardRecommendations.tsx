@@ -45,7 +45,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
   if (error) {
     return (
       <div className="card text-center py-4">
-        <p className="text-xs text-gray-400 mb-2">{t('failed_load_recommendations')}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('failed_load_recommendations')}</p>
         <button onClick={fetchRecs} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">{t('retry')}</button>
       </div>
     );
@@ -67,9 +67,9 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{r.title}</p>
-              <p className="text-[10px] text-gray-400 truncate">{r.author}</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{r.author}</p>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 whitespace-nowrap">{r.genre ? t(`genre_${r.genre.toLowerCase().replace('-', '_')}`) || r.genre : ''}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 whitespace-nowrap">{r.genre ? t(`genre_${r.genre.toLowerCase().replace('-', '_')}`) || r.genre : ''}</span>
           </div>
         ))}
       </div>

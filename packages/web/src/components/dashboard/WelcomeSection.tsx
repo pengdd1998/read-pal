@@ -26,7 +26,7 @@ export function WelcomeSection({ onSeedSample, seeding }: WelcomeSectionProps) {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
           {t('ready_first_book')}
         </h2>
-        <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
           {t('first_book_desc')}
         </p>
         <div className="flex items-center justify-center gap-3">
@@ -56,7 +56,7 @@ export function WelcomeSection({ onSeedSample, seeding }: WelcomeSectionProps) {
           >
             <span className="text-2xl block mb-2">{f.icon}</span>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t(f.titleKey)}</h3>
-            <p className="text-xs text-gray-400 mt-1">{t(f.descKey)}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t(f.descKey)}</p>
           </Link>
         ))}
       </div>

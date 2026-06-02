@@ -114,7 +114,7 @@ export default function WelcomePage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 text-gray-500">
+            <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
               <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
               {t('preparing')}
             </div>
@@ -183,7 +183,7 @@ export default function WelcomePage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-gray-900 dark:text-white">{p.name}</span>
-                          <span className="text-[10px] text-gray-400">{t(p.personalityKey)}</span>
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500">{t(p.personalityKey)}</span>
                         </div>
                       </div>
                       {isSelected && (

@@ -330,7 +330,7 @@ function AuthForm() {
                   <div className="w-full border-t border-gray-200 dark:border-gray-700" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-surface-0 px-2 text-gray-400">{t('or_divider')}</span>
+                  <span className="bg-surface-0 px-2 text-gray-400 dark:text-gray-500">{t('or_divider')}</span>
                 </div>
               </div>
               <a
@@ -362,7 +362,7 @@ export default function AuthPage() {
   return (
     <Suspense fallback={
       <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="flex items-center gap-2 text-gray-500">
+        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
           <LoadingSpinner />
           {tc('loading')}
         </div>

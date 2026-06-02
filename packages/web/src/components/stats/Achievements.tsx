@@ -36,7 +36,7 @@ export function Achievements({ stats }: AchievementsProps) {
           >
             <div className={`text-2xl mb-1 ${badge.unlocked ? '' : 'grayscale'}`}>{badge.icon}</div>
             <div className="text-xs font-semibold text-gray-900 dark:text-white">{badge.title}</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">{badge.desc}</div>
+            <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{badge.desc}</div>
           </div>
         ))}
       </div>

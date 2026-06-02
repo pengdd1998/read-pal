@@ -45,14 +45,14 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('reading_speed_title')}</h3>
-        <span className="text-[10px] text-gray-400">{t('words_min')}</span>
+        <span className="text-[10px] text-gray-400 dark:text-gray-500">{t('words_min')}</span>
       </div>
       <div className="space-y-2.5">
         {books.slice(0, 6).map((b) => (
           <div key={b.bookId}>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[60%]">{b.title}</span>
-              <span className="text-xs tabular-nums text-gray-500">{b.wpm} {t('words_min')}</span>
+              <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400">{b.wpm} {t('words_min')}</span>
             </div>
             <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
               <div

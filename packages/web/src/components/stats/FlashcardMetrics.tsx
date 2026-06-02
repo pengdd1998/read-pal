@@ -25,8 +25,8 @@ export function FlashcardMetrics({ flashcardStats }: FlashcardMetricsProps) {
         {metrics.map((item) => (
           <div key={item.label} className={`${item.bg} rounded-xl p-3 text-center`}>
             <div className={`text-xl font-bold ${item.color}`}>{item.value}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{item.label}</div>
-            {item.sub && <div className="text-[10px] text-gray-400 mt-0.5">{item.sub}</div>}
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.label}</div>
+            {item.sub && <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{item.sub}</div>}
           </div>
         ))}
       </div>

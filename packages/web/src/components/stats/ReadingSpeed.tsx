@@ -26,7 +26,7 @@ export function ReadingSpeed({ speedData, bookSpeeds }: ReadingSpeedProps) {
             <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
               {Math.round(speedData.averageWordsPerMinute)}
             </div>
-            <div className="text-xs text-gray-500 mt-0.5">{t('speed_average_wpm')}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('speed_average_wpm')}</div>
             <div className="text-[10px] text-teal-500 dark:text-teal-400 mt-0.5">{t('speed_wpm_unit')}</div>
           </div>
         </div>
@@ -44,7 +44,7 @@ export function ReadingSpeed({ speedData, bookSpeeds }: ReadingSpeedProps) {
 
       {/* No data hint */}
       {showNoData && (
-        <p className="text-sm text-gray-400">{t('speed_no_data')}</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500">{t('speed_no_data')}</p>
       )}
     </div>
   );

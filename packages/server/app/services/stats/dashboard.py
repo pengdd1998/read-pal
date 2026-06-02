@@ -14,6 +14,7 @@ from app.models.book import Book, BookStatus
 from app.models.chat_message import ChatMessage
 from app.models.memory_book import MemoryBook
 from app.models.reading_session import ReadingSession
+from app.services.stats.streaks import compute_streaks
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,151 @@ async def invalidate_dashboard_cache(uid: UUID) -> None:
         logger.warning('Failed to invalidate dashboard cache for user %s', uid)
 
 
+# ---------------------------------------------------------------------------
+# Helper functions (decomposed from the original monolith)
+# ---------------------------------------------------------------------------
+
+
+async def _get_book_status_counts(db: AsyncSession, uid: UUID) -> dict[str, int]:
+    """Return book counts grouped by status."""
+    rows = await db.execute(
+        select(Book.status, func.count(Book.id))
+        .where(Book.user_id == uid)
+        .group_by(Book.status),
+    )
+    counts = {row[0]: row[1] for row in rows.all()}
+    return {
+        'total': sum(counts.values()),
+        'reading': counts.get(BookStatus.reading, 0),
+        'completed': counts.get(BookStatus.completed, 0),
+        'unread': counts.get(BookStatus.unread, 0),
+    }
+
+
+async def _get_pages_read(db: AsyncSession, uid: UUID) -> int:
+    """Total pages read from sessions, with book-progress fallback."""
+    total = await db.scalar(
+        select(func.coalesce(func.sum(ReadingSession.pages_read), 0)).where(
+            ReadingSession.user_id == uid,
+        ),
+    )
+    if total:
+        return int(total)
+    fallback = await db.scalar(
+        select(func.coalesce(func.sum(Book.current_page), 0)).where(
+            and_(Book.user_id == uid, Book.current_page > 0),
+        ),
+    )
+    return int(fallback or 0)
+
+
+async def _get_reading_minutes(db: AsyncSession, uid: UUID) -> int:
+    """Total reading time in minutes."""
+    seconds = await db.scalar(
+        select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
+            ReadingSession.user_id == uid,
+        ),
+    )
+    return int(seconds) // 60 if seconds else 0
+
+
+async def _compute_streak(db: AsyncSession, uid: UUID) -> int:
+    """Current reading streak (consecutive days ending today)."""
+    day_col = func.date(ReadingSession.started_at).label('day')
+    rows = await db.execute(
+        select(day_col)
+        .where(ReadingSession.user_id == uid)
+        .group_by(day_col),
+    )
+    active = {
+        r[0] if isinstance(r[0], date) else date.fromisoformat(r[0])
+        for r in rows.all()
+    }
+    current, _ = compute_streaks(active)
+    return current
+
+
+async def _get_annotation_counts(db: AsyncSession, uid: UUID) -> tuple[int, int]:
+    """Return (highlights, notes) counts."""
+    highlights = await db.scalar(
+        select(func.count(Annotation.id)).where(
+            and_(Annotation.user_id == uid, Annotation.type == 'highlight'),
+        ),
+    )
+    notes = await db.scalar(
+        select(func.count(Annotation.id)).where(
+            and_(Annotation.user_id == uid, Annotation.type == 'note'),
+        ),
+    )
+    return highlights or 0, notes or 0
+
+
+async def _get_recent_books(db: AsyncSession, uid: UUID, limit: int = 10) -> list[dict]:
+    """Last N books sorted by last_read_at."""
+    rows = await db.execute(
+        select(Book)
+        .where(Book.user_id == uid)
+        .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
+        .limit(limit),
+    )
+    return [
+        {
+            'id': str(b.id),
+            'title': b.title,
+            'author': b.author,
+            'progress': float(b.progress or 0),
+            'lastRead': (
+                b.last_read_at.isoformat()
+                if b.last_read_at
+                else b.added_at.isoformat() if b.added_at else None
+            ),
+            'coverUrl': b.cover_url,
+        }
+        for b in rows.scalars().all()
+    ]
+
+
+async def _get_weekly_activity(db: AsyncSession, uid: UUID) -> list[dict]:
+    """Pages read per day for the last 7 days."""
+    today = date.today()
+    week_start = today - timedelta(days=6)
+    day_col = func.date(ReadingSession.started_at).label('day')
+    rows = await db.execute(
+        select(
+            day_col,
+            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
+        )
+        .where(
+            and_(
+                ReadingSession.user_id == uid,
+                ReadingSession.started_at >= datetime.combine(week_start, datetime.min.time()),
+            ),
+        )
+        .group_by(day_col)
+        .order_by(day_col),
+    )
+    week_map: dict[str, int] = {}
+    for row in rows.all():
+        key = row[0].isoformat() if isinstance(row[0], date) else str(row[0])
+        week_map[key] = int(row[1])
+    return [
+        {'day': (week_start + timedelta(days=i)).isoformat(), 'pages': week_map.get((week_start + timedelta(days=i)).isoformat(), 0)}
+        for i in range(7)
+    ]
+
+
+def _format_time(minutes: int) -> str:
+    """Format minutes as 'Xh Ym' or 'Ym'."""
+    hours = minutes // 60
+    mins = minutes % 60
+    return f'{hours}h {mins}m' if hours > 0 else f'{mins}m'
+
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
+
+
 async def get_dashboard_stats(
     db: AsyncSession,
     uid: UUID,
@@ -59,167 +205,44 @@ async def get_dashboard_stats(
     except Exception:
         logger.warning('Redis read failed for dashboard cache, querying DB')
 
-    # --- Book counts (single GROUP BY query) ---
-    status_rows = await db.execute(
-        select(Book.status, func.count(Book.id))
-        .where(Book.user_id == uid)
-        .group_by(Book.status)
+    # --- Gather all data via helpers ---
+    status_counts = await _get_book_status_counts(db, uid)
+    pages_read = await _get_pages_read(db, uid)
+    total_minutes = await _get_reading_minutes(db, uid)
+    streak = await _compute_streak(db, uid)
+    highlights, notes = await _get_annotation_counts(db, uid)
+    recent_books = await _get_recent_books(db, uid)
+    weekly_activity = await _get_weekly_activity(db, uid)
+
+    chat_count = await db.scalar(
+        select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid),
     )
-    status_counts = {row[0]: row[1] for row in status_rows.all()}
-    total_books = sum(status_counts.values())
-    books_reading = status_counts.get(BookStatus.reading, 0)
-    books_completed = status_counts.get(BookStatus.completed, 0)
-    books_unread = status_counts.get(BookStatus.unread, 0)
-
-    # --- Pages read (from reading sessions, fallback to book progress) ---
-    total_pages = await db.scalar(
-        select(func.coalesce(func.sum(ReadingSession.pages_read), 0)).where(
-            ReadingSession.user_id == uid
-        )
-    )
-    # Fallback: if no session data, sum book current_page as approximate pages read
-    if not total_pages:
-        book_pages = await db.scalar(
-            select(func.coalesce(func.sum(Book.current_page), 0)).where(
-                and_(Book.user_id == uid, Book.current_page > 0)
-            )
-        )
-        total_pages = book_pages or 0
-
-    # --- Reading time (seconds -> minutes) ---
-    total_seconds = await db.scalar(
-        select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
-            ReadingSession.user_id == uid
-        )
-    )
-    total_minutes = int(total_seconds) // 60 if total_seconds else 0
-
-    # --- Streaks ---
-    date_col = func.date(ReadingSession.started_at).label('day')
-    date_rows = await db.execute(
-        select(date_col)
-        .where(ReadingSession.user_id == uid)
-        .group_by(date_col)
-        .order_by(date_col.desc())
-    )
-    reading_dates = [
-        row[0] if isinstance(row[0], date) else date.fromisoformat(row[0])
-        for row in date_rows.all()
-    ]
-
-    current_streak = 0
-
-    if reading_dates:
-        today = date.today()
-        check = today
-        for d in reading_dates:
-            if d == check:
-                current_streak += 1
-                check -= timedelta(days=1)
-            elif d < check:
-                break
-
-    # --- Annotations ---
-    total_highlights = await db.scalar(
-        select(func.count(Annotation.id)).where(
-            and_(Annotation.user_id == uid, Annotation.type == 'highlight')
-        )
-    )
-    total_notes = await db.scalar(
-        select(func.count(Annotation.id)).where(
-            and_(Annotation.user_id == uid, Annotation.type == 'note')
-        )
+    memory_count = await db.scalar(
+        select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid),
     )
 
-    # --- Recent books (last 10 by last_read_at desc) ---
-    recent_rows = await db.execute(
-        select(Book)
-        .where(Book.user_id == uid)
-        .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
-        .limit(10)
-    )
-    recent_books = []
-    for book in recent_rows.scalars().all():
-        recent_books.append({
-            'id': str(book.id),
-            'title': book.title,
-            'author': book.author,
-            'progress': float(book.progress or 0),
-            'lastRead': (
-                book.last_read_at.isoformat()
-                if book.last_read_at
-                else book.added_at.isoformat() if book.added_at else None
-            ),
-            'coverUrl': book.cover_url,
-        })
-
-    # --- Weekly activity (last 7 days) ---
-    today = date.today()
-    week_start = today - timedelta(days=6)
-    day_col = func.date(ReadingSession.started_at).label('day')
-    week_rows = await db.execute(
-        select(
-            day_col,
-            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
-        )
-        .where(
-            and_(
-                ReadingSession.user_id == uid,
-                ReadingSession.started_at >= datetime.combine(week_start, datetime.min.time()),
-            )
-        )
-        .group_by(day_col)
-        .order_by(day_col)
-    )
-    week_map: dict[str, int] = {}
-    for row in week_rows.all():
-        key = row[0].isoformat() if isinstance(row[0], date) else str(row[0])
-        week_map[key] = int(row[1])
-    weekly_activity = []
-    for i in range(7):
-        d = week_start + timedelta(days=i)
-        weekly_activity.append({
-            'day': d.isoformat(),
-            'pages': week_map.get(d.isoformat(), 0),
-        })
-
-    # --- Stats object ---
-    hours = total_minutes // 60
-    mins = total_minutes % 60
-    total_time_str = f'{hours}h {mins}m' if hours > 0 else f'{mins}m'
-
-    # --- Chat messages & Memory books ---
-    chat_message_count = await db.scalar(
-        select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid)
-    )
-    memory_book_count = await db.scalar(
-        select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid)
-    )
-
+    # --- Assemble response ---
     stats = {
-        'booksRead': books_completed or 0,
-        'totalPages': int(total_pages or 0),
-        'pagesRead': int(total_pages or 0),
-        'readingStreak': current_streak,
-        'totalTime': total_time_str,
-        'conceptsLearned': (total_highlights or 0) + (total_notes or 0),
+        'booksRead': status_counts['completed'],
+        'totalPages': pages_read,
+        'pagesRead': pages_read,
+        'readingStreak': streak,
+        'totalTime': _format_time(total_minutes),
+        'conceptsLearned': highlights + notes,
         'connections': 0,
-        'chatMessageCount': chat_message_count or 0,
-        'memoryBookCount': memory_book_count or 0,
-    }
-
-    # --- Books by status ---
-    books_by_status = {
-        'unread': books_unread or 0,
-        'reading': books_reading or 0,
-        'completed': books_completed or 0,
+        'chatMessageCount': chat_count or 0,
+        'memoryBookCount': memory_count or 0,
     }
 
     result = {
         'stats': stats,
         'recentBooks': recent_books,
         'weeklyActivity': weekly_activity,
-        'booksByStatus': books_by_status,
+        'booksByStatus': {
+            'unread': status_counts['unread'],
+            'reading': status_counts['reading'],
+            'completed': status_counts['completed'],
+        },
     }
 
     # --- Store in Redis cache ---

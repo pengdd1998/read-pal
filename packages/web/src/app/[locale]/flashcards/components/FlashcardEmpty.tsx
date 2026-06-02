@@ -22,7 +22,7 @@ export function FlashcardEmpty({ variant, reviewedCount = 0, onBackToDecks }: Fl
         <div className="card text-center py-12 sm:py-16">
           <span className="text-5xl block mb-4">{'\uD83D\uDCC7'}</span>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('empty_title')}</h2>
-          <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">
             {t('empty_desc')}
           </p>
           <div className="flex flex-col gap-3 max-w-xs mx-auto mb-8 text-left">
@@ -55,7 +55,7 @@ export function FlashcardEmpty({ variant, reviewedCount = 0, onBackToDecks }: Fl
         <div className="card text-center py-16">
           <span className="text-5xl block mb-4">{'\uD83C\uDF89'}</span>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('review_complete_title')}</h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             {t('review_complete_desc', { count: reviewedCount })}
           </p>
           <div className="flex gap-3 justify-center">
@@ -79,7 +79,7 @@ export function FlashcardEmpty({ variant, reviewedCount = 0, onBackToDecks }: Fl
       <div className="card text-center py-16">
         <span className="text-5xl block mb-4">{'\u2705'}</span>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('all_caught_up')}</h2>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
           {t('all_caught_up_desc')}
         </p>
         <div className="flex gap-3 justify-center">

@@ -77,7 +77,7 @@ async def test_reset_password_valid_token(client):
     fake_redis.delete.return_value = 1
 
     with (
-        patch('app.routers.password_reset._get_redis', return_value=fake_redis),
+        patch('app.services.password_reset_service.get_redis', return_value=fake_redis),
         patch('app.db.async_session', _TestSession),
     ):
         resp = await client.post(
@@ -104,7 +104,7 @@ async def test_reset_password_then_login(client):
     fake_redis.delete.return_value = 1
 
     with (
-        patch('app.routers.password_reset._get_redis', return_value=fake_redis),
+        patch('app.services.password_reset_service.get_redis', return_value=fake_redis),
         patch('app.db.async_session', _TestSession),
     ):
         resp = await client.post(
