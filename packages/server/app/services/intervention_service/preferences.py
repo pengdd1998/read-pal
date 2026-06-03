@@ -51,7 +51,7 @@ async def get_preferences(user_id: UUID) -> dict:
 
 async def update_preferences(
     user_id: UUID,
-    prefs_body: object,
+    prefs_body: dict,
 ) -> dict:
     """Merge incoming preference values over defaults and persist to Redis."""
     redis = get_redis()

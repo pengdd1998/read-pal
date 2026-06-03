@@ -15,7 +15,7 @@ async def store_feedback(
     intervention_type: str,
     helpful: bool,
     dismissed: bool,
-    context: object = None,
+    context: dict | None = None,
 ) -> dict:
     """Persist an intervention feedback record and return a confirmation dict."""
     feedback = InterventionFeedback(
