@@ -2,9 +2,11 @@
 
 import asyncio
 import logging
+import tempfile
 from pathlib import Path
 from uuid import UUID
 
+from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookFileType
@@ -41,6 +43,37 @@ def validate_file(filename: str, file_size: int, lang: str = DEFAULT_LANGUAGE) -
 def get_file_type(filename: str) -> str:
     """Extract file type from filename."""
     return Path(filename).suffix.lower().lstrip('.')
+
+
+# ---------------------------------------------------------------------------
+# Tempfile streaming
+# ---------------------------------------------------------------------------
+
+
+async def stream_upload_to_tempfile(
+    file: UploadFile,
+    max_size: int = MAX_FILE_SIZE,
+) -> tuple[str, int]:
+    """Stream uploaded file to a temp file.
+
+    Returns (tmp_path, file_size).
+    Raises ValueError if the file exceeds *max_size*.
+    """
+    file_type = get_file_type(file.filename or '')
+    file_size = 0
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_type}') as tmp:
+        tmp_path = tmp.name
+        while chunk := await file.read(1024 * 1024):
+            file_size += len(chunk)
+            if file_size > max_size:
+                tmp.close()
+                raise ValueError(
+                    f'File exceeds {max_size // (1024 * 1024)} MB limit'
+                )
+            tmp.write(chunk)
+
+    return tmp_path, file_size
 
 
 # ---------------------------------------------------------------------------

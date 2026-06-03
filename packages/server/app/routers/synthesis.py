@@ -13,7 +13,12 @@ from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.synthesis import CompareRequest, SynthesisRequest
-from app.services.synthesis_service import compare_books, cross_book_synthesize, get_user_book_ids, synthesize
+from app.services.cross_book_synthesis_service import (
+    compare_books,
+    cross_book_synthesize,
+    get_user_book_ids,
+)
+from app.services.synthesis_service import synthesize
 from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.synthesis')

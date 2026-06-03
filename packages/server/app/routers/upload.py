@@ -2,7 +2,6 @@
 
 import html
 import os
-import tempfile
 from pathlib import Path
 from uuid import UUID
 
@@ -18,6 +17,7 @@ from app.services.upload_service import (
     create_book_with_content,
     get_book_content as svc_get_book_content,
     get_file_type,
+    stream_upload_to_tempfile,
     validate_file,
 )
 from app.utils.i18n import _get_user_lang, t
@@ -53,16 +53,13 @@ async def upload_book(
     file_type = get_file_type(file.filename)
     tmp_path: str | None = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_type}') as tmp:
-            tmp_path = tmp.name
-            while chunk := await file.read(1024 * 1024):
-                file_size += len(chunk)
-                if file_size > MAX_FILE_SIZE:
-                    raise HTTPException(
-                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                        detail={'code': 'FILE_TOO_LARGE', 'message': t('errors.file_too_large_mb', lang, max_size=MAX_FILE_SIZE // (1024 * 1024))},
-                    )
-                tmp.write(chunk)
+        try:
+            tmp_path, file_size = await stream_upload_to_tempfile(file)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail={'code': 'FILE_TOO_LARGE', 'message': t('errors.file_too_large_mb', lang, max_size=MAX_FILE_SIZE // (1024 * 1024))},
+            )
 
         error = validate_file(file.filename, file_size, lang)
         if error:

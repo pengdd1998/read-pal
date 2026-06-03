@@ -1,19 +1,11 @@
-"""Intervention business logic — reading pattern analysis, feedback, and preferences.
+"""Reading-pattern analysis — core intervention detection logic."""
 
-Extracted from the interventions router so that route handlers stay thin
-(parse input -> call service -> return response).
-"""
-
-import json
-from collections import Counter
 from datetime import timedelta
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.redis import get_redis
-from app.models.intervention_feedback import InterventionFeedback
 from app.models.reading_session import ReadingSession
 from app.utils import utcnow
 
@@ -29,21 +21,6 @@ SPEED_DROP_THRESHOLD = 0.30      # 30% speed drop -> speed_drop intervention
 RE_READING_OVERLAP = 0.50        # 50% page overlap -> re_reading intervention
 OPTIMAL_TIMING_RATIO = 0.60      # 60% of sessions in 3h window -> optimal_timing
 
-# ---------------------------------------------------------------------------
-# Default preferences
-# ---------------------------------------------------------------------------
-
-DEFAULT_PREFS: dict = {
-    'marathonEnabled': True,
-    'longSessionEnabled': True,
-    'lowEngagementEnabled': True,
-    'welcomeBackEnabled': True,
-    'speedDropEnabled': True,
-    'reReadingEnabled': True,
-    'optimalTimingEnabled': True,
-    'quietHoursStart': None,
-    'quietHoursEnd': None,
-}
 
 # ---------------------------------------------------------------------------
 # Pure helper functions
@@ -121,13 +98,10 @@ def check_re_reading(sessions: list[ReadingSession]) -> dict | None:
     if len(sessions) < 3:
         return None
     sorted_sessions = sorted(sessions, key=lambda s: s.started_at)
-    # Group last 3 sessions by book -- all must be the same book
     last_three = sorted_sessions[-3:]
     book_ids = {s.book_id for s in last_three}
     if len(book_ids) != 1:
         return None
-    # Build estimated page ranges for these 3 sessions
-    # Use all prior sessions for that book to estimate cumulative position
     book_sessions = [
         s for s in sorted_sessions if s.book_id == last_three[0].book_id
     ]
@@ -138,7 +112,6 @@ def check_re_reading(sessions: list[ReadingSession]) -> dict | None:
             ranges.append(compute_page_range(prior, s))
     if len(ranges) < 3:
         return None
-    # Check pairwise overlap between the 3 ranges
     overlaps = 0
     pairs = [(0, 1), (1, 2), (0, 2)]
     for a, b in pairs:
@@ -159,16 +132,16 @@ def check_re_reading(sessions: list[ReadingSession]) -> dict | None:
 
 def check_optimal_timing(sessions: list[ReadingSession]) -> dict | None:
     """Suggest optimal reading time if sessions cluster in a 3-hour window."""
+    from collections import Counter
+
     if len(sessions) < 5:
         return None
-    # Count sessions per starting hour
     hour_counts: Counter[int] = Counter()
     for s in sessions:
         if s.started_at:
             hour_counts[s.started_at.hour] += 1
     if not hour_counts:
         return None
-    # Slide a 3-hour window and find the densest cluster
     total = len(sessions)
     best_hour = 0
     best_count = 0
@@ -318,110 +291,3 @@ async def analyze_reading_pattern(
         return optimal
 
     return None
-
-
-# ---------------------------------------------------------------------------
-# Feedback operations
-# ---------------------------------------------------------------------------
-
-
-async def store_feedback(
-    db: AsyncSession,
-    user_id: UUID,
-    book_id: UUID | None,
-    intervention_type: str,
-    helpful: bool,
-    dismissed: bool,
-    context: object = None,
-) -> dict:
-    """Persist an intervention feedback record and return a confirmation dict."""
-    feedback = InterventionFeedback(
-        user_id=user_id,
-        book_id=book_id,
-        intervention_type=intervention_type,
-        helpful=helpful,
-        dismissed=dismissed,
-        context=context,
-    )
-    db.add(feedback)
-    await db.flush()
-    return {'message': 'Feedback recorded'}
-
-
-async def get_feedback_history(
-    db: AsyncSession,
-    user_id: UUID,
-    limit: int = 20,
-) -> list[dict]:
-    """Return the most recent feedback records for the given user."""
-    stmt = (
-        select(InterventionFeedback)
-        .where(InterventionFeedback.user_id == user_id)
-        .order_by(InterventionFeedback.created_at.desc())
-        .limit(limit)
-    )
-    rows = (await db.execute(stmt)).scalars().all()
-
-    return [
-        {
-            'id': str(row.id),
-            'interventionType': row.intervention_type,
-            'userAction': 'helpful' if row.helpful else (
-                'dismissed' if row.dismissed else 'seen'
-            ),
-            'createdAt': row.created_at.isoformat() if row.created_at else None,
-        }
-        for row in rows
-    ]
-
-
-# ---------------------------------------------------------------------------
-# Preferences (Redis-backed)
-# ---------------------------------------------------------------------------
-
-
-def _prefs_redis_key(user_id: UUID) -> str:
-    return f'intervention_prefs:{user_id}'
-
-
-async def get_preferences(user_id: UUID) -> dict:
-    """Return the user's intervention preferences (or defaults)."""
-    redis = get_redis()
-    raw = await redis.get(_prefs_redis_key(user_id))
-
-    if raw:
-        return json.loads(raw)
-    return {**DEFAULT_PREFS}
-
-
-async def update_preferences(
-    user_id: UUID,
-    prefs_body: object,
-) -> dict:
-    """Merge incoming preference values over defaults and persist to Redis."""
-    redis = get_redis()
-
-    prefs = {**DEFAULT_PREFS}
-    # Merge incoming values over defaults
-    for field in (
-        'marathonEnabled',
-        'longSessionEnabled',
-        'lowEngagementEnabled',
-        'welcomeBackEnabled',
-        'speedDropEnabled',
-        'reReadingEnabled',
-        'optimalTimingEnabled',
-        'quietHoursStart',
-        'quietHoursEnd',
-    ):
-        val = getattr(prefs_body, field, None)
-        if val is not None:
-            prefs[field] = val
-
-    await redis.set(
-        _prefs_redis_key(user_id),
-        json.dumps(prefs),
-        ex=60 * 60 * 24 * 365,  # 1 year TTL
-    )
-
-    return prefs
