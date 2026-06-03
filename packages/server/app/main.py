@@ -84,9 +84,11 @@ async def lifespan(app: FastAPI):
         model=settings.default_model,
     )
 
-    prod_warnings = settings.validate_production()
-    for warning in prod_warnings:
-        logger.warning('production_warning', detail=warning)
+    try:
+        settings.validate_production()
+    except RuntimeError as exc:
+        logger.error('production_validation_failed', detail=str(exc))
+        raise
 
     if settings.is_dev:
         try:

@@ -208,18 +208,22 @@ class Settings(BaseSettings):
         return _parse_duration(self.cache_knowledge_ttl)
 
     def validate_production(self) -> list[str]:
-        """Validate settings for production — returns list of warnings."""
-        warnings: list[str] = []
+        """Validate settings for production — raises on insecure secrets."""
+        errors: list[str] = []
         if not self.is_dev:
             if 'change' in self.jwt_secret.lower() or len(self.jwt_secret) < 32:
-                warnings.append(
+                errors.append(
                     'JWT_SECRET must be a strong secret (>= 32 chars) in production'
                 )
             if self.db_password in ('readpal_dev', 'changeme', 'password'):
-                warnings.append(
+                errors.append(
                     'DB_PASSWORD must be changed from default in production'
                 )
-        return warnings
+        if errors:
+            raise RuntimeError(
+                'Production validation failed:\n' + '\n'.join(f'  - {e}' for e in errors)
+            )
+        return errors
 
 
 @lru_cache
