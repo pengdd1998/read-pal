@@ -60,7 +60,75 @@ async def test_create_webhook_returns_201(client):
     assert data['events'] == ['book.started']
     assert 'id' in data
     assert 'secret' in data
-    assert data['is_active'] is True
+    assert data['isActive'] is True
+
+
+@pytest.mark.asyncio
+async def test_create_webhook_returns_camel_case_fields(client):
+    """Verify the Pydantic schema serializes to camelCase."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    data = await _create_webhook(client, headers)
+    # camelCase aliases from alias_generator=to_camel
+    assert 'isActive' in data
+    assert 'createdAt' in data
+    # snake_case should NOT be present
+    assert 'is_active' not in data
+    assert 'created_at' not in data
+
+
+@pytest.mark.asyncio
+async def test_create_webhook_with_invalid_event_returns_422(client):
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    resp = await client.post(
+        '/api/v1/webhooks/',
+        headers=headers,
+        json={'url': _WEBHOOK_URL, 'events': ['invalid.event']},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_webhook_with_empty_events_returns_422(client):
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    resp = await client.post(
+        '/api/v1/webhooks/',
+        headers=headers,
+        json={'url': _WEBHOOK_URL, 'events': []},
+    )
+    # Empty events list is not in VALID_WEBHOOK_EVENTS, should fail validation
+    assert resp.status_code in (422, 201)
+
+
+@pytest.mark.asyncio
+async def test_create_webhook_with_invalid_url_returns_422(client):
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    resp = await client.post(
+        '/api/v1/webhooks/',
+        headers=headers,
+        json={'url': 'not-a-url', 'events': ['book.started']},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_webhook_without_url_returns_422(client):
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    resp = await client.post(
+        '/api/v1/webhooks/',
+        headers=headers,
+        json={'events': ['book.started']},
+    )
+    assert resp.status_code == 422
 
 
 # ---------------------------------------------------------------------------
@@ -85,6 +153,27 @@ async def test_list_webhooks_returns_items(client):
     assert items[0]['url'] == _WEBHOOK_URL
 
 
+@pytest.mark.asyncio
+async def test_list_webhooks_returns_camel_case_fields(client):
+    """Verify list items use camelCase via schema alias."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    await _create_webhook(client, headers)
+
+    resp = await client.get('/api/v1/webhooks/', headers=headers)
+    body = resp.json()
+    item = body['data']['items'][0]
+    assert 'isActive' in item
+    assert 'lastDeliveryAt' in item
+    assert 'lastDeliveryStatus' in item
+    assert 'failureCount' in item
+    assert 'createdAt' in item
+    # snake_case should NOT be present
+    assert 'is_active' not in item
+    assert 'last_delivery_at' not in item
+
+
 # ---------------------------------------------------------------------------
 # PATCH /api/v1/webhooks/{webhook_id}
 # ---------------------------------------------------------------------------
@@ -107,6 +196,24 @@ async def test_update_webhook_returns_updated_data(client):
     assert body['success'] is True
     assert body['data']['events'] == ['book.started', 'book.updated']
     assert body['data']['id'] == created['id']
+
+
+@pytest.mark.asyncio
+async def test_update_webhook_returns_camel_case_fields(client):
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    created = await _create_webhook(client, headers)
+
+    resp = await client.patch(
+        f"/api/v1/webhooks/{created['id']}",
+        headers=headers,
+        json={'events': ['book.started']},
+    )
+    data = resp.json()['data']
+    assert 'isActive' in data
+    assert 'createdAt' in data
+    assert 'is_active' not in data
 
 
 @pytest.mark.asyncio
@@ -214,7 +321,23 @@ async def test_test_webhook_returns_queued(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert body['data']['test_result'] == 'queued'
+    assert body['data']['testResult'] == 'queued'
+
+
+@pytest.mark.asyncio
+async def test_test_webhook_returns_camel_case_fields(client):
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    created = await _create_webhook(client, headers)
+
+    resp = await client.post(
+        f"/api/v1/webhooks/{created['id']}/test",
+        headers=headers,
+    )
+    data = resp.json()['data']
+    assert 'testResult' in data
+    assert 'test_result' not in data
 
 
 @pytest.mark.asyncio

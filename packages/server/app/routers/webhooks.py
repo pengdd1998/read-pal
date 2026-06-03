@@ -8,10 +8,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import write_limiter
-from app.schemas.common import GenericResponse
-from app.schemas.webhook import WebhookCreate, WebhookUpdate
+from app.schemas.common import GenericResponse, paginate
+from app.schemas.webhook import (
+    DeliveryLogResponse,
+    WebhookCreate,
+    WebhookListItemResponse,
+    WebhookResponse,
+    WebhookTestResponse,
+    WebhookUpdate,
+)
 from app.services import webhook_service
-from app.utils.i18n import _get_user_lang, t, translate_error
+from app.utils.i18n import t, translate_error
 
 router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'])
 
@@ -56,14 +63,12 @@ async def test_webhook(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
-    return {
-        'success': True,
-        'data': {
-            'id': str(wh.id),
-            'url': wh.url,
-            'test_result': 'queued',
-        },
-    }
+    data = WebhookTestResponse(
+        id=wh.id,
+        url=wh.url,
+        test_result='queued',
+    ).model_dump(by_alias=True, mode='json')
+    return {'success': True, 'data': data}
 
 
 @router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
@@ -74,16 +79,8 @@ async def create_webhook(
 ) -> dict:
     """Create a new webhook."""
     webhook = await webhook_service.create_webhook(db, UUID(user['id']), body)
-    return {
-        'success': True,
-        'data': {
-            'id': str(webhook.id),
-            'url': webhook.url,
-            'events': webhook.events,
-            'secret': webhook.secret,
-            'is_active': webhook.is_active,
-        },
-    }
+    data = WebhookResponse.model_validate(webhook).model_dump(by_alias=True, mode='json')
+    return {'success': True, 'data': data}
 
 
 @router.get('', response_model=GenericResponse)
@@ -93,24 +90,11 @@ async def list_webhooks(
 ) -> dict:
     """List all webhooks for the authenticated user."""
     webhooks = await webhook_service.list_webhooks(db, UUID(user['id']))
-    return {
-        'success': True,
-        'data': {
-            'items': [
-                {
-                    'id': str(w.id),
-                    'url': w.url,
-                    'events': w.events,
-                    'is_active': w.is_active,
-                    'last_delivery_at': w.last_delivery_at.isoformat() if w.last_delivery_at else None,
-                    'last_delivery_status': w.last_delivery_status,
-                    'failure_count': w.failure_count,
-                    'created_at': w.created_at.isoformat() if w.created_at else None,
-                }
-                for w in webhooks
-            ],
-        },
-    }
+    items = [
+        WebhookListItemResponse.model_validate(w).model_dump(by_alias=True, mode='json')
+        for w in webhooks
+    ]
+    return {'success': True, 'data': {'items': items}}
 
 
 @router.patch('/{webhook_id}', response_model=GenericResponse)
@@ -130,15 +114,8 @@ async def update_webhook(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
-    return {
-        'success': True,
-        'data': {
-            'id': str(webhook.id),
-            'url': webhook.url,
-            'events': webhook.events,
-            'is_active': webhook.is_active,
-        },
-    }
+    data = WebhookResponse.model_validate(webhook).model_dump(by_alias=True, mode='json')
+    return {'success': True, 'data': data}
 
 
 @router.delete('/{webhook_id}', status_code=status.HTTP_204_NO_CONTENT)
@@ -175,24 +152,8 @@ async def get_delivery_logs(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
-    return {
-        'success': True,
-        'data': {
-            'items': [
-                {
-                    'id': str(log.id),
-                    'webhook_id': str(log.webhook_id),
-                    'event': log.event,
-                    'url': log.url,
-                    'status_code': log.status_code,
-                    'duration_ms': log.duration_ms,
-                    'error': log.error,
-                    'created_at': log.created_at.isoformat() if log.created_at else None,
-                }
-                for log in logs
-            ],
-            'total': total,
-            'page': page,
-            'per_page': per_page,
-        },
-    }
+    items = [
+        DeliveryLogResponse.model_validate(log).model_dump(by_alias=True, mode='json')
+        for log in logs
+    ]
+    return {'success': True, 'data': paginate(items, total, page, per_page)}

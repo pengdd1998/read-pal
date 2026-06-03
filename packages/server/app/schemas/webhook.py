@@ -41,22 +41,50 @@ class WebhookUpdate(BaseModel):
 
 
 class WebhookResponse(BaseModel):
+    """Single webhook returned in create / update / test responses."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
     id: UUID
-    user_id: UUID
     url: str
     events: list[str]
     secret: str
+    is_active: bool
+    created_at: datetime
+
+
+class WebhookListItemResponse(BaseModel):
+    """Webhook item in the list endpoint (includes delivery summary)."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
+    id: UUID
+    url: str
+    events: list[str]
     is_active: bool
     last_delivery_at: datetime | None
     last_delivery_status: int | None
     failure_count: int
     created_at: datetime
-    updated_at: datetime
-
-    model_config = {'from_attributes': True}
 
 
 class DeliveryLogResponse(BaseModel):
+    """Single delivery log entry."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
     id: UUID
     webhook_id: UUID
     event: str
@@ -66,4 +94,16 @@ class DeliveryLogResponse(BaseModel):
     error: str | None
     created_at: datetime
 
-    model_config = {'from_attributes': True}
+
+class WebhookTestResponse(BaseModel):
+    """Response for the test-webhook endpoint."""
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
+    id: UUID
+    url: str
+    test_result: str
