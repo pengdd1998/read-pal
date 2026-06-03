@@ -175,6 +175,33 @@ def _prepare_section_data(
             'theme_list': ', '.join(enriched_data.get('synthesis_themes', [])[:5]),
         }
 
+    elif section_type == 'threads':
+        other_books = enriched_data.get('other_books', [])
+        book_list = ', '.join(f'"{b["title"]}" by {b["author"]}' for b in other_books[:10])
+        return {
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'theme_list': ', '.join(enriched_data.get('synthesis_themes', [])[:5]),
+            'concept_list': ', '.join(enriched_data.get('concepts', [])[:10]),
+            'other_books': book_list or 'No other completed books yet',
+        }
+
+    elif section_type == 'reader_became':
+        total_min = enriched_data.get('stats', {}).get('total_reading_minutes', 0)
+        hours = total_min // 60
+        mins = total_min % 60
+        return {
+            'book_title': enriched_data.get('book', {}).get('title', ''),
+            'book_author': enriched_data.get('book', {}).get('author', ''),
+            'total_time': f'{hours}h {mins}m' if hours > 0 else f'{mins}m',
+            'session_count': enriched_data.get('stats', {}).get('total_sessions', 0),
+            'highlight_count': enriched_data.get('stats', {}).get('total_highlights', 0),
+            'note_count': enriched_data.get('stats', {}).get('total_notes', 0),
+            'concept_list': ', '.join(enriched_data.get('concepts', [])[:10]),
+            'theme_list': ', '.join(enriched_data.get('synthesis_themes', [])[:5]),
+            'reading_archetype': enriched_data.get('encounter_archetype', 'The Explorer'),
+            'mastery_score': enriched_data.get('mastery', {}).get('overallMastery', 0),
+        }
+
     return {}
 
 
@@ -248,10 +275,7 @@ async def _generate_section(
 
 def _placeholder_section(section_type: str) -> dict[str, Any]:
     """Return a placeholder section for Phase 2 sections."""
-    section_names = {
-        'threads': 'Threads Between Books',
-        'reader_became': 'The Reader You Became',
-    }
+    section_names: dict[str, str] = {}
     return {
         'type': section_type,
         'title': section_names.get(section_type, section_type),

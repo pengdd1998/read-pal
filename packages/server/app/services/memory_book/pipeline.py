@@ -62,6 +62,7 @@ async def generate(
         'encounter', 'highlights', 'recommendations',
         'conversations', 'annotations_woven',
         'attention_map', 'what_stuck', 'concept_web',
+        'threads', 'reader_became',
     }
 
     async def _gen_section(section_type: str) -> dict[str, Any]:

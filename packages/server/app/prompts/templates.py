@@ -422,6 +422,43 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
         ),
         output_format='json',
     ),
+    'threads': PromptTemplate(
+        key='mirror.section.threads',
+        version=1,
+        template=(
+            'Write the THREADS BETWEEN BOOKS section — how "{book_title}" connects to other books the reader has read. '
+            'Themes from this book: {theme_list}. Concepts extracted: {concept_list}. '
+            'Other books the reader has completed: {other_books}. '
+            'Find 3-5 thematic threads that connect "{book_title}" to their broader reading life. '
+            'For each thread, describe how an idea in this book echoes, contrasts with, or deepens '
+            'something from another book. Be specific about which themes connect. '
+            'Write in second person with literary warmth. '
+            'Return JSON: {{"threads": [{{"theme": "...", "books": ["title1", "title2"], '
+            '"connection": "how they relate"}}], '
+            '"reading_pattern": "1-2 sentences about their reading taste pattern", '
+            '"suggested_next_theme": "what theme they should explore next"}}'
+        ),
+        output_format='json',
+    ),
+    'reader_became': PromptTemplate(
+        key='mirror.section.reader_became',
+        version=1,
+        template=(
+            'Write THE READER YOU BECAME section — a reflective closing essay for the Reading Mirror. '
+            'Book: "{book_title}" by {book_author}. '
+            'They spent {total_time} reading over {session_count} sessions. '
+            'They made {highlight_count} highlights and {note_count} notes. '
+            'Knowledge concepts: {concept_list}. Themes: {theme_list}. '
+            'Reading archetype: {reading_archetype}. Mastery: {mastery_score}%. '
+            'Write a 200-word reflective essay in second person about who they became as a reader '
+            'through this book. How did their thinking evolve? What questions did they learn to ask? '
+            'What did they discover about themselves? '
+            'Tone: warm, insightful, celebratory without being sycophantic. '
+            'Return JSON: {{"essay": "...", "key_transformation": "1 sentence about their intellectual growth", '
+            '"parting_question": "a thought-provoking question to carry forward"}}'
+        ),
+        output_format='json',
+    ),
 }
 
 # ---------------------------------------------------------------------------

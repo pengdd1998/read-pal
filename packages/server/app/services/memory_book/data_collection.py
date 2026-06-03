@@ -195,15 +195,21 @@ async def _collect_enriched_data(
     highlights = data.get('highlights', [])
     enriched['first_highlight'] = highlights[0].get('content', '')[:200] if highlights else ''
 
-    # User's other completed books (for recommendations)
+    # User's other completed books (for recommendations + threads)
     try:
         result = await db.execute(
-            select(Book.title)
+            select(Book.id, Book.title, Book.author)
             .where(Book.user_id == user_id, Book.id != book_id, Book.status == 'completed')
             .limit(20),
         )
-        enriched['existing_books'] = [r[0] for r in result.all()]
+        other_books = result.all()
+        enriched['existing_books'] = [r[1] for r in other_books]
+        enriched['other_books'] = [
+            {'id': str(r[0]), 'title': r[1], 'author': r[2] or 'Unknown'}
+            for r in other_books
+        ]
     except Exception:
         enriched['existing_books'] = []
+        enriched['other_books'] = []
 
     return enriched
