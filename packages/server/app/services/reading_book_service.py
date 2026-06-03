@@ -40,7 +40,8 @@ async def list_memory_books(
     result = await db.execute(
         select(MemoryBook)
         .where(MemoryBook.user_id == user_id)
-        .order_by(MemoryBook.generated_at.desc()),
+        .order_by(MemoryBook.generated_at.desc())
+        .limit(50),
     )
     books = list(result.scalars().all())
     return [

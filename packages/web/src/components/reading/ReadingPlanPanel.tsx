@@ -174,10 +174,11 @@ export function ReadingPlanPanel({
               </p>
 
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label htmlFor="reading-plan-days" className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t('reading_plan_total_days')}
                 </label>
                 <input
+                  id="reading-plan-days"
                   type="number"
                   value={totalDays}
                   onChange={(e) => setTotalDays(Math.max(1, Math.min(90, parseInt(e.target.value) || 1)))}
@@ -188,10 +189,11 @@ export function ReadingPlanPanel({
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label htmlFor="reading-plan-minutes" className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t('reading_plan_daily_minutes')}
                 </label>
                 <input
+                  id="reading-plan-minutes"
                   type="number"
                   value={dailyMinutes}
                   onChange={(e) => setDailyMinutes(Math.max(10, Math.min(240, parseInt(e.target.value) || 30)))}

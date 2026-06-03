@@ -143,6 +143,7 @@ export function ApiKeysSection() {
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             placeholder={t('api_key_name_placeholder')}
+            aria-label={t('api_key_name_placeholder')}
             className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             autoFocus

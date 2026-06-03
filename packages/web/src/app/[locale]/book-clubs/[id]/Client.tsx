@@ -397,6 +397,7 @@ export default function BookClubDetailPage() {
               <input
                 type="text"
                 placeholder={t('discussionPlaceholder')}
+                aria-label={t('discussionPlaceholder')}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => {

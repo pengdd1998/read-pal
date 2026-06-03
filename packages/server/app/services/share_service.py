@@ -102,7 +102,7 @@ async def list_shares(
     if book_id is not None:
         query = query.where(SharedExport.book_id == book_id)
 
-    result = await db.execute(query)
+    result = await db.execute(query.limit(100))
     return list(result.scalars().all())
 
 

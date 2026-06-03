@@ -39,6 +39,7 @@ export function NotePopover({ selectedText, onSave, onCancel }: NotePopoverProps
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder={t('note_placeholder')}
+          aria-label={t('note_placeholder')}
           className="input mb-3 text-sm"
           rows={3}
         />

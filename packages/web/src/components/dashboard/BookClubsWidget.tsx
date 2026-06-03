@@ -170,6 +170,7 @@ function BookClubsWidgetInner() {
           <input
             type="text"
             placeholder={t('clubName')}
+            aria-label={t('clubName')}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-surface-0 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
@@ -177,6 +178,7 @@ function BookClubsWidgetInner() {
           />
           <textarea
             placeholder={t('descriptionOptional')}
+            aria-label={t('descriptionOptional')}
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-surface-0 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
@@ -207,6 +209,7 @@ function BookClubsWidgetInner() {
           <input
             type="text"
             placeholder={t('enterCode')}
+            aria-label={t('enterCode')}
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-surface-0 text-sm text-gray-900 dark:text-white tracking-widest text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"

@@ -188,7 +188,7 @@ async def get_chapter_stats(
         select(Annotation).where(
             Annotation.user_id == user_id,
             Annotation.book_id == book_id,
-        ).order_by(Annotation.created_at.asc()),
+        ).order_by(Annotation.created_at.asc()).limit(5000),
     )
     annotations = list(result.scalars().all())
 

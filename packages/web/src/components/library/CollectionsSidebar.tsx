@@ -173,6 +173,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setShowCreate(false); }}
                 placeholder={t('collections_name_placeholder')}
+                aria-label={t('collections_name_placeholder')}
                 className="w-full px-2.5 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-1 focus:ring-primary-400/50"
                 autoFocus
               />
@@ -244,6 +245,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
                     onChange={(e) => setEditName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleRename(col.id); if (e.key === 'Escape') setEditingId(null); }}
                     onBlur={() => handleRename(col.id)}
+                    aria-label={t('collections_name_placeholder')}
                     className="flex-1 px-2 py-1 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded outline-none focus:ring-1 focus:ring-primary-400/50"
                     autoFocus
                   />

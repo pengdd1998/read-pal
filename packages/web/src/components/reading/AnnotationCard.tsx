@@ -233,6 +233,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
               placeholder={editTags.length === 0 ? t('card_add_tags') : t('card_add_tag')}
+              aria-label={editTags.length === 0 ? t('card_add_tags') : t('card_add_tag')}
               className="w-full px-2.5 py-1 rounded-md bg-white dark:bg-gray-700/50 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400"
             />
             {tagInput && filteredPresets.length > 0 && (

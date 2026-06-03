@@ -108,7 +108,7 @@ export default function LibraryPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('search_library')}
               aria-label={t('search_library')}
-              className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none w-32 sm:w-44 lg:w-48"
+              className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500/30 w-32 sm:w-44 lg:w-48"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} aria-label={t('clear_search')} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
@@ -168,7 +168,7 @@ export default function LibraryPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('search_library')}
             aria-label={t('search_library')}
-            className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none flex-1"
+            className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500/30 flex-1"
           />
         </div>
       </div>

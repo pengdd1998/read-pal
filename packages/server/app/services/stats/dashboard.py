@@ -1,5 +1,6 @@
 """Dashboard stats with Redis caching."""
 
+import asyncio
 import json
 import logging
 from datetime import date, datetime, timedelta
@@ -90,9 +91,10 @@ async def _get_reading_minutes(db: AsyncSession, uid: UUID) -> int:
 async def _compute_streak(db: AsyncSession, uid: UUID) -> int:
     """Current reading streak (consecutive days ending today)."""
     day_col = func.date(ReadingSession.started_at).label('day')
+    cutoff = date.today() - timedelta(days=60)
     rows = await db.execute(
         select(day_col)
-        .where(ReadingSession.user_id == uid)
+        .where(ReadingSession.user_id == uid, ReadingSession.started_at >= cutoff)
         .group_by(day_col),
     )
     active = {
@@ -205,20 +207,32 @@ async def get_dashboard_stats(
     except Exception:
         logger.warning('Redis read failed for dashboard cache, querying DB')
 
-    # --- Gather all data via helpers ---
-    status_counts = await _get_book_status_counts(db, uid)
-    pages_read = await _get_pages_read(db, uid)
-    total_minutes = await _get_reading_minutes(db, uid)
-    streak = await _compute_streak(db, uid)
-    highlights, notes = await _get_annotation_counts(db, uid)
-    recent_books = await _get_recent_books(db, uid)
-    weekly_activity = await _get_weekly_activity(db, uid)
-
-    chat_count = await db.scalar(
-        select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid),
+    # --- Gather all data via helpers (parallelized) ---
+    (
+        status_counts,
+        pages_read,
+        total_minutes,
+        streak,
+        (highlights, notes),
+        recent_books,
+        weekly_activity,
+    ) = await asyncio.gather(
+        _get_book_status_counts(db, uid),
+        _get_pages_read(db, uid),
+        _get_reading_minutes(db, uid),
+        _compute_streak(db, uid),
+        _get_annotation_counts(db, uid),
+        _get_recent_books(db, uid),
+        _get_weekly_activity(db, uid),
     )
-    memory_count = await db.scalar(
-        select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid),
+
+    chat_count, memory_count = await asyncio.gather(
+        db.scalar(
+            select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid),
+        ),
+        db.scalar(
+            select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid),
+        ),
     )
 
     # --- Assemble response ---

@@ -122,17 +122,19 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
 
 async def _compute_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
     book_rows = (await db.execute(
-        select(Book).where(Book.user_id == user_id)
-    )).scalars().all()
+        select(Book.title, Book.author, Book.tags)
+        .where(Book.user_id == user_id)
+        .limit(200)
+    )).all()
 
     user_authors: Counter[str] = Counter()
     user_genres: Counter[str] = Counter()
     read_titles: set[str] = set()
 
-    for book in book_rows:
-        read_titles.add(book.title.lower())
-        user_authors[book.author.lower()] += 1
-        for tag in (book.tags or []):
+    for title, author, tags in book_rows:
+        read_titles.add(title.lower())
+        user_authors[author.lower()] += 1
+        for tag in (tags or []):
             user_genres[tag.lower()] += 1
 
     # No history — return starter picks
