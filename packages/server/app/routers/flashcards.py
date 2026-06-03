@@ -141,7 +141,7 @@ async def generate_flashcards(
 ) -> dict:
     """Generate flashcards for a book."""
     lang = await _get_user_lang(db, UUID(user['id']))
-    book_id = body.book_id or body.bookId
+    book_id = body.book_id
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

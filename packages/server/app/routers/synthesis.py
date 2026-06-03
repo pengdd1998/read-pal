@@ -6,16 +6,14 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter
-from app.models.book import Book
 from app.schemas.common import GenericResponse
 from app.schemas.synthesis import CompareRequest, SynthesisRequest
-from app.services.synthesis_service import compare_books, cross_book_synthesize, synthesize
+from app.services.synthesis_service import compare_books, cross_book_synthesize, get_user_book_ids, synthesize
 from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.synthesis')
@@ -65,10 +63,7 @@ async def run_cross_book_synthesis(
 
     Finds common themes, contrasting viewpoints, and connections between books.
     """
-    result = await db.execute(
-        select(Book.id).where(Book.user_id == UUID(current_user['id'])),
-    )
-    book_ids = [row[0] for row in result.all()]
+    book_ids = await get_user_book_ids(db, UUID(current_user['id']))
 
     if not book_ids:
         return {

@@ -9,7 +9,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.book import Book, BookStatus
+from app.models.book import Book, BookFileType, BookStatus
 from app.utils import utcnow
 from app.schemas.book import BookCreate, BookUpdate
 
@@ -195,3 +195,27 @@ async def update_tags(
 
     logger.info('Tags updated for book %s', book_id)
     return book
+
+
+async def create_sample_book(
+    db: AsyncSession,
+    user_id: str,
+    title: str = 'Sample Book',
+    author: str = 'Sample Author',
+) -> Book:
+    """Create a minimal sample book for testing."""
+    sample = Book(
+        user_id=user_id,
+        title=title,
+        author=author,
+        file_type=BookFileType.epub,
+        file_size=1024,
+        total_pages=1,
+        current_page=0,
+        status=BookStatus.unread,
+        tags=['sample'],
+    )
+    db.add(sample)
+    await db.flush()
+    await db.refresh(sample)
+    return sample

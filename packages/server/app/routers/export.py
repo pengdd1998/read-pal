@@ -18,6 +18,54 @@ logger = logging.getLogger('read-pal.export')
 
 router = APIRouter(prefix='/api/v1/export', tags=['export'])
 
+_FILENAME_MAP = {
+    'csv': 'annotations-{book_id}.csv',
+    'markdown': 'annotations-{book_id}.md',
+    'html': 'annotations-{book_id}.html',
+    'zotero': 'annotations-{book_id}.rdf',
+    'apa': 'citation-{book_id}.txt',
+    'mla': 'citation-{book_id}.txt',
+    'chicago': 'citation-{book_id}.txt',
+    'bibtex': 'citation-{book_id}.bib',
+}
+
+
+def _validate_format(fmt: str) -> None:
+    """Raise 400 if format is unsupported."""
+    all_formats = SUPPORTED_FORMATS + CITATION_FORMATS
+    if fmt not in all_formats:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                'code': 'INVALID_FORMAT',
+                'message': t('errors.unsupported_format', format=fmt, formats=', '.join(all_formats)),
+            },
+        )
+
+
+async def _do_export(db: AsyncSession, user_id: UUID, book_id: UUID, fmt: str) -> Response:
+    """Shared export logic: validate, call service, build response."""
+    _validate_format(fmt)
+
+    result = await export(db, user_id, book_id, fmt)
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
+        )
+
+    content, content_type = result
+    filename = _FILENAME_MAP[fmt].format(book_id=book_id)
+
+    return Response(
+        content=content,
+        media_type=content_type,
+        headers={
+            'Content-Disposition': f'attachment; filename="{filename}"',
+        },
+    )
+
 
 @router.get('/{book_id}/{format}')
 async def export_annotations(
@@ -30,46 +78,7 @@ async def export_annotations(
 
     Supported formats: csv, markdown, html, zotero, apa, mla, chicago.
     """
-    all_formats = SUPPORTED_FORMATS + CITATION_FORMATS
-    if format not in all_formats:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                'code': 'INVALID_FORMAT',
-                'message': t('errors.unsupported_format', format=format, formats=', '.join(all_formats)),
-            },
-        )
-
-    result = await export(db, UUID(current_user['id']), book_id, format)
-
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
-        )
-
-    content, content_type = result
-
-    filename_map = {
-        'csv': f'annotations-{book_id}.csv',
-        'markdown': f'annotations-{book_id}.md',
-        'html': f'annotations-{book_id}.html',
-        'zotero': f'annotations-{book_id}.rdf',
-        'apa': f'citation-{book_id}.txt',
-        'mla': f'citation-{book_id}.txt',
-        'chicago': f'citation-{book_id}.txt',
-        'bibtex': f'citation-{book_id}.bib',
-    }
-
-    return Response(
-        content=content,
-        media_type=content_type,
-        headers={
-            'Content-Disposition': (
-                f'attachment; filename="{filename_map[format]}"'
-            ),
-        },
-    )
+    return await _do_export(db, UUID(current_user['id']), book_id, format)
 
 
 @router.get('')
@@ -83,43 +92,4 @@ async def export_by_query_params(
 
     Query params: ``?bookId=...&format=...``
     """
-    all_formats = SUPPORTED_FORMATS + CITATION_FORMATS
-    if format not in all_formats:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                'code': 'INVALID_FORMAT',
-                'message': t('errors.unsupported_format', format=format, formats=', '.join(all_formats)),
-            },
-        )
-
-    result = await export(db, UUID(current_user['id']), bookId, format)
-
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
-        )
-
-    content, content_type = result
-
-    filename_map = {
-        'csv': f'annotations-{bookId}.csv',
-        'markdown': f'annotations-{bookId}.md',
-        'html': f'annotations-{bookId}.html',
-        'zotero': f'annotations-{bookId}.rdf',
-        'apa': f'citation-{bookId}.txt',
-        'mla': f'citation-{bookId}.txt',
-        'chicago': f'citation-{bookId}.txt',
-        'bibtex': f'citation-{bookId}.bib',
-    }
-
-    return Response(
-        content=content,
-        media_type=content_type,
-        headers={
-            'Content-Disposition': (
-                f'attachment; filename="{filename_map[format]}"'
-            ),
-        },
-    )
+    return await _do_export(db, UUID(current_user['id']), bookId, format)

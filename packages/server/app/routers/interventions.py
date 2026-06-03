@@ -41,7 +41,7 @@ async def check_intervention(
 ) -> dict:
     """Check if a reading intervention is needed based on reading patterns."""
     user_id = UUID(current_user['id'])
-    book_id = body.book_id or body.bookId
+    book_id = body.book_id
     book_uuid = UUID(str(book_id)) if book_id else None
 
     intervention = await analyze_reading_pattern(db, user_id, book_uuid)
@@ -68,7 +68,7 @@ async def submit_feedback(
 ) -> dict:
     """Store intervention feedback."""
     user_id = UUID(current_user['id'])
-    book_id = body.book_id or body.bookId
+    book_id = body.book_id
 
     result = await store_feedback(
         db=db,

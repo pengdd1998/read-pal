@@ -175,6 +175,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
                     <button
                       key={f.value}
                       onClick={() => { setFormat(f.value); setPreview(null); }}
+                      aria-label={`${t(f.label)} - ${t(f.description)}`}
                       className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
                         format === f.value
                           ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-400/30'
@@ -212,6 +213,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
                 <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t('export_preview_label')}</span>
                 <button
                   onClick={handleCopy}
+                  aria-label={t('export_copy')}
                   className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
                 >
                   {t('export_copy')}

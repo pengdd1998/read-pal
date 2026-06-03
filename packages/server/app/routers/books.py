@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.models.book import Book, BookFileType, BookStatus
+from app.models.book import BookStatus
 from app.schemas.book import (
     BookCreate,
     BookListResponse,
@@ -154,20 +154,9 @@ async def seed_sample_book(
     title = body.title if body else 'Sample Book'
     author = body.author if body else 'Sample Author'
 
-    sample = Book(
-        user_id=UUID(current_user['id']),
-        title=title,
-        author=author,
-        file_type=BookFileType.epub,
-        file_size=1024,
-        total_pages=1,
-        current_page=0,
-        status=BookStatus.unread,
-        tags=['sample'],
+    sample = await book_service.create_sample_book(
+        db, UUID(current_user['id']), title=title, author=author,
     )
-    db.add(sample)
-    await db.flush()
-    await db.refresh(sample)
     return {
         'success': True,
         'data': BookResponse.model_validate(sample).model_dump(by_alias=True, mode='json'),

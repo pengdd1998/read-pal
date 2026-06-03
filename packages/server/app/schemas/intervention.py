@@ -4,7 +4,7 @@ from typing import Any
 
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 
@@ -13,8 +13,9 @@ class InterventionCheckRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    book_id: UUID | None = None
-    bookId: str | None = None
+    book_id: UUID | None = Field(
+        None, validation_alias=AliasChoices('book_id', 'bookId'),
+    )
 
 
 class InterventionFeedbackRequest(BaseModel):
@@ -25,8 +26,9 @@ class InterventionFeedbackRequest(BaseModel):
     type: str = Field(default='', max_length=50)
     helpful: bool = False
     dismissed: bool = False
-    book_id: UUID | None = None
-    bookId: str | None = None
+    book_id: UUID | None = Field(
+        None, validation_alias=AliasChoices('book_id', 'bookId'),
+    )
     context: Any = None
 
 

@@ -351,6 +351,14 @@ async def _batch_collect_reading_data(
   return data_map
 
 
+async def get_user_book_ids(db: AsyncSession, user_id: UUID) -> list[UUID]:
+  """Return all book IDs owned by the given user."""
+  result = await db.execute(
+    select(Book.id).where(Book.user_id == user_id),
+  )
+  return [row[0] for row in result.all()]
+
+
 async def cross_book_synthesize(
   db: AsyncSession,
   user_id: UUID,
@@ -443,6 +451,7 @@ async def compare_books(
   book_id_1: UUID,
   book_id_2: UUID,
 ) -> SynthesisResponse:
+  """Compare two books — find common themes and unique perspectives."""
   """Compare two books — find common themes and unique perspectives."""
   t0 = time.monotonic()
   logger.info(

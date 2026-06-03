@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
@@ -8,9 +9,11 @@ import { useToast } from '@/components/Toast';
 export function AccountSection() {
   const { toast } = useToast();
   const t = useTranslations('settings_page');
+  const [deleting, setDeleting] = useState(false);
 
   async function handleDeleteAccount() {
     if (!confirm(t('account_delete_confirm'))) return;
+    setDeleting(true);
     try {
       const res = await authFetch(`${API_BASE_URL}/api/auth/account`, {
         method: 'DELETE',
@@ -21,6 +24,8 @@ export function AccountSection() {
       }
     } catch {
       toast(t('account_delete_failed'), 'error');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -62,9 +67,18 @@ export function AccountSection() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleDeleteAccount}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+                    disabled={deleting}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {t('account_delete_button')}
+                    {deleting ? (
+                      <span className="flex items-center gap-1.5">
+                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        {t('account_deleting')}
+                      </span>
+                    ) : t('account_delete_button')}
                   </button>
                 </div>
               </div>

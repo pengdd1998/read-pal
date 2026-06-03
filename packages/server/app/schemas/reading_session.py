@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 
@@ -67,8 +67,9 @@ class SessionStartRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    book_id: str | None = None
-    bookId: str | None = None
+    book_id: str | None = Field(
+        None, validation_alias=AliasChoices('book_id', 'bookId'),
+    )
 
 
 class HeartbeatRequest(BaseModel):

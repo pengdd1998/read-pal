@@ -24,10 +24,11 @@ export function SynthesizeForm({
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+        <label htmlFor="synthesis-query" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           {t('synthesis_query_label')}
         </label>
         <textarea
+          id="synthesis-query"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={t('synthesis_query_placeholder')}

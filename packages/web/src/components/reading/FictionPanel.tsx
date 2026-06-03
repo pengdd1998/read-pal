@@ -254,6 +254,7 @@ export function FictionPanel({
                     <div key={char.name}>
                       <button
                         onClick={() => handleCharacterClick(char.name)}
+                        aria-label={selectedCharacter === char.name ? `Collapse ${char.name}` : `Expand ${char.name}`}
                         className={`w-full text-left px-3 py-2.5 rounded-xl transition-all ${
                           selectedCharacter === char.name
                             ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700'
@@ -279,6 +280,7 @@ export function FictionPanel({
                                   e.stopPropagation();
                                   handleAskCompanion(char.name);
                                 }}
+                                aria-label={t('fiction_ask_about', { name: char.name.split(' ')[0] })}
                                 className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline"
                               >
                                 {t('fiction_ask_about', { name: char.name.split(' ')[0] })}

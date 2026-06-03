@@ -20,9 +20,11 @@ export function OfflineSection() {
   const [books, setBooks] = useState<Array<{ id: string; title: string; author: string }>>([]);
   const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set());
   const [caching, setCaching] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
         const count = await getQueueCount();
         setQueueCount(count);
@@ -44,6 +46,8 @@ export function OfflineSection() {
         if (res.data?.books) setBooks(res.data.books);
       } catch {
         // Offline or not configured
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -154,7 +158,20 @@ export function OfflineSection() {
         </div>
 
         {/* Cache more books */}
-        {books.length > 0 && (
+        {loading ? (
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{t('offline_cache_heading')}</h3>
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-2 py-1.5">
+                  <div className="w-4 h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                  <div className="flex-1 h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">{t('offline_loading')}</p>
+          </div>
+        ) : books.length > 0 && (
           <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{t('offline_cache_heading')}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t('offline_cache_desc')}</p>

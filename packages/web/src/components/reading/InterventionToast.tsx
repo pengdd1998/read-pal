@@ -43,6 +43,7 @@ export function InterventionToast({
   const t = useTranslations('common');
   const [intervention, setIntervention] = useState<Intervention | null>(null);
   const [visible, setVisible] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const dismissedRef = useRef<Set<string>>(new Set());
   const lastCheckRef = useRef(0);
   const pageChangeCountRef = useRef(0);
@@ -99,6 +100,8 @@ export function InterventionToast({
   }, [bookId, currentPage, totalPages, sessionDuration, highlightCount]);
 
   const handleDismiss = useCallback(() => {
+    if (submitting) return;
+    setSubmitting(true);
     if (intervention) {
       dismissedRef.current = new Set(dismissedRef.current).add(intervention.type);
     }
@@ -108,19 +111,23 @@ export function InterventionToast({
       api.post('/api/interventions/feedback', {
         interventionType: intervention.type,
         dismissed: true,
-      }).catch(() => {});
+      }).catch(() => {}).finally(() => setSubmitting(false));
+    } else {
+      setSubmitting(false);
     }
-  }, [intervention]);
+  }, [intervention, submitting]);
 
   const handleHelpful = useCallback(() => {
+    if (submitting) return;
+    setSubmitting(true);
     if (intervention) {
       api.post('/api/interventions/feedback', {
         interventionType: intervention.type,
         helpful: true,
-      }).catch(() => {});
+      }).catch(() => {}).finally(() => setSubmitting(false));
     }
     setVisible(false);
-  }, [intervention]);
+  }, [intervention, submitting]);
 
   if (!visible || !intervention) return null;
 
@@ -134,13 +141,23 @@ export function InterventionToast({
             <div className="flex items-center gap-2 mt-2">
               <button
                 onClick={handleHelpful}
-                className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                disabled={submitting}
+                className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors disabled:opacity-50"
               >
-                {t('thanks')}
+                {submitting ? (
+                  <span className="flex items-center gap-1">
+                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {t('thanks')}
+                  </span>
+                ) : t('thanks')}
               </button>
               <button
                 onClick={handleDismiss}
-                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                disabled={submitting}
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
               >
                 {t('dismiss')}
               </button>

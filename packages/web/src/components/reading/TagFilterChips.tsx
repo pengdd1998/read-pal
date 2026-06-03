@@ -29,6 +29,7 @@ export function TagFilterChips({
             key={tag}
             onClick={() => onToggleTag(tag)}
             aria-pressed={selectedTags.includes(tag)}
+            aria-label={selectedTags.includes(tag) ? t('sidebar_unfilter_tag', { tag }) : t('sidebar_filter_tag', { tag })}
             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium transition-all duration-150 active:scale-95 ${
               selectedTags.includes(tag)
                 ? tag === 'discuss'
@@ -50,6 +51,7 @@ export function TagFilterChips({
         {selectedTags.length > 0 && (
           <button
             onClick={onClearTags}
+            aria-label={t('sidebar_clear_all_tags')}
             className="px-1.5 py-0.5 rounded-full text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             {t('sidebar_clear')}

@@ -38,9 +38,9 @@ async def generate_objectives(
     """Generate study objectives for a chapter using LLM."""
     user_id = UUID(current_user['id'])
     data = await svc_generate_objectives(
-        book_id=body.book_id or body.bookId,
-        chapter_title=body.chapter_title or body.chapterTitle or 'this chapter',
-        chapter_index=body.chapter_index if body.chapter_index is not None else body.chapterIndex,
+        book_id=body.book_id,
+        chapter_title=body.chapter_title or 'this chapter',
+        chapter_index=body.chapter_index,
         user_id=user_id,
     )
     return {'success': True, 'data': data}
@@ -54,10 +54,10 @@ async def generate_concept_checks(
     """Generate concept check questions with answers and hints."""
     user_id = UUID(current_user['id'])
     data = await svc_generate_checks(
-        book_id=body.book_id or body.bookId,
-        chapter_title=body.chapter_title or body.chapterTitle or 'this chapter',
-        chapter_index=body.chapter_index if body.chapter_index is not None else body.chapterIndex,
-        chapter_content=body.chapter_content or body.chapterContent or '',
+        book_id=body.book_id,
+        chapter_title=body.chapter_title or 'this chapter',
+        chapter_index=body.chapter_index,
+        chapter_content=body.chapter_content or '',
         user_id=user_id,
     )
     return {'success': True, 'data': data}
@@ -71,7 +71,7 @@ async def save_concept_checks(
 ) -> dict:
     """Save concept check results as flashcards for spaced repetition."""
     user_id = UUID(current_user['id'])
-    book_id = body.book_id or body.bookId
+    book_id = body.book_id
     checks = body.checks
 
     saved = await save_checks_as_flashcards(db, user_id, book_id, checks)

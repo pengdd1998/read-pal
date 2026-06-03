@@ -140,7 +140,7 @@ async def start_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Alias for POST / — create a new reading session."""
-    book_id = body.book_id or body.bookId
+    book_id = body.book_id
     if not book_id:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
