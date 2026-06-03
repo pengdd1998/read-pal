@@ -73,7 +73,9 @@
     "error_rate_limit": "尝试次数过多。",
     "error_generic": "出了点问题。请重试。",
     "offline_banner": "你已离线。部分功能可能不可用。",
-    "toast_dismiss_aria": "关闭通知"
+    "toast_dismiss_aria": "关闭通知",
+    "update_available": "read-pal 有新版本可用。",
+    "update_now": "立即更新"
   },
   "landing": {
     "meta_title": "AI 阅读伴侣 | 更聪明地阅读，记住更多",
@@ -1835,6 +1837,13 @@
     "dashboard_description": "你的阅读伴侣——追踪进度、查看统计、管理阅读目标、获取 AI 洞察。",
     "welcome_title": "欢迎 | read-pal",
     "welcome_description": "开始使用 read-pal——认识你的 AI 阅读伴侣，开启你的阅读之旅。"
+  },
+  "readingMirror": {
+    "by_author": "作者：{author}",
+    "reading_time": "阅读时长",
+    "sessions": "阅读次数",
+    "highlights": "高亮",
+    "longest_session": "最长单次"
   },
   "errors": {
     "connection_problem": "网络连接问题",

@@ -18,6 +18,12 @@ class ShareCreate(BaseModel):
 
 
 class ShareResponse(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
+
     id: UUID
     user_id: UUID
     book_id: UUID
@@ -30,5 +36,3 @@ class ShareResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     share_url: str | None = None
-
-    model_config = ConfigDict(from_attributes=True)

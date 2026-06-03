@@ -293,7 +293,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
           {config.icon} {config.label}
         </span>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

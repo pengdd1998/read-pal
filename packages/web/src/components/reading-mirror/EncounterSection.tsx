@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface EncounterSectionProps {
   data: Record<string, unknown>;
@@ -10,6 +11,7 @@ interface EncounterSectionProps {
 }
 
 export default function EncounterSection({ data, bookTitle, bookAuthor, coverUrl }: EncounterSectionProps) {
+  const t = useTranslations('readingMirror');
   const prologue = data.prologue as Record<string, string> | undefined;
   const stats = data.stats as Record<string, unknown> | undefined;
 
@@ -25,26 +27,39 @@ export default function EncounterSection({ data, bookTitle, bookAuthor, coverUrl
   }, [text]);
 
   return (
-    <div className="encounter-section">
+    <div className="py-8">
       {/* Book cover + title */}
-      <div className="encounter-header">
+      <div className="flex items-center gap-6 mb-8">
         {coverUrl && (
-          <div className="encounter-cover">
+          <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={coverUrl} alt={bookTitle} className="encounter-cover-img" loading="lazy" />
+            <img
+              src={coverUrl}
+              alt={bookTitle}
+              className="w-[100px] h-[140px] object-cover rounded-lg shadow-[0_4px_12px_-2px_rgba(30,42,56,0.1),0_8px_24px_-4px_rgba(30,42,56,0.06)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3),0_8px_24px_-4px_rgba(0,0,0,0.2)]"
+              loading="lazy"
+            />
           </div>
         )}
-        <div className="encounter-title-block">
-          <h1 className="encounter-title">{bookTitle}</h1>
-          <p className="encounter-author">by {bookAuthor}</p>
+        <div>
+          <h1 className="font-serif text-4xl font-semibold text-gray-900 dark:text-white m-0 leading-tight">
+            {bookTitle}
+          </h1>
+          <p className="text-lg text-amber-900/70 dark:text-amber-200/70 mt-1 mb-0">
+            {t('by_author', { author: bookAuthor })}
+          </p>
         </div>
       </div>
 
       {/* Prologue text with drop cap */}
       {text && (
-        <div className="encounter-prologue">
-          <p>
-            <span className="drop-cap">{dropCap.first}</span>
+        <div className="font-serif text-lg leading-[1.85] text-gray-800 dark:text-gray-200 max-w-[65ch] my-6">
+          <p className="m-0">
+            <span
+              className="float-left font-serif text-[3.5rem] leading-[0.8] pt-[0.1em] pr-[0.1em] text-amber-600 dark:text-amber-400 font-semibold"
+            >
+              {dropCap.first}
+            </span>
             {dropCap.rest}
           </p>
         </div>
@@ -52,132 +67,55 @@ export default function EncounterSection({ data, bookTitle, bookAuthor, coverUrl
 
       {/* Archetype badge */}
       {archetype && (
-        <div className="archetype-block">
-          <span className="archetype-badge">{archetype}</span>
-          {archetypeDesc && <p className="archetype-desc">{archetypeDesc}</p>}
+        <div className="my-4 mb-6">
+          <span className="inline-block py-1 px-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-400 dark:border-amber-600 rounded-2xl text-sm text-amber-800 dark:text-amber-200 font-medium">
+            {archetype}
+          </span>
+          {archetypeDesc && (
+            <p className="text-amber-900/70 dark:text-amber-200/60 text-sm mt-1.5 italic">
+              {archetypeDesc}
+            </p>
+          )}
         </div>
       )}
 
       {/* Reading stats strip */}
       {stats && (
-        <div className="encounter-stats">
-          <div className="stat-pill">
-            <span className="stat-pill-value">{String(stats.total_reading_time || '0m')}</span>
-            <span className="stat-pill-label">Reading Time</span>
+        <div className="flex flex-wrap gap-3 pt-4 border-t border-amber-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 border border-amber-100 dark:border-gray-700 rounded-lg px-3 py-2 text-center min-w-[100px]">
+            <span className="block text-lg font-semibold text-gray-900 dark:text-white">
+              {String(stats.total_reading_time || '0m')}
+            </span>
+            <span className="block text-[0.7rem] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              {t('reading_time')}
+            </span>
           </div>
-          <div className="stat-pill">
-            <span className="stat-pill-value">{String(stats.session_count || 0)}</span>
-            <span className="stat-pill-label">Sessions</span>
+          <div className="bg-white dark:bg-gray-800 border border-amber-100 dark:border-gray-700 rounded-lg px-3 py-2 text-center min-w-[100px]">
+            <span className="block text-lg font-semibold text-gray-900 dark:text-white">
+              {String(stats.session_count || 0)}
+            </span>
+            <span className="block text-[0.7rem] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              {t('sessions')}
+            </span>
           </div>
-          <div className="stat-pill">
-            <span className="stat-pill-value">{String(stats.highlight_count || 0)}</span>
-            <span className="stat-pill-label">Highlights</span>
+          <div className="bg-white dark:bg-gray-800 border border-amber-100 dark:border-gray-700 rounded-lg px-3 py-2 text-center min-w-[100px]">
+            <span className="block text-lg font-semibold text-gray-900 dark:text-white">
+              {String(stats.highlight_count || 0)}
+            </span>
+            <span className="block text-[0.7rem] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              {t('highlights')}
+            </span>
           </div>
-          <div className="stat-pill">
-            <span className="stat-pill-value">{String(stats.longest_session || '0m')}</span>
-            <span className="stat-pill-label">Longest Session</span>
+          <div className="bg-white dark:bg-gray-800 border border-amber-100 dark:border-gray-700 rounded-lg px-3 py-2 text-center min-w-[100px]">
+            <span className="block text-lg font-semibold text-gray-900 dark:text-white">
+              {String(stats.longest_session || '0m')}
+            </span>
+            <span className="block text-[0.7rem] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              {t('longest_session')}
+            </span>
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .encounter-section {
-          padding: 2rem 0;
-        }
-        .encounter-header {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-          margin-bottom: 2rem;
-        }
-        .encounter-cover-img {
-          width: 100px;
-          height: 140px;
-          object-fit: cover;
-          border-radius: 0.5rem;
-          box-shadow: 0 4px 12px -2px rgba(30,42,56,0.1), 0 8px 24px -4px rgba(30,42,56,0.06);
-        }
-        .encounter-title {
-          font-family: 'Crimson Pro', Georgia, serif;
-          font-size: 2rem;
-          font-weight: 600;
-          color: #1e2a38;
-          margin: 0;
-          line-height: 1.25;
-        }
-        .encounter-author {
-          color: #6b5e4d;
-          font-size: 1.1rem;
-          margin: 0.25rem 0 0;
-        }
-        .encounter-prologue {
-          font-family: 'Literata', 'Source Serif 4', Georgia, serif;
-          font-size: 1.125rem;
-          line-height: 1.85;
-          color: #302820;
-          max-width: 65ch;
-          margin: 1.5rem 0;
-        }
-        .encounter-prologue p {
-          margin: 0;
-        }
-        .drop-cap {
-          float: left;
-          font-family: 'Crimson Pro', Georgia, serif;
-          font-size: 3.5rem;
-          line-height: 0.8;
-          padding: 0.1em 0.1em 0 0;
-          color: #d97706;
-          font-weight: 600;
-        }
-        .archetype-block {
-          margin: 1rem 0 1.5rem;
-        }
-        .archetype-badge {
-          display: inline-block;
-          padding: 0.3rem 0.8rem;
-          background: #fef3c7;
-          border: 1px solid #fbbf24;
-          border-radius: 1rem;
-          font-size: 0.85rem;
-          color: #92400e;
-          font-weight: 500;
-        }
-        .archetype-desc {
-          color: #6b5e4d;
-          font-size: 0.9rem;
-          margin: 0.4rem 0 0;
-          font-style: italic;
-        }
-        .encounter-stats {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-          padding-top: 1rem;
-          border-top: 1px solid #f0e9e0;
-        }
-        .stat-pill {
-          background: #fefdfb;
-          border: 1px solid #f0e9e0;
-          border-radius: 0.5rem;
-          padding: 0.5rem 0.75rem;
-          text-align: center;
-          min-width: 100px;
-        }
-        .stat-pill-value {
-          display: block;
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: #1e2a38;
-        }
-        .stat-pill-label {
-          display: block;
-          font-size: 0.7rem;
-          color: #8a7e72;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-      `}</style>
     </div>
   );
 }

@@ -8,31 +8,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.common import GenericResponse
-from app.schemas.share import ShareCreate
+from app.schemas.share import ShareCreate, ShareResponse
 from app.services import share_service
 from app.utils.i18n import _get_user_lang, t, translate_error
 
 router = APIRouter(prefix='/api/v1/share', tags=['share'])
 
 
-def _serialize_share(share: object, include_url: bool = False) -> dict:
-    """Convert a SharedExport ORM object to a response dict."""
-    data = {
-        'id': str(share.id),
-        'user_id': str(share.user_id),
-        'book_id': str(share.book_id),
-        'token': share.token,
-        'format': share.format,
-        'title': share.title,
-        'content_type': share.content_type,
-        'view_count': share.view_count,
-        'expires_at': share.expires_at.isoformat() if share.expires_at else None,
-        'created_at': share.created_at.isoformat() if share.created_at else None,
-        'updated_at': share.updated_at.isoformat() if share.updated_at else None,
-    }
+def _dump(share: object, include_url: bool = False) -> dict:
+    """Serialize a SharedExport ORM object via Pydantic schema."""
+    resp = ShareResponse.model_validate(share)
     if include_url:
-        data['share_url'] = f'/api/v1/share/s/{share.token}'
-    return data
+        resp.share_url = f'/api/v1/share/s/{share.token}'
+    return resp.model_dump(by_alias=True, mode='json')
 
 
 @router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
@@ -43,7 +31,7 @@ async def create_share(
 ) -> dict:
     """Create a new shared export."""
     share = await share_service.create_share(db, UUID(user['id']), body)
-    return {'success': True, 'data': _serialize_share(share, include_url=True)}
+    return {'success': True, 'data': _dump(share, include_url=True)}
 
 
 @router.get('', response_model=GenericResponse)
@@ -57,7 +45,7 @@ async def list_shares(
     return {
         'success': True,
         'data': {
-            'items': [_serialize_share(s, include_url=True) for s in shares],
+            'items': [_dump(s, include_url=True) for s in shares],
         },
     }
 
@@ -111,7 +99,7 @@ async def export_share(
 ) -> dict:
     """Share an export — alias for POST /."""
     share = await share_service.create_share(db, UUID(user['id']), body)
-    return {'success': True, 'data': _serialize_share(share, include_url=True)}
+    return {'success': True, 'data': _dump(share, include_url=True)}
 
 
 @router.get('/reading-card', response_model=GenericResponse)
@@ -125,6 +113,6 @@ async def get_reading_card(
         'success': True,
         'data': {
             'total_shares': len(shares),
-            'shares': [_serialize_share(s) for s in shares[:10]],
+            'shares': [_dump(s) for s in shares[:10]],
         },
     }

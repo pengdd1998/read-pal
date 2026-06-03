@@ -175,7 +175,7 @@ export function ReadingGoals() {
           </svg>
           <h3 className="font-bold text-gray-900 dark:text-white">{t('goals_title')}</h3>
         </div>
-        <p className="text-sm text-gray-500">{error ?? t('goals_no_data')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{error ?? t('goals_no_data')}</p>
       </div>
     );
   }
@@ -210,7 +210,7 @@ export function ReadingGoals() {
                 {data.todayMinutes}
               </span>
               <span className="text-xs text-gray-400">/{data.dailyGoalMinutes}</span>
-              <div className="text-[10px] text-gray-500 mt-0.5">{t('goals_min_today')}</div>
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('goals_min_today')}</div>
             </div>
           </ProgressRing>
           <p className="text-xs font-medium text-center">
@@ -242,7 +242,7 @@ export function ReadingGoals() {
                 {data.completed}
               </span>
               <span className="text-xs text-gray-400">/{data.goal}</span>
-              <div className="text-[10px] text-gray-500 mt-0.5">{t('goals_books_this_week')}</div>
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('goals_books_this_week')}</div>
             </div>
           </ProgressRing>
           <p className="text-xs font-medium text-center">

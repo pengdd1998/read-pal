@@ -73,7 +73,9 @@
     "error_rate_limit": "Too many attempts.",
     "error_generic": "Something went wrong. Please try again.",
     "offline_banner": "You're offline. Some features may be unavailable.",
-    "toast_dismiss_aria": "Dismiss notification"
+    "toast_dismiss_aria": "Dismiss notification",
+    "update_available": "A new version of read-pal is available.",
+    "update_now": "Update now"
   },
   "landing": {
     "meta_title": "AI Reading Companion | Read Smarter, Remember More",
@@ -1835,6 +1837,13 @@
     "dashboard_description": "Your reading companion — track progress, view stats, manage reading goals, and get AI-powered insights.",
     "welcome_title": "Welcome | read-pal",
     "welcome_description": "Get started with read-pal — meet your AI reading companion and begin your reading journey."
+  },
+  "readingMirror": {
+    "by_author": "by {author}",
+    "reading_time": "Reading Time",
+    "sessions": "Sessions",
+    "highlights": "Highlights",
+    "longest_session": "Longest Session"
   },
   "errors": {
     "connection_problem": "Connection problem",

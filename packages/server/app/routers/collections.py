@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.schemas.collection import CollectionBooksBatchRequest, CollectionCreate, CollectionUpdate
+from app.schemas.collection import (
+    CollectionBooksBatchRequest,
+    CollectionCreate,
+    CollectionResponse,
+    CollectionUpdate,
+)
 from app.schemas.common import GenericResponse
 from app.services import collection_service
 from app.utils.i18n import _get_user_lang, t, translate_error
@@ -15,19 +20,11 @@ from app.utils.i18n import _get_user_lang, t, translate_error
 router = APIRouter(prefix='/api/v1/collections', tags=['collections'])
 
 
-def _serialize_collection(col: object) -> dict:
-    """Convert a Collection ORM object to a response dict."""
-    return {
-        'id': str(col.id),
-        'user_id': str(col.user_id),
-        'name': col.name,
-        'description': col.description,
-        'icon': col.icon,
-        'color': col.color,
-        'book_ids': [str(bid) for bid in (col.book_ids or [])],
-        'created_at': col.created_at.isoformat() if col.created_at else None,
-        'updated_at': col.updated_at.isoformat() if col.updated_at else None,
-    }
+def _dump(col: object) -> dict:
+    """Serialize a Collection ORM object via Pydantic schema."""
+    return CollectionResponse.model_validate(col).model_dump(
+        by_alias=True, mode='json',
+    )
 
 
 @router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
@@ -38,7 +35,7 @@ async def create_collection(
 ) -> dict:
     """Create a new collection."""
     col = await collection_service.create_collection(db, UUID(user['id']), body)
-    return {'success': True, 'data': _serialize_collection(col)}
+    return {'success': True, 'data': _dump(col)}
 
 
 @router.get('', response_model=GenericResponse)
@@ -50,7 +47,7 @@ async def list_collections(
     cols = await collection_service.list_collections(db, UUID(user['id']))
     return {
         'success': True,
-        'data': {'items': [_serialize_collection(c) for c in cols]},
+        'data': {'items': [_dump(c) for c in cols]},
     }
 
 
@@ -67,7 +64,7 @@ async def get_collection(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
-    return {'success': True, 'data': _serialize_collection(col)}
+    return {'success': True, 'data': _dump(col)}
 
 
 @router.patch('/{collection_id}', response_model=GenericResponse)
@@ -88,7 +85,7 @@ async def update_collection(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
-    return {'success': True, 'data': _serialize_collection(col)}
+    return {'success': True, 'data': _dump(col)}
 
 
 @router.delete('/{collection_id}', status_code=status.HTTP_204_NO_CONTENT)
@@ -147,7 +144,7 @@ async def add_books_batch(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
-    return {'success': True, 'data': _serialize_collection(col)}
+    return {'success': True, 'data': _dump(col)}
 
 
 @router.post('/{collection_id}/books/remove', response_model=GenericResponse)
@@ -168,7 +165,7 @@ async def remove_books_batch(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
-    return {'success': True, 'data': _serialize_collection(col)}
+    return {'success': True, 'data': _dump(col)}
 
 
 @router.post('/{collection_id}/books/{book_id}', response_model=GenericResponse)
@@ -189,7 +186,7 @@ async def add_book(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
-    return {'success': True, 'data': _serialize_collection(col)}
+    return {'success': True, 'data': _dump(col)}
 
 
 @router.delete('/{collection_id}/books/{book_id}', status_code=status.HTTP_204_NO_CONTENT)

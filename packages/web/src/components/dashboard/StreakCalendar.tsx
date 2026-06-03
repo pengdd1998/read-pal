@@ -254,7 +254,7 @@ export default function StreakCalendar() {
         {!loading && !error && data && (
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <div className="text-xs text-gray-400 uppercase tracking-wide font-medium">
+              <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium">
                 {t('streak_longest')}
               </div>
               <div className="text-lg font-bold text-gray-700 dark:text-gray-300 tabular-nums">

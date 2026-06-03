@@ -56,7 +56,7 @@ export function ChapterTimeline({
         <div className="sticky top-0 bg-surface-0 border-b border-gray-200 dark:border-gray-800 p-4 flex items-center justify-between z-10">
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white">{t('timeline_title')}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{t('timeline_subtitle')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('timeline_subtitle')}</p>
           </div>
           <button
             onClick={onClose}

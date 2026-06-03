@@ -57,7 +57,7 @@ async def test_create_share_returns_201(client):
     data = body['data']
     assert 'id' in data
     assert 'token' in data
-    assert 'share_url' in data
+    assert 'shareUrl' in data
     assert data['format'] == 'html'
     assert data['title'] == 'My Book'
 

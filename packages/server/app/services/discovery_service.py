@@ -170,7 +170,7 @@ async def get_free_books(db: AsyncSession) -> list[dict]:
         if cached:
             return json.loads(cached)
     except Exception:
-        logger.debug('Redis unavailable, skipping free-books cache')
+        logger.warning('Redis unavailable, skipping free-books cache')
     q = (
         select(
             Book.title,
@@ -199,6 +199,6 @@ async def get_free_books(db: AsyncSession) -> list[dict]:
         redis = get_redis()
         await redis.setex(cache_key, 300, json.dumps(result))
     except Exception:
-        logger.debug('Redis unavailable, skipping free-books cache set')
+        logger.warning('Redis unavailable, skipping free-books cache set')
 
     return result

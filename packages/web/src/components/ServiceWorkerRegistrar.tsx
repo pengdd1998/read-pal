@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { isCapacitor } from '@/lib/capacitor';
 
 export function ServiceWorkerRegistrar() {
+  const t = useTranslations('common');
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
@@ -84,13 +86,13 @@ export function ServiceWorkerRegistrar() {
   return (
     <div className="fixed bottom-4 right-4 z-50 bg-surface-0 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 max-w-xs animate-fade-in">
       <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-        A new version of read-pal is available.
+        {t('update_available')}
       </p>
       <button
         onClick={handleUpdate}
         className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors"
       >
-        Update now
+        {t('update_now')}
       </button>
     </div>
   );

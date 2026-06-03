@@ -214,19 +214,14 @@ async def get_club_progress(
             detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
         )
 
-    members_progress = await book_club_service.get_club_progress(db, club_id)
-    avg = 0
-    if members_progress:
-        avg = round(
-            sum(m['progress'] for m in members_progress) / len(members_progress),
-        )
+    progress = await book_club_service.get_club_progress(db, club_id)
 
     return {
         'success': True,
         'data': {
             'club_id': str(club_id),
-            'members_progress': members_progress,
-            'average_progress': avg,
+            'members_progress': progress['members_progress'],
+            'average_progress': progress['average_progress'],
         },
     }
 

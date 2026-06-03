@@ -71,13 +71,16 @@ async def discover_clubs(
 async def get_club_progress(
     db: AsyncSession,
     club_id: UUID,
-) -> list[dict]:
-    """Get reading progress for each member of a club."""
+) -> dict:
+    """Get reading progress for each member of a club with average.
+
+    Returns dict with 'members_progress' list and 'average_progress' int.
+    """
     club = (
         await db.execute(select(BookClub).where(BookClub.id == club_id))
     ).scalar_one_or_none()
     if club is None:
-        return []
+        return {'members_progress': [], 'average_progress': 0}
 
     # Get all members
     member_rows = (
@@ -115,4 +118,13 @@ async def get_club_progress(
             'progress': member_progress,
         })
 
-    return progress_list
+    avg = 0
+    if progress_list:
+        avg = round(
+            sum(m['progress'] for m in progress_list) / len(progress_list),
+        )
+
+    return {
+        'members_progress': progress_list,
+        'average_progress': avg,
+    }

@@ -8,26 +8,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.common import GenericResponse
-from app.schemas.notification import NotificationUpdate
+from app.schemas.notification import NotificationResponse, NotificationUpdate
 from app.services import notification_service
 from app.utils.i18n import t
 
 router = APIRouter(prefix='/api/v1/notifications', tags=['notifications'])
 
 
-def _serialize_notification(n: object) -> dict:
-    """Convert a Notification ORM object to a camelCase response dict."""
-    return {
-        'id': str(n.id),
-        'userId': str(n.user_id),
-        'type': n.type,
-        'title': n.title,
-        'message': n.message,
-        'metadata': n.metadata_,
-        'read': n.read,
-        'createdAt': n.created_at.isoformat() if n.created_at else None,
-        'updatedAt': n.updated_at.isoformat() if n.updated_at else None,
-    }
+def _dump(n: object) -> dict:
+    """Serialize a Notification ORM object via Pydantic schema."""
+    return NotificationResponse.model_validate(n).model_dump(
+        by_alias=True, mode='json',
+    )
 
 
 @router.get('', response_model=GenericResponse)
@@ -45,7 +37,7 @@ async def list_notifications(
     return {
         'success': True,
         'data': {
-            'items': [_serialize_notification(n) for n in notifications],
+            'items': [_dump(n) for n in notifications],
             'total': total,
             'page': page,
             'per_page': per_page,
@@ -69,7 +61,7 @@ async def mark_notification_read(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.notification_not_found')},
         )
-    return {'success': True, 'data': _serialize_notification(notification)}
+    return {'success': True, 'data': _dump(notification)}
 
 
 @router.patch('/{notification_id}/read', response_model=GenericResponse)
@@ -87,7 +79,7 @@ async def mark_read_alias(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.notification_not_found')},
         )
-    return {'success': True, 'data': _serialize_notification(notification)}
+    return {'success': True, 'data': _dump(notification)}
 
 
 @router.post('/mark-all-read', response_model=GenericResponse)

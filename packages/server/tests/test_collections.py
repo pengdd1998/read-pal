@@ -30,7 +30,7 @@ async def test_create_collection_returns_201(client):
     data = body['data']
     assert 'id' in data
     assert data['name'] == 'My Books'
-    assert data['book_ids'] == []
+    assert data['bookIds'] == []
 
 
 # ---------------------------------------------------------------------------
@@ -225,7 +225,7 @@ async def test_add_books_batch(client):
         json={'bookIds': [BOOK_ID, BOOK_ID_2]},
     )
     assert resp.status_code == 200
-    book_ids = resp.json()['data']['book_ids']
+    book_ids = resp.json()['data']['bookIds']
     assert BOOK_ID in book_ids
     assert BOOK_ID_2 in book_ids
 
@@ -263,7 +263,7 @@ async def test_add_single_book(client):
         headers=headers,
     )
     assert resp.status_code == 200
-    assert BOOK_ID in resp.json()['data']['book_ids']
+    assert BOOK_ID in resp.json()['data']['bookIds']
 
 
 @pytest.mark.asyncio
@@ -348,8 +348,8 @@ async def test_remove_books_batch(client):
         json={'bookIds': [BOOK_ID]},
     )
     assert resp.status_code == 200
-    assert BOOK_ID not in resp.json()['data']['book_ids']
-    assert BOOK_ID_2 in resp.json()['data']['book_ids']
+    assert BOOK_ID not in resp.json()['data']['bookIds']
+    assert BOOK_ID_2 in resp.json()['data']['bookIds']
 
 
 @pytest.mark.asyncio

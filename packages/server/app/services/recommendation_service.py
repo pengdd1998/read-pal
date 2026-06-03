@@ -107,7 +107,7 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
         if cached:
             return json.loads(cached)
     except Exception:
-        logger.debug('Redis unavailable, skipping recommendation cache')
+        logger.warning('Redis unavailable, skipping recommendation cache')
 
     result = await _compute_recommendations(db, user_id)
 
@@ -115,7 +115,7 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
         redis = get_redis()
         await redis.setex(_cache_key(user_id), 600, json.dumps(result))
     except Exception:
-        logger.debug('Redis unavailable, skipping recommendation cache set')
+        logger.warning('Redis unavailable, skipping recommendation cache set')
 
     return result
 
