@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.flashcard import Flashcard
+from app.prompts import FLASHCARD_GENERATION_HUMAN, FLASHCARD_GENERATION_SYSTEM
 from app.schemas.flashcard import FlashcardCreate
 from app.services.llm import safe_llm_call
 from app.utils import utcnow
@@ -222,15 +223,11 @@ async def generate_flashcards(
         for a in annotations[:15]
     )
 
-    system_prompt = (
-        'You are a study assistant. Generate flashcard Q&A pairs from the reading highlights below. '
-        'Return a JSON array of objects with "question" and "answer" fields. '
-        f'Generate exactly {count} cards. Questions should test understanding, not just recall. '
-        'Answers should be concise (1-3 sentences).'
-    )
-    human_prompt = (
-        f'Book: "{book.title}" by {book.author or "Unknown"}\n\n'
-        f'Highlights and notes:\n{annotation_text}'
+    system_prompt = FLASHCARD_GENERATION_SYSTEM.template.format(count=count)
+    human_prompt = FLASHCARD_GENERATION_HUMAN.template.format(
+        title=book.title,
+        author=book.author or 'Unknown',
+        annotation_text=annotation_text,
     )
 
     result = await safe_llm_call(

@@ -104,6 +104,30 @@ FRIEND_BOOK_CONTEXT = PromptTemplate(
 # Study mode
 # ---------------------------------------------------------------------------
 
+FLASHCARD_GENERATION_SYSTEM = PromptTemplate(
+    key='flashcard.generation.system',
+    version=1,
+    template=(
+        'You are a study assistant. Generate flashcard Q&A pairs from the reading highlights below. '
+        'Return a JSON array of objects with "question" and "answer" fields. '
+        'Generate exactly {count} cards. Questions should test understanding, not just recall. '
+        'Answers should be concise (1-3 sentences).'
+    ),
+    variables=['count'],
+    output_format='json_array',
+)
+
+FLASHCARD_GENERATION_HUMAN = PromptTemplate(
+    key='flashcard.generation.human',
+    version=1,
+    template=(
+        'Book: "{title}" by {author}\n\n'
+        'Highlights and notes:\n{annotation_text}'
+    ),
+    variables=['title', 'author', 'annotation_text'],
+    output_format='text',
+)
+
 STUDY_OBJECTIVES_SYSTEM = PromptTemplate(
     key='study.objectives.system',
     version=1,
@@ -154,15 +178,22 @@ STUDY_CONCEPT_CHECKS_HUMAN = PromptTemplate(
 
 KNOWLEDGE_EXTRACTION_SYSTEM = PromptTemplate(
     key='knowledge.extraction.system',
-    version=1,
+    version=2,
     template=(
         'You are a knowledge extraction assistant. Analyze reader annotations '
         'and extract key concepts as structured data. Return ONLY a JSON object '
         'with a "concepts" array. Each concept should have: '
         '"name" (string), "type" (one of: concept, character, theme, location), '
         '"related" (array of related concept names), '
+        '"relationships" (array of objects, each with "target" (concept name) and '
+        '"label" describing the relationship type such as "causes", "contrasts with", '
+        '"is a subtype of", "builds upon", "exemplifies", "opposes", "is analogous to", '
+        '"depends on", or another precise verb phrase). '
         '"description" (brief explanation). '
-        'Example: {{"concepts":[{{"name":"...","type":"concept","related":[],"description":"..."}}]}}'
+        'Example: {{"concepts":[{{"name":"Resilience","type":"theme",'
+        '"related":["Hope"],'
+        '"relationships":[{{"target":"Hope","label":"sustains"}}],'
+        '"description":"The ability to recover from adversity"}}]}}'
     ),
     output_format='json',
 )
@@ -615,6 +646,8 @@ def _build_registry() -> None:
     ]
     singles: list[PromptTemplate] = [
         FRIEND_BOOK_CONTEXT,
+        FLASHCARD_GENERATION_SYSTEM,
+        FLASHCARD_GENERATION_HUMAN,
         STUDY_OBJECTIVES_SYSTEM,
         STUDY_OBJECTIVES_HUMAN,
         STUDY_CONCEPT_CHECKS_SYSTEM,

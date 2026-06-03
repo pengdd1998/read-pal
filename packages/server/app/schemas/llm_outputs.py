@@ -40,10 +40,18 @@ class ConceptCheckList(BaseModel):
 # Knowledge graph
 # ---------------------------------------------------------------------------
 
+class ConceptRelation(BaseModel):
+    """A typed relationship from this concept to another."""
+
+    target: str
+    label: str = 'related'
+
+
 class ExtractedConcept(BaseModel):
     name: str
     type: str = 'concept'
     related: list[str] = Field(default_factory=list)
+    relationships: list[ConceptRelation] = Field(default_factory=list)
     description: str = ''
 
 

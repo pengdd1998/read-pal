@@ -41,6 +41,7 @@ async def generate_objectives(
         book_id=body.book_id,
         chapter_title=body.chapter_title or 'this chapter',
         chapter_index=body.chapter_index,
+        chapter_content=body.chapter_content or '',
         user_id=user_id,
     )
     return {'success': True, 'data': data}

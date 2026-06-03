@@ -20,6 +20,9 @@ class StudyObjectivesRequest(BaseModel):
     chapter_index: int | None = Field(
         None, validation_alias=AliasChoices('chapter_index', 'chapterIndex'),
     )
+    chapter_content: str | None = Field(
+        None, validation_alias=AliasChoices('chapter_content', 'chapterContent'),
+    )
 
 
 class ConceptCheckRequest(BaseModel):

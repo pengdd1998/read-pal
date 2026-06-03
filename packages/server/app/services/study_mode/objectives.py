@@ -28,6 +28,7 @@ async def generate_objectives(
     book_id: str | None,
     chapter_title: str,
     chapter_index: int | None,
+    chapter_content: str = '',
     user_id: UUID | None = None,
 ) -> dict[str, Any]:
     """Generate study objectives for a chapter using LLM."""
@@ -50,6 +51,18 @@ async def generate_objectives(
         chapter_index=chapter_index or 1,
         chapter_title=safe_title,
     )
+
+    # Include chapter content excerpt if available
+    content_hint = ''
+    if chapter_content:
+        safe_content = sanitize_user_input(
+            chapter_content[:1000],
+            max_length=1000,
+            context='chapter_content',
+        )
+        content_hint = f'\n\nChapter excerpt (first 1000 chars):\n{safe_content}'
+
+    human_text = f'{human_text}{content_hint}'
     human_text = budget.add(human_text, label='study-objectives-human')
 
     if budget.truncations:

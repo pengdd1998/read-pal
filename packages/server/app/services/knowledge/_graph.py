@@ -56,6 +56,23 @@ def _compute_freshness(
     return max(0.0, 1.0 - days_since / 90.0)
 
 
+def _resolve_edge_label(
+    concept: dict[str, Any],
+    related_name: str,
+) -> str:
+    """Look up the LLM-provided relationship label for an edge.
+
+    Falls back to "related" when no structured relationship is found.
+    """
+    relationships = concept.get('relationships', [])
+    for rel in relationships:
+        if isinstance(rel, dict) and rel.get('target', '').strip() == related_name:
+            label = rel.get('label', '').strip()
+            if label:
+                return label
+    return 'related'
+
+
 def _build_nx_graph(
     concepts: list[dict[str, Any]],
     book_id: UUID | None = None,
@@ -121,10 +138,18 @@ def _build_nx_graph(
                 graph.nodes[related_name]['freshness'] = min(
                     existing, related_freshness,
                 )
+            # Look up LLM-provided label from relationships
+            edge_label = _resolve_edge_label(concept, related_name)
             if graph.has_edge(name, related_name):
                 graph[name][related_name]['weight'] += 1.0
+                # Prefer a non-generic label over "related"
+                current = graph[name][related_name].get('label', 'related')
+                if edge_label != 'related' and current == 'related':
+                    graph[name][related_name]['label'] = edge_label
             else:
-                graph.add_edge(name, related_name, weight=1.0, label='related')
+                graph.add_edge(
+                    name, related_name, weight=1.0, label=edge_label,
+                )
 
     return graph
 
