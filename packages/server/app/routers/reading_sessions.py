@@ -140,21 +140,8 @@ async def start_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Alias for POST / — create a new reading session."""
-    book_id = body.book_id
-    if not book_id:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={'code': 'VALIDATION_ERROR', 'message': t('errors.book_id_required')},
-        )
-    try:
-        parsed_id = UUID(str(book_id))
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={'code': 'VALIDATION_ERROR', 'message': t('errors.invalid_book_id', book_id=str(book_id))},
-        )
     session = await reading_session_service.create_session(
-        db, UUID(current_user['id']), SessionCreate(book_id=parsed_id),
+        db, UUID(current_user['id']), SessionCreate(book_id=body.book_id),
     )
     return {
         'success': True,

@@ -67,8 +67,9 @@ class SessionStartRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    book_id: str | None = Field(
-        None, validation_alias=AliasChoices('book_id', 'bookId'),
+    book_id: UUID = Field(
+        ...,
+        validation_alias=AliasChoices('book_id', 'bookId'),
     )
 
 
