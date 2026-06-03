@@ -7,7 +7,7 @@
 Your AI reading companion — ask questions, explore ideas, and remember every insight.
 
 [![CI](https://github.com/pengdd1998/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd1998/read-pal/actions)
-[![Tests](https://img.shields.io/badge/tests-325%20passing-brightgreen)](packages/server/tests)
+[![Tests](https://img.shields.io/badge/tests-748%2B%20passing-brightgreen)](packages/server/tests)
 [![Backend](https://img.shields.io/badge/backend-Python%203.12%20%7C%20FastAPI-blue)](packages/server)
 [![Frontend](https://img.shields.io/badge/frontend-Next.js%2014%20%7C%20TypeScript-black)](packages/web)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -101,7 +101,7 @@ read-pal/
 │   │   │   ├── schemas/       # Pydantic request/response
 │   │   │   └── middleware/    # Auth, rate limiting
 │   │   ├── alembic/           # Database migrations
-│   │   └── tests/             # 325 pytest tests
+│   │   └── tests/             # 748+ pytest tests
 │   └── web/           # Next.js 14 / TypeScript frontend
 │       └── src/
 │           ├── app/           # 30+ pages (App Router)
@@ -121,7 +121,7 @@ read-pal/
 | Search | Vector-ready (Pinecone configured) |
 | File Processing | ebooklib (EPUB), pypdf (PDF) |
 | Knowledge | NetworkX graph engine |
-| Testing | pytest (325 tests), Vitest (24 tests) |
+| Testing | pytest (748+ tests), Vitest (24 tests) |
 
 ## Quickstart
 
@@ -130,7 +130,7 @@ read-pal/
 ```bash
 git clone https://github.com/pengdd1998/read-pal.git
 cd read-pal
-cp .env.example .env   # edit with your DB credentials + GLM API key
+cp .env.example packages/server/.env   # edit with your DB credentials + GLM API key
 docker compose up -d
 ```
 
@@ -190,7 +190,7 @@ Open http://localhost:3000 and start reading!
 ### 5. Run Tests
 
 ```bash
-# Backend (325 tests)
+# Backend (748+ tests)
 cd packages/server
 uv run pytest tests/ -v
 
