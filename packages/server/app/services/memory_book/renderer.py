@@ -96,6 +96,206 @@ def _render_chapter_html(section: dict[str, Any]) -> str:
                 f'<p>{_esc(str(m.get("insight") or m.get("exchange", "")))}</p></div>'
             )
 
+    # --- Reading Mirror v2 section types ---
+
+    # Attention map: engagement peaks, score, reading style
+    peaks = section.get('peaks')
+    if peaks and isinstance(peaks, list):
+        engagement_score = section.get('engagement_score', '')
+        reading_style = section.get('reading_style', '')
+        pattern_analysis = section.get('pattern_analysis', '')
+
+        if engagement_score or reading_style:
+            metrics_html = '<div class="stats-grid">'
+            if engagement_score:
+                metrics_html += (
+                    f'<div class="stat-card"><span class="stat-value">'
+                    f'{_esc(str(engagement_score))}/10</span>'
+                    f'<span class="stat-label">Engagement</span></div>'
+                )
+            if reading_style:
+                metrics_html += (
+                    f'<div class="stat-card"><span class="stat-value">'
+                    f'{_esc(reading_style)}</span>'
+                    f'<span class="stat-label">Reading Style</span></div>'
+                )
+            metrics_html += '</div>'
+            parts.append(metrics_html)
+
+        if pattern_analysis:
+            parts.append(f'<p class="pattern-analysis">{_esc(pattern_analysis)}</p>')
+
+        if peaks:
+            peak_items: list[str] = []
+            for p in peaks:
+                peak_items.append(
+                    f'<div class="attention-peak">'
+                    f'<div class="peak-date">{_esc(str(p.get("date", "")))}</div>'
+                    f'<div class="peak-desc">{_esc(str(p.get("description", "")))}</div></div>'
+                )
+            parts.append(f'<div class="peaks-timeline">{"".join(peak_items)}</div>')
+
+    # What stuck: retention analysis
+    stuck_items = section.get('stuck')
+    slipping_items = section.get('slipping')
+    top_insight = section.get('top_insight', '')
+    retention_summary = section.get('retention_summary', '')
+
+    if stuck_items and isinstance(stuck_items, list):
+        if top_insight:
+            parts.append(
+                f'<div class="insight-card"><div class="insight-label">Top Insight</div>'
+                f'<p class="insight-text">{_esc(top_insight)}</p></div>'
+            )
+        if retention_summary:
+            parts.append(f'<p class="retention-summary">{_esc(retention_summary)}</p>')
+
+        stuck_html = ''.join(
+            f'<div class="stuck-item"><strong>{_esc(s.get("concept", ""))}</strong>'
+            f'<p class="stuck-evidence">{_esc(s.get("evidence", ""))}</p></div>'
+            for s in stuck_items
+        )
+        parts.append(
+            f'<div class="stuck-section"><h3>What Stuck</h3>{stuck_html}</div>'
+        )
+
+        if slipping_items and isinstance(slipping_items, list):
+            slipping_html = ''.join(
+                f'<div class="slipping-item"><strong>{_esc(s.get("concept", ""))}</strong>'
+                f'<p class="slipping-tip">{_esc(s.get("tip", ""))}</p></div>'
+                for s in slipping_items
+            )
+            parts.append(
+                f'<div class="slipping-section"><h3>Still Slipping</h3>{slipping_html}</div>'
+            )
+
+    # Concept web: hub concepts, connections, narrative
+    hub_concepts = section.get('hub_concepts')
+    if hub_concepts and isinstance(hub_concepts, list):
+        map_narrative = section.get('map_narrative', '')
+
+        hub_html = ''.join(
+            f'<div class="hub-concept"><strong>{_esc(h.get("name", ""))}</strong>'
+            f'<p class="hub-why">{_esc(h.get("why_central", ""))}</p></div>'
+            for h in hub_concepts
+        )
+        parts.append(f'<div class="concept-hubs"><h3>Central Ideas</h3>{hub_html}</div>')
+
+        surprising = section.get('surprising_connections')
+        if surprising and isinstance(surprising, list):
+            conn_html = ''.join(
+                f'<div class="surprising-connection">'
+                f'<span class="conn-from">{_esc(c.get("from", ""))}</span>'
+                f' <span class="conn-arrow">&harr;</span> '
+                f'<span class="conn-to">{_esc(c.get("to", ""))}</span>'
+                f'<p class="conn-insight">{_esc(c.get("insight", ""))}</p></div>'
+                for c in surprising
+            )
+            parts.append(
+                f'<div class="surprising-connections"><h3>Surprising Connections</h3>'
+                f'{conn_html}</div>'
+            )
+
+        peripheral = section.get('peripheral_concepts')
+        if peripheral and isinstance(peripheral, list):
+            tags = ''.join(
+                f'<span class="peripheral-tag">{_esc(str(pc))}</span>' for pc in peripheral
+            )
+            parts.append(
+                f'<div class="peripheral-concepts"><h3>Also Explored</h3>'
+                f'<div class="tag-cloud">{tags}</div></div>'
+            )
+
+        if map_narrative:
+            parts.append(f'<p class="map-narrative">{_esc(map_narrative)}</p>')
+
+    # Threads between books
+    threads = section.get('threads')
+    if threads and isinstance(threads, list):
+        thread_html = ''.join(
+            f'<div class="thread-card">'
+            f'<div class="thread-theme">{_esc(t.get("theme", ""))}</div>'
+            f'<div class="thread-books">'
+            + ' &amp; '.join(_esc(str(b)) for b in t.get('books', []))
+            + '</div>'
+            f'<p class="thread-connection">{_esc(t.get("connection", ""))}</p></div>'
+            for t in threads
+        )
+        parts.append(f'<div class="threads-list">{thread_html}</div>')
+
+        reading_pattern = section.get('reading_pattern', '')
+        if reading_pattern:
+            parts.append(f'<p class="reading-pattern">{_esc(reading_pattern)}</p>')
+
+        suggested = section.get('suggested_next_theme', '')
+        if suggested:
+            parts.append(
+                f'<div class="callout"><div class="callout-label">Explore Next</div>'
+                f'<p class="callout-text">{_esc(suggested)}</p></div>'
+            )
+
+    # Reader became: reflective essay
+    essay = section.get('essay')
+    if essay and isinstance(essay, str) and essay.strip():
+        key_transformation = section.get('key_transformation', '')
+        parting_question = section.get('parting_question', '')
+
+        parts.append(f'<div class="essay-body">{_esc(essay)}</div>')
+
+        if key_transformation:
+            parts.append(
+                f'<div class="transformation-card">'
+                f'<div class="transformation-label">Key Transformation</div>'
+                f'<p class="transformation-text">{_esc(key_transformation)}</p></div>'
+            )
+
+        if parting_question:
+            parts.append(
+                f'<div class="parting-question">'
+                f'<blockquote>{_esc(parting_question)}</blockquote></div>'
+            )
+
+    # Annotations woven: thinking arc
+    phases = section.get('phases')
+    if phases and isinstance(phases, list):
+        phase_html: list[str] = []
+        for idx, ph in enumerate(phases):
+            notes_html = ''.join(
+                f'<li>{_esc(str(n))}</li>' for n in ph.get('key_notes', [])
+            )
+            notes_list = f'<ul class="phase-notes">{notes_html}</ul>' if notes_html else ''
+            phase_html.append(
+                f'<div class="annotation-phase">'
+                f'<div class="phase-number">Phase {idx + 1}</div>'
+                f'<h3>{_esc(ph.get("name", ""))}</h3>'
+                f'<p class="phase-narrative">{_esc(ph.get("narrative", ""))}</p>'
+                f'{notes_list}</div>'
+            )
+        parts.append(f'<div class="phases-timeline">{"".join(phase_html)}</div>')
+
+        arc_summary = section.get('arc_summary', '')
+        if arc_summary:
+            parts.append(f'<p class="arc-summary">{_esc(arc_summary)}</p>')
+
+    # Conversations v2: breakthroughs and summary
+    breakthroughs = section.get('breakthroughs')
+    if breakthroughs and isinstance(breakthroughs, list):
+        bt_html = ''.join(
+            f'<div class="breakthrough-card">'
+            f'<h3>{_esc(b.get("title", ""))}</h3>'
+            f'<p class="breakthrough-narrative">{_esc(b.get("narrative", ""))}</p>'
+            f'<div class="breakthrough-question">'
+            f'<span class="question-label">You asked:</span> '
+            f'{_esc(b.get("reader_question", ""))}</div>'
+            f'<p class="breakthrough-insight">{_esc(b.get("insight", ""))}</p></div>'
+            for b in breakthroughs
+        )
+        parts.append(f'<div class="breakthroughs">{bt_html}</div>')
+
+        conv_summary = section.get('summary', '')
+        if conv_summary:
+            parts.append(f'<p class="conversation-summary">{_esc(conv_summary)}</p>')
+
     # Placeholder sections
     if section.get('placeholder'):
         parts.append(f'<p class="placeholder-text">{_esc(section.get("message", "Coming soon."))}</p>')
@@ -158,6 +358,69 @@ def _render_html(
         '.moment-topic{font-size:.8rem;color:#a09080;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem}'
         '.recommendation{margin-bottom:1rem;padding:1rem;background:#f5f0ea;border-radius:6px}'
         '.placeholder-text{color:#a09080;font-style:italic;text-align:center;padding:2rem}'
+        # --- v2 section styles ---
+        '.pattern-analysis{color:#3d3d3d;margin:1rem 0;line-height:1.6}'
+        '.peaks-timeline{margin:1rem 0}'
+        '.attention-peak{display:flex;gap:1rem;padding:.75rem 0;border-bottom:1px solid #f0ece6}'
+        '.peak-date{color:#8a7e72;font-size:.85rem;min-width:80px}'
+        '.peak-desc{color:#3d3d3d;flex:1}'
+        '.insight-card{background:#fdf8f0;border-left:4px solid #d97706;border-radius:0 8px 8px 0;'
+        'padding:1rem 1.25rem;margin:1.5rem 0}'
+        '.insight-label{font-size:.75rem;color:#92400e;text-transform:uppercase;'
+        'letter-spacing:.5px;margin-bottom:.3rem}'
+        '.insight-text{font-size:1.05rem;color:#4a3f35;margin:0;font-style:italic}'
+        '.retention-summary{color:#6b5e50;margin:1rem 0}'
+        '.stuck-section,.slipping-section{margin:1rem 0}'
+        '.stuck-item,.slipping-item{padding:.75rem;margin:.5rem 0;border-radius:6px}'
+        '.stuck-item{background:#f0fdf4;border-left:3px solid #65a30d}'
+        '.slipping-item{background:#fffbeb;border-left:3px solid #d97706}'
+        '.stuck-evidence,.slipping-tip{color:#6b5e50;font-size:.9rem;margin:.2rem 0}'
+        '.concept-hubs,.surprising-connections,.peripheral-concepts{margin:1rem 0}'
+        '.hub-concept{background:#fdf8f0;padding:.75rem 1rem;border-radius:6px;margin:.5rem 0}'
+        '.hub-why{color:#6b5e50;font-size:.9rem;margin:.2rem 0}'
+        '.surprising-connection{padding:.75rem;margin:.5rem 0;background:#f5f0ea;border-radius:6px}'
+        '.conn-from,.conn-to{font-weight:bold;color:#4a3f35}'
+        '.conn-arrow{color:#d97706;margin:0 .5rem}'
+        '.conn-insight{color:#6b5e50;font-size:.9rem;margin:.3rem 0 0}'
+        '.tag-cloud{display:flex;flex-wrap:wrap;gap:.5rem}'
+        '.peripheral-tag{display:inline-block;padding:.3rem .7rem;background:#f5f0ea;border-radius:1rem;'
+        'font-size:.85rem;color:#6b5e50}'
+        '.map-narrative{color:#3d3d3d;margin:1rem 0;line-height:1.6}'
+        '.threads-list{margin:1rem 0}'
+        '.thread-card{background:#f5f0ea;padding:1rem;border-radius:6px;margin:.75rem 0}'
+        '.thread-theme{font-weight:bold;color:#4a3f35;margin-bottom:.3rem}'
+        '.thread-books{color:#8a7e72;font-size:.85rem;margin-bottom:.3rem}'
+        '.thread-connection{color:#3d3d3d;margin:0}'
+        '.reading-pattern{color:#6b5e50;margin:1rem 0}'
+        '.callout{background:#fef3c7;border-radius:8px;padding:1rem 1.25rem;margin:1.5rem 0;'
+        'text-align:center}'
+        '.callout-label{font-size:.75rem;color:#92400e;text-transform:uppercase;'
+        'letter-spacing:.5px;margin-bottom:.3rem}'
+        '.callout-text{color:#4a3f35;font-size:1rem;margin:0;font-weight:bold}'
+        '.essay-body{font-size:1.05rem;line-height:1.8;color:#3d3d3d;margin:1rem 0}'
+        '.transformation-card{background:#f0fdf4;border-left:4px solid #65a30d;border-radius:0 8px 8px 0;'
+        'padding:1rem 1.25rem;margin:1.5rem 0}'
+        '.transformation-label{font-size:.75rem;color:#166534;text-transform:uppercase;'
+        'letter-spacing:.5px;margin-bottom:.3rem}'
+        '.transformation-text{color:#3d3d3d;font-size:1rem;margin:0}'
+        '.parting-question{margin:1.5rem 0}'
+        '.phases-timeline{margin:1rem 0}'
+        '.annotation-phase{padding:1rem;margin:.75rem 0;background:#fdf8f0;border-radius:6px;'
+        'border-left:3px solid #d97706}'
+        '.phase-number{font-size:.75rem;color:#8a7e72;text-transform:uppercase;letter-spacing:.5px}'
+        '.phase-narrative{color:#3d3d3d;margin:.3rem 0}'
+        '.phase-notes{color:#6b5e50;font-size:.9rem;margin:.3rem 0 0;padding-left:1.2rem}'
+        '.phase-notes li{margin:.2rem 0}'
+        '.arc-summary{color:#6b5e50;font-style:italic;margin:1rem 0}'
+        '.breakthroughs{margin:1rem 0}'
+        '.breakthrough-card{background:#fdf8f0;padding:1rem;border-radius:6px;margin:.75rem 0;'
+        'border-left:3px solid #d97706}'
+        '.breakthrough-card h3{color:#4a3f35;margin:0 0 .3rem;font-size:1rem}'
+        '.breakthrough-narrative{color:#3d3d3d;margin:.3rem 0}'
+        '.breakthrough-question{color:#8a7e72;font-size:.9rem;margin:.3rem 0}'
+        '.question-label{font-weight:bold;color:#6b5e50}'
+        '.breakthrough-insight{color:#3d3d3d;font-size:.9rem;font-style:italic;margin:.3rem 0 0}'
+        '.conversation-summary{color:#6b5e50;font-style:italic;margin:1rem 0}'
         '@media print{body{background:#fff} .chapter{break-inside:avoid}}'
     )
 

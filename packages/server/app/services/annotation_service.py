@@ -3,7 +3,7 @@
 import logging
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -184,25 +184,34 @@ async def get_chapter_stats(
     book_id: UUID,
 ) -> list[dict]:
     """Group annotations by chapter from location JSONB, with type counts."""
+    chapter_col = func.coalesce(
+        cast(Annotation.location['chapter'], String), 'Unknown',
+    ).label('chapter')
     result = await db.execute(
-        select(Annotation).where(
+        select(
+            chapter_col,
+            Annotation.type,
+            func.count(Annotation.id).label('count'),
+        ).where(
             Annotation.user_id == user_id,
             Annotation.book_id == book_id,
-        ).order_by(Annotation.created_at.asc()).limit(5000),
+        ).group_by(
+            chapter_col,
+            Annotation.type,
+        ),
     )
-    annotations = list(result.scalars().all())
 
     chapters: dict[str, dict] = {}
-    for ann in annotations:
-        chapter_name = ann.location.get('chapter', 'Unknown')
+    for row in result.all():
+        chapter_name = row.chapter or 'Unknown'
         if chapter_name not in chapters:
             chapters[chapter_name] = {
                 'chapter': chapter_name,
                 'count': 0,
                 'types': {'highlight': 0, 'note': 0, 'bookmark': 0},
             }
-        chapters[chapter_name]['count'] += 1
-        ann_type = ann.type if ann.type in chapters[chapter_name]['types'] else 'highlight'
-        chapters[chapter_name]['types'][ann_type] += 1
+        chapters[chapter_name]['count'] += row.count
+        ann_type = row.type if row.type in chapters[chapter_name]['types'] else 'highlight'
+        chapters[chapter_name]['types'][ann_type] += row.count
 
     return list(chapters.values())

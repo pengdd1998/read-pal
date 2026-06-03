@@ -111,9 +111,11 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
         if (data.book) {
           setBooks((prev) => [data.book, ...prev]);
         }
+      } else {
+        setError(res.error?.message || t('failed_seed_sample'));
       }
     } catch {
-      // Silently fail
+      setError(t('failed_seed_sample'));
     } finally {
       setSeeding(false);
     }

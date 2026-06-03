@@ -520,14 +520,12 @@ async def test_get_chapter_stats_groups_by_chapter():
     user_id = str(uuid4())
     book_id = uuid4()
 
-    ann1 = _make_annotation(type='highlight', location={'chapter': 'Chapter 1'})
-    ann2 = _make_annotation(type='note', location={'chapter': 'Chapter 1'})
-    ann3 = _make_annotation(type='bookmark', location={'chapter': 'Chapter 2'})
+    row1 = MagicMock(chapter='Chapter 1', type='highlight', count=1)
+    row2 = MagicMock(chapter='Chapter 1', type='note', count=1)
+    row3 = MagicMock(chapter='Chapter 2', type='bookmark', count=1)
 
     result_mock = MagicMock()
-    scalars_mock = MagicMock()
-    scalars_mock.all.return_value = [ann1, ann2, ann3]
-    result_mock.scalars.return_value = scalars_mock
+    result_mock.all.return_value = [row1, row2, row3]
     db.execute = AsyncMock(return_value=result_mock)
 
     stats = await annotation_service.get_chapter_stats(db, user_id, book_id)
@@ -550,7 +548,7 @@ async def test_get_chapter_stats_empty():
     book_id = uuid4()
 
     result_mock = MagicMock()
-    result_mock.scalars.return_value.all.return_value = []
+    result_mock.all.return_value = []
     db.execute = AsyncMock(return_value=result_mock)
 
     stats = await annotation_service.get_chapter_stats(db, user_id, book_id)
@@ -564,11 +562,11 @@ async def test_get_chapter_stats_unknown_chapter():
     user_id = str(uuid4())
     book_id = uuid4()
 
-    # Annotation with no 'chapter' key in location
-    ann = _make_annotation(type='highlight', location={'page': 5})
+    # SQL coalesce returns 'Unknown' when chapter is null
+    row = MagicMock(chapter='Unknown', type='highlight', count=1)
 
     result_mock = MagicMock()
-    result_mock.scalars.return_value.all.return_value = [ann]
+    result_mock.all.return_value = [row]
     db.execute = AsyncMock(return_value=result_mock)
 
     stats = await annotation_service.get_chapter_stats(db, user_id, book_id)
@@ -584,14 +582,14 @@ async def test_get_chapter_stats_all_types():
     user_id = str(uuid4())
     book_id = uuid4()
 
-    annotations = [
-        _make_annotation(type='highlight', location={'chapter': 'Intro'}),
-        _make_annotation(type='note', location={'chapter': 'Intro'}),
-        _make_annotation(type='bookmark', location={'chapter': 'Intro'}),
+    rows = [
+        MagicMock(chapter='Intro', type='highlight', count=1),
+        MagicMock(chapter='Intro', type='note', count=1),
+        MagicMock(chapter='Intro', type='bookmark', count=1),
     ]
 
     result_mock = MagicMock()
-    result_mock.scalars.return_value.all.return_value = annotations
+    result_mock.all.return_value = rows
     db.execute = AsyncMock(return_value=result_mock)
 
     stats = await annotation_service.get_chapter_stats(db, user_id, book_id)

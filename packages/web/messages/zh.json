@@ -1077,6 +1077,7 @@
     "reading_today": "今日阅读",
     "failed_load_goals": "加载阅读目标失败",
     "reading_speed_title": "阅读速度",
+    "reading_speed_load_failed": "加载阅读速度统计失败",
     "words_min": "字/分钟",
     "flashcard_review_title": "闪卡复习",
     "due_now": "{count} 张待复习",

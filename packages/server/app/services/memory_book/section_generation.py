@@ -11,9 +11,16 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.prompts import MIRROR_SECTIONS, MIRROR_SYSTEM
 from app.schemas.llm_outputs import (
+    AttentionMapData,
+    AnnotationsWovenData,
+    ConceptWebData,
     EncounterData,
     GroundedRecommendationData,
     HighlightClusterData,
+    MirrorConversationsData,
+    ReaderBecameData,
+    ThreadsData,
+    WhatStuckData,
 )
 from app.services.llm import safe_llm_invoke
 from app.utils.token_budget import TokenBudget
@@ -39,7 +46,13 @@ SECTION_SCHEMAS: dict[str, type] = {
     'encounter': EncounterData,
     'highlights': HighlightClusterData,
     'recommendations': GroundedRecommendationData,
-    # conversations and annotations_woven use raw JSON (no schema validation)
+    'attention_map': AttentionMapData,
+    'what_stuck': WhatStuckData,
+    'concept_web': ConceptWebData,
+    'threads': ThreadsData,
+    'reader_became': ReaderBecameData,
+    'annotations_woven': AnnotationsWovenData,
+    'conversations': MirrorConversationsData,
 }
 
 

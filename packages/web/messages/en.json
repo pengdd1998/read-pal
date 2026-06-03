@@ -1077,6 +1077,7 @@
     "reading_today": "Reading today",
     "failed_load_goals": "Failed to load reading goals",
     "reading_speed_title": "Reading Speed",
+    "reading_speed_load_failed": "Failed to load reading speed stats",
     "words_min": "words/min",
     "flashcard_review_title": "Flashcard Review",
     "due_now": "{count} due now",

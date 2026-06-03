@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
@@ -17,14 +17,26 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
   const t = useTranslations('dashboard');
   const [books, setBooks] = useState<ReadingSpeedBook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(false);
     api.get<ReadingSpeedBook[]>('/api/stats/reading-speed/by-book')
-      .then((res) => { if (!cancelled && res.success && Array.isArray(res.data)) setBooks(res.data); })
+      .then((res) => {
+        if (!cancelled && res.success && Array.isArray(res.data)) {
+          setBooks(res.data);
+        } else if (!cancelled) {
+          setError(true);
+        }
+      })
+      .catch(() => { if (!cancelled) setError(true); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => { return fetchData(); }, [fetchData]);
 
   if (loading) {
     return (
@@ -33,6 +45,20 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
         <div className="space-y-3">
           {[1, 2, 3].map((i) => <SkeletonPulse key={i} className="h-8 w-full" />)}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card text-center py-4">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('reading_speed_load_failed')}</p>
+        <button
+          onClick={fetchData}
+          className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+        >
+          {t('retry')}
+        </button>
       </div>
     );
   }

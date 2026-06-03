@@ -73,7 +73,13 @@ export default function DashboardPage() {
     let cancelled = false;
     api.get<DashboardData>('/api/stats/dashboard')
       .then((res) => {
-        if (!cancelled) setDashboardData((res.data) ?? null);
+        if (!cancelled) {
+          if (res.success) {
+            setDashboardData((res.data) ?? null);
+          } else {
+            setError(res.error?.message || t('failed_load'));
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setError(t('failed_load'));

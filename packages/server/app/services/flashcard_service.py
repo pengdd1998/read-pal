@@ -6,7 +6,7 @@ from uuid import UUID
 
 import structlog
 from langchain_core.messages import HumanMessage, SystemMessage
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -155,6 +155,7 @@ async def list_flashcards(
 
 async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
     """List flashcard decks grouped by book."""
+    now = utcnow()
     result = await db.execute(
         select(
             Flashcard.book_id,
@@ -162,6 +163,7 @@ async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
             Book.author,
             Book.cover_url,
             func.count(Flashcard.id).label('card_count'),
+            func.sum(case((Flashcard.next_review_at <= now, 1), else_=0)).label('due_count'),
         )
         .join(Book, Book.id == Flashcard.book_id)
         .where(Flashcard.user_id == user_id)
@@ -174,7 +176,7 @@ async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
             'author': row.author or '',
             'coverUrl': row.cover_url,
             'total': row.card_count,
-            'due': row.card_count,
+            'due': int(row.due_count or 0),
         }
         for row in result.all()
     ]

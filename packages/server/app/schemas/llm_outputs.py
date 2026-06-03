@@ -200,3 +200,97 @@ class ConversationSummaryData(BaseModel):
     key_topics: list[str] = Field(default_factory=list, max_length=10)
     insights: list[str] = Field(default_factory=list, max_length=10)
     unresolved_questions: list[str] = Field(default_factory=list, max_length=5)
+
+
+# ---------------------------------------------------------------------------
+# Reading Mirror section-specific schemas (v2 Phase 2 sections)
+# ---------------------------------------------------------------------------
+
+class EngagementPeak(BaseModel):
+    date: str = ''
+    description: str = ''
+
+
+class AttentionMapData(BaseModel):
+    peaks: list[EngagementPeak] = Field(default_factory=list)
+    pattern_analysis: str = ''
+    engagement_score: int = Field(default=0, ge=0, le=10)
+    reading_style: str = ''
+
+
+class StuckConcept(BaseModel):
+    concept: str = ''
+    evidence: str = ''
+
+
+class SlippingConcept(BaseModel):
+    concept: str = ''
+    tip: str = ''
+
+
+class WhatStuckData(BaseModel):
+    stuck: list[StuckConcept] = Field(default_factory=list)
+    slipping: list[SlippingConcept] = Field(default_factory=list)
+    retention_summary: str = ''
+    top_insight: str = ''
+
+
+class HubConcept(BaseModel):
+    name: str = ''
+    why_central: str = ''
+
+
+class SurprisingConnection(BaseModel):
+    from_name: str = Field('', alias='from')
+    to_name: str = Field('', alias='to')
+    insight: str = ''
+
+    model_config = {'populate_by_name': True}
+
+
+class ConceptWebData(BaseModel):
+    hub_concepts: list[HubConcept] = Field(default_factory=list)
+    surprising_connections: list[SurprisingConnection] = Field(default_factory=list)
+    peripheral_concepts: list[str] = Field(default_factory=list)
+    map_narrative: str = ''
+
+
+class ThemeThread(BaseModel):
+    theme: str = ''
+    books: list[str] = Field(default_factory=list)
+    connection: str = ''
+
+
+class ThreadsData(BaseModel):
+    threads: list[ThemeThread] = Field(default_factory=list)
+    reading_pattern: str = ''
+    suggested_next_theme: str = ''
+
+
+class ReaderBecameData(BaseModel):
+    essay: str = ''
+    key_transformation: str = ''
+    parting_question: str = ''
+
+
+class AnnotationPhase(BaseModel):
+    name: str = ''
+    narrative: str = ''
+    key_notes: list[str] = Field(default_factory=list)
+
+
+class AnnotationsWovenData(BaseModel):
+    phases: list[AnnotationPhase] = Field(default_factory=list)
+    arc_summary: str = ''
+
+
+class BreakthroughMoment(BaseModel):
+    title: str = ''
+    narrative: str = ''
+    reader_question: str = ''
+    insight: str = ''
+
+
+class MirrorConversationsData(BaseModel):
+    breakthroughs: list[BreakthroughMoment] = Field(default_factory=list)
+    summary: str = ''

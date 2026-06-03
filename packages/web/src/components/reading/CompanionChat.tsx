@@ -245,8 +245,9 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
         message_id: messageId,
         rating,
       });
-    } catch {
-      // Silent fail for feedback
+    } catch (err) {
+      // Non-critical — log but don't disrupt the user
+      console.error('[CompanionChat] Feedback submission failed:', err);
     }
   }, [bookId]);
 

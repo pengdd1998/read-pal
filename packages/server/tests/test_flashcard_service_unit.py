@@ -562,6 +562,7 @@ async def test_list_decks_groups_by_book():
     row.author = 'Test Author'
     row.cover_url = 'http://example.com/cover.jpg'
     row.card_count = 5
+    row.due_count = 5
 
     result_mock = MagicMock()
     result_mock.all.return_value = [row]
