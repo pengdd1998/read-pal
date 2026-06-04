@@ -62,7 +62,9 @@ export default function ReadingMirrorPage() {
         setBookAuthor(bookRes.data.author);
         setCoverUrl(bookRes.data.coverUrl);
       }
-    }).catch(() => { /* ignore */ })
+    }).catch(() => {
+        setError(t('failedToLoad'));
+      })
     .finally(() => setLoading(false));
   }, [bookId]);
 

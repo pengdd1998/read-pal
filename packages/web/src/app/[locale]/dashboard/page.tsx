@@ -115,6 +115,8 @@ export default function DashboardPage() {
       if (res.success) {
         const locale = window.location.pathname.split('/')[1] || 'en';
         window.location.href = `/${locale}/library`;
+      } else {
+        toast(res.error?.message || t('failed_seed_sample'), 'error');
       }
     } catch {
       toast(t('failed_seed_sample'), 'error');

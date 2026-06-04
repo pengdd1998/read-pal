@@ -13,6 +13,7 @@ interface BookContentState {
   annotations: Annotation[];
   loading: boolean;
   error: string;
+  annotationsError: boolean;
   chapterContent: string;
   chapterTitle: string;
   setCurrentChapter: (idx: number) => void;
@@ -40,6 +41,7 @@ export function useBookContent(
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [annotationsError, setAnnotationsError] = useState(false);
   const [chapterFade, setChapterFade] = useState<'in' | 'out'>('in');
 
   // Data loading
@@ -50,7 +52,11 @@ export function useBookContent(
         setLoading(true);
         const [bookResult, annotationsResult] = await Promise.all([
           api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/upload/books/${bookId}/content`, { _t: Date.now() }),
-          api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch(() => null),
+          api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch((annErr) => {
+            console.warn('[useBookContent] Failed to load annotations:', annErr);
+            setAnnotationsError(true);
+            return null;
+          }),
         ]);
         if (cancelled) return;
         if (bookResult.success && bookResult.data) {
@@ -119,6 +125,7 @@ export function useBookContent(
     annotations,
     loading,
     error,
+    annotationsError,
     chapterContent,
     chapterTitle,
     setCurrentChapter: handleSetCurrentChapter,

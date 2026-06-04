@@ -34,6 +34,7 @@ export default function SynthesisPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [booksLoading, setBooksLoading] = useState(true);
+  const [booksError, setBooksError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [compareBook1, setCompareBook1] = useState<string>('');
@@ -52,7 +53,7 @@ export default function SynthesisPage() {
           setBooks(res.data);
         }
       } catch {
-        // Silently fail
+        if (!cancelled) setBooksError(t('network_error'));
       } finally {
         if (!cancelled) setBooksLoading(false);
       }
@@ -259,6 +260,10 @@ export default function SynthesisPage() {
           </label>
           {booksLoading ? (
             <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+          ) : booksError ? (
+            <div className="px-3 py-2.5 text-sm rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
+              {booksError}
+            </div>
           ) : (
             <select
               value={selectedBookId}
