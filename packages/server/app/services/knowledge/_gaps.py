@@ -43,6 +43,167 @@ async def _batch_load_annotations(
     return {bid: anns[:limit_per_book] for bid, anns in grouped.items()}
 
 
+def _determine_suggested_action(
+    node_name: str,
+    graph: nx.Graph,
+) -> str:
+    """Deterministic heuristic for actionable next-step per gap."""
+    node_data = graph.nodes[node_name]
+    source_books = node_data.get('source_book_ids', [])
+    description = node_data.get('description', '')
+
+    if len(source_books) <= 1:
+        return (
+            'Read other books covering this topic to strengthen connections.'
+        )
+    if not description:
+        return (
+            'Add notes about this concept during your next reading session.'
+        )
+    return 'Review your highlights related to this concept.'
+
+
+def _build_sub_graph_from_cached(cached: Any) -> nx.Graph:
+    """Build a NetworkX graph from cached node/edge data, merging duplicates."""
+    sub_graph = nx.Graph()
+    for node in cached.nodes:
+        if not sub_graph.has_node(node.id):
+            sub_graph.add_node(
+                node.id,
+                type=node.type,
+                size=node.size,
+                description=node.description,
+                source_book_ids=node.source_book_ids,
+                annotation_count=node.annotation_count,
+                freshness=node.freshness,
+            )
+        else:
+            sub_graph.nodes[node.id]['size'] += node.size
+            existing_books = sub_graph.nodes[node.id].get('source_book_ids', [])
+            for sbid in node.source_book_ids:
+                if sbid not in existing_books:
+                    existing_books.append(sbid)
+            sub_graph.nodes[node.id]['annotation_count'] = (
+                sub_graph.nodes[node.id].get('annotation_count', 0)
+                + node.annotation_count
+            )
+            existing_fresh = sub_graph.nodes[node.id].get('freshness', 1.0)
+            sub_graph.nodes[node.id]['freshness'] = min(
+                existing_fresh, node.freshness,
+            )
+    for edge in cached.edges:
+        if sub_graph.has_edge(edge.source, edge.target):
+            sub_graph[edge.source][edge.target]['weight'] += edge.weight
+        else:
+            sub_graph.add_edge(
+                edge.source, edge.target,
+                weight=edge.weight, label=edge.label,
+            )
+    return sub_graph
+
+
+def _merge_sub_graph_into(merged: nx.Graph, sub_graph: nx.Graph) -> None:
+    """Merge a sub-graph into the combined merged graph, accumulating attributes."""
+    for name, data in sub_graph.nodes(data=True):
+        if not merged.has_node(name):
+            node_kwargs = {'name': name}
+            node_kwargs.update(data)
+            merged.add_node(**node_kwargs)
+        else:
+            merged.nodes[name]['size'] = (
+                merged.nodes[name].get('size', 0) + data.get('size', 0)
+            )
+            merged.nodes[name]['annotation_count'] = (
+                merged.nodes[name].get('annotation_count', 0)
+                + data.get('annotation_count', 0)
+            )
+            existing = merged.nodes[name].get('source_book_ids', [])
+            for sbid in data.get('source_book_ids', []):
+                if sbid not in existing:
+                    existing.append(sbid)
+            merged.nodes[name]['source_book_ids'] = existing
+            old_count = merged.nodes[name].get('annotation_count', 0)
+            old_fresh = merged.nodes[name].get('freshness', 1.0)
+            new_count = data.get('annotation_count', 0)
+            new_fresh = data.get('freshness', 1.0)
+            total = old_count + new_count
+            if total > 0:
+                merged.nodes[name]['freshness'] = (
+                    old_fresh * old_count + new_fresh * new_count
+                ) / total
+
+    for src, tgt, data in sub_graph.edges(data=True):
+        if merged.has_edge(src, tgt):
+            merged[src][tgt]['weight'] += data.get('weight', 1.0)
+        else:
+            merged.add_edge(src, tgt, **data)
+
+
+def _make_gap(
+    concept: str,
+    reason: str,
+    suggestion: str,
+    graph: nx.Graph,
+    total_clusters: int,
+) -> KnowledgeGap:
+    """Create a KnowledgeGap with the suggested action derived from the graph."""
+    return KnowledgeGap(
+        concept=concept,
+        reason=reason,
+        suggestion=suggestion,
+        suggested_action=_determine_suggested_action(concept, graph),
+        connected_clusters=total_clusters,
+    )
+
+
+def _identify_gap_nodes(
+    graph: nx.Graph,
+    total_clusters: int,
+) -> list[KnowledgeGap]:
+    """Find isolated nodes, weakly connected nodes, and disconnected cluster gaps."""
+    gaps: list[KnowledgeGap] = []
+
+    for node_name in graph.nodes:
+        deg = graph.degree(node_name)
+        if deg == 0:
+            gaps.append(_make_gap(
+                node_name, 'Isolated concept with no connections',
+                f"Read more about '{node_name}' -- it appears disconnected from your other knowledge.",
+                graph, total_clusters,
+            ))
+        elif deg == 1:
+            gaps.append(_make_gap(
+                node_name, 'Weakly connected concept (only 1 link)',
+                f"Explore connections between '{node_name}' and related topics.",
+                graph, total_clusters,
+            ))
+
+    for component in nx.connected_components(graph):
+        if len(component) > 1 and total_clusters > 1:
+            representative = next(iter(component))
+            if not any(g.concept == representative for g in gaps):
+                gaps.append(_make_gap(
+                    representative,
+                    f'Part of a disconnected cluster of {len(component)} concepts',
+                    'Bridge the gap between these concept clusters by reading about their intersection.',
+                    graph, total_clusters,
+                ))
+    return gaps
+
+
+def _deduplicate_gaps(gaps: list[KnowledgeGap], limit: int = 10) -> list[KnowledgeGap]:
+    """Deduplicate gaps by concept name and cap at the given limit."""
+    seen: set[str] = set()
+    unique: list[KnowledgeGap] = []
+    for gap in gaps:
+        if gap.concept not in seen:
+            seen.add(gap.concept)
+            unique.append(gap)
+        if len(unique) >= limit:
+            break
+    return unique
+
+
 async def detect_gaps(
     db: AsyncSession,
     user_id: UUID,
@@ -61,10 +222,8 @@ async def detect_gaps(
     if not book_ids:
         return []
 
-    # Batch-load annotations for all books in a single DB query
     annotations_by_book = await _batch_load_annotations(db, user_id, book_ids)
 
-    # Merge all cached graphs into a single NetworkX graph
     merged = nx.Graph()
     for bid in book_ids:
         try:
@@ -76,79 +235,8 @@ async def detect_gaps(
             cached = await _load_cached_graph(user_id, bid, current_hash)
             if cached is None or not cached.nodes:
                 continue
-            sub_graph = nx.Graph()
-            for node in cached.nodes:
-                if not sub_graph.has_node(node.id):
-                    sub_graph.add_node(
-                        node.id,
-                        type=node.type,
-                        size=node.size,
-                        description=node.description,
-                        source_book_ids=node.source_book_ids,
-                        annotation_count=node.annotation_count,
-                        freshness=node.freshness,
-                    )
-                else:
-                    sub_graph.nodes[node.id]['size'] += node.size
-                    existing_books = sub_graph.nodes[node.id].get(
-                        'source_book_ids', [],
-                    )
-                    for sbid in node.source_book_ids:
-                        if sbid not in existing_books:
-                            existing_books.append(sbid)
-                    sub_graph.nodes[node.id]['annotation_count'] = (
-                        sub_graph.nodes[node.id].get('annotation_count', 0)
-                        + node.annotation_count
-                    )
-                    # Take minimum freshness across duplicates
-                    existing_fresh = sub_graph.nodes[node.id].get('freshness', 1.0)
-                    sub_graph.nodes[node.id]['freshness'] = min(
-                        existing_fresh, node.freshness,
-                    )
-            for edge in cached.edges:
-                if sub_graph.has_edge(edge.source, edge.target):
-                    sub_graph[edge.source][edge.target]['weight'] += edge.weight
-                else:
-                    sub_graph.add_edge(
-                        edge.source, edge.target,
-                        weight=edge.weight, label=edge.label,
-                    )
-
-            # Merge sub_graph into merged
-            for name, data in sub_graph.nodes(data=True):
-                if not merged.has_node(name):
-                    node_kwargs = {'name': name}
-                    node_kwargs.update(data)
-                    merged.add_node(**node_kwargs)
-                else:
-                    merged.nodes[name]['size'] = (
-                        merged.nodes[name].get('size', 0) + data.get('size', 0)
-                    )
-                    merged.nodes[name]['annotation_count'] = (
-                        merged.nodes[name].get('annotation_count', 0)
-                        + data.get('annotation_count', 0)
-                    )
-                    existing = merged.nodes[name].get('source_book_ids', [])
-                    for sbid in data.get('source_book_ids', []):
-                        if sbid not in existing:
-                            existing.append(sbid)
-                    merged.nodes[name]['source_book_ids'] = existing
-                    # Weighted average freshness by annotation count
-                    old_count = merged.nodes[name].get('annotation_count', 0)
-                    old_fresh = merged.nodes[name].get('freshness', 1.0)
-                    new_count = data.get('annotation_count', 0)
-                    new_fresh = data.get('freshness', 1.0)
-                    total = old_count + new_count
-                    if total > 0:
-                        merged.nodes[name]['freshness'] = (
-                            old_fresh * old_count + new_fresh * new_count
-                        ) / total
-
-            for src, tgt, data in sub_graph.edges(data=True):
-                if merged.has_edge(src, tgt):
-                    merged[src][tgt]['weight'] += data.get('weight', 1.0)
-                else:
-                    merged.add_edge(src, tgt, **data)
+            sub_graph = _build_sub_graph_from_cached(cached)
+            _merge_sub_graph_into(merged, sub_graph)
         except Exception:
             logger.warning('Failed to load graph for book %s', bid, exc_info=True)
             continue
@@ -156,101 +244,12 @@ async def detect_gaps(
     if not merged.nodes:
         return []
 
-    # Find connected components (clusters)
-    components = list(nx.connected_components(merged))
-    total_clusters = len(components)
-
-    if total_clusters <= 1 and all(
-        merged.degree(n) > 1 for n in merged.nodes
-    ):
+    total_clusters = len(list(nx.connected_components(merged)))
+    if total_clusters <= 1 and all(merged.degree(n) > 1 for n in merged.nodes):
         return []
 
-    gaps: list[KnowledgeGap] = []
-
-    def _determine_suggested_action(
-        node_name: str,
-        graph: nx.Graph,
-    ) -> str:
-        """Deterministic heuristic for actionable next-step per gap."""
-        node_data = graph.nodes[node_name]
-        source_books = node_data.get('source_book_ids', [])
-        description = node_data.get('description', '')
-
-        if len(source_books) <= 1:
-            return (
-                'Read other books covering this topic to strengthen connections.'
-            )
-        if not description:
-            return (
-                'Add notes about this concept during your next reading session.'
-            )
-        return 'Review your highlights related to this concept.'
-
-    # Find isolated nodes (degree 0)
-    for node_name in merged.nodes:
-        if merged.degree(node_name) == 0:
-            gaps.append(KnowledgeGap(
-                concept=node_name,
-                reason='Isolated concept with no connections',
-                suggestion=(
-                    f"Read more about '{node_name}' -- it appears disconnected"
-                    ' from your other knowledge.'
-                ),
-                suggested_action=_determine_suggested_action(
-                    node_name, merged,
-                ),
-                connected_clusters=total_clusters,
-            ))
-
-    # Find low-degree nodes (degree 1) as potential gaps
-    for node_name in merged.nodes:
-        if 0 < merged.degree(node_name) <= 1:
-            gaps.append(KnowledgeGap(
-                concept=node_name,
-                reason='Weakly connected concept (only 1 link)',
-                suggestion=(
-                    f"Explore connections between '{node_name}' and related"
-                    ' topics.'
-                ),
-                suggested_action=_determine_suggested_action(
-                    node_name, merged,
-                ),
-                connected_clusters=total_clusters,
-            ))
-
-    # Find disconnected clusters > 1 node
-    for component in components:
-        if len(component) > 1 and total_clusters > 1:
-            representative = next(iter(component))
-            if not any(g.concept == representative for g in gaps):
-                cluster_size = len(component)
-                reason_text = (
-                    'Part of a disconnected cluster of '
-                    + str(cluster_size)
-                    + ' concepts'
-                )
-                gaps.append(KnowledgeGap(
-                    concept=representative,
-                    reason=reason_text,
-                    suggestion=(
-                        'Bridge the gap between these concept clusters by'
-                        ' reading about their intersection.'
-                    ),
-                    suggested_action=_determine_suggested_action(
-                        representative, merged,
-                    ),
-                    connected_clusters=total_clusters,
-                ))
-
-    # Deduplicate and cap at 10
-    seen: set[str] = set()
-    unique_gaps: list[KnowledgeGap] = []
-    for gap in gaps:
-        if gap.concept not in seen:
-            seen.add(gap.concept)
-            unique_gaps.append(gap)
-        if len(unique_gaps) >= 10:
-            break
+    gaps = _identify_gap_nodes(merged, total_clusters)
+    unique_gaps = _deduplicate_gaps(gaps)
 
     logger.info(
         'knowledge.detect_gaps.completed',
