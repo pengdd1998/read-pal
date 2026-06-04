@@ -15,6 +15,63 @@ from app.models.annotation import Annotation
 from app.utils.annotations import annotation_type_value
 
 
+def _build_book_xml(book_info: dict[str, Any]) -> str:
+    """Build the bibliographic item XML block from book metadata."""
+    title = book_info.get('title', 'Unknown')
+    author = book_info.get('author', 'Unknown')
+    isbn = book_info.get('isbn', '')
+    publisher = book_info.get('publisher', '')
+    year = book_info.get('year', '')
+
+    parts: list[str] = []
+    parts.append(f'<dc:title>{escape(title)}</dc:title>')
+    parts.append(f'<dc:creator>{escape(author)}</dc:creator>')
+    if isbn:
+        parts.append(f'<dc:identifier>ISBN {escape(isbn)}</dc:identifier>')
+    if publisher:
+        parts.append(f'<dc:publisher>{escape(publisher)}</dc:publisher>')
+    if year:
+        parts.append(f'<dc:date>{escape(str(year))}</dc:date>')
+    parts.append('<z:ItemType>book</z:ItemType>')
+    return ''.join(parts)
+
+
+def _build_note_xml(
+    ann: Annotation,
+    index: int,
+    book_title: str,
+) -> str:
+    """Build a single Zotero z:Note element for one annotation."""
+    ann_type = annotation_type_value(ann.type)
+    content = escape(ann.content or '')
+    note_text = escape(ann.note or '')
+    date_str = ann.created_at.isoformat() if ann.created_at else ''
+    chapter = ''
+    if ann.location and isinstance(ann.location, dict):
+        ch = ann.location.get('chapter')
+        if ch is not None:
+            chapter = f'Chapter {ch}'
+
+    note_html_parts: list[str] = []
+    note_html_parts.append(f'<p><strong>{escape(ann_type)}</strong></p>')
+    note_html_parts.append(f'<p>{content}</p>')
+    if note_text:
+        note_html_parts.append(f'<p><em>Note: {note_text}</em></p>')
+    if chapter:
+        note_html_parts.append(f'<p>Location: {escape(chapter)}</p>')
+    note_html = ''.join(note_html_parts)
+
+    return (
+        '<z:Note rdf:about="#ann_%d">' % index
+        + '<z:ItemType>note</z:ItemType>'
+        + '<dc:title>%s</dc:title>' % escape(f'{ann_type} - {book_title}')
+        + '<dc:description><![CDATA[%s]]></dc:description>' % note_html
+        + '<dc:date>%s</dc:date>' % escape(date_str)
+        + '<dcterms:isPartOf rdf:resource="#item_0"/>'
+        + '</z:Note>'
+    )
+
+
 def export_zotero_rdf(
     annotations: list[Annotation],
     book_info: dict[str, Any],
@@ -27,60 +84,11 @@ def export_zotero_rdf(
     - Each item has rdf:about with a unique URI
     - z:ItemType specifies the Zotero item type
     """
+    book_xml = _build_book_xml(book_info)
     title = book_info.get('title', 'Unknown')
-    author = book_info.get('author', 'Unknown')
-    isbn = book_info.get('isbn', '')
-    publisher = book_info.get('publisher', '')
-    year = book_info.get('year', '')
-
-    # Build the book item
-    book_parts: list[str] = []
-    book_parts.append(f'<dc:title>{escape(title)}</dc:title>')
-    book_parts.append(f'<dc:creator>{escape(author)}</dc:creator>')
-    if isbn:
-        book_parts.append(f'<dc:identifier>ISBN {escape(isbn)}</dc:identifier>')
-    if publisher:
-        book_parts.append(f'<dc:publisher>{escape(publisher)}</dc:publisher>')
-    if year:
-        book_parts.append(f'<dc:date>{escape(str(year))}</dc:date>')
-    book_parts.append('<z:ItemType>book</z:ItemType>')
-
-    book_xml = ''.join(book_parts)
-
-    # Build annotation note items
-    note_items: list[str] = []
-    for i, ann in enumerate(annotations):
-        ann_type = annotation_type_value(ann.type)
-        content = escape(ann.content or '')
-        note_text = escape(ann.note or '')
-        date_str = ann.created_at.isoformat() if ann.created_at else ''
-        chapter = ''
-        if ann.location and isinstance(ann.location, dict):
-            ch = ann.location.get('chapter')
-            if ch is not None:
-                chapter = f'Chapter {ch}'
-
-        # Build the note HTML content that Zotero renders
-        note_html_parts: list[str] = []
-        note_html_parts.append(f'<p><strong>{escape(ann_type)}</strong></p>')
-        note_html_parts.append(f'<p>{content}</p>')
-        if note_text:
-            note_html_parts.append(f'<p><em>Note: {note_text}</em></p>')
-        if chapter:
-            note_html_parts.append(f'<p>Location: {escape(chapter)}</p>')
-        note_html = ''.join(note_html_parts)
-
-        note_items.append(
-            '<z:Note rdf:about="#ann_%d">' % i
-            + '<z:ItemType>note</z:ItemType>'
-            + '<dc:title>%s</dc:title>' % escape(f'{ann_type} - {title}')
-            + '<dc:description><![CDATA[%s]]></dc:description>' % note_html
-            + '<dc:date>%s</dc:date>' % escape(date_str)
-            + '<dcterms:isPartOf rdf:resource="#item_0"/>'
-            + '</z:Note>'
-        )
-
-    notes_xml = ''.join(note_items)
+    notes_xml = ''.join(
+        _build_note_xml(ann, i, title) for i, ann in enumerate(annotations)
+    )
 
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'

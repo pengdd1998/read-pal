@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 import { generateId } from '@read-pal/shared';
 import type { Message } from '@/hooks/useStreamingChat';

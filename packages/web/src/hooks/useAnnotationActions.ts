@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
 import type { Chapter, Annotation } from '@read-pal/shared';

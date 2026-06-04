@@ -66,6 +66,64 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
+# Helpers for build_graph
+# ---------------------------------------------------------------------------
+
+
+async def _try_load_cached(
+    user_id: UUID,
+    book_id: UUID,
+    current_hash: str,
+    force_rebuild: bool,
+    annotation_count: int,
+) -> GraphData | None:
+    """Attempt to load a cached graph, returning None on miss or forced rebuild."""
+    if force_rebuild:
+        logger.info(
+            'knowledge.build_graph.cache_miss',
+            force_rebuild=True,
+            annotation_count=annotation_count,
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
+        return None
+
+    cached = await _load_cached_graph(user_id, book_id, current_hash)
+    if cached is not None:
+        logger.info(
+            'knowledge.build_graph.cache_hit',
+            annotation_count=annotation_count,
+            node_count=len(cached.nodes),
+            edge_count=len(cached.edges),
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
+    return cached
+
+
+async def _extract_and_build_graph(
+    texts: list[str],
+    annotations: list,
+    user_id: UUID,
+    book_id: UUID,
+) -> GraphData:
+    """Extract concepts via LLM (with rule-based fallback) and build the graph."""
+    concepts = await _extract_concepts_via_llm(texts, user_id=user_id, book_id=book_id)
+
+    if not concepts:
+        concepts = _extract_concepts_from_keywords(texts)
+
+    freshness_map: dict[str, float] = {}
+    for concept in concepts:
+        cname = concept.get('name', '').strip()
+        if cname:
+            freshness_map[cname] = _compute_freshness(annotations, cname)
+
+    graph = _build_nx_graph(concepts, book_id=book_id, freshness_map=freshness_map)
+    return _graph_to_data(graph)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -85,12 +143,10 @@ async def build_graph(
         book_id=str(book_id),
     )
 
-    # 1. Load annotations and compute content hash
     annotations = await _load_annotations(db, user_id, book_id)
     texts = [a.content for a in annotations if a.content.strip()]
     current_hash = _content_hash(texts)
 
-    # 2. Return empty graph when there is nothing to process
     if not texts:
         logger.info(
             'knowledge.build_graph.no_annotations',
@@ -99,52 +155,21 @@ async def build_graph(
         )
         return GraphData(nodes=[], edges=[])
 
-    # 3. Try cache (unless force_rebuild)
-    if not force_rebuild:
-        cached = await _load_cached_graph(user_id, book_id, current_hash)
-        if cached is not None:
-            logger.info(
-                'knowledge.build_graph.cache_hit',
-                annotation_count=len(annotations),
-                node_count=len(cached.nodes),
-                edge_count=len(cached.edges),
-                user_id=str(user_id),
-                book_id=str(book_id),
-            )
-            return cached
-
-    logger.info(
-        'knowledge.build_graph.cache_miss',
-        force_rebuild=force_rebuild,
-        annotation_count=len(annotations),
-        user_id=str(user_id),
-        book_id=str(book_id),
+    cached = await _try_load_cached(
+        user_id, book_id, current_hash, force_rebuild, len(annotations),
     )
+    if cached is not None:
+        return cached
 
-    # 4. Build via LLM (with rule-based fallback)
-    concepts = await _extract_concepts_via_llm(texts, user_id=user_id, book_id=book_id)
+    data = await _extract_and_build_graph(texts, annotations, user_id, book_id)
 
-    if not concepts:
-        concepts = _extract_concepts_from_keywords(texts)
-
-    # Compute freshness map from annotation recency
-    freshness_map: dict[str, float] = {}
-    for concept in concepts:
-        cname = concept.get('name', '').strip()
-        if cname:
-            freshness_map[cname] = _compute_freshness(annotations, cname)
-
-    graph = _build_nx_graph(concepts, book_id=book_id, freshness_map=freshness_map)
-    data = _graph_to_data(graph)
-
-    # 5. Persist to Redis
     await _persist_graph(user_id, book_id, data, current_hash)
 
     elapsed = int((time.monotonic() - t0) * 1000)
     logger.info(
         'knowledge.build_graph.completed',
         annotation_count=len(annotations),
-        concept_count=len(concepts),
+        concept_count=len(data.nodes),
         node_count=len(data.nodes),
         edge_count=len(data.edges),
         latency_ms=elapsed,

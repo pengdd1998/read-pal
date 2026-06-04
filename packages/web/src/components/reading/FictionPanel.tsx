@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { renderSimpleMarkdown } from '@/lib/markdown';
 
 // ---------------------------------------------------------------------------
 // Character extraction heuristics

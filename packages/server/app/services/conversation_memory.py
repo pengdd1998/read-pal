@@ -1,4 +1,4 @@
-"""Conversation memory — rolling summarization for long-term chat context."""
+"""Conversation memory -- rolling summarization for long-term chat context."""
 
 import json
 import time
@@ -100,14 +100,12 @@ async def get_or_create_summary(
     return summary
 
 
-async def _generate_summary(
+async def _load_older_messages(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
-    existing: 'ConversationSummary | None' = None,
-) -> str:
-    """Generate a compressed summary of older conversation turns."""
-    # Load older messages (skip the most recent MAX_RECENT), capped at 200
+) -> list[ChatMessage]:
+    """Load all messages for a conversation, capped at 200."""
     result = await db.execute(
         select(ChatMessage)
         .where(
@@ -117,23 +115,17 @@ async def _generate_summary(
         .order_by(ChatMessage.created_at)
         .limit(200)
     )
-    all_messages = list(result.scalars().all())
+    return list(result.scalars().all())
 
-    # Separate into "to summarize" and "keep recent"
-    if len(all_messages) <= MAX_RECENT:
-        return existing.summary if existing else ''
 
-    older = all_messages[:-MAX_RECENT]
-
-    # Build conversation text with sanitization and token budgeting
+def _build_summary_prompt(
+    older: list[ChatMessage],
+    existing_summary: str,
+) -> list:
+    """Build the system + human message pair for the LLM summary call."""
     conversation_text = _format_conversation(older)
-
-    existing_summary = existing.summary if existing else ''
-
-    # Build system prompt from centralized template
     system_content = CONVERSATION_SUMMARY_SYSTEM.template
 
-    # Build human prompt with context
     human_parts: list[str] = []
     if existing_summary:
         human_parts.append(
@@ -146,12 +138,54 @@ async def _generate_summary(
     human_parts.append(f'\n{conversation_text}')
     human_content = CONVERSATION_SUMMARY_HUMAN.template + '\n' + '\n'.join(human_parts)
 
-    messages = [
+    return [
         SystemMessage(content=system_content),
         HumanMessage(content=human_content),
     ]
 
-    # Use safe_llm_invoke with Pydantic output validation
+
+async def _save_summary(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    existing: 'ConversationSummary | None',
+    summary_text: str,
+    message_count: int,
+) -> None:
+    """Persist the generated summary to the database."""
+    from app.models.conversation_summary import ConversationSummary
+    if existing:
+        existing.summary = summary_text
+        existing.message_count = message_count
+        await db.flush()
+    else:
+        new_summary = ConversationSummary(
+            user_id=user_id,
+            book_id=book_id,
+            summary=summary_text,
+            message_count=message_count,
+        )
+        db.add(new_summary)
+        await db.flush()
+
+
+async def _generate_summary(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    existing: 'ConversationSummary | None' = None,
+) -> str:
+    """Generate a compressed summary of older conversation turns."""
+    all_messages = await _load_older_messages(db, user_id, book_id)
+
+    if len(all_messages) <= MAX_RECENT:
+        return existing.summary if existing else ''
+
+    older = all_messages[:-MAX_RECENT]
+    existing_summary = existing.summary if existing else ''
+
+    messages = _build_summary_prompt(older, existing_summary)
+
     summary_data = await safe_llm_invoke(
         messages,
         fallback=None,
@@ -161,28 +195,12 @@ async def _generate_summary(
         book_id=str(book_id),
     )
 
-    # Convert structured output to text summary for storage
     if summary_data and isinstance(summary_data, dict):
         summary_text = _summarize_to_text(summary_data)
     else:
         summary_text = existing_summary
 
-    # Save/update in DB
-    from app.models.conversation_summary import ConversationSummary
-    if existing:
-        existing.summary = summary_text
-        existing.message_count = len(all_messages)
-        await db.flush()
-    else:
-        new_summary = ConversationSummary(
-            user_id=user_id,
-            book_id=book_id,
-            summary=summary_text,
-            message_count=len(all_messages),
-        )
-        db.add(new_summary)
-        await db.flush()
-
+    await _save_summary(db, user_id, book_id, existing, summary_text, len(all_messages))
     return summary_text
 
 

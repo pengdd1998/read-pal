@@ -18,7 +18,7 @@ import { DashboardChallenges } from '@/components/dashboard/DashboardChallenges'
 import { DashboardRecommendations } from '@/components/dashboard/DashboardRecommendations';
 import { FlashcardReviewWidget } from '@/components/dashboard/FlashcardReviewWidget';
 import { ExploreMoreSection } from '@/components/dashboard/ExploreMoreSection';
-import type { DashboardData, DashboardStats } from '@/components/dashboard/types';
+import type { DashboardData } from '@/components/dashboard/types';
 
 // Lazy-load heavy dashboard components
 const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false });

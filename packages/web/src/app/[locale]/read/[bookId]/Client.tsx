@@ -1,6 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { useReaderPage } from '@/hooks/useReaderPage';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
 import { pageThemeClasses, type ReaderTheme } from '@/lib/reader-theme';
