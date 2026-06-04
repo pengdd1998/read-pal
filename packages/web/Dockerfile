@@ -27,6 +27,7 @@ RUN NEXT_PUBLIC_API_URL="" API_URL="" DOCKER_BUILD=1 pnpm --filter @read-pal/web
 
 # Production image
 FROM node:20-alpine
+RUN apk add --no-cache curl
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=builder /app/packages/web/.next/standalone ./
