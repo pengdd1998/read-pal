@@ -61,6 +61,122 @@ async def _invoke_with_retry(
 # ---------------------------------------------------------------------------
 
 
+async def _record_success(
+    *,
+    state: Any,
+    provider_name: str,
+    registry: Any,
+    request_id: str,
+    model_used: str,
+    log_label: str,
+    start: float,
+    response: Any,
+    user_id: str | None,
+    book_id: str | None,
+) -> None:
+    """Record a successful LLM invocation: metrics + observability log."""
+    from app.services.llm.observability import _extract_usage, _log_call
+
+    latency_ms = int((time.monotonic() - start) * 1000)
+    await state.circuit.record_success()
+    registry.record_latency(provider_name, latency_ms, True)
+    usage = _extract_usage(response)
+    _log_call(
+        request_id=request_id,
+        model=model_used,
+        label=log_label,
+        latency_ms=latency_ms,
+        usage=usage,
+        success=True,
+        provider=provider_name,
+        user_id=user_id,
+        book_id=book_id,
+    )
+
+
+async def _record_failure(
+    *,
+    state: Any,
+    provider_name: str,
+    registry: Any,
+    request_id: str,
+    model_used: str,
+    log_label: str,
+    start: float,
+    exc: Exception,
+    user_id: str | None,
+    book_id: str | None,
+) -> None:
+    """Record a failed LLM invocation: circuit breaker + metrics + log."""
+    from app.services.llm.observability import _log_call
+
+    latency_ms = int((time.monotonic() - start) * 1000)
+    logger.error(
+        'llm_primary_failed',
+        label=log_label,
+        provider=provider_name,
+        model=model_used,
+        error=str(exc),
+    )
+    await state.circuit.record_failure()
+    registry.record_latency(provider_name, latency_ms, False)
+    _log_call(
+        request_id=request_id,
+        model=model_used,
+        label=log_label,
+        latency_ms=latency_ms,
+        usage={},
+        success=False,
+        provider=provider_name,
+        error_message=str(exc)[:500],
+        user_id=user_id,
+        book_id=book_id,
+    )
+
+
+async def _handle_invoke_failure(
+    *,
+    state: Any,
+    provider_name: str,
+    registry: Any,
+    request_id: str,
+    model_used: str,
+    log_label: str,
+    start: float,
+    exc: Exception,
+    messages: list[BaseMessage],
+    user_id: str | None,
+    book_id: str | None,
+) -> Any:
+    """Record failure, log it, and attempt fallback providers."""
+    await _record_failure(
+        state=state,
+        provider_name=provider_name,
+        registry=registry,
+        request_id=request_id,
+        model_used=model_used,
+        log_label=log_label,
+        start=start,
+        exc=exc,
+        user_id=user_id,
+        book_id=book_id,
+    )
+    response = await _try_next_provider(
+        messages, registry, provider_name, request_id, log_label,
+        start_time=start,
+        user_id=user_id, book_id=book_id,
+    )
+    if response is None:
+        fb_model = state.config.fallback_model
+        if fb_model:
+            response = await _try_same_provider_fallback(
+                messages, state, fb_model, request_id, log_label,
+                start_time=start,
+                user_id=user_id, book_id=book_id,
+            )
+    return response
+
+
 async def _invoke_with_circuit(
     messages: list[BaseMessage],
     *,
@@ -70,11 +186,9 @@ async def _invoke_with_circuit(
     feature: str | None = None,
 ) -> Any:
     """Low-level invoke with per-provider circuit breaker + multi-provider fallback."""
-    from app.services.llm.observability import _extract_usage, _log_call
     from app.services.llm.pool import get_llm
     from app.services.llm.registry import get_registry
 
-    settings = get_settings()
     registry = get_registry()
     effective_feature = feature or log_label
     request_id = uuid.uuid4().hex[:12]
@@ -93,7 +207,6 @@ async def _invoke_with_circuit(
             label=log_label,
             provider=state.config.name,
         )
-        # Try next provider
         return await _try_next_provider(
             messages, registry, state.config.name, request_id, log_label,
             start_time=start,
@@ -105,63 +218,33 @@ async def _invoke_with_circuit(
     try:
         llm = get_llm(provider=provider_name)
         response = await _invoke_with_retry(llm, messages, log_label)
-        latency_ms = int((time.monotonic() - start) * 1000)
-        await state.circuit.record_success()
-        registry.record_latency(provider_name, latency_ms, True)
-        usage = _extract_usage(response)
-        _log_call(
+        await _record_success(
+            state=state,
+            provider_name=provider_name,
+            registry=registry,
             request_id=request_id,
-            model=model_used,
-            label=log_label,
-            latency_ms=latency_ms,
-            usage=usage,
-            success=True,
-            provider=provider_name,
+            model_used=model_used,
+            log_label=log_label,
+            start=start,
+            response=response,
             user_id=user_id,
             book_id=book_id,
         )
-    except Exception as exc:
-        latency_ms = int((time.monotonic() - start) * 1000)
-        logger.error(
-            'llm_primary_failed',
-            label=log_label,
-            provider=provider_name,
-            model=model_used,
-            error=str(exc),
-        )
-        await state.circuit.record_failure()
-        registry.record_latency(provider_name, latency_ms, False)
-        _log_call(
-            request_id=request_id,
-            model=model_used,
-            label=log_label,
-            latency_ms=latency_ms,
-            usage={},
-            success=False,
-            provider=provider_name,
-            error_message=str(exc)[:500],
-            user_id=user_id,
-            book_id=book_id,
-        )
-        # Try next provider
-        response = await _try_next_provider(
-            messages, registry, provider_name, request_id, log_label,
-            start_time=start,
-            user_id=user_id, book_id=book_id,
-        )
-        if response is None:
-            # Last resort: try same-provider fallback model if configured
-            fb_model = state.config.fallback_model
-            if fb_model:
-                response = await _try_same_provider_fallback(
-                    messages, state, fb_model, request_id, log_label,
-                    start_time=start,
-                    user_id=user_id, book_id=book_id,
-                )
-            return response
         return response
-
-    return response
+    except Exception as exc:
+        return await _handle_invoke_failure(
+            state=state,
+            provider_name=provider_name,
+            registry=registry,
+            request_id=request_id,
+            model_used=model_used,
+            log_label=log_label,
+            start=start,
+            exc=exc,
+            messages=messages,
+            user_id=user_id,
+            book_id=book_id,
+        )
 
 
 async def _try_next_provider(

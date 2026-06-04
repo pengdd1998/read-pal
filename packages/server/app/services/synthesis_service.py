@@ -39,44 +39,40 @@ _MAX_CHAT_MESSAGES = 20
 _MAX_READING_SESSIONS = 50
 
 
-async def _collect_reading_data(
+# ---------------------------------------------------------------------------
+# Per-source data loaders
+# ---------------------------------------------------------------------------
+
+
+async def _load_book_info(
   db: AsyncSession,
   user_id: UUID,
   book_id: UUID,
-  include_highlights: bool = True,
-  include_notes: bool = True,
-  include_conversations: bool = True,
-) -> dict[str, Any]:
-  """Collect all reading data for synthesis."""
-  data: dict[str, Any] = {}
-
-  # Load book info
+) -> dict[str, Any] | None:
+  """Load book metadata; returns None if book not found."""
   result = await db.execute(
     select(Book).where(Book.id == book_id, Book.user_id == user_id),
   )
   book = result.scalar_one_or_none()
   if book is None:
-    return data
-
-  data['book'] = {
+    return None
+  return {
     'title': book.title,
     'author': book.author,
     'progress': float(book.progress),
     'status': book.status,
   }
 
-  # Load annotations (highlights + notes), capped at _MAX_ANNOTATIONS
-  conditions = [
-    Annotation.user_id == user_id,
-    Annotation.book_id == book_id,
-  ]
-  result = await db.execute(
-    select(Annotation).where(*conditions).order_by(Annotation.created_at).limit(_MAX_ANNOTATIONS),
-  )
-  annotations = list(result.scalars().all())
 
+def _split_annotations(
+  annotations: list[Annotation],
+  include_highlights: bool,
+  include_notes: bool,
+) -> dict[str, list[dict]]:
+  """Split annotation rows into highlights and notes lists."""
+  result: dict[str, list[dict]] = {}
   if include_highlights:
-    highlights = [
+    result['highlights'] = [
       {
         'content': sanitize_annotations(a.content or ''),
         'note': sanitize_annotations(a.note or ''),
@@ -85,10 +81,8 @@ async def _collect_reading_data(
       for a in annotations
       if match_annotation_type(a.type, AnnotationType.highlight)
     ]
-    data['highlights'] = highlights
-
   if include_notes:
-    notes = [
+    result['notes'] = [
       {
         'content': sanitize_annotations(a.content or ''),
         'note': sanitize_annotations(a.note or ''),
@@ -97,29 +91,40 @@ async def _collect_reading_data(
       for a in annotations
       if match_annotation_type(a.type, AnnotationType.note)
     ]
-    data['notes'] = notes
+  return result
 
-  # Load chat conversations (capped at _MAX_CHAT_MESSAGES)
-  if include_conversations:
-    result = await db.execute(
-      select(ChatMessage)
-      .where(
-        ChatMessage.user_id == user_id,
-        ChatMessage.book_id == book_id,
-      )
-      .order_by(ChatMessage.created_at)
-      .limit(_MAX_CHAT_MESSAGES),
+
+async def _load_conversations(
+  db: AsyncSession,
+  user_id: UUID,
+  book_id: UUID,
+) -> list[dict]:
+  """Load chat conversations for synthesis (capped at _MAX_CHAT_MESSAGES)."""
+  result = await db.execute(
+    select(ChatMessage)
+    .where(
+      ChatMessage.user_id == user_id,
+      ChatMessage.book_id == book_id,
     )
-    messages = list(result.scalars().all())
-    data['conversations'] = [
-      {
-        'role': m.role,
-        'content': sanitize_chat_message(m.content or ''),
-      }
-      for m in messages
-    ]
+    .order_by(ChatMessage.created_at)
+    .limit(_MAX_CHAT_MESSAGES),
+  )
+  messages = list(result.scalars().all())
+  return [
+    {
+      'role': m.role,
+      'content': sanitize_chat_message(m.content or ''),
+    }
+    for m in messages
+  ]
 
-  # Load reading sessions for timeline (capped at _MAX_READING_SESSIONS)
+
+async def _load_reading_sessions(
+  db: AsyncSession,
+  user_id: UUID,
+  book_id: UUID,
+) -> list[dict]:
+  """Load reading sessions for timeline (capped at _MAX_READING_SESSIONS)."""
   result = await db.execute(
     select(ReadingSession)
     .where(
@@ -130,7 +135,7 @@ async def _collect_reading_data(
     .limit(_MAX_READING_SESSIONS),
   )
   sessions = list(result.scalars().all())
-  data['reading_sessions'] = [
+  return [
     {
       'started_at': s.started_at.isoformat() if s.started_at else None,
       'duration': s.duration,
@@ -141,7 +146,100 @@ async def _collect_reading_data(
     for s in sessions
   ]
 
+
+async def _load_chat_and_sessions(
+  db: AsyncSession,
+  user_id: UUID,
+  book_id: UUID,
+  include_conversations: bool,
+) -> dict[str, Any]:
+  """Load chat messages and reading sessions."""
+  data: dict[str, Any] = {}
+  if include_conversations:
+    data['conversations'] = await _load_conversations(db, user_id, book_id)
+  data['reading_sessions'] = await _load_reading_sessions(db, user_id, book_id)
   return data
+
+
+# ---------------------------------------------------------------------------
+# Core data collector
+# ---------------------------------------------------------------------------
+
+
+async def _collect_reading_data(
+  db: AsyncSession,
+  user_id: UUID,
+  book_id: UUID,
+  include_highlights: bool = True,
+  include_notes: bool = True,
+  include_conversations: bool = True,
+) -> dict[str, Any]:
+  """Collect all reading data for synthesis."""
+  book_info = await _load_book_info(db, user_id, book_id)
+  if book_info is None:
+    return {}
+
+  data: dict[str, Any] = {'book': book_info}
+
+  # Load annotations (highlights + notes), capped at _MAX_ANNOTATIONS
+  result = await db.execute(
+    select(Annotation)
+    .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
+    .order_by(Annotation.created_at)
+    .limit(_MAX_ANNOTATIONS),
+  )
+  annotations = list(result.scalars().all())
+  data.update(_split_annotations(annotations, include_highlights, include_notes))
+
+  # Chat conversations + reading sessions
+  data.update(await _load_chat_and_sessions(
+    db, user_id, book_id, include_conversations,
+  ))
+
+  return data
+
+
+def _build_synthesis_prompt(
+  reading_data: dict[str, Any],
+) -> list:
+  """Token-budget the data and build system+human prompt messages."""
+  budget = TokenBudget()
+  serialized_data = json.dumps(reading_data, default=str)
+  budgeted_data = budget.add(serialized_data, 'reading_data')
+  if budget.truncations:
+    logger.warning(
+      'synthesis_prompt_truncated',
+      truncations=', '.join(budget.truncations),
+    )
+
+  book_title = reading_data['book']['title']
+  book_author = reading_data['book']['author']
+  human_prompt = SYNTHESIS_HUMAN.template.format(
+    title=book_title,
+    author=book_author,
+    data=budgeted_data,
+  )
+  return [
+    SystemMessage(content=SYNTHESIS_SYSTEM.template),
+    HumanMessage(content=human_prompt),
+  ]
+
+
+def _log_synthesis_result(
+  synthesis_data: dict[str, Any],
+  book_id: UUID,
+  elapsed_ms: float,
+) -> None:
+  """Log synthesis completion metrics."""
+  themes_count = len(synthesis_data.get('themes', []))
+  connections_count = len(synthesis_data.get('connections', []))
+  logger.info(
+    'synthesis.synthesize.completed',
+    book_id=str(book_id),
+    themes_count=themes_count,
+    connections_count=connections_count,
+    latency_ms=round(elapsed_ms, 1),
+  )
 
 
 async def synthesize(
@@ -167,12 +265,8 @@ async def synthesize(
   )
 
   reading_data = await _collect_reading_data(
-    db,
-    user_id,
-    book_id,
-    include_highlights,
-    include_notes,
-    include_conversations,
+    db, user_id, book_id,
+    include_highlights, include_notes, include_conversations,
   )
 
   if not reading_data.get('book'):
@@ -181,31 +275,11 @@ async def synthesize(
       data={'error': 'Book not found'},
     )
 
-  # Token-budget the serialized data to avoid 50K+ char dumps
-  budget = TokenBudget()
-  serialized_data = json.dumps(reading_data, default=str)
-  budgeted_data = budget.add(serialized_data, 'reading_data')
-  if budget.truncations:
-    logger.warning(
-      'synthesis_prompt_truncated',
-      truncations=', '.join(budget.truncations),
-    )
-
-  system_prompt = SYNTHESIS_SYSTEM.template
-  book_title = reading_data['book']['title']
-  book_author = reading_data['book']['author']
-  human_prompt = SYNTHESIS_HUMAN.template.format(
-    title=book_title,
-    author=book_author,
-    data=budgeted_data,
-  )
+  messages = _build_synthesis_prompt(reading_data)
 
   empty_synthesis = SynthesisResult().model_dump()
   synthesis_data = await safe_llm_invoke(
-    [
-      SystemMessage(content=system_prompt),
-      HumanMessage(content=human_prompt),
-    ],
+    messages,
     fallback=empty_synthesis,
     log_label='Synthesis',
     schema_class=SynthesisResult,
@@ -213,15 +287,7 @@ async def synthesize(
     book_id=str(book_id),
   )
 
-  themes_count = len(synthesis_data.get('themes', []))
-  connections_count = len(synthesis_data.get('connections', []))
-  elapsed = (time.monotonic() - t0) * 1000
-  logger.info(
-    'synthesis.synthesize.completed',
-    book_id=str(book_id),
-    themes_count=themes_count,
-    connections_count=connections_count,
-    latency_ms=round(elapsed, 1),
-  )
+  elapsed_ms = (time.monotonic() - t0) * 1000
+  _log_synthesis_result(synthesis_data, book_id, elapsed_ms)
 
   return SynthesisResponse(success=True, data=synthesis_data)
