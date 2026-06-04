@@ -1,7 +1,6 @@
 """Footnote detection and annotation for EPUB content."""
 
 import logging
-import re
 
 from app.services.epub_parser.constants import FOOTNOTE_REF_RE
 

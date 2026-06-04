@@ -84,11 +84,11 @@ class TestGeneratePlan:
         db.execute = AsyncMock(side_effect=[book_result, plan_result])
 
         result = await generate_plan(db, user_id, book_id)
-        assert result['book_id'] == str(book_id)
-        assert result['is_active'] is True
-        assert result['current_day'] == 1
-        assert result['total_days'] == 7
-        assert result['plan_text'] == '7-Day Reading Plan for "Test Book"'
+        assert result['bookId'] == str(book_id)
+        assert result['isActive'] is True
+        assert result['currentDay'] == 1
+        assert result['totalDays'] == 7
+        assert result['planText'] == '7-Day Reading Plan for "Test Book"'
         db.add.assert_called_once()
         db.flush.assert_called()
 
@@ -113,7 +113,7 @@ class TestGeneratePlan:
 
         result = await generate_plan(db, user_id, book_id)
         assert existing_plan.is_active is False
-        assert result['plan_text'] == 'New plan text'
+        assert result['planText'] == 'New plan text'
 
     @pytest.mark.asyncio
     async def test_generate_plan_book_not_found_raises(self) -> None:
@@ -147,7 +147,7 @@ class TestGeneratePlan:
 
         # Test upper bound clamped to 90
         result = await generate_plan(db, user_id, book_id, total_days=100)
-        assert result['total_days'] == 90
+        assert result['totalDays'] == 90
 
     @pytest.mark.asyncio
     @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
@@ -167,7 +167,7 @@ class TestGeneratePlan:
         db.execute = AsyncMock(side_effect=[book_result, plan_result])
 
         result = await generate_plan(db, user_id, book_id, total_days=0)
-        assert result['total_days'] == 1
+        assert result['totalDays'] == 1
 
     @pytest.mark.asyncio
     @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
@@ -208,7 +208,7 @@ class TestGeneratePlan:
         db.execute = AsyncMock(side_effect=[book_result, plan_result])
 
         result = await generate_plan(db, user_id, book_id)
-        assert result['total_days'] == 7
+        assert result['totalDays'] == 7
 
     @pytest.mark.asyncio
     @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
@@ -228,7 +228,7 @@ class TestGeneratePlan:
 
         result = await generate_plan(db, user_id, book_id)
         assert isinstance(result['id'], str)
-        assert isinstance(result['book_id'], str)
+        assert isinstance(result['bookId'], str)
 
 
 # ---------------------------------------------------------------------------
@@ -252,9 +252,9 @@ class TestGetActivePlan:
         result = await get_active_plan(db, user_id, book_id)
         assert result is not None
         assert result['id'] == str(plan_id)
-        assert result['book_id'] == str(book_id)
-        assert result['plan_text'] == plan.plan_text
-        assert result['is_active'] is True
+        assert result['bookId'] == str(book_id)
+        assert result['planText'] == plan.plan_text
+        assert result['isActive'] is True
 
     @pytest.mark.asyncio
     async def test_returns_none_when_not_found(self) -> None:
@@ -281,8 +281,8 @@ class TestGetActivePlan:
         db.execute = AsyncMock(return_value=plan_result)
 
         result = await get_active_plan(db, user_id, book_id)
-        assert result['current_day'] == 4
-        assert result['total_days'] == 7
+        assert result['currentDay'] == 4
+        assert result['totalDays'] == 7
 
 
 # ---------------------------------------------------------------------------
@@ -304,8 +304,8 @@ class TestAdvancePlan:
 
         result = await advance_plan(db, user_id, book_id)
         assert result is not None
-        assert result['current_day'] == 2
-        assert result['is_active'] is True
+        assert result['currentDay'] == 2
+        assert result['isActive'] is True
         db.flush.assert_called_once()
 
     @pytest.mark.asyncio
@@ -321,8 +321,8 @@ class TestAdvancePlan:
         db.execute = AsyncMock(return_value=plan_result)
 
         result = await advance_plan(db, user_id, book_id)
-        assert result['current_day'] == 7
-        assert result['is_active'] is False
+        assert result['currentDay'] == 7
+        assert result['isActive'] is False
 
     @pytest.mark.asyncio
     async def test_advance_clamps_to_total_days(self) -> None:
@@ -337,8 +337,8 @@ class TestAdvancePlan:
         db.execute = AsyncMock(return_value=plan_result)
 
         result = await advance_plan(db, user_id, book_id)
-        assert result['current_day'] == 7
-        assert result['is_active'] is False
+        assert result['currentDay'] == 7
+        assert result['isActive'] is False
 
     @pytest.mark.asyncio
     async def test_advance_returns_none_when_no_plan(self) -> None:
@@ -367,8 +367,8 @@ class TestAdvancePlan:
         db.execute = AsyncMock(return_value=plan_result)
 
         result = await advance_plan(db, user_id, book_id)
-        assert result['current_day'] == 4
-        assert result['is_active'] is True
+        assert result['currentDay'] == 4
+        assert result['isActive'] is True
 
     @pytest.mark.asyncio
     async def test_advance_result_has_id(self) -> None:
@@ -384,7 +384,7 @@ class TestAdvancePlan:
 
         result = await advance_plan(db, user_id, book_id)
         assert result['id'] == str(plan_id)
-        assert 'total_days' in result
+        assert 'totalDays' in result
 
 
 # ---------------------------------------------------------------------------
@@ -413,8 +413,8 @@ class TestGeneratePlanText:
 
         result = await generate_plan(db, user_id, book_id, total_days=3)
         # Fallback plan should contain the book title
-        assert 'Great Gatsby' in result['plan_text']
-        assert 'Day 1' in result['plan_text']
+        assert 'Great Gatsby' in result['planText']
+        assert 'Day 1' in result['planText']
 
     @pytest.mark.asyncio
     @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
@@ -433,7 +433,7 @@ class TestGeneratePlanText:
         db.execute = AsyncMock(side_effect=[book_result, plan_result])
 
         result = await generate_plan(db, user_id, book_id, total_days=5)
-        plan_text = result['plan_text']
+        plan_text = result['planText']
         assert 'Day 1' in plan_text
         assert 'Day 5' in plan_text
 
@@ -456,8 +456,8 @@ class TestGeneratePlanText:
 
         result = await generate_plan(db, user_id, book_id, total_days=3)
         # Should not crash, should produce a plan
-        assert result['plan_text'] is not None
-        assert 'Test Book' in result['plan_text']
+        assert result['planText'] is not None
+        assert 'Test Book' in result['planText']
 
     @pytest.mark.asyncio
     @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
@@ -479,4 +479,4 @@ class TestGeneratePlanText:
         db.execute = AsyncMock(side_effect=[book_result, plan_result])
 
         result = await generate_plan(db, user_id, book_id)
-        assert result['plan_text'] == 'LLM plan'
+        assert result['planText'] == 'LLM plan'

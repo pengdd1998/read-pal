@@ -78,13 +78,12 @@ async def end_session(
 
     # Apply additional update fields if provided
     current_page_from_client = None
-    total_pages_from_client = None
     scroll_progress_from_client = None
     current_segment_from_client = None
     if data:
         update_data = data.model_dump(exclude_unset=True)
         current_page_from_client = update_data.pop('current_page', None)
-        total_pages_from_client = update_data.pop('total_pages', None)
+        update_data.pop('total_pages', None)
         scroll_progress_from_client = update_data.pop('scroll_progress', None)
         current_segment_from_client = update_data.pop('current_segment', None)
         for field, value in update_data.items():
@@ -202,6 +201,7 @@ async def get_session(
 async def get_session_stats(db: AsyncSession, user_id: str) -> dict:
     """Return aggregate reading session statistics (cached 5 min, single query)."""
     from app.core.redis import get_redis
+    from app.config import get_settings
 
     try:
         redis = get_redis()
@@ -222,16 +222,16 @@ async def get_session_stats(db: AsyncSession, user_id: str) -> dict:
     )).one()
 
     result = {
-        'total_sessions': int(row.sessions),
-        'total_duration': int(row.duration),
-        'total_pages_read': int(row.pages),
-        'total_highlights': int(row.highlights),
-        'total_notes': int(row.notes),
+        'totalSessions': int(row.sessions),
+        'totalDuration': int(row.duration),
+        'totalPagesRead': int(row.pages),
+        'totalHighlights': int(row.highlights),
+        'totalNotes': int(row.notes),
     }
 
     try:
         redis = get_redis()
-        await redis.setex(_stats_cache_key(user_id), 300, json.dumps(result))
+        await redis.setex(_stats_cache_key(user_id), get_settings().cache_data_ttl_seconds, json.dumps(result))
     except Exception as exc:
         logger.debug('reading_session.cache_write_failed', error=str(exc)[:200])
 

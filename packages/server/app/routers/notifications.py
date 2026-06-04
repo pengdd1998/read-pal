@@ -40,7 +40,7 @@ async def list_notifications(
             'items': [_dump(n) for n in notifications],
             'total': total,
             'page': page,
-            'per_page': per_page,
+            'perPage': per_page,
         },
     }
 

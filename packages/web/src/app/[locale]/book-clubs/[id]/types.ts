@@ -27,6 +27,7 @@ export interface ClubDetail {
   isPrivate: boolean;
   inviteCode: string;
   maxMembers: number;
+  memberCount: number;
   currentBookId?: string;
   currentUserRole: string | null;
   clubMembers: ClubMember[];

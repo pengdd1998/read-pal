@@ -142,10 +142,11 @@ async def revoke_token(jti: str, exp: int) -> None:
 async def is_token_revoked(jti: str) -> bool:
     """Check whether a token's jti has been blacklisted.
 
-    Fail-closed strategy (mirrors Node.js):
+    Strategy:
       1. Check Redis — if reachable, authoritative answer.
       2. If Redis is down, check in-memory fallback.
-      3. If Redis was *never* connected, fail-closed (reject).
+      3. If Redis was never connected, fail-open (allow) — only known-blacklisted
+         tokens (via in-memory set) are rejected.
     """
     global _redis_ever_connected
 
@@ -160,8 +161,6 @@ async def is_token_revoked(jti: str) -> bool:
     except Exception:
         if jti in _in_memory_blacklist:
             return True
-        if not _redis_ever_connected:
-            return True  # fail-closed
         return False
 
 
@@ -260,21 +259,3 @@ async def get_current_user(
         'email': user.email,
         'name': user.name,
     }
-
-
-async def get_current_user_id(
-    user: dict[str, Any] = Depends(get_current_user),
-) -> uuid.UUID:
-    """Return the authenticated user's ID as a UUID directly."""
-    return uuid.UUID(user['id'])
-
-
-async def get_optional_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, Any] | None:
-    """Same as get_current_user but returns None on failure instead of 401."""
-    try:
-        return await get_current_user(credentials, db)
-    except HTTPException:
-        return None

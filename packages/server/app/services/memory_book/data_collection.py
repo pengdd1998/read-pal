@@ -140,15 +140,13 @@ async def _collect_enriched_data(
 
     # Knowledge graph concepts + edges for concept_web section
     try:
-        from app.services.knowledge_service import get_concepts, build_graph
-        concepts = await get_concepts(db, user_id, book_id)
-        enriched['concepts'] = [c.get('label', c.get('name', '')) for c in concepts if c.get('label') or c.get('name')]
-        # Collect graph edges for concept relationships
+        from app.services.knowledge_service import build_graph
         graph = await build_graph(db, user_id, book_id)
+        enriched['concepts'] = [n.label for n in graph.nodes if n.label]
         enriched['concept_nodes'] = [{'label': n.label, 'type': n.type, 'size': n.size} for n in graph.nodes]
         enriched['concept_edges'] = [{'source': e.source, 'target': e.target, 'label': e.label} for e in graph.edges if e.label]
     except Exception:
-        logger.info('Knowledge graph enrichment skipped for book %s', book_id)
+        logger.warning('Knowledge graph enrichment skipped for book %s', book_id, exc_info=True)
         enriched['concepts'] = []
         enriched['concept_nodes'] = []
         enriched['concept_edges'] = []
@@ -159,7 +157,7 @@ async def _collect_enriched_data(
         mastery = await get_mastery(db, user_id, book_id)
         enriched['mastery'] = mastery
     except Exception:
-        logger.info('Mastery enrichment skipped for book %s', book_id)
+        logger.warning('Mastery enrichment skipped for book %s', book_id, exc_info=True)
         enriched['mastery'] = {}
 
     # Synthesis themes
@@ -173,7 +171,7 @@ async def _collect_enriched_data(
             themes = [t.get('name', '') for t in theme_list if isinstance(t, dict) and t.get('name')]
         enriched['synthesis_themes'] = themes
     except Exception:
-        logger.info('Synthesis enrichment skipped for book %s', book_id)
+        logger.warning('Synthesis enrichment skipped for book %s', book_id, exc_info=True)
         enriched['synthesis_themes'] = []
 
     # Compute reading pace and session details for Encounter section
@@ -209,6 +207,7 @@ async def _collect_enriched_data(
             for r in other_books
         ]
     except Exception:
+        logger.warning('Failed to query existing books for user %s', user_id, exc_info=True)
         enriched['existing_books'] = []
         enriched['other_books'] = []
 

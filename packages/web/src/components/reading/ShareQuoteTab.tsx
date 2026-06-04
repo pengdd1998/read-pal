@@ -33,7 +33,7 @@ export function ShareQuoteTab({ selectedAnnotation }: ShareQuoteTabProps) {
           {selectedAnnotation.content}
         </p>
       </div>
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
         {t('share_quote_hint')}
       </p>
     </div>

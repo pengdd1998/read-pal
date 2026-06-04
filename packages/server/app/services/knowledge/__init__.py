@@ -275,9 +275,9 @@ async def get_all_cached_graphs(
             cached = await _load_cached_graph(user_id, bid, current_hash)
             if cached is not None:
                 for node in cached.nodes:
-                    all_nodes.append(node.model_dump())
+                    all_nodes.append(node.model_dump(by_alias=True, mode='json'))
                 for edge in cached.edges:
-                    all_edges.append(edge.model_dump())
+                    all_edges.append(edge.model_dump(by_alias=True, mode='json'))
         except Exception:
             logger.warning('Failed to load cached graph for book %s', bid, exc_info=True)
             continue

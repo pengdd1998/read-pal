@@ -190,6 +190,7 @@ def _enrich_html(
     try:
         enriched = rewrite_image_sources(raw_html, image_map, item_name)
     except Exception:
+        logger.debug('Image source rewrite failed for %s', item_name, exc_info=True)
         enriched = raw_html
 
     enriched = annotate_footnotes(enriched)

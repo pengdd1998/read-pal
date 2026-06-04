@@ -26,17 +26,5 @@ def bind_user_id(user_id: str) -> None:
     structlog.contextvars.bind_contextvars(user_id=user_id)
 
 
-def bind_book_id(book_id: str) -> None:
-    structlog.contextvars.bind_contextvars(book_id=book_id)
-
-
 def clear_request_context() -> None:
     structlog.contextvars.clear_contextvars()
-
-
-def get_request_id() -> str | None:
-    return structlog.contextvars.get_contextvars().get('request_id')
-
-
-def get_user_id() -> str | None:
-    return structlog.contextvars.get_contextvars().get('user_id')

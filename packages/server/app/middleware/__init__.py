@@ -3,7 +3,6 @@
 from app.middleware.auth import (
     create_access_token,
     get_current_user,
-    get_optional_user,
     hash_password,
     is_token_revoked,
     revoke_token,
@@ -15,7 +14,6 @@ from app.middleware.rate_limiter import RateLimiter
 __all__ = [
     'create_access_token',
     'get_current_user',
-    'get_optional_user',
     'get_login_lockout',
     'hash_password',
     'is_token_revoked',

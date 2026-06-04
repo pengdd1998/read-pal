@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { SessionData } from './types';
 
 interface ActivityHeatmapProps {
@@ -19,11 +19,12 @@ const COLORS = [
 
 export function ActivityHeatmap({ sessions }: ActivityHeatmapProps) {
   const t = useTranslations('stats');
+  const locale = useLocale();
 
   const cells = useMemo(() => {
     const sessionMap = new Map<string, SessionData>();
     for (const s of sessions) {
-      sessionMap.set(new Date(s.date).toDateString(), s);
+      sessionMap.set(new Date(s.startedAt).toDateString(), s);
     }
 
     const result = [];
@@ -40,12 +41,12 @@ export function ActivityHeatmap({ sessions }: ActivityHeatmapProps) {
         <div
           key={i}
           className={`w-3 h-3 rounded-sm ${COLORS[level]}`}
-          title={`${date.toLocaleDateString()} - ${dayActivity ? t('heatmap_title', { count: dayActivity.pagesRead }) : t('heatmap_no_activity')}`}
+          title={`${date.toLocaleDateString(locale)} - ${dayActivity ? t('heatmap_title', { count: dayActivity.pagesRead }) : t('heatmap_no_activity')}`}
         />,
       );
     }
     return result;
-  }, [sessions, t]);
+  }, [sessions, t, locale]);
 
   return (
     <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">

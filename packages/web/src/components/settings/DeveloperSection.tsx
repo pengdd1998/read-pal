@@ -5,7 +5,13 @@ import { ZoteroSection } from '@/components/settings/ZoteroSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
 import { OfflineSection } from '@/components/settings/OfflineSection';
 
-export function DeveloperSection() {
+import { UserSettings } from './types';
+
+interface DeveloperSectionProps {
+  settings?: UserSettings | null;
+}
+
+export function DeveloperSection({ settings }: DeveloperSectionProps) {
   const t = useTranslations('settings_page');
   return (
     <>
@@ -27,7 +33,7 @@ export function DeveloperSection() {
               <p className="text-xs text-gray-500 dark:text-gray-400">{t('zotero_desc')}</p>
             </div>
           </div>
-          <ZoteroSection />
+          <ZoteroSection initialSettings={settings} />
         </div>
       </section>
 

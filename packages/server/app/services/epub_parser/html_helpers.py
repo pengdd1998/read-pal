@@ -2,7 +2,6 @@
 
 import html as html_module
 import posixpath
-import re
 
 from app.services.epub_parser.constants import IMG_COUNT_RE, TITLE_RE
 

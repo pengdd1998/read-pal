@@ -8,6 +8,7 @@ from sqlalchemy import String, cast, func, select, distinct
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import get_redis
+from app.config import get_settings
 from app.models.annotation import Annotation
 from app.models.book import Book
 
@@ -197,7 +198,7 @@ async def get_free_books(db: AsyncSession) -> list[dict]:
 
     try:
         redis = get_redis()
-        await redis.setex(cache_key, 300, json.dumps(result))
+        await redis.setex(cache_key, get_settings().cache_data_ttl_seconds, json.dumps(result))
     except Exception:
         logger.warning('Redis unavailable, skipping free-books cache set')
 

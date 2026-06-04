@@ -1,14 +1,14 @@
 """Dashboard stats with Redis caching."""
 
-import asyncio
 import json
 import logging
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.core.redis import get_redis
 from app.models.annotation import Annotation
 from app.models.book import Book, BookStatus
@@ -19,7 +19,14 @@ from app.services.stats.streaks import compute_streaks
 
 logger = logging.getLogger(__name__)
 
-_DASHBOARD_CACHE_TTL = 300  # 5 minutes
+_DASHBOARD_CACHE_TTL = None  # lazy-init from settings
+
+
+def _get_cache_ttl() -> int:
+    global _DASHBOARD_CACHE_TTL
+    if _DASHBOARD_CACHE_TTL is None:
+        _DASHBOARD_CACHE_TTL = get_settings().cache_data_ttl_seconds
+    return _DASHBOARD_CACHE_TTL
 
 
 def _dashboard_cache_key(uid: UUID) -> str:
@@ -106,18 +113,16 @@ async def _compute_streak(db: AsyncSession, uid: UUID) -> int:
 
 
 async def _get_annotation_counts(db: AsyncSession, uid: UUID) -> tuple[int, int]:
-    """Return (highlights, notes) counts."""
-    highlights = await db.scalar(
-        select(func.count(Annotation.id)).where(
-            and_(Annotation.user_id == uid, Annotation.type == 'highlight'),
-        ),
-    )
-    notes = await db.scalar(
-        select(func.count(Annotation.id)).where(
-            and_(Annotation.user_id == uid, Annotation.type == 'note'),
-        ),
-    )
-    return highlights or 0, notes or 0
+    """Return (highlights, notes) counts via a single composite query."""
+    row = (
+        await db.execute(
+            select(
+                func.count(case((Annotation.type == 'highlight', Annotation.id))).label('highlights'),
+                func.count(case((Annotation.type == 'note', Annotation.id))).label('notes'),
+            ).where(Annotation.user_id == uid)
+        )
+    ).one()
+    return row.highlights or 0, row.notes or 0
 
 
 async def _get_recent_books(db: AsyncSession, uid: UUID, limit: int = 10) -> list[dict]:
@@ -207,32 +212,20 @@ async def get_dashboard_stats(
     except Exception:
         logger.warning('Redis read failed for dashboard cache, querying DB')
 
-    # --- Gather all data via helpers (parallelized) ---
-    (
-        status_counts,
-        pages_read,
-        total_minutes,
-        streak,
-        (highlights, notes),
-        recent_books,
-        weekly_activity,
-    ) = await asyncio.gather(
-        _get_book_status_counts(db, uid),
-        _get_pages_read(db, uid),
-        _get_reading_minutes(db, uid),
-        _compute_streak(db, uid),
-        _get_annotation_counts(db, uid),
-        _get_recent_books(db, uid),
-        _get_weekly_activity(db, uid),
-    )
+    # --- Gather all data via helpers (sequential — AsyncSession is not safe for concurrent ops) ---
+    status_counts = await _get_book_status_counts(db, uid)
+    pages_read = await _get_pages_read(db, uid)
+    total_minutes = await _get_reading_minutes(db, uid)
+    streak = await _compute_streak(db, uid)
+    highlights, notes = await _get_annotation_counts(db, uid)
+    recent_books = await _get_recent_books(db, uid)
+    weekly_activity = await _get_weekly_activity(db, uid)
 
-    chat_count, memory_count = await asyncio.gather(
-        db.scalar(
-            select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid),
-        ),
-        db.scalar(
-            select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid),
-        ),
+    chat_count = await db.scalar(
+        select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid),
+    )
+    memory_count = await db.scalar(
+        select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid),
     )
 
     # --- Assemble response ---
@@ -262,7 +255,7 @@ async def get_dashboard_stats(
     # --- Store in Redis cache ---
     try:
         redis = get_redis()
-        await redis.set(cache_key, json.dumps(result), ex=_DASHBOARD_CACHE_TTL)
+        await redis.set(cache_key, json.dumps(result), ex=_get_cache_ttl())
     except Exception:
         logger.warning('Failed to cache dashboard stats for user %s', uid)
 

@@ -57,12 +57,12 @@ async def discover_clubs(
             'id': str(club.id),
             'name': club.name,
             'description': club.description,
-            'cover_image': club.cover_image,
-            'is_private': club.is_private,
-            'max_members': club.max_members,
-            'member_count': mc,
-            'current_book_title': book_titles.get(club.current_book_id) if club.current_book_id else None,
-            'created_at': club.created_at.isoformat() if club.created_at else None,
+            'coverImage': club.cover_image,
+            'isPrivate': club.is_private,
+            'maxMembers': club.max_members,
+            'memberCount': mc,
+            'currentBookTitle': book_titles.get(club.current_book_id) if club.current_book_id else None,
+            'createdAt': club.created_at.isoformat() if club.created_at else None,
         })
 
     return items, total
@@ -80,7 +80,7 @@ async def get_club_progress(
         await db.execute(select(BookClub).where(BookClub.id == club_id))
     ).scalar_one_or_none()
     if club is None:
-        return {'members_progress': [], 'average_progress': 0}
+        return {'membersProgress': [], 'averageProgress': 0}
 
     # Get all members
     member_rows = (
@@ -113,8 +113,8 @@ async def get_club_progress(
             )
 
         progress_list.append({
-            'user_id': str(member.user_id),
-            'user_name': user_name,
+            'userId': str(member.user_id),
+            'userName': user_name,
             'progress': member_progress,
         })
 
@@ -125,6 +125,6 @@ async def get_club_progress(
         )
 
     return {
-        'members_progress': progress_list,
-        'average_progress': avg,
+        'membersProgress': progress_list,
+        'averageProgress': avg,
     }

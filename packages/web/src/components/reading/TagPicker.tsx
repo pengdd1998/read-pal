@@ -15,7 +15,7 @@ export function TagPicker({ variant, onTagSelect }: TagPickerProps) {
   if (variant === 'mobile') {
     return (
       <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-        <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
+        <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
         <div className="flex flex-wrap gap-2">
           {QUICK_TAGS.map((qt) => (
             <button
@@ -35,7 +35,7 @@ export function TagPicker({ variant, onTagSelect }: TagPickerProps) {
 
   return (
     <div className="absolute top-full mt-2 left-0 bg-surface-0 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-3 min-w-[220px] z-10 animate-bounce-in">
-      <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
+      <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
       <div className="flex flex-wrap gap-1.5">
         {QUICK_TAGS.map((qt) => (
           <button

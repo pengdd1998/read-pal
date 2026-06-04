@@ -190,7 +190,7 @@ async def test_get_collection_books_returns_empty(client):
         f'/api/v1/collections/{col_id}/books', headers=headers,
     )
     assert resp.status_code == 200
-    assert resp.json()['data']['book_ids'] == []
+    assert resp.json()['data']['bookIds'] == []
 
 
 @pytest.mark.asyncio

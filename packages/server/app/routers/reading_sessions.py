@@ -60,7 +60,7 @@ async def get_active_session(
         return {'success': True, 'data': None}
     return {
         'success': True,
-        'data': SessionResponse.model_validate(session).model_dump(mode='json'),
+        'data': SessionResponse.model_validate(session).model_dump(mode='json', by_alias=True),
     }
 
 
@@ -91,7 +91,7 @@ async def get_session(
         )
     return {
         'success': True,
-        'data': SessionResponse.model_validate(session).model_dump(mode='json'),
+        'data': SessionResponse.model_validate(session).model_dump(mode='json', by_alias=True),
     }
 
 
@@ -107,7 +107,7 @@ async def create_session(
     )
     return {
         'success': True,
-        'data': SessionResponse.model_validate(session).model_dump(mode='json'),
+        'data': SessionResponse.model_validate(session).model_dump(mode='json', by_alias=True),
     }
 
 
@@ -129,7 +129,7 @@ async def end_session(
         )
     return {
         'success': True,
-        'data': SessionResponse.model_validate(session).model_dump(mode='json'),
+        'data': SessionResponse.model_validate(session).model_dump(mode='json', by_alias=True),
     }
 
 
@@ -145,7 +145,7 @@ async def start_session(
     )
     return {
         'success': True,
-        'data': SessionResponse.model_validate(session).model_dump(mode='json'),
+        'data': SessionResponse.model_validate(session).model_dump(mode='json', by_alias=True),
     }
 
 
@@ -205,11 +205,11 @@ async def get_book_session_log(
     return {
         'success': True,
         'data': [
-            SessionResponse.model_validate(s).model_dump(mode='json')
+            SessionResponse.model_validate(s).model_dump(mode='json', by_alias=True)
             for s in sessions
         ],
         'total': total,
         'page': page,
-        'per_page': per_page,
-        'has_more': (offset + len(sessions)) < total,
+        'perPage': per_page,
+        'hasMore': (offset + len(sessions)) < total,
     }

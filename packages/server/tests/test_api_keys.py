@@ -26,7 +26,7 @@ async def test_create_api_key_with_name(client):
     assert body['success'] is True
     assert body['data']['name'] == 'My Key'
     assert body['data']['key'] is not None
-    assert body['data']['key_prefix'] is not None
+    assert body['data']['keyPrefix'] is not None
     assert 'id' in body['data']
 
 

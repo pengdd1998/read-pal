@@ -201,9 +201,9 @@ async def test_reading_card_returns_data(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert 'total_shares' in body['data']
+    assert 'totalShares' in body['data']
     assert 'shares' in body['data']
-    assert body['data']['total_shares'] == 0
+    assert body['data']['totalShares'] == 0
 
 
 @pytest.mark.asyncio
@@ -236,7 +236,7 @@ async def test_reading_card_counts_shares(client):
 
     resp = await client.get('/api/v1/share/reading-card', headers=headers)
     assert resp.status_code == 200
-    assert resp.json()['data']['total_shares'] == 2
+    assert resp.json()['data']['totalShares'] == 2
 
 
 # ---------------------------------------------------------------------------

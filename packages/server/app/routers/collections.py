@@ -121,7 +121,7 @@ async def get_collection_books(
     return {
         'success': True,
         'data': {
-            'book_ids': [str(bid) for bid in (col.book_ids or [])],
+            'bookIds': [str(bid) for bid in (col.book_ids or [])],
         },
     }
 

@@ -66,7 +66,7 @@ def test_build_user_data_returns_expected_shape():
     assert result['name'] == user.name
     assert result['avatar'] == user.avatar
     assert isinstance(result['settings'], dict)
-    assert 'created_at' in result
+    assert 'createdAt' in result
 
 
 def test_build_user_data_with_null_settings():

@@ -3,10 +3,13 @@
 Uses only stdlib xml.etree — no ebooklib dependency.
 """
 
+import logging
 import xml.etree.ElementTree as ET
 import zipfile
 
 from app.services.epub_parser.constants import NS_DC, NS_EPUB, NS_NCX
+
+logger = logging.getLogger('read-pal')
 
 
 # ---------------------------------------------------------------------------
@@ -20,7 +23,11 @@ def parse_epub_container(zf: zipfile.ZipFile) -> str | None:
     except KeyError:
         return _scan_for_opf(zf)
 
-    root = ET.fromstring(xml_bytes)
+    try:
+        root = ET.fromstring(xml_bytes)
+    except ET.ParseError:
+        logger.debug('container.xml parse failed, scanning for OPF')
+        return _scan_for_opf(zf)
     for rf in root.iter():
         if rf.tag.endswith('rootfile') or rf.tag == 'rootfile':
             mt = rf.get('media-type', '')
@@ -44,7 +51,11 @@ def _scan_for_opf(zf: zipfile.ZipFile) -> str | None:
 
 def parse_opf(opf_xml: str, opf_path: str) -> dict:
     """Parse OPF package document for manifest, spine, metadata."""
-    root = ET.fromstring(opf_xml)
+    try:
+        root = ET.fromstring(opf_xml)
+    except ET.ParseError:
+        logger.debug('OPF XML parse failed for %s', opf_path)
+        return {'manifest': {}, 'spine': [], 'metadata': {}, 'cover_id': None, 'ncx_href': None, 'nav_href': None, 'opf_path': opf_path}
 
     manifest = _parse_manifest(root)
     spine = _parse_spine(root)
@@ -155,7 +166,11 @@ def _find_toc_refs(manifest: dict[str, dict]) -> tuple[str | None, str | None]:
 
 def parse_ncx(ncx_xml: str) -> list[tuple[str, str, int]]:
     """Parse NCX (EPUB 2) table of contents."""
-    root = ET.fromstring(ncx_xml)
+    try:
+        root = ET.fromstring(ncx_xml)
+    except ET.ParseError:
+        logger.debug('NCX XML parse failed')
+        return []
     results: list[tuple[str, str, int]] = []
 
     def _walk_navpoints(parent: ET.Element, level: int) -> None:
@@ -193,7 +208,11 @@ def parse_ncx(ncx_xml: str) -> list[tuple[str, str, int]]:
 
 def parse_nav(nav_xml: str) -> list[tuple[str, str, int]]:
     """Parse EPUB 3 nav document for table of contents."""
-    root = ET.fromstring(nav_xml)
+    try:
+        root = ET.fromstring(nav_xml)
+    except ET.ParseError:
+        logger.debug('NAV XML parse failed')
+        return []
     results: list[tuple[str, str, int]] = []
 
     toc_nav = _find_toc_nav(root)

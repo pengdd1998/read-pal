@@ -50,7 +50,8 @@ async def _cache_get(key: str) -> str | None:
         from app.core.redis import get_redis as _get_redis
         r = _get_redis()
         return await r.get(key)
-    except Exception:
+    except Exception as exc:
+        logger.debug('llm.cache_read_failed', error=str(exc)[:200])
         return None
 
 

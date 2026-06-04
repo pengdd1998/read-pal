@@ -299,7 +299,10 @@
     "reset_repeat_placeholder": "重复输入密码",
     "reset_form_label": "新密码表单",
     "resetting": "重置中...",
-    "reset_button": "重置密码"
+    "reset_button": "重置密码",
+    "completing_sign_in": "正在完成登录...",
+    "callback_missing_data": "OAuth回调缺少数据",
+    "parse_response_failed": "解析OAuth响应失败"
   },
   "library": {
     "title": "我的书架",

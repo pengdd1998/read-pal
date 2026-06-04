@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import type { SimNode, VisualizationEdge } from '@/types/knowledge';
 
 interface NodeDetailPanelProps {
@@ -57,10 +56,10 @@ export function NodeDetailPanel({ node, connectedEdges, allNodes, onDeselect, t 
           <span className="text-gray-500 dark:text-gray-400">{t('connections_label')} </span>
           <span className="font-medium text-gray-900 dark:text-white">{connectedEdges.length}</span>
         </div>
-        {(node.annotation_count ?? 0) > 0 && (
+        {(node.annotationCount ?? 0) > 0 && (
           <div>
             <span className="text-gray-500 dark:text-gray-400">{t('annotation_count_label')} </span>
-            <span className="font-medium text-gray-900 dark:text-white">{node.annotation_count}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{node.annotationCount}</span>
           </div>
         )}
         <div>
@@ -70,11 +69,11 @@ export function NodeDetailPanel({ node, connectedEdges, allNodes, onDeselect, t 
           </span>
         </div>
       </div>
-      {node.source_book_ids && node.source_book_ids.length > 0 && (
+      {node.sourceBookIds && node.sourceBookIds.length > 0 && (
         <div className="mt-2">
           <span className="text-xs text-gray-500 dark:text-gray-400">{t('source_books_label')}</span>
           <div className="flex flex-wrap gap-1 mt-1">
-            {node.source_book_ids.map((bid) => (
+            {node.sourceBookIds.map((bid) => (
               <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
                 {bid.slice(0, 8)}...
               </span>

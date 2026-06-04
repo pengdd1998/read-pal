@@ -95,7 +95,7 @@ class TestGetChatHistory:
         result = await get_chat_history(db, user_id)
 
         assert isinstance(result[0]['id'], str)
-        assert isinstance(result[0]['book_id'], str)
+        assert isinstance(result[0]['bookId'], str)
 
 
 # ---------------------------------------------------------------------------

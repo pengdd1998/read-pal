@@ -39,6 +39,11 @@ class Flashcard(Base):
             'user_id',
             'next_review_at',
         ),
+        Index(
+            'ix_flashcards_user_id_book_id',
+            'user_id',
+            'book_id',
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(

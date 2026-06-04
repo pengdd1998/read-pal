@@ -59,7 +59,7 @@ export default function BookClubDetailPage() {
   }
 
   const isAdmin = club.currentUserRole === 'admin';
-  const memberCount = (club.clubMembers || []).length;
+  const memberCount = club.memberCount ?? (club.clubMembers || []).length;
 
   return (
     <main className="min-h-screen bg-gray-50/50 dark:bg-gray-950">

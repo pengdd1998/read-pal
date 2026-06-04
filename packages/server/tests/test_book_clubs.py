@@ -12,7 +12,7 @@ from tests.conftest import auth_headers, register_user
 
 @pytest.mark.asyncio
 async def test_create_club(client):
-    """POST / creates a new book club and returns id, name, invite_code."""
+    """POST / creates a new book club and returns id, name, inviteCode."""
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
 
@@ -26,7 +26,7 @@ async def test_create_club(client):
     assert body['success'] is True
     assert 'id' in body['data']
     assert body['data']['name'] == 'Test Club'
-    assert body['data']['invite_code'] is not None
+    assert body['data']['inviteCode'] is not None
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +47,7 @@ async def test_discover_clubs(client):
     assert 'items' in body['data']
     assert 'total' in body['data']
     assert 'page' in body['data']
-    assert 'per_page' in body['data']
+    assert 'perPage' in body['data']
 
 
 # ---------------------------------------------------------------------------
@@ -112,7 +112,7 @@ async def test_get_club(client):
     body = resp.json()
     assert body['success'] is True
     assert body['data']['name'] == 'Detail Club'
-    assert body['data']['member_count'] == 1
+    assert body['data']['memberCount'] == 1
 
 
 @pytest.mark.asyncio
@@ -157,8 +157,8 @@ async def test_update_club(client):
     assert body['data']['id'] == club_id
     assert body['data']['name'] == 'Updated'
     assert 'description' in body['data']
-    assert 'is_private' in body['data']
-    assert 'max_members' in body['data']
+    assert 'isPrivate' in body['data']
+    assert 'maxMembers' in body['data']
 
 
 @pytest.mark.asyncio
@@ -244,7 +244,7 @@ async def test_delete_club_forbidden_for_non_admin(client):
 
 @pytest.mark.asyncio
 async def test_join_club(client):
-    """POST /join lets another user join via invite_code."""
+    """POST /join lets another user join via inviteCode."""
     reg_a = await register_user(client, email='owner@test.com', name='Owner')
     headers_a = auth_headers(reg_a['token'])
 
@@ -253,7 +253,7 @@ async def test_join_club(client):
         headers=headers_a,
         json={'name': 'Joinable'},
     )
-    invite_code = create_resp.json()['data']['invite_code']
+    invite_code = create_resp.json()['data']['inviteCode']
 
     reg_b = await register_user(client, email='joiner@test.com', name='Joiner')
     headers_b = auth_headers(reg_b['token'])
@@ -301,7 +301,7 @@ async def test_leave_club(client):
         json={'name': 'Leavable'},
     )
     club_id = create_resp.json()['data']['id']
-    invite_code = create_resp.json()['data']['invite_code']
+    invite_code = create_resp.json()['data']['inviteCode']
 
     reg_b = await register_user(client, email='leaver@test.com', name='Leaver')
     headers_b = auth_headers(reg_b['token'])
@@ -338,7 +338,7 @@ async def test_join_by_code(client):
         headers=headers_a,
         json={'name': 'Alias Club'},
     )
-    invite_code = create_resp.json()['data']['invite_code']
+    invite_code = create_resp.json()['data']['inviteCode']
 
     reg_b = await register_user(client, email='coder@test.com', name='Coder')
     headers_b = auth_headers(reg_b['token'])
@@ -407,9 +407,9 @@ async def test_get_club_progress(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert body['data']['club_id'] == club_id
-    assert isinstance(body['data']['members_progress'], list)
-    assert isinstance(body['data']['average_progress'], int)
+    assert body['data']['clubId'] == club_id
+    assert isinstance(body['data']['membersProgress'], list)
+    assert isinstance(body['data']['averageProgress'], int)
 
 
 @pytest.mark.asyncio
@@ -452,7 +452,7 @@ async def test_get_discussions(client):
     assert 'items' in body['data']
     assert 'total' in body['data']
     assert 'page' in body['data']
-    assert 'per_page' in body['data']
+    assert 'perPage' in body['data']
 
 
 # ---------------------------------------------------------------------------
@@ -482,10 +482,10 @@ async def test_add_discussion(client):
     body = resp.json()
     assert body['success'] is True
     assert 'id' in body['data']
-    assert body['data']['club_id'] == club_id
-    assert body['data']['user_id'] == reg['user']['id']
+    assert body['data']['clubId'] == club_id
+    assert body['data']['userId'] == reg['user']['id']
     assert body['data']['content'] == 'Hello!'
-    assert body['data']['created_at'] is not None
+    assert body['data']['createdAt'] is not None
 
 
 @pytest.mark.asyncio

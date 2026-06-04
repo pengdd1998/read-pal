@@ -299,7 +299,10 @@
     "reset_repeat_placeholder": "Repeat your password",
     "reset_form_label": "New password form",
     "resetting": "Resetting...",
-    "reset_button": "Reset Password"
+    "reset_button": "Reset Password",
+    "completing_sign_in": "Completing sign in...",
+    "callback_missing_data": "OAuth callback missing data",
+    "parse_response_failed": "Failed to parse OAuth response"
   },
   "library": {
     "title": "My Library",

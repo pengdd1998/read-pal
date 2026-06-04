@@ -7,8 +7,8 @@ export interface VisualizationNode {
   group?: string;
   type?: string;
   description?: string;
-  annotation_count?: number;
-  source_book_ids?: string[];
+  annotationCount?: number;
+  sourceBookIds?: string[];
   freshness?: number;
 }
 
@@ -32,8 +32,8 @@ export interface KnowledgeGap {
   concept: string;
   reason: string;
   suggestion: string;
-  suggested_action: string;
-  connected_clusters: number;
+  suggestedAction: string;
+  connectedClusters: number;
 }
 
 export interface SimNode extends VisualizationNode {

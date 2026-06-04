@@ -5,7 +5,6 @@
  * All use `currentColor` for stroke/fill so they inherit text color.
  */
 
-import React from 'react';
 
 interface IconProps {
   className?: string;

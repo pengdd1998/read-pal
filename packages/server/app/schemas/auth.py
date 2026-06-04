@@ -32,7 +32,7 @@ class UserResponse(BaseModel):
     settings: dict = {}
     created_at: datetime | None = None
 
-    model_config = {'from_attributes': True}
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True, alias_generator=to_camel)
 
 
 class AuthResponse(BaseModel):

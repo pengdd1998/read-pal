@@ -45,7 +45,7 @@ class SessionResponse(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True, alias_generator=to_camel)
 
 
 class SessionListResponse(BaseModel):
@@ -53,8 +53,10 @@ class SessionListResponse(BaseModel):
     data: list[SessionResponse]
     total: int
     page: int = 1
-    per_page: int = 50
-    has_more: bool = False
+    per_page: int = Field(50, alias='perPage')
+    has_more: bool = Field(False, alias='hasMore')
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
 
 class SessionStatsResponse(BaseModel):

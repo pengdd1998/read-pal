@@ -14,7 +14,7 @@ def _make_mock_result(book_id: str) -> MagicMock:
     mock_result = MagicMock()
     mock_result.model_dump.return_value = {
         'id': str(uuid4()),
-        'book_id': book_id,
+        'bookId': book_id,
         'title': 'My Reading Mirror',
         'format': 'reading_mirror',
         'sections': [{'id': 'section-1', 'type': 'encounter', 'data': {}}],
@@ -47,7 +47,7 @@ async def test_generate_returns_success(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
-    assert body['data']['book_id'] == book_id
+    assert body['data']['bookId'] == book_id
     assert body['data']['title'] == 'My Reading Mirror'
 
 

@@ -38,7 +38,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
       }`}>
         {/* Font size */}
         <div>
-          <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5 block">{t('font_size_label')}</label>
+          <label className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 block">{t('font_size_label')}</label>
           <div className="flex items-center gap-2">
             <button onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_decrease_font')}>A-</button>
             <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full relative">
@@ -51,7 +51,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
 
         {/* Line height */}
         <div>
-          <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5 block">{t('line_height_label')}</label>
+          <label className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 block">{t('line_height_label')}</label>
           <div className="flex items-center gap-2">
             <button onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_decrease_line_height')}>-</button>
             <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full relative">
@@ -64,7 +64,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
 
         {/* Font family */}
         <div>
-          <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5 block">{t('font_label')}</label>
+          <label className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 block">{t('font_label')}</label>
           <div className="grid grid-cols-4 gap-1">
             {[{ value: 'system-ui', label: t('font_system') }, { value: "'Literata', 'Source Serif 4', Georgia, serif", label: t('font_serif') }, { value: "'Inter', system-ui, sans-serif", label: t('font_sans') }, { value: "'Merriweather', Georgia, serif", label: t('font_merri') }].map((f) => (
               <button
@@ -73,7 +73,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
                 className={`py-2.5 rounded-lg text-[10px] font-medium transition-all ${
                   fontFamily === f.value
                     ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 ring-1 ring-amber-300 dark:ring-amber-700'
-                    : 'text-gray-400 dark:text-gray-500 hover:bg-black/5 dark:hover:bg-white/5'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
               >
                 {f.label}
@@ -84,7 +84,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
 
         {/* Theme */}
         <div>
-          <label className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5 block">{t('theme_label')}</label>
+          <label className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 block">{t('theme_label')}</label>
           <div className="flex gap-1.5">
             {(['light', 'sepia', 'dark'] as const).map((themeVal) => (
               <button
@@ -93,7 +93,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                   theme === themeVal
                     ? themeVal === 'light' ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300' : themeVal === 'dark' ? 'bg-amber-900/50 text-amber-200 ring-1 ring-amber-700' : 'bg-amber-200 text-amber-900 ring-1 ring-amber-400'
-                    : 'text-gray-400 dark:text-gray-500 hover:bg-black/5 dark:hover:bg-white/5'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
               >
                 {themeVal === 'light' ? t('settings_light') : themeVal === 'sepia' ? t('settings_sepia') : t('settings_dark')}
@@ -107,7 +107,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
           <button
             onClick={() => onQuietModeChange(!quietMode)}
             className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
-              quietMode ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 dark:text-gray-500 hover:bg-black/5 dark:hover:bg-white/5'
+              quietMode ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -119,7 +119,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
           <button
             onClick={() => onBgEnabledChange(!bgEnabled)}
             className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
-              bgEnabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-400 dark:text-gray-500 hover:bg-black/5 dark:hover:bg-white/5'
+              bgEnabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -131,7 +131,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
 
         <button
           onClick={() => { onClose(); onShowShortcuts(); }}
-          className="w-full py-2 rounded-lg text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          className="w-full py-2 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
         >
           {t('keyboard_shortcuts')} (?)
         </button>

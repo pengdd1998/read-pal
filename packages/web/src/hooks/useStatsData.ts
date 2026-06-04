@@ -46,8 +46,14 @@ export function useStatsData(): StatsDataResult {
           setData(dashRes.data);
         }
         if (sessRes.success && sessRes.data) {
-          const sessData = sessRes.data;
-          setSessions(Array.isArray(sessData) ? sessData.slice(0, 30) : []);
+          const raw = sessRes.data;
+          const sessData = (Array.isArray(raw) ? raw : []).map((s: SessionData) => ({
+            startedAt: s.startedAt || '',
+            duration: s.duration || 0,
+            pagesRead: s.pagesRead || 0,
+            bookTitle: s.bookTitle || '',
+          }));
+          setSessions(sessData.slice(0, 30));
         }
         if (fcRes.success && fcRes.data) {
           setFlashcardStats(fcRes.data);

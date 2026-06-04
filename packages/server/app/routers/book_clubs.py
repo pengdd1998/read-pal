@@ -34,7 +34,7 @@ async def create_club(
         'data': {
             'id': str(club.id),
             'name': club.name,
-            'invite_code': club.invite_code,
+            'inviteCode': club.invite_code,
         },
     }
 
@@ -54,7 +54,7 @@ async def discover_clubs(
             'items': items,
             'total': total,
             'page': page,
-            'per_page': per_page,
+            'perPage': per_page,
         },
     }
 
@@ -76,7 +76,7 @@ async def list_clubs(
             'items': items,
             'total': total,
             'page': page,
-            'per_page': per_page,
+            'perPage': per_page,
         },
     }
 
@@ -121,8 +121,8 @@ async def update_club(
             'id': str(club.id),
             'name': club.name,
             'description': club.description,
-            'is_private': club.is_private,
-            'max_members': club.max_members,
+            'isPrivate': club.is_private,
+            'maxMembers': club.max_members,
         },
     }
 
@@ -219,9 +219,9 @@ async def get_club_progress(
     return {
         'success': True,
         'data': {
-            'club_id': str(club_id),
-            'members_progress': progress['members_progress'],
-            'average_progress': progress['average_progress'],
+            'clubId': str(club_id),
+            'membersProgress': progress['membersProgress'],
+            'averageProgress': progress['averageProgress'],
         },
     }
 
@@ -244,16 +244,16 @@ async def get_discussions(
             'items': [
                 {
                     'id': str(d.id),
-                    'club_id': str(d.club_id),
-                    'user_id': str(d.user_id),
+                    'clubId': str(d.club_id),
+                    'userId': str(d.user_id),
                     'content': d.content,
-                    'created_at': d.created_at.isoformat() if d.created_at else None,
+                    'createdAt': d.created_at.isoformat() if d.created_at else None,
                 }
                 for d in discussions
             ],
             'total': total,
             'page': page,
-            'per_page': per_page,
+            'perPage': per_page,
         },
     }
 
@@ -280,9 +280,9 @@ async def add_discussion(
         'success': True,
         'data': {
             'id': str(discussion.id),
-            'club_id': str(discussion.club_id),
-            'user_id': str(discussion.user_id),
+            'clubId': str(discussion.club_id),
+            'userId': str(discussion.user_id),
             'content': discussion.content,
-            'created_at': discussion.created_at.isoformat() if discussion.created_at else None,
+            'createdAt': discussion.created_at.isoformat() if discussion.created_at else None,
         },
     }

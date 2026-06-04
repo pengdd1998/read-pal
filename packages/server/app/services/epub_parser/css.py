@@ -1,6 +1,9 @@
 """CSS extraction and sanitization for EPUB files."""
 
+import logging
 import zipfile
+
+logger = logging.getLogger('read-pal')
 
 from app.services.epub_parser.constants import (
     CSS_DANGEROUS,
@@ -28,6 +31,7 @@ def extract_epub_css(
             raw = zf.read(resolved).decode('utf-8', errors='replace')
             css_parts.append(raw)
         except Exception:
+            logger.debug('Failed to read CSS from ZIP: %s', resolved, exc_info=True)
             continue
 
     combined = '\n'.join(css_parts)

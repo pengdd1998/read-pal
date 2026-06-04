@@ -134,6 +134,7 @@ async def delete_book(db: AsyncSession, user_id: str, book_id: UUID) -> bool:
 async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
     """Return aggregate book statistics for a user (cached 5 min, single query)."""
     from app.core.redis import get_redis
+    from app.config import get_settings
 
     cache_key = f'stats:books:{user_id}'
     try:
@@ -167,12 +168,12 @@ async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
         'reading': int(row.reading),
         'completed': int(row.completed),
         'unread': int(row.unread),
-        'total_pages_read': int(row.pages),
+        'totalPagesRead': int(row.pages),
     }
 
     try:
         redis = get_redis()
-        await redis.setex(cache_key, 300, json.dumps(result))
+        await redis.setex(cache_key, get_settings().cache_data_ttl_seconds, json.dumps(result))
     except Exception as exc:
         logger.debug('book_service.cache_write_failed', error=str(exc)[:200])
 

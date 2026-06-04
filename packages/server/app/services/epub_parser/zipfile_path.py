@@ -187,7 +187,8 @@ def _build_chapters(
         resolved = resolve_epub_path(opf_path, href)
         try:
             raw_html = zf.read(resolved).decode('utf-8', errors='replace')
-        except (KeyError, Exception):
+        except Exception:
+            logger.debug('Failed to read chapter from ZIP: %s', resolved, exc_info=True)
             continue
 
         enriched = _enrich_html(raw_html, resolved, image_map, css_str)
@@ -226,6 +227,7 @@ def _enrich_html(
     try:
         enriched = rewrite_image_sources(raw_html, image_map, resolved)
     except Exception:
+        logger.debug('Image source rewrite failed for %s', resolved, exc_info=True)
         enriched = raw_html
 
     enriched = annotate_footnotes(enriched)

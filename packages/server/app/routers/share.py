@@ -67,9 +67,9 @@ async def get_shared_content(
         'data': {
             'title': share.title,
             'format': share.format,
-            'content_type': share.content_type,
+            'contentType': share.content_type,
             'content': share.content,
-            'view_count': share.view_count,
+            'viewCount': share.view_count,
         },
     }
 
@@ -112,7 +112,7 @@ async def get_reading_card(
     return {
         'success': True,
         'data': {
-            'total_shares': len(shares),
+            'totalShares': len(shares),
             'shares': [_dump(s) for s in shares[:10]],
         },
     }

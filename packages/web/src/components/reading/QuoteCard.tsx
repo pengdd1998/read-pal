@@ -184,6 +184,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
               disabled={downloading}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 hover:bg-white/20 border border-white/10 hover:border-white/20 disabled:opacity-60 disabled:cursor-not-allowed"
               title={tc('download_as_png')}
+              aria-label={tc('download_as_png')}
             >
               {downloading ? (
                 <>

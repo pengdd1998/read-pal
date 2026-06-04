@@ -40,6 +40,17 @@ class Annotation(Base):
             'book_id',
             'created_at',
         ),
+        Index(
+            'ix_annotations_user_id_type',
+            'user_id',
+            'type',
+        ),
+        Index(
+            'ix_annotations_user_id_type_created_at',
+            'user_id',
+            'type',
+            'created_at',
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(

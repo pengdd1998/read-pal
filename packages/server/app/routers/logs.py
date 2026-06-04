@@ -81,5 +81,5 @@ async def get_llm_log_detail(
         )
     return {
         'success': True,
-        'data': LLMLogResponse.model_validate(log).model_dump(mode='json'),
+        'data': LLMLogResponse.model_validate(log).model_dump(mode='json', by_alias=True),
     }

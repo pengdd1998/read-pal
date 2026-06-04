@@ -33,8 +33,9 @@ async def generate(
 ) -> MemoryBookResponse:
     """Generate a 10-section Reading Mirror.
 
-    Sections 1, 3, 10 are LLM-generated with enriched prompts.
-    Sections 2, 4, 5, 6, 7, 8, 9 are placeholders for Phase 2.
+    All 10 sections are LLM-generated with enriched prompts:
+    encounter, attention_map, highlights, annotations_woven, conversations,
+    concept_web, what_stuck, threads, reader_became, recommendations.
     """
     t0 = time.monotonic()
     logger.info(

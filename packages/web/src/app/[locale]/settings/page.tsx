@@ -238,7 +238,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <DeveloperSection />
+      <DeveloperSection settings={settings} />
       <AccountSection />
 
       {/* Back link */}

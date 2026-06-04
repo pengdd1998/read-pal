@@ -285,7 +285,7 @@ async def test_get_deliveries_returns_paginated_data(client):
     assert 'items' in data
     assert 'total' in data
     assert 'page' in data
-    assert 'per_page' in data
+    assert 'perPage' in data
     assert isinstance(data['items'], list)
 
 

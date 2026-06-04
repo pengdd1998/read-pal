@@ -621,11 +621,11 @@ class TestGetSessionStats:
 
             stats = await reading_session_service.get_session_stats(db, user_id)
 
-        assert stats['total_sessions'] == 10
-        assert stats['total_duration'] == 36000
-        assert stats['total_pages_read'] == 150
-        assert stats['total_highlights'] == 45
-        assert stats['total_notes'] == 12
+        assert stats['totalSessions'] == 10
+        assert stats['totalDuration'] == 36000
+        assert stats['totalPagesRead'] == 150
+        assert stats['totalHighlights'] == 45
+        assert stats['totalNotes'] == 12
 
     @pytest.mark.asyncio
     async def test_returns_cached_stats(self):
@@ -633,11 +633,11 @@ class TestGetSessionStats:
         user_id = str(uuid4())
 
         cached_data = {
-            'total_sessions': 5,
-            'total_duration': 1800,
-            'total_pages_read': 60,
-            'total_highlights': 10,
-            'total_notes': 2,
+            'totalSessions': 5,
+            'totalDuration': 1800,
+            'totalPagesRead': 60,
+            'totalHighlights': 10,
+            'totalNotes': 2,
         }
 
         with patch('app.core.redis.get_redis') as mock_redis_fn:
@@ -673,8 +673,8 @@ class TestGetSessionStats:
             stats = await reading_session_service.get_session_stats(db, user_id)
 
         # Should still return stats from DB
-        assert stats['total_sessions'] == 0
-        assert stats['total_duration'] == 0
+        assert stats['totalSessions'] == 0
+        assert stats['totalDuration'] == 0
 
     @pytest.mark.asyncio
     async def test_caches_result_after_db_query(self):

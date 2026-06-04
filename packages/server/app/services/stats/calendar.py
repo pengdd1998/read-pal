@@ -3,7 +3,7 @@
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -121,19 +121,25 @@ async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
         key = row[0].isoformat() if isinstance(row[0], date) else str(row[0])
         daily_map[key] = {'minutes': int(row[1]) // 60, 'pages': int(row[2])}
 
-    # Annotations counts for the week
-    hl_count = await db.scalar(
-        select(func.count(Annotation.id)).where(and_(
-            Annotation.user_id == uid, Annotation.type == 'highlight',
-            Annotation.created_at >= dt_start, Annotation.created_at < dt_end,
-        ))
-    )
-    note_count = await db.scalar(
-        select(func.count(Annotation.id)).where(and_(
-            Annotation.user_id == uid, Annotation.type == 'note',
-            Annotation.created_at >= dt_start, Annotation.created_at < dt_end,
-        ))
-    )
+    # Annotations counts for the week (single composite query)
+    ann_row = (
+        await db.execute(
+            select(
+                func.count(case(
+                    (Annotation.type == 'highlight', Annotation.id),
+                )).label('highlights'),
+                func.count(case(
+                    (Annotation.type == 'note', Annotation.id),
+                )).label('notes'),
+            ).where(and_(
+                Annotation.user_id == uid,
+                Annotation.created_at >= dt_start,
+                Annotation.created_at < dt_end,
+            ))
+        )
+    ).one()
+    hl_count = ann_row.highlights or 0
+    note_count = ann_row.notes or 0
 
     # Active books this week
     active_books = await db.scalar(
@@ -144,10 +150,22 @@ async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
         ))
     )
 
-    # Streaks (reuse calendar logic)
-    cal = await get_reading_calendar(db, uid, months=1, year=None, month=None)
-    current_streak = cal['currentStreak']
-    longest_streak = cal['longestStreak']
+    # Streaks (lightweight query instead of full get_reading_calendar)
+    streak_cutoff = today - timedelta(days=60)
+    streak_day_col = func.date(ReadingSession.started_at).label('day')
+    streak_rows = await db.execute(
+        select(streak_day_col)
+        .where(
+            ReadingSession.user_id == uid,
+            ReadingSession.started_at >= datetime.combine(streak_cutoff, datetime.min.time()),
+        )
+        .group_by(streak_day_col),
+    )
+    active_dates = {
+        r[0] if isinstance(r[0], date) else date.fromisoformat(r[0])
+        for r in streak_rows.all()
+    }
+    current_streak, longest_streak = compute_streaks(active_dates)
 
     # Build daily breakdown
     daily_breakdown = []

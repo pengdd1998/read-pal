@@ -24,7 +24,7 @@ def paginate(
         'items': items,
         'total': total,
         'page': page,
-        'per_page': per_page,
+        'perPage': per_page,
     }
     result.update(extra)
     return result

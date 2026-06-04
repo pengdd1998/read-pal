@@ -205,14 +205,14 @@ async def get_relationship(
     rel = await _get_or_create_relationship(db, user_id)
     return {
         'persona': rel.persona,
-        'books_read_together': rel.books_read_together,
-        'total_messages': rel.total_messages,
-        'last_interaction_at': (
+        'booksReadTogether': rel.books_read_together,
+        'totalMessages': rel.total_messages,
+        'lastInteractionAt': (
             rel.last_interaction_at.isoformat()
             if rel.last_interaction_at
             else None
         ),
-        'created_at': rel.created_at.isoformat() if rel.created_at else None,
+        'createdAt': rel.created_at.isoformat() if rel.created_at else None,
     }
 
 

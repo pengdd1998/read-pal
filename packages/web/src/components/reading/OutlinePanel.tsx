@@ -204,7 +204,7 @@ export function OutlinePanel({
       <div className="flex-1 overflow-y-auto">
         {chapters.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-xs text-gray-400">{t('outline_no_match')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('outline_no_match')}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-800">

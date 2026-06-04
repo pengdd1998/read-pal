@@ -20,9 +20,10 @@ export interface BookProgress {
 }
 
 export interface SessionData {
-  date: string;
+  startedAt: string;
   duration: number;
   pagesRead: number;
+  bookTitle?: string;
 }
 
 export interface FlashcardStats {

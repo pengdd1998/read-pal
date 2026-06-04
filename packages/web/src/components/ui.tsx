@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useTranslations } from 'next-intl';
 
 export function LoadingSpinner({ className = 'w-4 h-4' }: { className?: string }) {

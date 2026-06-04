@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 
 class GraphNode(BaseModel):
     """A single node in the knowledge graph."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     id: str
     label: str
@@ -31,6 +34,8 @@ class GraphEdge(BaseModel):
 class GraphData(BaseModel):
     """Full graph payload for frontend SVG rendering."""
 
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
     nodes: list[GraphNode]
     edges: list[GraphEdge]
 
@@ -46,6 +51,8 @@ class ConceptSearchResult(BaseModel):
 
 class KnowledgeGap(BaseModel):
     """A detected gap in the user's knowledge graph."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     concept: str
     reason: str

@@ -12,6 +12,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.core.redis import get_redis
 from app.models.book import Book
 
@@ -113,7 +114,7 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
 
     try:
         redis = get_redis()
-        await redis.setex(_cache_key(user_id), 600, json.dumps(result))
+        await redis.setex(_cache_key(user_id), get_settings().cache_recommendation_ttl_seconds, json.dumps(result))
     except Exception:
         logger.warning('Redis unavailable, skipping recommendation cache set')
 

@@ -53,10 +53,10 @@ async def test_create_session(client):
 
     session = await _create_session(client, reg['token'], book['id'])
 
-    assert session['book_id'] == book['id']
-    assert session['is_active'] is True
-    assert session['started_at'] is not None
-    assert session['ended_at'] is None
+    assert session['bookId'] == book['id']
+    assert session['isActive'] is True
+    assert session['startedAt'] is not None
+    assert session['endedAt'] is None
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +96,7 @@ async def test_list_sessions_with_book_filter(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['total'] == 1
-    assert body['data'][0]['book_id'] == book_a['id']
+    assert body['data'][0]['bookId'] == book_a['id']
 
 
 # ---------------------------------------------------------------------------
@@ -151,9 +151,11 @@ async def test_get_session_stats(client):
     body = resp.json()
     assert body['success'] is True
     stats = body['data']
-    assert 'total_sessions' in stats
-    assert 'total_duration' in stats
-    assert 'total_pages_read' in stats
+    assert 'totalSessions' in stats
+    assert 'totalDuration' in stats
+    assert 'totalPagesRead' in stats
+    assert 'totalHighlights' in stats
+    assert 'totalNotes' in stats
 
 
 # ---------------------------------------------------------------------------
@@ -175,8 +177,8 @@ async def test_end_session(client):
     assert resp.status_code == 200
 
     data = resp.json()['data']
-    assert data['is_active'] is False
-    assert data['ended_at'] is not None
+    assert data['isActive'] is False
+    assert data['endedAt'] is not None
 
 
 # ---------------------------------------------------------------------------
@@ -198,8 +200,8 @@ async def test_start_session_with_bookId(client):
     assert resp.status_code == 201
 
     data = resp.json()['data']
-    assert data['book_id'] == book['id']
-    assert data['is_active'] is True
+    assert data['bookId'] == book['id']
+    assert data['isActive'] is True
 
 
 @pytest.mark.asyncio
@@ -214,7 +216,7 @@ async def test_start_session_with_book_id_snake(client):
         headers=headers,
     )
     assert resp.status_code == 201
-    assert resp.json()['data']['book_id'] == book['id']
+    assert resp.json()['data']['bookId'] == book['id']
 
 
 # ---------------------------------------------------------------------------
@@ -261,8 +263,8 @@ async def test_get_book_session_log(client):
     assert len(body['data']) >= 1
     # Pagination metadata
     assert body['page'] == 1
-    assert body['per_page'] == 50
-    assert body['has_more'] is False
+    assert body['perPage'] == 50
+    assert body['hasMore'] is False
 
 
 @pytest.mark.asyncio
@@ -283,11 +285,11 @@ async def test_get_book_session_log_pagination(client):
     body = resp.json()
     assert body['total'] == 3
     assert body['page'] == 1
-    assert body['per_page'] == 2
+    assert body['perPage'] == 2
     assert len(body['data']) == 2
-    assert body['has_more'] is True
+    assert body['hasMore'] is True
 
-    # Page 2, per_page=2 — should have has_more=False
+    # Page 2, per_page=2 — should have hasMore=False
     resp2 = await client.get(
         f"/api/v1/sessions/book/{book['id']}/log?page=2&per_page=2",
         headers=headers,
@@ -296,7 +298,7 @@ async def test_get_book_session_log_pagination(client):
     body2 = resp2.json()
     assert body2['page'] == 2
     assert len(body2['data']) == 1
-    assert body2['has_more'] is False
+    assert body2['hasMore'] is False
 
 
 # ---------------------------------------------------------------------------

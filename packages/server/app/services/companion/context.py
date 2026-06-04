@@ -1,6 +1,5 @@
 """Context loading, prompt building, and message persistence for companion."""
 
-import asyncio
 from typing import Any
 from uuid import UUID
 
@@ -190,11 +189,9 @@ async def _prepare_context(
     lang: str = 'en',
 ) -> tuple[Book, list[HumanMessage | AIMessage], str, TokenBudget]:
     """Load all chat context in parallel, returning (book, history, system_text, budget)."""
-    book, annotations_ctx, history = await asyncio.gather(
-        _load_book(db, user_id, book_id),
-        _load_annotations_context(db, user_id, book_id),
-        _load_history(db, user_id, book_id),
-    )
+    book = await _load_book(db, user_id, book_id)
+    annotations_ctx = await _load_annotations_context(db, user_id, book_id)
+    history = await _load_history(db, user_id, book_id)
 
     async def _get_rag() -> str:
         try:
@@ -212,7 +209,8 @@ async def _prepare_context(
             logger.warning('companion.memory_failed', error=str(exc))
             return ''
 
-    rag_ctx, memory_summary = await asyncio.gather(_get_rag(), _get_memory())
+    rag_ctx = await _get_rag()
+    memory_summary = await _get_memory()
 
     budget = TokenBudget()
     system_text = _build_system_prompt(

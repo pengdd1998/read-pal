@@ -24,7 +24,6 @@ def extract_images(
 ) -> dict[str, str]:
     """Extract images from EPUB and return {zip_path: data_uri} map."""
     image_map: dict[str, str] = {}
-    base_dir = Path(opf_path).parent  # unused but kept for clarity
 
     for iid, info in manifest.items():
         mt = info.get('media_type', '')
@@ -47,6 +46,7 @@ def extract_images(
         try:
             data = zf.read(resolved)
         except Exception:
+            logger.debug('Failed to read image from ZIP: %s', resolved, exc_info=True)
             continue
 
         ext = Path(resolved).suffix.lower()
@@ -112,6 +112,7 @@ def extract_cover(
     try:
         data = zf.read(resolved)
     except Exception:
+        logger.debug('Failed to read cover image from ZIP: %s', resolved, exc_info=True)
         return None
     ext = Path(resolved).suffix.lower()
     mime = IMAGE_MIME_MAP.get(ext, 'image/jpeg')

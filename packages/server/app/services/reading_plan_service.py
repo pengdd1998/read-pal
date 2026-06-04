@@ -70,11 +70,11 @@ async def generate_plan(
 
     return {
         'id': str(plan.id),
-        'book_id': str(book_id),
-        'plan_text': plan_text,
-        'total_days': total_days,
-        'current_day': 1,
-        'is_active': True,
+        'bookId': str(book_id),
+        'planText': plan_text,
+        'totalDays': total_days,
+        'currentDay': 1,
+        'isActive': True,
     }
 
 
@@ -103,11 +103,11 @@ async def get_active_plan(
     )
     return {
         'id': str(plan.id),
-        'book_id': str(plan.book_id),
-        'plan_text': plan.plan_text,
-        'total_days': plan.total_days,
-        'current_day': plan.current_day,
-        'is_active': plan.is_active,
+        'bookId': str(plan.book_id),
+        'planText': plan.plan_text,
+        'totalDays': plan.total_days,
+        'currentDay': plan.current_day,
+        'isActive': plan.is_active,
     }
 
 
@@ -142,9 +142,9 @@ async def advance_plan(
 
     return {
         'id': str(plan.id),
-        'current_day': plan.current_day,
-        'total_days': plan.total_days,
-        'is_active': plan.is_active,
+        'currentDay': plan.current_day,
+        'totalDays': plan.total_days,
+        'isActive': plan.is_active,
     }
 
 

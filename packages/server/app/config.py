@@ -107,6 +107,8 @@ class Settings(BaseSettings):
     cache_llm_ttl: str = '30m'
     cache_rag_ttl: str = '30m'
     cache_knowledge_ttl: str = '7d'
+    cache_data_ttl: str = '5m'
+    cache_recommendation_ttl: str = '10m'
     cache_llm_max_entries: int = 500
 
     # SMTP (optional — console fallback when unset)
@@ -206,6 +208,16 @@ class Settings(BaseSettings):
     @property
     def cache_knowledge_ttl_seconds(self) -> int:
         return _parse_duration(self.cache_knowledge_ttl)
+
+    @computed_field
+    @property
+    def cache_data_ttl_seconds(self) -> int:
+        return _parse_duration(self.cache_data_ttl)
+
+    @computed_field
+    @property
+    def cache_recommendation_ttl_seconds(self) -> int:
+        return _parse_duration(self.cache_recommendation_ttl)
 
     def validate_production(self) -> list[str]:
         """Validate settings for production — raises on insecure secrets."""

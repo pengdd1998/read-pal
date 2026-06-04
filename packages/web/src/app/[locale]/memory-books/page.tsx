@@ -32,7 +32,7 @@ interface MemoryBook {
   moments: Array<{ type: string; content: string }>;
   insights: Array<{ theme: string; description: string }>;
   stats: MemoryBookStats;
-  createdAt: string;
+  generatedAt: string;
   book?: { id: string; title: string; author: string; coverUrl?: string };
 }
 
@@ -161,7 +161,7 @@ export default function MemoryBooksPage() {
               return (
                 <Link
                   key={mb.id}
-                  href={isPersonalBook ? `/memory-books/${mb.bookId}` : `/book/${mb.bookId}`}
+                  href={`/memory-books/${mb.bookId}`}
                   className="block bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200"
                 >
                   <div className="flex items-center gap-4">
@@ -181,7 +181,7 @@ export default function MemoryBooksPage() {
                           ? t('chapters', { count: sectionCount })
                           : t('moments', { count: mb.moments?.length || 0 })}
                         {' \u00B7 '}
-                        {mb.createdAt ? new Date(mb.createdAt).toLocaleDateString() : t('unknownDate')}
+                        {mb.generatedAt ? new Date(mb.generatedAt).toLocaleDateString() : t('unknownDate')}
                       </p>
                       {mb.stats && (
                         <div className="flex gap-3 mt-2">

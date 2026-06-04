@@ -54,7 +54,7 @@ async def get_graph(
     graph_data = await build_graph(
         db, UUID(current_user['id']), book_id, force_rebuild=force_rebuild,
     )
-    return {'success': True, 'data': graph_data.model_dump()}
+    return {'success': True, 'data': graph_data.model_dump(by_alias=True, mode='json')}
 
 
 @router.get('/search', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
@@ -66,7 +66,7 @@ async def search(
 ) -> dict:
     """Search concepts in a book's knowledge graph."""
     results = await search_concepts(db, UUID(current_user['id']), book_id, q)
-    return {'success': True, 'data': [r.model_dump() for r in results]}
+    return {'success': True, 'data': [r.model_dump() for r in results]}  # ConceptSearchResult has no snake_case fields
 
 
 @router.get('/concepts/{book_id}', response_model=GenericResponse)
@@ -87,4 +87,4 @@ async def get_knowledge_gaps(
 ) -> dict:
     """Detect knowledge gaps in the user's combined knowledge graph."""
     gaps = await detect_gaps(db, UUID(current_user['id']))
-    return {'success': True, 'data': {'gaps': [g.model_dump() for g in gaps]}}
+    return {'success': True, 'data': {'gaps': [g.model_dump(by_alias=True, mode='json') for g in gaps]}}

@@ -41,7 +41,7 @@ async def list_flashcards(
             'items': [_serialize_card(c) for c in cards],
             'total': total,
             'page': page,
-            'per_page': per_page,
+            'perPage': per_page,
         },
     }
 

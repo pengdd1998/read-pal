@@ -167,7 +167,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
             const items = FORMATS.filter((f) => f.category === cat.key);
             return (
               <div key={cat.key}>
-                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   {t(cat.labelKey)}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -210,7 +210,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
           {preview && (
             <div className="mt-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t('export_preview_label')}</span>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('export_preview_label')}</span>
                 <button
                   onClick={handleCopy}
                   aria-label={t('export_copy')}

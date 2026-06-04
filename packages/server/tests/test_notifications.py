@@ -25,7 +25,7 @@ async def test_list_notifications_returns_empty(client):
     assert data['items'] == []
     assert data['total'] == 0
     assert data['page'] == 1
-    assert data['per_page'] == 20
+    assert data['perPage'] == 20
 
 
 @pytest.mark.asyncio
@@ -39,7 +39,7 @@ async def test_list_notifications_accepts_query_params(client):
     )
     assert resp.status_code == 200
     data = resp.json()['data']
-    assert data['per_page'] == 10
+    assert data['perPage'] == 10
 
 
 # ---------------------------------------------------------------------------

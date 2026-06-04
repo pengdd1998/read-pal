@@ -24,10 +24,10 @@ async def get_chat_history(
     return [
         {
             'id': str(m.id),
-            'book_id': str(m.book_id),
+            'bookId': str(m.book_id),
             'role': m.role,
             'content': m.content,
-            'created_at': m.created_at.isoformat() if m.created_at else None,
+            'createdAt': m.created_at.isoformat() if m.created_at else None,
         }
         for m in messages
     ]

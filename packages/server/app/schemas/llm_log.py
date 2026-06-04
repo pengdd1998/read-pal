@@ -5,10 +5,13 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
 class LLMLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True, alias_generator=to_camel)
+
     id: UUID
     user_id: UUID | None = None
     book_id: UUID | None = None
@@ -25,8 +28,6 @@ class LLMLogResponse(BaseModel):
     is_fallback: bool = False
     extra: dict[str, Any] | None = None
     created_at: datetime | None = None
-
-    model_config = {'from_attributes': True}
 
 
 class LLMLogListResponse(BaseModel):

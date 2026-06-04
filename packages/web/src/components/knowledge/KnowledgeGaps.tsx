@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import type { KnowledgeGap } from '@/types/knowledge';
 
 interface KnowledgeGapsProps {
@@ -26,11 +25,11 @@ export function KnowledgeGaps({ gaps, t }: KnowledgeGapsProps) {
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                 <span className="font-medium">{t('gap_suggestion')}:</span> {gap.suggestion}
               </p>
-              {gap.suggested_action && (
+              {gap.suggestedAction && (
                 <p className="text-xs text-teal-700 dark:text-teal-400 flex items-start gap-1">
                   <span aria-hidden="true" className="shrink-0 mt-px">&#x2192;</span>
                   <span>
-                    <span className="font-medium">{t('gap_action')}:</span> {gap.suggested_action}
+                    <span className="font-medium">{t('gap_action')}:</span> {gap.suggestedAction}
                   </span>
                 </p>
               )}

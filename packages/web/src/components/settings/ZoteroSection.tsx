@@ -5,7 +5,13 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 
-export function ZoteroSection() {
+import { UserSettings } from './types';
+
+interface ZoteroSectionProps {
+  initialSettings?: UserSettings | null;
+}
+
+export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
   const { toast } = useToast();
   const t = useTranslations('settings_page');
   const [connected, setConnected] = useState(false);
@@ -15,18 +21,12 @@ export function ZoteroSection() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get<{ connected: boolean; userId: string | null }>('/api/v1/settings')
-      .then((res) => {
-        if (res.success && res.data) {
-          const d = res.data as Record<string, unknown>;
-          if (d.zoteroApiKey && d.zoteroUserId) {
-            setConnected(true);
-            setUserId(String(d.zoteroUserId));
-          }
-        }
-      })
-      .catch(() => { /* Zotero not configured */ });
-  }, []);
+    const s = initialSettings as Record<string, unknown> | null | undefined;
+    if (s?.['zoteroApiKey'] && s?.['zoteroUserId']) {
+      setConnected(true);
+      setUserId(String(s['zoteroUserId']));
+    }
+  }, [initialSettings]);
 
   async function handleConnect() {
     if (!apiKey.trim() || !userId.trim()) {
@@ -100,8 +100,9 @@ export function ZoteroSection() {
     <div className="space-y-3">
       <div className="space-y-2">
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_api_key_label')}</label>
+          <label htmlFor="zotero-api-key" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_api_key_label')}</label>
           <input
+            id="zotero-api-key"
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
@@ -110,8 +111,9 @@ export function ZoteroSection() {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_user_id')}</label>
+          <label htmlFor="zotero-user-id" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_user_id')}</label>
           <input
+            id="zotero-user-id"
             type="text"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}

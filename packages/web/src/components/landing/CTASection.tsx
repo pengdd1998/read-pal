@@ -48,7 +48,7 @@ export function CTASection({
           <Link href="/auth?mode=register" className="btn btn-primary btn-glow px-10 py-4 text-base rounded-2xl shadow-glow-amber">
             {cta_join_button}
           </Link>
-          <p className="text-sm text-gray-400 mt-5">{free_during_beta}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-5">{free_during_beta}</p>
         </div>
       </section>
     </>

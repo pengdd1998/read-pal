@@ -146,7 +146,7 @@ function StatCard({ label, value, unit }: { label: string; value: string; unit?:
   return (
     <div className="text-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
       <span className="text-lg font-bold text-gray-900 dark:text-white">{value}</span>
-      {unit && <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-0.5">{unit}</span>}
+      {unit && <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">{unit}</span>}
       <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
     </div>
   );

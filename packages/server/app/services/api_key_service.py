@@ -13,9 +13,9 @@ def serialize_key(key: ApiKey, *, include_secret: bool = False) -> dict:
     data = {
         'id': str(key.id),
         'name': key.name,
-        'key_prefix': key.key_prefix,
-        'last_used_at': key.last_used_at.isoformat() if key.last_used_at else None,
-        'created_at': key.created_at.isoformat() if key.created_at else None,
+        'keyPrefix': key.key_prefix,
+        'lastUsedAt': key.last_used_at.isoformat() if key.last_used_at else None,
+        'createdAt': key.created_at.isoformat() if key.created_at else None,
     }
     if include_secret:
         data['key'] = None  # populated by caller

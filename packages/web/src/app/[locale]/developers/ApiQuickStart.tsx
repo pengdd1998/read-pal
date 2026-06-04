@@ -1,11 +1,16 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { API_BASE_URL } from '@/lib/api';
 
 export function ApiQuickStart() {
   const t = useTranslations('developers');
-  const apiBase = API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  const [apiBase, setApiBase] = useState('');
+
+  useEffect(() => {
+    setApiBase(API_BASE_URL || window.location.origin);
+  }, []);
 
   return (
     <section>

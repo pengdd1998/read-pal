@@ -245,7 +245,7 @@ export function FictionPanel({
               </p>
 
               {characters.length === 0 ? (
-                <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-4">
                   {t('fiction_no_characters')}
                 </p>
               ) : (
@@ -265,7 +265,7 @@ export function FictionPanel({
                           <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                             {char.name}
                           </span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {char.mentions}x
                           </span>
                         </div>

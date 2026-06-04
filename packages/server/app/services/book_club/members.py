@@ -111,11 +111,11 @@ async def get_members(
     return [
         {
             'id': str(member.id),
-            'club_id': str(member.club_id),
-            'user_id': str(member.user_id),
+            'clubId': str(member.club_id),
+            'userId': str(member.user_id),
             'role': member.role,
-            'joined_at': member.joined_at.isoformat() if member.joined_at else None,
-            'user_name': user_name,
+            'joinedAt': member.joined_at.isoformat() if member.joined_at else None,
+            'user': {'id': str(member.user_id), 'name': user_name},
         }
         for member, user_name in rows
     ]

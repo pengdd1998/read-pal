@@ -46,7 +46,7 @@ def _build_user_data(user: User) -> dict:
         settings=user.settings or {},
         created_at=user.created_at,
     )
-    return user_data.model_dump(mode='json')
+    return user_data.model_dump(mode='json', by_alias=True)
 
 
 def _build_auth_response(user: User, access_token: str, refresh_token: str) -> dict:
