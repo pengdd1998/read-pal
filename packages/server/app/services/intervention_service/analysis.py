@@ -171,6 +171,146 @@ def check_optimal_timing(sessions: list[ReadingSession]) -> dict | None:
 
 
 # ---------------------------------------------------------------------------
+# Data collection
+# ---------------------------------------------------------------------------
+
+
+def _build_session_query(
+    user_id: UUID,
+    since,
+    book_id: UUID | None = None,
+):
+    """Build a ReadingSession query scoped to *user_id* and *since*."""
+    q = select(ReadingSession).where(
+        ReadingSession.user_id == user_id,
+        ReadingSession.started_at >= since,
+    )
+    if book_id:
+        q = q.where(ReadingSession.book_id == book_id)
+    return q
+
+
+async def _fetch_recent_sessions(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID | None,
+) -> tuple[list, list]:
+    """Return (weekly_sessions, today_sessions) for the given user/book."""
+    now = utcnow()
+    week_ago = now - timedelta(days=7)
+    day_ago = now - timedelta(days=1)
+
+    q = _build_session_query(user_id, week_ago, book_id)
+    sessions = (await db.execute(q)).scalars().all()
+
+    today_q = _build_session_query(user_id, day_ago, book_id)
+    today_sessions = (await db.execute(today_q)).scalars().all()
+    return sessions, today_sessions
+
+
+# ---------------------------------------------------------------------------
+# Inline check helpers
+# ---------------------------------------------------------------------------
+
+
+def check_marathon(today_sessions: list) -> dict | None:
+    """Detect too many sessions in a single day."""
+    if len(today_sessions) < MARATHON_SESSIONS:
+        return None
+    total_minutes = sum(s.duration for s in today_sessions) // 60
+    return {
+        'interventionNeeded': True,
+        'type': 'marathon',
+        'priority': 'medium',
+        'message': (
+            f"You've been reading for {len(today_sessions)} sessions "
+            f'today ({total_minutes} min). Consider taking a break to '
+            'let the material sink in.'
+        ),
+    }
+
+
+def check_long_session(today_sessions: list) -> dict | None:
+    """Detect a single session that has been running too long."""
+    active = [s for s in today_sessions if s.is_active]
+    if not active:
+        return None
+    longest = max(active, key=lambda s: s.duration)
+    minutes = longest.duration // 60
+    if minutes < LONG_SESSION_MINUTES:
+        return None
+    return {
+        'interventionNeeded': True,
+        'type': 'long_session',
+        'priority': 'high',
+        'message': (
+            f'You have been reading for {minutes} minutes. '
+            'A short break can improve retention and focus.'
+        ),
+    }
+
+
+def check_low_engagement(sessions: list) -> dict | None:
+    """Detect a recent drop in highlights/notes engagement."""
+    if len(sessions) < _MIN_SESSIONS_ANALYSIS:
+        return None
+    recent = sessions[:len(sessions) // 2]
+    older = sessions[len(sessions) // 2:]
+    recent_engagement = sum(s.highlights + s.notes for s in recent) / max(
+        len(recent), 1,
+    )
+    older_engagement = sum(s.highlights + s.notes for s in older) / max(
+        len(older), 1,
+    )
+    if (
+        older_engagement <= LOW_ENGAGEMENT_THRESHOLD
+        or recent_engagement >= older_engagement * _ENGAGEMENT_DROP_RATIO
+    ):
+        return None
+    return {
+        'interventionNeeded': True,
+        'type': 'low_engagement',
+        'priority': 'low',
+        'message': (
+            'Your highlights and notes have dropped recently. '
+            'Try pausing to reflect on what you\'ve read — active '
+            'engagement helps retention.'
+        ),
+    }
+
+
+def check_welcome_back(sessions: list, today_sessions: list) -> dict | None:
+    """Detect a reading gap and suggest resuming."""
+    if today_sessions or not sessions:
+        return None
+    now = utcnow()
+    last_session = max(sessions, key=lambda s: s.started_at)
+    gap = now - last_session.started_at
+    if gap < timedelta(days=GAP_DAYS):
+        return None
+    return {
+        'interventionNeeded': True,
+        'type': 'welcome_back',
+        'priority': 'medium',
+        'message': (
+            f'Welcome back! It\'s been {gap.days} days since your '
+            'last reading session. Pick up where you left off?'
+        ),
+    }
+
+
+async def _fetch_extended_sessions(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID | None,
+) -> list:
+    """Fetch sessions from the last 14 days for timing analysis."""
+    two_weeks_ago = utcnow() - timedelta(days=14)
+    q = _build_session_query(user_id, two_weeks_ago, book_id)
+    return (await db.execute(q)).scalars().all()
+
+
+# ---------------------------------------------------------------------------
 # Core orchestration
 # ---------------------------------------------------------------------------
 
@@ -181,119 +321,24 @@ async def analyze_reading_pattern(
     book_id: UUID | None = None,
 ) -> dict | None:
     """Return an intervention dict if one is warranted, else None."""
-    now = utcnow()
-    week_ago = now - timedelta(days=7)
-    day_ago = now - timedelta(days=1)
+    sessions, today_sessions = await _fetch_recent_sessions(db, user_id, book_id)
 
-    # Recent sessions (last 7 days)
-    q = select(ReadingSession).where(
-        ReadingSession.user_id == user_id,
-        ReadingSession.started_at >= week_ago,
+    return (
+        check_marathon(today_sessions)
+        or check_long_session(today_sessions)
+        or check_low_engagement(sessions)
+        or check_welcome_back(sessions, today_sessions)
+        or check_speed_drop(sessions)
+        or check_re_reading(sessions)
+        or await _check_optimal_timing(db, user_id, book_id)
     )
-    if book_id:
-        q = q.where(ReadingSession.book_id == book_id)
-    sessions = (await db.execute(q)).scalars().all()
 
-    # Today's sessions
-    today_q = select(ReadingSession).where(
-        ReadingSession.user_id == user_id,
-        ReadingSession.started_at >= day_ago,
-    )
-    if book_id:
-        today_q = today_q.where(ReadingSession.book_id == book_id)
-    today_sessions = (await db.execute(today_q)).scalars().all()
 
-    # --- Check 1: marathon (too many sessions today) ---
-    if len(today_sessions) >= MARATHON_SESSIONS:
-        total_minutes = sum(s.duration for s in today_sessions) // 60
-        return {
-            'interventionNeeded': True,
-            'type': 'marathon',
-            'priority': 'medium',
-            'message': (
-                f"You've been reading for {len(today_sessions)} sessions "
-                f'today ({total_minutes} min). Consider taking a break to '
-                'let the material sink in.'
-            ),
-        }
-
-    # --- Check 2: long current session ---
-    active = [s for s in today_sessions if s.is_active]
-    if active:
-        longest = max(active, key=lambda s: s.duration)
-        minutes = longest.duration // 60
-        if minutes >= LONG_SESSION_MINUTES:
-            return {
-                'interventionNeeded': True,
-                'type': 'long_session',
-                'priority': 'high',
-                'message': (
-                    f'You have been reading for {minutes} minutes. '
-                    'A short break can improve retention and focus.'
-                ),
-            }
-
-    # --- Check 3: declining engagement ---
-    if len(sessions) >= _MIN_SESSIONS_ANALYSIS:
-        recent = sessions[:len(sessions) // 2]
-        older = sessions[len(sessions) // 2:]
-        recent_engagement = sum(s.highlights + s.notes for s in recent) / max(
-            len(recent), 1,
-        )
-        older_engagement = sum(s.highlights + s.notes for s in older) / max(
-            len(older), 1,
-        )
-        if (
-            older_engagement > LOW_ENGAGEMENT_THRESHOLD
-            and recent_engagement < older_engagement * _ENGAGEMENT_DROP_RATIO
-        ):
-            return {
-                'interventionNeeded': True,
-                'type': 'low_engagement',
-                'priority': 'low',
-                'message': (
-                    'Your highlights and notes have dropped recently. '
-                    'Try pausing to reflect on what you\'ve read — active '
-                    'engagement helps retention.'
-                ),
-            }
-
-    # --- Check 4: welcome back after gap ---
-    if not today_sessions and sessions:
-        last_session = max(sessions, key=lambda s: s.started_at)
-        gap = now - last_session.started_at
-        if gap >= timedelta(days=GAP_DAYS):
-            return {
-                'interventionNeeded': True,
-                'type': 'welcome_back',
-                'priority': 'medium',
-                'message': (
-                    f'Welcome back! It\'s been {gap.days} days since your '
-                    'last reading session. Pick up where you left off?'
-                ),
-            }
-
-    # --- Check 5: speed drop ---
-    speed_drop = check_speed_drop(sessions)
-    if speed_drop:
-        return speed_drop
-
-    # --- Check 6: re-reading detection ---
-    re_reading = check_re_reading(sessions)
-    if re_reading:
-        return re_reading
-
-    # --- Check 7: optimal timing ---
-    two_weeks_ago = now - timedelta(days=14)
-    extended_q = select(ReadingSession).where(
-        ReadingSession.user_id == user_id,
-        ReadingSession.started_at >= two_weeks_ago,
-    )
-    if book_id:
-        extended_q = extended_q.where(ReadingSession.book_id == book_id)
-    extended_sessions = (await db.execute(extended_q)).scalars().all()
-    optimal = check_optimal_timing(extended_sessions)
-    if optimal:
-        return optimal
-
-    return None
+async def _check_optimal_timing(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID | None,
+) -> dict | None:
+    """Fetch extended sessions and run optimal timing check."""
+    extended = await _fetch_extended_sessions(db, user_id, book_id)
+    return check_optimal_timing(extended)

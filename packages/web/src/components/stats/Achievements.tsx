@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ReadingStats } from './types';
 
@@ -10,7 +11,7 @@ interface AchievementsProps {
 export function Achievements({ stats }: AchievementsProps) {
   const t = useTranslations('stats');
 
-  const badges = [
+  const badges = useMemo(() => [
     { icon: '📖', title: t('achievement_first_book'), desc: t('achievement_first_book_desc'), unlocked: (stats.booksRead || 0) >= 1 },
     { icon: '🔥', title: t('achievement_on_fire'), desc: t('achievement_on_fire_desc'), unlocked: (stats.readingStreak || 0) >= 7 },
     { icon: '💡', title: t('achievement_curious_mind'), desc: t('achievement_curious_mind_desc'), unlocked: (stats.conceptsLearned || 0) >= 10 },
@@ -19,7 +20,7 @@ export function Achievements({ stats }: AchievementsProps) {
     { icon: '🤝', title: t('achievement_social_reader'), desc: t('achievement_social_reader_desc'), unlocked: (stats.chatMessageCount || 0) >= 1 },
     { icon: '📒', title: t('achievement_memory_keeper'), desc: t('achievement_memory_keeper_desc'), unlocked: (stats.memoryBookCount || 0) >= 1 },
     { icon: '🏆', title: t('achievement_champion'), desc: t('achievement_champion_desc'), unlocked: (stats.booksRead || 0) >= 10 },
-  ];
+  ], [stats, t]);
 
   return (
     <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">

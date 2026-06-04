@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ReadingStats } from './types';
 
@@ -12,11 +13,11 @@ export function LibraryStatus({ stats, statusCounts }: LibraryStatusProps) {
   const t = useTranslations('stats');
   const total = statusCounts.reading + statusCounts.unread + statusCounts.completed;
 
-  const items = [
+  const items = useMemo(() => [
     { label: t('status_reading'), count: statusCounts.reading, color: 'bg-amber-500', pct: stats?.booksRead ? (statusCounts.reading / total) * 100 : 0 },
     { label: t('status_completed'), count: statusCounts.completed, color: 'bg-emerald-500', pct: stats?.booksRead ? (statusCounts.completed / total) * 100 : 0 },
     { label: t('status_unread'), count: statusCounts.unread, color: 'bg-gray-300 dark:bg-gray-600', pct: stats?.booksRead ? (statusCounts.unread / total) * 100 : 0 },
-  ];
+  ], [stats, statusCounts, total, t]);
 
   return (
     <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">

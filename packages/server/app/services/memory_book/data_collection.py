@@ -20,27 +20,41 @@ from app.utils.sanitizer import sanitize_user_input
 logger = structlog.get_logger('read-pal.memory_book')
 
 
-async def _collect_book_data(
+# ---------------------------------------------------------------------------
+# Per-source data fetchers
+# ---------------------------------------------------------------------------
+
+
+async def _fetch_book_meta(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
-) -> dict[str, Any]:
-    """Collect raw reading data (unchanged from v1)."""
-    data: dict[str, Any] = {}
+) -> dict[str, Any] | None:
+    """Fetch book metadata or return None if not found."""
     result = await db.execute(
         select(Book).where(Book.id == book_id, Book.user_id == user_id),
     )
     book = result.scalar_one_or_none()
     if book is None:
-        return data
-
-    data['book'] = {
+        return None
+    return {
         'id': str(book.id), 'title': book.title, 'author': book.author,
         'cover_url': book.cover_url, 'progress': float(book.progress),
         'status': book.status,
         'started_at': book.started_at.isoformat() if book.started_at else None,
         'completed_at': book.completed_at.isoformat() if book.completed_at else None,
     }
+
+
+async def _fetch_annotations(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> tuple[list[dict], list[dict]]:
+    """Fetch highlights and notes from annotations.
+
+    Returns (highlights, notes).
+    """
     result = await db.execute(
         select(Annotation)
         .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
@@ -48,7 +62,8 @@ async def _collect_book_data(
         .limit(500),
     )
     annotations = list(result.scalars().all())
-    data['highlights'] = [
+
+    highlights = [
         {
             'id': str(a.id),
             'content': sanitize_user_input(a.content, context='highlight_content'),
@@ -56,9 +71,10 @@ async def _collect_book_data(
             'tags': a.tags, 'location': a.location,
             'created_at': a.created_at.isoformat() if a.created_at else None,
         }
-        for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)
+        for a in annotations
+        if match_annotation_type(a.type, AnnotationType.highlight)
     ]
-    data['notes'] = [
+    notes = [
         {
             'id': str(a.id),
             'content': sanitize_user_input(a.content, context='note_content'),
@@ -66,8 +82,18 @@ async def _collect_book_data(
             'tags': a.tags,
             'created_at': a.created_at.isoformat() if a.created_at else None,
         }
-        for a in annotations if match_annotation_type(a.type, AnnotationType.note)
+        for a in annotations
+        if match_annotation_type(a.type, AnnotationType.note)
     ]
+    return highlights, notes
+
+
+async def _fetch_conversations(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> list[dict[str, Any]]:
+    """Fetch chat messages for the book."""
     result = await db.execute(
         select(ChatMessage)
         .where(ChatMessage.user_id == user_id, ChatMessage.book_id == book_id)
@@ -75,13 +101,24 @@ async def _collect_book_data(
         .limit(200),
     )
     messages = list(result.scalars().all())
-    data['conversations'] = [
+    return [
         {
             'role': m.role,
             'content': sanitize_user_input(m.content, context='chat_message'),
         }
         for m in messages
     ]
+
+
+async def _fetch_reading_sessions(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> tuple[list[dict], list]:
+    """Fetch reading sessions.
+
+    Returns (serialized_sessions, raw_session_objects).
+    """
     result = await db.execute(
         select(ReadingSession)
         .where(ReadingSession.user_id == user_id, ReadingSession.book_id == book_id)
@@ -89,30 +126,33 @@ async def _collect_book_data(
         .limit(100),
     )
     sessions = list(result.scalars().all())
-    data['reading_sessions'] = [
-        {'started_at': s.started_at.isoformat() if s.started_at else None,
-         'duration': s.duration, 'pages_read': s.pages_read,
-         'highlights': s.highlights, 'notes': s.notes}
+    serialized = [
+        {
+            'started_at': s.started_at.isoformat() if s.started_at else None,
+            'duration': s.duration,
+            'pages_read': s.pages_read,
+            'highlights': s.highlights,
+            'notes': s.notes,
+        }
         for s in sessions
     ]
-    data['stats'] = {
-        'total_highlights': len(data['highlights']),
-        'total_notes': len(data['notes']),
-        'total_conversations': len(data['conversations']),
-        'total_sessions': len(sessions),
-        'total_reading_minutes': sum(s.duration for s in sessions) // 60,
-        'total_pages_read': sum(s.pages_read for s in sessions),
-    }
+    return serialized, sessions
 
-    # Flashcards for "What Stuck" section
-    fc_result = await db.execute(
+
+async def _fetch_flashcards(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> list[dict[str, Any]]:
+    """Fetch flashcards for the 'What Stuck' section."""
+    result = await db.execute(
         select(Flashcard)
         .where(Flashcard.user_id == user_id, Flashcard.book_id == book_id)
         .order_by(Flashcard.created_at.desc())
         .limit(30),
     )
-    flashcards = list(fc_result.scalars().all())
-    data['flashcards'] = [
+    flashcards = list(result.scalars().all())
+    return [
         {
             'question': fc.question,
             'answer': fc.answer[:200],
@@ -122,8 +162,58 @@ async def _collect_book_data(
         }
         for fc in flashcards
     ]
-    data['stats']['total_flashcards'] = len(flashcards)
-    return data
+
+
+def _build_stats(
+    highlights: list,
+    notes: list,
+    conversations: list,
+    sessions: list,
+) -> dict[str, int]:
+    """Compute aggregate stats from collected data."""
+    return {
+        'total_highlights': len(highlights),
+        'total_notes': len(notes),
+        'total_conversations': len(conversations),
+        'total_sessions': len(sessions),
+        'total_reading_minutes': sum(s.duration for s in sessions) // 60,
+        'total_pages_read': sum(s.pages_read for s in sessions),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Core orchestrator
+# ---------------------------------------------------------------------------
+
+
+async def _collect_book_data(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> dict[str, Any]:
+    """Collect raw reading data from all sources."""
+    book_meta = await _fetch_book_meta(db, user_id, book_id)
+    if book_meta is None:
+        return {}
+
+    highlights, notes = await _fetch_annotations(db, user_id, book_id)
+    conversations = await _fetch_conversations(db, user_id, book_id)
+    reading_sessions, raw_sessions = await _fetch_reading_sessions(
+        db, user_id, book_id,
+    )
+    flashcards = await _fetch_flashcards(db, user_id, book_id)
+    stats = _build_stats(highlights, notes, conversations, raw_sessions)
+    stats['total_flashcards'] = len(flashcards)
+
+    return {
+        'book': book_meta,
+        'highlights': highlights,
+        'notes': notes,
+        'conversations': conversations,
+        'reading_sessions': reading_sessions,
+        'flashcards': flashcards,
+        'stats': stats,
+    }
 
 
 async def _collect_enriched_data(

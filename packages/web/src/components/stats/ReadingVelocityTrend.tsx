@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { SessionData } from './types';
 
@@ -10,30 +11,36 @@ interface ReadingVelocityTrendProps {
 export function ReadingVelocityTrend({ sessions }: ReadingVelocityTrendProps) {
   const t = useTranslations('stats');
 
+  const { points, areaPath, durLine, avgPages } = useMemo(() => {
+    if (sessions.length <= 2) return { points: [], areaPath: '', durLine: '', avgPages: '0.0' };
+
+    const data = sessions.slice(0, 14).reverse();
+    const maxPages = Math.max(...data.map((s) => s.pagesRead || 0), 1);
+    const maxDuration = Math.max(...data.map((s) => s.duration || 1), 1);
+    const w = 300;
+    const h = 70;
+    const padY = 5;
+
+    const pts = data.map((s, i) => {
+      const x = (i / Math.max(data.length - 1, 1)) * w;
+      const y = h - padY - (((s.pagesRead || 0) / maxPages) * (h - padY * 2));
+      return { x, y };
+    });
+    const area = `M${pts[0].x},${h} ${pts.map((p) => `L${p.x},${p.y}`).join(' ')} L${pts[pts.length - 1].x},${h} Z`;
+
+    const durPts = data.map((s, i) => {
+      const x = (i / Math.max(data.length - 1, 1)) * w;
+      const y = h - padY - (((s.duration || 0) / maxDuration) * (h - padY * 2));
+      return { x, y };
+    });
+    const dur = durPts.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ');
+
+    const avg = (sessions.reduce((a, s) => a + (s.pagesRead || 0), 0) / sessions.length).toFixed(1);
+
+    return { points: pts, areaPath: area, durLine: dur, avgPages: avg };
+  }, [sessions]);
+
   if (sessions.length <= 2) return null;
-
-  const data = sessions.slice(0, 14).reverse();
-  const maxPages = Math.max(...data.map((s) => s.pagesRead || 0), 1);
-  const maxDuration = Math.max(...data.map((s) => s.duration || 1), 1);
-  const w = 300;
-  const h = 70;
-  const padY = 5;
-
-  const points = data.map((s, i) => {
-    const x = (i / Math.max(data.length - 1, 1)) * w;
-    const y = h - padY - (((s.pagesRead || 0) / maxPages) * (h - padY * 2));
-    return { x, y };
-  });
-  const areaPath = `M${points[0].x},${h} ${points.map((p) => `L${p.x},${p.y}`).join(' ')} L${points[points.length - 1].x},${h} Z`;
-
-  const durPoints = data.map((s, i) => {
-    const x = (i / Math.max(data.length - 1, 1)) * w;
-    const y = h - padY - (((s.duration || 0) / maxDuration) * (h - padY * 2));
-    return { x, y };
-  });
-  const durLine = durPoints.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ');
-
-  const avgPages = (sessions.reduce((a, s) => a + (s.pagesRead || 0), 0) / sessions.length).toFixed(1);
 
   return (
     <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
