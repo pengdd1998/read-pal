@@ -848,7 +848,9 @@
     "remove_tag_aria": "移除标签 {tag}",
     "quote_by_author": "作者：{author}",
     "share_close_quote": "关闭引用卡片",
-    "placeholder_message": "此章节将在后续更新中提供。"
+    "placeholder_message": "此章节将在后续更新中提供。",
+    "companion_mode_error": "切换伴侣模式失败",
+    "share_failed": "分享标注失败"
   },
   "stats": {
     "title": "阅读统计",
@@ -1450,7 +1452,8 @@
     "noClubsHint": "创建一个读书会，或用邀请码加入",
     "adminBadge": "管理员",
     "reading": "阅读中",
-    "discoverClubs": "发现公开读书会"
+    "discoverClubs": "发现公开读书会",
+    "failedToSend": "发送消息失败，请重试。"
   },
   "book": {
     "pageTitle": "书籍详情",

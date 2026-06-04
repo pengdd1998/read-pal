@@ -37,10 +37,12 @@ export function useBookClubDetail(clubId: string) {
 
 export function useBookClubProgress(clubId: string, currentBookId?: string) {
   const [progress, setProgress] = useState<MemberProgress[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!clubId || !currentBookId) return;
     let cancelled = false;
+    setError(null);
 
     api
       .get<{ hasBook: boolean; progress: MemberProgress[] }>(`/api/book-clubs/${clubId}/progress`)
@@ -48,22 +50,29 @@ export function useBookClubProgress(clubId: string, currentBookId?: string) {
         if (!cancelled && res.success && res.data?.progress) {
           setProgress(res.data.progress);
         }
+      })
+      .catch(() => {
+        if (!cancelled) setError('Failed to load reading progress');
       });
 
     return () => { cancelled = true; };
   }, [clubId, currentBookId]);
 
-  return { progress };
+  return { progress, error };
 }
 
 export function useBookClubDiscussion(clubId: string) {
+  const t = useTranslations('bookClubs');
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!clubId) return;
     let cancelled = false;
+    setError(null);
 
     api
       .get<{ data: DiscussionMessage[] }>(`/api/book-clubs/${clubId}/discussions?limit=50`)
@@ -71,6 +80,9 @@ export function useBookClubDiscussion(clubId: string) {
         if (!cancelled && res.success && res.data) {
           setMessages(Array.isArray(res.data) ? res.data : []);
         }
+      })
+      .catch(() => {
+        if (!cancelled) setError('Failed to load discussions');
       });
 
     return () => { cancelled = true; };
@@ -79,6 +91,7 @@ export function useBookClubDiscussion(clubId: string) {
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || sending) return;
     setSending(true);
+    setSendError(null);
     try {
       const res = await api.post<DiscussionMessage>(`/api/book-clubs/${clubId}/discussions`, {
         content: newMessage.trim(),
@@ -86,13 +99,17 @@ export function useBookClubDiscussion(clubId: string) {
       if (res.success && res.data) {
         setMessages((prev) => [...prev, res.data as DiscussionMessage]);
         setNewMessage('');
+      } else {
+        setSendError(t('failedToSend'));
       }
     } catch {
-      // ignore
+      setSendError(t('failedToSend'));
     } finally {
       setSending(false);
     }
-  }, [clubId, newMessage, sending]);
+  }, [clubId, newMessage, sending, t]);
 
-  return { messages, newMessage, setNewMessage, sending, sendMessage };
+  const clearSendError = useCallback(() => setSendError(null), []);
+
+  return { messages, newMessage, setNewMessage, sending, sendMessage, error, sendError, clearSendError };
 }

@@ -222,6 +222,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
     setCompanionMode(newMode);
     api.patch('/api/settings', { companionMode: newMode }).catch(() => {
       setCompanionMode(companionMode);
+      toast(t('companion_mode_error'), 'error');
     });
   }, [companionMode, setCompanionMode]);
 

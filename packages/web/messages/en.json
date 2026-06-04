@@ -848,7 +848,9 @@
     "remove_tag_aria": "Remove tag {tag}",
     "quote_by_author": "by {author}",
     "share_close_quote": "Close quote card",
-    "placeholder_message": "This section will be available in a future update."
+    "placeholder_message": "This section will be available in a future update.",
+    "companion_mode_error": "Failed to switch companion mode",
+    "share_failed": "Failed to share annotation"
   },
   "stats": {
     "title": "Reading Stats",
@@ -1617,7 +1619,8 @@
     "noClubsHint": "Create a club or join one with an invite code",
     "adminBadge": "Admin",
     "reading": "Reading",
-    "discoverClubs": "Discover public clubs"
+    "discoverClubs": "Discover public clubs",
+    "failedToSend": "Failed to send message. Please try again."
   },
   "book": {
     "pageTitle": "Book Details",

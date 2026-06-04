@@ -96,8 +96,12 @@ export function useReaderPage() {
           },
           body: JSON.stringify({ current_page: chapter, scroll_progress: scroll, current_segment: segment }),
           keepalive: true,
-        }).catch(() => {});
-      } catch { /* ignore */ }
+        }).catch((err) => {
+          console.error('[useReaderPage] Failed to save reading progress:', err);
+        });
+      } catch (err) {
+        console.error('[useReaderPage] Failed to save reading progress:', err);
+      }
     };
   }, [bookId, loading]);
 
@@ -123,7 +127,8 @@ export function useReaderPage() {
   useEffect(() => {
     if (loading) return;
     api.get<{ currentWpm: number; trend: string }>('/api/stats/reading-speed')
-      .then((res) => { if (res.success && res.data && res.data.currentWpm > 0) setReadingWpm(res.data.currentWpm); });
+      .then((res) => { if (res.success && res.data && res.data.currentWpm > 0) setReadingWpm(res.data.currentWpm); })
+      .catch((e) => { console.warn('Reading speed fetch failed:', e); });
   }, [loading]);
 
   // --- Selection tracking ---

@@ -103,9 +103,11 @@ export function useReadingSession({
             },
             body: JSON.stringify({ pagesRead: 0 }),
             keepalive: true,
-          }).catch(() => {});
-        } catch {
-          // ignore
+          }).catch((err) => {
+            console.error('[useReadingSession] Failed to end reading session:', err);
+          });
+        } catch (err) {
+          console.error('[useReadingSession] Failed to end reading session:', err);
         }
         sessionIdRef.current = null;
       }

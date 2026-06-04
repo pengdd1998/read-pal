@@ -102,6 +102,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
       }, 'image/png');
     } catch {
       setSharing(false);
+      toast(t('share_failed'), 'error');
     }
   }, [quoteText, bookTitle, author, sharing, t]);
 
