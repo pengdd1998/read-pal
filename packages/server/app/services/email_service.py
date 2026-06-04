@@ -86,8 +86,9 @@ async def send_password_reset_email(email: str, token: str) -> None:
         logger.info('Password reset email sent to %s', email)
 
     except Exception:
-        logger.error(
-            'Failed to send password reset email to %s',
+        logger.warning(
+            'SMTP delivery failed for password reset email to %s — '
+            'user will not receive the reset link',
             email,
             exc_info=True,
         )

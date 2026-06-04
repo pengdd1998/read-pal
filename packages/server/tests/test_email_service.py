@@ -205,7 +205,7 @@ class TestSendPasswordResetEmailErrors:
             # Should NOT raise
             await send_password_reset_email('user@example.com', 'tok')
 
-            mock_logger.error.assert_called_once()
+            mock_logger.warning.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_timeout_error_is_caught(self):
@@ -227,7 +227,7 @@ class TestSendPasswordResetEmailErrors:
         ):
             await send_password_reset_email('user@example.com', 'tok')
 
-            mock_logger.error.assert_called_once()
+            mock_logger.warning.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_constructs_correct_reset_url(self):

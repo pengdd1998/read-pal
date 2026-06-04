@@ -72,8 +72,15 @@ async def generate(
                 return await _generate_section(section_type, enriched_data, user_id=user_id, book_id=book_id)
             else:
                 return _placeholder_section(section_type)
-        except Exception:
-            logger.exception('section_generation_failed', section_type=section_type)
+        except Exception as exc:
+            logger.warning(
+                'section_generation_failed',
+                section_type=section_type,
+                book_id=str(book_id),
+                user_id=str(user_id),
+                error=str(exc),
+                exc_info=True,
+            )
             return {'type': section_type, 'error': 'Generation failed'}
 
     section_results = await asyncio.gather(

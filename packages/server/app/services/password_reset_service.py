@@ -39,13 +39,25 @@ async def create_reset_token(db: AsyncSession, email: str) -> str | None:
     return token
 
 
-async def send_reset_email(email: str, token: str) -> None:
-    """Dispatch the password reset email. Logs failure instead of raising."""
+async def send_reset_email(email: str, token: str) -> bool:
+    """Dispatch the password reset email.
+
+    Returns True if the email was dispatched (or logged to console in dev),
+    False if SMTP delivery failed.  The caller should still return HTTP 200
+    to prevent email enumeration, but can use the return value for logging.
+    """
     try:
         from app.services.email_service import send_password_reset_email
         await send_password_reset_email(email, token)
+        return True
     except Exception:
-        logger.warning('Failed to send reset email to %s', email, exc_info=True)
+        logger.warning(
+            'Password reset email delivery failed for %s — '
+            'user will not receive the reset link',
+            email,
+            exc_info=True,
+        )
+        return False
 
 
 async def validate_and_reset(

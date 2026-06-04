@@ -40,9 +40,19 @@ async def forgot_password(
     try:
         token = await create_reset_token(db, body.email)
         if token:
-            await send_reset_email(body.email, token)
+            delivered = await send_reset_email(body.email, token)
+            if not delivered:
+                logger.warning(
+                    'Forgot-password: email delivery failed for %s — '
+                    'token created but user will not receive reset link',
+                    body.email,
+                )
     except Exception:
-        logger.warning('Error during forgot-password flow', exc_info=True)
+        logger.warning(
+            'Unexpected error in forgot-password flow for %s',
+            body.email,
+            exc_info=True,
+        )
 
     return MessageResponse(
         data={'message': t('errors.reset_link_sent')},

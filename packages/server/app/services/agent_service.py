@@ -71,7 +71,12 @@ async def sse_bytes_stream(
             error_msg = f'data: {{"error": "{exc}"}}\n\n'
             await queue.put(error_msg.encode('utf-8'))
         except Exception:
-            logger.exception('Streaming error in agent chat')
+            logger.warning(
+                'Streaming error in agent chat for user=%s book=%s',
+                user_id,
+                book_id,
+                exc_info=True,
+            )
             internal_msg = t('errors.internal_error')
             error_msg = f'data: {{"error": "{internal_msg}"}}\n\n'
             await queue.put(error_msg.encode('utf-8'))
