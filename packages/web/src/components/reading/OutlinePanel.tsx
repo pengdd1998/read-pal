@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 
@@ -57,6 +57,9 @@ export function OutlinePanel({
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'highlight' | 'note' | 'bookmark'>('all');
+
+  // Stabilize callback for memoized OutlineItem children
+  const stableScrollTo = useCallback((a: Annotation) => onScrollToAnnotation(a), [onScrollToAnnotation]);
 
   // Group annotations by chapter
   const chapters = useMemo(() => {
@@ -258,7 +261,7 @@ export function OutlinePanel({
                         <OutlineItem
                           key={note.id}
                           annotation={note}
-                          onClick={() => onScrollToAnnotation(note)}
+                          onClick={() => stableScrollTo(note)}
                         />
                       ))}
 
@@ -267,7 +270,7 @@ export function OutlinePanel({
                         <OutlineItem
                           key={highlight.id}
                           annotation={highlight}
-                          onClick={() => onScrollToAnnotation(highlight)}
+                          onClick={() => stableScrollTo(highlight)}
                         />
                       ))}
 
@@ -276,7 +279,7 @@ export function OutlinePanel({
                         <OutlineItem
                           key={bookmark.id}
                           annotation={bookmark}
-                          onClick={() => onScrollToAnnotation(bookmark)}
+                          onClick={() => stableScrollTo(bookmark)}
                         />
                       ))}
 
@@ -299,7 +302,7 @@ export function OutlinePanel({
 // Outline Item — individual annotation in the tree
 // ---------------------------------------------------------------------------
 
-function OutlineItem({
+const OutlineItem = memo(function OutlineItem({
   annotation,
   onClick,
 }: {
@@ -364,4 +367,4 @@ function OutlineItem({
       </div>
     </button>
   );
-}
+});

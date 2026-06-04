@@ -114,18 +114,18 @@ GATSBY_CHAPTERS = [
 ]
 
 
-async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
-    """Create a sample book with annotations so new users see content immediately."""
+async def _create_sample_book(db: AsyncSession, user_id: UUID) -> Book:
+    """Create the sample Great Gatsby book with its Document."""
     sample = Book(
         user_id=user_id,
         title='The Great Gatsby',
         author='F. Scott Fitzgerald',
         file_type=BookFileType.epub,
         file_size=2048,
-        total_pages=len(GATSBY_CHAPTERS),  # 5 chapters
+        total_pages=len(GATSBY_CHAPTERS),
         current_page=1,
         status=BookStatus.reading,
-        progress=20,  # 1/5 chapters read
+        progress=20,
         tags=['sample', 'classic', 'fiction'],
         metadata_={
             'year': 1925,
@@ -139,7 +139,6 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
     await db.flush()
     await db.refresh(sample)
 
-    # Create a Document with actual chapter content
     full_content = '\n'.join(ch['content'] for ch in GATSBY_CHAPTERS)
     doc = Document(
         book_id=sample.id,
@@ -148,10 +147,14 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
         chapters=GATSBY_CHAPTERS,
     )
     db.add(doc)
+    return sample
 
-    sample_annotations = [
+
+def _create_sample_annotations(user_id: UUID, book_id: UUID) -> list[Annotation]:
+    """Build the list of pre-built Gatsby annotations."""
+    return [
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.highlight,
             content='In my younger and more vulnerable years my father gave me some advice '
                     "that I've been turning over in my mind ever since.",
@@ -161,7 +164,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             color='yellow',
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.highlight,
             content='a single green light, minute and far way, that might have been the end of a dock',
             location={'pageIndex': 0, 'chapter': 1, 'position': 0, 'selection': {'start': 600, 'end': 670}},
@@ -170,7 +173,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             color='green',
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.highlight,
             content='This is a valley of ashes — a fantastic farm where ashes grow like wheat',
             location={'pageIndex': 1, 'chapter': 2, 'position': 0, 'selection': {'start': 130, 'end': 195}},
@@ -179,7 +182,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             color='yellow',
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.note,
             content='The eyes of Doctor T.J. Eckleburg watch over the Valley of Ashes — '
                     'God watching moral decay?',
@@ -187,7 +190,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             tags=['symbolism', 'morality', 'eyes'],
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.highlight,
             content='I was within and without, simultaneously enchanted and repelled by the '
                     'inexhaustible variety of life.',
@@ -197,7 +200,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             color='yellow',
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.note,
             content="Gatsby's parties represent the excess and emptiness of the Jazz Age. "
                     'Everyone comes but nobody truly knows him.',
@@ -205,7 +208,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             tags=['theme', 'jazz-age', 'character'],
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.highlight,
             content='It was one of those rare smiles with a quality of eternal reassurance in it',
             location={'pageIndex': 2, 'chapter': 3, 'position': 0, 'selection': {'start': 400, 'end': 470}},
@@ -214,7 +217,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             color='amber',
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.highlight,
             content='Gatsby believed in the green light, the orgastic future that year by year recedes before us.',
             location={'pageIndex': 4, 'chapter': 9, 'position': 0, 'selection': {'start': 0, 'end': 80}},
@@ -223,7 +226,7 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             color='green',
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.highlight,
             content='So we beat on, boats against the current, borne back ceaselessly into the past.',
             location={'pageIndex': 4, 'chapter': 9, 'position': 0, 'selection': {'start': 130, 'end': 204}},
@@ -232,33 +235,37 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
             color='orange',
         ),
         Annotation(
-            user_id=user_id, book_id=sample.id,
+            user_id=user_id, book_id=book_id,
             type=AnnotationType.bookmark,
             content='Chapter 4: Gatsby tells Nick about his past',
             location={'pageIndex': 3, 'chapter': 4, 'position': 0, 'selection': {'start': 0, 'end': 40}},
         ),
     ]
-    db.add_all(sample_annotations)
 
-    # Seed a reading session so dashboard stats show meaningful data
+
+def _create_sample_session(user_id: UUID, book_id: UUID) -> ReadingSession:
+    """Build a completed reading session for dashboard stats."""
     from datetime import timezone as _tz
     session_start = datetime.now(_tz.utc) - timedelta(minutes=20)
-    sample_session = ReadingSession(
+    return ReadingSession(
         user_id=user_id,
-        book_id=sample.id,
+        book_id=book_id,
         started_at=session_start,
         ended_at=session_start + timedelta(minutes=15),
-        duration=900,  # 15 minutes
+        duration=900,
         pages_read=1,
         highlights=5,
         notes=2,
         is_active=False,
     )
-    db.add(sample_session)
 
-    # Pre-populate knowledge graph cache so the graph page shows data immediately
+
+async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
+    """Create a sample book with annotations so new users see content immediately."""
+    sample = await _create_sample_book(db, user_id)
+    db.add_all(_create_sample_annotations(user_id, sample.id))
+    db.add(_create_sample_session(user_id, sample.id))
     await _seed_graph_cache(user_id, sample.id)
-
     return sample
 
 

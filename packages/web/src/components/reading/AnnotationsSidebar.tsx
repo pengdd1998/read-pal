@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import type { Annotation } from '@read-pal/shared';
@@ -57,6 +57,11 @@ export function AnnotationsSidebar({
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  // Stabilize prop callbacks for memoized children
+  const stableOnDeleteAnnotation = useCallback((id: string) => onDeleteAnnotation(id), [onDeleteAnnotation]);
+  const stableOnUpdateAnnotation = useCallback((updated: Annotation) => onUpdateAnnotation(updated), [onUpdateAnnotation]);
+  const stableOnScrollToAnnotation = useCallback((annotation: Annotation) => onScrollToAnnotation(annotation), [onScrollToAnnotation]);
 
   // Escape key to close
   useEffect(() => {
@@ -257,9 +262,9 @@ export function AnnotationsSidebar({
                     annotation={annotation}
                     bookTitle={bookTitle}
                     author={author}
-                    onDelete={() => onDeleteAnnotation(annotation.id)}
-                    onUpdate={(updated) => onUpdateAnnotation(updated)}
-                    onClick={bulkMode ? () => toggleSelect(annotation.id) : () => onScrollToAnnotation(annotation)}
+                    onDelete={() => stableOnDeleteAnnotation(annotation.id)}
+                    onUpdate={(updated) => stableOnUpdateAnnotation(updated)}
+                    onClick={bulkMode ? () => toggleSelect(annotation.id) : () => stableOnScrollToAnnotation(annotation)}
                   />
                 </div>
               </div>

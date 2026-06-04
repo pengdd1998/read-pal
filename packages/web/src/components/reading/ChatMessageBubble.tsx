@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import type { SanitizedMessage } from './ChatMessageList';
 
 interface ChatMessageBubbleProps {
@@ -8,7 +9,7 @@ interface ChatMessageBubbleProps {
   submitFeedback: (messageId: string, rating: boolean) => void;
 }
 
-export function ChatMessageBubble({ msg, t, submitFeedback }: ChatMessageBubbleProps) {
+export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submitFeedback }: ChatMessageBubbleProps) {
   return (
     <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
@@ -55,4 +56,4 @@ export function ChatMessageBubble({ msg, t, submitFeedback }: ChatMessageBubbleP
       </div>
     </div>
   );
-}
+});

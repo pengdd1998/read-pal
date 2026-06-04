@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { api } from '@/lib/api';
@@ -20,7 +20,7 @@ interface AnnotationCardProps {
   onClick: () => void;
 }
 
-export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpdate, onClick }: AnnotationCardProps) {
+export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpdate, onClick }: AnnotationCardProps) {
   const t = useTranslations('reader');
   const tc = useTranslations('common');
   const { toast } = useToast();
@@ -378,4 +378,4 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
       )}
     </div>
   );
-}
+});

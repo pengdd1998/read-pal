@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
@@ -77,7 +77,7 @@ function formatTooltipDate(dateStr: string): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function DayCell({
+const DayCell = memo(function DayCell({
   day,
   isToday,
 }: {
@@ -113,7 +113,7 @@ function DayCell({
       )}
     </div>
   );
-}
+});
 
 function SkeletonHeatmap() {
   return (
