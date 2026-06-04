@@ -302,7 +302,10 @@
     "reset_button": "Reset Password",
     "completing_sign_in": "Completing sign in...",
     "callback_missing_data": "OAuth callback missing data",
-    "parse_response_failed": "Failed to parse OAuth response"
+    "parse_response_failed": "Failed to parse OAuth response",
+    "feature_smart_reader": "Smart Reader",
+    "feature_ai_companion": "AI Companion",
+    "feature_knowledge_graph": "Knowledge Graph"
   },
   "library": {
     "title": "My Library",
@@ -844,7 +847,8 @@
     "offline_save_title": "Save for offline reading",
     "remove_tag_aria": "Remove tag {tag}",
     "quote_by_author": "by {author}",
-    "share_close_quote": "Close quote card"
+    "share_close_quote": "Close quote card",
+    "placeholder_message": "This section will be available in a future update."
   },
   "stats": {
     "title": "Reading Stats",
@@ -1818,7 +1822,14 @@
     "compare_book_1": "First Book",
     "compare_book_2": "Second Book",
     "compare_button": "Compare",
-    "compare_select": "Select a book..."
+    "compare_select": "Select a book...",
+    "key_themes": "Key Themes",
+    "key_insights": "Key Insights",
+    "references_found": "References Found",
+    "contradictions_count": "Contradictions ({count})",
+    "books_covered": "{count, plural, one {# book covered} other {# books covered}}",
+    "analysis_label": "Analysis",
+    "concept_map_label": "Concept Map ({nodes} nodes, {edges} edges)"
   },
   "seo": {
     "knowledge_title": "Knowledge Graph | read-pal",

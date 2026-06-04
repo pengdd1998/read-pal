@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface PlaceholderSectionProps {
   sectionType: string;
   title: string;
@@ -17,6 +19,7 @@ const SECTION_ICONS: Record<string, string> = {
 };
 
 export default function PlaceholderSection({ sectionType, title, message }: PlaceholderSectionProps) {
+  const t = useTranslations('reader');
   const icon = SECTION_ICONS[sectionType] || '✨';
 
   return (
@@ -24,7 +27,7 @@ export default function PlaceholderSection({ sectionType, title, message }: Plac
       <span className="placeholder-icon">{icon}</span>
       <h3 className="placeholder-title">{title}</h3>
       <p className="placeholder-message">
-        {message || 'This section will be available in a future update.'}
+        {message || t('placeholder_message')}
       </p>
 
       <style jsx>{`

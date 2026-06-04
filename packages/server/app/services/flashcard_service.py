@@ -22,6 +22,12 @@ logger = structlog.get_logger('read-pal.flashcards')
 DEFAULT_EASE_FACTOR = 2.5
 MIN_EASE_FACTOR = 1.3
 
+# SM-2 algorithm thresholds
+_FAIL_RATING_THRESHOLD = 3     # ratings below this count as "failed"
+_SM2_EASE_MIN = 0.1            # minimum ease adjustment component
+_SM2_DELTA = 0.08              # linear coefficient in ease update
+_SM2_BASE = 0.02               # quadratic coefficient in ease update
+
 
 async def create_flashcard(
     db: AsyncSession,
@@ -66,7 +72,7 @@ async def review_flashcard(
 
     old_ef = card.ease_factor
 
-    if rating < 3:
+    if rating < _FAIL_RATING_THRESHOLD:
         # Failed — reset
         new_interval = 1
         new_repetition = 0
@@ -83,7 +89,7 @@ async def review_flashcard(
     # Update ease factor
     new_ef = max(
         MIN_EASE_FACTOR,
-        old_ef + (0.1 - (5 - rating) * (0.08 + (5 - rating) * 0.02)),
+        old_ef + (_SM2_EASE_MIN - (5 - rating) * (_SM2_DELTA + (5 - rating) * _SM2_BASE)),
     )
 
     now = utcnow()

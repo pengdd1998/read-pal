@@ -264,6 +264,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
                   type="text"
                   readOnly
                   value={shareLink}
+                  aria-label={t('export_share_via_link')}
                   className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300"
                   onClick={(e) => (e.target as HTMLInputElement).select()}
                 />

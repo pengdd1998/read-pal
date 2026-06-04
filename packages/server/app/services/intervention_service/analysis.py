@@ -21,6 +21,12 @@ SPEED_DROP_THRESHOLD = 0.30      # 30% speed drop -> speed_drop intervention
 RE_READING_OVERLAP = 0.50        # 50% page overlap -> re_reading intervention
 OPTIMAL_TIMING_RATIO = 0.60      # 60% of sessions in 3h window -> optimal_timing
 
+# Minimum session counts for various checks
+_MIN_SESSIONS_ANALYSIS = 4       # sessions needed for engagement analysis
+_MIN_SESSIONS_TREND = 3          # sessions needed for re-reading trend
+_MIN_SESSIONS_STREAK = 5         # sessions needed for optimal timing
+_ENGAGEMENT_DROP_RATIO = 0.3     # engagement drop ratio for low_engagement alert
+
 
 # ---------------------------------------------------------------------------
 # Pure helper functions
@@ -67,7 +73,7 @@ def format_hour_window(peak_hour: int) -> str:
 
 def check_speed_drop(sessions: list[ReadingSession]) -> dict | None:
     """Detect if the latest session's reading speed dropped >30% vs average."""
-    if len(sessions) < 4:
+    if len(sessions) < _MIN_SESSIONS_ANALYSIS:
         return None
     sorted_sessions = sorted(sessions, key=lambda s: s.started_at)
     prior = sorted_sessions[:-1]
@@ -95,7 +101,7 @@ def check_speed_drop(sessions: list[ReadingSession]) -> dict | None:
 
 def check_re_reading(sessions: list[ReadingSession]) -> dict | None:
     """Detect re-reading by checking page-range overlap in last 3 sessions."""
-    if len(sessions) < 3:
+    if len(sessions) < _MIN_SESSIONS_TREND:
         return None
     sorted_sessions = sorted(sessions, key=lambda s: s.started_at)
     last_three = sorted_sessions[-3:]
@@ -134,7 +140,7 @@ def check_optimal_timing(sessions: list[ReadingSession]) -> dict | None:
     """Suggest optimal reading time if sessions cluster in a 3-hour window."""
     from collections import Counter
 
-    if len(sessions) < 5:
+    if len(sessions) < _MIN_SESSIONS_STREAK:
         return None
     hour_counts: Counter[int] = Counter()
     for s in sessions:
@@ -228,7 +234,7 @@ async def analyze_reading_pattern(
             }
 
     # --- Check 3: declining engagement ---
-    if len(sessions) >= 4:
+    if len(sessions) >= _MIN_SESSIONS_ANALYSIS:
         recent = sessions[:len(sessions) // 2]
         older = sessions[len(sessions) // 2:]
         recent_engagement = sum(s.highlights + s.notes for s in recent) / max(
@@ -239,7 +245,7 @@ async def analyze_reading_pattern(
         )
         if (
             older_engagement > LOW_ENGAGEMENT_THRESHOLD
-            and recent_engagement < older_engagement * 0.3
+            and recent_engagement < older_engagement * _ENGAGEMENT_DROP_RATIO
         ):
             return {
                 'interventionNeeded': True,

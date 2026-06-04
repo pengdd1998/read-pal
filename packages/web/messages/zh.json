@@ -302,7 +302,10 @@
     "reset_button": "重置密码",
     "completing_sign_in": "正在完成登录...",
     "callback_missing_data": "OAuth回调缺少数据",
-    "parse_response_failed": "解析OAuth响应失败"
+    "parse_response_failed": "解析OAuth响应失败",
+    "feature_smart_reader": "智能阅读器",
+    "feature_ai_companion": "AI 阅读伴侣",
+    "feature_knowledge_graph": "知识图谱"
   },
   "library": {
     "title": "我的书架",
@@ -844,7 +847,8 @@
     "offline_save_title": "保存以供离线阅读",
     "remove_tag_aria": "移除标签 {tag}",
     "quote_by_author": "作者：{author}",
-    "share_close_quote": "关闭引用卡片"
+    "share_close_quote": "关闭引用卡片",
+    "placeholder_message": "此章节将在后续更新中提供。"
   },
   "stats": {
     "title": "阅读统计",
@@ -1818,7 +1822,14 @@
     "compare_book_1": "第一本书",
     "compare_book_2": "第二本书",
     "compare_button": "对比",
-    "compare_select": "选择一本书..."
+    "compare_select": "选择一本书...",
+    "key_themes": "关键主题",
+    "key_insights": "关键见解",
+    "references_found": "找到的引用",
+    "contradictions_count": "矛盾 ({count})",
+    "books_covered": "{count, plural, one {# 本书涵盖} other {# 本书涵盖}}",
+    "analysis_label": "分析",
+    "concept_map_label": "概念图（{nodes} 个节点，{edges} 条边）"
   },
   "seo": {
     "knowledge_title": "知识图谱 | read-pal",

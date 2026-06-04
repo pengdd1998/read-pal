@@ -1,5 +1,11 @@
 """Stats subpackage — re-exports all public functions."""
 
+from datetime import timedelta
+
+# Shared lookback window for streak computation
+STATS_LOOKBACK_DAYS = 60
+STATS_LOOKBACK_DELTA = timedelta(days=STATS_LOOKBACK_DAYS)
+
 from app.services.stats.calendar import get_reading_calendar, get_weekly_summary
 from app.services.stats.dashboard import (
     get_dashboard_stats,

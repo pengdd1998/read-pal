@@ -24,10 +24,11 @@ export function CrossReferenceForm({
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+        <label htmlFor="concept-input" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           {t('synthesis_cross_ref_label')}
         </label>
         <input
+          id="concept-input"
           type="text"
           value={concept}
           onChange={(e) => onConceptChange(e.target.value)}

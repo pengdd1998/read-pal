@@ -73,6 +73,7 @@ export function ExportFilterPanel({
               <select
                 value={selectedTag}
                 onChange={(e) => onSetSelectedTag(e.target.value)}
+                aria-label={t('export_filter_by_tag')}
                 className="w-full px-3 py-1.5 text-xs bg-surface-0 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
               >
                 <option value="">{t('export_all_tags')}</option>

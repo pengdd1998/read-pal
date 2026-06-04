@@ -129,9 +129,9 @@ function AuthForm() {
           </p>
           <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
-              { emoji: '📖', label: 'Smart Reader' },
-              { emoji: '🤖', label: 'AI Companion' },
-              { emoji: '💡', label: 'Knowledge Graph' },
+              { emoji: '📖', label: t('feature_smart_reader') },
+              { emoji: '🤖', label: t('feature_ai_companion') },
+              { emoji: '💡', label: t('feature_knowledge_graph') },
             ].map((f) => (
               <div key={f.label} className="text-center p-4 rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-sm">
                 <div className="text-3xl mb-3">{f.emoji}</div>

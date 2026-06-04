@@ -200,6 +200,7 @@ export function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpda
           value={editNote}
           onChange={(e) => setEditNote(e.target.value)}
           placeholder={t('card_add_note')}
+          aria-label={t('card_add_note')}
           className="w-full px-2.5 py-1.5 rounded-md bg-white dark:bg-gray-700/50 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 resize-none"
           rows={2}
           autoFocus

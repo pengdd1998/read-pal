@@ -16,6 +16,7 @@ from app.models.chat_message import ChatMessage
 from app.models.memory_book import MemoryBook
 from app.models.reading_session import ReadingSession
 from app.services.stats.streaks import compute_streaks
+from app.services.stats import STATS_LOOKBACK_DELTA
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +99,7 @@ async def _get_reading_minutes(db: AsyncSession, uid: UUID) -> int:
 async def _compute_streak(db: AsyncSession, uid: UUID) -> int:
     """Current reading streak (consecutive days ending today)."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    cutoff = date.today() - timedelta(days=60)
+    cutoff = date.today() - STATS_LOOKBACK_DELTA
     rows = await db.execute(
         select(day_col)
         .where(ReadingSession.user_id == uid, ReadingSession.started_at >= cutoff)

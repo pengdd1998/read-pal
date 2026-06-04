@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.models.reading_session import ReadingSession
 from app.services.stats.streaks import compute_streaks
+from app.services.stats import STATS_LOOKBACK_DELTA
 
 
 async def get_reading_calendar(
@@ -151,7 +152,7 @@ async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
     )
 
     # Streaks (lightweight query instead of full get_reading_calendar)
-    streak_cutoff = today - timedelta(days=60)
+    streak_cutoff = today - STATS_LOOKBACK_DELTA
     streak_day_col = func.date(ReadingSession.started_at).label('day')
     streak_rows = await db.execute(
         select(streak_day_col)

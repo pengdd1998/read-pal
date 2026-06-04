@@ -15,6 +15,9 @@ from app.schemas.knowledge import (
     GraphNode,
 )
 
+# Knowledge freshness decay period (days)
+_KNOWLEDGE_FRESHNESS_DAYS = 90.0
+
 
 def _compute_freshness(
     annotations: list[Annotation],
@@ -53,7 +56,7 @@ def _compute_freshness(
 
     oldest = min(relevant_dates)
     days_since = (now - oldest).days
-    return max(0.0, 1.0 - days_since / 90.0)
+    return max(0.0, 1.0 - days_since / _KNOWLEDGE_FRESHNESS_DAYS)
 
 
 def _resolve_edge_label(

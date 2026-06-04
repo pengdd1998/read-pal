@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { AnalysisResult } from './types';
 
 // ============================================================================
@@ -11,6 +12,7 @@ interface AnalysisResultViewProps {
 }
 
 export function AnalysisResultView({ result }: AnalysisResultViewProps) {
+  const t = useTranslations('synthesis');
   const content = result.analysis || result.synthesis || result.report || result.summary || '';
   const textContent = typeof content === 'string' ? content : '';
 
@@ -20,7 +22,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
       {result.themes && result.themes.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Key Themes
+            {t('key_themes')}
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {result.themes.map((theme, i) => (
@@ -42,7 +44,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
       {result.insights && result.insights.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Key Insights
+            {t('key_insights')}
           </h4>
           <ul className="space-y-1.5">
             {result.insights.map((insight, i) => (
@@ -58,7 +60,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
       {result.references && result.references.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            References Found
+            {t('references_found')}
           </h4>
           <div className="space-y-2">
             {result.references.map((ref, i) => (
@@ -92,7 +94,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
       {result.contradictions && result.contradictions.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Contradictions ({result.contradictions.length})
+            {t('contradictions_count', { count: result.contradictions.length })}
           </h4>
           <div className="space-y-2">
             {result.contradictions.map((c, i) => (
@@ -139,7 +141,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            {result.booksCovered} book{result.booksCovered !== 1 ? 's' : ''} covered
+            {t('books_covered', { count: result.booksCovered })}
           </span>
         </div>
       )}
@@ -148,7 +150,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
       {textContent && (
         <div>
           <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Analysis
+            {t('analysis_label')}
           </h4>
           <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 max-h-[400px] overflow-y-auto">
             {textContent}
@@ -164,10 +166,11 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
 // ============================================================================
 
 function ConceptMapView({ result }: { result: AnalysisResult }) {
+  const t = useTranslations('synthesis');
   return (
     <div>
       <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-        Concept Map ({result.nodes?.length || 0} nodes, {result.edges?.length || 0} edges)
+        {t('concept_map_label', { nodes: result.nodes?.length || 0, edges: result.edges?.length || 0 })}
       </h4>
       <div className="flex flex-wrap gap-1.5 mb-3">
         {result.nodes?.map((node) => (

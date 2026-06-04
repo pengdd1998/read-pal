@@ -24,10 +24,11 @@ export function SummaryReportForm({
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+        <label htmlFor="focus-input" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           {t('synthesis_report_focus')}
         </label>
         <input
+          id="focus-input"
           type="text"
           value={focus}
           onChange={(e) => onFocusChange(e.target.value)}

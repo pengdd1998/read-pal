@@ -28,6 +28,13 @@ logger = structlog.get_logger('read-pal.friend')
 
 HISTORY_LIMIT = 30
 
+# Persona recommendation thresholds
+_POWER_USER_DENSITY = 3.0   # annotations per session for "power user"
+_POWER_USER_SESSIONS = 20   # minimum sessions to qualify
+_EXPLORER_BOOKS = 5         # distinct books for "explorer"
+_CASUAL_DENSITY = 1.0       # low annotation density for "casual"
+_CASUAL_SESSIONS = 10       # minimum sessions to qualify
+
 
 async def _get_or_create_relationship(
     db: AsyncSession,
@@ -254,7 +261,7 @@ async def recommend_persona(
     )
     chat_propensity = total_chats / total_sessions if total_sessions > 0 else 0
 
-    if annotation_density > 3.0 and total_sessions > 20:
+    if annotation_density > _POWER_USER_DENSITY and total_sessions > _POWER_USER_SESSIONS:
         return {
             'recommendedPersona': 'alex',
             'reason': (
@@ -272,7 +279,7 @@ async def recommend_persona(
                 'with you.'
             ),
         }
-    if distinct_books > 5:
+    if distinct_books > _EXPLORER_BOOKS:
         return {
             'recommendedPersona': 'penny',
             'reason': (
@@ -281,7 +288,7 @@ async def recommend_persona(
                 'reading.'
             ),
         }
-    if annotation_density < 1.0 and total_sessions > 10:
+    if annotation_density < _CASUAL_DENSITY and total_sessions > _CASUAL_SESSIONS:
         return {
             'recommendedPersona': 'sam',
             'reason': (
