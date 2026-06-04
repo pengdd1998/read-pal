@@ -43,7 +43,7 @@ export function ReadingVelocityTrend({ sessions }: ReadingVelocityTrendProps) {
           {t('avg_pages_session', { count: avgPages })}
         </span>
       </div>
-      <svg viewBox="0 0 300 80" className="w-full h-24" preserveAspectRatio="none" role="img" aria-label="Reading velocity trend chart">
+      <svg viewBox="0 0 300 80" className="w-full h-24" preserveAspectRatio="none" role="img" aria-label={t('velocity_trend_chart')}>
         {/* Pages area */}
         <path d={areaPath} fill="url(#pagesGrad)" opacity={0.3} />
         <polyline

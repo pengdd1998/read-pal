@@ -349,25 +349,9 @@ def _render_chapter_html(section: dict[str, Any]) -> str:
     return f'<section class="chapter"{id_attr}><div class="chapter-content">{content}</div></section>'
 
 
-def _render_html(
-    book_data: dict[str, Any],
-    sections: list[dict[str, Any]],
-    stats: dict[str, Any],
-) -> str:
-    """Render the full reading mirror as styled HTML (legacy)."""
-    book = book_data.get('book', {})
-    book_title = _esc(book.get('title', 'Reading Mirror'))
-    book_author = _esc(book.get('author', ''))
-
-    chapters_html = '\n'.join(_render_chapter_html(s) for s in sections)
-
-    stats_html = ''.join(
-        f'<div class="stat-card"><span class="stat-value">{_esc(str(v))}</span>'
-        f'<span class="stat-label">{_esc(k.replace("_", " ").title())}</span></div>'
-        for k, v in stats.items()
-    )
-
-    css = (
+def _build_stylesheet() -> str:
+    """Return the minified CSS for the reading mirror HTML."""
+    return (
         'body{font-family:Georgia,"Times New Roman",serif;max-width:900px;margin:0 auto;padding:2rem;'
         'color:#2d2d2d;background:#fafaf8;line-height:1.7}'
         '.cover{text-align:center;padding:4rem 0;border-bottom:2px solid #e0d8cf;margin-bottom:2rem}'
@@ -393,7 +377,6 @@ def _render_html(
         '.moment-topic{font-size:.8rem;color:#a09080;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem}'
         '.recommendation{margin-bottom:1rem;padding:1rem;background:#f5f0ea;border-radius:6px}'
         '.placeholder-text{color:#a09080;font-style:italic;text-align:center;padding:2rem}'
-        # --- v2 section styles ---
         '.pattern-analysis{color:#3d3d3d;margin:1rem 0;line-height:1.6}'
         '.peaks-timeline{margin:1rem 0}'
         '.attention-peak{display:flex;gap:1rem;padding:.75rem 0;border-bottom:1px solid #f0ece6}'
@@ -459,13 +442,21 @@ def _render_html(
         '@media print{body{background:#fff} .chapter{break-inside:avoid}}'
     )
 
+
+def _assemble_document(
+    book_title: str,
+    book_author: str,
+    stats_html: str,
+    chapters_html: str,
+) -> str:
+    """Assemble the full HTML document from pre-rendered parts."""
+    css = _build_stylesheet()
     scroll_js = (
         'window.addEventListener("message",function(e){'
         'if(e.data&&e.data.type==="scroll-to-section"){'
         'var el=document.getElementById(e.data.sectionId);'
         'if(el)el.scrollIntoView({behavior:"smooth",block:"start"})}});'
     )
-
     return (
         '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
         + f'<title>{book_title} — Reading Mirror</title>'
@@ -478,3 +469,24 @@ def _render_html(
         + f'<script>{scroll_js}</script>'
         + '</body></html>'
     )
+
+
+def _render_html(
+    book_data: dict[str, Any],
+    sections: list[dict[str, Any]],
+    stats: dict[str, Any],
+) -> str:
+    """Render the full reading mirror as styled HTML (legacy)."""
+    book = book_data.get('book', {})
+    book_title = _esc(book.get('title', 'Reading Mirror'))
+    book_author = _esc(book.get('author', ''))
+
+    chapters_html = '\n'.join(_render_chapter_html(s) for s in sections)
+
+    stats_html = ''.join(
+        f'<div class="stat-card"><span class="stat-value">{_esc(str(v))}</span>'
+        f'<span class="stat-label">{_esc(k.replace("_", " ").title())}</span></div>'
+        for k, v in stats.items()
+    )
+
+    return _assemble_document(book_title, book_author, stats_html, chapters_html)

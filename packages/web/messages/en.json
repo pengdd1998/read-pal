@@ -850,7 +850,8 @@
     "share_close_quote": "Close quote card",
     "placeholder_message": "This section will be available in a future update.",
     "companion_mode_error": "Failed to switch companion mode",
-    "share_failed": "Failed to share annotation"
+    "share_failed": "Failed to share annotation",
+    "close_study_mode": "Close study mode"
   },
   "stats": {
     "title": "Reading Stats",
@@ -944,7 +945,10 @@
     "speed_wpm_unit": "WPM",
     "speed_trend": "Speed Trend",
     "speed_by_book": "Speed by Book",
-    "speed_no_data": "Read more to see your speed trends."
+    "speed_no_data": "Read more to see your speed trends.",
+    "weekly_activity_chart": "Weekly reading activity bar chart",
+    "velocity_trend_chart": "Reading velocity trend chart",
+    "speed_trend_chart": "Reading speed trend"
   },
   "settings": {
     "title": "Settings",
@@ -1620,7 +1624,8 @@
     "adminBadge": "Admin",
     "reading": "Reading",
     "discoverClubs": "Discover public clubs",
-    "failedToSend": "Failed to send message. Please try again."
+    "failedToSend": "Failed to send message. Please try again.",
+    "private_club": "Private club"
   },
   "book": {
     "pageTitle": "Book Details",

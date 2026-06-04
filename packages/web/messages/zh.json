@@ -850,7 +850,8 @@
     "share_close_quote": "关闭引用卡片",
     "placeholder_message": "此章节将在后续更新中提供。",
     "companion_mode_error": "切换伴侣模式失败",
-    "share_failed": "分享标注失败"
+    "share_failed": "分享标注失败",
+    "close_study_mode": "关闭学习模式"
   },
   "stats": {
     "title": "阅读统计",
@@ -944,7 +945,10 @@
     "speed_wpm_unit": "WPM",
     "speed_trend": "速度趋势",
     "speed_by_book": "各书速度",
-    "speed_no_data": "多读一些来查看速度趋势。"
+    "speed_no_data": "多读一些来查看速度趋势。",
+    "weekly_activity_chart": "每周阅读活动柱状图",
+    "velocity_trend_chart": "阅读速度趋势图",
+    "speed_trend_chart": "阅读速度趋势"
   },
   "settings": {
     "title": "设置",
@@ -1453,7 +1457,8 @@
     "adminBadge": "管理员",
     "reading": "阅读中",
     "discoverClubs": "发现公开读书会",
-    "failedToSend": "发送消息失败，请重试。"
+    "failedToSend": "发送消息失败，请重试。",
+    "private_club": "私密读书会"
   },
   "book": {
     "pageTitle": "书籍详情",

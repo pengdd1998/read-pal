@@ -18,7 +18,7 @@ export function WeeklyActivity({ weekly }: WeeklyActivityProps) {
   return (
     <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('weekly_activity')}</h2>
-      <div className="flex items-end gap-2 h-32" role="img" aria-label="Weekly reading activity bar chart">
+      <div className="flex items-end gap-2 h-32" role="img" aria-label={t('weekly_activity_chart')}>
         {weekly.map((day, i) => {
           const height = Math.max(4, (day.pages / maxPages) * 100);
           return (

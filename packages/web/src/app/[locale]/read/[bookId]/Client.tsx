@@ -184,7 +184,7 @@ export default function ReadPage() {
       <SynthesisPanel bookId={bookId} bookTitle={book?.title} author={book?.author} isOpen={ui.synthesisOpen} onClose={() => ui.setSynthesisOpen(false)} />
       <ReadingPlanPanel bookId={bookId} bookTitle={book?.title || ''} isOpen={ui.readingPlanOpen} onClose={() => ui.setReadingPlanOpen(false)} />
       {studyMode.enabled && (
-        <div className="fixed inset-0 z-20 bg-black/40 md:bg-black/20" onClick={studyMode.toggleStudyMode} onKeyDown={(e) => { if (e.key === 'Escape') studyMode.toggleStudyMode(); }} tabIndex={-1} role="button" aria-label="Close study mode" />
+        <div className="fixed inset-0 z-20 bg-black/40 md:bg-black/20" onClick={studyMode.toggleStudyMode} onKeyDown={(e) => { if (e.key === 'Escape') studyMode.toggleStudyMode(); }} tabIndex={-1} role="button" aria-label={t('close_study_mode')} />
       )}
       <div className={`fixed right-0 top-[61px] bottom-0 z-20 w-full md:w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="h-full overflow-y-auto px-3 pb-4 bg-surface-0 md:bg-transparent">

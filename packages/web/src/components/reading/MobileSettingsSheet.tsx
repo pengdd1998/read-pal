@@ -60,7 +60,7 @@ export function MobileSettingsSheet({
             <button
               onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))}
               className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition-transform"
-              aria-label="Decrease font size"
+              aria-label={t('settings_decrease_font')}
             >
               A-
             </button>
@@ -68,7 +68,7 @@ export function MobileSettingsSheet({
             <button
               onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))}
               className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition-transform"
-              aria-label="Increase font size"
+              aria-label={t('settings_increase_font')}
             >
               A+
             </button>
@@ -82,7 +82,7 @@ export function MobileSettingsSheet({
             <button
               onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))}
               className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition-transform"
-              aria-label="Decrease line height"
+              aria-label={t('settings_decrease_line_height')}
             >
               -
             </button>
@@ -90,7 +90,7 @@ export function MobileSettingsSheet({
             <button
               onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))}
               className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-bold text-gray-600 dark:text-gray-300 active:scale-95 transition-transform"
-              aria-label="Increase line height"
+              aria-label={t('settings_increase_line_height')}
             >
               +
             </button>

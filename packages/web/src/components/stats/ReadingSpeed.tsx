@@ -73,7 +73,7 @@ function WpmTrend({ data }: { data: SpeedData }) {
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-gray-600 dark:text-gray-400">{t('speed_trend')}</span>
       </div>
-      <svg viewBox="0 0 300 70" className="w-full h-20" preserveAspectRatio="none" role="img" aria-label="Reading speed trend">
+      <svg viewBox="0 0 300 70" className="w-full h-20" preserveAspectRatio="none" role="img" aria-label={t('speed_trend_chart')}>
         <path d={areaPath} fill="url(#speedGrad)" opacity={0.25} />
         <polyline
           points={points.map((p) => `${p.x},${p.y}`).join(' ')}
