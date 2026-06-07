@@ -12,14 +12,10 @@ from app.utils import utcnow
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sqlalchemy import func
-
-from app.models.annotation import Annotation
 from app.models.book import Book
-from app.models.chat_message import ChatMessage
 from app.models.friend import FriendConversation, FriendRelationship
-from app.models.reading_session import ReadingSession
 from app.prompts import FRIEND_BOOK_CONTEXT, FRIEND_PERSONAS
+from app.services.friend_persona import recommend_persona
 from app.services.llm import safe_llm_call
 from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
@@ -28,12 +24,8 @@ logger = structlog.get_logger('read-pal.friend')
 
 HISTORY_LIMIT = 30
 
-# Persona recommendation thresholds
-_POWER_USER_DENSITY = 3.0   # annotations per session for "power user"
-_POWER_USER_SESSIONS = 20   # minimum sessions to qualify
-_EXPLORER_BOOKS = 5         # distinct books for "explorer"
-_CASUAL_DENSITY = 1.0       # low annotation density for "casual"
-_CASUAL_SESSIONS = 10       # minimum sessions to qualify
+# Re-export for backward compatibility
+__all__ = ['chat', 'get_relationship', 'recommend_persona']
 
 
 async def _get_or_create_relationship(
@@ -128,6 +120,66 @@ async def _save_message(
     await db.flush()
 
 
+def _apply_token_budget(
+    system_msg: SystemMessage,
+    history: list[HumanMessage | AIMessage],
+    user_message: str,
+    user_id: UUID,
+) -> None:
+    """Enforce token budget on the message list, logging any truncations."""
+    budget = TokenBudget()
+    budget.add(system_msg.content, label='system')
+    for i, msg in enumerate(history):
+        budget.add(msg.content, label=f'history[{i}]')
+    budget.add(user_message, label='user_message')
+
+    if budget.truncations:
+        logger.warning(
+            'friend.chat.budget_truncated',
+            truncations=', '.join(budget.truncations),
+            user_id=str(user_id),
+        )
+
+
+async def _call_llm_and_persist(
+    db: AsyncSession,
+    user_id: UUID,
+    persona: str,
+    book_id: UUID | None,
+    messages: list,
+    sanitized_message: str,
+) -> str:
+    """Call the LLM, persist both user and assistant messages, return response."""
+    assistant_content = await safe_llm_call(
+        messages,
+        fallback="I'm having trouble thinking right now. Please try again in a moment.",
+        log_label='Friend chat',
+        user_id=str(user_id),
+        book_id=str(book_id) if book_id else None,
+    )
+    await _save_message(db, user_id, persona, 'user', sanitized_message, book_id)
+    await _save_message(
+        db, user_id, persona, 'assistant', assistant_content, book_id,
+    )
+    return assistant_content
+
+
+def _log_chat_completed(
+    persona: str,
+    total_messages: int,
+    latency_ms: int,
+    user_id: UUID,
+) -> None:
+    """Log the completion of a friend chat turn."""
+    logger.info(
+        'friend.chat.completed',
+        persona=persona,
+        total_messages=total_messages,
+        latency_ms=latency_ms,
+        user_id=str(user_id),
+    )
+
+
 async def chat(
     db: AsyncSession,
     user_id: UUID,
@@ -143,59 +195,30 @@ async def chat(
         user_id=str(user_id),
         book_id=str(book_id) if book_id else None,
     )
+
     rel = await _get_or_create_relationship(db, user_id)
     if persona not in FRIEND_PERSONAS:
         persona = 'sage'
     rel.persona = persona
 
     sanitized_message = sanitize_chat_message(message)
-
     history = await _load_history(db, user_id, persona)
     system_msg = await _build_system_message(db, user_id, persona, book_id)
 
     messages = [system_msg] + history
     messages.append(HumanMessage(content=sanitized_message))
+    _apply_token_budget(system_msg, history, sanitized_message, user_id)
 
-    # Enforce token budget before calling the LLM
-    budget = TokenBudget()
-    budget.add(system_msg.content, label='system')
-    for i, msg in enumerate(history):
-        budget.add(msg.content, label=f'history[{i}]')
-    budget.add(sanitized_message, label='user_message')
-
-    if budget.truncations:
-        logger.warning(
-            'friend.chat.budget_truncated',
-            truncations=', '.join(budget.truncations),
-            user_id=str(user_id),
-        )
-
-    assistant_content = await safe_llm_call(
-        messages,
-        fallback="I'm having trouble thinking right now. Please try again in a moment.",
-        log_label='Friend chat',
-        user_id=str(user_id),
-        book_id=str(book_id) if book_id else None,
+    assistant_content = await _call_llm_and_persist(
+        db, user_id, persona, book_id, messages, sanitized_message,
     )
 
-    await _save_message(db, user_id, persona, 'user', sanitized_message, book_id)
-    await _save_message(
-        db, user_id, persona, 'assistant', assistant_content, book_id,
-    )
-
-    # Update relationship stats
     rel.total_messages += 2
     rel.last_interaction_at = utcnow()
     await db.flush()
 
     elapsed = int((time.monotonic() - t0) * 1000)
-    logger.info(
-        'friend.chat.completed',
-        persona=persona,
-        total_messages=rel.total_messages,
-        latency_ms=elapsed,
-        user_id=str(user_id),
-    )
+    _log_chat_completed(persona, rel.total_messages, elapsed, user_id)
 
     return {'role': 'assistant', 'content': assistant_content}
 
@@ -220,88 +243,4 @@ async def get_relationship(
             else None
         ),
         'createdAt': rel.created_at.isoformat() if rel.created_at else None,
-    }
-
-
-async def recommend_persona(
-    db: AsyncSession,
-    user_id: UUID,
-) -> dict[str, str]:
-    """Analyze user reading behavior and recommend the best persona."""
-    sessions_q = await db.execute(
-        select(func.count()).select_from(ReadingSession).where(
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    total_sessions = sessions_q.scalar() or 0
-
-    annotations_q = await db.execute(
-        select(func.count()).select_from(Annotation).where(
-            Annotation.user_id == user_id,
-        ),
-    )
-    total_annotations = annotations_q.scalar() or 0
-
-    chats_q = await db.execute(
-        select(func.count()).select_from(ChatMessage).where(
-            ChatMessage.user_id == user_id,
-        ),
-    )
-    total_chats = chats_q.scalar() or 0
-
-    books_q = await db.execute(
-        select(func.count(Book.id.distinct())).where(
-            Book.user_id == user_id,
-        ),
-    )
-    distinct_books = books_q.scalar() or 0
-
-    annotation_density = (
-        total_annotations / total_sessions if total_sessions > 0 else 0
-    )
-    chat_propensity = total_chats / total_sessions if total_sessions > 0 else 0
-
-    if annotation_density > _POWER_USER_DENSITY and total_sessions > _POWER_USER_SESSIONS:
-        return {
-            'recommendedPersona': 'alex',
-            'reason': (
-                'Based on your reading patterns, you annotate heavily '
-                'and study systematically. Alex will match your '
-                'analytical approach.'
-            ),
-        }
-    if chat_propensity > 2.0:
-        return {
-            'recommendedPersona': 'quinn',
-            'reason': (
-                'Based on your reading patterns, you love discussing '
-                'what you read. Quinn will spark creative conversations '
-                'with you.'
-            ),
-        }
-    if distinct_books > _EXPLORER_BOOKS:
-        return {
-            'recommendedPersona': 'penny',
-            'reason': (
-                'Based on your reading patterns, you read widely across '
-                'many books. Penny shares your enthusiasm for diverse '
-                'reading.'
-            ),
-        }
-    if annotation_density < _CASUAL_DENSITY and total_sessions > _CASUAL_SESSIONS:
-        return {
-            'recommendedPersona': 'sam',
-            'reason': (
-                'Based on your reading patterns, you stay focused on '
-                'the text without many annotations. Sam will respect '
-                'your practical style.'
-            ),
-        }
-    return {
-        'recommendedPersona': 'sage',
-        'reason': (
-            'Based on your reading patterns, Sage is a thoughtful '
-            'companion who offers philosophical insights to deepen '
-            'your reading.'
-        ),
     }

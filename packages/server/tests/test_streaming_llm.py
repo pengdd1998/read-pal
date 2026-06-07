@@ -287,7 +287,7 @@ class TestStreamingErrors:
 
     @pytest.mark.asyncio
     async def test_empty_stream_skips_save(self):
-        """When stream produces no content, assistant message should not be saved."""
+        """When stream produces no content, neither user nor assistant message is saved."""
         from app.services.companion_service import stream_chat
 
         mock_db = AsyncMock()
@@ -328,7 +328,7 @@ class TestStreamingErrors:
             patch('app.services.companion.context._load_annotations_context', return_value=''),
             patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
             patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
-            patch('app.services.companion.streaming._save_message', new_callable=AsyncMock) as mock_save,
+            patch('app.services.companion.stream_cache._save_message', new_callable=AsyncMock) as mock_save,
         ):
 
             chunks = []
@@ -337,9 +337,9 @@ class TestStreamingErrors:
             ):
                 chunks.append(chunk)
 
-            # _save_message called once for user message but NOT for empty assistant
+            # Neither user nor assistant message saved when response is empty
             save_calls = mock_save.call_count
-            assert save_calls == 1  # Only user message saved
+            assert save_calls == 0  # Empty response: skip both saves
 
 
 # ---------------------------------------------------------------------------

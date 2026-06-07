@@ -18,72 +18,72 @@ import { ActivityHeatmap } from '@/components/stats/ActivityHeatmap';
 import { Achievements } from '@/components/stats/Achievements';
 
 export default function StatsPage() {
-  const t = useTranslations('stats');
-  usePageTitle(t('page_title'));
+ const t = useTranslations('stats');
+ usePageTitle(t('page_title'));
 
-  const { data, sessions, flashcardStats, speedData, bookSpeeds, loading, error } = useStatsData();
+ const { data, sessions, flashcardStats, speedData, bookSpeeds, loading, error } = useStatsData();
 
-  const stats = data?.stats;
-  const weekly = data?.weeklyActivity || [];
-  const statusCounts = data?.booksByStatus || { unread: 0, reading: 0, completed: 0 };
+ const stats = data?.stats;
+ const weekly = data?.weeklyActivity || [];
+ const statusCounts = data?.booksByStatus || { unread: 0, reading: 0, completed: 0 };
 
-  return (
-    <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
-      {/* Back */}
-      <div className="mb-6">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          {t('dashboard')}
-        </Link>
-      </div>
+ return (
+ <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
+  {/* Back */}
+  <div className="mb-6">
+  <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px]" aria-label={t('dashboard')}>
+   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+   </svg>
+   {t('dashboard')}
+  </Link>
+  </div>
 
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('title')}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('subtitle')}</p>
-      </div>
+  {/* Header */}
+  <div className="mb-8">
+  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('title')}</h1>
+  <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
+  </div>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm">
-          {error}
-        </div>
-      )}
+  {error && (
+  <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm">
+   {error}
+  </div>
+  )}
 
-      {loading ? (
-        <StatsLoadingSkeleton />
-      ) : (!data && !error) ? (
-        <EmptyState />
-      ) : (
-        <div className="space-y-5">
-          <OverviewCards stats={stats} sessions={sessions} />
+  {loading ? (
+  <StatsLoadingSkeleton />
+  ) : (!data && !error) ? (
+  <EmptyState />
+  ) : (
+  <div className="space-y-5">
+   <OverviewCards stats={stats} sessions={sessions} />
 
-          {flashcardStats && flashcardStats.totalCards > 0 && (
-            <FlashcardMetrics flashcardStats={flashcardStats} />
-          )}
+   {flashcardStats && flashcardStats.totalCards > 0 && (
+   <FlashcardMetrics flashcardStats={flashcardStats} />
+   )}
 
-          <LibraryStatus stats={stats} statusCounts={statusCounts} />
+   <LibraryStatus stats={stats} statusCounts={statusCounts} />
 
-          <WeeklyActivity weekly={weekly} />
+   <WeeklyActivity weekly={weekly} />
 
-          <ReadingSpeed speedData={speedData} bookSpeeds={bookSpeeds} />
+   <ReadingSpeed speedData={speedData} bookSpeeds={bookSpeeds} />
 
-          <ReadingVelocityTrend sessions={sessions} />
+   <ReadingVelocityTrend sessions={sessions} />
 
-          <RecentSessions sessions={sessions} />
+   <RecentSessions sessions={sessions} />
 
-          {data?.recentBooks && data.recentBooks.length > 0 && (
-            <BookBreakdown books={data.recentBooks} />
-          )}
+   {data?.recentBooks && data.recentBooks.length > 0 && (
+   <BookBreakdown books={data.recentBooks} />
+   )}
 
-          <ActivityHeatmap sessions={sessions} />
+   <ActivityHeatmap sessions={sessions} />
 
-          {stats && (
-            <Achievements stats={stats} />
-          )}
-        </div>
-      )}
-    </main>
-  );
+   {stats && (
+   <Achievements stats={stats} />
+   )}
+  </div>
+  )}
+ </main>
+ );
 }

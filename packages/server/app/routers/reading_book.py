@@ -16,10 +16,11 @@ from app.schemas.memory_book import MemoryBookGenerateRequest
 from app.services import reading_book_service
 from app.services.memory_book_service import generate
 from app.utils.i18n import translate_error, t
+from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.reading_book')
 
-router = APIRouter(prefix='/api/v1/reading-book', tags=['reading-book'])
+router = APIRouter(prefix='/api/v1/reading-book', tags=['reading-book'], dependencies=[api_limiter])
 
 
 @router.post('/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter])

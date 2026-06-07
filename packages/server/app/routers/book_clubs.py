@@ -13,12 +13,14 @@ from app.schemas.book_club import (
     BookClubUpdate,
     ClubJoinRequest,
     DiscussionCreate,
+    DiscussionResponse,
 )
 from app.schemas.common import GenericResponse
 from app.services import book_club_service
 from app.utils.i18n import _get_user_lang, t, translate_error
+from app.middleware.rate_limiter import api_limiter
 
-router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'])
+router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'], dependencies=[api_limiter])
 
 
 @router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
@@ -87,7 +89,13 @@ async def get_club(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """Get club details."""
+    """Get club details. Only visible to members."""
+    uid = UUID(user['id'])
+    if not await book_club_service.is_member(db, uid, club_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
+        )
     club = await book_club_service.get_club(db, club_id)
     if club is None:
         raise HTTPException(
@@ -195,7 +203,13 @@ async def get_members(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """List club members."""
+    """List club members. Only visible to members."""
+    uid = UUID(user['id'])
+    if not await book_club_service.is_member(db, uid, club_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
+        )
     members = await book_club_service.get_members(db, club_id)
     return {'success': True, 'data': members}
 
@@ -206,7 +220,13 @@ async def get_club_progress(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """Get club reading progress."""
+    """Get club reading progress. Only visible to members."""
+    uid = UUID(user['id'])
+    if not await book_club_service.is_member(db, uid, club_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
+        )
     club = await book_club_service.get_club(db, club_id)
     if club is None:
         raise HTTPException(
@@ -234,23 +254,24 @@ async def get_discussions(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """List discussions for a club."""
+    """List discussions for a club. Only visible to members."""
+    uid = UUID(user['id'])
+    if not await book_club_service.is_member(db, uid, club_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
+        )
     discussions, total = await book_club_service.get_discussions(
         db, club_id, page, per_page,
     )
+    items = [
+        DiscussionResponse.model_validate(d).model_dump(by_alias=True, mode='json')
+        for d in discussions
+    ]
     return {
         'success': True,
         'data': {
-            'items': [
-                {
-                    'id': str(d.id),
-                    'clubId': str(d.club_id),
-                    'userId': str(d.user_id),
-                    'content': d.content,
-                    'createdAt': d.created_at.isoformat() if d.created_at else None,
-                }
-                for d in discussions
-            ],
+            'items': items,
             'total': total,
             'page': page,
             'perPage': per_page,
@@ -276,13 +297,5 @@ async def add_discussion(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},
         ) from exc
-    return {
-        'success': True,
-        'data': {
-            'id': str(discussion.id),
-            'clubId': str(discussion.club_id),
-            'userId': str(discussion.user_id),
-            'content': discussion.content,
-            'createdAt': discussion.created_at.isoformat() if discussion.created_at else None,
-        },
-    }
+    data = DiscussionResponse.model_validate(discussion).model_dump(by_alias=True, mode='json')
+    return {'success': True, 'data': data}

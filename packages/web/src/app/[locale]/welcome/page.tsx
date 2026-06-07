@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -9,6 +9,7 @@ import { Check } from '@/components/icons';
 import type { Book } from '@read-pal/shared';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAuth } from '@/lib/auth';
+import { useToast } from '@/components/Toast';
 
 const ONBOARDING_KEY = 'read-pal-onboarding-complete';
 
@@ -25,10 +26,15 @@ export default function WelcomePage() {
   usePageTitle(t('page_title'));
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [selectedPersona, setSelectedPersona] = useState<string>('penny');
+  const [finishing, setFinishing] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedError, setSeedError] = useState(false);
 
   // Auto-redirect returning users who already completed onboarding
   useEffect(() => {
@@ -38,54 +44,60 @@ export default function WelcomePage() {
     }
   }, [isAuthenticated, router]);
 
+  const fetchBooks = useCallback(async (signal: { stale: boolean }) => {
+    try {
+      const res = await api.get<Book[]>('/api/books');
+      if (signal.stale) return;
+      if (res.success && res.data) {
+        const books = res.data || [];
+        const sample = books.find(
+          (b) => (b.metadata as Record<string, string>)?.source === 'sample',
+        ) ?? books.find(
+          (b) => b.title?.includes("Alice's Adventures") || b.title?.includes('Art of Reading') || b.author === 'read-pal',
+        );
+        if (sample) setBook(sample);
+        else if (books.length > 0) setBook(books[0]);
+      }
+    } catch (err) {
+      if (signal.stale) return;
+      console.warn('Welcome: failed to load sample book list', err);
+      setError(t('book_load_error'));
+    }
+    setLoading(false);
+  }, [t]);
+
   useEffect(() => {
     // Skip data fetching if user is already onboarded (redirecting anyway)
     const alreadyOnboarded = localStorage.getItem(ONBOARDING_KEY) === 'true';
     if (isAuthenticated && alreadyOnboarded) return;
 
-    (async () => {
-      try {
-        const res = await api.get<Book[]>('/api/books');
-        if (res.success && res.data) {
-          const books = (res.data) || [];
-          // Find the sample book — prefer metadata.source, fallback to title matching
-          const sample = books.find(
-            (b) => (b.metadata as Record<string, string>)?.source === 'sample',
-          ) ?? books.find(
-            (b) => b.title?.includes("Alice's Adventures") || b.title?.includes('Art of Reading') || b.author === 'read-pal',
-          );
-          if (sample) setBook(sample);
-          else if (books.length > 0) setBook(books[0]);
-        }
-      } catch {
-        // Continue without book
-      }
-      setLoading(false);
-    })();
-  }, [isAuthenticated]);
+    const signal = { stale: false };
+    fetchBooks(signal);
+    return () => { signal.stale = true; };
+  }, [isAuthenticated, fetchBooks]);
 
   // Auto-advance through intro steps
   useEffect(() => {
-    if (loading) return;
+    if (loading || error) return;
     const timers = [
       setTimeout(() => setStep(1), 600),
       setTimeout(() => setStep(2), 1800),
     ];
     return () => timers.forEach(clearTimeout);
-  }, [loading]);
+  }, [loading, error]);
 
   const handleFinish = async () => {
-    // Save persona preference
+    setFinishing(true);
     try {
       await authFetch('/api/settings', {
         method: 'PATCH',
         body: JSON.stringify({ friendPersona: selectedPersona }),
       });
-    } catch {
-      // Non-blocking — persona can be changed later
+    } catch (err) {
+      console.warn('Welcome: failed to save persona preference', err);
+      toast(t('persona_save_error'), 'error');
     }
-    // Mark onboarding as complete so the dashboard walkthrough is skipped
-    try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch { /* ignore */ }
+    try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('Storage error:', err); }
 
     if (book) {
       router.push(`/read/${book.id}`);
@@ -114,14 +126,29 @@ export default function WelcomePage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-center gap-2 text-gray-500">
               <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
               {t('preparing')}
+            </div>
+          ) : error ? (
+            <div className="space-y-4">
+              <p className="text-red-600 text-lg">{error}</p>
+              <button
+                onClick={() => {
+                  setError(null);
+                  setLoading(true);
+                  const signal = { stale: false };
+                  fetchBooks(signal);
+                }}
+                className="btn btn-primary py-2 px-6 rounded-xl"
+              >
+                {t('retry')}
+              </button>
             </div>
           ) : (
             <>
               <h1 className="text-3xl font-bold mb-2">{t('greeting', { name: persona.name })}</h1>
-              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
+              <p className="text-gray-600 text-lg leading-relaxed">
                 {t('intro')}
               </p>
             </>
@@ -129,24 +156,24 @@ export default function WelcomePage() {
         </div>
 
         {/* Step 1: What we'll do */}
-        {step >= 1 && !loading && (
+        {step >= 1 && !loading && !error && (
           <div
             className={`mt-8 transition-all duration-700 ${
               step >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
-            <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 text-left space-y-4">
+            <div className="bg-surface-0 rounded-2xl border border-gray-200 p-6 text-left space-y-4">
               <h2 className="font-semibold text-lg text-center">{t('what_we_do_title')}</h2>
               {[
                 { icon: '📖', titleKey: 'read_together', descKey: 'read_together_desc' },
                 { icon: '💬', titleKey: 'chat_ideas', descKey: 'chat_ideas_desc' },
                 { icon: '🌱', titleKey: 'build_knowledge', descKey: 'build_knowledge_desc' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
+              ].map((item) => (
+                <div key={item.titleKey} className="flex items-start gap-3">
                   <span className="text-xl mt-0.5">{item.icon}</span>
                   <div>
                     <div className="font-medium text-sm">{t(item.titleKey)}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{t(item.descKey)}</div>
+                    <div className="text-xs text-gray-500">{t(item.descKey)}</div>
                   </div>
                 </div>
               ))}
@@ -155,7 +182,7 @@ export default function WelcomePage() {
         )}
 
         {/* Step 2: Persona picker + sample book ready */}
-        {step >= 2 && !loading && (
+        {step >= 2 && !loading && !error && (
           <div
             className={`mt-6 transition-all duration-700 ${
               step >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -163,7 +190,7 @@ export default function WelcomePage() {
           >
             {/* Persona selection */}
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
                 {t('pick_companion')}
               </h3>
               <div className="grid grid-cols-1 gap-1.5 text-left">
@@ -173,17 +200,17 @@ export default function WelcomePage() {
                     <button
                       key={p.id}
                       onClick={() => setSelectedPersona(p.id)}
-                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all duration-200 text-left ${
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all duration-200 text-left min-h-[44px] ${
                         isSelected
                           ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/15 ring-1 ring-amber-400/30'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-surface-2'
                       }`}
                     >
                       <span className="text-xl">{p.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-gray-900 dark:text-white">{p.name}</span>
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500">{t(p.personalityKey)}</span>
+                          <span className="font-semibold text-sm text-gray-900">{p.name}</span>
+                          <span className="text-[10px] text-gray-500">{t(p.personalityKey)}</span>
                         </div>
                       </div>
                       {isSelected && (
@@ -205,9 +232,9 @@ export default function WelcomePage() {
                 </div>
                 <div>
                   <div className="font-semibold text-sm">
-                    {book?.title || "Alice's Adventures in Wonderland"}
+                    {book?.title || t('sample_book_title')}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-gray-500">
                     {t('sample_book_ready')}
                   </div>
                 </div>
@@ -218,38 +245,49 @@ export default function WelcomePage() {
             <div className="mt-6">
               <button
                 onClick={handleFinish}
-                className="btn btn-primary py-3.5 px-8 rounded-2xl text-lg hover:scale-105 active:scale-95 transition-transform duration-200"
+                disabled={finishing}
+                className="btn btn-primary py-3.5 px-8 rounded-2xl text-lg hover:scale-105 active:scale-95 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t('start_reading', { name: persona.name })}
+                {finishing ? '...' : t('start_reading', { name: persona.name })}
               </button>
               <div className="mt-4">
                 <button
                   onClick={() => {
-                    try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch { /* ignore */ }
+                    try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('Storage error:', err); }
                     router.push('/dashboard');
                   }}
-                  className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="text-sm text-gray-400 hover:text-gray-600 transition-colors min-h-[44px] inline-flex items-center"
                 >
                   {t('go_dashboard')}
                 </button>
                 {!book && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
-                        if (res.success && res.data) {
-                          const data = res.data;
-                          try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch { /* ignore */ }
-                          router.push(`/read/${data.book.id}`);
+                  <div>
+                    <button
+                      onClick={async () => {
+                        setSeeding(true);
+                        setSeedError(false);
+                        try {
+                          const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
+                          if (res.success && res.data) {
+                            const data = res.data;
+                            try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('Storage error:', err); }
+                            router.push(`/read/${data.book.id}`);
+                          }
+                        } catch (err) {
+                          console.warn('Welcome: failed to seed sample book', err);
+                          setSeedError(true);
+                          setSeeding(false);
                         }
-                      } catch {
-                        router.push('/library');
-                      }
-                    }}
-                    className="text-sm text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors ml-4"
-                  >
-                    {t('load_sample')}
-                  </button>
+                      }}
+                      disabled={seeding}
+                      className="text-sm text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors ml-4 disabled:opacity-50"
+                    >
+                      {seeding ? '...' : t('load_sample')}
+                    </button>
+                    {seedError && (
+                      <div className="text-xs text-red-500 mt-1 ml-4">{t('seed_error')}</div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

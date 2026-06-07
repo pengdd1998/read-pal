@@ -174,10 +174,13 @@ async def test_refresh_token(client):
 
 @pytest.mark.asyncio
 async def test_delete_account(client):
-    reg = await register_user(client)
-    resp = await client.delete(
+    password = 'TestPass123!'
+    reg = await register_user(client, password=password)
+    resp = await client.request(
+        'DELETE',
         '/api/v1/auth/account',
         headers=auth_headers(reg['token']),
+        json={'password': password},
     )
     assert resp.status_code == 204
 

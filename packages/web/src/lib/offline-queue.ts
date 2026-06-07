@@ -73,7 +73,8 @@ export async function queueMutation(
     }
 
     return true;
-  } catch {
+  } catch (err) {
+    console.warn('OfflineQueue: failed to enqueue mutation', err);
     return false;
   }
 }
@@ -91,7 +92,8 @@ export async function getQueueCount(): Promise<number> {
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => resolve(0);
     });
-  } catch {
+  } catch (err) {
+    console.warn('OfflineQueue: failed to get queue count', err);
     return 0;
   }
 }
@@ -104,8 +106,8 @@ export async function clearQueue(): Promise<void> {
     const db = await openDB();
     const tx = db.transaction(STORE_NAME, 'readwrite');
     tx.objectStore(STORE_NAME).clear();
-  } catch {
-    // Ignore errors
+  } catch (err) {
+    console.warn('OfflineQueue: failed to clear queue', err);
   }
 }
 

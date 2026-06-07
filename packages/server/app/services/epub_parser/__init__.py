@@ -14,14 +14,23 @@ Decomposed into focused sub-modules:
 """
 
 import logging
+from contextvars import ContextVar
 
 from app.services.epub_parser.ebooklib_path import process_epub_ebooklib
 from app.services.epub_parser.zipfile_path import epub_zip_fallback
 
 logger = logging.getLogger('read-pal')
 
-# Module-level temp for zipfile fallback metadata
-_last_epub_metadata: dict = {}
+# Context-local metadata for zipfile fallback (concurrency-safe)
+_epub_metadata_var: ContextVar[dict] = ContextVar('_epub_metadata_var', default={})
+
+
+def _get_metadata() -> dict:
+    return _epub_metadata_var.get({})
+
+
+def _set_metadata(metadata: dict) -> None:
+    _epub_metadata_var.set(metadata)
 
 
 async def process_epub(file_path: str) -> dict:
@@ -33,12 +42,11 @@ async def process_epub(file_path: str) -> dict:
 
     # Fallback to zipfile
     logger.warning('ebooklib not available, using ZIP fallback for EPUB')
-    global _last_epub_metadata
-    _last_epub_metadata = {}
+    _epub_metadata_var.set({})
     chapters, full_text_parts, total_pages = await epub_zip_fallback(file_path)
     return {
         'total_pages': total_pages,
         'chapters': chapters,
         'content': '\n\n'.join(full_text_parts),
-        'metadata': _last_epub_metadata,
+        'metadata': _epub_metadata_var.get({}),
     }

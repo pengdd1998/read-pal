@@ -29,10 +29,11 @@ from app.services.feedback_service import submit_feedback as submit_feedback_svc
 from app.services.mood_service import generate_mood_scene
 from app.services.reading_plan_service import advance_plan, generate_plan, get_active_plan
 from app.utils.i18n import t
+from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.agent')
 
-router = APIRouter(prefix='/api/v1/agent', tags=['agent'])
+router = APIRouter(prefix='/api/v1/agent', tags=['agent'], dependencies=[api_limiter])
 
 _SSE_HEADERS = {
     'Cache-Control': 'no-cache',
@@ -41,7 +42,7 @@ _SSE_HEADERS = {
 }
 
 
-@router.get('/health')
+@router.get('/health', response_model=GenericResponse)
 async def llm_health() -> dict:
     """Public health check for the LLM service (no auth required)."""
     from app.services.llm import check_llm_health
@@ -50,7 +51,7 @@ async def llm_health() -> dict:
         return await check_llm_health()
     except Exception as exc:
         logger.error('Health check failed: %s', exc)
-        return {'healthy': False, 'error': str(exc)}
+        return {'healthy': False, 'error': 'Health check failed'}
 
 
 @router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter])
@@ -66,7 +67,7 @@ async def chat(
         result = await companion_service.chat(
             db=db, user_id=uid, book_id=body.book_id,
             message=body.message, context=body.context,
-            persona=body.persona, lang=lang,
+            persona=body.persona, genre=body.genre, lang=lang,
         )
     except ValueError as exc:
         raise_not_found(exc, lang)
@@ -85,11 +86,12 @@ async def stream(
     lang = await resolve_lang(db, uid)
     companion_mode = body.context.get('companionMode', 'casual') if body.context else 'casual'
     persona = (body.context.get('persona') if body.context else None) or body.persona
+    genre = body.genre
     return StreamingResponse(
         sse_bytes_stream(
             db, uid, body.book_id, body.message,
             context=body.context, companion_mode=companion_mode,
-            persona=persona, lang=lang,
+            persona=persona, genre=genre, lang=lang,
         ),
         media_type='text/event-stream',
         headers=_SSE_HEADERS,
@@ -165,6 +167,12 @@ async def discussion_questions(
         )
     except ValueError as exc:
         raise_not_found(exc, lang)
+    except Exception as exc:
+        logger.error('Discussion questions failed: %s', exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable', lang)},
+        ) from exc
     return {'success': True, 'data': result}
 
 
@@ -176,10 +184,17 @@ async def mood_scene(
 ) -> dict:
     """Generate a mood-based scene description using the LLM."""
     lang = await resolve_lang(db, UUID(current_user['id']))
-    data = await generate_mood_scene(
-        db, UUID(current_user['id']),
-        mood=body.mood, text=body.text, lang=lang,
-    )
+    try:
+        data = await generate_mood_scene(
+            db, UUID(current_user['id']),
+            mood=body.mood, text=body.text, lang=lang,
+        )
+    except Exception as exc:
+        logger.error('Mood scene generation failed: %s', exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable', lang)},
+        ) from exc
     return {'success': True, 'data': data}
 
 

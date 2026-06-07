@@ -159,9 +159,88 @@ async def is_token_revoked(jti: str) -> bool:
             return True
         return False
     except Exception:
+        logger.warning('auth.redis_blacklist_failed', jti=jti[:8] if jti else None)
         if jti in _in_memory_blacklist:
             return True
         return False
+
+
+async def _was_password_reset(user_id: str, token_issued_at: float) -> bool:
+    """Check if a password reset occurred after this token was issued."""
+    try:
+        r = _get_redis()
+        reset_marker = await r.get(f'pwd-reset:{user_id}')
+        # If a reset marker exists, all tokens issued before it are invalid
+        return reset_marker is not None
+    except Exception:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Internal auth helpers
+# ---------------------------------------------------------------------------
+
+def _user_dict(user: User) -> dict[str, Any]:
+    """Build a standardized user dict for dependency injection."""
+    return {'id': str(user.id), 'email': user.email, 'name': user.name}
+
+
+def _raise_401(code: str, message: str) -> None:
+    """Raise a 401 HTTPException with structured detail."""
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail={'code': code, 'message': message},
+    )
+
+
+async def _authenticate_api_key(token: str, db: AsyncSession) -> dict[str, Any]:
+    """Validate an API key and return the user dict."""
+    key_hash = hash_api_key(token)
+    result = await db.execute(select(ApiKey).where(ApiKey.key_hash == key_hash))
+    api_key = result.scalar_one_or_none()
+
+    if api_key is None:
+        _raise_401('INVALID_API_KEY', t('errors.invalid_api_key'))
+
+    result = await db.execute(select(User).where(User.id == api_key.user_id))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        _raise_401('USER_NOT_FOUND', t('errors.api_key_owner_not_found'))
+
+    api_key.last_used_at = datetime.now(timezone.utc)
+    await db.flush()
+    return _user_dict(user)
+
+
+async def _authenticate_jwt(token: str, db: AsyncSession) -> dict[str, Any]:
+    """Validate a JWT token and return the user dict."""
+    settings = get_settings()
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=['HS256'])
+    except JWTError as exc:
+        is_expired = 'expired' in str(exc).lower()
+        code = 'TOKEN_EXPIRED' if is_expired else 'INVALID_TOKEN'
+        msg = t('errors.token_expired') if is_expired else t('errors.token_invalid')
+        _raise_401(code, msg)
+
+    jti = payload.get('jti')
+    if jti and await is_token_revoked(jti):
+        _raise_401('TOKEN_REVOKED', t('errors.token_revoked'))
+
+    # Check if password was reset after this token was issued
+    user_id = payload.get('userId') or payload.get('sub') or ''
+    if user_id and await _was_password_reset(user_id, payload.get('iat', 0)):
+        _raise_401('TOKEN_REVOKED', t('errors.token_revoked'))
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        _raise_401('USER_NOT_FOUND', t('errors.user_sign_in_again'))
+
+    return _user_dict(user)
 
 
 # ---------------------------------------------------------------------------
@@ -172,90 +251,11 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Validate Bearer token (JWT or API key) and return the user dict.
-
-    Returns ``{id, email, name}`` on success; raises 401 on failure.
-    """
+    """Validate Bearer token (JWT or API key) and return the user dict."""
     if credentials is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'code': 'UNAUTHORIZED', 'message': t('errors.missing_auth')},
-        )
+        _raise_401('UNAUTHORIZED', t('errors.missing_auth'))
 
     token = credentials.credentials
-
-    # --- API key path ---
     if is_api_key_format(token):
-        key_hash = hash_api_key(token)
-        result = await db.execute(
-            select(ApiKey).where(ApiKey.key_hash == key_hash),
-        )
-        api_key = result.scalar_one_or_none()
-
-        if api_key is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={'code': 'INVALID_API_KEY', 'message': t('errors.invalid_api_key')},
-            )
-
-        result = await db.execute(
-            select(User).where(User.id == api_key.user_id),
-        )
-        user = result.scalar_one_or_none()
-
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={'code': 'USER_NOT_FOUND', 'message': t('errors.api_key_owner_not_found')},
-            )
-
-        # Update last_used_at within the request session
-        api_key.last_used_at = datetime.now(timezone.utc)
-        await db.flush()
-
-        return {
-            'id': str(user.id),
-            'email': user.email,
-            'name': user.name,
-        }
-
-    # --- JWT path ---
-    settings = get_settings()
-    try:
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=['HS256'])
-    except JWTError as exc:
-        # Distinguish expired vs invalid for better client handling
-        is_expired = 'expired' in str(exc).lower()
-        error_msg = t('errors.token_expired') if is_expired else t('errors.token_invalid')
-        error_code = 'TOKEN_EXPIRED' if is_expired else 'INVALID_TOKEN'
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'code': error_code, 'message': error_msg},
-        ) from exc
-
-    jti = payload.get('jti')
-    if jti and await is_token_revoked(jti):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'code': 'TOKEN_REVOKED', 'message': t('errors.token_revoked')},
-        )
-
-    user_id = payload.get('userId') or payload.get('sub') or ''
-
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={
-                'code': 'USER_NOT_FOUND',
-                'message': t('errors.user_sign_in_again'),
-            },
-        )
-
-    return {
-        'id': str(user.id),
-        'email': user.email,
-        'name': user.name,
-    }
+        return await _authenticate_api_key(token, db)
+    return await _authenticate_jwt(token, db)

@@ -76,6 +76,75 @@ def _resolve_edge_label(
     return 'related'
 
 
+def _upsert_concept_node(
+    graph: nx.Graph,
+    name: str,
+    node_type: str,
+    description: str,
+    book_id: UUID | None,
+    freshness: float,
+) -> None:
+    """Insert a new concept node or update an existing one in the graph."""
+    if not graph.has_node(name):
+        graph.add_node(
+            name,
+            type=node_type,
+            size=1,
+            description=description,
+            source_book_ids=[str(book_id)] if book_id else [],
+            annotation_count=1,
+            freshness=freshness,
+        )
+        return
+
+    attrs = graph.nodes[name]
+    attrs['size'] += 1
+    attrs['annotation_count'] = attrs.get('annotation_count', 0) + 1
+    # Keep the lower freshness (older data dominates)
+    attrs['freshness'] = min(attrs.get('freshness', 1.0), freshness)
+    if description and not attrs.get('description'):
+        attrs['description'] = description
+    if book_id:
+        book_ids = attrs.get('source_book_ids', [])
+        bid = str(book_id)
+        if bid not in book_ids:
+            book_ids.append(bid)
+            attrs['source_book_ids'] = book_ids
+
+
+def _add_related_edge(
+    graph: nx.Graph,
+    source: str,
+    target: str,
+    edge_label: str,
+    book_id: UUID | None,
+    freshness: float,
+) -> None:
+    """Ensure the target node exists, then add or strengthen an edge."""
+    if not graph.has_node(target):
+        graph.add_node(
+            target,
+            type='concept',
+            size=1,
+            description='',
+            source_book_ids=[str(book_id)] if book_id else [],
+            annotation_count=0,
+            freshness=freshness,
+        )
+    else:
+        existing = graph.nodes[target].get('freshness', 1.0)
+        graph.nodes[target]['freshness'] = min(existing, freshness)
+
+    if graph.has_edge(source, target):
+        graph[source][target]['weight'] += 1.0
+        # Prefer a non-generic label over "related"
+        current = graph[source][target].get('label', 'related')
+        if edge_label != 'related' and current == 'related':
+            graph[source][target]['label'] = edge_label
+    else:
+        graph.add_edge(source, target, weight=1.0, label=edge_label)
+
+
 def _build_nx_graph(
     concepts: list[dict[str, Any]],
     book_id: UUID | None = None,
@@ -83,76 +152,35 @@ def _build_nx_graph(
 ) -> nx.Graph:
     """Build a NetworkX graph from extracted concepts."""
     graph = nx.Graph()
+    freshness_lookup = freshness_map or {}
 
     for concept in concepts:
         name = concept.get('name', '').strip()
         if not name:
             continue
 
-        node_type = concept.get('type', 'concept')
-        description = concept.get('description', '')
-        related = concept.get('related', [])
-        node_freshness = (freshness_map or {}).get(name, 1.0)
+        _upsert_concept_node(
+            graph,
+            name=name,
+            node_type=concept.get('type', 'concept'),
+            description=concept.get('description', ''),
+            book_id=book_id,
+            freshness=freshness_lookup.get(name, 1.0),
+        )
 
-        if not graph.has_node(name):
-            graph.add_node(
-                name,
-                type=node_type,
-                size=1,
-                description=description,
-                source_book_ids=[str(book_id)] if book_id else [],
-                annotation_count=1,
-                freshness=node_freshness,
-            )
-        else:
-            graph.nodes[name]['size'] += 1
-            graph.nodes[name]['annotation_count'] = (
-                graph.nodes[name].get('annotation_count', 0) + 1
-            )
-            # Keep the lower freshness (older data dominates)
-            existing = graph.nodes[name].get('freshness', 1.0)
-            graph.nodes[name]['freshness'] = min(existing, node_freshness)
-            if description and not graph.nodes[name].get('description'):
-                graph.nodes[name]['description'] = description
-            if book_id:
-                book_ids = graph.nodes[name].get('source_book_ids', [])
-                bid = str(book_id)
-                if bid not in book_ids:
-                    book_ids.append(bid)
-                    graph.nodes[name]['source_book_ids'] = book_ids
-
-        for related_name in related:
-            related_name = related_name.strip()
+        for raw_related in concept.get('related', []):
+            related_name = raw_related.strip()
             if not related_name or related_name == name:
                 continue
-            related_freshness = (freshness_map or {}).get(related_name, 1.0)
-            if not graph.has_node(related_name):
-                graph.add_node(
-                    related_name,
-                    type='concept',
-                    size=1,
-                    description='',
-                    source_book_ids=[str(book_id)] if book_id else [],
-                    annotation_count=0,
-                    freshness=related_freshness,
-                )
-            else:
-                existing = graph.nodes[related_name].get('freshness', 1.0)
-                graph.nodes[related_name]['freshness'] = min(
-                    existing, related_freshness,
-                )
-            # Look up LLM-provided label from relationships
             edge_label = _resolve_edge_label(concept, related_name)
-            if graph.has_edge(name, related_name):
-                graph[name][related_name]['weight'] += 1.0
-                # Prefer a non-generic label over "related"
-                current = graph[name][related_name].get('label', 'related')
-                if edge_label != 'related' and current == 'related':
-                    graph[name][related_name]['label'] = edge_label
-            else:
-                graph.add_edge(
-                    name, related_name, weight=1.0, label=edge_label,
-                )
+            _add_related_edge(
+                graph,
+                source=name,
+                target=related_name,
+                edge_label=edge_label,
+                book_id=book_id,
+                freshness=freshness_lookup.get(related_name, 1.0),
+            )
 
     return graph
 

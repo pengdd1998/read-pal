@@ -45,7 +45,7 @@ function loadSavedPosition(storageKey: string): DragPosition | null {
     if (!raw) return null;
     const pos = JSON.parse(raw) as DragPosition;
     if (typeof pos.x === 'number' && typeof pos.y === 'number') return pos;
-  } catch { /* ignore */ }
+  } catch (err) { console.warn('Storage error: failed to load draggable position', err); }
   return null;
 }
 
@@ -134,7 +134,7 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableReturn {
 
   // Persist position on change
   useEffect(() => {
-    try { localStorage.setItem(storageKey, JSON.stringify(btnPos)); } catch { /* ignore */ }
+    try { localStorage.setItem(storageKey, JSON.stringify(btnPos)); } catch (err) { console.warn('Storage error: failed to persist draggable position', err); }
   }, [btnPos, storageKey]);
 
   // Reposition on viewport resize

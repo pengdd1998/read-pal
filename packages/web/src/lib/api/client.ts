@@ -173,6 +173,7 @@ export class ApiClient {
         }
       })
       .catch(() => {
+        console.warn("api: background refresh failed");
         // Background refresh failed — stale data remains usable
       });
   }
@@ -204,8 +205,8 @@ export class ApiClient {
     return this._mutation<T>('put', url, data);
   }
 
-  async patch<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    return this._mutation<T>('patch', url, data);
+  async patch<T>(url: string, data?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    return this._mutation<T>('patch', url, data, options);
   }
 
   async delete<T>(url: string): Promise<ApiResponse<T>> {
@@ -234,17 +235,20 @@ export class ApiClient {
     };
   }
 
-  /** Upload a file (FormData) to a given endpoint, with optional progress callback. */
+  /** Upload a file (FormData) to a given endpoint, with optional progress callback and abort support. */
   async upload<T>(
     url: string,
     formData: FormData,
     onProgress?: (percent: number) => void,
+    signal?: AbortSignal,
   ): Promise<ApiResponse<T>> {
     let lastError: unknown;
     for (let attempt = 1; attempt <= 2; attempt++) {
+      if (signal?.aborted) throw new DOMException('Upload cancelled', 'AbortError');
       try {
         const response = await this.client.post<ApiResponse<T>>(url, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
+          signal,
           onUploadProgress: (e) => {
             if (e.total && onProgress) {
               onProgress(Math.round((e.loaded / e.total) * 100));
@@ -254,6 +258,9 @@ export class ApiClient {
         invalidateAfterMutation(this.cache, '/api/books');
         return response.data;
       } catch (err) {
+        if (signal?.aborted || (err as DOMException)?.name === 'AbortError') {
+          throw err;
+        }
         lastError = err;
         const status = (err as AxiosError).response?.status;
         if (!isRetryableStatus(status) && status) break;

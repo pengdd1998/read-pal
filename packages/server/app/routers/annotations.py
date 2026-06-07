@@ -21,8 +21,9 @@ from app.schemas.annotation import (
 from app.schemas.common import GenericResponse
 from app.services import annotation_service
 from app.utils.i18n import _get_user_lang, t
+from app.middleware.rate_limiter import api_limiter
 
-router = APIRouter(prefix='/api/v1/annotations', tags=['annotations'])
+router = APIRouter(prefix='/api/v1/annotations', tags=['annotations'], dependencies=[api_limiter])
 
 
 @router.get('', response_model=AnnotationListResponse)
@@ -131,9 +132,15 @@ async def create_annotation(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Create a new annotation."""
-    annotation = await annotation_service.create_annotation(
-        db, UUID(current_user['id']), body,
-    )
+    try:
+        annotation = await annotation_service.create_annotation(
+            db, UUID(current_user['id']), body,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+        ) from exc
     return {
         'success': True,
         'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json', by_alias=True),

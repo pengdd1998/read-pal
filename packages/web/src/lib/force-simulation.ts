@@ -10,15 +10,10 @@ export function runForceSimulation(
   const centerX = width / 2;
   const centerY = height / 2;
 
-  // Build adjacency for quick lookup
-  const edgeMap = new Map<string, string[]>();
-  for (const e of edges) {
-    const sList = edgeMap.get(e.source) || [];
-    sList.push(e.target);
-    edgeMap.set(e.source, sList);
-    const tList = edgeMap.get(e.target) || [];
-    tList.push(e.source);
-    edgeMap.set(e.target, tList);
+  // Build node index for O(1) lookup
+  const nodeIndex = new Map<string, SimNode>();
+  for (const n of nodes) {
+    nodeIndex.set(n.id, n);
   }
 
   for (let iter = 0; iter < iterations; iter++) {
@@ -40,10 +35,10 @@ export function runForceSimulation(
       }
     }
 
-    // Attraction along edges
+    // Attraction along edges (O(m) with index lookup)
     for (const edge of edges) {
-      const source = nodes.find((n) => n.id === edge.source);
-      const target = nodes.find((n) => n.id === edge.target);
+      const source = nodeIndex.get(edge.source);
+      const target = nodeIndex.get(edge.target);
       if (!source || !target) continue;
       const dx = target.x - source.x;
       const dy = target.y - source.y;

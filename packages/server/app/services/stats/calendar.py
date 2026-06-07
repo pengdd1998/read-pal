@@ -1,5 +1,6 @@
 """Reading calendar and weekly summary stats."""
 
+import asyncio
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
@@ -12,45 +13,113 @@ from app.services.stats.streaks import compute_streaks
 from app.services.stats import STATS_LOOKBACK_DELTA
 
 
-async def get_reading_calendar(
-    db: AsyncSession,
-    uid: UUID,
+def _build_date_range(
     months: int | None,
     year: int | None,
     month: int | None,
-) -> dict:
-    """Return calendar data: days with reading activity.
-
-    Supports two modes:
-    - ``?months=6`` — last N months from today (frontend StreakCalendar)
-    - ``?year=2026`` and optional ``?month=4`` — specific date range
-    """
-    # Build date filter using date range (cross-DB compatible)
-    conditions = [ReadingSession.user_id == uid]
+) -> tuple[datetime, datetime]:
+    """Compute (start, end) datetime range for calendar queries."""
     if months is not None:
-        # Last N months from today
         today = date.today()
         end = datetime.combine(today + timedelta(days=1), datetime.min.time())
+        m = min(months, 12)
         start = (
-            datetime(today.year, today.month - min(months, 12), 1)
-            if today.month > min(months, 12)
-            else datetime(today.year - 1, 12 + today.month - months, 1)
+            datetime(today.year, today.month - m, 1)
+            if today.month > m
+            else datetime(today.year - 1, 12 + today.month - m, 1)
         )
     elif month is not None and year is not None:
         start = datetime(year, month, 1)
-        if month == 12:
-            end = datetime(year + 1, 1, 1)
-        else:
-            end = datetime(year, month + 1, 1)
+        end = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
     else:
         y = year or date.today().year
-        start = datetime(y, 1, 1)
-        end = datetime(y + 1, 1, 1)
-    conditions.extend([
-        ReadingSession.started_at >= start,
-        ReadingSession.started_at < end,
-    ])
+        start, end = datetime(y, 1, 1), datetime(y + 1, 1, 1)
+    return start, end
 
+
+def _parse_day_rows(rows: list[tuple]) -> dict[str, dict]:
+    """Convert aggregated session rows to a {date_str: {minutes, pages}} map."""
+    result: dict[str, dict] = {}
+    for row in rows:
+        day_val = row[0]
+        key = day_val.isoformat() if isinstance(day_val, date) else str(day_val)
+        result[key] = {'minutes': int(row[1]) // 60, 'pages': int(row[2])}
+    return result
+
+
+async def _aggregate_sessions(
+    db: AsyncSession,
+    uid: UUID,
+    dt_start: datetime,
+    dt_end: datetime,
+) -> dict[str, dict]:
+    """Aggregate reading sessions by day within a date range."""
+    day_col = func.date(ReadingSession.started_at).label('day')
+    rows = await db.execute(
+        select(
+            day_col,
+            func.coalesce(func.sum(ReadingSession.duration), 0).label('seconds'),
+            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
+        )
+        .where(and_(
+            ReadingSession.user_id == uid,
+            ReadingSession.started_at >= dt_start,
+            ReadingSession.started_at < dt_end,
+        ))
+        .group_by(day_col),
+    )
+    return _parse_day_rows(rows.all())
+
+
+async def _count_annotations(
+    db: AsyncSession,
+    uid: UUID,
+    dt_start: datetime,
+    dt_end: datetime,
+) -> tuple[int, int]:
+    """Count highlights and notes created within a date range."""
+    row = (
+        await db.execute(
+            select(
+                func.count(case((Annotation.type == 'highlight', Annotation.id))).label('highlights'),
+                func.count(case((Annotation.type == 'note', Annotation.id))).label('notes'),
+            ).where(and_(
+                Annotation.user_id == uid,
+                Annotation.created_at >= dt_start,
+                Annotation.created_at < dt_end,
+            ))
+        )
+    ).one()
+    return row.highlights or 0, row.notes or 0
+
+
+async def _get_streak_data(
+    db: AsyncSession,
+    uid: UUID,
+    cutoff: date,
+) -> tuple[int, int]:
+    """Compute current and longest streaks from a cutoff date."""
+    day_col = func.date(ReadingSession.started_at).label('day')
+    rows = await db.execute(
+        select(day_col).where(
+            ReadingSession.user_id == uid,
+            ReadingSession.started_at >= datetime.combine(cutoff, datetime.min.time()),
+        ).group_by(day_col),
+    )
+    active_dates = {
+        r[0] if isinstance(r[0], date) else date.fromisoformat(r[0])
+        for r in rows.all()
+    }
+    return compute_streaks(active_dates)
+
+
+async def _query_calendar_days(
+    db: AsyncSession,
+    uid: UUID,
+    dt_start: datetime,
+    dt_end: datetime,
+) -> dict[str, dict]:
+    """Aggregate reading sessions by day, returning {date_str: {minutes, pagesRead, sessions}}."""
     day_col = func.date(ReadingSession.started_at).label('day')
     rows = await db.execute(
         select(
@@ -59,9 +128,13 @@ async def get_reading_calendar(
             func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
             func.count(ReadingSession.id).label('sessions'),
         )
-        .where(and_(*conditions))
+        .where(and_(
+            ReadingSession.user_id == uid,
+            ReadingSession.started_at >= dt_start,
+            ReadingSession.started_at < dt_end,
+        ))
         .group_by(day_col)
-        .order_by(day_col)
+        .order_by(day_col),
     )
 
     days: dict[str, dict] = {}
@@ -73,14 +146,19 @@ async def get_reading_calendar(
             'pagesRead': int(row[2]),
             'sessions': int(row[3]),
         }
+    return days
 
-    # Build calendar array matching frontend StreakCalendar shape
+
+def _build_calendar_response(
+    days: dict[str, dict],
+    year: int | None,
+    month: int | None,
+) -> dict:
+    """Build the final calendar response dict with streaks and summary."""
     calendar = [
         {'date': d, 'pages': v['pagesRead'], 'minutes': v['minutes']}
         for d, v in sorted(days.items())
     ]
-
-    # Compute streaks via shared utility
     active_dates = {date.fromisoformat(d) for d in days}
     current_streak, longest_streak = compute_streaks(active_dates)
 
@@ -94,82 +172,25 @@ async def get_reading_calendar(
     }
 
 
-async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
-    """Return weekly reading summary (Mon-Sun of the current week)."""
-    today = date.today()
-    week_start = today - timedelta(days=today.weekday())
-    week_end = week_start + timedelta(days=6)
-    dt_start = datetime.combine(week_start, datetime.min.time())
-    dt_end = datetime.combine(week_end + timedelta(days=1), datetime.min.time())
+async def get_reading_calendar(
+    db: AsyncSession,
+    uid: UUID,
+    months: int | None,
+    year: int | None,
+    month: int | None,
+) -> dict:
+    """Return calendar data: days with reading activity."""
+    start, end = _build_date_range(months, year, month)
+    days = await _query_calendar_days(db, uid, start, end)
+    return _build_calendar_response(days, year, month)
 
-    # Aggregate sessions for the week
-    day_col = func.date(ReadingSession.started_at).label('day')
-    sess_rows = await db.execute(
-        select(
-            day_col,
-            func.coalesce(func.sum(ReadingSession.duration), 0).label('seconds'),
-            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
-        )
-        .where(and_(
-            ReadingSession.user_id == uid,
-            ReadingSession.started_at >= dt_start,
-            ReadingSession.started_at < dt_end,
-        ))
-        .group_by(day_col)
-    )
-    daily_map: dict[str, dict] = {}
-    for row in sess_rows.all():
-        key = row[0].isoformat() if isinstance(row[0], date) else str(row[0])
-        daily_map[key] = {'minutes': int(row[1]) // 60, 'pages': int(row[2])}
 
-    # Annotations counts for the week (single composite query)
-    ann_row = (
-        await db.execute(
-            select(
-                func.count(case(
-                    (Annotation.type == 'highlight', Annotation.id),
-                )).label('highlights'),
-                func.count(case(
-                    (Annotation.type == 'note', Annotation.id),
-                )).label('notes'),
-            ).where(and_(
-                Annotation.user_id == uid,
-                Annotation.created_at >= dt_start,
-                Annotation.created_at < dt_end,
-            ))
-        )
-    ).one()
-    hl_count = ann_row.highlights or 0
-    note_count = ann_row.notes or 0
-
-    # Active books this week
-    active_books = await db.scalar(
-        select(func.count(func.distinct(ReadingSession.book_id))).where(and_(
-            ReadingSession.user_id == uid,
-            ReadingSession.started_at >= dt_start,
-            ReadingSession.started_at < dt_end,
-        ))
-    )
-
-    # Streaks (lightweight query instead of full get_reading_calendar)
-    streak_cutoff = today - STATS_LOOKBACK_DELTA
-    streak_day_col = func.date(ReadingSession.started_at).label('day')
-    streak_rows = await db.execute(
-        select(streak_day_col)
-        .where(
-            ReadingSession.user_id == uid,
-            ReadingSession.started_at >= datetime.combine(streak_cutoff, datetime.min.time()),
-        )
-        .group_by(streak_day_col),
-    )
-    active_dates = {
-        r[0] if isinstance(r[0], date) else date.fromisoformat(r[0])
-        for r in streak_rows.all()
-    }
-    current_streak, longest_streak = compute_streaks(active_dates)
-
-    # Build daily breakdown
-    daily_breakdown = []
+def _build_daily_breakdown(
+    week_start: date,
+    daily_map: dict[str, dict],
+) -> tuple[list[dict], int, int, int]:
+    """Build daily breakdown array and compute totals."""
+    daily_breakdown: list[dict] = []
     total_minutes, total_pages, streak_days = 0, 0, 0
     for i in range(7):
         d = (week_start + timedelta(days=i)).isoformat()
@@ -179,14 +200,45 @@ async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
         if d in daily_map:
             streak_days += 1
         daily_breakdown.append({'date': d, 'minutes': entry['minutes'], 'pages': entry['pages']})
+    return daily_breakdown, total_minutes, total_pages, streak_days
+
+
+async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
+    """Return weekly reading summary (Mon-Sun of the current week)."""
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+    dt_start = datetime.combine(week_start, datetime.min.time())
+    dt_end = datetime.combine(week_end + timedelta(days=1), datetime.min.time())
+
+    (
+        (daily_map, (hl_count, note_count), active_books, (current_streak, longest_streak)),
+    ) = await asyncio.gather(
+        asyncio.gather(
+            _aggregate_sessions(db, uid, dt_start, dt_end),
+            _count_annotations(db, uid, dt_start, dt_end),
+            db.scalar(
+                select(func.count(func.distinct(ReadingSession.book_id))).where(and_(
+                    ReadingSession.user_id == uid,
+                    ReadingSession.started_at >= dt_start,
+                    ReadingSession.started_at < dt_end,
+                ))
+            ),
+            _get_streak_data(db, uid, today - STATS_LOOKBACK_DELTA),
+        ),
+    )
+
+    daily_breakdown, total_minutes, total_pages, streak_days = _build_daily_breakdown(
+        week_start, daily_map,
+    )
 
     return {
         'weekStart': week_start.isoformat(),
         'weekEnd': week_end.isoformat(),
         'minutesRead': total_minutes,
         'pagesRead': total_pages,
-        'highlightsCount': hl_count or 0,
-        'notesCount': note_count or 0,
+        'highlightsCount': hl_count,
+        'notesCount': note_count,
         'booksActive': active_books or 0,
         'streakDays': streak_days,
         'currentStreak': current_streak,

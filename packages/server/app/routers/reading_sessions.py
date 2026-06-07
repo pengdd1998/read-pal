@@ -23,8 +23,9 @@ from app.schemas.reading_session import (
 from app.schemas.common import GenericResponse
 from app.services import reading_session_service
 from app.utils.i18n import t
+from app.middleware.rate_limiter import api_limiter
 
-router = APIRouter(prefix='/api/v1/sessions', tags=['sessions'])
+router = APIRouter(prefix='/api/v1/sessions', tags=['sessions'], dependencies=[api_limiter])
 
 
 @router.get('', response_model=SessionListResponse)
@@ -72,6 +73,33 @@ async def get_session_stats(
     """Return aggregate reading session statistics."""
     stats = await reading_session_service.get_session_stats(db, UUID(current_user['id']))
     return SessionStatsResponse(data=stats)
+
+
+@router.get('/book/{book_id}/log', response_model=SessionListResponse)
+async def get_book_session_log(
+    book_id: UUID,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get sessions for a specific book with pagination."""
+    uid = UUID(current_user['id'])
+    sessions, total = await reading_session_service.get_book_session_log(
+        db, uid, book_id, page=page, per_page=per_page,
+    )
+    offset = (page - 1) * per_page
+    return {
+        'success': True,
+        'data': [
+            SessionResponse.model_validate(s).model_dump(mode='json', by_alias=True)
+            for s in sessions
+        ],
+        'total': total,
+        'page': page,
+        'perPage': per_page,
+        'hasMore': (offset + len(sessions)) < total,
+    }
 
 
 @router.get('/{session_id}', response_model=GenericResponse)
@@ -186,30 +214,3 @@ async def summarize_session(
         )
     summary = reading_session_service.build_session_summary(session)
     return {'success': True, 'data': {'summary': summary}}
-
-
-@router.get('/book/{book_id}/log', response_model=SessionListResponse)
-async def get_book_session_log(
-    book_id: UUID,
-    page: int = Query(1, ge=1),
-    per_page: int = Query(50, ge=1, le=200),
-    current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    """Get sessions for a specific book with pagination."""
-    uid = UUID(current_user['id'])
-    sessions, total = await reading_session_service.get_book_session_log(
-        db, uid, book_id, page=page, per_page=per_page,
-    )
-    offset = (page - 1) * per_page
-    return {
-        'success': True,
-        'data': [
-            SessionResponse.model_validate(s).model_dump(mode='json', by_alias=True)
-            for s in sessions
-        ],
-        'total': total,
-        'page': page,
-        'perPage': per_page,
-        'hasMore': (offset + len(sessions)) < total,
-    }

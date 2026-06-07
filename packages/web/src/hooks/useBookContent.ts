@@ -31,7 +31,6 @@ interface BookContentState {
 export function useBookContent(
   bookId: string,
   errorMessage: string,
-  loadFailedMessage: string,
   connectFailedMessage: string,
 ): BookContentState {
   const [book, setBook] = useState<Book | null>(null);
@@ -52,8 +51,8 @@ export function useBookContent(
         setLoading(true);
         const [bookResult, annotationsResult] = await Promise.all([
           api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/upload/books/${bookId}/content`, { _t: Date.now() }),
-          api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch((annErr) => {
-            console.warn('[useBookContent] Failed to load annotations:', annErr);
+          api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch((err) => {
+            console.warn('useBookContent: annotations fetch failed', err);
             setAnnotationsError(true);
             return null;
           }),
@@ -67,13 +66,13 @@ export function useBookContent(
           const startPage = data.book.currentPage || 0;
           setCurrentChapter(Math.min(startPage, Math.max(chapterList.length - 1, 0)));
           // Restore saved segment position
-          const savedSegment = (data.book as unknown as Record<string, unknown>).currentSegment as number | undefined;
+          const savedSegment = data.book.currentSegment;
           if (savedSegment && savedSegment > 0) {
             setCurrentSegment(savedSegment);
           }
           analytics.track('book_opened', { bookId, title: data.book.title });
         } else {
-          setError(bookResult.error?.message || errorMessage);
+          setError(errorMessage);
         }
         if (annotationsResult?.success && annotationsResult.data) {
           const annData = annotationsResult.data;

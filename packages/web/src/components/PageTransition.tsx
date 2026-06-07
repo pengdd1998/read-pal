@@ -9,9 +9,9 @@ import { ReactNode } from 'react';
  * Avoids React re-render loops from useEffect + setState patterns.
  */
 export function PageTransition({ children }: { children: ReactNode }) {
-  return (
-    <div className="animate-fade-in">
-      {children}
-    </div>
-  );
+ return (
+ <div className="animate-fade-in">
+  {children}
+ </div>
+ );
 }

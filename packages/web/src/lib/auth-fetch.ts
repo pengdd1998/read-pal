@@ -76,3 +76,63 @@ export async function authFetch(url: string, init?: RequestInit): Promise<Respon
   const headers = await authHeadersAsync(extraHeaders);
   return fetch(url, { ...init, headers });
 }
+
+/**
+ * Auth-aware fetch with automatic token refresh on 401.
+ * Use for SSE streaming and other raw-fetch scenarios where the Axios
+ * interceptor is not available.
+ */
+export async function authFetchWithRefresh(url: string, init?: RequestInit): Promise<Response> {
+  const response = await authFetch(url, init);
+
+  if (response.status !== 401) return response;
+
+  // Try to refresh the token
+  const refreshed = await tryFetchRefresh();
+  if (!refreshed) return response; // Return original 401
+
+  // Retry with new token
+  return authFetch(url, init);
+}
+
+// Shared refresh lock — prevents concurrent refresh calls across both
+// the Axios interceptor and raw-fetch paths.
+let _refreshPromise: Promise<boolean> | null = null;
+
+/** Attempt to refresh tokens using the stored refresh token (shared, deduplicated). */
+export async function tryFetchRefresh(): Promise<boolean> {
+  if (_refreshPromise) return _refreshPromise;
+
+  _refreshPromise = doRefresh();
+  try {
+    return await _refreshPromise;
+  } finally {
+    _refreshPromise = null;
+  }
+}
+
+async function doRefresh(): Promise<boolean> {
+  const refreshToken = isCapacitor() ? await getRefreshTokenAsync() : getRefreshToken();
+  if (!refreshToken) return false;
+
+  try {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!response.ok) return false;
+    const result = await response.json();
+    if (result.success && result.data) {
+      await setAuthTokens(result.data.token, result.data.refreshToken);
+      if (typeof document !== 'undefined') {
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `auth_token=${result.data.token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`;
+      }
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}

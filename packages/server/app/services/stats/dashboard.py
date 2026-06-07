@@ -1,5 +1,6 @@
 """Dashboard stats with Redis caching."""
 
+import asyncio
 import json
 import logging
 from datetime import date, datetime, timedelta
@@ -44,8 +45,8 @@ async def invalidate_dashboard_cache(uid: UUID) -> None:
     try:
         redis = get_redis()
         await redis.delete(_dashboard_cache_key(uid))
-    except Exception:
-        logger.warning('Failed to invalidate dashboard cache for user %s', uid)
+    except Exception as exc:
+        logger.warning('Failed to invalidate dashboard cache for user %s: %s', uid, exc)
 
 
 # ---------------------------------------------------------------------------
@@ -99,7 +100,8 @@ async def _get_reading_minutes(db: AsyncSession, uid: UUID) -> int:
 async def _compute_streak(db: AsyncSession, uid: UUID) -> int:
     """Current reading streak (consecutive days ending today)."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    cutoff = date.today() - STATS_LOOKBACK_DELTA
+    # Use 365-day window for streaks to avoid capping long streaks
+    cutoff = date.today() - timedelta(days=365)
     rows = await db.execute(
         select(day_col)
         .where(ReadingSession.user_id == uid, ReadingSession.started_at >= cutoff)
@@ -124,6 +126,28 @@ async def _get_annotation_counts(db: AsyncSession, uid: UUID) -> tuple[int, int]
         )
     ).one()
     return row.highlights or 0, row.notes or 0
+
+
+async def _get_distinct_tag_count(db: AsyncSession, uid: UUID) -> int:
+    """Count distinct tags across all user annotations.
+
+    Uses a PostgreSQL-specific raw query. Falls back to 0 on error
+    (e.g., SQLite during tests).
+    """
+    from sqlalchemy import text
+
+    try:
+        result = await db.execute(
+            text(
+                'SELECT COUNT(DISTINCT t) FROM annotations, unnest(tags) AS t '
+                'WHERE user_id = :uid AND tags IS NOT NULL AND array_length(tags, 1) > 0'
+            ),
+            {'uid': str(uid)},
+        )
+        return result.scalar() or 0
+    except Exception as exc:
+        logger.debug('Tag count query failed (expected on SQLite): %s', exc)
+        return 0
 
 
 async def _get_recent_books(db: AsyncSession, uid: UUID, limit: int = 10) -> list[dict]:
@@ -188,76 +212,134 @@ def _format_time(minutes: int) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Assembly helpers
+# ---------------------------------------------------------------------------
+
+
+def _safe_default(exc: Exception, fallback: object = 0) -> object:
+    """Log a partial-dashboard failure and return a safe default."""
+    logger.warning('Dashboard partial query failed: %s', str(exc)[:200])
+    return fallback
+
+
+async def _gather_raw_data(db: AsyncSession, uid: UUID) -> dict:
+    """Collect all raw data from DB helpers and direct queries in parallel.
+
+    Uses return_exceptions=True so a single query failure doesn't break
+    the entire dashboard — failed sections fall back to safe defaults.
+    """
+    results = await asyncio.gather(
+        _get_book_status_counts(db, uid),
+        _get_pages_read(db, uid),
+        _get_reading_minutes(db, uid),
+        _compute_streak(db, uid),
+        _get_annotation_counts(db, uid),
+        _get_recent_books(db, uid),
+        _get_weekly_activity(db, uid),
+        db.scalar(select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid)),
+        db.scalar(select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid)),
+        _get_distinct_tag_count(db, uid),
+        return_exceptions=True,
+    )
+
+    def _val(idx: int, default: object = 0) -> object:
+        r = results[idx]
+        return _safe_default(r) if isinstance(r, Exception) else r
+
+    status_counts = _val(0, {'total': 0, 'reading': 0, 'completed': 0, 'unread': 0})
+    pages_read = int(_val(1))
+    total_minutes = int(_val(2))
+    streak = int(_val(3))
+    annotation_pair = _val(4, (0, 0))
+    highlights, notes = annotation_pair if isinstance(annotation_pair, tuple) else (0, 0)
+    recent_books = _val(5, [])
+    weekly_activity = _val(6, [])
+    chat_count = int(_val(7) or 0)
+    memory_count = int(_val(8) or 0)
+    distinct_tags = int(_val(9))
+
+    return {
+        'status_counts': status_counts,
+        'pages_read': pages_read,
+        'total_minutes': total_minutes,
+        'streak': streak,
+        'highlights': highlights,
+        'notes': notes,
+        'recent_books': recent_books,
+        'weekly_activity': weekly_activity,
+        'chat_count': chat_count,
+        'memory_count': memory_count,
+        'distinct_tags': distinct_tags,
+    }
+
+
+def _build_response(raw: dict) -> dict:
+    """Assemble the nested response dict the frontend expects."""
+    sc = raw['status_counts']
+    stats = {
+        'booksRead': sc['completed'],
+        'totalPages': raw['pages_read'],
+        'pagesRead': raw['pages_read'],
+        'readingStreak': raw['streak'],
+        'totalTime': _format_time(raw['total_minutes']),
+        'conceptsLearned': raw['highlights'] + raw['notes'],
+        'connections': raw['distinct_tags'],
+        'chatMessageCount': raw['chat_count'],
+        'memoryBookCount': raw['memory_count'],
+    }
+    return {
+        'stats': stats,
+        'recentBooks': raw['recent_books'],
+        'weeklyActivity': raw['weekly_activity'],
+        'booksByStatus': {
+            'unread': sc['unread'],
+            'reading': sc['reading'],
+            'completed': sc['completed'],
+        },
+    }
+
+
+async def _read_dashboard_cache(uid: UUID) -> dict | None:
+    """Return cached dashboard data or None on miss/failure."""
+    try:
+        redis = get_redis()
+        cached = await redis.get(_dashboard_cache_key(uid))
+        if cached is not None:
+            return json.loads(cached)
+    except Exception as exc:
+        logger.warning('Redis read failed for dashboard cache: %s', exc)
+    return None
+
+
+async def _write_dashboard_cache(uid: UUID, data: dict) -> None:
+    """Store dashboard data in Redis cache."""
+    try:
+        redis = get_redis()
+        await redis.set(
+            _dashboard_cache_key(uid), json.dumps(data), ex=_get_cache_ttl(),
+        )
+    except Exception as exc:
+        logger.warning('Failed to cache dashboard stats for user %s: %s', uid, exc)
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
 
-async def get_dashboard_stats(
-    db: AsyncSession,
-    uid: UUID,
-) -> dict:
+async def get_dashboard_stats(db: AsyncSession, uid: UUID) -> dict:
     """Return dashboard data matching the nested shape the frontend expects.
 
     Response shape: ``{stats, recentBooks, weeklyActivity, booksByStatus}``
 
-    Results are cached in Redis for 5 minutes. Use ``invalidate_dashboard_cache``
+    Results are cached in Redis. Use ``invalidate_dashboard_cache``
     to force a refresh when underlying data changes.
     """
-    # --- Check Redis cache ---
-    cache_key = _dashboard_cache_key(uid)
-    try:
-        redis = get_redis()
-        cached = await redis.get(cache_key)
-        if cached is not None:
-            return json.loads(cached)
-    except Exception:
-        logger.warning('Redis read failed for dashboard cache, querying DB')
+    cached = await _read_dashboard_cache(uid)
+    if cached is not None:
+        return cached
 
-    # --- Gather all data via helpers (sequential — AsyncSession is not safe for concurrent ops) ---
-    status_counts = await _get_book_status_counts(db, uid)
-    pages_read = await _get_pages_read(db, uid)
-    total_minutes = await _get_reading_minutes(db, uid)
-    streak = await _compute_streak(db, uid)
-    highlights, notes = await _get_annotation_counts(db, uid)
-    recent_books = await _get_recent_books(db, uid)
-    weekly_activity = await _get_weekly_activity(db, uid)
-
-    chat_count = await db.scalar(
-        select(func.count(ChatMessage.id)).where(ChatMessage.user_id == uid),
-    )
-    memory_count = await db.scalar(
-        select(func.count(MemoryBook.id)).where(MemoryBook.user_id == uid),
-    )
-
-    # --- Assemble response ---
-    stats = {
-        'booksRead': status_counts['completed'],
-        'totalPages': pages_read,
-        'pagesRead': pages_read,
-        'readingStreak': streak,
-        'totalTime': _format_time(total_minutes),
-        'conceptsLearned': highlights + notes,
-        'connections': 0,
-        'chatMessageCount': chat_count or 0,
-        'memoryBookCount': memory_count or 0,
-    }
-
-    result = {
-        'stats': stats,
-        'recentBooks': recent_books,
-        'weeklyActivity': weekly_activity,
-        'booksByStatus': {
-            'unread': status_counts['unread'],
-            'reading': status_counts['reading'],
-            'completed': status_counts['completed'],
-        },
-    }
-
-    # --- Store in Redis cache ---
-    try:
-        redis = get_redis()
-        await redis.set(cache_key, json.dumps(result), ex=_get_cache_ttl())
-    except Exception:
-        logger.warning('Failed to cache dashboard stats for user %s', uid)
-
+    raw = await _gather_raw_data(db, uid)
+    result = _build_response(raw)
+    await _write_dashboard_cache(uid, result)
     return result

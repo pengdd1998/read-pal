@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 from pydantic.alias_generators import to_camel
 
 from app.models.webhook import VALID_WEBHOOK_EVENTS
@@ -22,7 +22,7 @@ class WebhookCreate(BaseModel):
 
     url: HttpUrl
     events: list[str]
-    secret: str | None = None
+    secret: str | None = Field(None, min_length=16, max_length=128)
 
     def model_post_init(self, __context: object) -> None:
         _validate_events(self.events)

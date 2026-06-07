@@ -19,8 +19,9 @@ from app.schemas.webhook import (
 )
 from app.services import webhook_service
 from app.utils.i18n import t, translate_error
+from app.middleware.rate_limiter import api_limiter
 
-router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'])
+router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'], dependencies=[api_limiter])
 
 
 @router.get('/events', response_model=GenericResponse)
@@ -63,10 +64,16 @@ async def test_webhook(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
+    # Actually deliver the test webhook
+    test_result = await webhook_service.deliver_webhook(
+        webhook=wh,
+        event='webhook.test',
+        payload={'test': True, 'webhook_id': str(wh.id), 'timestamp': __import__('time').time()},
+    )
     data = WebhookTestResponse(
         id=wh.id,
         url=wh.url,
-        test_result='queued',
+        test_result='delivered' if test_result[0] is not None else 'failed',
     ).model_dump(by_alias=True, mode='json')
     return {'success': True, 'data': data}
 

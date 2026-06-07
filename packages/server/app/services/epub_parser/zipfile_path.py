@@ -4,6 +4,7 @@ Uses only stdlib — no ebooklib dependency.
 """
 
 import logging
+import re
 import zipfile
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from app.services.epub_parser.structural import (
     parse_ncx,
     parse_opf,
 )
+from app.services.epub_parser.constants import OUTER_DOC_WRAPPER
 
 logger = logging.getLogger('read-pal')
 
@@ -50,7 +52,7 @@ async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]
                     zf, opf_data.get('manifest', {}), opf_data, opf_path,
                 )
             except Exception as exc:
-                logger.warning('epub_parser.cover_image_extraction_failed', error=str(exc)[:200])
+                logger.warning('epub_parser.cover_image_extraction_failed: %s', str(exc)[:200])
 
     _store_metadata(metadata, cover_uri)
     return chapters, full_text_parts, max(1, len(chapters))
@@ -69,7 +71,7 @@ def _parse_structure(zf: zipfile.ZipFile) -> tuple:
     try:
         opf_path_raw = parse_epub_container(zf)
     except Exception as exc:
-        logger.debug('EPUB container parsing failed: %s', exc)
+        logger.warning('EPUB container parsing failed: %s', exc)
         opf_path_raw = None
 
     if opf_path_raw:
@@ -79,7 +81,7 @@ def _parse_structure(zf: zipfile.ZipFile) -> tuple:
             opf_data = parse_opf(opf_xml, opf_path)
             metadata = opf_data.get('metadata', {})
         except Exception as exc:
-            logger.debug('OPF parsing failed: %s', exc)
+            logger.warning('OPF parsing failed: %s', exc)
 
     # Parse TOC (NCX then NAV)
     if opf_data:
@@ -90,14 +92,14 @@ def _parse_structure(zf: zipfile.ZipFile) -> tuple:
         try:
             image_map = extract_images(zf, opf_data.get('manifest', {}), opf_path)
         except Exception as exc:
-            logger.debug('Image extraction failed: %s', exc)
+            logger.warning('Image extraction failed: %s', exc)
 
     # Extract CSS
     if opf_data:
         try:
             css_str = extract_epub_css(zf, opf_data.get('manifest', {}), opf_path)
         except Exception as exc:
-            logger.debug('CSS extraction failed: %s', exc)
+            logger.warning('CSS extraction failed: %s', exc)
 
     return opf_data, toc_map, image_map, css_str, metadata, opf_path
 
@@ -118,7 +120,7 @@ def _parse_toc(
             ncx_xml = zf.read(ncx_path).decode('utf-8', errors='replace')
             toc_entries = parse_ncx(ncx_xml)
     except Exception as exc:
-        logger.debug('NCX parsing failed: %s', exc)
+        logger.warning('NCX parsing failed: %s', exc)
 
     try:
         nav_href = opf_data.get('nav_href')
@@ -127,7 +129,7 @@ def _parse_toc(
             nav_xml = zf.read(nav_path).decode('utf-8', errors='replace')
             toc_entries = parse_nav(nav_xml)
     except Exception as exc:
-        logger.debug('Nav parsing failed: %s', exc)
+        logger.warning('Nav parsing failed: %s', exc)
 
     for title, href, level in toc_entries:
         if href:
@@ -187,7 +189,7 @@ def _build_chapters(
         resolved = resolve_epub_path(opf_path, href)
         try:
             raw_html = zf.read(resolved).decode('utf-8', errors='replace')
-        except Exception:
+        except Exception as exc:
             logger.debug('Failed to read chapter from ZIP: %s', resolved, exc_info=True)
             continue
 
@@ -217,25 +219,58 @@ def _build_chapters(
     return chapters, full_text_parts
 
 
+_DANGEROUS_TAG_RE = re.compile(
+    r'<\s*/?\s*(script|iframe|object|embed|applet|form|input|button|textarea|select|option|meta|link|base|svg|math|noscript|template)\b[^>]*>',
+    re.IGNORECASE,
+)
+_EVENT_HANDLER_RE = re.compile(
+    r'\bon\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)',
+    re.IGNORECASE,
+)
+_DANGEROUS_URL_RE = re.compile(
+    r'(href|src|xlink:href)\s*=\s*["\']?\s*(javascript|vbscript|data)\s*:[^"\'">\s]*',
+    re.IGNORECASE,
+)
+
+
+def _strip_dangerous_html(html: str) -> str:
+    """Remove script tags, event handlers, and dangerous URLs from HTML."""
+    html = _DANGEROUS_TAG_RE.sub('', html)
+    html = _EVENT_HANDLER_RE.sub('', html)
+    html = _DANGEROUS_URL_RE.sub(r'\1=""', html)
+    return html
+
+
 def _enrich_html(
     raw_html: str,
     resolved: str,
     image_map: dict[str, str],
     css_str: str,
 ) -> str:
-    """Rewrite images, annotate footnotes, and prepend CSS."""
+    """Rewrite images, annotate footnotes, sanitize, and prepend CSS."""
+    html = _strip_outer_wrapper(raw_html)
+
     try:
-        enriched = rewrite_image_sources(raw_html, image_map, resolved)
-    except Exception:
+        enriched = rewrite_image_sources(html, image_map, resolved)
+    except Exception as exc:
         logger.debug('Image source rewrite failed for %s', resolved, exc_info=True)
-        enriched = raw_html
+        enriched = html
 
     enriched = annotate_footnotes(enriched)
+    enriched = _strip_dangerous_html(enriched)
 
     if css_str:
         enriched = f'<style>{css_str}</style>\n{enriched}'
 
     return enriched
+
+
+def _strip_outer_wrapper(html: str) -> str:
+    """Strip <?xml?>, <!DOCTYPE>, <html><head>...</head><body> wrappers."""
+    m = OUTER_DOC_WRAPPER.match(html)
+    if m:
+        return m.group(1).strip()
+    return html
 
 
 def _resolve_title(
@@ -254,7 +289,7 @@ def _resolve_title(
 
 
 def _store_metadata(metadata: dict, cover_uri: str | None) -> None:
-    """Store metadata via module-level side channel for orchestrator."""
+    """Store metadata via context-local variable for orchestrator."""
     import app.services.epub_parser as pkg
 
-    pkg._last_epub_metadata = {**metadata, 'cover_data_uri': cover_uri}
+    pkg._set_metadata({**metadata, 'cover_data_uri': cover_uri})

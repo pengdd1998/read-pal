@@ -36,12 +36,15 @@ export function useBookClubDetail(clubId: string) {
 }
 
 export function useBookClubProgress(clubId: string, currentBookId?: string) {
+  const t = useTranslations('bookClubs');
   const [progress, setProgress] = useState<MemberProgress[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!clubId || !currentBookId) return;
     let cancelled = false;
+    setLoading(true);
     setError(null);
 
     api
@@ -52,13 +55,16 @@ export function useBookClubProgress(clubId: string, currentBookId?: string) {
         }
       })
       .catch(() => {
-        if (!cancelled) setError('Failed to load reading progress');
+        if (!cancelled) setError(t('progress_failed_load', { defaultValue: 'Failed to load reading progress' }));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
 
     return () => { cancelled = true; };
-  }, [clubId, currentBookId]);
+  }, [clubId, currentBookId, t]);
 
-  return { progress, error };
+  return { progress, loading, error };
 }
 
 export function useBookClubDiscussion(clubId: string) {
@@ -82,11 +88,11 @@ export function useBookClubDiscussion(clubId: string) {
         }
       })
       .catch(() => {
-        if (!cancelled) setError('Failed to load discussions');
+        if (!cancelled) setError(t('discussions_failed_load', { defaultValue: 'Failed to load discussions' }));
       });
 
     return () => { cancelled = true; };
-  }, [clubId]);
+  }, [clubId, t]);
 
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || sending) return;

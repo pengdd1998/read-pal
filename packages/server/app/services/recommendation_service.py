@@ -13,7 +13,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
-from app.core.redis import get_redis
 from app.models.book import Book
 
 logger = logging.getLogger('read-pal.recommendations')
@@ -102,23 +101,15 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
 
     Results are cached in Redis for 10 minutes.
     """
-    try:
-        redis = get_redis()
-        cached = await redis.get(_cache_key(user_id))
-        if cached:
-            return json.loads(cached)
-    except Exception:
-        logger.warning('Redis unavailable, skipping recommendation cache')
+    from app.core.cache import cache_get_or_compute
+    from app.config import get_settings
 
-    result = await _compute_recommendations(db, user_id)
+    async def _compute() -> list[dict]:
+        return await _compute_recommendations(db, user_id)
 
-    try:
-        redis = get_redis()
-        await redis.setex(_cache_key(user_id), get_settings().cache_recommendation_ttl_seconds, json.dumps(result))
-    except Exception:
-        logger.warning('Redis unavailable, skipping recommendation cache set')
-
-    return result
+    return await cache_get_or_compute(
+        _cache_key(user_id), _compute, get_settings().cache_recommendation_ttl_seconds,
+    )
 
 
 async def _compute_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:

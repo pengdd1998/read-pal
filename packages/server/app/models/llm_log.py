@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, Index, Integer, Numeric, String, Text, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -31,11 +31,13 @@ class LLMLog(Base):
     )
     user_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
+        ForeignKey('users.id', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )
     book_id: Mapped[Optional[UUID]] = mapped_column(
         PG_UUID(as_uuid=True),
+        ForeignKey('books.id', ondelete='SET NULL'),
         nullable=True,
         index=True,
     )

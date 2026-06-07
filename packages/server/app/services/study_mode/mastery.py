@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import structlog
 import uuid
 from collections import defaultdict
@@ -18,6 +19,31 @@ from app.models.flashcard import Flashcard
 from app.utils import utcnow
 
 logger = structlog.get_logger('read-pal.study_mode')
+
+
+def _build_flashcard(
+    user_id: UUID,
+    book_id: UUID,
+    question: str,
+    answer: str,
+    now,
+) -> Flashcard:
+    """Build a single Flashcard ORM object with SM-2 defaults."""
+    return Flashcard(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        book_id=book_id,
+        question=question,
+        answer=answer,
+        ease_factor=2.5,
+        interval=0,
+        repetition_count=0,
+        next_review_at=now,
+        last_review_at=None,
+        last_rating=None,
+        created_at=now,
+        updated_at=now,
+    )
 
 
 async def save_checks_as_flashcards(
@@ -37,8 +63,6 @@ async def save_checks_as_flashcards(
     if not book_id or not checks:
         return 0
 
-    now = utcnow()
-
     book_result = await db.execute(
         select(Book.id).where(
             and_(Book.id == UUID(str(book_id)), Book.user_id == user_id),
@@ -47,29 +71,15 @@ async def save_checks_as_flashcards(
     if not book_result.scalar_one_or_none():
         return 0
 
+    now = utcnow()
+    parsed_book_id = UUID(str(book_id))
     saved_count = 0
     for check in checks:
         question = check.get('question', '')
         answer = check.get('answer', '')
         if not question or not answer:
             continue
-
-        card = Flashcard(
-            id=uuid.uuid4(),
-            user_id=user_id,
-            book_id=UUID(str(book_id)),
-            question=question,
-            answer=answer,
-            ease_factor=2.5,
-            interval=0,
-            repetition_count=0,
-            next_review_at=now,
-            last_review_at=None,
-            last_rating=None,
-            created_at=now,
-            updated_at=now,
-        )
-        db.add(card)
+        db.add(_build_flashcard(user_id, parsed_book_id, question, answer, now))
         saved_count += 1
 
     await db.flush()
@@ -267,8 +277,10 @@ async def get_mastery(
     chapter_names = _resolve_chapter_names(doc_result.scalar_one_or_none() or [])
     estimated_total = max(len(chapter_names) if chapter_names else round(total_pages / 25), 1)
 
-    flashcard_rows = await _fetch_flashcard_rows(db, user_id, book_id)
-    cards_due = await _count_cards_due(db, user_id, book_id)
+    flashcard_rows, cards_due = await asyncio.gather(
+        _fetch_flashcard_rows(db, user_id, book_id),
+        _count_cards_due(db, user_id, book_id),
+    )
     overall_mastery = _compute_overall_mastery(book_progress, flashcard_rows)
 
     topic_stats = _compute_topic_stats(flashcard_rows)

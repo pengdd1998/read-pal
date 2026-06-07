@@ -29,12 +29,16 @@ async def create_reset_token(db: AsyncSession, email: str) -> str | None:
         return None
 
     token = str(uuid.uuid4())
-    redis = get_redis()
-    await redis.set(
-        f'{_TOKEN_PREFIX}{token}',
-        json.dumps({'userId': str(user.id), 'email': user.email}),
-        ex=_TOKEN_TTL,
-    )
+    try:
+        redis = get_redis()
+        await redis.set(
+            f'{_TOKEN_PREFIX}{token}',
+            json.dumps({'userId': str(user.id), 'email': user.email}),
+            ex=_TOKEN_TTL,
+        )
+    except Exception as exc:
+        logger.error('password_reset.redis_set_failed email=%s error=%s', email, exc)
+        raise RuntimeError('Service temporarily unavailable') from exc
     logger.info('Password reset requested for %s', email)
     return token
 
@@ -50,7 +54,7 @@ async def send_reset_email(email: str, token: str) -> bool:
         from app.services.email_service import send_password_reset_email
         await send_password_reset_email(email, token)
         return True
-    except Exception:
+    except Exception as exc:
         logger.warning(
             'Password reset email delivery failed for %s — '
             'user will not receive the reset link',
@@ -68,14 +72,22 @@ async def validate_and_reset(
     """Validate a reset token and update the user's password.
 
     Raises ValueError if token is invalid or user not found.
+    Raises RuntimeError if Redis is unavailable.
     """
-    redis = get_redis()
-    data = await redis.get(f'{_TOKEN_PREFIX}{token}')
+    try:
+        redis = get_redis()
+        data = await redis.get(f'{_TOKEN_PREFIX}{token}')
+    except Exception as exc:
+        logger.error('password_reset.redis_get_failed error=%s', exc)
+        raise RuntimeError('Service temporarily unavailable') from exc
+
     if not data:
         raise ValueError('Invalid or expired reset token')
 
     payload = json.loads(data)
-    user_id = payload['userId']
+    user_id = payload.get('userId')
+    if not user_id:
+        raise ValueError('Invalid reset token payload')
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
@@ -85,7 +97,22 @@ async def validate_and_reset(
     user.password_hash = hash_password(new_password)
     await db.commit()
 
+    # Invalidate all existing sessions by storing a password reset timestamp in Redis
+    # The auth middleware checks this when validating tokens
+    try:
+        redis = get_redis()
+        await redis.set(
+            f'pwd-reset:{user_id}',
+            str(uuid.uuid4()),
+            ex=86400 * 30,  # 30 days — longer than any token TTL
+        )
+    except Exception as exc:
+        logger.warning('password_reset.invalidate_sessions_failed user=%s error=%s', user_id, exc)
+
     # Consume token
-    await redis.delete(f'{_TOKEN_PREFIX}{token}')
+    try:
+        await redis.delete(f'{_TOKEN_PREFIX}{token}')
+    except Exception as exc:
+        logger.warning('password_reset.redis_delete_failed user=%s error=%s', user_id, exc)
     logger.info('Password reset successful for user %s', user_id)
     return user

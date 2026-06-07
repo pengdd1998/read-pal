@@ -52,13 +52,14 @@ def _get_pdf_outlines(reader: 'PdfReader') -> list[dict]:
                     try:
                         title = title.decode('utf-8')
                     except UnicodeDecodeError:
+                        logger.debug('pdf.unicode_fallback_latin1 title_bytes=%d', len(title))
                         title = title.decode('latin-1')
                 title = str(title).strip() if title else ''
                 page_num = None
                 try:
                     page_num = reader.get_destination_page_number(item)
                 except Exception as exc:
-                    logger.warning('pdf_parser.outline_page_number_failed', error=str(exc)[:200])
+                    logger.warning('pdf_parser.outline_page_number_failed: %s', str(exc)[:200])
                 if title and page_num is not None:
                     results.append({
                         'title': title,
@@ -114,28 +115,54 @@ def _build_pdf_chapters(
     return chapters
 
 
+def _extract_page_text(reader: object) -> tuple[list[str], list[str]]:
+    """Extract per-page text and HTML from a PDF reader."""
+    pages_text: list[str] = []
+    pages_html: list[str] = []
+    for page in reader.pages:
+        text = page.extract_text() or ''
+        text = fix_garbled_cjk(text)
+        pages_text.append(text.strip())
+        pages_html.append(text_to_html_paragraphs(text.strip()))
+    return pages_text, pages_html
+
+
+def _build_fallback_chapters(
+    pages_text: list[str],
+    pages_html: list[str],
+    total_pages: int,
+) -> list[dict]:
+    """Create per-page chapters as a fallback when outline parsing fails."""
+    chapters: list[dict] = []
+    for i in range(total_pages):
+        text = pages_text[i]
+        if text:
+            chapters.append({
+                'id': f'page-{i + 1}',
+                'title': f'Page {i + 1}',
+                'content': text,
+                'rawContent': pages_html[i],
+                'startIndex': 0,
+                'endIndex': len(text),
+                'order': i,
+                'images': 0,
+                'wordCount': len(text.split()),
+            })
+    return chapters
+
+
 async def process_pdf(file_path: str) -> dict:
     """Extract text, outlines, and metadata from PDF."""
     from pypdf import PdfReader
 
     reader = PdfReader(file_path)
     total_pages = len(reader.pages)
-
-    # Extract metadata
     metadata = _extract_pdf_metadata(reader)
 
-    # Extract per-page text and HTML
-    pages_text: list[str] = []
-    pages_html: list[str] = []
-    chapters: list[dict] = []
-
-    for i, page in enumerate(reader.pages):
-        text = page.extract_text() or ''
-        text = fix_garbled_cjk(text)
-        pages_text.append(text.strip())
-        pages_html.append(text_to_html_paragraphs(text.strip()))
+    pages_text, pages_html = _extract_page_text(reader)
 
     # Try outline-based chapters
+    chapters: list[dict] = []
     try:
         outlines = _get_pdf_outlines(reader)
         outline_chapters = _build_pdf_chapters(outlines, pages_text, pages_html, total_pages)
@@ -144,22 +171,8 @@ async def process_pdf(file_path: str) -> dict:
     except Exception as exc:
         logger.debug('PDF outline processing failed: %s', exc)
 
-    # Fallback: per-page chapters
     if not chapters:
-        for i in range(total_pages):
-            text = pages_text[i]
-            if text:
-                chapters.append({
-                    'id': f'page-{i + 1}',
-                    'title': f'Page {i + 1}',
-                    'content': text,
-                    'rawContent': pages_html[i],
-                    'startIndex': 0,
-                    'endIndex': len(text),
-                    'order': i,
-                    'images': 0,
-                    'wordCount': len(text.split()),
-                })
+        chapters = _build_fallback_chapters(pages_text, pages_html, total_pages)
 
     full_text = '\n\n'.join(ch.get('content', '') for ch in chapters)
     return {

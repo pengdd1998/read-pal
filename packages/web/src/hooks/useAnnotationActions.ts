@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
 import type { Chapter, Annotation } from '@read-pal/shared';
@@ -14,6 +14,7 @@ interface AnnotationActionsOptions {
   selectionOffsets: { start: number; end: number } | null;
   annotations: Annotation[];
   setAnnotations: React.Dispatch<React.SetStateAction<Annotation[]>>;
+  onChapterChange?: (chapterIndex: number) => Promise<void>;
   toastError: (msg: string) => void;
   toast: {
     failed_load_annotations: string;
@@ -22,6 +23,7 @@ interface AnnotationActionsOptions {
     failed_remove_bookmark: string;
     failed_add_bookmark: string;
     failed_delete_annotation: string;
+    failed_update_annotation: string;
     failed_save_progress: string;
   };
 }
@@ -34,7 +36,8 @@ function computeOffsets(range: Range, container: HTMLElement): { start: number; 
     const start = preRange.toString().length;
     const end = start + range.toString().length;
     return { start, end };
-  } catch {
+  } catch (err) {
+    console.warn('computeOffsets: range computation failed, using fallback', err);
     return { start: 0, end: range.toString().length };
   }
 }
@@ -42,8 +45,11 @@ function computeOffsets(range: Range, container: HTMLElement): { start: number; 
 export function useAnnotationActions(options: AnnotationActionsOptions) {
   const {
     bookId, currentChapter, chapters, contentRef, selectionRange,
-    selectionOffsets, annotations, setAnnotations, toastError, toast,
+    selectionOffsets, annotations, setAnnotations, onChapterChange, toastError, toast,
   } = options;
+
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isCreatingRef = useRef(false);
 
   const loadAnnotations = useCallback(async () => {
     try {
@@ -52,8 +58,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         const data = result.data;
         setAnnotations(Array.isArray(data) ? data : []);
       }
-    } catch (err) {
-      console.error('Failed to load annotations:', err);
+    } catch {
       toastError(toast.failed_load_annotations);
     }
   }, [bookId, setAnnotations, toastError, toast.failed_load_annotations]);
@@ -64,6 +69,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
   }, []);
 
   const handleAddHighlight = useCallback(async (text: string, color: string, tags?: string[]) => {
+    if (isCreatingRef.current) return;
+    isCreatingRef.current = true;
     try {
       const chapter = chapters[currentChapter];
       if (!chapter) return;
@@ -71,24 +78,37 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         ? computeOffsets(selectionRange, contentRef.current)
         : { start: 0, end: text.length });
 
+      const location = { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: offsets };
       const result = await api.post<Annotation>('/api/annotations', {
         book_id: bookId, type: 'highlight', content: text, color,
         tags: tags || [],
-        location: { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: offsets },
+        location,
       });
 
-      if (result.success && result.data) {
-        setAnnotations((prev) => [...prev, result.data!]);
+      if (result.success) {
+        const annotation = result.data || {
+          id: `offline-${Date.now()}`,
+          userId: '',
+          bookId,
+          type: 'highlight' as const,
+          content: text,
+          color,
+          tags: tags || [],
+          location,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        setAnnotations((prev) => [...prev, annotation]);
         analytics.track('annotation_created', { type: 'highlight' });
       }
-    } catch (err) {
-      console.error('Failed to add highlight:', err);
+    } catch {
       toastError(toast.failed_save_highlight);
     }
     dismissSelection();
+    isCreatingRef.current = false;
   }, [bookId, currentChapter, chapters, selectionRange, selectionOffsets, contentRef, setAnnotations, toastError, toast.failed_save_highlight, dismissSelection]);
 
-  const handleAddNote = useCallback(async (text: string, note: string) => {
+  const handleAddNote = useCallback(async (text: string, note: string, tags?: string[]) => {
     try {
       const chapter = chapters[currentChapter];
       if (!chapter) return;
@@ -96,17 +116,30 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         ? computeOffsets(selectionRange, contentRef.current)
         : { start: 0, end: text.length });
 
+      const location = { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: offsets };
       const result = await api.post<Annotation>('/api/annotations', {
         book_id: bookId, type: 'note', content: text, note,
-        location: { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: offsets },
+        tags: tags || [],
+        location,
       });
 
-      if (result.success && result.data) {
-        setAnnotations((prev) => [...prev, result.data!]);
+      if (result.success) {
+        const annotation = result.data || {
+          id: `offline-${Date.now()}`,
+          userId: '',
+          bookId,
+          type: 'note' as const,
+          content: text,
+          note,
+          tags: tags || [],
+          location,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        setAnnotations((prev) => [...prev, annotation]);
         analytics.track('annotation_created', { type: 'note' });
       }
-    } catch (err) {
-      console.error('Failed to add note:', err);
+    } catch {
       toastError(toast.failed_save_note);
     }
     dismissSelection();
@@ -121,56 +154,87 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         (a) => a.type === 'bookmark' && Number(a.location?.pageIndex) === currentChapter,
       );
       if (bookmark) {
+        // Optimistic delete with functional rollback
+        const removedId = bookmark.id;
+        setAnnotations((p) => p.filter((a) => a.id !== removedId));
         try {
-          await api.delete(`/api/annotations/${bookmark.id}`);
-          setAnnotations((prev) => prev.filter((a) => a.id !== bookmark.id));
-        } catch (err) {
-          console.error('Failed to remove bookmark:', err);
+          await api.delete(`/api/annotations/${removedId}`);
+        } catch {
+          setAnnotations((p) => [...p, annotations.find((a) => a.id === removedId)!].filter(Boolean));
           toastError(toast.failed_remove_bookmark);
         }
       }
     } else {
       try {
         const chapter = chapters[currentChapter];
+        const location = { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: { start: 0, end: 0 } };
         const result = await api.post<Annotation>('/api/annotations', {
           book_id: bookId, type: 'bookmark',
           content: `Bookmark: ${chapter.title}`,
-          location: { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: { start: 0, end: 0 } },
+          location,
         });
-        if (result.success && result.data) {
-          setAnnotations((prev) => [...prev, result.data!]);
+        if (result.success) {
+          const annotation = result.data || {
+            id: `offline-${Date.now()}`,
+            userId: '',
+            bookId,
+            type: 'bookmark' as const,
+            content: `Bookmark: ${chapter.title}`,
+            location,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          setAnnotations((prev) => [...prev, annotation]);
           analytics.track('annotation_created', { type: 'bookmark' });
         }
-      } catch (err) {
-        console.error('Failed to add bookmark:', err);
+      } catch {
         toastError(toast.failed_add_bookmark);
       }
     }
   }, [annotations, currentChapter, bookId, chapters, setAnnotations, toastError, toast.failed_remove_bookmark, toast.failed_add_bookmark]);
 
   const handleDeleteAnnotation = useCallback(async (id: string) => {
+    // Optimistic delete — capture item for rollback before removing
+    const removed = annotations.find((a) => a.id === id);
+    setAnnotations((p) => p.filter((a) => a.id !== id));
     try {
       await api.delete(`/api/annotations/${id}`);
-      setAnnotations((prev) => prev.filter((a) => a.id !== id));
-    } catch (err) {
-      console.error('Failed to delete annotation:', err);
+    } catch {
+      if (removed) setAnnotations((p) => [...p, removed]);
       toastError(toast.failed_delete_annotation);
     }
-  }, [setAnnotations, toastError, toast.failed_delete_annotation]);
+  }, [annotations, setAnnotations, toastError, toast.failed_delete_annotation]);
 
-  const handleScrollToAnnotation = useCallback((annotation: Annotation) => {
+  const handleScrollToAnnotation = useCallback(async (annotation: Annotation) => {
+    const targetChapter = annotation.location?.pageIndex;
+    if (targetChapter != null && targetChapter !== currentChapter && onChapterChange) {
+      await onChapterChange(targetChapter);
+      // Wait for chapter content to render before querying
+      await new Promise<void>((r) => setTimeout(r, 300));
+    }
     const mark = contentRef.current?.querySelector(`[data-annotation-id="${annotation.id}"]`);
     if (mark) {
       mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
       const original = (mark as HTMLElement).style.backgroundColor;
       (mark as HTMLElement).style.backgroundColor = 'rgba(217, 119, 6, 0.5)';
-      setTimeout(() => { (mark as HTMLElement).style.backgroundColor = original; }, 1500);
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = setTimeout(() => {
+        (mark as HTMLElement).style.backgroundColor = original;
+        highlightTimerRef.current = null;
+      }, 1500);
     }
-  }, [contentRef]);
+  }, [contentRef, currentChapter, onChapterChange]);
 
-  const handleUpdateAnnotation = useCallback((updated: Annotation) => {
-    setAnnotations((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
-  }, [setAnnotations]);
+  const handleUpdateAnnotation = useCallback(async (updated: Annotation) => {
+    const prev = annotations;
+    setAnnotations((p) => p.map((a) => (a.id === updated.id ? updated : a)));
+    try {
+      await api.patch(`/api/annotations/${updated.id}`, updated as unknown as Record<string, unknown>);
+    } catch {
+      setAnnotations(prev);
+      toastError(toast.failed_update_annotation);
+    }
+  }, [annotations, setAnnotations, toastError, toast.failed_update_annotation]);
 
   // Derived counts
   const highlightCount = useMemo(

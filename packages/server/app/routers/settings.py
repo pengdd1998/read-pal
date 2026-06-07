@@ -5,17 +5,43 @@ All responses follow the shape: ``{"success": true, "data": {...}}``
 
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import api_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.settings import SettingsUpdate
 from app.services import settings_service
 from app.utils.i18n import t
+import logging
 
-router = APIRouter(prefix='/api/v1/settings', tags=['settings'])
+logger = logging.getLogger('read-pal')
+
+router = APIRouter(
+    prefix='/api/v1/settings',
+    tags=['settings'],
+    dependencies=[api_limiter],
+)
+
+
+class ZoteroValidateRequest(BaseModel):
+    apiKey: str = Field(..., min_length=1, max_length=64)
+    userId: str = Field(..., pattern=r'^\d+$')
+
+    @field_validator('userId')
+    @classmethod
+    def validate_no_traversal(cls, v: str) -> str:
+        if '..' in v or '/' in v:
+            raise ValueError('Invalid user ID')
+        return v
+
+
+class PushTokenRequest(BaseModel):
+    push_token: str = Field('', max_length=512)
 
 
 @router.get('', response_model=GenericResponse)
@@ -69,3 +95,47 @@ async def get_reading_goals(
             detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
         )
     return {'success': True, 'data': goals}
+
+
+@router.post('/zotero/validate', response_model=GenericResponse)
+async def validate_zotero_key(
+    body: ZoteroValidateRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Validate a Zotero API key by fetching the user profile."""
+    url = f'https://api.zotero.org/users/{body.userId}/keys/{body.apiKey}'
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                url,
+                headers={'Zotero-API-Key': body.apiKey},
+            )
+        if resp.status_code == 200:
+            data = resp.json()
+            username = data.get('username', data.get('userID', ''))
+            return {'success': True, 'data': {'valid': True, 'username': str(username)}}
+        return {
+            'success': True,
+            'data': {'valid': False, 'error': 'Invalid Zotero credentials'},
+        }
+    except httpx.HTTPError as exc:
+        logger.warning('zotero_api_error: %s', str(exc)[:200])
+        return {
+            'success': True,
+            'data': {'valid': False, 'error': 'Could not reach Zotero API'},
+        }
+
+
+@router.post('/push-token', response_model=GenericResponse)
+async def register_push_token(
+    body: PushTokenRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Register or update a push notification token (mobile)."""
+    if not body.push_token:
+        return {'success': True, 'data': {'registered': False}}
+    await settings_service.update_user_settings(
+        db, UUID(current_user['id']), {'pushToken': body.push_token},
+    )
+    return {'success': True, 'data': {'registered': True}}

@@ -348,7 +348,7 @@ class TestGetFreeBooks:
         result_mock.all.return_value = [row1, row2]
         db.execute = AsyncMock(return_value=result_mock)
 
-        with patch('app.services.discovery_service.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis = AsyncMock()
             mock_redis.get.return_value = None  # cache miss
             mock_redis_fn.return_value = mock_redis
@@ -369,7 +369,7 @@ class TestGetFreeBooks:
             {'title': 'Cached Book', 'author': 'Author', 'coverUrl': None, 'readerCount': 5},
         ]
 
-        with patch('app.services.discovery_service.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis = AsyncMock()
             mock_redis.get.return_value = json.dumps(cached)
             mock_redis_fn.return_value = mock_redis
@@ -388,7 +388,7 @@ class TestGetFreeBooks:
         result_mock.all.return_value = []
         db.execute = AsyncMock(return_value=result_mock)
 
-        with patch('app.services.discovery_service.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis = AsyncMock()
             mock_redis.get.return_value = None
             mock_redis_fn.return_value = mock_redis
@@ -411,7 +411,7 @@ class TestGetFreeBooks:
         result_mock.all.return_value = [row]
         db.execute = AsyncMock(return_value=result_mock)
 
-        with patch('app.services.discovery_service.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis_fn.side_effect = Exception('Connection refused')
 
             result = await discovery_service.get_free_books(db)
@@ -445,7 +445,7 @@ class TestGetFreeBooks:
             # Second call (write) fails
             raise Exception('Write failed')
 
-        with patch('app.services.discovery_service.get_redis', side_effect=redis_factory):
+        with patch('app.core.cache.get_redis', side_effect=redis_factory):
             result = await discovery_service.get_free_books(db)
 
         # Should still return results even if cache write fails
@@ -466,7 +466,7 @@ class TestGetFreeBooks:
         result_mock.all.return_value = [row]
         db.execute = AsyncMock(return_value=result_mock)
 
-        with patch('app.services.discovery_service.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis = AsyncMock()
             mock_redis.get.return_value = None  # cache miss
             mock_redis_fn.return_value = mock_redis

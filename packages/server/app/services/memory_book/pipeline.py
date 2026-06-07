@@ -32,6 +32,11 @@ _LLM_SECTIONS = frozenset({
     'threads', 'reader_became',
 })
 
+# Sections that require annotations to avoid hallucination
+_ANNOTATION_DEPENDENT = frozenset({
+    'highlights', 'annotations_woven',
+})
+
 
 async def _collect_and_validate(
     db: AsyncSession,
@@ -59,8 +64,18 @@ async def _generate_all_sections(
     book_id: UUID,
 ) -> list[dict[str, Any]]:
     """Generate all sections in parallel and add metadata."""
+    stats = enriched_data.get('stats', {})
+    total_annotations = stats.get('total_highlights', 0) + stats.get('total_notes', 0)
+    skip_annotation_sections = total_annotations == 0
+
     async def _gen_section(section_type: str) -> dict[str, Any]:
         try:
+            if skip_annotation_sections and section_type in _ANNOTATION_DEPENDENT:
+                return {
+                    'type': section_type,
+                    'title': 'No Annotations Yet',
+                    'message': 'Start highlighting and taking notes to see your annotations woven into a narrative here.',
+                }
             if section_type in _LLM_SECTIONS:
                 return await _generate_section(
                     section_type, enriched_data,
@@ -112,7 +127,7 @@ async def _upsert_memory_book(
     )
     existing = result.scalar_one_or_none()
 
-    book_title = enriched_data['book']['title']
+    book_title = enriched_data.get('book', {}).get('title', 'Untitled Book')
     mirror_title = f'{book_title} — Reading Mirror'
 
     if existing:

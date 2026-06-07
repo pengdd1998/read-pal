@@ -14,7 +14,6 @@ import time
 import redis.asyncio as aioredis
 
 from app.core.redis import get_redis
-from app.config import get_settings
 
 logger = logging.getLogger('read-pal.lockout')
 

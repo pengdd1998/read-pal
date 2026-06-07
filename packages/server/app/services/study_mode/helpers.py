@@ -41,12 +41,17 @@ def _extract_items(result: Any, wrapper_key: str) -> list[dict[str, Any]]:
         items = result
     elif isinstance(result, dict):
         # Try the expected wrapper key first, then fall back to any list value
-        items = result.get(wrapper_key, [])
-        if not items and isinstance(items, list):
+        items = result.get(wrapper_key)
+        # Only fallback if the key is missing entirely, not if it's an empty list
+        if items is None:
             for value in result.values():
-                if isinstance(value, list):
+                if isinstance(value, list) and value:
                     items = value
                     break
+            else:
+                items = []
+        elif not isinstance(items, list):
+            items = []
     else:
         return []
 

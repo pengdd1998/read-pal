@@ -9,8 +9,9 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.common import GenericResponse
 from app.services import stats_service
+from app.middleware.rate_limiter import api_limiter
 
-router = APIRouter(prefix='/api/v1/stats', tags=['stats'])
+router = APIRouter(prefix='/api/v1/stats', tags=['stats'], dependencies=[api_limiter])
 
 
 def _user_id(current_user: dict) -> UUID:

@@ -22,13 +22,14 @@ from app.services.password_reset_service import (
     validate_and_reset,
 )
 from app.utils.i18n import t
+from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.password_reset')
 
-router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
+router = APIRouter(prefix='/api/v1/auth', tags=['auth'], dependencies=[api_limiter])
 
 
-@router.post('/forgot-password', dependencies=[password_reset_limiter])
+@router.post('/forgot-password', response_model=MessageResponse, dependencies=[password_reset_limiter])
 async def forgot_password(
     body: ForgotPasswordRequest,
     db: AsyncSession = Depends(get_db),
@@ -47,7 +48,7 @@ async def forgot_password(
                     'token created but user will not receive reset link',
                     body.email,
                 )
-    except Exception:
+    except Exception as exc:
         logger.warning(
             'Unexpected error in forgot-password flow for %s',
             body.email,
@@ -59,7 +60,7 @@ async def forgot_password(
     )
 
 
-@router.post('/reset-password', dependencies=[password_reset_limiter])
+@router.post('/reset-password', response_model=MessageResponse, dependencies=[password_reset_limiter])
 async def reset_password(
     body: ResetPasswordRequest,
     db: AsyncSession = Depends(get_db),

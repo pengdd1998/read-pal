@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { runForceSimulation } from '@/lib/force-simulation';
 import type {
@@ -16,11 +16,12 @@ export interface UseKnowledgeGraphReturn {
   edges: VisualizationEdge[];
   themes: CrossBookTheme[];
   gaps: KnowledgeGap[];
-  neo4jAvailable: boolean;
+  isAvailable: boolean;
   loading: boolean;
   error: string | null;
   dimensions: { width: number; height: number };
   svgRef: React.RefObject<SVGSVGElement>;
+  refetch: () => void;
 }
 
 export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn {
@@ -30,20 +31,34 @@ export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn
   const [edges, setEdges] = useState<VisualizationEdge[]>([]);
   const [themes, setThemes] = useState<CrossBookTheme[]>([]);
   const [gaps, setGaps] = useState<KnowledgeGap[]>([]);
-  const [neo4jAvailable, setNeo4jAvailable] = useState(false);
+  const [isAvailable, setNeo4jAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const [fetchKey, setFetchKey] = useState(0);
+  const dataLoadedRef = useRef(false);
+
+  const rawNodesRef = useRef<VisualizationNode[]>([]);
+  const rawEdgesRef = useRef<VisualizationEdge[]>([]);
+
+  const refetch = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setFetchKey((k) => k + 1);
+  }, []);
 
   // Fetch graph data
   useEffect(() => {
+    let stale = false;
     async function load() {
       try {
         const [graphRes, themesRes, gapsRes] = await Promise.all([
           api.get<{ neo4jAvailable?: boolean; nodes: VisualizationNode[]; edges: VisualizationEdge[] }>('/api/v1/knowledge/graph'),
           api.get<{ neo4jAvailable?: boolean; themes: CrossBookTheme[] }>('/api/v1/knowledge/themes'),
-          api.get<{ gaps?: KnowledgeGap[] }>('/api/v1/knowledge/gaps').catch(() => ({ data: { gaps: [] } })),
+          api.get<{ gaps?: KnowledgeGap[] }>('/api/v1/knowledge/gaps').catch((err) => { console.warn('useKnowledgeGraph: gaps fetch failed', err); return { data: { gaps: [] } }; }),
         ]);
+
+        if (stale) return;
 
         const available = graphRes.data?.neo4jAvailable ?? true;
         setNeo4jAvailable(available);
@@ -51,31 +66,37 @@ export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn
         setGaps(gapsRes.data?.gaps ?? []);
 
         if (graphRes.data) {
-          const rawNodes = graphRes.data.nodes || [];
-          const rawEdges = graphRes.data.edges || [];
-
-          // Convert to simulation nodes with random initial positions
-          const simNodes: SimNode[] = rawNodes.map((n) => ({
-            ...n,
-            x: dimensions.width / 2 + (Math.random() - 0.5) * 300,
-            y: dimensions.height / 2 + (Math.random() - 0.5) * 300,
-            vx: 0,
-            vy: 0,
-          }));
-
-          runForceSimulation(simNodes, rawEdges, dimensions.width, dimensions.height);
-          setNodes(simNodes);
-          setEdges(rawEdges);
+          rawNodesRef.current = graphRes.data.nodes || [];
+          rawEdgesRef.current = graphRes.data.edges || [];
+          setEdges(rawEdgesRef.current);
+          dataLoadedRef.current = true;
         }
-      } catch (err) {
-        console.error('Failed to load knowledge graph:', err);
-        setError(errorMessage);
+      } catch {
+        if (!stale) setError(errorMessage);
       } finally {
-        setLoading(false);
+        if (!stale) setLoading(false);
       }
     }
     load();
-  }, [dimensions.width, dimensions.height, errorMessage]);
+    return () => { stale = true; };
+  }, [errorMessage, fetchKey]);
+
+  // Recompute layout when dimensions change or data is refetched
+  useEffect(() => {
+    if (!dataLoadedRef.current) return;
+    const rawNodes = rawNodesRef.current;
+    const rawEdges = rawEdgesRef.current;
+    if (rawNodes.length === 0) return;
+    const simNodes: SimNode[] = rawNodes.map((n) => ({
+      ...n,
+      x: dimensions.width / 2 + (Math.random() - 0.5) * 300,
+      y: dimensions.height / 2 + (Math.random() - 0.5) * 300,
+      vx: 0,
+      vy: 0,
+    }));
+    runForceSimulation(simNodes, rawEdges, dimensions.width, dimensions.height);
+    setNodes(simNodes);
+  }, [dimensions.width, dimensions.height, fetchKey]);
 
   // Responsive SVG
   useEffect(() => {
@@ -95,10 +116,11 @@ export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn
     edges,
     themes,
     gaps,
-    neo4jAvailable,
+    isAvailable,
     loading,
     error,
     dimensions,
     svgRef,
+    refetch,
   };
 }

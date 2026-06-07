@@ -69,21 +69,19 @@ export function useApi<T>(
       }
 
       // API returned { success: false }
-      const msg = res.error?.message || 'Request failed';
-      setError(msg);
+      setError('Request failed');
       setStatus('error');
       if (logErrors) {
-        console.warn(`[useApi] ${url}: ${msg}`);
+        console.warn(`[useApi] ${url}: request failed`);
       }
       return undefined;
     } catch (err) {
       if (cancelledRef.current) return undefined;
 
-      const msg = err instanceof Error ? err.message : 'Network error';
-      setError(msg);
+      setError('Network error');
       setStatus('error');
       if (logErrors) {
-        console.warn(`[useApi] ${url}: ${msg}`);
+        console.warn(`[useApi] ${url}: network error`);
       }
       return undefined;
     }

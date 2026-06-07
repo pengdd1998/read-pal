@@ -73,7 +73,8 @@ def translate_error(exc: ValueError, lang: str = DEFAULT_LANGUAGE) -> str:
     key = _VALUE_ERROR_KEY_MAP.get(str(exc))
     if key:
         return t(key, lang)
-    return str(exc)
+    logger.debug('translate_error: unmapped ValueError: %s', str(exc)[:200])
+    return t('errors.validation_failed', lang)
 
 
 def get_supported_languages() -> list[str]:

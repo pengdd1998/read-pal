@@ -24,6 +24,7 @@ from app.schemas.auth import (
     LoginRequest,
     LogoutRequest,
     MessageResponse,
+    RefreshResponse,
     RefreshTokenRequest,
     RegisterRequest,
 )
@@ -39,8 +40,9 @@ from app.services.auth_service import (
     revoke_refresh_token,
 )
 from app.utils.i18n import _get_user_lang, t
+from app.middleware.rate_limiter import api_limiter
 
-router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
+router = APIRouter(prefix='/api/v1/auth', tags=['auth'], dependencies=[api_limiter])
 
 
 # ---------------------------------------------------------------------------
@@ -58,7 +60,7 @@ async def google_oauth_status() -> dict:
 # POST /api/v1/auth/login
 # ---------------------------------------------------------------------------
 
-@router.post('/login', dependencies=[login_limiter])
+@router.post('/login', response_model=AuthResponse, dependencies=[login_limiter])
 async def login(
     body: LoginRequest,
     request: Request,
@@ -73,7 +75,7 @@ async def login(
 # POST /api/v1/auth/register
 # ---------------------------------------------------------------------------
 
-@router.post('/register', status_code=status.HTTP_201_CREATED, dependencies=[register_limiter])
+@router.post('/register', status_code=status.HTTP_201_CREATED, response_model=AuthResponse, dependencies=[register_limiter])
 async def register(
     body: RegisterRequest,
     db: AsyncSession = Depends(get_db),
@@ -101,7 +103,7 @@ async def get_me(
 # POST /api/v1/auth/change-password
 # ---------------------------------------------------------------------------
 
-@router.post('/change-password')
+@router.post('/change-password', response_model=MessageResponse)
 async def change_password(
     body: ChangePasswordRequest,
     current_user: dict = Depends(get_current_user),
@@ -118,7 +120,7 @@ async def change_password(
 # POST /api/v1/auth/logout
 # ---------------------------------------------------------------------------
 
-@router.post('/logout')
+@router.post('/logout', response_model=MessageResponse)
 async def logout(
     request: Request,
     body: LogoutRequest | None = None,
@@ -142,7 +144,7 @@ async def logout(
 # POST /api/v1/auth/refresh
 # ---------------------------------------------------------------------------
 
-@router.post('/refresh', response_model=GenericResponse, dependencies=[refresh_limiter])
+@router.post('/refresh', response_model=RefreshResponse, dependencies=[refresh_limiter])
 async def refresh(
     body: RefreshTokenRequest,
     db: AsyncSession = Depends(get_db),

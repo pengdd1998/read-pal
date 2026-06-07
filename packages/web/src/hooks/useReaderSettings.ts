@@ -32,7 +32,8 @@ function loadSettings(bookId: string): ReaderSettings | null {
   try {
     const raw = localStorage.getItem(`${SETTINGS_KEY_PREFIX}-${bookId}`);
     return raw ? JSON.parse(raw) : null;
-  } catch {
+  } catch (err) {
+    console.warn("useReaderSettings: failed to load settings", err);
     return null;
   }
 }
@@ -41,8 +42,8 @@ function saveSettings(bookId: string, settings: ReaderSettings) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(`${SETTINGS_KEY_PREFIX}-${bookId}`, JSON.stringify(settings));
-  } catch {
-    // ignore
+  } catch (err) {
+    console.warn("useReaderSettings: failed to save settings", err);
   }
 }
 

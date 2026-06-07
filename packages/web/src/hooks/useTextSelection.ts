@@ -71,8 +71,9 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
         // the selection collapses (e.g. focus moves to a textarea).
         range = sel.getRangeAt(0).cloneRange();
         rect = range.getBoundingClientRect();
-      } catch {
+      } catch (err) {
         // getRangeAt can fail in some edge cases
+        console.warn('Selection capture: getRangeAt failed', err);
       }
 
       // Compute character offsets NOW, before any DOM mutations from mark
@@ -86,7 +87,7 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
           const start = preRange.toString().length;
           const end = start + range.toString().length;
           offsets = { start, end };
-        } catch { /* ignore */ }
+        } catch (err) { console.warn('Selection capture: failed to compute character offsets', err); }
       }
 
       setSelection({

@@ -70,7 +70,7 @@ async def _collect_book_concepts(
                     'node': node,
                     'bookTitle': book_title,
                 }
-        except Exception:
+        except Exception as exc:
             logger.warning('Failed to load graph for book %s', book_id, exc_info=True)
             continue
     return book_concepts
@@ -84,15 +84,16 @@ def _find_themes_and_connections(
     themes: list[dict[str, Any]] = []
     for label, book_map in book_concepts.items():
         if len(book_map) >= 2:
-            theme_books = [
-                {'bookId': bid, 'bookTitle': info['bookTitle']}
-                for bid, info in book_map.items()
-            ]
+            book_ids = list(book_map.keys())
+            book_titles = [info['bookTitle'] for info in book_map.values()]
             total_size = sum(info['node'].size for info in book_map.values())
             themes.append({
-                'label': label,
-                'books': theme_books,
+                'concept': label,
+                'conceptId': f'theme-{label}',
+                'bookIds': book_ids,
+                'bookTitles': book_titles,
                 'strength': total_size,
+                'relatedConcepts': [],
             })
     themes.sort(key=lambda t: t['strength'], reverse=True)
 

@@ -1,9 +1,9 @@
 import PersonalBookPage from './Client';
 
 export async function generateStaticParams() {
-  return [{ bookId: '_' }];
+ return [{ bookId: '_' }];
 }
 
 export default function Page() {
-  return <PersonalBookPage />;
+ return <PersonalBookPage />;
 }

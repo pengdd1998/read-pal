@@ -9,6 +9,7 @@ from app.services.book_club import (  # noqa: F401
     get_club_progress,
     get_discussions,
     get_members,
+    is_member,
     join_club,
     leave_club,
     list_clubs,

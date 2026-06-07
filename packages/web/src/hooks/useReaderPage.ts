@@ -16,11 +16,20 @@ import { useBookContent } from '@/hooks/useBookContent';
 import { useAnnotationActions } from '@/hooks/useAnnotationActions';
 import { useReaderUI, type ReaderUIState } from '@/hooks/useReaderUI';
 export type { ReaderUIState };
-import { isCapacitor } from '@/lib/capacitor';
-import { getAuthToken } from '@/lib/auth-fetch';
+import { useReaderProgress } from '@/hooks/useReaderProgress';
+import { useReaderMilestones } from '@/hooks/useReaderMilestones';
+import { useReaderSelectionState } from '@/hooks/useReaderSelectionState';
+import { useReaderActions } from '@/hooks/useReaderActions';
+import { useStatusBar } from '@/hooks/useStatusBar';
 import { api } from '@/lib/api';
 import { detectGenre, type BookGenre } from '@/lib/companion-prompts';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
+
+const STATUS_BAR_COLORS: Record<string, string> = {
+  light: '#fefdfb',
+  dark: '#1a1410',
+  sepia: '#f8f4ec',
+};
 
 /**
  * Orchestrator hook for the reading page.
@@ -42,132 +51,86 @@ export function useReaderPage() {
     chapterContent, chapterTitle, setCurrentChapter, setAnnotations,
     setChapterFade, chapterFade,
     currentSegment, totalSegments, pageContent, setCurrentSegment, segments,
-  } = useBookContent(bookId, t('failed_load_book'), t('failed_load_book'), t('failed_connect'));
+  } = useBookContent(bookId, t('failed_load_book'), t('failed_connect'));
 
   const ui = useReaderUI();
   const contentRef = useRef<HTMLElement | null>(null);
   const [contentReady, setContentReady] = useState(false);
   const chatHandleRef = useRef<CompanionChatHandle | null>(null);
 
-  // Poll until content container is mounted
+  // Poll until content container is mounted and has content
   useEffect(() => {
     setContentReady(false);
     let elapsed = 0;
     const id = setInterval(() => {
       elapsed += 100;
-      if (contentRef.current) {
+      const el = contentRef.current;
+      if (el && el.innerHTML.length > 0) {
         clearInterval(id);
         setContentReady(true);
       } else if (elapsed > 5000) {
         clearInterval(id);
+        if (el) setContentReady(true);
       }
     }, 100);
     return () => clearInterval(id);
   }, [chapterContent]);
 
   const selection = useTextSelection(contentRef);
-
   const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight } = useReaderSettings(bookId, loading);
   const [chapterScrollProgress, setChapterScrollProgress] = useState(0);
-  const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length, isPaused: ui.isPaused, scrollProgress: chapterScrollProgress });
+  const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length, isPaused: ui.isPaused, scrollProgress: chapterScrollProgress, activeSeconds: ui.sessionElapsed });
   const studyMode = useStudyMode(bookId);
 
-  // --- Save progress on leave ---
-  const currentChapterRef = useRef(currentChapter);
-  const scrollProgressRef = useRef(chapterScrollProgress);
-  const currentSegmentRef = useRef(currentSegment);
-  useEffect(() => { currentChapterRef.current = currentChapter; }, [currentChapter]);
-  useEffect(() => { scrollProgressRef.current = chapterScrollProgress; }, [chapterScrollProgress]);
-  useEffect(() => { currentSegmentRef.current = currentSegment; }, [currentSegment]);
-
-  useEffect(() => {
-    if (loading || !bookId) return;
-    return () => {
-      const token = getAuthToken();
-      const chapter = currentChapterRef.current;
-      const scroll = scrollProgressRef.current;
-      const segment = currentSegmentRef.current;
-      try {
-        fetch(`/api/books/${bookId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ current_page: chapter, scroll_progress: scroll, current_segment: segment }),
-          keepalive: true,
-        }).catch((err) => {
-          console.error('[useReaderPage] Failed to save reading progress:', err);
-        });
-      } catch (err) {
-        console.error('[useReaderPage] Failed to save reading progress:', err);
-      }
-    };
-  }, [bookId, loading]);
+  // --- Progress & reading speed ---
+  const { readingWpm } = useReaderProgress({ bookId, loading, currentChapter, chapterScrollProgress, currentSegment });
 
   // --- Annotation actions ---
-  const annotationActions = useAnnotationActions({
-    bookId, currentChapter, chapters, contentRef, selectionRange: selection.range,
-    selectionOffsets: selection.offsets,
-    annotations, setAnnotations,
-    toastError: (msg: string) => toast(msg, 'error'),
-    toast: {
-      failed_load_annotations: t('failed_load_annotations'),
-      failed_save_highlight: t('failed_save_highlight'),
-      failed_save_note: t('failed_save_note'),
-      failed_remove_bookmark: t('failed_remove_bookmark'),
-      failed_add_bookmark: t('failed_add_bookmark'),
-      failed_delete_annotation: t('failed_delete_annotation'),
-      failed_save_progress: t('failed_save_progress'),
-    },
-  });
+  const toastMessages = useMemo(() => ({
+    failed_load_annotations: t('failed_load_annotations'),
+    failed_save_highlight: t('failed_save_highlight'),
+    failed_save_note: t('failed_save_note'),
+    failed_remove_bookmark: t('failed_remove_bookmark'),
+    failed_add_bookmark: t('failed_add_bookmark'),
+    failed_delete_annotation: t('failed_delete_annotation'),
+    failed_update_annotation: t('failed_update_annotation'),
+    failed_save_progress: t('failed_save_progress'),
+  }), [t]);
 
-  // --- Reading speed ---
-  const [readingWpm, setReadingWpm] = useState<number | null>(null);
-  useEffect(() => {
-    if (loading) return;
-    api.get<{ currentWpm: number; trend: string }>('/api/stats/reading-speed')
-      .then((res) => { if (res.success && res.data && res.data.currentWpm > 0) setReadingWpm(res.data.currentWpm); })
-      .catch((e) => { console.warn('Reading speed fetch failed:', e); });
-  }, [loading]);
+  // --- Chapter navigation (defined early for annotation scroll-to support) ---
+  const navigatingRef = useRef(false);
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
-  // --- Selection tracking ---
-  const [hasMadeSelection, setHasMadeSelection] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('read-pal-selection-used') === 'true';
-  });
-  const [highlightMode, setHighlightMode] = useState(false);
-  const [bgEnabled, setBgEnabled] = useState(true);
-  const [sessionSummary, setSessionSummary] = useState<{ duration: number; chaptersRead: number; sessionId?: string } | null>(null);
-
-  useEffect(() => {
-    if (!selection.isCollapsed && !hasMadeSelection) {
-      setHasMadeSelection(true);
-      try { localStorage.setItem('read-pal-selection-used', 'true'); } catch { /* ignore */ }
-    }
-  }, [selection.isCollapsed, hasMadeSelection]);
-
-  useEffect(() => {
-    if (highlightMode && !selection.isCollapsed && selection.text) {
-      annotationActions.handleAddHighlight(selection.text, 'amber');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightMode, selection.isCollapsed]);
-
-  // --- Chapter navigation ---
   const handleChapterChange = useCallback(async (chapterIndex: number) => {
+    if (navigatingRef.current) return;
     if (chapterIndex === currentChapter || chapterIndex < 0 || chapterIndex >= chapters.length) return;
+    navigatingRef.current = true;
     setChapterFade('out');
     await new Promise<void>((r) => setTimeout(r, 150));
+    if (!mountedRef.current) return;
     setCurrentChapter(chapterIndex);
     setChapterFade('in');
     try {
       await api.patch(`/api/books/${bookId}`, { current_page: chapterIndex, current_segment: 0 });
-    } catch (err) {
-      console.error('Failed to update progress:', err);
-      toast(t('failed_save_progress'), 'error');
+    } catch {
+      if (mountedRef.current) toast(t('failed_save_progress'), 'error');
+    } finally {
+      navigatingRef.current = false;
     }
   }, [currentChapter, chapters.length, bookId, setChapterFade, setCurrentChapter, toast, t]);
+
+  const annotationActions = useAnnotationActions({
+    bookId, currentChapter, chapters, contentRef, selectionRange: selection.range,
+    selectionOffsets: selection.offsets,
+    annotations, setAnnotations,
+    onChapterChange: handleChapterChange,
+    toastError: (msg: string) => toast(msg, 'error'),
+    toast: toastMessages,
+  });
+
+  // --- Selection & highlight state ---
+  const { hasMadeSelection, setHasMadeSelection, highlightMode, setHighlightMode, bgEnabled, setBgEnabled } = useReaderSelectionState({ selection, annotationActions });
 
   // --- Keyboard shortcuts ---
   useKeyboardShortcuts({
@@ -186,98 +149,37 @@ export function useReaderPage() {
 
   useAnnotationHighlights(contentRef, annotations, currentChapter, theme, contentReady);
 
-  // --- Capacitor status bar sync ---
-  useEffect(() => {
-    if (!isCapacitor()) return;
-    import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
-      StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light });
-      const colors: Record<string, string> = {
-        light: '#fefdfb',
-        dark: '#1a1410',
-        sepia: '#f8f4ec',
-      };
-      StatusBar.setBackgroundColor({ color: colors[theme] || colors.light });
-    }).catch(() => {});
-  }, [theme]);
+  // --- Capacitor status bar sync (delegated to useStatusBar) ---
+  useStatusBar(theme === 'dark' ? 'DARK' : 'LIGHT', STATUS_BAR_COLORS[theme] || STATUS_BAR_COLORS.light);
 
-  // --- Study mode ---
+  // --- Study mode chapter loading ---
   useEffect(() => {
     if (!loading && chapters.length > 0 && studyMode.enabled) {
       const ch = chapters[currentChapter];
       const content = ch?.rawContent || ch?.content || '';
       studyMode.loadChapterStudy(currentChapter, ch?.title || '', content);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChapter, loading, chapters.length, studyMode.enabled]);
+  }, [currentChapter, loading, chapters, studyMode.enabled, studyMode.loadChapterStudy]);
 
-  // --- Book completion detection ---
-  useEffect(() => {
-    if (!loading && chapters.length > 1 && currentChapter === chapters.length - 1 && (book?.progress ?? 0) >= 0.95) {
-      try {
-        localStorage.setItem('read-pal-tour-complete', 'true');
-        localStorage.removeItem('read-pal-tour-step');
-      } catch { /* ignore */ }
-      const timer = setTimeout(() => ui.setShowCompletion(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChapter, chapters.length, loading, book?.progress]);
-
-  // --- Milestone detection ---
-  const shownMilestones = useRef<Set<number>>(new Set());
-  useEffect(() => {
-    if (loading || chapters.length === 0) return;
-    const pct = ((currentChapter + 1) / chapters.length) * 100;
-    for (const m of [25, 50, 75]) {
-      if (pct >= m && !shownMilestones.current.has(m)) {
-        shownMilestones.current.add(m);
-        ui.setMilestone(`${m}%`);
-        const timer = setTimeout(() => ui.setMilestone(null), 3000);
-        return () => clearTimeout(timer);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChapter, chapters.length, loading]);
+  // --- Milestones & completion ---
+  useReaderMilestones({
+    loading, chaptersLength: chapters.length, currentChapter, book,
+    setShowCompletion: ui.setShowCompletion, setMilestone: ui.setMilestone,
+  });
 
   // --- Genre detection ---
-  const bookGenre: BookGenre = detectGenre(
+  const bookGenre: BookGenre = useMemo(() => detectGenre(
     (book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | string | undefined,
     book?.title,
     (book?.metadata as Record<string, unknown> | undefined)?.description as string | undefined,
-  );
+  ), [book?.metadata, book?.title]);
   const isFiction = bookGenre === 'fiction';
-
   const chapterTitles = useMemo(() => chapters.map((ch) => ({ title: ch.title })), [chapters]);
 
-  // --- Back button ---
-  const sessionStartRef = useRef<number>(Date.now());
-  const handleBack = useCallback(() => {
-    const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000);
-    if (elapsed > 30) {
-      setSessionSummary({ duration: elapsed, chaptersRead: currentChapter + 1, sessionId: sessionIdRef.current || undefined });
-    } else {
-      router.push('/library');
-    }
-  }, [currentChapter, router, sessionIdRef]);
-
-  // Settings panel handler — mobile uses sheet, desktop uses inline menu
-  const handleShowSettings = useCallback(() => {
-    if (window.innerWidth < 640) {
-      ui.setShowMobileSettings(true);
-    } else {
-      ui.setShowSettingsMenu((v: boolean) => !v);
-    }
-  }, [ui]);
-
-  const handleToggleStudyMode = useCallback(() => {
-    if (!studyMode.enabled) ui.closeAllPanels();
-    studyMode.toggleStudyMode();
-  }, [studyMode, ui]);
-
-  const handleBackToLibrary = useCallback(() => {
-    setSessionSummary(null);
-    router.push('/library');
-  }, [router]);
+  // --- Action handlers ---
+  const { sessionSummary, setSessionSummary, handleBack, handleShowSettings, handleToggleStudyMode, handleBackToLibrary } = useReaderActions({
+    currentChapter, sessionIdRef, ui, studyMode,
+  });
 
   return {
     // Identity
@@ -297,10 +199,13 @@ export function useReaderPage() {
     highlightMode, setHighlightMode,
     readingWpm, hasMadeSelection, setHasMadeSelection,
     sessionSummary, setSessionSummary,
-    sessionStartRef, sessionIdRef,
+    sessionIdRef,
     chapterScrollProgress, setChapterScrollProgress,
     // Genre
     isFiction, bookGenre, chapterTitles,
+    // Memoized metadata
+    genreMetadata: (book?.metadata as Record<string, unknown> | undefined)?.genre as string[] | string | undefined,
+    bookDescription: (book?.metadata as Record<string, unknown> | undefined)?.description as string | undefined,
     // Actions
     ui,
     handleChapterChange, handleBack, handleShowSettings, handleToggleStudyMode, handleBackToLibrary,

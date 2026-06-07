@@ -41,6 +41,30 @@ def _build_reset_html(reset_url: str) -> str:
 </html>"""
 
 
+def _send_via_smtp(
+    settings: object,
+    from_addr: str,
+    to_addr: str,
+    subject: str,
+    html_body: str,
+) -> None:
+    """Deliver *html_body* to *to_addr* via SMTP using *settings*."""
+    msg = MIMEText(html_body, 'html')
+    msg['Subject'] = subject
+    msg['From'] = from_addr
+    msg['To'] = to_addr
+
+    smtp_cls = smtplib.SMTP_SSL if settings.smtp_port == 465 else smtplib.SMTP
+    with smtp_cls(settings.smtp_host, settings.smtp_port, timeout=10) as server:
+        if settings.smtp_port != 465:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+        if settings.smtp_user and settings.smtp_password:
+            server.login(settings.smtp_user, settings.smtp_password)
+        server.sendmail(from_addr, [to_addr], msg.as_string())
+
+
 async def send_password_reset_email(email: str, token: str) -> None:
     """Send a password-reset email or log to console if SMTP is not configured.
 
@@ -50,7 +74,6 @@ async def send_password_reset_email(email: str, token: str) -> None:
     settings = get_settings()
     reset_url = f'{settings.frontend_url}/reset-password?token={token}'
 
-    # --- No SMTP configured: console fallback ---
     if not settings.smtp_host:
         logger.info(
             'Password reset for %s (no SMTP configured). Reset URL: %s',
@@ -59,33 +82,17 @@ async def send_password_reset_email(email: str, token: str) -> None:
         )
         return
 
-    # --- SMTP delivery ---
     try:
         from_ = settings.smtp_from or settings.smtp_user or 'noreply@readpal.app'
-        subject = 'Reset your read-pal password'
-
-        msg = MIMEText(_build_reset_html(reset_url), 'html')
-        msg['Subject'] = subject
-        msg['From'] = from_
-        msg['To'] = email
-
-        if settings.smtp_port == 465:
-            smtp_cls = smtplib.SMTP_SSL
-        else:
-            smtp_cls = smtplib.SMTP
-
-        with smtp_cls(settings.smtp_host, settings.smtp_port, timeout=10) as server:
-            if settings.smtp_port != 465:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-            if settings.smtp_user and settings.smtp_password:
-                server.login(settings.smtp_user, settings.smtp_password)
-            server.sendmail(from_, [email], msg.as_string())
-
+        _send_via_smtp(
+            settings,
+            from_,
+            email,
+            'Reset your read-pal password',
+            _build_reset_html(reset_url),
+        )
         logger.info('Password reset email sent to %s', email)
-
-    except Exception:
+    except Exception as exc:
         logger.warning(
             'SMTP delivery failed for password reset email to %s — '
             'user will not receive the reset link',

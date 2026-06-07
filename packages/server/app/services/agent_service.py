@@ -8,6 +8,7 @@ Keeps the router thin by extracting repeated patterns:
 """
 
 import asyncio
+import json
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
@@ -35,6 +36,85 @@ def raise_not_found(exc: ValueError, lang: str = DEFAULT_LANGUAGE) -> None:
     ) from exc
 
 
+async def _start_llm_producer(
+    queue: asyncio.Queue[bytes | None],
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    message: str,
+    context: dict | None,
+    companion_mode: str,
+    persona: str | None,
+    genre: str | None,
+    lang: str,
+) -> asyncio.Task:
+    """Create and return a task that reads LLM chunks into *queue*."""
+    import logging
+
+    logger = logging.getLogger('read-pal.agent')
+
+    async def _produce() -> None:
+        try:
+            async for chunk in companion_service.stream_chat(
+                db, user_id, book_id, message, context=context,
+                companion_mode=companion_mode, persona=persona,
+                genre=genre, lang=lang,
+            ):
+                await queue.put(chunk.encode('utf-8'))
+        except ValueError as exc:
+            logger.warning(
+                'agent.stream_validation_error user=%s book=%s error=%s',
+                user_id, book_id, str(exc)[:200],
+            )
+            error_payload = json.dumps({'error': str(exc)})
+            await queue.put(f'data: {error_payload}\n\n'.encode('utf-8'))
+            await queue.put(b'data: [DONE]\n\n')
+        except Exception as exc:
+            logger.warning(
+                'Streaming error in agent chat for user=%s book=%s',
+                user_id, book_id, exc_info=True,
+            )
+            error_payload = json.dumps({'error': t('errors.internal_error')})
+            await queue.put(f'data: {error_payload}\n\n'.encode('utf-8'))
+            await queue.put(b'data: [DONE]\n\n')
+        finally:
+            await queue.put(_SENTINEL)
+
+    return asyncio.create_task(_produce())
+
+
+async def _start_keepalive(queue: asyncio.Queue[bytes | None]) -> asyncio.Task:
+    """Create and return a task that periodically pushes keepalive frames."""
+    async def _loop() -> None:
+        while True:
+            await asyncio.sleep(KEEPALIVE_INTERVAL)
+            await queue.put(_KEEPALIVE_FRAME)
+    return asyncio.create_task(_loop())
+
+
+async def _consume_queue(
+    queue: asyncio.Queue[bytes | None],
+    tasks: list[asyncio.Task],
+    user_id: UUID,
+    book_id: UUID,
+) -> AsyncGenerator[bytes, None]:
+    """Yield items from *queue* until sentinel, then cancel background tasks."""
+    import logging
+
+    logger = logging.getLogger('read-pal.agent')
+    try:
+        while True:
+            item = await queue.get()
+            if item is _SENTINEL:
+                break
+            yield item
+    finally:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        logger.debug('SSE stream closed for user=%s book=%s', user_id, book_id)
+
+
 async def sse_bytes_stream(
     db: AsyncSession,
     user_id: UUID,
@@ -43,6 +123,7 @@ async def sse_bytes_stream(
     context: dict | None = None,
     companion_mode: str = 'casual',
     persona: str | None = None,
+    genre: str | None = None,
     lang: str = DEFAULT_LANGUAGE,
 ) -> AsyncGenerator[bytes, None]:
     """Wrap companion_service.stream_chat as a bytes SSE generator.
@@ -54,52 +135,11 @@ async def sse_bytes_stream(
     waiting for LLM tokens to prevent nginx/proxy connection timeouts during
     long thinking periods.
     """
-    import logging
-
-    logger = logging.getLogger('read-pal.agent')
     queue: asyncio.Queue[bytes | None] = asyncio.Queue()
-
-    async def _llm_producer() -> None:
-        """Read LLM chunks and push encoded bytes into the shared queue."""
-        try:
-            async for chunk in companion_service.stream_chat(
-                db, user_id, book_id, message, context=context,
-                companion_mode=companion_mode, persona=persona, lang=lang,
-            ):
-                await queue.put(chunk.encode('utf-8'))
-        except ValueError as exc:
-            error_msg = f'data: {{"error": "{exc}"}}\n\n'
-            await queue.put(error_msg.encode('utf-8'))
-        except Exception:
-            logger.warning(
-                'Streaming error in agent chat for user=%s book=%s',
-                user_id,
-                book_id,
-                exc_info=True,
-            )
-            internal_msg = t('errors.internal_error')
-            error_msg = f'data: {{"error": "{internal_msg}"}}\n\n'
-            await queue.put(error_msg.encode('utf-8'))
-        finally:
-            await queue.put(_SENTINEL)
-
-    async def _keepalive() -> None:
-        """Periodically push keepalive frames into the shared queue."""
-        while True:
-            await asyncio.sleep(KEEPALIVE_INTERVAL)
-            await queue.put(_KEEPALIVE_FRAME)
-
-    producer_task = asyncio.create_task(_llm_producer())
-    keepalive_task = asyncio.create_task(_keepalive())
-
-    try:
-        while True:
-            item = await queue.get()
-            if item is _SENTINEL:
-                break
-            yield item
-    finally:
-        for task in (producer_task, keepalive_task):
-            task.cancel()
-        await asyncio.gather(producer_task, keepalive_task, return_exceptions=True)
-        logger.debug('SSE stream closed for user=%s book=%s', user_id, book_id)
+    producer = await _start_llm_producer(
+        queue, db, user_id, book_id, message,
+        context, companion_mode, persona, genre, lang,
+    )
+    keepalive = await _start_keepalive(queue)
+    async for chunk in _consume_queue(queue, [producer, keepalive], user_id, book_id):
+        yield chunk

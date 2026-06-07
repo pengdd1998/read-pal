@@ -32,7 +32,7 @@ def persist_stream_log(
             book_id=str(book_id) if book_id else None,
         )
     except Exception as exc:
-        logger.debug('companion.safety.observability_log_failed', error=str(exc)[:200])
+        logger.warning('companion.safety.observability_log_failed', error=str(exc)[:200])
 
 
 def quick_safety_check(text: str | None) -> bool:

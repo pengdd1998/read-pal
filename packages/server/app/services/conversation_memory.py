@@ -25,6 +25,59 @@ SUMMARY_BATCH = 15       # compress oldest N messages into summary
 MAX_RECENT = 20          # keep this many recent messages verbatim
 
 
+async def _count_messages(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> int:
+    """Count total chat messages for a user-book pair."""
+    count_result = await db.execute(
+        select(func.count(ChatMessage.id)).where(
+            ChatMessage.user_id == user_id,
+            ChatMessage.book_id == book_id,
+        )
+    )
+    return count_result.scalar() or 0
+
+
+async def _load_existing_summary(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> 'ConversationSummary | None':
+    """Load the most recent conversation summary from the database."""
+    from app.models.conversation_summary import ConversationSummary
+    result = await db.execute(
+        select(ConversationSummary)
+        .where(
+            ConversationSummary.user_id == user_id,
+            ConversationSummary.book_id == book_id,
+        )
+        .order_by(ConversationSummary.updated_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+def _log_summary_result(
+    event: str,
+    total: int,
+    summary_length: int,
+    latency_ms: int,
+    user_id: UUID,
+    book_id: UUID,
+) -> None:
+    """Log the outcome of a summary lookup or generation."""
+    logger.info(
+        event,
+        message_count=total,
+        summary_length=summary_length,
+        latency_ms=latency_ms,
+        user_id=str(user_id),
+        book_id=str(book_id),
+    )
+
+
 async def get_or_create_summary(
     db: AsyncSession,
     user_id: UUID,
@@ -41,15 +94,7 @@ async def get_or_create_summary(
         book_id=str(book_id),
     )
 
-    # Check total message count
-    count_result = await db.execute(
-        select(func.count(ChatMessage.id)).where(
-            ChatMessage.user_id == user_id,
-            ChatMessage.book_id == book_id,
-        )
-    )
-    total = count_result.scalar() or 0
-
+    total = await _count_messages(db, user_id, book_id)
     if total < SUMMARY_THRESHOLD:
         logger.info(
             'memory.get_or_create_summary.below_threshold',
@@ -60,42 +105,21 @@ async def get_or_create_summary(
         )
         return None
 
-    # Load existing summary from DB
-    from app.models.conversation_summary import ConversationSummary
-    result = await db.execute(
-        select(ConversationSummary)
-        .where(
-            ConversationSummary.user_id == user_id,
-            ConversationSummary.book_id == book_id,
-        )
-        .order_by(ConversationSummary.updated_at.desc())
-        .limit(1)
-    )
-    existing = result.scalar_one_or_none()
+    existing = await _load_existing_summary(db, user_id, book_id)
 
-    # Check if we need to update the summary
     if existing and existing.message_count >= total - MAX_RECENT:
         elapsed = int((time.monotonic() - t0) * 1000)
-        logger.info(
+        _log_summary_result(
             'memory.get_or_create_summary.cache_hit',
-            message_count=total,
-            summary_length=len(existing.summary),
-            latency_ms=elapsed,
-            user_id=str(user_id),
-            book_id=str(book_id),
+            total, len(existing.summary), elapsed, user_id, book_id,
         )
         return existing.summary
 
-    # Need to generate/update summary
     summary = await _generate_summary(db, user_id, book_id, existing)
     elapsed = int((time.monotonic() - t0) * 1000)
-    logger.info(
+    _log_summary_result(
         'memory.get_or_create_summary.generated',
-        message_count=total,
-        summary_length=len(summary) if summary else 0,
-        latency_ms=elapsed,
-        user_id=str(user_id),
-        book_id=str(book_id),
+        total, len(summary) if summary else 0, elapsed, user_id, book_id,
     )
     return summary
 

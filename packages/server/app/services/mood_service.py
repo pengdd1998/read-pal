@@ -4,6 +4,7 @@ import json
 import logging
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.llm import safe_llm_call
 
@@ -43,8 +44,8 @@ def _parse_response(raw: str, mood: str) -> dict:
 
 
 async def generate_mood_scene(
-    db,  # noqa: ARG001 — kept for interface consistency
-    user_id,  # noqa: ARG001 — kept for interface consistency
+    db: AsyncSession,  # noqa: ARG001 — kept for interface consistency
+    user_id: str,  # noqa: ARG001 — kept for interface consistency
     mood: str,
     text: str | None = None,
     lang: str = 'en',
@@ -67,8 +68,8 @@ async def generate_mood_scene(
 
     try:
         raw = await safe_llm_call(messages, fallback='', log_label='mood-scene')
-    except Exception:
-        logger.warning('Mood scene LLM call failed, using fallback')
+    except Exception as exc:
+        logger.warning('Mood scene LLM call failed, using fallback: %s', exc)
         return fallback
 
     if not raw:
@@ -77,4 +78,5 @@ async def generate_mood_scene(
     try:
         return _parse_response(raw, mood)
     except (json.JSONDecodeError, KeyError):
+        logger.warning('mood.parse_failed raw_preview=%s', raw[:100] if raw else None)
         return fallback

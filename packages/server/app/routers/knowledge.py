@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -19,6 +20,9 @@ from app.services.knowledge_service import (
     get_cross_book_themes,
     search_concepts,
 )
+from app.utils.i18n import t
+
+logger = logging.getLogger('read-pal.knowledge')
 
 router = APIRouter(prefix='/api/v1/knowledge', tags=['knowledge'])
 
@@ -51,9 +55,16 @@ async def get_graph(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Get knowledge graph data for a book."""
-    graph_data = await build_graph(
-        db, UUID(current_user['id']), book_id, force_rebuild=force_rebuild,
-    )
+    try:
+        graph_data = await build_graph(
+            db, UUID(current_user['id']), book_id, force_rebuild=force_rebuild,
+        )
+    except Exception as exc:
+        logger.error('Knowledge graph build failed: %s', exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable')},
+        ) from exc
     return {'success': True, 'data': graph_data.model_dump(by_alias=True, mode='json')}
 
 
@@ -86,5 +97,12 @@ async def get_knowledge_gaps(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Detect knowledge gaps in the user's combined knowledge graph."""
-    gaps = await detect_gaps(db, UUID(current_user['id']))
+    try:
+        gaps = await detect_gaps(db, UUID(current_user['id']))
+    except Exception as exc:
+        logger.error('Knowledge gaps detection failed: %s', exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable')},
+        ) from exc
     return {'success': True, 'data': {'gaps': [g.model_dump(by_alias=True, mode='json') for g in gaps]}}

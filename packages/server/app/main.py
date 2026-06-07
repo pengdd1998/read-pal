@@ -1,14 +1,16 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 
 import structlog
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from app.config import get_settings
 from app.core.logging import setup_logging
@@ -99,6 +101,7 @@ async def lifespan(app: FastAPI):
             logger.warning('auto_create_tables_failed', error=str(exc))
 
     asyncio.create_task(_log_cleanup_loop())
+    asyncio.create_task(_stale_session_cleanup_loop())
 
     from app.services.llm import _trace_writer
     _trace_writer.start()
@@ -136,9 +139,10 @@ async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse
     code = 'NOT_FOUND' if is_not_found else 'INVALID_INPUT'
     status_code = 404 if is_not_found else 400
     logger.warning('ValueError on %s: %s', request.url.path, msg[:200])
+    user_msg = 'Resource not found' if is_not_found else 'Invalid input'
     return JSONResponse(
         status_code=status_code,
-        content={'detail': {'code': code, 'message': msg}},
+        content={'detail': {'code': code, 'message': user_msg}},
     )
 
 
@@ -148,7 +152,27 @@ async def permission_error_handler(request: Request, exc: PermissionError) -> JS
     logger.warning('PermissionError on %s: %s', request.url.path, str(exc)[:200])
     return JSONResponse(
         status_code=403,
-        content={'detail': {'code': 'FORBIDDEN', 'message': str(exc)}},
+        content={'detail': {'code': 'FORBIDDEN', 'message': 'You do not have permission to perform this action'}},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Return structured 422 responses without exposing internal field details."""
+    errors = exc.errors()
+    messages = []
+    for err in errors:
+        field = '.'.join(str(loc) for loc in err.get('loc', []))
+        msg = err.get('msg', 'Invalid value')
+        messages.append(f'{field}: {msg}' if field else msg)
+    return JSONResponse(
+        status_code=422,
+        content={
+            'detail': {
+                'code': 'VALIDATION_ERROR',
+                'message': '; '.join(messages),
+            },
+        },
     )
 
 
@@ -200,6 +224,7 @@ async def _log_cleanup_loop() -> None:
     try:
         from app.services.llm_log_service import cleanup_old_logs
     except ImportError:
+        logger.info('log_cleanup_skipped_no_module')
         return
     while True:
         await asyncio.sleep(86400)  # 24 hours
@@ -210,6 +235,35 @@ async def _log_cleanup_loop() -> None:
                     logger.info('cleaned_up_llm_logs', deleted=deleted, retention_days=settings.llm_log_retention_days)
         except Exception as exc:
             logger.warning('llm_log_cleanup_failed', error=str(exc))
+
+
+async def _stale_session_cleanup_loop() -> None:
+    """Background task that finalizes orphaned reading sessions."""
+    while True:
+        await asyncio.sleep(7200)  # 2 hours
+        try:
+            from app.models.reading_session import ReadingSession
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=2)
+            async with async_session() as db:
+                result = await db.execute(
+                    select(ReadingSession).where(
+                        ReadingSession.is_active.is_(True),
+                        ReadingSession.updated_at < cutoff,
+                    ),
+                )
+                now = datetime.now(timezone.utc)
+                closed = 0
+                for session in result.scalars().all():
+                    session.is_active = False
+                    session.ended_at = now
+                    if not session.duration and session.started_at:
+                        session.duration = int((now - session.started_at).total_seconds())
+                    closed += 1
+                if closed:
+                    await db.commit()
+                    logger.info('closed_stale_sessions', count=closed)
+        except Exception as exc:
+            logger.warning('stale_session_cleanup_failed', error=str(exc))
 
 
 @app.get('/api/v1/health')

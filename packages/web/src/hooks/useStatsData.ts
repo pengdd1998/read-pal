@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
 import type {
   DashboardData,
   SessionData,
@@ -24,7 +23,6 @@ interface StatsDataResult {
 
 export function useStatsData(): StatsDataResult {
   const t = useTranslations('stats');
-  const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [flashcardStats, setFlashcardStats] = useState<FlashcardStats | null>(null);
@@ -34,6 +32,7 @@ export function useStatsData(): StatsDataResult {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let stale = false;
     Promise.all([
       api.get<DashboardData>('/api/stats/dashboard'),
       api.get<SessionData[]>('/api/reading-sessions'),
@@ -42,6 +41,7 @@ export function useStatsData(): StatsDataResult {
       api.get<BookSpeed[]>('/api/stats/reading-speed/by-book'),
     ])
       .then(([dashRes, sessRes, fcRes, speedRes, bookSpeedRes]) => {
+        if (stale) return;
         if (dashRes.success && dashRes.data) {
           setData(dashRes.data);
         }
@@ -65,8 +65,9 @@ export function useStatsData(): StatsDataResult {
           setBookSpeeds(Array.isArray(bookSpeedRes.data) ? bookSpeedRes.data : []);
         }
       })
-      .catch(() => { setError(t('error_load')); toast(t('error_load'), 'error'); })
-      .finally(() => setLoading(false));
+      .catch(() => { if (!stale) setError(t('error_load')); })
+      .finally(() => { if (!stale) setLoading(false); });
+    return () => { stale = true; };
   }, [t]);
 
   return { data, sessions, flashcardStats, speedData, bookSpeeds, loading, error };

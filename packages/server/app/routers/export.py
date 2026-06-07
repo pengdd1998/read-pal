@@ -11,12 +11,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import api_limiter
 from app.services.export_service import CITATION_FORMATS, SUPPORTED_FORMATS, export
 from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.export')
 
-router = APIRouter(prefix='/api/v1/export', tags=['export'])
+router = APIRouter(
+    prefix='/api/v1/export',
+    tags=['export'],
+    dependencies=[api_limiter],
+)
 
 _FILENAME_MAP = {
     'csv': 'annotations-{book_id}.csv',

@@ -49,7 +49,7 @@ def _make_annotation(
 
 def _make_db_session():
     """Create a mock AsyncSession."""
-    db = AsyncMock(spec=['execute', 'add', 'flush', 'refresh', 'delete'])
+    db = AsyncMock(spec=['execute', 'add', 'flush', 'refresh', 'delete', 'scalar'])
     return db
 
 
@@ -248,6 +248,7 @@ async def test_create_annotation_highlight():
     user_id = str(uuid4())
     book_id = uuid4()
 
+    db.scalar = AsyncMock(return_value=MagicMock())
     created = _make_annotation(user_id=user_id, book_id=book_id, type='highlight')
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=created)
@@ -285,6 +286,7 @@ async def test_create_annotation_note_with_tags():
     user_id = str(uuid4())
     book_id = uuid4()
 
+    db.scalar = AsyncMock(return_value=MagicMock())
     created = _make_annotation(user_id=user_id, book_id=book_id, type='note')
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=created)
@@ -315,6 +317,7 @@ async def test_create_annotation_bookmark():
     user_id = str(uuid4())
     book_id = uuid4()
 
+    db.scalar = AsyncMock(return_value=MagicMock())
     created = _make_annotation(user_id=user_id, book_id=book_id, type='bookmark')
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=created)
@@ -335,6 +338,26 @@ async def test_create_annotation_bookmark():
 
     added = added_annotations[0]
     assert added.type == 'bookmark'
+
+
+@pytest.mark.asyncio
+async def test_create_annotation_rejects_unknown_book():
+    db = _make_db_session()
+    user_id = str(uuid4())
+    book_id = uuid4()
+
+    db.scalar = AsyncMock(return_value=None)
+    data = MagicMock()
+    data.book_id = book_id
+    data.type = 'highlight'
+    data.location = {'page': 1}
+    data.content = 'Test'
+    data.color = None
+    data.note = None
+    data.tags = []
+
+    with pytest.raises(ValueError, match='Book not found'):
+        await annotation_service.create_annotation(db, user_id, data)
 
 
 # ---------------------------------------------------------------------------

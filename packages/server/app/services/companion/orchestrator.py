@@ -30,6 +30,7 @@ async def chat(
     context: dict | None = None,
     companion_mode: str = 'casual',
     persona: str | None = None,
+    genre: str | None = None,
     lang: str = 'en',
 ) -> dict[str, Any]:
     """Run a single-turn companion chat and return the assistant response."""
@@ -43,7 +44,7 @@ async def chat(
     )
     _, history, system_text, budget = await _prepare_context(
         db, user_id, book_id, message, context, companion_mode,
-        persona=persona, lang=lang,
+        persona=persona, genre=genre, lang=lang,
     )
     messages = _build_messages(system_text, history, message, budget)
 
@@ -72,6 +73,35 @@ async def chat(
     return {'role': 'assistant', 'content': assistant_content}
 
 
+def _build_summarize_messages(
+    book_title: str,
+    book_author: str,
+    chapter_ids: list[str] | None,
+    lang: str,
+) -> tuple[list, TokenBudget]:
+    """Build system + human messages for summarize and return (messages, budget)."""
+    from langchain_core.messages import HumanMessage, SystemMessage
+
+    prompt_parts = [
+        t('companion.summarize_prompt', lang, title=book_title, author=book_author),
+    ]
+    if chapter_ids:
+        prompt_parts.append(
+            t('companion.summarize_chapters', lang, chapters=', '.join(chapter_ids)),
+        )
+    prompt_parts.append(t('companion.summarize_instruction', lang))
+
+    budget = TokenBudget()
+    system_msg = budget.add(t('companion.summarize_system', lang), 'summarize_system')
+    human_msg = budget.add(' '.join(prompt_parts), 'summarize_human')
+
+    messages = [
+        SystemMessage(content=system_msg),
+        HumanMessage(content=human_msg),
+    ]
+    return messages, budget
+
+
 async def summarize(
     db: AsyncSession,
     user_id: UUID,
@@ -90,23 +120,9 @@ async def summarize(
     )
     book = await _load_book(db, user_id, book_id)
 
-    prompt_parts = [
-        t('companion.summarize_prompt', lang, title=book.title, author=book.author),
-    ]
-    if chapter_ids:
-        prompt_parts.append(
-            t('companion.summarize_chapters', lang, chapters=', '.join(chapter_ids)),
-        )
-    prompt_parts.append(t('companion.summarize_instruction', lang))
-
-    budget = TokenBudget()
-    system_msg = budget.add(t('companion.summarize_system', lang), 'summarize_system')
-    human_msg = budget.add(' '.join(prompt_parts), 'summarize_human')
-
-    messages = [
-        SystemMessage(content=system_msg),
-        HumanMessage(content=human_msg),
-    ]
+    messages, _budget = _build_summarize_messages(
+        book.title, book.author, chapter_ids, lang,
+    )
 
     fallback_text = t('companion.summary_error', lang)
     content = await safe_llm_call(
@@ -129,6 +145,27 @@ async def summarize(
     return {'role': 'assistant', 'content': content}
 
 
+def _build_explain_prompt(
+    book_title: str,
+    book_author: str,
+    text: str,
+    context: str | None,
+    lang: str,
+) -> str:
+    """Build the human prompt for the explain function."""
+    safe_text = sanitize_user_input(text, max_length=3000, context='explain_text')
+    prompt = t(
+        'companion.explain_prompt', lang,
+        title=book_title, author=book_author, text=safe_text,
+    )
+    if context:
+        safe_context = sanitize_user_input(
+            context, max_length=2000, context='explain_context',
+        )
+        prompt += t('companion.explain_extra_context', lang, context=safe_context)
+    return prompt
+
+
 async def explain(
     db: AsyncSession,
     user_id: UUID,
@@ -147,15 +184,10 @@ async def explain(
     )
     book = await _load_book(db, user_id, book_id)
 
-    safe_text = sanitize_user_input(text, max_length=3000, context='explain_text')
-    prompt = t('companion.explain_prompt', lang, title=book.title, author=book.author, text=safe_text)
-    if context:
-        safe_context = sanitize_user_input(context, max_length=2000, context='explain_context')
-        prompt += t('companion.explain_extra_context', lang, context=safe_context)
+    prompt = _build_explain_prompt(book.title, book.author, text, context, lang)
 
     budget = TokenBudget()
     system_msg = budget.add(t('companion.explain_system', lang), 'explain_system')
-
     messages = [
         SystemMessage(content=system_msg),
         HumanMessage(content=prompt),

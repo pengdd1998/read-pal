@@ -1,15 +1,15 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Book Club',
-  description: 'View and participate in your book club discussions.',
-  robots: { index: false, follow: true },
+ title: 'Book Club',
+ description: 'View and participate in your book club discussions.',
+ robots: { index: false, follow: true },
 };
 
 export default function BookClubDetailLayout({
-  children,
+ children,
 }: {
-  children: React.ReactNode;
+ children: React.ReactNode;
 }) {
-  return children;
+ return children;
 }

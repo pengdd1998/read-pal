@@ -7,12 +7,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import api_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.notification import NotificationResponse, NotificationUpdate
 from app.services import notification_service
 from app.utils.i18n import t
 
-router = APIRouter(prefix='/api/v1/notifications', tags=['notifications'])
+router = APIRouter(
+    prefix='/api/v1/notifications',
+    tags=['notifications'],
+    dependencies=[api_limiter],
+)
 
 
 def _dump(n: object) -> dict:

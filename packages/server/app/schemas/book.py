@@ -68,9 +68,19 @@ class BookListResponse(BaseModel):
     total: int
 
 
+class BookStatsData(BaseModel):
+    total: int
+    reading: int
+    completed: int
+    unread: int
+    total_pages_read: int = Field(validation_alias='totalPagesRead', serialization_alias='totalPagesRead')
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class BookStatsResponse(BaseModel):
     success: bool = True
-    data: dict  # {total, reading, completed, unread, total_pages_read}
+    data: BookStatsData
 
 
 class BookTagsUpdateRequest(BaseModel):

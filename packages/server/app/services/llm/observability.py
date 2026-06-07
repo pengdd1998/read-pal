@@ -65,6 +65,36 @@ def _estimate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> fl
     )
 
 
+def _build_trace_dict(
+    *,
+    request_id: str,
+    model: str,
+    label: str,
+    latency_ms: int,
+    usage: dict[str, int],
+    cost: float,
+    success: bool,
+    fallback_used: bool,
+    error_message: str | None,
+    provider: str | None,
+) -> dict[str, Any]:
+    """Build the shared trace dict used for both logging and DB persistence."""
+    return {
+        'request_id': request_id,
+        'model': model,
+        'label': label,
+        'latency_ms': latency_ms,
+        'prompt_tokens': usage.get('prompt_tokens', 0),
+        'completion_tokens': usage.get('completion_tokens', 0),
+        'total_tokens': usage.get('total_tokens', 0),
+        'estimated_cost_usd': cost,
+        'success': success,
+        'fallback_used': fallback_used,
+        'error_message': error_message,
+        'provider': provider,
+    }
+
+
 def _log_call(
     *,
     request_id: str,
@@ -85,37 +115,28 @@ def _log_call(
         usage.get('prompt_tokens', 0),
         usage.get('completion_tokens', 0),
     )
-    logger.info(
-        'llm_call',
+    trace = _build_trace_dict(
         request_id=request_id,
         model=model,
         label=label,
         latency_ms=latency_ms,
-        prompt_tokens=usage.get('prompt_tokens', 0),
-        completion_tokens=usage.get('completion_tokens', 0),
-        total_tokens=usage.get('total_tokens', 0),
-        estimated_cost=round(cost, 6),
+        usage=usage,
+        cost=cost,
         success=success,
-        fallback=fallback_used,
+        fallback_used=fallback_used,
+        error_message=error_message,
         provider=provider,
+    )
+    logger.info(
+        'llm_call',
+        **trace,
+        estimated_cost=round(cost, 6),
+        fallback=fallback_used,
         user_id=user_id,
         book_id=book_id,
     )
     if get_settings().llm_log_enabled:
-        _trace_writer.add({
-            'request_id': request_id,
-            'model': model,
-            'label': label,
-            'latency_ms': latency_ms,
-            'prompt_tokens': usage.get('prompt_tokens', 0),
-            'completion_tokens': usage.get('completion_tokens', 0),
-            'total_tokens': usage.get('total_tokens', 0),
-            'estimated_cost_usd': cost,
-            'success': success,
-            'fallback_used': fallback_used,
-            'error_message': error_message,
-            'provider': provider,
-        })
+        _trace_writer.add(trace)
 
 
 # ---------------------------------------------------------------------------
@@ -165,7 +186,7 @@ class _TraceWriter:
                 await session.commit()
             logger.debug('Trace flush: %d records written', len(batch))
             return len(batch)
-        except Exception:
+        except Exception as exc:
             logger.warning(
                 'Trace flush failed (%d records dropped)',
                 len(batch),

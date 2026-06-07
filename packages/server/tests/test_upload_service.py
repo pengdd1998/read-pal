@@ -132,13 +132,22 @@ class TestBuildChapters:
     def test_builds_from_dict_chapters(self):
         doc = MagicMock()
         doc.chapters = [
-            {'id': 'ch-1', 'title': 'Intro', 'content': 'Hello', 'rawContent': 'Hello'},
+            {'id': 'ch-1', 'title': 'Intro', 'content': 'Hello', 'rawContent': '<p>Hello</p>'},
             {'id': 'ch-2', 'title': 'End', 'content': 'Bye'},
         ]
         result = _build_chapters(doc, 'en')
         assert len(result) == 2
         assert result[0]['id'] == 'ch-1'
-        assert result[1]['rawContent'] == 'Bye'  # falls back to content
+        assert result[1]['rawContent'] == '<p>Bye</p>'  # wraps plain text in <p>
+
+    def test_html_content_used_directly_as_raw(self):
+        doc = MagicMock()
+        doc.chapters = [
+            {'id': 'ch-1', 'title': 'Intro', 'content': '<p>Hello world</p>'},
+        ]
+        result = _build_chapters(doc, 'en')
+        # content that already has HTML tags is used directly, not re-wrapped
+        assert result[0]['rawContent'] == '<p>Hello world</p>'
 
     def test_default_id_when_missing(self):
         doc = MagicMock()

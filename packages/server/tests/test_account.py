@@ -88,11 +88,12 @@ async def test_update_me_unauthenticated(client):
 
 @pytest.mark.asyncio
 async def test_delete_account(client):
-    """DELETE /account deletes user successfully."""
-    reg = await register_user(client)
+    """DELETE /account deletes user successfully with password confirmation."""
+    password = 'TestPass123!'
+    reg = await register_user(client, password=password)
     headers = auth_headers(reg['token'])
 
-    resp = await client.delete('/api/v1/auth/account', headers=headers)
+    resp = await client.request('DELETE', '/api/v1/auth/account', headers=headers, json={'password': password})
     assert resp.status_code == 204
 
     # Subsequent request with the same token should fail (user gone)

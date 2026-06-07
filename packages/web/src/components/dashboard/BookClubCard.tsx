@@ -1,0 +1,82 @@
+'use client';
+
+import React from 'react';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
+
+interface ClubMember {
+ id: string;
+ userId: string;
+ role: string;
+}
+
+export interface BookClub {
+ id: string;
+ name: string;
+ description?: string;
+ coverImage?: string;
+ isPrivate: boolean;
+ inviteCode: string;
+ maxMembers: number;
+ currentBookId?: string;
+ currentUserRole: string;
+ clubMembers?: ClubMember[];
+ currentBook?: {
+ id: string;
+ title: string;
+ author: string;
+ coverUrl?: string;
+ progress: number;
+ };
+}
+
+export const BookClubCard = React.memo(function BookClubCard({ club }: { club: BookClub }) {
+ const t = useTranslations('bookClubs');
+
+ return (
+ <Link
+  key={club.id}
+  href={`/book-clubs/${club.id}`}
+  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50/50 transition-colors group"
+ >
+  {/* Club avatar */}
+  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center text-lg shrink-0">
+  {'📚'}
+  </div>
+
+  <div className="flex-1 min-w-0">
+  <div className="flex items-center gap-2">
+   <span className="text-sm font-semibold text-gray-900 truncate">
+   {club.name}
+   </span>
+   {club.isPrivate && (
+   <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+   </svg>
+   )}
+   {club.currentUserRole === 'admin' && (
+   <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">
+    {t('adminBadge')}
+   </span>
+   )}
+  </div>
+  <div className="flex items-center gap-3 mt-0.5">
+   <span className="text-xs text-gray-400">
+   {(club.clubMembers || []).length} {(club.clubMembers || []).length !== 1 ? t('memberCountPlural', { count: (club.clubMembers || []).length }) : t('memberCount', { count: 1 })}
+   </span>
+   {club.currentBookId && (
+   <span className="text-xs text-primary-600 dark:text-primary-400 flex items-center gap-1">
+    <span className="w-1 h-1 rounded-full bg-green-500" />
+    {t('reading')}
+   </span>
+   )}
+  </div>
+  </div>
+
+  {/* Chevron */}
+  <svg className="w-4 h-4 text-gray-300 group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+  </svg>
+ </Link>
+ );
+});

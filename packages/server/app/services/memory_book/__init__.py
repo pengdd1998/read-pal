@@ -8,7 +8,8 @@ from app.services.memory_book.data_collection import (
     _collect_book_data,
     _collect_enriched_data,
 )
-from app.services.memory_book.renderer import _render_html, _render_chapter_html, _esc
+from app.services.memory_book.renderer import _render_html, _render_chapter_html
+from app.services.memory_book.renderer_utils import _esc
 from app.services.memory_book.section_generation import (
     SECTION_TYPES,
     SECTION_SCHEMAS,

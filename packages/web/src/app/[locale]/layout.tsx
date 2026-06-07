@@ -11,99 +11,100 @@ import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 import { routing } from '@/i18n/routing';
 
 const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
+ subsets: ['latin'],
+ variable: '--font-sans',
+ display: 'swap',
 });
 
 const crimsonPro = Crimson_Pro({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
+ subsets: ['latin'],
+ variable: '--font-display',
+ display: 'swap',
 });
 
 const sourceSerif = Source_Serif_4({
-  subsets: ['latin'],
-  variable: '--font-serif',
-  display: 'swap',
+ subsets: ['latin'],
+ variable: '--font-serif',
+ display: 'swap',
 });
 
 const literata = Literata({
-  subsets: ['latin'],
-  variable: '--font-reading',
-  display: 'swap',
+ subsets: ['latin'],
+ variable: '--font-reading',
+ display: 'swap',
 });
 
 const firaCode = Fira_Code({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  display: 'swap',
+ subsets: ['latin'],
+ variable: '--font-mono',
+ display: 'swap',
 });
 
 export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
+ return routing.locales.map((locale) => ({ locale }));
 }
 
 export default async function LocaleLayout({
-  children,
-  params,
+ children,
+ params,
 }: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
+ children: React.ReactNode;
+ params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+ const { locale } = await params;
 
-  if (!routing.locales.includes(locale as 'en' | 'zh')) {
-    notFound();
-  }
+ if (!routing.locales.includes(locale as 'en' | 'zh')) {
+ notFound();
+ }
 
-  setRequestLocale(locale);
-  const messages = await getMessages({ locale });
+ setRequestLocale(locale);
+ const messages = await getMessages({ locale });
 
-  return (
-    <html lang={locale} className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable} ${firaCode.variable}`}>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
-        <meta name="theme-color" content="#d97706" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@graph': [
-                {
-                  '@type': 'SoftwareApplication',
-                  name: 'read-pal',
-                  description: 'AI reading companion that reads with you, explains concepts, and builds your knowledge graph.',
-                  applicationCategory: 'EducationApplication',
-                  operatingSystem: 'Web',
-                  offers: {
-                    '@type': 'Offer',
-                    price: '0',
-                    priceCurrency: 'USD',
-                  },
-                },
-              ],
-            }),
-          }}
-        />
-      </head>
-      <body className="font-sans antialiased">
-        <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            <AnalyticsProvider>
-              <ErrorBoundary>
-                <ServiceWorkerRegistrar />
-                <NetworkStatus />
-                <AppShell>{children}</AppShell>
-              </ErrorBoundary>
-            </AnalyticsProvider>
-          </AuthProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
-  );
+ return (
+ <html lang={locale} suppressHydrationWarning className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable} ${firaCode.variable}`}>
+  <head>
+  <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}" }} />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+  <meta name="theme-color" content="#d97706" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <script
+   type="application/ld+json"
+   dangerouslySetInnerHTML={{
+   __html: JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+    {
+     '@type': 'SoftwareApplication',
+     name: 'read-pal',
+     description: 'AI reading companion that reads with you, explains concepts, and builds your knowledge graph.',
+     applicationCategory: 'EducationApplication',
+     operatingSystem: 'Web',
+     offers: {
+     '@type': 'Offer',
+     price: '0',
+     priceCurrency: 'USD',
+     },
+    },
+    ],
+   }),
+   }}
+  />
+  </head>
+  <body className="font-sans antialiased">
+  <NextIntlClientProvider messages={messages}>
+   <AuthProvider>
+   <AnalyticsProvider>
+    <ErrorBoundary>
+    <ServiceWorkerRegistrar />
+    <NetworkStatus />
+    <AppShell>{children}</AppShell>
+    </ErrorBoundary>
+   </AnalyticsProvider>
+   </AuthProvider>
+  </NextIntlClientProvider>
+  </body>
+ </html>
+ );
 }

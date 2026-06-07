@@ -10,9 +10,8 @@ import type { ApiResponse } from '@read-pal/shared';
 import {
   getAuthToken,
   getAuthTokenAsync,
-  getRefreshToken,
-  getRefreshTokenAsync,
-  setAuthTokens,
+  tryFetchRefresh,
+  clearAuthTokens,
 } from '@/lib/auth-fetch';
 import { isCapacitor } from '@/lib/capacitor';
 
@@ -41,9 +40,6 @@ export function installRequestInterceptor(client: AxiosInstance): void {
 }
 
 export function installResponseInterceptor(client: AxiosInstance): void {
-  // Token refresh state — prevents concurrent refresh calls
-  let refreshPromise: Promise<boolean> | null = null;
-
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError<ApiResponse>) => {
@@ -64,16 +60,17 @@ export function installResponseInterceptor(client: AxiosInstance): void {
         return handleExpiredSession(error, NON_CRITICAL_PREFIXES);
       }
 
-      // Check if the error code indicates an expired token (vs. invalid/unauthorized)
+      // Only skip refresh for error codes that indicate auth is truly unrecoverable
       const errorCode = (error.response?.data as { error?: { code?: string } })?.error?.code;
-      if (errorCode !== 'TOKEN_EXPIRED' && errorCode !== 'TOKEN_REVOKED') {
+      const unrecoverableCodes = ['INVALID_CREDENTIALS', 'ACCOUNT_DELETED', 'ACCOUNT_LOCKED'];
+      if (unrecoverableCodes.includes(errorCode ?? '')) {
         return handleExpiredSession(error, NON_CRITICAL_PREFIXES);
       }
 
-      // Attempt refresh
+      // Attempt refresh using shared dedup mechanism
       originalRequest._retry = true;
 
-      const refreshed = await tryRefreshToken();
+      const refreshed = await tryFetchRefresh();
       if (!refreshed) {
         return handleExpiredSession(error, NON_CRITICAL_PREFIXES);
       }
@@ -86,40 +83,6 @@ export function installResponseInterceptor(client: AxiosInstance): void {
       return client.request(originalRequest);
     },
   );
-
-  /** Attempt to refresh the access token using the stored refresh token. */
-  async function tryRefreshToken(): Promise<boolean> {
-    if (refreshPromise) return refreshPromise;
-
-    refreshPromise = doRefresh();
-    try {
-      return await refreshPromise;
-    } finally {
-      refreshPromise = null;
-    }
-  }
-
-  async function doRefresh(): Promise<boolean> {
-    const refreshToken = isCapacitor()
-      ? await getRefreshTokenAsync()
-      : getRefreshToken();
-
-    if (!refreshToken) return false;
-
-    try {
-      const response = await client.post<ApiResponse<{ token: string; refreshToken: string }>>(
-        '/api/auth/refresh',
-        { refreshToken },
-      );
-      if (response.data.success && response.data.data) {
-        setAuthTokens(response.data.data.token, response.data.data.refreshToken);
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
 }
 
 /** Handle a definitively expired/invalid session — clear storage and redirect. */
@@ -134,9 +97,11 @@ function handleExpiredSession(
     !window.location.pathname.includes('/welcome') &&
     !nonCriticalPrefixes.some((p) => error.config?.url?.startsWith(p))
   ) {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
+    clearAuthTokens();
     localStorage.removeItem('user');
+    if (typeof document !== 'undefined') {
+      document.cookie = 'auth_token=; path=/; max-age=0';
+    }
     const locale = window.location.pathname.split('/')[1] || 'en';
     window.location.href = `/${locale}/auth?mode=login`;
   }

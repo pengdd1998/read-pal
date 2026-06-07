@@ -1,6 +1,40 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useReducer } from 'react';
+
+type PanelName = 'sidebar' | 'synthesis' | 'readingPlan' | 'search' | 'settings' | 'timeline' | 'chat';
+
+interface PanelState {
+  sidebar: boolean;
+  synthesis: boolean;
+  readingPlan: boolean;
+  search: boolean;
+  settings: boolean;
+  timeline: boolean;
+  chat: boolean;
+}
+
+type PanelAction = { panel: PanelName; open: boolean } | { panel: 'closeAll'; open: false };
+
+const initialPanelState: PanelState = {
+  sidebar: false,
+  synthesis: false,
+  readingPlan: false,
+  search: false,
+  settings: false,
+  timeline: false,
+  chat: false,
+};
+
+function panelReducer(state: PanelState, action: PanelAction): PanelState {
+  if (action.panel === 'closeAll') return initialPanelState;
+  const open = action.open;
+  if (!open) {
+    return { ...state, [action.panel]: false };
+  }
+  // Mutual exclusion: close all others when opening a panel
+  return { ...initialPanelState, [action.panel]: true };
+}
 
 export interface ReaderUIState {
   showControls: boolean;
@@ -15,6 +49,7 @@ export interface ReaderUIState {
   showTimeline: boolean;
   showShortcutsHelp: boolean;
   showCompletion: boolean;
+  chatOpen: boolean;
   isPaused: boolean;
   sessionElapsed: number;
   milestone: string | null;
@@ -31,6 +66,7 @@ export interface ReaderUIState {
   setShowTimeline: React.Dispatch<React.SetStateAction<boolean>>;
   setShowShortcutsHelp: React.Dispatch<React.SetStateAction<boolean>>;
   setShowCompletion: React.Dispatch<React.SetStateAction<boolean>>;
+  setChatOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setMilestone: React.Dispatch<React.SetStateAction<string | null>>;
   resetAutoHideTimer: () => void;
   pauseAutoHide: () => void;
@@ -42,40 +78,15 @@ export interface ReaderUIState {
 
 export function useReaderUI(): ReaderUIState {
   const [showControls, setShowControls] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [synthesisOpen, setSynthesisOpen] = useState(false);
-  const [readingPlanOpen, setReadingPlanOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [panels, dispatchPanel] = useReducer(panelReducer, initialPanelState);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
-  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [showTimeline, setShowTimeline] = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [sessionElapsed, setSessionElapsed] = useState(0);
   const [milestone, setMilestone] = useState<string | null>(null);
-
-  // Mutual exclusion: opening one header-triggered panel closes all others
-  useEffect(() => {
-    if (sidebarOpen) { setSearchOpen(false); setSynthesisOpen(false); setReadingPlanOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
-  }, [sidebarOpen]);
-  useEffect(() => {
-    if (synthesisOpen) { setSearchOpen(false); setSidebarOpen(false); setReadingPlanOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
-  }, [synthesisOpen]);
-  useEffect(() => {
-    if (readingPlanOpen) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
-  }, [readingPlanOpen]);
-  useEffect(() => {
-    if (searchOpen) { setSidebarOpen(false); setSynthesisOpen(false); setReadingPlanOpen(false); setShowSettingsMenu(false); setShowTimeline(false); }
-  }, [searchOpen]);
-  useEffect(() => {
-    if (showSettingsMenu) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setReadingPlanOpen(false); setShowTimeline(false); }
-  }, [showSettingsMenu]);
-  useEffect(() => {
-    if (showTimeline) { setSearchOpen(false); setSidebarOpen(false); setSynthesisOpen(false); setReadingPlanOpen(false); setShowSettingsMenu(false); }
-  }, [showTimeline]);
 
   const sessionStartRef = useRef<number>(Date.now());
   const pausedAtRef = useRef<number | null>(null);
@@ -83,7 +94,44 @@ export function useReaderUI(): ReaderUIState {
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Session timer
+  // Typed panel setters
+  const setSidebarOpen = useCallback((v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === 'function' ? v(panels.sidebar) : v;
+    if (next) dispatchPanel({ panel: 'sidebar', open: true });
+    else dispatchPanel({ panel: 'sidebar', open: false });
+  }, [panels.sidebar]);
+
+  const setSynthesisOpen = useCallback((v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === 'function' ? v(panels.synthesis) : v;
+    dispatchPanel({ panel: 'synthesis', open: next });
+  }, [panels.synthesis]);
+
+  const setReadingPlanOpen = useCallback((v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === 'function' ? v(panels.readingPlan) : v;
+    dispatchPanel({ panel: 'readingPlan', open: next });
+  }, [panels.readingPlan]);
+
+  const setSearchOpen = useCallback((v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === 'function' ? v(panels.search) : v;
+    dispatchPanel({ panel: 'search', open: next });
+  }, [panels.search]);
+
+  const setShowSettingsMenu = useCallback((v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === 'function' ? v(panels.settings) : v;
+    dispatchPanel({ panel: 'settings', open: next });
+  }, [panels.settings]);
+
+  const setShowTimeline = useCallback((v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === 'function' ? v(panels.timeline) : v;
+    dispatchPanel({ panel: 'timeline', open: next });
+  }, [panels.timeline]);
+
+  const setChatOpen = useCallback((v: boolean | ((p: boolean) => boolean)) => {
+    const next = typeof v === 'function' ? v(panels.chat) : v;
+    dispatchPanel({ panel: 'chat', open: next });
+  }, [panels.chat]);
+
+  // Session timer — update ref, only setState for reads
   useEffect(() => {
     const timer = setInterval(() => {
       if (!isPaused) {
@@ -158,22 +206,26 @@ export function useReaderUI(): ReaderUIState {
   const closeToc = useCallback(() => setTocOpen(false), []);
 
   const closeAllPanels = useCallback(() => {
-    setSidebarOpen(false);
-    setSynthesisOpen(false);
-    setReadingPlanOpen(false);
-    setSearchOpen(false);
-    setShowSettingsMenu(false);
-    setShowTimeline(false);
+    dispatchPanel({ panel: 'closeAll', open: false });
   }, []);
 
   return {
-    showControls, sidebarOpen, synthesisOpen, readingPlanOpen, searchOpen, searchQuery,
-    showMobileSettings, tocOpen, showSettingsMenu, showTimeline,
-    showShortcutsHelp, showCompletion, isPaused, sessionElapsed, milestone,
+    showControls,
+    sidebarOpen: panels.sidebar,
+    synthesisOpen: panels.synthesis,
+    readingPlanOpen: panels.readingPlan,
+    searchOpen: panels.search,
+    searchQuery,
+    showMobileSettings, tocOpen,
+    showSettingsMenu: panels.settings,
+    showTimeline: panels.timeline,
+    showShortcutsHelp, showCompletion,
+    chatOpen: panels.chat,
+    isPaused, sessionElapsed, milestone,
     sessionStartRef,
     setShowControls, setSidebarOpen, setSynthesisOpen, setReadingPlanOpen, setSearchOpen, setSearchQuery,
     setShowMobileSettings, setTocOpen, setShowSettingsMenu, setShowTimeline,
-    setShowShortcutsHelp, setShowCompletion, setMilestone,
+    setShowShortcutsHelp, setShowCompletion, setChatOpen, setMilestone,
     resetAutoHideTimer, pauseAutoHide, resumeAutoHide, handleToggleControls, closeToc, closeAllPanels,
   };
 }

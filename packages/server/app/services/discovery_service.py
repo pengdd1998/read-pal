@@ -1,14 +1,12 @@
 """Business logic for book discovery — search, semantic search, free books."""
 
-import json
+import asyncio
 import logging
 from uuid import UUID
 
 from sqlalchemy import String, cast, func, select, distinct
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.redis import get_redis
-from app.config import get_settings
 from app.models.annotation import Annotation
 from app.models.book import Book
 
@@ -61,8 +59,6 @@ async def search_books(
     """
     if not q.strip():
         total_q = select(func.count()).select_from(Book).where(Book.user_id == user_id)
-        total = (await db.execute(total_q)).scalar_one()
-
         data_q = (
             select(Book)
             .where(Book.user_id == user_id)
@@ -70,7 +66,11 @@ async def search_books(
             .offset((page - 1) * limit)
             .limit(limit)
         )
-        books = (await db.execute(data_q)).scalars().all()
+        total_result, books_result = await asyncio.gather(
+            db.execute(total_q), db.execute(data_q),
+        )
+        total = total_result.scalar_one()
+        books = books_result.scalars().all()
     else:
         pattern = f'%{_escape_like(q.strip())}%'
         base_filter = (
@@ -79,8 +79,6 @@ async def search_books(
         )
 
         total_q = select(func.count()).select_from(Book).where(*base_filter)
-        total = (await db.execute(total_q)).scalar_one()
-
         data_q = (
             select(Book)
             .where(*base_filter)
@@ -88,9 +86,60 @@ async def search_books(
             .offset((page - 1) * limit)
             .limit(limit)
         )
-        books = (await db.execute(data_q)).scalars().all()
+        total_result, books_result = await asyncio.gather(
+            db.execute(total_q), db.execute(data_q),
+        )
+        total = total_result.scalar_one()
+        books = books_result.scalars().all()
 
     return [_book_to_dict(b) for b in books], total
+
+
+def _build_semantic_filter(user_id: UUID, pattern: str) -> tuple:
+    """Build SQLAlchemy filter combining title/author/tags and annotation matches."""
+    annotation_book_ids = (
+        select(Annotation.book_id)
+        .where(
+            Annotation.user_id == user_id,
+            Annotation.content.ilike(pattern),
+        )
+    )
+    return (
+        Book.user_id == user_id,
+        (
+            Book.title.ilike(pattern)
+            | Book.author.ilike(pattern)
+            | _tags_search(pattern)
+            | Book.id.in_(annotation_book_ids)
+        ),
+    )
+
+
+async def _fetch_books_page(
+    db: AsyncSession,
+    user_id: UUID,
+    page: int,
+    limit: int,
+    base_filter: tuple | None = None,
+) -> tuple[list[Book], int]:
+    """Fetch a page of books with optional filter; return (books, total)."""
+    if base_filter:
+        where = base_filter
+    else:
+        where = (Book.user_id == user_id,)
+
+    total_q = select(func.count()).select_from(Book).where(*where)
+    total = (await db.execute(total_q)).scalar_one()
+
+    data_q = (
+        select(Book)
+        .where(*where)
+        .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    books = (await db.execute(data_q)).scalars().all()
+    return books, total
 
 
 async def semantic_search_books(
@@ -108,52 +157,14 @@ async def semantic_search_books(
     Returns (serialized_book_list, total_count).
     """
     if not q.strip():
-        total_q = select(func.count()).select_from(Book).where(Book.user_id == user_id)
-        total = (await db.execute(total_q)).scalar_one()
-
-        data_q = (
-            select(Book)
-            .where(Book.user_id == user_id)
-            .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
-            .offset((page - 1) * limit)
-            .limit(limit)
-        )
-        books = (await db.execute(data_q)).scalars().all()
+        base_filter = None
     else:
         pattern = f'%{_escape_like(q.strip())}%'
+        base_filter = _build_semantic_filter(user_id, pattern)
 
-        # Book IDs matched via their annotations' content
-        annotation_book_ids = (
-            select(Annotation.book_id)
-            .where(
-                Annotation.user_id == user_id,
-                Annotation.content.ilike(pattern),
-            )
-        )
-
-        # Combined filter: title/author/tags match OR book ID in annotation matches
-        base_filter = (
-            Book.user_id == user_id,
-            (
-                Book.title.ilike(pattern)
-                | Book.author.ilike(pattern)
-                | _tags_search(pattern)
-                | Book.id.in_(annotation_book_ids)
-            ),
-        )
-
-        total_q = select(func.count()).select_from(Book).where(*base_filter)
-        total = (await db.execute(total_q)).scalar_one()
-
-        data_q = (
-            select(Book)
-            .where(*base_filter)
-            .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
-            .offset((page - 1) * limit)
-            .limit(limit)
-        )
-        books = (await db.execute(data_q)).scalars().all()
-
+    books, total = await _fetch_books_page(
+        db, user_id, page, limit, base_filter,
+    )
     return [_book_to_dict(b) for b in books], total
 
 
@@ -164,42 +175,32 @@ async def get_free_books(db: AsyncSession) -> list[dict]:
     top 20 most popular titles (anonymized, no user data).
     Results are cached globally for 5 minutes.
     """
+    from app.core.cache import cache_get_or_compute
+
     cache_key = 'discovery:free_books'
-    try:
-        redis = get_redis()
-        cached = await redis.get(cache_key)
-        if cached:
-            return json.loads(cached)
-    except Exception:
-        logger.warning('Redis unavailable, skipping free-books cache')
-    q = (
-        select(
-            Book.title,
-            Book.author,
-            func.max(Book.cover_url).label('cover_url'),
-            func.count(distinct(Book.user_id)).label('reader_count'),
+
+    async def _compute() -> list[dict]:
+        q = (
+            select(
+                Book.title,
+                Book.author,
+                func.max(Book.cover_url).label('cover_url'),
+                func.count(distinct(Book.user_id)).label('reader_count'),
+            )
+            .where(Book.status == 'completed')
+            .group_by(Book.title, Book.author)
+            .order_by(func.count(distinct(Book.user_id)).desc())
+            .limit(20)
         )
-        .where(Book.status == 'completed')
-        .group_by(Book.title, Book.author)
-        .order_by(func.count(distinct(Book.user_id)).desc())
-        .limit(20)
-    )
-    rows = (await db.execute(q)).all()
+        rows = (await db.execute(q)).all()
+        return [
+            {
+                'title': row.title,
+                'author': row.author,
+                'coverUrl': row.cover_url,
+                'readerCount': row.reader_count,
+            }
+            for row in rows
+        ]
 
-    result = [
-        {
-            'title': row.title,
-            'author': row.author,
-            'coverUrl': row.cover_url,
-            'readerCount': row.reader_count,
-        }
-        for row in rows
-    ]
-
-    try:
-        redis = get_redis()
-        await redis.setex(cache_key, get_settings().cache_data_ttl_seconds, json.dumps(result))
-    except Exception:
-        logger.warning('Redis unavailable, skipping free-books cache set')
-
-    return result
+    return await cache_get_or_compute(cache_key, _compute)

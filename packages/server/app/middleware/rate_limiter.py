@@ -14,7 +14,6 @@ import redis.asyncio as aioredis
 from fastapi import Depends, HTTPException, Request, status
 
 from app.core.redis import get_redis
-from app.config import get_settings
 from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.rate-limit')
@@ -168,9 +167,9 @@ def _ip_key(request: Request) -> str:
     return request.client.host if request.client else 'unknown'
 
 
-login_limiter = Depends(_make_rate_limit_dependency(100, 60, _ip_key))
-register_limiter = Depends(_make_rate_limit_dependency(50, 60, _ip_key))
-password_reset_limiter = Depends(_make_rate_limit_dependency(50, 60, _ip_key))
+login_limiter = Depends(_make_rate_limit_dependency(10, 60, _ip_key))
+register_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key))
+password_reset_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key))
 refresh_limiter = Depends(_make_rate_limit_dependency(50, 60, _ip_key))
 account_limiter = Depends(_make_rate_limit_dependency(30, 60, _ip_key))
 upload_limiter = Depends(_make_rate_limit_dependency(50, 3600, _ip_key))

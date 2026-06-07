@@ -35,7 +35,8 @@ export function useScrollPersistence({
     const { scrollTop, scrollHeight, clientHeight } = el;
     const maxScroll = scrollHeight - clientHeight;
     if (maxScroll > 0) {
-      try { localStorage.setItem(scrollKey, String(scrollTop / maxScroll)); } catch { /* ignore */ }
+      const fraction = Math.min(1, Math.max(0, scrollTop / maxScroll));
+      try { localStorage.setItem(scrollKey, String(fraction)); } catch (err) { console.warn('Storage error: failed to save scroll position', err); }
     }
   }, [containerRef, scrollKey]);
 
@@ -55,15 +56,12 @@ export function useScrollPersistence({
 
   // Restore scroll on chapter/segment change
   useEffect(() => {
-    // Save previous chapter's scroll position before switching
-    saveScrollPosition();
-
     let outerRaf: number | undefined;
     let innerRaf: number | undefined;
     outerRaf = requestAnimationFrame(() => {
       if (containerRef.current) {
         try {
-          const saved = localStorage.getItem(`scroll-${bookId}-ch${currentPage}`);
+          const saved = localStorage.getItem(scrollKey);
           if (saved) {
             const fraction = parseFloat(saved);
             if (fraction > 0 && containerRef.current) {
@@ -77,7 +75,7 @@ export function useScrollPersistence({
               return;
             }
           }
-        } catch { /* ignore */ }
+        } catch (err) { console.warn('Storage error: failed to restore scroll position', err); }
         containerRef.current.scrollTop = 0;
         onProgressUpdate(0, 0);
       }
@@ -86,7 +84,7 @@ export function useScrollPersistence({
       if (outerRaf) cancelAnimationFrame(outerRaf);
       if (innerRaf) cancelAnimationFrame(innerRaf);
     };
-  }, [chapterContent, bookId, currentPage, saveScrollPosition, containerRef, onProgressUpdate]);
+  }, [chapterContent, scrollKey, saveScrollPosition, containerRef, onProgressUpdate]);
 
   return { saveScrollPosition };
 }

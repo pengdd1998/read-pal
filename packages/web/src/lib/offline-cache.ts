@@ -32,7 +32,8 @@ export async function checkOfflineCache(bookId: string): Promise<boolean> {
       req.onerror = () => resolve(null);
     });
     return !!(result && result.chaptersCached > 0);
-  } catch {
+  } catch (err) {
+    console.warn('checkOfflineCache: failed for book', bookId, err);
     return false;
   }
 }
@@ -49,7 +50,8 @@ export async function cacheBookOffline(bookId: string): Promise<boolean> {
       return true;
     }
     return false;
-  } catch {
+  } catch (err) {
+    console.warn('cacheBookOffline: failed for book', bookId, err);
     return false;
   }
 }

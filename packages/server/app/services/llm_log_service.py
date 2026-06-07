@@ -64,8 +64,8 @@ def fire_and_forget_log(
 
         loop = asyncio.get_running_loop()
         loop.create_task(_write())
-    except Exception:
-        logger.debug('fire_and_forget_log failed (non-critical)', exc_info=True)
+    except Exception as exc:
+        logger.warning('fire_and_forget_log failed (non-critical)', exc_info=True)
 
 
 async def get_llm_logs(
@@ -113,13 +113,12 @@ async def get_llm_log_by_id(db: AsyncSession, user_id: UUID, log_id: UUID) -> LL
     return result.scalar_one_or_none()
 
 
-async def get_usage_summary(
+async def _aggregate_by_model(
     db: AsyncSession,
     user_id: UUID,
-    days: int = 30,
-) -> dict[str, Any]:
-    """Return aggregated usage stats over the last N days."""
-    since = datetime.now(tz=timezone.utc) - timedelta(days=days)
+    since: datetime,
+) -> list[dict[str, Any]]:
+    """Aggregate LLM usage grouped by model."""
     rows = await db.execute(
         select(
             LLMLog.model,
@@ -133,9 +132,8 @@ async def get_usage_summary(
         .where(and_(LLMLog.user_id == user_id, LLMLog.created_at >= since))
         .group_by(LLMLog.model)
     )
-    by_model = []
-    for row in rows.all():
-        by_model.append({
+    return [
+        {
             'model': row[0],
             'calls': int(row[1]),
             'promptTokens': int(row[2]),
@@ -143,10 +141,18 @@ async def get_usage_summary(
             'totalTokens': int(row[4]),
             'totalCost': float(row[5] or 0),
             'avgLatencyMs': round(float(row[6] or 0), 1),
-        })
+        }
+        for row in rows.all()
+    ]
 
-    # By label
-    label_rows = await db.execute(
+
+async def _aggregate_by_label(
+    db: AsyncSession,
+    user_id: UUID,
+    since: datetime,
+) -> list[dict[str, Any]]:
+    """Aggregate LLM usage grouped by label."""
+    rows = await db.execute(
         select(
             LLMLog.label,
             func.count(LLMLog.id).label('calls'),
@@ -155,14 +161,25 @@ async def get_usage_summary(
         .where(and_(LLMLog.user_id == user_id, LLMLog.created_at >= since))
         .group_by(LLMLog.label)
     )
-    by_label = []
-    for row in label_rows.all():
-        by_label.append({
+    return [
+        {
             'label': row[0],
             'calls': int(row[1]),
             'totalTokens': int(row[2]),
-        })
+        }
+        for row in rows.all()
+    ]
 
+
+async def get_usage_summary(
+    db: AsyncSession,
+    user_id: UUID,
+    days: int = 30,
+) -> dict[str, Any]:
+    """Return aggregated usage stats over the last N days."""
+    since = datetime.now(tz=timezone.utc) - timedelta(days=days)
+    by_model = await _aggregate_by_model(db, user_id, since)
+    by_label = await _aggregate_by_label(db, user_id, since)
     return {
         'period': f'{days}d',
         'byModel': by_model,

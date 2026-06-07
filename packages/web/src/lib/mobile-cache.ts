@@ -106,7 +106,8 @@ export async function cacheBook(
 
     await withStore('readwrite', (store) => store.put(entry));
     return { cached: cachedChapters.length, total: chapters.length };
-  } catch {
+  } catch (err) {
+    console.warn('cacheBook: failed to cache book for offline', err);
     return { cached: -1, total: 0 };
   }
 }
@@ -129,7 +130,8 @@ export async function getCachedContent(
       return result;
     }
     return null;
-  } catch {
+  } catch (err) {
+    console.warn('getCachedContent: failed to retrieve cached content', err);
     return null;
   }
 }
@@ -146,7 +148,8 @@ export async function isCached(bookId: string): Promise<boolean> {
       (store) => store.get(bookId),
     );
     return !!result && result.chaptersCached > 0;
-  } catch {
+  } catch (err) {
+    console.warn('isCached: failed to check cache status', err);
     return false;
   }
 }
@@ -160,7 +163,8 @@ export async function removeCachedBook(bookId: string): Promise<boolean> {
   try {
     await withStore('readwrite', (store) => store.delete(bookId));
     return true;
-  } catch {
+  } catch (err) {
+    console.warn('removeCachedBook: failed to remove cached book', err);
     return false;
   }
 }
@@ -180,7 +184,8 @@ export async function getCachedBookIds(): Promise<string[]> {
       req.onsuccess = () => resolve(req.result as string[]);
       req.onerror = () => resolve([]);
     });
-  } catch {
+  } catch (err) {
+    console.warn('getCachedBookIds: failed to list cached books', err);
     return [];
   }
 }

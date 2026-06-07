@@ -57,9 +57,11 @@ def _encode_jwt(payload: dict, secret: str = 'test-secret') -> str:
 
 
 def test_build_user_data_returns_expected_shape():
+    from app.services.auth._login import _build_user_data
+
     user = _make_user()
 
-    result = auth_service._build_user_data(user)
+    result = _build_user_data(user)
 
     assert result['id'] == str(user.id)
     assert result['email'] == user.email
@@ -70,10 +72,12 @@ def test_build_user_data_returns_expected_shape():
 
 
 def test_build_user_data_with_null_settings():
+    from app.services.auth._login import _build_user_data
+
     user = _make_user()
     user.settings = None
 
-    result = auth_service._build_user_data(user)
+    result = _build_user_data(user)
 
     assert result['settings'] == {}
 
@@ -84,11 +88,13 @@ def test_build_user_data_with_null_settings():
 
 
 def test_build_auth_response_returns_expected_shape():
+    from app.services.auth._login import _build_auth_response
+
     user = _make_user()
     access_token = 'access.jwt.token'
     refresh_token = 'refresh.jwt.token'
 
-    result = auth_service._build_auth_response(user, access_token, refresh_token)
+    result = _build_auth_response(user, access_token, refresh_token)
 
     assert 'user' in result
     assert result['token'] == access_token
@@ -102,9 +108,9 @@ def test_build_auth_response_returns_expected_shape():
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_login_lockout')
-@patch('app.services.auth_service.verify_password', return_value=True)
-@patch('app.services.auth_service.create_token_pair', return_value=('access_tok', 'refresh_tok'))
+@patch('app.services.auth._login.get_login_lockout')
+@patch('app.services.auth._login.verify_password', return_value=True)
+@patch('app.services.auth._login.create_token_pair', return_value=('access_tok', 'refresh_tok'))
 async def test_authenticate_user_success(mock_create_tokens, mock_verify, mock_get_lockout):
     db = _make_db_session()
     user = _make_user(password_hash='$2b$12$hash')
@@ -118,7 +124,7 @@ async def test_authenticate_user_success(mock_create_tokens, mock_verify, mock_g
     result_mock.scalar_one_or_none.return_value = user
     db.execute = AsyncMock(return_value=result_mock)
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._login._get_user_lang', return_value='en'):
         result = await auth_service.authenticate_user(db, 'user@example.com', 'password123', 'web')
 
     assert result['token'] == 'access_tok'
@@ -128,7 +134,7 @@ async def test_authenticate_user_success(mock_create_tokens, mock_verify, mock_g
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_login_lockout')
+@patch('app.services.auth._login.get_login_lockout')
 async def test_authenticate_user_account_locked(mock_get_lockout):
     db = _make_db_session()
 
@@ -146,7 +152,7 @@ async def test_authenticate_user_account_locked(mock_get_lockout):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_login_lockout')
+@patch('app.services.auth._login.get_login_lockout')
 async def test_authenticate_user_user_not_found(mock_get_lockout):
     db = _make_db_session()
 
@@ -168,8 +174,8 @@ async def test_authenticate_user_user_not_found(mock_get_lockout):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_login_lockout')
-@patch('app.services.auth_service.verify_password', return_value=False)
+@patch('app.services.auth._login.get_login_lockout')
+@patch('app.services.auth._login.verify_password', return_value=False)
 async def test_authenticate_user_wrong_password(mock_verify, mock_get_lockout):
     db = _make_db_session()
     user = _make_user(password_hash='$2b$12$hash')
@@ -185,7 +191,7 @@ async def test_authenticate_user_wrong_password(mock_verify, mock_get_lockout):
 
     from fastapi import HTTPException
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._login._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
             await auth_service.authenticate_user(db, 'user@example.com', 'wrongpass', 'web')
 
@@ -195,7 +201,7 @@ async def test_authenticate_user_wrong_password(mock_verify, mock_get_lockout):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_login_lockout')
+@patch('app.services.auth._login.get_login_lockout')
 async def test_authenticate_user_null_password_hash(mock_get_lockout):
     """User exists but has no password hash (OAuth-only account)."""
     db = _make_db_session()
@@ -218,9 +224,9 @@ async def test_authenticate_user_null_password_hash(mock_get_lockout):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_login_lockout')
-@patch('app.services.auth_service.verify_password', return_value=True)
-@patch('app.services.auth_service.create_token_pair', return_value=('at', 'rt'))
+@patch('app.services.auth._login.get_login_lockout')
+@patch('app.services.auth._login.verify_password', return_value=True)
+@patch('app.services.auth._login.create_token_pair', return_value=('at', 'rt'))
 async def test_authenticate_user_passes_platform_to_token(mock_create_tokens, mock_verify, mock_get_lockout):
     db = _make_db_session()
     user = _make_user()
@@ -234,7 +240,7 @@ async def test_authenticate_user_passes_platform_to_token(mock_create_tokens, mo
     result_mock.scalar_one_or_none.return_value = user
     db.execute = AsyncMock(return_value=result_mock)
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._login._get_user_lang', return_value='en'):
         await auth_service.authenticate_user(db, 'user@example.com', 'pass', 'mobile')
 
     mock_create_tokens.assert_called_once_with(str(user.id), 'mobile')
@@ -246,8 +252,8 @@ async def test_authenticate_user_passes_platform_to_token(mock_create_tokens, mo
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.hash_password', return_value='$2b$12$newhash')
-@patch('app.services.auth_service.create_token_pair', return_value=('access_tok', 'refresh_tok'))
+@patch('app.services.auth._user.hash_password', return_value='$2b$12$newhash')
+@patch('app.services.auth._user.create_token_pair', return_value=('access_tok', 'refresh_tok'))
 @patch('app.services.seed_service.seed_sample_data', new_callable=AsyncMock)
 async def test_register_user_success(mock_seed, mock_create_tokens, mock_hash):
     db = _make_db_session()
@@ -292,8 +298,8 @@ async def test_register_user_duplicate_email():
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.hash_password', return_value='$2b$12$newhash')
-@patch('app.services.auth_service.create_token_pair', return_value=('at', 'rt'))
+@patch('app.services.auth._user.hash_password', return_value='$2b$12$newhash')
+@patch('app.services.auth._user.create_token_pair', return_value=('at', 'rt'))
 @patch('app.services.seed_service.seed_sample_data', new_callable=AsyncMock)
 async def test_register_user_sets_default_settings(mock_seed, mock_create_tokens, mock_hash):
     db = _make_db_session()
@@ -323,8 +329,8 @@ async def test_register_user_sets_default_settings(mock_seed, mock_create_tokens
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.hash_password', return_value='$2b$12$h')
-@patch('app.services.auth_service.create_token_pair', return_value=('at', 'rt'))
+@patch('app.services.auth._user.hash_password', return_value='$2b$12$h')
+@patch('app.services.auth._user.create_token_pair', return_value=('at', 'rt'))
 @patch('app.services.seed_service.seed_sample_data', new_callable=AsyncMock)
 async def test_register_user_passes_platform_to_token(mock_seed, mock_create_tokens, mock_hash):
     db = _make_db_session()
@@ -360,7 +366,7 @@ async def test_get_user_profile_found():
     result_mock.scalar_one_or_none.return_value = user
     db.execute = AsyncMock(return_value=result_mock)
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._user._get_user_lang', return_value='en'):
         profile = await auth_service.get_user_profile(db, str(user.id))
 
     assert profile['email'] == user.email
@@ -379,7 +385,7 @@ async def test_get_user_profile_not_found():
 
     from fastapi import HTTPException
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._user._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
             await auth_service.get_user_profile(db, str(uuid4()))
 
@@ -396,7 +402,7 @@ async def test_get_user_profile_with_avatar():
     result_mock.scalar_one_or_none.return_value = user
     db.execute = AsyncMock(return_value=result_mock)
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._user._get_user_lang', return_value='en'):
         profile = await auth_service.get_user_profile(db, str(user.id))
 
     assert profile['avatar'] == 'https://example.com/avatar.png'
@@ -408,8 +414,8 @@ async def test_get_user_profile_with_avatar():
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.verify_password', return_value=True)
-@patch('app.services.auth_service.hash_password', return_value='$2b$12$newhash')
+@patch('app.services.auth._user.verify_password', return_value=True)
+@patch('app.services.auth._user.hash_password', return_value='$2b$12$newhash')
 async def test_change_user_password_success(mock_hash, mock_verify):
     db = _make_db_session()
     user = _make_user(password_hash='$2b$12$oldhash')
@@ -419,7 +425,7 @@ async def test_change_user_password_success(mock_hash, mock_verify):
     db.execute = AsyncMock(return_value=result_mock)
     db.flush = AsyncMock()
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._user._get_user_lang', return_value='en'):
         result = await auth_service.change_user_password(
             db, str(user.id), 'OldPass123!', 'NewPass456!',
         )
@@ -430,7 +436,7 @@ async def test_change_user_password_success(mock_hash, mock_verify):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.verify_password', return_value=False)
+@patch('app.services.auth._user.verify_password', return_value=False)
 async def test_change_user_password_wrong_old_password(mock_verify):
     db = _make_db_session()
     user = _make_user(password_hash='$2b$12$oldhash')
@@ -441,7 +447,7 @@ async def test_change_user_password_wrong_old_password(mock_verify):
 
     from fastapi import HTTPException
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._user._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
             await auth_service.change_user_password(
                 db, str(user.id), 'WrongOldPass!', 'NewPass456!',
@@ -461,7 +467,7 @@ async def test_change_user_password_user_not_found():
 
     from fastapi import HTTPException
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._user._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
             await auth_service.change_user_password(
                 db, str(uuid4()), 'OldPass!', 'NewPass!',
@@ -481,7 +487,7 @@ async def test_change_user_password_null_password_hash():
 
     from fastapi import HTTPException
 
-    with patch('app.services.auth_service._get_user_lang', return_value='en'):
+    with patch('app.services.auth._user._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
             await auth_service.change_user_password(
                 db, str(user.id), 'OldPass!', 'NewPass!',
@@ -497,9 +503,9 @@ async def test_change_user_password_null_password_hash():
 
 @pytest.mark.asyncio
 @patch('app.middleware.auth.is_token_revoked', new_callable=AsyncMock, return_value=False)
-@patch('app.services.auth_service.revoke_token', new_callable=AsyncMock)
-@patch('app.services.auth_service.create_token_pair', return_value=('new_access', 'new_refresh'))
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.revoke_token', new_callable=AsyncMock)
+@patch('app.services.auth._token.create_token_pair', return_value=('new_access', 'new_refresh'))
+@patch('app.services.auth._token.get_settings')
 async def test_refresh_tokens_success(mock_settings, mock_create_tokens, mock_revoke, mock_is_revoked):
     db = _make_db_session()
     user = _make_user()
@@ -528,7 +534,7 @@ async def test_refresh_tokens_success(mock_settings, mock_create_tokens, mock_re
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.get_settings')
 async def test_refresh_tokens_invalid_jwt(mock_settings):
     db = _make_db_session()
 
@@ -546,7 +552,7 @@ async def test_refresh_tokens_invalid_jwt(mock_settings):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.get_settings')
 async def test_refresh_tokens_wrong_token_type(mock_settings):
     db = _make_db_session()
 
@@ -571,7 +577,7 @@ async def test_refresh_tokens_wrong_token_type(mock_settings):
 
 @pytest.mark.asyncio
 @patch('app.middleware.auth.is_token_revoked', new_callable=AsyncMock, return_value=True)
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.get_settings')
 async def test_refresh_tokens_revoked_token(mock_settings, mock_is_revoked):
     db = _make_db_session()
 
@@ -597,8 +603,8 @@ async def test_refresh_tokens_revoked_token(mock_settings, mock_is_revoked):
 
 @pytest.mark.asyncio
 @patch('app.middleware.auth.is_token_revoked', new_callable=AsyncMock, return_value=False)
-@patch('app.services.auth_service.revoke_token', new_callable=AsyncMock)
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.revoke_token', new_callable=AsyncMock)
+@patch('app.services.auth._token.get_settings')
 async def test_refresh_tokens_user_deleted(mock_settings, mock_revoke, mock_is_revoked):
     db = _make_db_session()
 
@@ -632,8 +638,8 @@ async def test_refresh_tokens_user_deleted(mock_settings, mock_revoke, mock_is_r
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.revoke_token', new_callable=AsyncMock)
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.revoke_token', new_callable=AsyncMock)
+@patch('app.services.auth._token.get_settings')
 async def test_revoke_access_token_success(mock_settings, mock_revoke):
     settings = MagicMock()
     settings.jwt_secret = 'test-secret'
@@ -651,7 +657,7 @@ async def test_revoke_access_token_success(mock_settings, mock_revoke):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.get_settings')
 async def test_revoke_access_token_invalid_jwt(mock_settings):
     settings = MagicMock()
     settings.jwt_secret = 'test-secret'
@@ -662,8 +668,8 @@ async def test_revoke_access_token_invalid_jwt(mock_settings):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.revoke_token', new_callable=AsyncMock)
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.revoke_token', new_callable=AsyncMock)
+@patch('app.services.auth._token.get_settings')
 async def test_revoke_refresh_token_success(mock_settings, mock_revoke):
     settings = MagicMock()
     settings.jwt_secret = 'test-secret'
@@ -681,7 +687,7 @@ async def test_revoke_refresh_token_success(mock_settings, mock_revoke):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._token.get_settings')
 async def test_revoke_refresh_token_invalid_jwt_no_error(mock_settings):
     settings = MagicMock()
     settings.jwt_secret = 'test-secret'
@@ -697,7 +703,7 @@ async def test_revoke_refresh_token_invalid_jwt_no_error(mock_settings):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._user.get_settings')
 async def test_check_google_oauth_configured_true(mock_settings):
     settings = MagicMock()
     settings.google_client_id = 'some-client-id'
@@ -709,7 +715,7 @@ async def test_check_google_oauth_configured_true(mock_settings):
 
 
 @pytest.mark.asyncio
-@patch('app.services.auth_service.get_settings')
+@patch('app.services.auth._user.get_settings')
 async def test_check_google_oauth_configured_false(mock_settings):
     settings = MagicMock()
     settings.google_client_id = None

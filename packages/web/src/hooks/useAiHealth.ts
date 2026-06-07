@@ -19,7 +19,8 @@ export function useAiHealth(): boolean | null {
             setAiHealthy(false);
           }
         }
-      } catch {
+      } catch (err) {
+        console.warn("useAiHealth: health check failed", err);
         if (!cancelled) setAiHealthy(false);
       }
     };

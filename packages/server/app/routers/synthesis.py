@@ -20,10 +20,11 @@ from app.services.cross_book_synthesis_service import (
 )
 from app.services.synthesis_service import synthesize
 from app.utils.i18n import t
+from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.synthesis')
 
-router = APIRouter(prefix='/api/v1/synthesis', tags=['synthesis'])
+router = APIRouter(prefix='/api/v1/synthesis', tags=['synthesis'], dependencies=[api_limiter])
 
 
 @router.post('/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter])

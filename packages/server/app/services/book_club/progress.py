@@ -13,18 +13,44 @@ from app.models.user import User
 logger = logging.getLogger('read-pal.book_clubs')
 
 
+async def _count_public_clubs(db: AsyncSession) -> int:
+    """Count total public clubs."""
+    result = await db.execute(
+        select(func.count())
+        .select_from(BookClub)
+        .where(BookClub.is_private == False),  # noqa: E712
+    )
+    return result.scalar() or 0
+
+
+def _format_club_items(
+    rows: list[tuple],
+    book_titles: dict,
+) -> list[dict]:
+    """Format club rows into response dicts."""
+    items: list[dict] = []
+    for club, mc in rows:
+        items.append({
+            'id': str(club.id),
+            'name': club.name,
+            'description': club.description,
+            'coverImage': club.cover_image,
+            'isPrivate': club.is_private,
+            'maxMembers': club.max_members,
+            'memberCount': mc,
+            'currentBookTitle': book_titles.get(club.current_book_id) if club.current_book_id else None,
+            'createdAt': club.created_at.isoformat() if club.created_at else None,
+        })
+    return items
+
+
 async def discover_clubs(
     db: AsyncSession,
     page: int = 1,
     per_page: int = 20,
 ) -> tuple[list[dict], int]:
     """Discover public clubs ordered by member count (most popular first)."""
-    count_result = await db.execute(
-        select(func.count())
-        .select_from(BookClub)
-        .where(BookClub.is_private == False),  # noqa: E712
-    )
-    total = count_result.scalar() or 0
+    total = await _count_public_clubs(db)
 
     member_count_sq = (
         select(BookClubMember.club_id, func.count().label('mc'))
@@ -51,21 +77,37 @@ async def discover_clubs(
         )
         book_titles = dict(book_result.all())
 
-    items = []
-    for club, mc in rows:
-        items.append({
-            'id': str(club.id),
-            'name': club.name,
-            'description': club.description,
-            'coverImage': club.cover_image,
-            'isPrivate': club.is_private,
-            'maxMembers': club.max_members,
-            'memberCount': mc,
-            'currentBookTitle': book_titles.get(club.current_book_id) if club.current_book_id else None,
-            'createdAt': club.created_at.isoformat() if club.created_at else None,
-        })
+    return _format_club_items(rows, book_titles), total
 
-    return items, total
+
+def _compute_member_progress(
+    member_rows: list[tuple],
+    book_by_user: dict,
+) -> list[dict]:
+    """Build progress list for each member."""
+    progress_list: list[dict] = []
+    for member, user_name in member_rows:
+        member_progress = 0
+        book = book_by_user.get(member.user_id)
+        if book and book.total_pages and book.total_pages > 0:
+            member_progress = round(
+                (book.current_page or 0) / book.total_pages * 100,
+            )
+        progress_list.append({
+            'userId': str(member.user_id),
+            'userName': user_name,
+            'progress': member_progress,
+        })
+    return progress_list
+
+
+def _compute_average_progress(progress_list: list[dict]) -> int:
+    """Compute the average progress across members."""
+    if not progress_list:
+        return 0
+    return round(
+        sum(m['progress'] for m in progress_list) / len(progress_list),
+    )
 
 
 async def get_club_progress(
@@ -103,26 +145,8 @@ async def get_club_progress(
         )
         book_by_user = {b.user_id: b for b in book_result.scalars().all()}
 
-    progress_list = []
-    for member, user_name in member_rows:
-        member_progress = 0
-        book = book_by_user.get(member.user_id)
-        if book and book.total_pages and book.total_pages > 0:
-            member_progress = round(
-                (book.current_page or 0) / book.total_pages * 100,
-            )
-
-        progress_list.append({
-            'userId': str(member.user_id),
-            'userName': user_name,
-            'progress': member_progress,
-        })
-
-    avg = 0
-    if progress_list:
-        avg = round(
-            sum(m['progress'] for m in progress_list) / len(progress_list),
-        )
+    progress_list = _compute_member_progress(member_rows, book_by_user)
+    avg = _compute_average_progress(progress_list)
 
     return {
         'membersProgress': progress_list,

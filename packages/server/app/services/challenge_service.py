@@ -3,7 +3,7 @@
 No LLM/AI calls -- progress is computed directly from the database.
 """
 
-import json
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -259,31 +259,18 @@ async def get_all_challenges(
     db: AsyncSession, user_id: UUID,
 ) -> list[dict]:
     """Return all personalised reading challenges for a user (cached 5 min)."""
-    from app.core.redis import get_redis
-    from app.config import get_settings
+    from app.core.cache import cache_get_or_compute
 
     cache_key = f'challenges:{user_id}'
-    try:
-        redis = get_redis()
-        cached = await redis.get(cache_key)
-        if cached:
-            return json.loads(cached)
-    except Exception as exc:
-        logger.debug('challenge_service.cache_read_miss', error=str(exc)[:200])
 
-    result = [
-        await get_daily_reading(db, user_id),
-        await get_weekly_pages(db, user_id),
-        await get_highlight_streak(db, user_id),
-        await get_book_completion(db, user_id),
-        await get_flashcard_review(db, user_id),
-        await get_monthly_books(db, user_id),
-    ]
+    async def _compute() -> list[dict]:
+        return list(await asyncio.gather(
+            get_daily_reading(db, user_id),
+            get_weekly_pages(db, user_id),
+            get_highlight_streak(db, user_id),
+            get_book_completion(db, user_id),
+            get_flashcard_review(db, user_id),
+            get_monthly_books(db, user_id),
+        ))
 
-    try:
-        redis = get_redis()
-        await redis.setex(cache_key, get_settings().cache_data_ttl_seconds, json.dumps(result))
-    except Exception as exc:
-        logger.debug('challenge_service.cache_write_failed', error=str(exc)[:200])
-
-    return result
+    return await cache_get_or_compute(cache_key, _compute)

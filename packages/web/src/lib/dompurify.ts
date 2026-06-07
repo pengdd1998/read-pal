@@ -38,8 +38,12 @@ export function purifySync(html: string, config?: Record<string, unknown>): stri
  */
 function stripDangerousTags(html: string): string {
   return html
-    .replace(/<\s*\/?\s*(script|iframe|object|embed|applet|form|input|button|textarea|select|option|meta|link|base)\b[^>]*>/gi, '')
-    .replace(/on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    // Remove dangerous tags (including svg/math which can execute scripts)
+    .replace(/<\s*\/?\s*(script|iframe|object|embed|applet|form|input|button|textarea|select|option|meta|link|base|svg|math|noscript|template)\b[^>]*>/gi, '')
+    // Remove event handlers (on* attributes), including those with line breaks
+    .replace(/\bon\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    // Remove javascript:/vbscript:/data: URLs in href/src/xlink:href attributes
+    .replace(/(href|src|xlink:href)\s*=\s*["']?\s*(javascript|vbscript|data)\s*:[^"'>\s]*/gi, '$1=""')
     .replace(/javascript\s*:/gi, '');
 }
 

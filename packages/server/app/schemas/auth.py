@@ -3,7 +3,9 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+import re
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 
@@ -23,6 +25,17 @@ class RegisterRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     platform: str = Field('web', pattern=r'^(web|mobile)$')
 
+    @field_validator('password')
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain at least one digit')
+        return v
+
 
 class UserResponse(BaseModel):
     id: UUID
@@ -35,9 +48,17 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True, alias_generator=to_camel)
 
 
+class AuthData(BaseModel):
+    user: UserResponse
+    token: str
+    refresh_token: str = Field(validation_alias='refreshToken', serialization_alias='refreshToken')
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class AuthResponse(BaseModel):
     success: bool = True
-    data: dict  # {user: UserResponse, token: str, refreshToken: str}
+    data: AuthData
 
 
 class UpdateProfileRequest(BaseModel):
@@ -60,12 +81,34 @@ class ResetPasswordRequest(BaseModel):
     token: str
     password: str = Field(min_length=8, max_length=72)
 
+    @field_validator('password')
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain at least one digit')
+        return v
+
 
 class ChangePasswordRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     current_password: str = Field(max_length=72)
     new_password: str = Field(min_length=8, max_length=72)
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain at least one digit')
+        return v
 
 
 class RefreshTokenRequest(BaseModel):
@@ -80,11 +123,28 @@ class LogoutRequest(BaseModel):
     refresh_token: str | None = None
 
 
+class RefreshData(BaseModel):
+    token: str
+    refresh_token: str = Field(validation_alias='refreshToken', serialization_alias='refreshToken')
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class RefreshResponse(BaseModel):
     success: bool = True
-    data: dict  # {token: str, refreshToken: str}
+    data: RefreshData
+
+
+class MessageData(BaseModel):
+    message: str
 
 
 class MessageResponse(BaseModel):
     success: bool = True
-    data: dict  # {message: str}
+    data: MessageData
+
+
+class DeleteAccountRequest(BaseModel):
+    """Password confirmation for account deletion."""
+    password: str = Field(min_length=1, max_length=72)
+    refresh_token: str | None = None

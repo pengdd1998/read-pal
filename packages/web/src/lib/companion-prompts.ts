@@ -8,6 +8,8 @@
  *
  * The "genre" is derived from book metadata (`metadata.genre`), falling back
  * to heuristic keyword matching on the book title when no metadata is present.
+ *
+ * All user-facing strings use translation keys via a TranslateFn parameter.
  */
 
 // ---------------------------------------------------------------------------
@@ -16,10 +18,21 @@
 
 export type BookGenre = 'fiction' | 'nonfiction' | 'technical' | 'academic' | 'default';
 
+export type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
+
 interface GenreTemplate {
-  greeting: (friendName: string, bookTitle?: string) => string;
-  returnGreeting: (friendName: string, bookTitle?: string) => string;
-  suggestedPrompts: (bookTitle?: string) => string[];
+  greeting: (t: TranslateFn, friendName: string, bookTitle?: string) => string;
+  returnGreeting: (t: TranslateFn, friendName: string) => string;
+  suggestedPrompts: (t: TranslateFn, bookTitle?: string) => string[];
+}
+
+// ---------------------------------------------------------------------------
+// Helper
+// ---------------------------------------------------------------------------
+
+/** Pick a random element from an array. */
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 // ---------------------------------------------------------------------------
@@ -28,114 +41,104 @@ interface GenreTemplate {
 
 const TEMPLATES: Record<BookGenre, GenreTemplate> = {
   fiction: {
-    greeting: (name, title) => {
-      const bookRef = title ? ` for "${title}"` : '';
-      return `Hi there! I'm ${name}, your reading companion${bookRef}. I'll be quietly here while you enjoy the story — tap me anytime you want to discuss a character, a twist, or a beautiful line.`;
-    },
-    returnGreeting: (name) => {
-      const options = [
-        "Welcome back! Where were we in the story?",
-        `${name} here — ready to dive back in?`,
-        "Hey! Good to see you again. The story awaits.",
-      ];
-      return options[Math.floor(Math.random() * options.length)];
-    },
-    suggestedPrompts: (title) => [
+    greeting: (t, name, title) =>
       title
-        ? `What motivates the main character in "${title}"?`
-        : 'What motivates the main character here?',
-      'Is there foreshadowing in this passage?',
-      'What symbolism do you see in this chapter?',
+        ? t('prompts_fiction_greeting_with_title', { name, title })
+        : t('prompts_fiction_greeting', { name }),
+    returnGreeting: (t, name) =>
+      pickRandom([
+        t('prompts_fiction_return_1'),
+        t('prompts_fiction_return_2', { name }),
+        t('prompts_fiction_return_3'),
+      ]),
+    suggestedPrompts: (t, title) => [
+      title
+        ? t('prompts_fiction_suggest_1_with_title', { title })
+        : t('prompts_fiction_suggest_1'),
+      t('prompts_fiction_suggest_2'),
+      t('prompts_fiction_suggest_3'),
     ],
   },
 
   nonfiction: {
-    greeting: (name, title) => {
-      const bookRef = title ? ` for "${title}"` : '';
-      return `Hi! I'm ${name}${bookRef}. I can help you understand key arguments, evaluate evidence, and pull out practical takeaways. Ask me anything!`;
-    },
-    returnGreeting: (name) => {
-      const options = [
-        "Welcome back! Want to pick up where we left off?",
-        `${name} here — shall we continue exploring the ideas?`,
-        "Good to see you again! Ready for more insights?",
-      ];
-      return options[Math.floor(Math.random() * options.length)];
-    },
-    suggestedPrompts: (title) => [
+    greeting: (t, name, title) =>
       title
-        ? `What are the core arguments in "${title}"?`
-        : 'What are the core arguments here?',
-      'How strong is the evidence for this claim?',
-      'What are the practical takeaways from this chapter?',
+        ? t('prompts_nonfiction_greeting_with_title', { name, title })
+        : t('prompts_nonfiction_greeting', { name }),
+    returnGreeting: (t, name) =>
+      pickRandom([
+        t('prompts_nonfiction_return_1'),
+        t('prompts_nonfiction_return_2', { name }),
+        t('prompts_nonfiction_return_3'),
+      ]),
+    suggestedPrompts: (t, title) => [
+      title
+        ? t('prompts_nonfiction_suggest_1_with_title', { title })
+        : t('prompts_nonfiction_suggest_1'),
+      t('prompts_nonfiction_suggest_2'),
+      t('prompts_nonfiction_suggest_3'),
     ],
   },
 
   technical: {
-    greeting: (name, title) => {
-      const bookRef = title ? ` for "${title}"` : '';
-      return `Hey! I'm ${name}${bookRef}. I can explain concepts step-by-step, walk through code examples, and help you understand the technical details. What are you working through?`;
-    },
-    returnGreeting: (name) => {
-      const options = [
-        "Welcome back! Still working through that section?",
-        `${name} here — ready to tackle the next concept?`,
-        "Good to see you! Let's continue.",
-      ];
-      return options[Math.floor(Math.random() * options.length)];
-    },
-    suggestedPrompts: (title) => [
+    greeting: (t, name, title) =>
       title
-        ? `Explain the key concepts in "${title}" step by step`
-        : 'Explain the key concepts here step by step',
-      'Walk me through this code example',
-      'What are the prerequisites for understanding this?',
+        ? t('prompts_technical_greeting_with_title', { name, title })
+        : t('prompts_technical_greeting', { name }),
+    returnGreeting: (t, name) =>
+      pickRandom([
+        t('prompts_technical_return_1'),
+        t('prompts_technical_return_2', { name }),
+        t('prompts_technical_return_3'),
+      ]),
+    suggestedPrompts: (t, title) => [
+      title
+        ? t('prompts_technical_suggest_1_with_title', { title })
+        : t('prompts_technical_suggest_1'),
+      t('prompts_technical_suggest_2'),
+      t('prompts_technical_suggest_3'),
     ],
   },
 
   academic: {
-    greeting: (name, title) => {
-      const bookRef = title ? ` for "${title}"` : '';
-      return `Hello! I'm ${name}${bookRef}. I can help you analyze methodology, identify key findings, and connect this research to other work in the field. What would you like to explore?`;
-    },
-    returnGreeting: (name) => {
-      const options = [
-        "Welcome back! Shall we continue the analysis?",
-        `${name} here — ready to dig deeper?`,
-        "Good to see you. Let's continue our discussion.",
-      ];
-      return options[Math.floor(Math.random() * options.length)];
-    },
-    suggestedPrompts: (title) => [
+    greeting: (t, name, title) =>
       title
-        ? `What is the thesis of "${title}"?`
-        : 'What is the main thesis here?',
-      'How does the author support their argument?',
-      'What are the limitations of this methodology?',
+        ? t('prompts_academic_greeting_with_title', { name, title })
+        : t('prompts_academic_greeting', { name }),
+    returnGreeting: (t, name) =>
+      pickRandom([
+        t('prompts_academic_return_1'),
+        t('prompts_academic_return_2', { name }),
+        t('prompts_academic_return_3'),
+      ]),
+    suggestedPrompts: (t, title) => [
+      title
+        ? t('prompts_academic_suggest_1_with_title', { title })
+        : t('prompts_academic_suggest_1'),
+      t('prompts_academic_suggest_2'),
+      t('prompts_academic_suggest_3'),
     ],
   },
 
   default: {
-    greeting: (name, title) => {
-      const bookRef = title ? ` for "${title}"` : '';
-      return `Hi there! I'm ${name}, your reading companion${bookRef}. I'll be here while you read — ask me anything about the text, or try selecting a passage to get started!`;
-    },
-    returnGreeting: (name) => {
-      const options = [
-        "Welcome back! Ready to pick up where we left off?",
-        `Hey! ${name} here — good to see you again.`,
-        "You're back! I was thinking about our last discussion...",
-      ];
-      return options[Math.floor(Math.random() * options.length)];
-    },
-    suggestedPrompts: (title) => [
+    greeting: (t, name, title) =>
       title
-        ? `What should I know before starting "${title}"?`
-        : "What's the main idea of this chapter?",
-      'Summarize this chapter so far',
+        ? t('prompts_default_greeting_with_title', { name, title })
+        : t('prompts_default_greeting', { name }),
+    returnGreeting: (t, name) =>
+      pickRandom([
+        t('prompts_default_return_1'),
+        t('prompts_default_return_2', { name }),
+        t('prompts_default_return_3'),
+      ]),
+    suggestedPrompts: (t, title) => [
       title
-        ? 'What questions should I ask while reading this?'
-        : 'What should I pay attention to next?',
+        ? t('prompts_default_suggest_1_with_title', { title })
+        : t('prompts_default_suggest_1'),
+      t('prompts_default_suggest_2'),
+      title
+        ? t('prompts_default_suggest_3_with_title', { title })
+        : t('prompts_default_suggest_3'),
     ],
   },
 };
@@ -232,12 +235,12 @@ export function shouldAutoOpen(genre: BookGenre): boolean {
  * Socratic mode is genre-independent — it guides the reader to discover
  * meaning through questions rather than providing direct answers.
  */
-export function getSocraticPrompts(bookTitle?: string): string[] {
+export function getSocraticPrompts(t: TranslateFn, bookTitle?: string): string[] {
   return [
     bookTitle
-      ? `Guide me to discover the deeper meaning of "${bookTitle}"`
-      : 'Guide me to discover the deeper meaning of this text',
-    'What questions should I be asking myself while reading?',
-    'Help me uncover the hidden themes in this passage',
+      ? t('prompts_socratic_1_with_title', { title: bookTitle })
+      : t('prompts_socratic_1'),
+    t('prompts_socratic_2'),
+    t('prompts_socratic_3'),
   ];
 }

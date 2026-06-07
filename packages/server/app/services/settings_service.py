@@ -29,23 +29,13 @@ async def update_user_settings(
     return user.settings
 
 
-async def get_reading_goals(db: AsyncSession, user_id: UUID) -> dict:
-    """Compute reading-goal progress from today's sessions and weekly completions."""
-    from app.models.book import Book, BookStatus  # noqa: avoid circular at module level
+async def _get_today_reading_minutes(
+    db: AsyncSession,
+    user_id: UUID,
+) -> int:
+    """Return total minutes the user has read today."""
     from app.models.reading_session import ReadingSession
 
-    user = await _get_user(db, user_id)
-    settings = user.settings or {}
-    goals_prefs = settings.get('readingGoals', {
-        'dailyMinutes': 30,
-        'weeklyBooks': 1,
-        'monthlyBooks': 4,
-    })
-
-    daily_goal_minutes = goals_prefs.get('dailyMinutes', 30)
-    weekly_books_goal = goals_prefs.get('weeklyBooks', 1)
-
-    # Today's reading time
     today_start = datetime.combine(date.today(), datetime.min.time())
     today_seconds = await db.scalar(
         select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
@@ -55,9 +45,16 @@ async def get_reading_goals(db: AsyncSession, user_id: UUID) -> dict:
             )
         )
     )
-    today_minutes = int(today_seconds or 0) // 60
+    return int(today_seconds or 0) // 60
 
-    # Books completed this week
+
+async def _get_weekly_completed_books(
+    db: AsyncSession,
+    user_id: UUID,
+) -> int:
+    """Return number of books the user completed this week."""
+    from app.models.book import Book, BookStatus
+
     week_start = datetime.combine(
         date.today() - timedelta(days=date.today().weekday()),
         datetime.min.time(),
@@ -71,8 +68,25 @@ async def get_reading_goals(db: AsyncSession, user_id: UUID) -> dict:
             )
         )
     )
+    return completed_this_week or 0
 
-    completed = completed_this_week or 0
+
+async def get_reading_goals(db: AsyncSession, user_id: UUID) -> dict:
+    """Compute reading-goal progress from today's sessions and weekly completions."""
+    user = await _get_user(db, user_id)
+    settings = user.settings or {}
+    goals_prefs = settings.get('readingGoals', {
+        'dailyMinutes': 30,
+        'weeklyBooks': 1,
+        'monthlyBooks': 4,
+    })
+
+    daily_goal_minutes = goals_prefs.get('dailyMinutes', 30)
+    weekly_books_goal = goals_prefs.get('weeklyBooks', 1)
+
+    today_minutes = await _get_today_reading_minutes(db, user_id)
+    completed = await _get_weekly_completed_books(db, user_id)
+
     return {
         'goal': weekly_books_goal,
         'completed': completed,

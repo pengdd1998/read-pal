@@ -16,13 +16,21 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     context: dict | None = None
     persona: str | None = None
+    genre: Literal['fiction', 'nonfiction', 'technical', 'academic', 'default'] | None = None
+
+
+class ChatData(BaseModel):
+    """Inner data for chat responses."""
+
+    role: str
+    content: str
 
 
 class ChatResponse(BaseModel):
     """Standard response for chat endpoints."""
 
     success: bool = True
-    data: dict  # {role: 'assistant', content: str}
+    data: ChatData
 
 
 class FriendChatRequest(BaseModel):
@@ -75,11 +83,24 @@ class ReadingPlanRequest(BaseModel):
     daily_minutes: int = Field(default=30, ge=10, le=240)
 
 
+class ReadingPlanData(BaseModel):
+    """Inner data for reading plan responses."""
+
+    id: str | None = None
+    book_id: str | None = Field(None, validation_alias='bookId', serialization_alias='bookId')
+    plan_text: str | None = Field(None, validation_alias='planText', serialization_alias='planText')
+    total_days: int | None = Field(None, validation_alias='totalDays', serialization_alias='totalDays')
+    current_day: int | None = Field(None, validation_alias='currentDay', serialization_alias='currentDay')
+    is_active: bool | None = Field(None, validation_alias='isActive', serialization_alias='isActive')
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class ReadingPlanResponse(BaseModel):
     """Response for reading plan."""
 
     success: bool = True
-    data: dict
+    data: ReadingPlanData
 
 
 class CompanionModeRequest(BaseModel):

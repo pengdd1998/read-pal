@@ -7,6 +7,7 @@ from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
+from app.models.book import Book
 from app.schemas.annotation import AnnotationCreate, AnnotationUpdate
 
 logger = logging.getLogger('read-pal.annotations')
@@ -70,7 +71,13 @@ async def create_annotation(
     user_id: str,
     data: AnnotationCreate,
 ) -> Annotation:
-    """Create a new annotation."""
+    """Create a new annotation after verifying book ownership."""
+    book = await db.scalar(
+        select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
+    )
+    if book is None:
+        raise ValueError('Book not found')
+
     annotation = Annotation(
         user_id=user_id,
         book_id=data.book_id,
@@ -79,7 +86,7 @@ async def create_annotation(
         content=data.content,
         color=data.color,
         note=data.note,
-        tags=data.tags,
+        tags=data.tags if data.tags else [],
     )
     db.add(annotation)
     await db.flush()
@@ -144,7 +151,7 @@ async def get_tags(
             tag_col,
             func.count().label('count'),
         )
-        .where(Annotation.user_id == user_id)
+        .where(Annotation.user_id == user_id, Annotation.tags != None)  # noqa: E711
         .group_by(tag_col)
         .order_by(func.count().desc())
     )

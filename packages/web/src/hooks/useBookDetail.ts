@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
 import { useBackgroundApi } from '@/hooks/useApi';
 import type {
@@ -28,25 +28,39 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
   const [zoteroConnected, setZoteroConnected] = useState(false);
 
   const { fetch: bgFetch } = useBackgroundApi();
+  const currentBookIdRef = useRef(bookId);
+  currentBookIdRef.current = bookId;
 
   useEffect(() => {
     let cancelled = false;
 
+    // Reset state when navigating to a different book
+    setLoading(true);
+    setError('');
+    setBook(null);
+    setAnnotationStats({ highlights: 0, notes: 0, bookmarks: 0 });
+    setAllAnnotations([]);
+    setHasPersonalBook(false);
+    setReadingLog([]);
+    setReadingWpm(0);
+    setFlashcardCount(0);
+    setTags([]);
+
     (async () => {
       try {
-        const res = await api.get<BookData>(`/api/books/${bookId}`);
+        const [res, annRes] = await Promise.all([
+          api.get<BookData>(`/api/books/${bookId}`),
+          api.get<AnnotationItem[]>('/api/annotations', {
+            book_id: bookId,
+            per_page: 200,
+          }),
+        ]);
         if (cancelled) return;
         if (res.success && res.data) {
           setBook(res.data);
         } else {
           setError(t('bookNotFound'));
         }
-
-        const annRes = await api.get<AnnotationItem[]>('/api/annotations', {
-          book_id: bookId,
-          per_page: 200,
-        });
-        if (cancelled) return;
         if (annRes.success && annRes.data) {
           const annotations = Array.isArray(annRes.data) ? annRes.data : [];
           setAnnotationStats({
@@ -64,31 +78,41 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
     })();
 
     // Background fetches -- non-critical, silenced errors
+    // Guard against stale writes when bookId changes during in-flight requests
+    const guard = <T>(setter: (v: T) => void) => (data: T) => {
+      if (currentBookIdRef.current === bookId) setter(data);
+    };
+
     bgFetch<Array<{ bookId: string; total: number }>>(
       '/api/flashcards/decks',
-      (data) => {
+      guard((data) => {
         const deck = data.find((d) => d.bookId === bookId);
         if (deck) setFlashcardCount(deck.total);
-      },
+      }),
     );
     bgFetch<Array<{ name: string; count: number }>>(
       `/api/annotations/tags?bookId=${bookId}`,
-      (data) => {
+      guard((data) => {
         if (Array.isArray(data)) setTags(data);
-      },
+      }),
     );
-    bgFetch<{ format: string }>(`/api/memory-books/${bookId}`, (data) => {
+    bgFetch<{ format: string }>(`/api/memory-books/${bookId}`, guard((data) => {
       if (data.format === 'personal_book') setHasPersonalBook(true);
-    });
+    }));
     bgFetch<ReadingLogEntry[]>(
       `/api/reading-sessions/book/${bookId}/log?limit=5`,
-      (data) => {
+      guard((data) => {
         if (Array.isArray(data)) setReadingLog(data);
-      },
+      }),
     );
-    bgFetch<{ currentWpm: number }>('/api/stats/reading-speed', (data) => {
+    bgFetch<{ currentWpm: number }>('/api/stats/reading-speed', guard((data) => {
       if (data.currentWpm) setReadingWpm(data.currentWpm);
-    });
+    }));
+    bgFetch<Record<string, unknown>>('/api/settings', guard((data) => {
+      if (data?.['zoteroApiKey'] && data?.['zoteroUserId']) {
+        setZoteroConnected(true);
+      }
+    }));
 
     return () => {
       cancelled = true;

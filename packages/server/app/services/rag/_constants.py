@@ -12,6 +12,38 @@ logger = logging.getLogger('read-pal.rag')
 
 _CJK_TOKEN_RE = re.compile(r'[一-鿿]|[a-zA-Z0-9]+')
 
+
+def _tokenize_with_bigrams(query: str) -> set[str]:
+    """Tokenize query: English words + CJK bigrams for precision."""
+    tokens: set[str] = set()
+    cjk_chars: list[str] = []
+    buf = ''
+    for ch in query.lower():
+        if '一' <= ch <= '鿿':
+            if buf:
+                tokens.add(buf)
+                buf = ''
+            cjk_chars.append(ch)
+        elif ch.isalnum():
+            buf += ch
+        else:
+            if buf:
+                tokens.add(buf)
+                buf = ''
+    if buf:
+        tokens.add(buf)
+    # Bigrams from consecutive CJK characters
+    for i in range(len(cjk_chars) - 1):
+        tokens.add(cjk_chars[i] + cjk_chars[i + 1])
+    # Also keep single CJK chars for short queries
+    tokens.update(cjk_chars)
+    return tokens
+
+
+# Backward-compatible alias
+def _tokenize_query(query: str) -> set[str]:
+    return _tokenize_with_bigrams(query)
+
 RAG_CACHE_PREFIX = 'rag:'
 
 

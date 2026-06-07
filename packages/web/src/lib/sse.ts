@@ -15,12 +15,26 @@ export function consumeSSEStream(
   onToken: (token: string) => void,
   onDone: () => void,
   onError: (err: string) => void,
+  parentSignal?: AbortSignal,
 ): AbortController {
   const controller = new AbortController();
   const reader = response.body?.getReader();
 
+  // Link parent signal so aborting the fetch also aborts the stream reader
+  if (parentSignal) {
+    if (parentSignal.aborted) {
+      controller.abort();
+    } else {
+      parentSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
+
+  let finalized = false;
+  const safeDone = () => { if (!finalized) { finalized = true; onDone(); } };
+  const safeError = (err: string) => { if (!finalized) { finalized = true; onError(err); } };
+
   if (!reader) {
-    onError('No response body');
+    safeError('No response body');
     return controller;
   }
 
@@ -39,14 +53,16 @@ export function consumeSSEStream(
 
       const payload = trimmed.slice(6); // strip "data: "
       if (payload === '[DONE]') {
-        onDone();
+        safeDone();
+        controller.abort();
         return;
       }
 
       try {
         const parsed = JSON.parse(payload) as { token?: string; content?: string; error?: string };
         if (parsed.error) {
-          onError(parsed.error);
+          safeError(parsed.error);
+          controller.abort();
           return;
         }
         const token = parsed.content || parsed.token;
@@ -67,10 +83,10 @@ export function consumeSSEStream(
         processChunk(decoder.decode(result.value, { stream: true }));
       }
       // If stream ended without [DONE], still finalize
-      onDone();
+      safeDone();
     } catch (err) {
       if (!controller.signal.aborted) {
-        onError(err instanceof Error ? err.message : 'Stream read failed');
+        safeError('Stream read failed');
       }
     } finally {
       reader.releaseLock();

@@ -614,7 +614,7 @@ class TestGetSessionStats:
         result_mock.one.return_value = row
         db.execute = AsyncMock(return_value=result_mock)
 
-        with patch('app.core.redis.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis = AsyncMock()
             mock_redis.get.return_value = None  # cache miss
             mock_redis_fn.return_value = mock_redis
@@ -640,7 +640,7 @@ class TestGetSessionStats:
             'totalNotes': 2,
         }
 
-        with patch('app.core.redis.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis = AsyncMock()
             mock_redis.get.return_value = json.dumps(cached_data)
             mock_redis_fn.return_value = mock_redis
@@ -667,7 +667,7 @@ class TestGetSessionStats:
         result_mock.one.return_value = row
         db.execute = AsyncMock(return_value=result_mock)
 
-        with patch('app.core.redis.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis_fn.side_effect = Exception('Redis connection refused')
 
             stats = await reading_session_service.get_session_stats(db, user_id)
@@ -692,7 +692,7 @@ class TestGetSessionStats:
         result_mock.one.return_value = row
         db.execute = AsyncMock(return_value=result_mock)
 
-        with patch('app.core.redis.get_redis') as mock_redis_fn:
+        with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis = AsyncMock()
             mock_redis.get.return_value = None  # cache miss
             mock_redis_fn.return_value = mock_redis

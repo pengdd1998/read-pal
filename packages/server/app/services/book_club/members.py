@@ -96,6 +96,21 @@ async def leave_club(
     logger.info('User left club: user=%s club=%s', user_id, club_id)
 
 
+async def is_member(
+    db: AsyncSession,
+    user_id: UUID,
+    club_id: UUID,
+) -> bool:
+    """Check if a user is a member of a club."""
+    result = await db.execute(
+        select(BookClubMember).where(
+            BookClubMember.club_id == club_id,
+            BookClubMember.user_id == user_id,
+        ),
+    )
+    return result.scalar_one_or_none() is not None
+
+
 async def get_members(
     db: AsyncSession,
     club_id: UUID,

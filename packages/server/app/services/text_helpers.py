@@ -1,7 +1,10 @@
 """Shared HTML/text conversion helpers used by EPUB and PDF processing."""
 
 import html as html_module
+import logging
 import re
+
+logger = logging.getLogger('read-pal.text_helpers')
 
 # Pre-compiled regex patterns for HTML processing
 _BLOCK_ELEMENTS = re.compile(
@@ -33,7 +36,7 @@ def fix_garbled_cjk(text: str) -> str:
         if fixed_cjk > cjk_count * 2:
             return fixed
     except (UnicodeDecodeError, UnicodeEncodeError):
-        pass
+        logger.debug('text_helpers.encoding_fix_failed')
 
     return text
 

@@ -1,9 +1,12 @@
 """Intervention preferences — Redis-backed user preference storage."""
 
 import json
+import logging
 from uuid import UUID
 
 from app.core.redis import get_redis
+
+logger = logging.getLogger('read-pal.intervention_prefs')
 
 
 # ---------------------------------------------------------------------------
@@ -41,11 +44,13 @@ def _prefs_redis_key(user_id: UUID) -> str:
 
 async def get_preferences(user_id: UUID) -> dict:
     """Return the user's intervention preferences (or defaults)."""
-    redis = get_redis()
-    raw = await redis.get(_prefs_redis_key(user_id))
-
-    if raw:
-        return json.loads(raw)
+    try:
+        redis = get_redis()
+        raw = await redis.get(_prefs_redis_key(user_id))
+        if raw:
+            return json.loads(raw)
+    except Exception as exc:
+        logger.warning('intervention_prefs.get_failed user=%s error=%s', user_id, exc)
     return {**DEFAULT_PREFS}
 
 
@@ -54,18 +59,20 @@ async def update_preferences(
     prefs_body: dict,
 ) -> dict:
     """Merge incoming preference values over defaults and persist to Redis."""
-    redis = get_redis()
-
     prefs = {**DEFAULT_PREFS}
     for field in _PREFERENCE_FIELDS:
         val = getattr(prefs_body, field, None)
         if val is not None:
             prefs[field] = val
 
-    await redis.set(
-        _prefs_redis_key(user_id),
-        json.dumps(prefs),
-        ex=60 * 60 * 24 * 365,  # 1 year TTL
-    )
+    try:
+        redis = get_redis()
+        await redis.set(
+            _prefs_redis_key(user_id),
+            json.dumps(prefs),
+            ex=60 * 60 * 24 * 365,  # 1 year TTL
+        )
+    except Exception as exc:
+        logger.warning('intervention_prefs.set_failed user=%s error=%s', user_id, exc)
 
     return prefs

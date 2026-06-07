@@ -24,10 +24,11 @@ from app.services.study_mode_service import (
     save_checks_as_flashcards,
 )
 from app.utils.i18n import t
+from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.study')
 
-router = APIRouter(prefix='/api/v1/study-mode', tags=['study-mode'])
+router = APIRouter(prefix='/api/v1/study-mode', tags=['study-mode'], dependencies=[api_limiter])
 
 
 @router.post('/objectives', response_model=GenericResponse, dependencies=[ai_heavy_limiter])

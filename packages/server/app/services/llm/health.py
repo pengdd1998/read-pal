@@ -9,8 +9,6 @@ from typing import Any
 import structlog
 from langchain_core.messages import HumanMessage
 
-from app.config import get_settings
-
 logger = structlog.get_logger('read-pal.llm')
 
 _health_cache: dict[str, Any] | None = None
@@ -47,7 +45,7 @@ async def _probe_provider(
             'model': default_model,
             'latency_ms': latency_ms,
             'circuit_open': circuit_open,
-            'error': str(exc),
+            'error': 'Provider health check failed',
         }
 
 

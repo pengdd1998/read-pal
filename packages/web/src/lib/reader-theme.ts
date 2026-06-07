@@ -9,18 +9,18 @@ export type ReaderTheme = 'light' | 'dark' | 'sepia';
 
 export const themeClasses: Record<ReaderTheme, string> = {
   light: 'bg-white text-gray-800',
-  dark: 'bg-gray-900 text-gray-200',
-  sepia: 'bg-[#faf6f0] text-[#5c4b37]',
+  dark: 'bg-gray-950 text-gray-200',
+  sepia: 'bg-[#f8f4ec] text-[#5c4b37]',
 };
 
 export const progressBg: Record<ReaderTheme, string> = {
-  light: 'bg-gray-200',
-  dark: 'bg-gray-700',
-  sepia: 'bg-amber-200/60',
+  light: 'bg-gray-100',
+  dark: 'bg-gray-800',
+  sepia: 'bg-amber-100/60',
 };
 
 export const progressFill: Record<ReaderTheme, string> = {
-  light: 'bg-gradient-to-r from-teal-500 to-amber-500',
+  light: 'bg-gradient-to-r from-teal-500 to-amber-400',
   dark: 'bg-gradient-to-r from-teal-400 to-amber-400',
   sepia: 'bg-gradient-to-r from-amber-600 to-amber-400',
 };
@@ -28,6 +28,6 @@ export const progressFill: Record<ReaderTheme, string> = {
 /** Page-level theme classes (slightly different from reader-internal classes). */
 export const pageThemeClasses: Record<ReaderTheme, string> = {
   light: 'bg-[#fefdfb] text-gray-900',
-  dark: 'bg-[#1a1410] text-gray-100',
-  sepia: 'bg-[#f8f4ec] text-amber-900',
+  dark: 'bg-[#0c0a09] text-gray-100',
+  sepia: 'bg-[#f5f0e4] text-amber-900',
 };

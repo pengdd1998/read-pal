@@ -9,6 +9,7 @@ interface UseCompanionPersonaReturn {
   friendEmoji: string;
   friendPersonaKey: string | undefined;
   companionMode: 'casual' | 'scholar' | 'socratic';
+  error: string | null;
   setFriendName: (name: string) => void;
   setFriendEmoji: (emoji: string) => void;
   setFriendPersonaKey: (key: string | undefined) => void;
@@ -20,6 +21,7 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
   const [friendPersonaKey, setFriendPersonaKey] = useState<string | undefined>(undefined);
   const [companionMode, setCompanionMode] = useState<'casual' | 'scholar' | 'socratic'>('casual');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,8 +39,9 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
             setCompanionMode(data.companionMode);
           }
         }
-      } catch {
-        // Keep defaults on error
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load companion persona';
+        if (!cancelled) setError(message);
       }
     };
     loadPersona();
@@ -50,6 +53,7 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
     friendEmoji,
     friendPersonaKey,
     companionMode,
+    error,
     setFriendName,
     setFriendEmoji,
     setFriendPersonaKey,

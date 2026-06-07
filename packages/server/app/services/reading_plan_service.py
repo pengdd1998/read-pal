@@ -18,6 +18,54 @@ from app.utils.token_budget import TokenBudget
 logger = structlog.get_logger('read-pal.reading_plan')
 
 
+async def _deactivate_existing_plan(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> None:
+    """Deactivate any existing active plan for this user/book."""
+    existing = await _get_active_plan(db, user_id, book_id)
+    if existing:
+        existing.is_active = False
+        await db.flush()
+
+
+async def _save_new_plan(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    plan_text: str,
+    total_days: int,
+) -> ReadingPlan:
+    """Persist a new reading plan and return it."""
+    plan = ReadingPlan(
+        user_id=user_id,
+        book_id=book_id,
+        plan_text=plan_text,
+        total_days=total_days,
+    )
+    db.add(plan)
+    await db.flush()
+    return plan
+
+
+def _format_plan_response(
+    plan: ReadingPlan,
+    book_id: UUID,
+    plan_text: str,
+    total_days: int,
+) -> dict[str, Any]:
+    """Build the API response dict for a reading plan."""
+    return {
+        'id': str(plan.id),
+        'bookId': str(book_id),
+        'planText': plan_text,
+        'totalDays': total_days,
+        'currentDay': 1,
+        'isActive': True,
+    }
+
+
 async def generate_plan(
     db: AsyncSession,
     user_id: UUID,
@@ -38,26 +86,15 @@ async def generate_plan(
     )
 
     book = await _load_book(db, user_id, book_id)
-
-    # Check for existing active plan
-    existing = await _get_active_plan(db, user_id, book_id)
-    if existing:
-        # Deactivate old plan
-        existing.is_active = False
-        await db.flush()
+    await _deactivate_existing_plan(db, user_id, book_id)
 
     # Generate plan via LLM
-    plan_text = await _generate_plan_text(book, total_days, daily_minutes, user_id=user_id, book_id=book_id)
-
-    # Save to DB
-    plan = ReadingPlan(
-        user_id=user_id,
-        book_id=book_id,
-        plan_text=plan_text,
-        total_days=total_days,
+    plan_text = await _generate_plan_text(
+        book, total_days, daily_minutes,
+        user_id=user_id, book_id=book_id,
     )
-    db.add(plan)
-    await db.flush()
+
+    plan = await _save_new_plan(db, user_id, book_id, plan_text, total_days)
 
     elapsed = (time.monotonic() - t0) * 1000
     logger.info(
@@ -68,14 +105,7 @@ async def generate_plan(
         latency_ms=round(elapsed, 1),
     )
 
-    return {
-        'id': str(plan.id),
-        'bookId': str(book_id),
-        'planText': plan_text,
-        'totalDays': total_days,
-        'currentDay': 1,
-        'isActive': True,
-    }
+    return _format_plan_response(plan, book_id, plan_text, total_days)
 
 
 async def get_active_plan(
@@ -176,22 +206,21 @@ async def _get_active_plan(
     return result.scalar_one_or_none()
 
 
-async def _generate_plan_text(
+def _build_plan_prompts(
     book: Book,
     total_days: int,
     daily_minutes: int,
-    user_id: UUID | None = None,
-    book_id: UUID | None = None,
-) -> str:
-    """Use LLM to generate a structured reading plan."""
+) -> tuple[str, str, int, int, int]:
+    """Build system and human prompts for reading plan generation.
+
+    Returns (system_prompt, human_prompt, current_page, pages_per_day, total_pages).
+    """
     pages = book.total_pages or 0
     current = book.current_page or 0
     remaining = max(0, pages - current)
     pages_per_day = remaining // total_days if total_days > 0 else remaining
 
-    # Centralized prompt templates (versioned, trackable)
     system_prompt = READING_PLAN_SYSTEM.template
-
     human_prompt = READING_PLAN_HUMAN.template.format(
         total_days=total_days,
         title=book.title,
@@ -204,7 +233,6 @@ async def _generate_plan_text(
         progress=book.progress or 0,
     )
 
-    # Token budget: ensure prompts fit within context window
     budget = TokenBudget()
     budget.add(system_prompt, label='reading_plan_system')
     budget.add(human_prompt, label='reading_plan_human')
@@ -216,7 +244,17 @@ async def _generate_plan_text(
             used_tokens=budget.used,
         )
 
-    # Build fallback text plan
+    return system_prompt, human_prompt, current, pages_per_day, pages
+
+
+def _build_fallback_plan(
+    book: Book,
+    total_days: int,
+    current: int,
+    pages_per_day: int,
+    pages: int,
+) -> str:
+    """Build a simple text-based reading plan as LLM fallback."""
     lines = [f'{total_days}-Day Reading Plan for "{book.title}"\n']
     for day in range(1, total_days + 1):
         start = current + (day - 1) * pages_per_day
@@ -226,7 +264,23 @@ async def _generate_plan_text(
             f'  - Focus: Read carefully and note key ideas\n'
             f'  - Question: What surprised you in this section?'
         )
-    fallback_plan = '\n\n'.join(lines)
+    return '\n\n'.join(lines)
+
+
+async def _generate_plan_text(
+    book: Book,
+    total_days: int,
+    daily_minutes: int,
+    user_id: UUID | None = None,
+    book_id: UUID | None = None,
+) -> str:
+    """Use LLM to generate a structured reading plan."""
+    system_prompt, human_prompt, current, pages_per_day, pages = (
+        _build_plan_prompts(book, total_days, daily_minutes)
+    )
+    fallback_plan = _build_fallback_plan(
+        book, total_days, current, pages_per_day, pages,
+    )
 
     result = await safe_llm_call(
         [

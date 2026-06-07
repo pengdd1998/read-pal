@@ -70,6 +70,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
               <button
                 key={f.label}
                 onClick={() => onFontFamilyChange(f.value)}
+                aria-label={f.label}
                 className={`py-2.5 rounded-lg text-[10px] font-medium transition-all ${
                   fontFamily === f.value
                     ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 ring-1 ring-amber-300 dark:ring-amber-700'
@@ -90,6 +91,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
               <button
                 key={themeVal}
                 onClick={() => onThemeChange(themeVal)}
+                aria-label={themeVal === 'light' ? t('settings_light') : themeVal === 'sepia' ? t('settings_sepia') : t('settings_dark')}
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                   theme === themeVal
                     ? themeVal === 'light' ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300' : themeVal === 'dark' ? 'bg-amber-900/50 text-amber-200 ring-1 ring-amber-700' : 'bg-amber-200 text-amber-900 ring-1 ring-amber-400'
@@ -106,6 +108,8 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
         <div className="flex gap-1.5">
           <button
             onClick={() => onQuietModeChange(!quietMode)}
+            aria-label={t('quiet_mode')}
+            aria-pressed={quietMode}
             className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
               quietMode ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
             }`}
@@ -118,6 +122,8 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
           </button>
           <button
             onClick={() => onBgEnabledChange(!bgEnabled)}
+            aria-label={t('bg_toggle')}
+            aria-pressed={bgEnabled}
             className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
               bgEnabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
             }`}
@@ -131,6 +137,7 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
 
         <button
           onClick={() => { onClose(); onShowShortcuts(); }}
+          aria-label={t('keyboard_shortcuts')}
           className="w-full py-2 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
         >
           {t('keyboard_shortcuts')} (?)

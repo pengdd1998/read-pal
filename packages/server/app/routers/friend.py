@@ -13,10 +13,11 @@ from app.schemas.agent import ChatResponse, FriendChatRequest
 from app.schemas.common import GenericResponse
 from app.services import friend_service
 from app.utils.i18n import t
+from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.friend')
 
-router = APIRouter(prefix='/api/v1/friend', tags=['friend'])
+router = APIRouter(prefix='/api/v1/friend', tags=['friend'], dependencies=[api_limiter])
 
 
 @router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter])
@@ -49,7 +50,7 @@ async def chat(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
                 'code': 'VALIDATION_ERROR',
-                'message': str(exc),
+                'message': t('errors.validation_failed'),
             },
         ) from exc
     except Exception as exc:

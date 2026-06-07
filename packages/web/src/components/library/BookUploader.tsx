@@ -6,176 +6,197 @@ import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
 
 interface BookUploaderProps {
-  onUploadComplete: (book: Book) => void;
+ onUploadComplete: (book: Book) => void;
 }
 
+const VALID_MIME_TYPES = ['application/epub+zip', 'application/pdf', 'application/octet-stream'];
+
 export function BookUploader({ onUploadComplete }: BookUploaderProps) {
-  const t = useTranslations('library');
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
-  const [dragOver, setDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+ const t = useTranslations('library');
+ const [uploading, setUploading] = useState(false);
+ const [uploadProgress, setUploadProgress] = useState(0);
+ const [success, setSuccess] = useState(false);
+ const [error, setError] = useState('');
+ const [dragOver, setDragOver] = useState(false);
+ const fileInputRef = useRef<HTMLInputElement>(null);
+ const abortControllerRef = useRef<AbortController | null>(null);
 
-  const uploadFile = async (file: File) => {
-    setUploading(true);
-    setUploadProgress(0);
-    setError('');
-    setSuccess(false);
+ const cancelUpload = () => {
+  abortControllerRef.current?.abort();
+  abortControllerRef.current = null;
+  setUploading(false);
+  setUploadProgress(0);
+  setError(t('upload_cancelled'));
+ };
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      // Let backend extract metadata from EPUB/PDF — don't hardcode defaults
+ const uploadFile = async (file: File) => {
+ setUploading(true);
+ setUploadProgress(0);
+ setError('');
+ setSuccess(false);
 
-      const result = await api.upload<{ book: Book }>(
-        '/api/upload',
-        formData,
-        (percent) => setUploadProgress(percent),
-      );
+ const controller = new AbortController();
+ abortControllerRef.current = controller;
 
-      if (result.success && result.data?.book) {
-        const { book } = result.data;
-        setUploadProgress(100);
-        setSuccess(true);
-        setTimeout(() => {
-          onUploadComplete(book);
-          setSuccess(false);
-        }, 1500);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      } else {
-        setError(result.error?.message || 'Upload failed');
-      }
-    } catch (err) {
-      const msg = err instanceof TypeError && err.message.includes('fetch')
-        ? t('upload_network_error')
-        : t('upload_failed');
-      setError(msg);
-    } finally {
-      setUploading(false);
-    }
-  };
+ try {
+  const formData = new FormData();
+  formData.append('file', file);
+  // Let backend extract metadata from EPUB/PDF — don't hardcode defaults
 
-  const handleFile = (file: File) => {
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    const isValid =
-      [
-        'application/epub+zip',
-        'application/pdf',
-        'application/octet-stream',
-      ].includes(file.type) ||
-      ext === 'epub' ||
-      ext === 'pdf';
-
-    if (!isValid) {
-      setError(t('upload_format_error'));
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      setError(t('upload_size_error'));
-      return;
-    }
-    uploadFile(file);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFile(file);
-  };
-
-  const handleClick = () => {
-    if (!uploading && !success) fileInputRef.current?.click();
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
-  };
-
-  return (
-    <div
-      onClick={handleClick}
-      onDrop={handleDrop}
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-      onDragLeave={() => setDragOver(false)}
-      className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 overflow-hidden ${
-        success
-          ? 'border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/20'
-          : uploading
-            ? 'border-amber-400 dark:border-amber-600 bg-amber-50/30 dark:bg-amber-900/10'
-            : dragOver
-              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-[1.01]'
-              : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
-      }`}
-    >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".epub,.pdf,application/epub+zip,application/pdf"
-        onChange={handleFileSelect}
-        disabled={uploading || success}
-        aria-label={t('upload_aria_label')}
-        className="hidden"
-      />
-
-      {/* Success state */}
-      {success ? (
-        <div className="animate-scale-in">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/40 dark:to-emerald-900/40 flex items-center justify-center">
-            <svg className="w-8 h-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-300">{t('upload_success')}</h3>
-          <p className="text-teal-600 dark:text-teal-400 text-sm mt-1">{t('upload_adding')}</p>
-        </div>
-      ) : (
-        <>
-          {/* Animated dashed border shimmer */}
-          {!uploading && !dragOver && (
-            <div className="absolute inset-0 rounded-2xl pointer-events-none animate-border-shimmer opacity-30" />
-          )}
-
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-100 to-amber-100 dark:from-primary-900/30 dark:to-amber-900/30 flex items-center justify-center">
-            <svg className="w-7 h-7 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold mb-1">
-            {uploading ? 'Uploading...' : t('upload_drag_here')}
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
-            {t('upload_format_hint')}
-          </p>
-
-          {uploading && (
-            <div className="mt-4">
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-amber-500 to-teal-500 h-2 rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                {uploadProgress < 100 ? t('upload_progress', { progress: uploadProgress }) : t('upload_processing')}
-              </p>
-            </div>
-          )}
-        </>
-      )}
-
-      {error && (
-        <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-    </div>
+  const result = await api.upload<{ book: Book }>(
+  '/api/upload',
+  formData,
+  (percent) => setUploadProgress(percent),
+  controller.signal,
   );
+
+  if (result.success && result.data?.book) {
+  const { book } = result.data;
+  setUploadProgress(100);
+  setSuccess(true);
+  setTimeout(() => {
+   onUploadComplete(book);
+   setSuccess(false);
+  }, 1500);
+  if (fileInputRef.current) {
+   fileInputRef.current.value = '';
+  }
+  } else {
+  setError(t('upload_failed'));
+  }
+ } catch (err: unknown) {
+  if ((err as DOMException)?.name === 'AbortError') return;
+  const isNetwork = (err as { response?: unknown; code?: string })?.code === 'ERR_NETWORK'
+   || (err as { response?: unknown })?.response === undefined;
+  setError(isNetwork ? t('upload_network_error') : t('upload_failed'));
+ } finally {
+  abortControllerRef.current = null;
+  setUploading(false);
+ }
+ };
+
+ const handleFile = (file: File) => {
+ const ext = file.name.split('.').pop()?.toLowerCase();
+ const isValid =
+  VALID_MIME_TYPES.includes(file.type) ||
+  ext === 'epub' ||
+  ext === 'pdf';
+
+ if (!isValid) {
+  setError(t('upload_format_error'));
+  return;
+ }
+ if (file.size > 100 * 1024 * 1024) {
+  setError(t('upload_size_error'));
+  return;
+ }
+ uploadFile(file);
+ };
+
+ const handleDrop = (e: React.DragEvent) => {
+ e.preventDefault();
+ setDragOver(false);
+ const file = e.dataTransfer.files?.[0];
+ if (file) handleFile(file);
+ };
+
+ const handleClick = () => {
+ if (!uploading && !success) fileInputRef.current?.click();
+ };
+
+ const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+ const file = e.target.files?.[0];
+ if (file) handleFile(file);
+ };
+
+ return (
+ <div
+  onClick={handleClick}
+  onDrop={handleDrop}
+  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+  onDragLeave={() => setDragOver(false)}
+  className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 overflow-hidden ${
+  success
+   ? 'border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/20'
+   : uploading
+   ? 'border-amber-400 dark:border-amber-600 bg-amber-50/30 dark:bg-amber-900/10'
+   : dragOver
+    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-[1.01]'
+    : 'border-gray-300 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
+  }`}
+ >
+  <input
+  ref={fileInputRef}
+  type="file"
+  accept=".epub,.pdf,application/epub+zip,application/pdf"
+  onChange={handleFileSelect}
+  disabled={uploading || success}
+  aria-label={t('upload_aria_label')}
+  className="hidden"
+  />
+
+  {/* Success state */}
+  {success ? (
+  <div className="animate-scale-in">
+   <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/40 dark:to-emerald-900/40 flex items-center justify-center">
+   <svg aria-hidden="true" className="w-8 h-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+   </svg>
+   </div>
+   <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-300">{t('upload_success')}</h3>
+   <p className="text-teal-600 dark:text-teal-400 text-sm mt-1">{t('upload_adding')}</p>
+  </div>
+  ) : (
+  <>
+   {/* Animated dashed border shimmer */}
+   {!uploading && !dragOver && (
+   <div className="absolute inset-0 rounded-2xl pointer-events-none animate-border-shimmer opacity-30" />
+   )}
+
+   <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-100 to-amber-100 dark:from-primary-900/30 dark:to-amber-900/30 flex items-center justify-center">
+   <svg aria-hidden="true" className="w-7 h-7 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+   </svg>
+   </div>
+   <h3 className="text-lg font-semibold mb-1">
+   {uploading ? t('uploading') : t('upload_drag_here')}
+   </h3>
+   <p className="text-gray-500 text-sm">
+   {t('upload_format_hint')}
+   </p>
+
+   {uploading && (
+   <div className="mt-4">
+    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+    <div
+     className="bg-gradient-to-r from-amber-500 to-teal-500 h-2 rounded-full transition-all duration-300 ease-out"
+     style={{ width: `${uploadProgress}%` }}
+    />
+    </div>
+    <div className="flex items-center justify-between mt-2">
+    <p className="text-xs text-gray-500">
+     {uploadProgress < 100 ? t('upload_progress', { progress: uploadProgress }) : t('upload_processing')}
+    </p>
+    <button
+     onClick={(e) => { e.stopPropagation(); cancelUpload(); }}
+     className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+     aria-label={t('upload_cancel')}
+    >
+     {t('upload_cancel')}
+    </button>
+    </div>
+   </div>
+   )}
+  </>
+  )}
+
+  {error && (
+  <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-lg text-sm">
+   {error}
+  </div>
+  )}
+ </div>
+ );
 }

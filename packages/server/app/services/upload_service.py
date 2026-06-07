@@ -2,11 +2,13 @@
 
 import asyncio
 import logging
+import os
 import tempfile
 from pathlib import Path
 from uuid import UUID
 
 from fastapi import UploadFile
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookFileType
@@ -14,8 +16,6 @@ from app.models.document import Document
 from app.services.epub_parser import process_epub
 from app.services.pdf_parser import process_pdf
 from app.services.text_helpers import (
-    fix_garbled_cjk as _fix_garbled_cjk,
-    html_to_structured_text as _html_to_structured_text,
     text_to_html_paragraphs as _text_to_html_paragraphs,
 )
 from app.utils.i18n import t, DEFAULT_LANGUAGE
@@ -68,6 +68,7 @@ async def stream_upload_to_tempfile(
             file_size += len(chunk)
             if file_size > max_size:
                 tmp.close()
+                os.unlink(tmp_path)
                 raise ValueError(
                     f'File exceeds {max_size // (1024 * 1024)} MB limit'
                 )
@@ -79,6 +80,70 @@ async def stream_upload_to_tempfile(
 # ---------------------------------------------------------------------------
 # Book creation orchestrator
 # ---------------------------------------------------------------------------
+
+async def _parse_file_content(file_type: str, file_path: str) -> dict:
+    """Parse an uploaded file and return the extraction result."""
+    if file_type == 'pdf':
+        return await process_pdf(file_path)
+    return await process_epub(file_path)
+
+
+def _resolve_metadata(
+    result: dict,
+    file_path: str,
+    title: str,
+    author: str,
+) -> tuple[str, str]:
+    """Resolve book title/author, preferring extracted metadata over defaults."""
+    meta = result.get('metadata', {})
+    book_title = title
+    book_author = author
+    if meta.get('title') and title == Path(file_path).stem:
+        book_title = meta['title']
+    if meta.get('author') and author == 'Unknown':
+        book_author = meta['author']
+    return book_title, book_author
+
+
+async def _persist_book_and_document(
+    db: AsyncSession,
+    user_id: UUID,
+    book_title: str,
+    book_author: str,
+    file_type: str,
+    file_size: int,
+    cover_url: str | None,
+    tags: list[str] | None,
+    result: dict,
+    meta: dict,
+) -> tuple[Book, UUID]:
+    """Create Book and Document records; return (book, document_id)."""
+    book = Book(
+        user_id=user_id,
+        title=book_title,
+        author=book_author,
+        file_type=BookFileType(file_type),
+        file_size=file_size,
+        total_pages=result.get('total_pages', 0),
+        cover_url=cover_url,
+        tags=tags or [],
+        status='unread',
+        metadata_=meta if meta else None,
+    )
+    db.add(book)
+    await db.flush()
+
+    document = Document(
+        book_id=book.id,
+        user_id=user_id,
+        content=result.get('content', ''),
+        chapters=result.get('chapters', []),
+    )
+    db.add(document)
+    await db.flush()
+    await db.refresh(book)
+    return book, document.id
+
 
 async def create_book_with_content(
     db: AsyncSession,
@@ -92,60 +157,27 @@ async def create_book_with_content(
     tags: list[str] | None = None,
 ) -> Book:
     """Create a book record and process its content."""
-    if file_type == 'pdf':
-        result = await process_pdf(file_path)
-    else:
-        result = await process_epub(file_path)
-
-    # Apply extracted metadata
+    result = await _parse_file_content(file_type, file_path)
     meta = result.get('metadata', {})
-    book_title = title
-    book_author = author
-
-    # Override title/author with extracted values if defaults were used
-    if meta.get('title') and title == Path(file_path).stem:
-        book_title = meta['title']
-    if meta.get('author') and author == 'Unknown':
-        book_author = meta['author']
-
-    book = Book(
-        user_id=user_id,
-        title=book_title,
-        author=book_author,
-        file_type=BookFileType(file_type),
-        file_size=file_size,
-        total_pages=result['total_pages'],
-        cover_url=cover_url,
-        tags=tags or [],
-        status='unread',
-        metadata_=meta if meta else None,
+    book_title, book_author = _resolve_metadata(
+        result, file_path, title, author,
     )
-    db.add(book)
-    await db.flush()
 
-    document = Document(
-        book_id=book.id,
-        user_id=user_id,
-        content=result['content'],
-        chapters=result['chapters'],
+    book, document_id = await _persist_book_and_document(
+        db, user_id, book_title, book_author,
+        file_type, file_size, cover_url, tags, result, meta,
     )
-    db.add(document)
-    await db.flush()
-    await db.refresh(book)
 
     logger.info(
         'Book created: %s (%s, %d pages, %d chapters, %d images)',
-        book_title,
-        file_type,
-        result['total_pages'],
-        len(result['chapters']),
-        sum(ch.get('images', 0) for ch in result['chapters']),
+        book_title, file_type, result.get('total_pages', 0),
+        len(result.get('chapters', [])),
+        sum(ch.get('images', 0) for ch in result.get('chapters', [])),
     )
 
     asyncio.create_task(
-        _safe_precompute(book.id, document.id, result['chapters'])
+        _safe_precompute(book.id, document_id, result['chapters'])
     )
-
     return book
 
 
@@ -156,17 +188,15 @@ async def get_book_content(
     lang: str = DEFAULT_LANGUAGE,
 ) -> dict | None:
     """Fetch book content and chapters. Returns None if book not found."""
-    from sqlalchemy import select as sa_select
-
     result = await db.execute(
-        sa_select(Book).where(Book.id == book_id, Book.user_id == user_id),
+        select(Book).where(Book.id == book_id, Book.user_id == user_id),
     )
     book = result.scalar_one_or_none()
     if book is None:
         return None
 
     doc_result = await db.execute(
-        sa_select(Document).where(Document.book_id == book_id),
+        select(Document).where(Document.book_id == book_id),
     )
     doc = doc_result.scalar_one_or_none()
 
@@ -222,11 +252,21 @@ def _build_chapters(doc: Document | None, lang: str) -> list[dict]:
     chapters = []
     for i, ch in enumerate(doc.chapters):
         if isinstance(ch, dict):
+            raw = ch.get('rawContent', '')
+            content = ch.get('content', '')
+            if not raw and content:
+                # Use content directly if it's already HTML, otherwise wrap in <p>
+                if '<' in content and '>' in content:
+                    raw = content
+                else:
+                    raw = _text_to_html_paragraphs(content)
+            elif not raw:
+                raw = ''
             chapters.append({
                 'id': ch.get('id', str(i)),
                 'title': ch.get('title', t('errors.chapter_title', lang, index=i + 1)),
-                'content': ch.get('content', ''),
-                'rawContent': ch.get('rawContent', ch.get('content', '')),
+                'content': content,
+                'rawContent': raw,
             })
     return chapters
 
@@ -236,12 +276,26 @@ async def _safe_precompute(
     document_id: UUID,
     chapters: list[dict],
 ) -> None:
-    """Fire-and-forget embedding pre-computation."""
-    try:
-        from app.services.rag import precompute_book_embeddings
-        await precompute_book_embeddings(book_id, document_id, chapters)
-    except Exception as exc:
-        logger.error(
-            'Background embedding pre-computation failed for book %s: %s',
-            book_id, exc,
-        )
+    """Fire-and-forget embedding pre-computation with retry."""
+    import asyncio
+
+    from app.services.rag import precompute_book_embeddings
+
+    max_retries = 2
+    for attempt in range(max_retries + 1):
+        try:
+            await precompute_book_embeddings(book_id, document_id, chapters)
+            return
+        except Exception as exc:
+            if attempt < max_retries:
+                delay = 2 ** attempt * 5
+                logger.warning(
+                    'Embedding pre-computation attempt %d/%d failed for book %s, retrying in %ds: %s',
+                    attempt + 1, max_retries + 1, book_id, delay, str(exc)[:200],
+                )
+                await asyncio.sleep(delay)
+            else:
+                logger.error(
+                    'Background embedding pre-computation failed after %d attempts for book %s: %s',
+                    max_retries + 1, book_id, exc,
+                )

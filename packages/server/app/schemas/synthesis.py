@@ -33,3 +33,4 @@ class SynthesisResponse(BaseModel):
 
     success: bool = True
     data: dict  # {themes, connections, timeline, insights}
+    error: str | None = None

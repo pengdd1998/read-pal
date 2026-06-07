@@ -6,7 +6,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.middleware.auth import verify_password
 from app.models.user import User
+from app.services.auth._token import revoke_access_token, revoke_refresh_token
 
 logger = logging.getLogger('read-pal.account')
 
@@ -39,11 +41,24 @@ async def update_profile(
     }
 
 
-async def delete_account(db: AsyncSession, user_id: UUID) -> None:
-    """Delete the user account and all cascading data."""
+async def delete_account(
+    db: AsyncSession,
+    user_id: UUID,
+    password: str,
+    access_token: str | None = None,
+    refresh_token: str | None = None,
+) -> None:
+    """Delete the user account and all cascading data. Requires password verification."""
     user = await _get_user(db, user_id)
+    if not verify_password(password, user.password_hash):
+        raise ValueError('wrong_password')
     await db.delete(user)
     await db.flush()
+    # Revoke outstanding tokens so they can't be used after deletion
+    if access_token:
+        await revoke_access_token(access_token)
+    if refresh_token:
+        await revoke_refresh_token(refresh_token)
     logger.info('Account deleted: %s', user_id)
 
 

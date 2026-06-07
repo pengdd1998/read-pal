@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.models.document import Document
 
-from app.services.rag.search import _tokenize_query
+from app.services.rag._constants import _tokenize_query
 
 
 async def _get_chapters(

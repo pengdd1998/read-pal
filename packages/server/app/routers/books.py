@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import api_limiter
 from app.schemas.book import (
     BookCreate,
     BookListResponse,
@@ -23,7 +24,11 @@ from app.schemas.common import GenericResponse
 from app.services import book_service
 from app.utils.i18n import _get_user_lang, t
 
-router = APIRouter(prefix='/api/v1/books', tags=['books'])
+router = APIRouter(
+    prefix='/api/v1/books',
+    tags=['books'],
+    dependencies=[api_limiter],
+)
 
 
 @router.get('', response_model=BookListResponse)
@@ -127,12 +132,12 @@ async def update_book(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
-@router.delete('/{book_id}', response_model=GenericResponse)
+@router.delete('/{book_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_book(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> GenericResponse:
+) -> None:
     """Delete a book and all associated data."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
     deleted = await book_service.delete_book(db, UUID(current_user['id']), book_id)
@@ -141,7 +146,6 @@ async def delete_book(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
         )
-    return GenericResponse(success=True)
 
 
 @router.put('/{book_id}/tags', response_model=GenericResponse)

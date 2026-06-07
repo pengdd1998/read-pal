@@ -11,10 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import api_limiter
 from app.schemas.common import GenericResponse
 from app.services.challenge_service import get_all_challenges
 
-router = APIRouter(prefix='/api/v1/challenges', tags=['challenges'])
+router = APIRouter(
+    prefix='/api/v1/challenges',
+    tags=['challenges'],
+    dependencies=[api_limiter],
+)
 
 
 @router.get('', response_model=GenericResponse)

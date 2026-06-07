@@ -1,15 +1,17 @@
 """Business logic for book CRUD operations."""
 
-import json
 import logging
 import uuid
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.services._session_book_progress import cap_progress
+
 from app.models.book import Book, BookFileType, BookStatus
+from app.models.collection import Collection
 from app.utils import utcnow
 from app.schemas.book import BookCreate, BookUpdate
 
@@ -107,8 +109,9 @@ async def update_book(
 
     # Recalculate progress when currentPage is updated
     if data.current_page is not None and book.total_pages > 0:
-        book.progress = Decimal(
-            str(round((book.current_page / book.total_pages) * 100, 2)),
+        book.current_page = min(max(book.current_page, 0), book.total_pages)
+        book.progress = cap_progress(
+            Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
         )
         if book.progress >= Decimal('100') and book.status != BookStatus.completed:
             book.status = BookStatus.completed
@@ -125,6 +128,7 @@ async def delete_book(db: AsyncSession, user_id: str, book_id: UUID) -> bool:
         return False
 
     await db.delete(book)
+    await _cleanup_collection_orphans(db, book_id)
     await db.flush()
 
     logger.info('Book deleted: %s for user %s', book_id, user_id)
@@ -133,51 +137,35 @@ async def delete_book(db: AsyncSession, user_id: str, book_id: UUID) -> bool:
 
 async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
     """Return aggregate book statistics for a user (cached 5 min, single query)."""
-    from app.core.redis import get_redis
-    from app.config import get_settings
+    from app.core.cache import cache_get_or_compute
 
     cache_key = f'stats:books:{user_id}'
-    try:
-        redis = get_redis()
-        cached = await redis.get(cache_key)
-        if cached:
-            return json.loads(cached)
-    except Exception as exc:
-        logger.debug('book_service.cache_read_miss', error=str(exc)[:200])
 
-    from sqlalchemy import case
+    async def _compute() -> dict:
+        row = (await db.execute(
+            select(
+                func.count().label('total'),
+                func.coalesce(func.sum(
+                    case((Book.status == 'reading', 1), else_=0),
+                ), 0).label('reading'),
+                func.coalesce(func.sum(
+                    case((Book.status == 'completed', 1), else_=0),
+                ), 0).label('completed'),
+                func.coalesce(func.sum(
+                    case((Book.status == 'unread', 1), else_=0),
+                ), 0).label('unread'),
+                func.coalesce(func.sum(Book.current_page), 0).label('pages'),
+            ).where(Book.user_id == user_id)
+        )).one()
+        return {
+            'total': row.total,
+            'reading': int(row.reading),
+            'completed': int(row.completed),
+            'unread': int(row.unread),
+            'totalPagesRead': int(row.pages),
+        }
 
-    row = (await db.execute(
-        select(
-            func.count().label('total'),
-            func.coalesce(func.sum(
-                case((Book.status == 'reading', 1), else_=0),
-            ), 0).label('reading'),
-            func.coalesce(func.sum(
-                case((Book.status == 'completed', 1), else_=0),
-            ), 0).label('completed'),
-            func.coalesce(func.sum(
-                case((Book.status == 'unread', 1), else_=0),
-            ), 0).label('unread'),
-            func.coalesce(func.sum(Book.current_page), 0).label('pages'),
-        ).where(Book.user_id == user_id)
-    )).one()
-
-    result = {
-        'total': row.total,
-        'reading': int(row.reading),
-        'completed': int(row.completed),
-        'unread': int(row.unread),
-        'totalPagesRead': int(row.pages),
-    }
-
-    try:
-        redis = get_redis()
-        await redis.setex(cache_key, get_settings().cache_data_ttl_seconds, json.dumps(result))
-    except Exception as exc:
-        logger.debug('book_service.cache_write_failed', error=str(exc)[:200])
-
-    return result
+    return await cache_get_or_compute(cache_key, _compute)
 
 
 async def update_tags(
@@ -220,3 +208,12 @@ async def create_sample_book(
     await db.flush()
     await db.refresh(sample)
     return sample
+
+
+async def _cleanup_collection_orphans(db: AsyncSession, book_id: UUID) -> None:
+    """Remove deleted book_id from all collections that reference it."""
+    result = await db.execute(
+        select(Collection).where(Collection.book_ids.contains([str(book_id)]))
+    )
+    for col in result.scalars():
+        col.book_ids = [bid for bid in (col.book_ids or []) if bid != str(book_id)]

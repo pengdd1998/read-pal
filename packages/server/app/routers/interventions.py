@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.rate_limiter import api_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.intervention import (
     InterventionCheckRequest,
@@ -25,7 +26,11 @@ from app.services.intervention_service import (
     update_preferences,
 )
 
-router = APIRouter(prefix='/api/v1/interventions', tags=['interventions'])
+router = APIRouter(
+    prefix='/api/v1/interventions',
+    tags=['interventions'],
+    dependencies=[api_limiter],
+)
 
 
 # ---------------------------------------------------------------------------

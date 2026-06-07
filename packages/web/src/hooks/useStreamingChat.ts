@@ -5,7 +5,7 @@ import { API_BASE_URL } from '@/lib/api';
 import { consumeSSEStream } from '@/lib/sse';
 import { purifySync } from '@/lib/dompurify';
 import { generateId } from '@read-pal/shared';
-import { authFetch } from '@/lib/auth-fetch';
+import { authFetchWithRefresh } from '@/lib/auth-fetch';
 
 export interface Message {
   id: string;
@@ -67,6 +67,9 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
 
   const sendStreamMessage = useCallback(async (msg: string, retryCount = 0) => {
     const assistantMsgId = createAssistantMessage();
@@ -80,9 +83,16 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     setConnecting(true);
 
     const attemptStream = async (attempt: number): Promise<void> => {
+      if (!mountedRef.current) return;
+      // Abort any previous stream before retrying
+      abortRef.current?.abort();
+      const fetchController = new AbortController();
+      abortRef.current = fetchController;
+
       try {
-        const response = await authFetch(`${API_BASE_URL}/api/agents/chat/stream`, {
+        const response = await authFetchWithRefresh(`${API_BASE_URL}/api/agents/chat/stream`, {
           method: 'POST',
+          signal: fetchController.signal,
           body: JSON.stringify({
             book_id: bookId,
             message: msg,
@@ -92,7 +102,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
               totalPages: totalPages ?? 0,
               bookTitle: bookTitle ?? '',
               author: author ?? '',
-              chapterContent: chapterContent ? purifySync(chapterContent).slice(0, 3000) : '',
+              chapterContent: chapterContent ? purifySync(chapterContent).slice(0, 8000) : '',
               nearbyCode: extractCodeBlocks(chapterContent ?? ''),
               genres: genreMetadata,
               bookDescription,
@@ -114,11 +124,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             await new Promise((r) => setTimeout(r, delay));
             return attemptStream(attempt + 1);
           }
-          let errorMsg = t('companion_server_error', { status: response.status });
-          try {
-            const errData = (await response.json()) as { error?: { message?: string } };
-            errorMsg = errData.error?.message || errorMsg;
-          } catch { /* use default */ }
+          const errorMsg = t('companion_server_error', { status: response.status });
           onMessagesUpdate((prev) =>
             prev.map((m) =>
               m.id === assistantMsgId
@@ -134,7 +140,6 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
         setConnecting(false);
         // Throttled streaming: buffer tokens and flush to state every 80ms
         let streamBuffer = '';
-        let flushTimer: ReturnType<typeof setTimeout> | null = null;
         const flushBuffer = () => {
           if (streamBuffer) {
             const chunk = streamBuffer;
@@ -145,18 +150,18 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
               ),
             );
           }
-          flushTimer = null;
+          flushTimerRef.current = null;
         };
-        abortRef.current = consumeSSEStream(
+        consumeSSEStream(
           response,
           (tokenChunk: string) => {
             streamBuffer += tokenChunk;
-            if (!flushTimer) {
-              flushTimer = setTimeout(flushBuffer, 80);
+            if (!flushTimerRef.current) {
+              flushTimerRef.current = setTimeout(flushBuffer, 80);
             }
           },
           () => {
-            if (flushTimer) clearTimeout(flushTimer);
+            if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
             flushBuffer();
             onMessagesUpdate((prev) =>
               prev.map((m) =>
@@ -170,6 +175,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             abortRef.current = null;
           },
           (errMsg: string) => {
+            if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
             if (attempt < MAX_RETRIES) {
               const delay = Math.pow(2, attempt) * 1000;
               onMessagesUpdate((prev) =>
@@ -179,7 +185,12 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
                     : m,
                 ),
               );
-              setTimeout(() => attemptStream(attempt + 1), delay);
+              setConnecting(false);
+              retryTimerRef.current = setTimeout(() => {
+                if (!mountedRef.current) return;
+                setConnecting(true);
+                attemptStream(attempt + 1);
+              }, delay);
               return;
             }
             onMessagesUpdate((prev) =>
@@ -193,8 +204,10 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             setConnecting(false);
             abortRef.current = null;
           },
+          fetchController.signal,
         );
-      } catch {
+      } catch (err) {
+        console.warn('useStreamingChat: connection error (attempt %d)', attempt, err);
         if (attempt < MAX_RETRIES) {
           const delay = Math.pow(2, attempt) * 1000;
           onMessagesUpdate((prev) =>
@@ -238,6 +251,8 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
   ]);
 
   const stopStreaming = useCallback(() => {
+    if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
+    if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
     abortRef.current?.abort();
     abortRef.current = null;
     onMessagesUpdate((prev) => prev.map((m) => (m.streaming ? { ...m, streaming: false } : m)));
@@ -245,9 +260,13 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     setConnecting(false);
   }, [onMessagesUpdate]);
 
-  // Abort stream on unmount
+  // Abort stream and clear timer on unmount
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       abortRef.current?.abort();
     };
   }, []);

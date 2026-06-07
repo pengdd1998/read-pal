@@ -5,9 +5,10 @@ Returns None if ebooklib is not installed, triggering the zipfile fallback.
 
 import base64
 import logging
+import re
 from pathlib import Path
 
-from app.services.epub_parser.constants import IMAGE_MIME_MAP, MAX_IMAGE_SIZE, NS_DC
+from app.services.epub_parser.constants import IMAGE_MIME_MAP, MAX_IMAGE_SIZE, NS_DC, OUTER_DOC_WRAPPER
 from app.services.epub_parser.css import sanitize_epub_css
 from app.services.epub_parser.footnotes import annotate_footnotes
 from app.services.epub_parser.html_helpers import count_images, extract_html_title
@@ -22,6 +23,7 @@ def process_epub_ebooklib(file_path: str) -> dict | None:
         import ebooklib
         from ebooklib import epub
     except ImportError:
+        logger.debug('epub.ebooklib_not_available')
         return None
 
     book = epub.read_epub(file_path)
@@ -122,6 +124,59 @@ def _extract_css(book) -> str:
         return ''
 
 
+def _ordered_spine_items(book) -> list:
+    """Return document items in spine order, or all documents if no spine."""
+    import ebooklib
+
+    items_by_id: dict[str, object] = {}
+    for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+        items_by_id[item.get_id()] = item
+
+    spine_ids = [s[0] for s in book.spine] if book.spine else []
+    if spine_ids:
+        ordered = [items_by_id[sid] for sid in spine_ids if sid in items_by_id]
+        if ordered:
+            return ordered
+    return list(items_by_id.values())
+
+
+def _process_chapter_item(
+    item,
+    toc_map: dict[str, tuple[str, int]],
+    image_map: dict[str, str],
+    css_str: str,
+    order: int,
+) -> tuple[dict | None, str | None]:
+    """Process a single document item into a chapter dict + text.
+
+    Returns (chapter_dict, text) or (None, None) if empty.
+    """
+    from app.services.text_helpers import html_to_structured_text
+
+    content_bytes = item.get_content()
+    raw_html = content_bytes.decode('utf-8', errors='replace') if content_bytes else ''
+    item_name = item.get_name()
+
+    enriched_html = _enrich_html(raw_html, item_name, image_map, css_str)
+    text = html_to_structured_text(enriched_html)
+    if not text.strip():
+        return None, None
+
+    title = _resolve_chapter_title(item_name, raw_html, toc_map)
+    chapter = {
+        'id': item.get_id(),
+        'title': title,
+        'content': text,
+        'rawContent': enriched_html,
+        'startIndex': 0,
+        'endIndex': len(text),
+        'order': order,
+        'images': count_images(enriched_html),
+        'wordCount': len(text.split()),
+    }
+    return chapter, text
+
+
 def _build_chapters(
     book,
     toc_map: dict[str, tuple[str, int]],
@@ -129,55 +184,43 @@ def _build_chapters(
     css_str: str,
 ) -> tuple[list[dict], list[str]]:
     """Build spine-ordered chapter list from ebooklib book."""
-    import ebooklib
-
-    from app.services.text_helpers import html_to_structured_text
-
-    spine_ids = [s[0] for s in book.spine] if book.spine else []
-    items_by_id: dict[str, object] = {}
-    for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
-        items_by_id[item.get_id()] = item
-
-    ordered_items = []
-    if spine_ids:
-        for sid in spine_ids:
-            if sid in items_by_id:
-                ordered_items.append(items_by_id[sid])
-    if not ordered_items:
-        ordered_items = list(items_by_id.values())
+    ordered_items = _ordered_spine_items(book)
 
     chapters: list[dict] = []
     full_text_parts: list[str] = []
     order = 0
 
     for item in ordered_items:
-        content_bytes = item.get_content()
-        raw_html = content_bytes.decode('utf-8', errors='replace') if content_bytes else ''
-        item_name = item.get_name()
-
-        enriched_html = _enrich_html(raw_html, item_name, image_map, css_str)
-
-        text = html_to_structured_text(enriched_html)
-        if not text.strip():
+        chapter, text = _process_chapter_item(item, toc_map, image_map, css_str, order)
+        if chapter is None:
             continue
-
+        chapters.append(chapter)
         full_text_parts.append(text)
-        title = _resolve_chapter_title(item_name, raw_html, toc_map)
-
-        chapters.append({
-            'id': item.get_id(),
-            'title': title,
-            'content': text,
-            'rawContent': enriched_html,
-            'startIndex': 0,
-            'endIndex': len(text),
-            'order': order,
-            'images': count_images(enriched_html),
-            'wordCount': len(text.split()),
-        })
         order += 1
 
     return chapters, full_text_parts
+
+
+_DANGEROUS_TAG_RE = re.compile(
+    r'<\s*/?\s*(script|iframe|object|embed|applet|form|input|button|textarea|select|option|meta|link|base|svg|math|noscript|template)\b[^>]*>',
+    re.IGNORECASE,
+)
+_EVENT_HANDLER_RE = re.compile(
+    r'\bon\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)',
+    re.IGNORECASE,
+)
+_DANGEROUS_URL_RE = re.compile(
+    r'(href|src|xlink:href)\s*=\s*["\']?\s*(javascript|vbscript|data)\s*:[^"\'">\s]*',
+    re.IGNORECASE,
+)
+
+
+def _strip_dangerous_html(html: str) -> str:
+    """Remove script tags, event handlers, and dangerous URLs from HTML."""
+    html = _DANGEROUS_TAG_RE.sub('', html)
+    html = _EVENT_HANDLER_RE.sub('', html)
+    html = _DANGEROUS_URL_RE.sub(r'\1=""', html)
+    return html
 
 
 def _enrich_html(
@@ -187,18 +230,30 @@ def _enrich_html(
     css_str: str,
 ) -> str:
     """Rewrite images, annotate footnotes, and prepend CSS to HTML."""
+    # Strip outer document wrapper (<?xml>, <!DOCTYPE>, <html><head>...<body>)
+    html = _strip_outer_wrapper(raw_html)
+
     try:
-        enriched = rewrite_image_sources(raw_html, image_map, item_name)
-    except Exception:
+        enriched = rewrite_image_sources(html, image_map, item_name)
+    except Exception as exc:
         logger.debug('Image source rewrite failed for %s', item_name, exc_info=True)
-        enriched = raw_html
+        enriched = html
 
     enriched = annotate_footnotes(enriched)
+    enriched = _strip_dangerous_html(enriched)
 
     if css_str:
         enriched = f'<style>{css_str}</style>\n{enriched}'
 
     return enriched
+
+
+def _strip_outer_wrapper(html: str) -> str:
+    """Strip <?xml?>, <!DOCTYPE>, <html><head>...</head><body> wrappers."""
+    m = OUTER_DOC_WRAPPER.match(html)
+    if m:
+        return m.group(1).strip()
+    return html
 
 
 def _resolve_chapter_title(
@@ -227,5 +282,5 @@ def _extract_cover(book) -> str | None:
                     b64 = base64.b64encode(data).decode('ascii')
                     return f'data:{mime};base64,{b64}'
     except Exception as exc:
-        logger.warning('epub_parser.image_embedding_failed', error=str(exc)[:200])
+        logger.warning('epub_parser.image_embedding_failed: %s', str(exc)[:200])
     return None

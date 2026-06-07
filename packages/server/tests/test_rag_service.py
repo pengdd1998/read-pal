@@ -340,6 +340,7 @@ class TestGetBookContext:
         with (
             patch('app.services.rag.context.get_redis') as mock_redis,
             patch('app.services.rag.context._semantic_chapter_search', return_value=[]),
+            patch('app.services.rag.context._keyword_chunk_search', return_value=[]),
             patch('app.services.rag.context._get_chapters', return_value=[
                 {'title': 'ML Basics', 'content': 'Machine learning fundamentals and algorithms'},
             ]),

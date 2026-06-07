@@ -256,25 +256,18 @@ async def get_concepts(
     return concepts
 
 
-async def get_all_cached_graphs(
+async def _load_user_book_annotations(
     db: AsyncSession,
     user_id: UUID,
-) -> dict[str, list[dict]]:
-    """Load all cached knowledge graphs for a user (no LLM calls).
-
-    Returns ``{'nodes': [...], 'edges': [...]}`` merged from every book.
-    """
+    book_ids: list[UUID],
+) -> dict[UUID, list]:
+    """Load all annotations for a user's books and group by book_id."""
     from sqlalchemy import select as sa_select
     from app.models.annotation import Annotation
-    from app.models.book import Book
 
-    # Get all book IDs for user
-    rows = await db.execute(
-        sa_select(Book.id).where(Book.user_id == user_id),
-    )
-    book_ids = [row[0] for row in rows.all()]
+    if not book_ids:
+        return {}
 
-    # Batch-load all annotations
     all_annotations = list((await db.execute(
         sa_select(Annotation)
         .where(
@@ -284,11 +277,18 @@ async def get_all_cached_graphs(
         .order_by(Annotation.created_at),
     )).scalars().all())
 
-    # Group by book
     ann_by_book: dict[UUID, list] = {}
     for ann in all_annotations:
         ann_by_book.setdefault(ann.book_id, []).append(ann)
+    return ann_by_book
 
+
+async def _merge_cached_graphs_for_books(
+    user_id: UUID,
+    book_ids: list[UUID],
+    ann_by_book: dict[UUID, list],
+) -> dict[str, list[dict]]:
+    """Load cached graphs per book and merge nodes/edges into flat lists."""
     all_nodes: list[dict] = []
     all_edges: list[dict] = []
 
@@ -303,8 +303,28 @@ async def get_all_cached_graphs(
                     all_nodes.append(node.model_dump(by_alias=True, mode='json'))
                 for edge in cached.edges:
                     all_edges.append(edge.model_dump(by_alias=True, mode='json'))
-        except Exception:
+        except Exception as exc:
             logger.warning('Failed to load cached graph for book %s', bid, exc_info=True)
             continue
 
     return {'nodes': all_nodes, 'edges': all_edges}
+
+
+async def get_all_cached_graphs(
+    db: AsyncSession,
+    user_id: UUID,
+) -> dict[str, list[dict]]:
+    """Load all cached knowledge graphs for a user (no LLM calls).
+
+    Returns ``{'nodes': [...], 'edges': [...]}`` merged from every book.
+    """
+    from sqlalchemy import select as sa_select
+    from app.models.book import Book
+
+    rows = await db.execute(
+        sa_select(Book.id).where(Book.user_id == user_id),
+    )
+    book_ids = [row[0] for row in rows.all()]
+
+    ann_by_book = await _load_user_book_annotations(db, user_id, book_ids)
+    return await _merge_cached_graphs_for_books(user_id, book_ids, ann_by_book)

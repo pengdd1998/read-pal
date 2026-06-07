@@ -630,8 +630,15 @@ async def test_list_decks_multiple_books():
 # ---------------------------------------------------------------------------
 
 
+def _no_existing_cards_result():
+    """Mock DB result for the flashcard dedup check (no existing cards)."""
+    r = MagicMock()
+    r.scalar_one_or_none.return_value = None
+    return r
+
+
 @pytest.mark.asyncio
-@patch('app.services.flashcard_service.safe_llm_call')
+@patch('app.services.flashcard.generation.safe_llm_call')
 async def test_generate_flashcards_success(mock_llm):
     db = _make_db_session()
     user_id = uuid4()
@@ -661,7 +668,10 @@ async def test_generate_flashcards_success(mock_llm):
     scalars_mock.all.return_value = [ann1, ann2]
     ann_result.scalars.return_value = scalars_mock
 
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    # Mock dedup check (no existing cards), book query, annotation query
+    dedup_result = MagicMock()
+    dedup_result.scalar_one_or_none.return_value = None
+    db.execute = AsyncMock(side_effect=[dedup_result, book_result, ann_result])
 
     # Mock LLM response
     mock_llm.return_value = json.dumps([
@@ -711,14 +721,14 @@ async def test_generate_flashcards_no_annotations():
     ann_result = MagicMock()
     ann_result.scalars.return_value.all.return_value = []
 
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    db.execute = AsyncMock(side_effect=[_no_existing_cards_result(), book_result, ann_result])
 
     with pytest.raises(ValueError, match='No highlights or notes found'):
         await flashcard_service.generate_flashcards(db, user_id, book_id)
 
 
 @pytest.mark.asyncio
-@patch('app.services.flashcard_service.safe_llm_call')
+@patch('app.services.flashcard.generation.safe_llm_call')
 async def test_generate_flashcards_llm_returns_invalid_json(mock_llm):
     db = _make_db_session()
     user_id = uuid4()
@@ -739,7 +749,7 @@ async def test_generate_flashcards_llm_returns_invalid_json(mock_llm):
     ann_result = MagicMock()
     ann_result.scalars.return_value.all.return_value = [ann]
 
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    db.execute = AsyncMock(side_effect=[_no_existing_cards_result(), book_result, ann_result])
     mock_llm.return_value = 'not valid json'
 
     db.flush = AsyncMock()
@@ -751,7 +761,7 @@ async def test_generate_flashcards_llm_returns_invalid_json(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch('app.services.flashcard_service.safe_llm_call')
+@patch('app.services.flashcard.generation.safe_llm_call')
 async def test_generate_flashcards_skips_empty_qa(mock_llm):
     db = _make_db_session()
     user_id = uuid4()
@@ -772,7 +782,7 @@ async def test_generate_flashcards_skips_empty_qa(mock_llm):
     ann_result = MagicMock()
     ann_result.scalars.return_value.all.return_value = [ann]
 
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    db.execute = AsyncMock(side_effect=[_no_existing_cards_result(), book_result, ann_result])
 
     # One valid, one with empty question, one with empty answer
     mock_llm.return_value = json.dumps([
@@ -791,7 +801,7 @@ async def test_generate_flashcards_skips_empty_qa(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch('app.services.flashcard_service.safe_llm_call')
+@patch('app.services.flashcard.generation.safe_llm_call')
 async def test_generate_flashcards_count_clamped_to_max_10(mock_llm):
     db = _make_db_session()
     user_id = uuid4()
@@ -811,7 +821,7 @@ async def test_generate_flashcards_count_clamped_to_max_10(mock_llm):
 
     ann_result = MagicMock()
     ann_result.scalars.return_value.all.return_value = [ann]
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    db.execute = AsyncMock(side_effect=[_no_existing_cards_result(), book_result, ann_result])
 
     mock_llm.return_value = '[]'
     db.flush = AsyncMock()
@@ -828,7 +838,7 @@ async def test_generate_flashcards_count_clamped_to_max_10(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch('app.services.flashcard_service.safe_llm_call')
+@patch('app.services.flashcard.generation.safe_llm_call')
 async def test_generate_flashcards_count_clamped_to_min_1(mock_llm):
     db = _make_db_session()
     user_id = uuid4()
@@ -848,7 +858,7 @@ async def test_generate_flashcards_count_clamped_to_min_1(mock_llm):
 
     ann_result = MagicMock()
     ann_result.scalars.return_value.all.return_value = [ann]
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    db.execute = AsyncMock(side_effect=[_no_existing_cards_result(), book_result, ann_result])
 
     mock_llm.return_value = '[]'
     db.flush = AsyncMock()
@@ -864,7 +874,7 @@ async def test_generate_flashcards_count_clamped_to_min_1(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch('app.services.flashcard_service.safe_llm_call')
+@patch('app.services.flashcard.generation.safe_llm_call')
 async def test_generate_flashcards_truncates_long_qa(mock_llm):
     db = _make_db_session()
     user_id = uuid4()
@@ -884,7 +894,7 @@ async def test_generate_flashcards_truncates_long_qa(mock_llm):
 
     ann_result = MagicMock()
     ann_result.scalars.return_value.all.return_value = [ann]
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    db.execute = AsyncMock(side_effect=[_no_existing_cards_result(), book_result, ann_result])
 
     long_question = 'Q' * 3000
     long_answer = 'A' * 6000
@@ -903,7 +913,7 @@ async def test_generate_flashcards_truncates_long_qa(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch('app.services.flashcard_service.safe_llm_call')
+@patch('app.services.flashcard.generation.safe_llm_call')
 async def test_generate_flashcards_llm_returns_none(mock_llm):
     db = _make_db_session()
     user_id = uuid4()
@@ -923,7 +933,7 @@ async def test_generate_flashcards_llm_returns_none(mock_llm):
 
     ann_result = MagicMock()
     ann_result.scalars.return_value.all.return_value = [ann]
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    db.execute = AsyncMock(side_effect=[_no_existing_cards_result(), book_result, ann_result])
 
     mock_llm.return_value = None
 
@@ -936,7 +946,7 @@ async def test_generate_flashcards_llm_returns_none(mock_llm):
 
 
 @pytest.mark.asyncio
-@patch('app.services.flashcard_service.safe_llm_call')
+@patch('app.services.flashcard.generation.safe_llm_call')
 async def test_generate_flashcards_llm_returns_non_list(mock_llm):
     db = _make_db_session()
     user_id = uuid4()
@@ -956,7 +966,7 @@ async def test_generate_flashcards_llm_returns_non_list(mock_llm):
 
     ann_result = MagicMock()
     ann_result.scalars.return_value.all.return_value = [ann]
-    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    db.execute = AsyncMock(side_effect=[_no_existing_cards_result(), book_result, ann_result])
 
     # Return a dict instead of a list
     mock_llm.return_value = json.dumps({'error': 'something'})

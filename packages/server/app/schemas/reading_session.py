@@ -59,9 +59,19 @@ class SessionListResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
 
+class SessionStatsData(BaseModel):
+    total_sessions: int = Field(validation_alias='totalSessions', serialization_alias='totalSessions')
+    total_duration: int = Field(validation_alias='totalDuration', serialization_alias='totalDuration')
+    total_pages_read: int = Field(validation_alias='totalPagesRead', serialization_alias='totalPagesRead')
+    total_highlights: int = Field(validation_alias='totalHighlights', serialization_alias='totalHighlights')
+    total_notes: int = Field(validation_alias='totalNotes', serialization_alias='totalNotes')
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class SessionStatsResponse(BaseModel):
     success: bool = True
-    data: dict  # {total_sessions, total_duration, total_pages_read, ...}
+    data: SessionStatsData
 
 
 class SessionStartRequest(BaseModel):

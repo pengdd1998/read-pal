@@ -76,8 +76,8 @@ async def _load_cached_graph(
             return None
 
         return GraphData.model_validate_json(cached_graph)
-    except Exception:
-        logger.debug('knowledge.cache_read_failed')
+    except Exception as exc:
+        logger.warning('knowledge.cache_read_failed', exc=str(exc)[:200])
         return None
 
 
@@ -97,5 +97,5 @@ async def _persist_graph(
         pipe.setex(cache_key, _knowledge_cache_ttl(), graph_data.model_dump_json())
         pipe.setex(hash_key, _knowledge_cache_ttl(), content_hash)
         await pipe.execute()
-    except Exception:
-        logger.debug('knowledge.cache_write_failed')
+    except Exception as exc:
+        logger.warning('knowledge.cache_write_failed', exc=str(exc)[:200])

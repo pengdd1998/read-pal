@@ -20,7 +20,7 @@ const DEFAULT_LABELS: RelativeTimeLabels = {
  * Format a date string as a relative time (e.g., "5m ago", "2d ago").
  * Falls back to "MMM DD" for dates older than 7 days.
  */
-export function formatRelativeTime(dateStr: string, labels?: RelativeTimeLabels): string {
+export function formatRelativeTime(dateStr: string, labels?: RelativeTimeLabels, locale?: string): string {
   const l = labels ?? DEFAULT_LABELS;
   try {
     const date = new Date(dateStr);
@@ -33,7 +33,7 @@ export function formatRelativeTime(dateStr: string, labels?: RelativeTimeLabels)
     if (diffHr < 24) return l.hours_ago.replace('%n', String(diffHr));
     const diffDay = Math.floor(diffHr / 24);
     if (diffDay < 7) return l.days_ago.replace('%n', String(diffDay));
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(locale || undefined, { month: 'short', day: 'numeric' });
   } catch {
     return dateStr;
   }

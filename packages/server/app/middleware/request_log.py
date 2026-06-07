@@ -30,6 +30,7 @@ def _extract_user_id_from_jwt(token: str) -> str | None:
         payload = json.loads(base64.urlsafe_b64decode(payload_b64))
         return str(payload.get('sub') or payload.get('userId') or '') or None
     except Exception:
+        logger.debug('jwt.extract_failed', error=True)
         return None
 
 _SKIP_PATHS = frozenset({
@@ -69,6 +70,14 @@ class RequestLogMiddleware:
             nonlocal status_code
             if message['type'] == 'http.response.start':
                 status_code = message.get('status', 500)
+                # Attach request ID and rate-limit headers to response
+                headers = dict(message.get('headers', []))
+                headers[b'x-request-id'] = request_id.encode()
+                rl_headers = scope.get('state', {}).get('rate_limit_headers')
+                if rl_headers:
+                    for k, v in rl_headers.items():
+                        headers[k.lower().encode()] = v.encode()
+                message['headers'] = list(headers.items())
             await send(message)
 
         try:

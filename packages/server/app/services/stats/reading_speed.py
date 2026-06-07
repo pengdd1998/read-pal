@@ -9,35 +9,32 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.book import Book
 from app.models.reading_session import ReadingSession
 
+# Minimum session duration (seconds) for speed calculation
+# Sessions shorter than this produce unreliable speed estimates
+_MIN_DURATION_SECS = 30
 
-async def get_reading_speed(
+
+def _format_speed_over_time(
+    speed_rows: list[tuple],
+) -> list[dict]:
+    """Convert raw speed-by-day rows into response dicts."""
+    result: list[dict] = []
+    for row in speed_rows:
+        day_val = row[0]
+        result.append({
+            'date': day_val.isoformat() if isinstance(day_val, date) else str(day_val),
+            'pagesPerHour': round(float(row[1]), 2) if row[1] else 0,
+        })
+    return result
+
+
+async def _query_daily_speed(
     db: AsyncSession,
     uid: UUID,
-) -> dict:
-    """Return reading speed stats aggregated from sessions."""
-    # Overall average pages per hour
-    # Only consider sessions with positive duration
-    avg_pph_row = await db.execute(
-        select(
-            func.avg(
-                ReadingSession.pages_read
-                * 3600.0
-                / func.nullif(ReadingSession.duration, 0)
-            )
-        ).where(
-            and_(
-                ReadingSession.user_id == uid,
-                ReadingSession.duration > 0,
-            )
-        )
-    )
-    avg_pph = avg_pph_row.scalar() or 0
-    avg_pph = float(avg_pph)
-    avg_wpm = avg_pph * 250.0 / 60.0
-
-    # Speed over time (by day)
+) -> list[tuple]:
+    """Query average reading speed grouped by day."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    speed_rows = await db.execute(
+    result = await db.execute(
         select(
             day_col,
             func.avg(
@@ -49,20 +46,41 @@ async def get_reading_speed(
         .where(
             and_(
                 ReadingSession.user_id == uid,
-                ReadingSession.duration > 0,
+                ReadingSession.duration >= _MIN_DURATION_SECS,
             )
         )
         .group_by(day_col)
         .order_by(day_col)
     )
+    return result.all()
 
-    speed_over_time = []
-    for row in speed_rows.all():
-        day_val = row[0]
-        speed_over_time.append({
-            'date': day_val.isoformat() if isinstance(day_val, date) else str(day_val),
-            'pagesPerHour': round(float(row[1]), 2) if row[1] else 0,
-        })
+
+async def get_reading_speed(
+    db: AsyncSession,
+    uid: UUID,
+) -> dict:
+    """Return reading speed stats aggregated from sessions."""
+    # Overall average pages per hour
+    # Only consider sessions with meaningful duration
+    avg_pph_row = await db.execute(
+        select(
+            func.avg(
+                ReadingSession.pages_read
+                * 3600.0
+                / func.nullif(ReadingSession.duration, 0)
+            )
+        ).where(
+            and_(
+                ReadingSession.user_id == uid,
+                ReadingSession.duration >= _MIN_DURATION_SECS,
+            )
+        )
+    )
+    avg_pph = float(avg_pph_row.scalar() or 0)
+    avg_wpm = avg_pph * 250.0 / 60.0
+
+    speed_rows = await _query_daily_speed(db, uid)
+    speed_over_time = _format_speed_over_time(speed_rows)
 
     return {
         'averagePagesPerHour': round(avg_pph, 2),
@@ -96,7 +114,12 @@ async def get_reading_speed_by_book(
             ).label('avg_pph'),
         )
         .join(Book, Book.id == ReadingSession.book_id)
-        .where(ReadingSession.user_id == uid)
+        .where(
+            and_(
+                ReadingSession.user_id == uid,
+                ReadingSession.duration >= _MIN_DURATION_SECS,
+            )
+        )
         .group_by(ReadingSession.book_id, Book.title, Book.author)
     )
 

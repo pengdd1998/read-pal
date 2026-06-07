@@ -21,6 +21,7 @@ def parse_epub_container(zf: zipfile.ZipFile) -> str | None:
     try:
         xml_bytes = zf.read('META-INF/container.xml')
     except KeyError:
+        logger.debug('epub.no_container_xml')
         return _scan_for_opf(zf)
 
     try:
@@ -180,16 +181,16 @@ def parse_ncx(ncx_xml: str) -> list[tuple[str, str, int]]:
                 tag = tag.split('}', 1)[1]
             if tag != 'navPoint':
                 continue
-            title_el = el.find(f'{{{_NS_NCX}}}navLabel/{{{_NS_NCX}}}text')
+            title_el = el.find(f'{{{NS_NCX}}}navLabel/{{{NS_NCX}}}text')
             title = (title_el.text or '').strip() if title_el is not None else ''
-            content_el = el.find(f'{{{_NS_NCX}}}content')
+            content_el = el.find(f'{{{NS_NCX}}}content')
             src = content_el.get('src', '') if content_el is not None else ''
             src = src.split('#')[0]
             if title:
                 results.append((title, src, level))
             _walk_navpoints(el, level + 1)
 
-    nav_map = root.find(f'{{{_NS_NCX}}}navMap')
+    nav_map = root.find(f'{{{NS_NCX}}}navMap')
     if nav_map is None:
         for el in root:
             tag = el.tag.split('}', 1)[-1] if '}' in el.tag else el.tag
@@ -236,7 +237,7 @@ def _find_toc_nav(root: ET.Element) -> ET.Element | None:
         tag = nav.tag.split('}', 1)[-1] if '}' in nav.tag else nav.tag
         if tag != 'nav':
             continue
-        epub_type = nav.get(f'{{{_NS_EPUB}}}type', nav.get('type', ''))
+        epub_type = nav.get(f'{{{NS_EPUB}}}type', nav.get('type', ''))
         if epub_type == 'toc':
             return nav
     # Fallback: first <nav> element

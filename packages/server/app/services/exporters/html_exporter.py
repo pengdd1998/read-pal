@@ -8,55 +8,77 @@ from app.models.annotation import Annotation, AnnotationType
 from app.utils.annotations import match_annotation_type
 
 
+def _group_by_type(annotations: list[Annotation]) -> tuple[list[Annotation], list[Annotation], list[Annotation]]:
+    """Split annotations into highlights, notes, and bookmarks."""
+    highlights = [a for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)]
+    notes = [a for a in annotations if match_annotation_type(a.type, AnnotationType.note)]
+    bookmarks = [a for a in annotations if match_annotation_type(a.type, AnnotationType.bookmark)]
+    return highlights, notes, bookmarks
+
+
+def _md_header(book_info: dict[str, Any]) -> list[str]:
+    """Build the Markdown header lines."""
+    return [
+        f'# {book_info.get("title", "Unknown")}',
+        f'**Author:** {book_info.get("author", "Unknown")}',
+        f'**Progress:** {book_info.get("progress", 0)}%',
+        '',
+        '---',
+        '',
+    ]
+
+
+def _md_highlights(highlights: list[Annotation]) -> list[str]:
+    """Render highlights as Markdown blockquotes."""
+    if not highlights:
+        return []
+    lines = ['## Highlights', '']
+    for h in highlights:
+        lines.append(f'> {h.content}')
+        if h.note:
+            lines.append(f'> *Note: {h.note}*')
+        if h.tags:
+            lines.append(f'> *Tags: {", ".join(h.tags)}*')
+        lines.append('')
+    return lines
+
+
+def _md_notes(notes: list[Annotation]) -> list[str]:
+    """Render notes as Markdown sections."""
+    if not notes:
+        return []
+    lines = ['## Notes', '']
+    for n in notes:
+        lines.append(f'### {n.content}')
+        if n.note:
+            lines.append(n.note)
+        lines.append('')
+    return lines
+
+
+def _md_bookmarks(bookmarks: list[Annotation]) -> list[str]:
+    """Render bookmarks as Markdown list."""
+    if not bookmarks:
+        return []
+    lines = ['## Bookmarks', '']
+    for b in bookmarks:
+        lines.append(f'- {b.content}')
+        lines.append('')
+    return lines
+
+
 def export_markdown(
     annotations: list[Annotation],
     book_info: dict[str, Any],
 ) -> str:
     """Convert annotations to Markdown."""
-    title = book_info.get('title', 'Unknown')
-    author = book_info.get('author', 'Unknown')
-    progress = book_info.get('progress', 0)
-
-    lines: list[str] = []
-    lines.append(f'# {title}')
-    lines.append(f'**Author:** {author}')
-    lines.append(f'**Progress:** {progress}%')
-    lines.append('')
-    lines.append('---')
-    lines.append('')
-
-    highlights = [a for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)]
-    notes = [a for a in annotations if match_annotation_type(a.type, AnnotationType.note)]
-    bookmarks = [a for a in annotations if match_annotation_type(a.type, AnnotationType.bookmark)]
-
-    if highlights:
-        lines.append('## Highlights')
-        lines.append('')
-        for h in highlights:
-            lines.append(f'> {h.content}')
-            if h.note:
-                lines.append(f'> *Note: {h.note}*')
-            if h.tags:
-                tag_str = ', '.join(h.tags)
-                lines.append(f'> *Tags: {tag_str}*')
-            lines.append('')
-
-    if notes:
-        lines.append('## Notes')
-        lines.append('')
-        for n in notes:
-            lines.append(f'### {n.content}')
-            if n.note:
-                lines.append(n.note)
-            lines.append('')
-
-    if bookmarks:
-        lines.append('## Bookmarks')
-        lines.append('')
-        for b in bookmarks:
-            lines.append(f'- {b.content}')
-            lines.append('')
-
+    highlights, notes, bookmarks = _group_by_type(annotations)
+    lines = (
+        _md_header(book_info)
+        + _md_highlights(highlights)
+        + _md_notes(notes)
+        + _md_bookmarks(bookmarks)
+    )
     return '\n'.join(lines)
 
 
@@ -70,21 +92,9 @@ def _escape_html(text: str) -> str:
     )
 
 
-def export_html(
-    annotations: list[Annotation],
-    book_info: dict[str, Any],
-) -> str:
-    """Convert annotations to styled HTML."""
-    title = book_info.get('title', 'Unknown')
-    author = book_info.get('author', 'Unknown')
-    progress = book_info.get('progress', 0)
-
-    highlights = [a for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)]
-    notes = [a for a in annotations if match_annotation_type(a.type, AnnotationType.note)]
-    bookmarks = [a for a in annotations if match_annotation_type(a.type, AnnotationType.bookmark)]
-
+def _render_highlights(highlights: list[Annotation]) -> list[str]:
+    """Render highlight annotations as HTML blockquotes."""
     sections: list[str] = []
-
     for h in highlights:
         tags_html = ''
         if h.tags:
@@ -103,7 +113,12 @@ def export_html(
             + f'<div class="tags">{tags_html}</div>'
             + '</blockquote>'
         )
+    return sections
 
+
+def _render_notes(notes: list[Annotation]) -> list[str]:
+    """Render note annotations as HTML divs."""
+    sections: list[str] = []
     for n in notes:
         escaped_content = _escape_html(n.content)
         escaped_note = _escape_html(n.note or '')
@@ -113,33 +128,62 @@ def export_html(
             + f'<p>{escaped_note}</p>'
             + '</div>'
         )
+    return sections
 
+
+def _render_bookmarks(bookmarks: list[Annotation]) -> list[str]:
+    """Render bookmark annotations as HTML divs."""
+    sections: list[str] = []
     for b in bookmarks:
         escaped_content = _escape_html(b.content)
         sections.append(f'<div class="bookmark">{escaped_content}</div>')
+    return sections
+
+
+def _group_by_type(annotations: list[Annotation]) -> tuple[list[Annotation], list[Annotation], list[Annotation]]:
+    """Split annotations into highlights, notes, and bookmarks."""
+    highlights = [a for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)]
+    notes = [a for a in annotations if match_annotation_type(a.type, AnnotationType.note)]
+    bookmarks = [a for a in annotations if match_annotation_type(a.type, AnnotationType.bookmark)]
+    return highlights, notes, bookmarks
+
+
+_HTML_STYLES = (
+    'body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:2rem;color:#333}'
+    'h1{color:#1a1a1a} h2{color:#444;border-bottom:1px solid #eee;padding-bottom:.5rem}'
+    '.highlight{border-left:3px solid #6366f1;padding:.5rem 1rem;margin:1rem 0;background:#f8f9fa}'
+    '.note{font-size:.9rem;color:#666;margin-top:.5rem}'
+    '.tag{display:inline-block;background:#e0e7ff;color:#4338ca;padding:.1rem .4rem;border-radius:4px;font-size:.8rem;margin-right:.3rem}'
+    '.note-entry{margin:1rem 0} .note-entry h3{font-size:1.1rem}'
+    '.bookmark{padding:.5rem;background:#fef3c7;border-left:3px solid #f59e0b;margin:.5rem 0}'
+)
+
+
+def export_html(
+    annotations: list[Annotation],
+    book_info: dict[str, Any],
+) -> str:
+    """Convert annotations to styled HTML."""
+    title = book_info.get('title', 'Unknown')
+    author = book_info.get('author', 'Unknown')
+    progress = book_info.get('progress', 0)
+
+    highlights, notes, bookmarks = _group_by_type(annotations)
+    sections = _render_highlights(highlights) + _render_notes(notes) + _render_bookmarks(bookmarks)
 
     safe_title = _escape_html(title)
     safe_author = _escape_html(author)
-    sections_html = ''.join(sections)
 
     return (
         '<!DOCTYPE html>'
         '<html lang="en"><head>'
         '<meta charset="utf-8">'
         f'<title>{safe_title} — Annotations</title>'
-        '<style>'
-        'body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:2rem;color:#333}'
-        'h1{color:#1a1a1a} h2{color:#444;border-bottom:1px solid #eee;padding-bottom:.5rem}'
-        '.highlight{border-left:3px solid #6366f1;padding:.5rem 1rem;margin:1rem 0;background:#f8f9fa}'
-        '.note{font-size:.9rem;color:#666;margin-top:.5rem}'
-        '.tag{display:inline-block;background:#e0e7ff;color:#4338ca;padding:.1rem .4rem;border-radius:4px;font-size:.8rem;margin-right:.3rem}'
-        '.note-entry{margin:1rem 0} .note-entry h3{font-size:1.1rem}'
-        '.bookmark{padding:.5rem;background:#fef3c7;border-left:3px solid #f59e0b;margin:.5rem 0}'
-        '</style></head><body>'
+        f'<style>{_HTML_STYLES}</style></head><body>'
         f'<h1>{safe_title}</h1>'
         f'<p><strong>Author:</strong> {safe_author} &mdash; '
         f'<strong>Progress:</strong> {progress}%</p>'
         '<hr>'
-        + sections_html
+        + ''.join(sections)
         + '</body></html>'
     )

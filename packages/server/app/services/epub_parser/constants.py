@@ -61,3 +61,15 @@ FOOTNOTE_REF_RE = re.compile(
     r'(<a\s[^>]*href\s*=\s*["\']#(?:fn|footnote|note|endnote)[^"\']*["\'])',
     re.IGNORECASE,
 )
+
+# Outer document wrapper patterns to strip from chapter HTML
+OUTER_DOC_PROLOGUE = re.compile(
+    r'^\s*(?:<\?xml[^?]*\?>\s*)?(?:<!DOCTYPE[^>]*>\s*)?',
+    re.IGNORECASE,
+)
+OUTER_DOC_WRAPPER = re.compile(
+    r'^\s*(?:<\?xml[^?]*\?>\s*)?(?:<!DOCTYPE[^>]*>\s*)?'
+    r'<html[^>]*>\s*(?:<head[^>]*>.*?</head>\s*)?'
+    r'<body[^>]*>(.*)</body>\s*</html>\s*$',
+    re.IGNORECASE | re.DOTALL,
+)

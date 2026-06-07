@@ -5,6 +5,8 @@ from typing import Any
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
+CHAPTER_CONTENT_MAX = 10_000
+
 
 class StudyObjectivesRequest(BaseModel):
     """Request body for generating study objectives."""
@@ -22,6 +24,7 @@ class StudyObjectivesRequest(BaseModel):
     )
     chapter_content: str | None = Field(
         None, validation_alias=AliasChoices('chapter_content', 'chapterContent'),
+        max_length=CHAPTER_CONTENT_MAX,
     )
 
 
@@ -41,6 +44,7 @@ class ConceptCheckRequest(BaseModel):
     )
     chapter_content: str | None = Field(
         None, validation_alias=AliasChoices('chapter_content', 'chapterContent'),
+        max_length=CHAPTER_CONTENT_MAX,
     )
 
 

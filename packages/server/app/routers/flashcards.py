@@ -12,8 +12,9 @@ from app.schemas.flashcard import FlashcardCreate, FlashcardGenerateRequest, Fla
 from app.schemas.common import GenericResponse
 from app.services import flashcard_service
 from app.utils.i18n import _get_user_lang, t, translate_error
+from app.middleware.rate_limiter import api_limiter
 
-router = APIRouter(prefix='/api/v1/flashcards', tags=['flashcards'])
+router = APIRouter(prefix='/api/v1/flashcards', tags=['flashcards'], dependencies=[api_limiter])
 
 
 def _serialize_card(card: object) -> dict:
@@ -49,12 +50,13 @@ async def list_flashcards(
 @router.get('/due', response_model=GenericResponse)
 async def get_due_cards(
     book_id: UUID | None = Query(None),
+    limit: int = Query(200, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Get flashcards due for review."""
     cards = await flashcard_service.get_due_cards(
-        db, UUID(user['id']), book_id,
+        db, UUID(user['id']), book_id, limit=limit,
     )
     return {
         'success': True,
@@ -113,21 +115,22 @@ async def list_decks(
 @router.get('/review', response_model=GenericResponse)
 async def review_alias(
     book_id: UUID | None = Query(None),
+    limit: int = Query(200, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Alias for /due — get cards due for review."""
     cards = await flashcard_service.get_due_cards(
-        db, UUID(user['id']), book_id,
+        db, UUID(user['id']), book_id, limit=limit,
     )
     return {
         'success': True,
         'data': {
             'flashcards': [_serialize_card(c) for c in cards],
             'stats': {
-                'total': len(cards),
+                'total': await flashcard_service.count_total(db, UUID(user['id'])),
                 'due': len(cards),
-                'reviewed': len(cards),
+                'reviewed': 0,
             },
         },
     }
@@ -154,7 +157,7 @@ async def generate_flashcards(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
         ) from exc
     return {
         'success': True,

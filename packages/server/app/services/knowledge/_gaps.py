@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Any
 from uuid import UUID
 
 import networkx as nx
@@ -204,6 +205,32 @@ def _deduplicate_gaps(gaps: list[KnowledgeGap], limit: int = 10) -> list[Knowled
     return unique
 
 
+async def _build_merged_graph(
+    db: AsyncSession,
+    user_id: UUID,
+    book_ids: list[UUID],
+) -> nx.Graph:
+    """Build a merged knowledge graph from cached graphs across all books."""
+    annotations_by_book = await _batch_load_annotations(db, user_id, book_ids)
+    merged = nx.Graph()
+    for bid in book_ids:
+        try:
+            annotations = annotations_by_book.get(bid, [])
+            texts = [a.content for a in annotations if a.content.strip()]
+            if not texts:
+                continue
+            current_hash = _content_hash(texts)
+            cached = await _load_cached_graph(user_id, bid, current_hash)
+            if cached is None or not cached.nodes:
+                continue
+            sub_graph = _build_sub_graph_from_cached(cached)
+            _merge_sub_graph_into(merged, sub_graph)
+        except Exception as exc:
+            logger.warning('Failed to load graph for book %s', bid, exc_info=True)
+            continue
+    return merged
+
+
 async def detect_gaps(
     db: AsyncSession,
     user_id: UUID,
@@ -222,24 +249,7 @@ async def detect_gaps(
     if not book_ids:
         return []
 
-    annotations_by_book = await _batch_load_annotations(db, user_id, book_ids)
-
-    merged = nx.Graph()
-    for bid in book_ids:
-        try:
-            annotations = annotations_by_book.get(bid, [])
-            texts = [a.content for a in annotations if a.content.strip()]
-            if not texts:
-                continue
-            current_hash = _content_hash(texts)
-            cached = await _load_cached_graph(user_id, bid, current_hash)
-            if cached is None or not cached.nodes:
-                continue
-            sub_graph = _build_sub_graph_from_cached(cached)
-            _merge_sub_graph_into(merged, sub_graph)
-        except Exception:
-            logger.warning('Failed to load graph for book %s', bid, exc_info=True)
-            continue
+    merged = await _build_merged_graph(db, user_id, book_ids)
 
     if not merged.nodes:
         return []

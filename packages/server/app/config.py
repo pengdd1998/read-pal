@@ -1,10 +1,13 @@
 import json
+import logging
 import re
 from functools import lru_cache
 from typing import Any
 
 from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger('read-pal.config')
 
 
 class ProviderConfig(BaseModel):
@@ -167,8 +170,8 @@ class Settings(BaseSettings):
             try:
                 raw: list[dict[str, Any]] = json.loads(self.llm_providers)
                 return [ProviderConfig(**p) for p in raw]
-            except (json.JSONDecodeError, Exception):
-                pass
+            except (json.JSONDecodeError, Exception) as exc:
+                logger.warning('config.provider_configs_parse_failed error=%s', str(exc)[:200])
         # Legacy single-provider fallback
         models: dict[str, str] = {'default': self.default_model}
         if self.fallback_model:
@@ -191,7 +194,7 @@ class Settings(BaseSettings):
             try:
                 return json.loads(self.llm_feature_routing)
             except json.JSONDecodeError:
-                pass
+                logger.warning('config.feature_routing_parse_failed')
         return {}
 
     @computed_field

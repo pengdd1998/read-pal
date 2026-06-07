@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { api } from '@/lib/api';
 
 export interface ChapterObjective {
@@ -33,8 +33,17 @@ export function useStudyMode(bookId: string) {
   const [checks, setChecks] = useState<ConceptCheck[]>([]);
   const [revealedAnswers, setRevealedAnswers] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [mastery, setMastery] = useState<MasteryReport | null>(null);
   const currentChapterRef = useRef(-1);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   const loadChapterStudy = useCallback(async (
     chapterIndex: number,
@@ -42,8 +51,8 @@ export function useStudyMode(bookId: string) {
     chapterContent: string,
   ) => {
     if (!enabled || chapterIndex === currentChapterRef.current) return;
-    currentChapterRef.current = chapterIndex;
     setLoading(true);
+    setError(null);
 
     try {
       // Generate objectives
@@ -51,6 +60,7 @@ export function useStudyMode(bookId: string) {
         bookId,
         chapterIndex,
         chapterTitle,
+        chapterContent,
       });
 
       const rawObj = (objRes.success && objRes.data) ? objRes.data : {};
@@ -71,8 +81,11 @@ export function useStudyMode(bookId: string) {
       const rawChecks = (checkRes.success && checkRes.data) ? checkRes.data : {};
       setChecks(Array.isArray(rawChecks) ? rawChecks : ((rawChecks as Record<string, unknown>).checks as ConceptCheck[]) ?? []);
       setRevealedAnswers(new Set());
+      // Mark chapter loaded only after both calls succeed
+      currentChapterRef.current = chapterIndex;
     } catch (err) {
-      console.warn('Failed to load study mode data:', err);
+      console.warn('Failed to load study mode data for chapter', err);
+      setError('Failed to load study data');
     } finally {
       setLoading(false);
     }
@@ -89,13 +102,17 @@ export function useStudyMode(bookId: string) {
   }, []);
 
   const saveChecks = useCallback(async (checksToSave: ConceptCheck[]) => {
+    setSaveStatus('saving');
     try {
       await api.post('/api/study-mode/save-checks', {
         bookId,
         checks: checksToSave,
       });
+      setSaveStatus('saved');
+      saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (err) {
-      console.warn('Failed to save checks:', err);
+      console.warn('Failed to save card checks:', err);
+      setSaveStatus('failed');
     }
   }, [bookId]);
 
@@ -106,17 +123,20 @@ export function useStudyMode(bookId: string) {
         setMastery(res.data);
       }
     } catch (err) {
-      console.warn('Failed to load mastery:', err);
+      console.warn('Failed to load mastery report', err);
+      setError('Failed to load mastery report');
     }
   }, [bookId]);
 
   const toggleStudyMode = useCallback(() => {
-    setEnabled((prev) => !prev);
-    if (!enabled) {
-      // Reset on disable
-      currentChapterRef.current = -1;
-    }
-  }, [enabled]);
+    setEnabled((prev) => {
+      if (prev) {
+        // Disabling — reset chapter ref so next enable gets fresh data
+        currentChapterRef.current = -1;
+      }
+      return !prev;
+    });
+  }, []);
 
   return {
     enabled,
@@ -124,6 +144,8 @@ export function useStudyMode(bookId: string) {
     checks,
     revealedAnswers,
     loading,
+    error,
+    saveStatus,
     mastery,
     toggleStudyMode,
     loadChapterStudy,

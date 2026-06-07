@@ -3,79 +3,85 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 interface BookTagEditorProps {
-  bookId: string;
-  tags: string[];
-  onTagsChange?: (id: string, tags: string[]) => void;
+ bookId: string;
+ tags: string[];
+ onTagsChange?: (id: string, tags: string[]) => void;
 }
 
 export function BookTagEditor({ bookId, tags, onTagsChange }: BookTagEditorProps) {
-  const t = useTranslations('library');
-  const [editingTags, setEditingTags] = useState(false);
-  const [tagInput, setTagInput] = useState('');
+ const t = useTranslations('library');
+ const { toast } = useToast();
+ const [editingTags, setEditingTags] = useState(false);
+ const [tagInput, setTagInput] = useState('');
 
-  const handleAddTag = useCallback(async (e: React.KeyboardEvent) => {
-    if (e.key !== 'Enter') return;
-    const tag = tagInput.trim().toLowerCase();
-    if (!tag || tags.includes(tag)) { setTagInput(''); return; }
-    const newTags = [...tags, tag];
-    try {
-      await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
-      onTagsChange?.(bookId, newTags);
-      setTagInput('');
-    } catch { /* silent */ }
-  }, [tagInput, tags, bookId, onTagsChange]);
+ const handleAddTag = useCallback(async (e: React.KeyboardEvent) => {
+ if (e.key !== 'Enter') return;
+ const tag = tagInput.trim().toLowerCase();
+ if (!tag || tags.includes(tag)) { setTagInput(''); return; }
+ const newTags = [...tags, tag];
+ try {
+  await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
+  onTagsChange?.(bookId, newTags);
+  setTagInput('');
+ } catch {
+  toast(t('tag_update_failed'), 'error');
+ }
+ }, [tagInput, tags, bookId, onTagsChange]);
 
-  const handleRemoveTag = useCallback(async (tag: string) => {
-    const newTags = tags.filter((t) => t !== tag);
-    try {
-      await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
-      onTagsChange?.(bookId, newTags);
-    } catch { /* silent */ }
-  }, [tags, bookId, onTagsChange]);
+ const handleRemoveTag = useCallback(async (tag: string) => {
+ const newTags = tags.filter((t) => t !== tag);
+ try {
+  await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
+  onTagsChange?.(bookId, newTags);
+ } catch {
+  toast(t('tag_update_failed'), 'error');
+ }
+ }, [tags, bookId, onTagsChange]);
 
-  return (
-    <div className="flex flex-wrap gap-1 mb-2">
-      {tags.map((tag) => (
-        <span
-          key={tag}
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
-        >
-          {tag}
-          {editingTags && (
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveTag(tag); }}
-              aria-label={`Remove tag ${tag}`}
-              className="ml-0.5 text-amber-400 hover:text-red-500 p-1 -m-1 min-w-[20px] min-h-[20px] flex items-center justify-center"
-            >
-              x
-            </button>
-          )}
-        </span>
-      ))}
-      {editingTags ? (
-        <input
-          type="text"
-          value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={(e) => { e.stopPropagation(); handleAddTag(e); }}
-          onBlur={() => setEditingTags(false)}
-          placeholder={t('card_tag_placeholder')}
-          aria-label={t('card_add_tag')}
-          className="px-1.5 py-0.5 text-[9px] rounded border border-gray-200 dark:border-gray-700 bg-surface-0 w-16 focus:outline-none focus:ring-1 focus:ring-amber-400"
-          autoFocus
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        />
-      ) : (
-        <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingTags(true); }}
-          aria-label={t('card_add_tag')}
-          className="px-1.5 py-0.5 rounded text-[9px] text-gray-400 dark:text-gray-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-        >
-          {t('card_plus_tag')}
-        </button>
-      )}
-    </div>
-  );
+ return (
+ <div className="flex flex-wrap gap-1 mb-2">
+  {tags.map((tag) => (
+  <span
+   key={tag}
+   className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+  >
+   {tag}
+   {editingTags && (
+   <button
+    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveTag(tag); }}
+    aria-label={`Remove tag ${tag}`}
+    className="ml-0.5 text-amber-400 hover:text-red-500 p-1 -m-1 min-w-[20px] min-h-[20px] flex items-center justify-center"
+   >
+    x
+   </button>
+   )}
+  </span>
+  ))}
+  {editingTags ? (
+  <input
+   type="text"
+   value={tagInput}
+   onChange={(e) => setTagInput(e.target.value)}
+   onKeyDown={(e) => { e.stopPropagation(); handleAddTag(e); }}
+   onBlur={() => setEditingTags(false)}
+   placeholder={t('card_tag_placeholder')}
+   aria-label={t('card_add_tag')}
+   className="px-1.5 py-0.5 text-[9px] rounded border border-surface-3 bg-surface-0 w-16 focus:outline-none focus:ring-1 focus:ring-amber-400"
+   autoFocus
+   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+  />
+  ) : (
+  <button
+   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingTags(true); }}
+   aria-label={t('card_add_tag')}
+   className="px-1.5 py-0.5 rounded text-[9px] text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+  >
+   {t('card_plus_tag')}
+  </button>
+  )}
+ </div>
+ );
 }

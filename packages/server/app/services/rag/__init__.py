@@ -17,7 +17,6 @@ from app.services.rag.chunking import _chunk_text, _split_long_paragraph
 from app.services.rag.search import (
     _keyword_chapter_search,
     _semantic_chapter_search,
-    _tokenize_query,
 )
 
 # Embedding (used by tests)
@@ -33,6 +32,7 @@ from app.services.rag._constants import (
     _get_http_client,
     _rag_cache_ttl,
     _stable_hash,
+    _tokenize_query,
     logger,
 )
 

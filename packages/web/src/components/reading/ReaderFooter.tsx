@@ -6,92 +6,91 @@ import { ChevronLeft, ChevronRight } from '@/components/icons';
 import { progressBg, progressFill, type ReaderTheme } from '@/lib/reader-theme';
 
 interface ChapterItem {
-  title: string;
+ title: string;
 }
 
 interface ReaderFooterProps {
-  currentPage: number;
-  totalPages: number;
-  currentSegment: number;
-  totalSegments: number;
-  chapters: ChapterItem[];
-  theme: ReaderTheme;
-  overallProgress: number;
-  showControls: boolean;
-  onPauseAutoHide?: () => void;
-  onResumeAutoHide?: () => void;
-  onPrevPage: () => void;
-  onNextPage: () => void;
-  chapterDropdown: React.ReactNode;
+ currentPage: number;
+ totalPages: number;
+ currentSegment: number;
+ totalSegments: number;
+ chapters: ChapterItem[];
+ theme: ReaderTheme;
+ overallProgress: number;
+ showControls: boolean;
+ onPauseAutoHide?: () => void;
+ onResumeAutoHide?: () => void;
+ onPrevPage: () => void;
+ onNextPage: () => void;
+ chapterDropdown: React.ReactNode;
 }
 
-/**
- * Bottom navigation bar for the reader.
- * Renders progress bar, prev/next buttons, and the chapter dropdown.
- */
+const FOOTER_CLASSES = {
+ light: 'border-gray-100 bg-white/90',
+ dark: 'border-gray-800/50 bg-gray-950/90',
+ sepia: 'border-amber-200/40 bg-amber-100/90',
+} as const;
+
 export function ReaderFooter({
-  currentPage,
-  totalPages,
-  theme,
-  overallProgress,
-  showControls,
-  onPauseAutoHide,
-  onResumeAutoHide,
-  onPrevPage,
-  onNextPage,
-  chapterDropdown,
+ currentPage,
+ totalPages,
+ theme,
+ overallProgress,
+ showControls,
+ onPauseAutoHide,
+ onResumeAutoHide,
+ onPrevPage,
+ onNextPage,
+ chapterDropdown,
 }: ReaderFooterProps) {
-  const t = useTranslations('reader');
-  const clampedProgress = Math.min(100, Math.max(0, overallProgress));
+ const t = useTranslations('reader');
+ const clampedProgress = Math.min(100, Math.max(0, overallProgress));
 
-  return (
-    <footer
-      className={`relative z-30 border-t transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        theme === 'dark' ? 'border-gray-700/50 bg-gray-900/95' : theme === 'sepia' ? 'border-amber-200/60 bg-amber-50/95' : 'border-gray-200/60 bg-white/95'
-      } backdrop-blur-sm ${
-        showControls
-          ? 'opacity-100 shrink-0'
-          : 'opacity-0 pointer-events-none shrink-0'
-      }`}
-      onClick={(e) => e.stopPropagation()}
-      onMouseEnter={onPauseAutoHide}
-      onMouseLeave={onResumeAutoHide}
-    >
-      {/* Progress bar — overall book progress */}
-      <div className={`h-0.5 ${progressBg[theme]}`}>
-        <div
-          className={`h-0.5 ${progressFill[theme]} transition-all duration-300 ease-out`}
-          style={{ width: `${clampedProgress}%` }}
-        />
-      </div>
+ return (
+ <footer
+  className={`relative z-30 border-t transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${FOOTER_CLASSES[theme]} backdrop-blur-md ${
+  showControls
+   ? 'opacity-100 translate-y-0 shrink-0'
+   : 'opacity-0 translate-y-2 pointer-events-none shrink-0'
+  }`}
+  onClick={(e) => e.stopPropagation()}
+  onMouseEnter={onPauseAutoHide}
+  onMouseLeave={onResumeAutoHide}
+ >
+  {/* Overall book progress */}
+  <div className={`h-[3px] ${progressBg[theme]}`}>
+  <div
+   className={`h-full ${progressFill[theme]} transition-all duration-500 ease-out rounded-r-full`}
+   style={{ width: `${clampedProgress}%` }}
+  />
+  </div>
 
-      {/* Three-zone navigation: prev | toc | next */}
-      <div className="flex items-center px-1 sm:px-4 py-1.5">
-        {/* Prev — fixed touch target */}
-        <button
-          onClick={onPrevPage}
-          disabled={currentPage === 0}
-          className="w-12 h-10 sm:w-auto sm:px-3 sm:h-9 flex items-center justify-center gap-1 rounded-lg text-sm font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 dark:active:bg-white/10 transition-colors shrink-0"
-          aria-label={t('reader_prev_chapter')}
-        >
-          <ChevronLeft className="w-5 h-5" />
-          <span className="hidden sm:inline">{t('reader_prev')}</span>
-        </button>
+  {/* Navigation row */}
+  <div className="flex items-center px-1 sm:px-3 h-10">
+  <button
+   onClick={onPrevPage}
+   disabled={currentPage === 0}
+   className="w-10 h-8 sm:w-auto sm:px-3 sm:h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/[0.04] dark:hover:bg-white/[0.04] active:bg-black/[0.08] dark:active:bg-white/[0.08] transition-all shrink-0 text-gray-500"
+   aria-label={t('reader_prev_chapter')}
+  >
+   <ChevronLeft className="w-4 h-4" />
+   <span className="hidden sm:inline">{t('reader_prev')}</span>
+  </button>
 
-        {/* Center: chapter dropdown */}
-        {chapterDropdown}
+  <div className="flex-1 min-w-0">
+   {chapterDropdown}
+  </div>
 
-        {/* Next — fixed touch target */}
-        <button
-          onClick={onNextPage}
-          disabled={currentPage >= totalPages - 1}
-          className="w-12 h-10 sm:w-auto sm:px-3 sm:h-9 flex items-center justify-center gap-1 rounded-lg text-sm font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/10 dark:active:bg-white/10 transition-colors shrink-0"
-          aria-label={t('reader_next_chapter')}
-        >
-          <span className="hidden sm:inline">{t('reader_next')}</span>
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
-    </footer>
-  );
+  <button
+   onClick={onNextPage}
+   disabled={currentPage >= totalPages - 1}
+   className="w-10 h-8 sm:w-auto sm:px-3 sm:h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/[0.04] dark:hover:bg-white/[0.04] active:bg-black/[0.08] dark:active:bg-white/[0.08] transition-all shrink-0 text-gray-500"
+   aria-label={t('reader_next_chapter')}
+  >
+   <span className="hidden sm:inline">{t('reader_next')}</span>
+   <ChevronRight className="w-4 h-4" />
+  </button>
+  </div>
+ </footer>
+ );
 }

@@ -37,6 +37,7 @@ def extract_images(
         try:
             zinfo = zf.getinfo(resolved)
         except KeyError:
+            logger.debug('epub.image_not_in_zip path=%s', resolved)
             continue
 
         if zinfo.file_size > MAX_IMAGE_SIZE:
@@ -45,7 +46,7 @@ def extract_images(
 
         try:
             data = zf.read(resolved)
-        except Exception:
+        except Exception as exc:
             logger.debug('Failed to read image from ZIP: %s', resolved, exc_info=True)
             continue
 
@@ -106,12 +107,13 @@ def extract_cover(
     try:
         zinfo = zf.getinfo(resolved)
     except KeyError:
+        logger.debug('epub.cover_not_in_zip', resolved=resolved)
         return None
     if zinfo.file_size > MAX_IMAGE_SIZE:
         return None
     try:
         data = zf.read(resolved)
-    except Exception:
+    except Exception as exc:
         logger.debug('Failed to read cover image from ZIP: %s', resolved, exc_info=True)
         return None
     ext = Path(resolved).suffix.lower()

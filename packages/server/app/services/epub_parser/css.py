@@ -30,7 +30,7 @@ def extract_epub_css(
         try:
             raw = zf.read(resolved).decode('utf-8', errors='replace')
             css_parts.append(raw)
-        except Exception:
+        except Exception as exc:
             logger.debug('Failed to read CSS from ZIP: %s', resolved, exc_info=True)
             continue
 

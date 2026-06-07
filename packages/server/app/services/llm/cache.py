@@ -51,7 +51,7 @@ async def _cache_get(key: str) -> str | None:
         r = _get_redis()
         return await r.get(key)
     except Exception as exc:
-        logger.debug('llm.cache_read_failed', error=str(exc)[:200])
+        logger.warning('llm.cache_read_failed: %s', str(exc)[:200])
         return None
 
 
@@ -70,4 +70,4 @@ async def _cache_set(key: str, value: str) -> None:
         r = _get_redis()
         await r.setex(key, ttl, value)
     except Exception as exc:
-        logger.debug('llm.cache_write_failed', error=str(exc)[:200])
+        logger.warning('llm.cache_write_failed: %s', str(exc)[:200])

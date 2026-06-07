@@ -39,8 +39,8 @@ async function loadPushPlugin(): Promise<PushNotificationsShape | null> {
     ) as Record<string, PushNotificationsShape>;
     pushPlugin = mod.PushNotifications;
     return pushPlugin;
-  } catch {
-    // Plugin not installed — graceful no-op
+  } catch (err) {
+    console.warn('Notifications: failed to load push notifications plugin', err);
     return null;
   }
 }
@@ -74,7 +74,8 @@ export async function requestNotificationPermission(): Promise<string | null> {
         resolve(null);
       });
     });
-  } catch {
+  } catch (err) {
+    console.warn('Notifications: failed to request notification permission', err);
     return null;
   }
 }
@@ -93,7 +94,8 @@ export async function registerPushToken(token: string): Promise<boolean> {
       await setItem(PUSH_TOKEN_KEY, token);
     }
     return res.success;
-  } catch {
+  } catch (err) {
+    console.warn('Notifications: failed to register push token with backend', err);
     return false;
   }
 }
