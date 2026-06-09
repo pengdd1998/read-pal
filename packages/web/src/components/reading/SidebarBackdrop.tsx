@@ -19,7 +19,7 @@ export const SidebarBackdrop = React.memo(function SidebarBackdrop({ visible, on
   onClick={onClose}
   onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
   tabIndex={-1}
-  role="button"
+  role="presentation"
   aria-label={t('sidebar_close_annotations')}
  />
  );

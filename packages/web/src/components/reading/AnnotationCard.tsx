@@ -71,7 +71,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
 
  return (
  <div
-  role="button"
+  role="article"
   tabIndex={0}
   className="group p-3 rounded-lg bg-gray-50/50 dark:bg-gray-800/50 border-l-4 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/10 hover:shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
   style={{ borderLeftColor: borderColor }}
