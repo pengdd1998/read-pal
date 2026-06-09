@@ -45,14 +45,14 @@ export interface BookClub {
 function Skeleton() {
  return (
  <div className="rounded-2xl border border-surface-2 bg-surface-0 p-5 sm:p-6 shadow-sm">
-  <div className="h-5 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-4" />
+  <div className="h-5 w-32 bg-surface-1 rounded animate-pulse mb-4" />
   <div className="space-y-3">
   {[1, 2].map((i) => (
    <div key={i} className="flex items-center gap-3">
-   <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+   <div className="w-10 h-10 rounded-lg bg-surface-1 animate-pulse" />
    <div className="flex-1">
-    <div className="h-4 w-28 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
-    <div className="h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+    <div className="h-4 w-28 bg-surface-1 rounded animate-pulse mb-1" />
+    <div className="h-3 w-20 bg-surface-1 rounded animate-pulse" />
    </div>
    </div>
   ))}

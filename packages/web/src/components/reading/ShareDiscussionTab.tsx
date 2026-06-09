@@ -174,7 +174,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
   <>
    {/* Preview */}
    <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-   <div className="bg-gray-50 dark:bg-gray-800 p-3 max-h-48 overflow-y-auto">
+   <div className="bg-surface-1 p-3 max-h-48 overflow-y-auto">
     <iframe
     srcDoc={guideHtml}
     title={t('share_tab_discussion')}
@@ -206,7 +206,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
    <button
     aria-label={t('export_copy')}
     onClick={handleCopyGuide}
-    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -216,7 +216,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
    <button
     aria-label={t('share_html')}
     onClick={handleDownloadGuide}
-    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -226,7 +226,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
    <button
     aria-label={t('share_print')}
     onClick={handlePrintGuide}
-    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -237,7 +237,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
     aria-label={t('share_link')}
     onClick={handleShareGuideLink}
     disabled={sharing}
-    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50"
+    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     <svg aria-hidden="true" className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -249,7 +249,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
    <button
    aria-label={t('share_regenerate')}
    onClick={() => { setGuideHtml(null); setQuestions([]); setShareLink(null); }}
-   className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+   className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    {t('share_regenerate')}
    </button>
@@ -261,7 +261,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
     readOnly
     value={shareLink}
     aria-label={t('share_link')}
-    className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300"
+    className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300"
     onClick={(e) => (e.target as HTMLInputElement).select()}
     />
     <button

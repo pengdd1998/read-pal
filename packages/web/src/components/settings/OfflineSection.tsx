@@ -244,4 +244,4 @@ export const OfflineSection = React.memo(function OfflineSection() {
   </div>
  </div>
  );
-}
+});

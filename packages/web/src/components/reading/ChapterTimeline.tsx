@@ -104,7 +104,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
    {loading ? (
    <div className="space-y-2">
     {Array.from({ length: 8 }).map((_, i) => (
-    <div key={i} className="h-12 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+    <div key={i} className="h-12 bg-surface-1 rounded-lg animate-pulse" />
     ))}
    </div>
    ) : error ? (
@@ -161,7 +161,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
      {/* Activity bar */}
      {stat && (
      <div className="flex items-center gap-2 mt-1.5">
-      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-surface-1 rounded-full overflow-hidden">
       <div
        className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-400 transition-all duration-300"
        style={{ width: `${barWidth}%` }}

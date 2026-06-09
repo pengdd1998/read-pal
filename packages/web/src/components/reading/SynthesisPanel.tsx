@@ -128,7 +128,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
   {/* Backdrop */}
   {isOpen && (
   <div
-   className="fixed inset-0 bg-black/30 animate-fade-in z-30"
+   className="fixed inset-0 bg-black/30 animate-fade-in z-30 focus-visible:ring-2 focus-visible:ring-amber-500"
    onClick={onClose}
    onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
    tabIndex={-1}
@@ -148,7 +148,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
    </svg>
    <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">{t('synthesis_title')}</h2>
    </div>
-   <button onClick={onClose} className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label={t('synthesis_close_label')} title={t('synthesis_close_esc')}>
+   <button onClick={onClose} className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('synthesis_close_label')} title={t('synthesis_close_esc')}>
    <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>
@@ -171,7 +171,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
     onClick={() => { setActiveTab(tab.key); setResult(null); setError(null); }}
     role="tab"
     aria-selected={activeTab === tab.key}
-    className={`flex items-center gap-1.5 px-2.5 py-2.5 text-[11px] font-medium transition-colors relative whitespace-nowrap ${
+    className={`flex items-center gap-1.5 px-2.5 py-2.5 text-[11px] font-medium transition-colors relative whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     activeTab === tab.key ? 'text-amber-700 dark:text-amber-300' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
     }`}
    >
