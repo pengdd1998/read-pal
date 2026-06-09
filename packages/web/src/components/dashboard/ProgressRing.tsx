@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
 interface ProgressRingProps {
@@ -13,7 +13,7 @@ interface ProgressRingProps {
  children: React.ReactNode;
 }
 
-export function ProgressRing({
+export const ProgressRing = React.memo(function ProgressRing({
  value,
  max,
  size,
@@ -64,4 +64,4 @@ export function ProgressRing({
   <div className="absolute inset-0 flex items-center justify-center">{children}</div>
  </div>
  );
-}
+});
