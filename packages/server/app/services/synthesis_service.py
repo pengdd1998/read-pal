@@ -50,18 +50,22 @@ async def _load_book_info(
   book_id: UUID,
 ) -> dict[str, Any] | None:
   """Load book metadata; returns None if book not found."""
-  result = await db.execute(
-    select(Book).where(Book.id == book_id, Book.user_id == user_id),
-  )
-  book = result.scalar_one_or_none()
-  if book is None:
+  try:
+    result = await db.execute(
+      select(Book).where(Book.id == book_id, Book.user_id == user_id),
+    )
+    book = result.scalar_one_or_none()
+    if book is None:
+      return None
+    return {
+      'title': book.title,
+      'author': book.author,
+      'progress': float(book.progress),
+      'status': book.status,
+    }
+  except Exception:
+    logger.error('Failed to load book info', exc_info=True, book_id=str(book_id), user_id=str(user_id))
     return None
-  return {
-    'title': book.title,
-    'author': book.author,
-    'progress': float(book.progress),
-    'status': book.status,
-  }
 
 
 def _split_annotations(
@@ -100,23 +104,27 @@ async def _load_conversations(
   book_id: UUID,
 ) -> list[dict]:
   """Load chat conversations for synthesis (capped at _MAX_CHAT_MESSAGES)."""
-  result = await db.execute(
-    select(ChatMessage)
-    .where(
-      ChatMessage.user_id == user_id,
-      ChatMessage.book_id == book_id,
+  try:
+    result = await db.execute(
+      select(ChatMessage)
+      .where(
+        ChatMessage.user_id == user_id,
+        ChatMessage.book_id == book_id,
+      )
+      .order_by(ChatMessage.created_at)
+      .limit(_MAX_CHAT_MESSAGES),
     )
-    .order_by(ChatMessage.created_at)
-    .limit(_MAX_CHAT_MESSAGES),
-  )
-  messages = list(result.scalars().all())
-  return [
-    {
-      'role': m.role,
-      'content': sanitize_chat_message(m.content or ''),
-    }
-    for m in messages
-  ]
+    messages = list(result.scalars().all())
+    return [
+      {
+        'role': m.role,
+        'content': sanitize_chat_message(m.content or ''),
+      }
+      for m in messages
+    ]
+  except Exception:
+    logger.error('Failed to load conversations', exc_info=True, book_id=str(book_id), user_id=str(user_id))
+    return []
 
 
 async def _load_reading_sessions(
@@ -125,26 +133,30 @@ async def _load_reading_sessions(
   book_id: UUID,
 ) -> list[dict]:
   """Load reading sessions for timeline (capped at _MAX_READING_SESSIONS)."""
-  result = await db.execute(
-    select(ReadingSession)
-    .where(
-      ReadingSession.user_id == user_id,
-      ReadingSession.book_id == book_id,
+  try:
+    result = await db.execute(
+      select(ReadingSession)
+      .where(
+        ReadingSession.user_id == user_id,
+        ReadingSession.book_id == book_id,
+      )
+      .order_by(ReadingSession.started_at)
+      .limit(_MAX_READING_SESSIONS),
     )
-    .order_by(ReadingSession.started_at)
-    .limit(_MAX_READING_SESSIONS),
-  )
-  sessions = list(result.scalars().all())
-  return [
-    {
-      'started_at': s.started_at.isoformat() if s.started_at else None,
-      'duration': s.duration,
-      'pages_read': s.pages_read,
-      'highlights': s.highlights,
-      'notes': s.notes,
-    }
-    for s in sessions
-  ]
+    sessions = list(result.scalars().all())
+    return [
+      {
+        'started_at': s.started_at.isoformat() if s.started_at else None,
+        'duration': s.duration,
+        'pages_read': s.pages_read,
+        'highlights': s.highlights,
+        'notes': s.notes,
+      }
+      for s in sessions
+    ]
+  except Exception:
+    logger.error('Failed to load reading sessions', exc_info=True, book_id=str(book_id), user_id=str(user_id))
+    return []
 
 
 async def _load_chat_and_sessions(
@@ -175,28 +187,32 @@ async def _collect_reading_data(
   include_conversations: bool = True,
 ) -> dict[str, Any]:
   """Collect all reading data for synthesis."""
-  book_info = await _load_book_info(db, user_id, book_id)
-  if book_info is None:
+  try:
+    book_info = await _load_book_info(db, user_id, book_id)
+    if book_info is None:
+      return {}
+
+    data: dict[str, Any] = {'book': book_info}
+
+    # Load annotations (highlights + notes), capped at _MAX_ANNOTATIONS
+    result = await db.execute(
+      select(Annotation)
+      .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
+      .order_by(Annotation.created_at)
+      .limit(_MAX_ANNOTATIONS),
+    )
+    annotations = list(result.scalars().all())
+    data.update(_split_annotations(annotations, include_highlights, include_notes))
+
+    # Chat conversations + reading sessions
+    data.update(await _load_chat_and_sessions(
+      db, user_id, book_id, include_conversations,
+    ))
+
+    return data
+  except Exception:
+    logger.error('Failed to collect reading data', exc_info=True, book_id=str(book_id), user_id=str(user_id))
     return {}
-
-  data: dict[str, Any] = {'book': book_info}
-
-  # Load annotations (highlights + notes), capped at _MAX_ANNOTATIONS
-  result = await db.execute(
-    select(Annotation)
-    .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
-    .order_by(Annotation.created_at)
-    .limit(_MAX_ANNOTATIONS),
-  )
-  annotations = list(result.scalars().all())
-  data.update(_split_annotations(annotations, include_highlights, include_notes))
-
-  # Chat conversations + reading sessions
-  data.update(await _load_chat_and_sessions(
-    db, user_id, book_id, include_conversations,
-  ))
-
-  return data
 
 
 def _build_synthesis_prompt(

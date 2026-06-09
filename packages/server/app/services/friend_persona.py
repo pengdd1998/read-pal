@@ -31,46 +31,57 @@ _SAGE_DEFAULT: dict[str, str] = {
     ),
 }
 
+_EMPTY_STATS: dict[str, int] = {
+    'total_sessions': 0,
+    'total_annotations': 0,
+    'total_chats': 0,
+    'distinct_books': 0,
+}
+
 
 async def _gather_reading_stats(
     db: AsyncSession,
     user_id: UUID,
 ) -> dict[str, int]:
     """Query aggregate reading stats for a user."""
-    sessions_q = await db.execute(
-        select(func.count()).select_from(ReadingSession).where(
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    total_sessions = sessions_q.scalar() or 0
+    try:
+        sessions_q = await db.execute(
+            select(func.count()).select_from(ReadingSession).where(
+                ReadingSession.user_id == user_id,
+            ),
+        )
+        total_sessions = sessions_q.scalar() or 0
 
-    annotations_q = await db.execute(
-        select(func.count()).select_from(Annotation).where(
-            Annotation.user_id == user_id,
-        ),
-    )
-    total_annotations = annotations_q.scalar() or 0
+        annotations_q = await db.execute(
+            select(func.count()).select_from(Annotation).where(
+                Annotation.user_id == user_id,
+            ),
+        )
+        total_annotations = annotations_q.scalar() or 0
 
-    chats_q = await db.execute(
-        select(func.count()).select_from(ChatMessage).where(
-            ChatMessage.user_id == user_id,
-        ),
-    )
-    total_chats = chats_q.scalar() or 0
+        chats_q = await db.execute(
+            select(func.count()).select_from(ChatMessage).where(
+                ChatMessage.user_id == user_id,
+            ),
+        )
+        total_chats = chats_q.scalar() or 0
 
-    books_q = await db.execute(
-        select(func.count(Book.id.distinct())).where(
-            Book.user_id == user_id,
-        ),
-    )
-    distinct_books = books_q.scalar() or 0
+        books_q = await db.execute(
+            select(func.count(Book.id.distinct())).where(
+                Book.user_id == user_id,
+            ),
+        )
+        distinct_books = books_q.scalar() or 0
 
-    return {
-        'total_sessions': total_sessions,
-        'total_annotations': total_annotations,
-        'total_chats': total_chats,
-        'distinct_books': distinct_books,
-    }
+        return {
+            'total_sessions': total_sessions,
+            'total_annotations': total_annotations,
+            'total_chats': total_chats,
+            'distinct_books': distinct_books,
+        }
+    except Exception:
+        logger.error('Failed to gather reading stats for user %s', user_id, exc_info=True)
+        return _EMPTY_STATS
 
 
 def _compute_reading_metrics(

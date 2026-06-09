@@ -24,10 +24,13 @@ async def _deactivate_existing_plan(
     book_id: UUID,
 ) -> None:
     """Deactivate any existing active plan for this user/book."""
-    existing = await _get_active_plan(db, user_id, book_id)
-    if existing:
-        existing.is_active = False
-        await db.flush()
+    try:
+        existing = await _get_active_plan(db, user_id, book_id)
+        if existing:
+            existing.is_active = False
+            await db.flush()
+    except Exception:
+        logger.error('Failed to deactivate existing plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
 
 
 async def _save_new_plan(
@@ -36,17 +39,21 @@ async def _save_new_plan(
     book_id: UUID,
     plan_text: str,
     total_days: int,
-) -> ReadingPlan:
+) -> ReadingPlan | None:
     """Persist a new reading plan and return it."""
-    plan = ReadingPlan(
-        user_id=user_id,
-        book_id=book_id,
-        plan_text=plan_text,
-        total_days=total_days,
-    )
-    db.add(plan)
-    await db.flush()
-    return plan
+    try:
+        plan = ReadingPlan(
+            user_id=user_id,
+            book_id=book_id,
+            plan_text=plan_text,
+            total_days=total_days,
+        )
+        db.add(plan)
+        await db.flush()
+        return plan
+    except Exception:
+        logger.error('Failed to save new plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
+        return None
 
 
 def _format_plan_response(
@@ -86,6 +93,8 @@ async def generate_plan(
     )
 
     book = await _load_book(db, user_id, book_id)
+    if book is None:
+        raise ValueError(f'Book {book_id} not found')
     await _deactivate_existing_plan(db, user_id, book_id)
 
     # Generate plan via LLM
@@ -95,6 +104,8 @@ async def generate_plan(
     )
 
     plan = await _save_new_plan(db, user_id, book_id, plan_text, total_days)
+    if plan is None:
+        raise ValueError('Failed to save reading plan')
 
     elapsed = (time.monotonic() - t0) * 1000
     logger.info(
@@ -178,14 +189,18 @@ async def advance_plan(
     }
 
 
-async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book:
-    result = await db.execute(
-        select(Book).where(Book.id == book_id, Book.user_id == user_id)
-    )
-    book = result.scalar_one_or_none()
-    if book is None:
-        raise ValueError(f'Book {book_id} not found for user {user_id}')
-    return book
+async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book | None:
+    try:
+        result = await db.execute(
+            select(Book).where(Book.id == book_id, Book.user_id == user_id)
+        )
+        book = result.scalar_one_or_none()
+        if book is None:
+            raise ValueError(f'Book {book_id} not found for user {user_id}')
+        return book
+    except Exception:
+        logger.error('Failed to load book', exc_info=True, book_id=str(book_id), user_id=str(user_id))
+        return None
 
 
 async def _get_active_plan(
@@ -193,17 +208,21 @@ async def _get_active_plan(
     user_id: UUID,
     book_id: UUID,
 ) -> ReadingPlan | None:
-    result = await db.execute(
-        select(ReadingPlan)
-        .where(
-            ReadingPlan.user_id == user_id,
-            ReadingPlan.book_id == book_id,
-            ReadingPlan.is_active == True,  # noqa: E712
+    try:
+        result = await db.execute(
+            select(ReadingPlan)
+            .where(
+                ReadingPlan.user_id == user_id,
+                ReadingPlan.book_id == book_id,
+                ReadingPlan.is_active == True,  # noqa: E712
+            )
+            .order_by(ReadingPlan.created_at.desc())
+            .limit(1)
         )
-        .order_by(ReadingPlan.created_at.desc())
-        .limit(1)
-    )
-    return result.scalar_one_or_none()
+        return result.scalar_one_or_none()
+    except Exception:
+        logger.error('Failed to get active plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
+        return None
 
 
 def _build_plan_prompts(
