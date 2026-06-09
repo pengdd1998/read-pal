@@ -1,7 +1,7 @@
 """Tests for knowledge graph endpoints — graph, concepts, search, themes."""
 
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -58,8 +58,12 @@ async def test_get_graph(client):
     await _create_annotation(client, reg['token'], book['id'])
 
     mock_redis = AsyncMock()
-    mock_redis.get.return_value = None
-    mock_redis.setex.return_value = True
+    mock_redis.mget.return_value = (None, None)
+    mock_redis.delete.return_value = True
+    mock_pipe = MagicMock()
+    mock_pipe.setex.return_value = True
+    mock_pipe.execute = AsyncMock(return_value=[True, True])
+    mock_redis.pipeline = MagicMock(return_value=mock_pipe)
 
     with (
         patch('app.services.knowledge._extraction.safe_llm_invoke', _mock_safe_llm_invoke()),
@@ -83,7 +87,7 @@ async def test_get_graph_no_annotations(client):
     book = await _create_book(client, reg['token'])
 
     mock_redis = AsyncMock()
-    mock_redis.get.return_value = None
+    mock_redis.mget.return_value = (None, None)
 
     with patch('app.services.knowledge._cache._get_redis', return_value=mock_redis):
         resp = await client.get(
@@ -109,8 +113,12 @@ async def test_list_concepts(client):
     await _create_annotation(client, reg['token'], book['id'])
 
     mock_redis = AsyncMock()
-    mock_redis.get.return_value = None
-    mock_redis.setex.return_value = True
+    mock_redis.mget.return_value = (None, None)
+    mock_redis.delete.return_value = True
+    mock_pipe = MagicMock()
+    mock_pipe.setex.return_value = True
+    mock_pipe.execute = AsyncMock(return_value=[True, True])
+    mock_redis.pipeline = MagicMock(return_value=mock_pipe)
 
     with (
         patch('app.services.knowledge._extraction.safe_llm_invoke', _mock_safe_llm_invoke()),
@@ -141,8 +149,12 @@ async def test_search_concepts(client):
     await _create_annotation(client, reg['token'], book['id'])
 
     mock_redis = AsyncMock()
-    mock_redis.get.return_value = None
-    mock_redis.setex.return_value = True
+    mock_redis.mget.return_value = (None, None)
+    mock_redis.delete.return_value = True
+    mock_pipe = MagicMock()
+    mock_pipe.setex.return_value = True
+    mock_pipe.execute = AsyncMock(return_value=[True, True])
+    mock_redis.pipeline = MagicMock(return_value=mock_pipe)
 
     with (
         patch('app.services.knowledge._extraction.safe_llm_invoke', _mock_safe_llm_invoke()),
@@ -167,8 +179,12 @@ async def test_search_concepts_no_match(client):
     await _create_annotation(client, reg['token'], book['id'])
 
     mock_redis = AsyncMock()
-    mock_redis.get.return_value = None
-    mock_redis.setex.return_value = True
+    mock_redis.mget.return_value = (None, None)
+    mock_redis.delete.return_value = True
+    mock_pipe = MagicMock()
+    mock_pipe.setex.return_value = True
+    mock_pipe.execute = AsyncMock(return_value=[True, True])
+    mock_redis.pipeline = MagicMock(return_value=mock_pipe)
 
     with (
         patch('app.services.knowledge._extraction.safe_llm_invoke', _mock_safe_llm_invoke()),
@@ -194,7 +210,7 @@ async def test_get_all_graphs(client):
     book = await _create_book(client, reg['token'])
 
     mock_redis = AsyncMock()
-    mock_redis.get.return_value = None
+    mock_redis.mget.return_value = (None, None)
 
     with patch('app.services.knowledge._cache._get_redis', return_value=mock_redis):
         resp = await client.get(
@@ -217,7 +233,7 @@ async def test_get_themes(client):
     reg = await register_user(client)
 
     mock_redis = AsyncMock()
-    mock_redis.get.return_value = None
+    mock_redis.mget.return_value = (None, None)
 
     with patch('app.services.knowledge._cache._get_redis', return_value=mock_redis):
         resp = await client.get(
