@@ -9,6 +9,7 @@ Keeps the router thin by extracting repeated patterns:
 
 import asyncio
 import json
+import logging
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
@@ -17,6 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services import companion_service
 from app.utils.i18n import DEFAULT_LANGUAGE, _get_user_lang, translate_error, t
+
+logger = logging.getLogger('read-pal.agent')
 
 KEEPALIVE_INTERVAL = 15  # seconds between keepalive comment frames
 _KEEPALIVE_FRAME = b': keepalive\n\n'
@@ -49,10 +52,6 @@ async def _start_llm_producer(
     lang: str,
 ) -> asyncio.Task:
     """Create and return a task that reads LLM chunks into *queue*."""
-    import logging
-
-    logger = logging.getLogger('read-pal.agent')
-
     async def _produce() -> None:
         try:
             async for chunk in companion_service.stream_chat(
@@ -99,9 +98,6 @@ async def _consume_queue(
     book_id: UUID,
 ) -> AsyncGenerator[bytes, None]:
     """Yield items from *queue* until sentinel, then cancel background tasks."""
-    import logging
-
-    logger = logging.getLogger('read-pal.agent')
     try:
         while True:
             item = await queue.get()

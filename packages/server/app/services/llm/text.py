@@ -34,7 +34,7 @@ def _validate_parsed(
     try:
         result = schema_class.model_validate(data)
         return result.model_dump()
-    except Exception as exc:
+    except (ValueError, TypeError) as exc:
         logger.warning(
             'llm_schema_validation_failed',
             label=log_label,

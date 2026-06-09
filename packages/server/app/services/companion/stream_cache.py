@@ -19,7 +19,7 @@ async def try_stream_cache(messages: list) -> str | None:
         from app.services.llm import _cache_key, _cache_get
         cache_key = _cache_key(messages, 'companion_stream')
         return await _cache_get(cache_key)
-    except Exception as exc:
+    except (ValueError, ConnectionError, RuntimeError) as exc:
         logger.warning('companion.streaming.cache_check_failed', error=str(exc)[:200])
         return None
 
@@ -85,7 +85,7 @@ async def persist_stream_result(
             from app.services.llm import _cache_key, _cache_set
             cache_key = _cache_key(messages, 'companion_stream')
             await _cache_set(cache_key, assistant_content)
-        except Exception as exc:
+        except (ValueError, ConnectionError, RuntimeError) as exc:
             logger.warning('companion.streaming.cache_write_failed', error=str(exc)[:200])
 
     if not assistant_content:

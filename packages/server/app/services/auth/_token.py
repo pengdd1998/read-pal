@@ -27,7 +27,7 @@ async def revoke_access_token(token: str) -> None:
         exp = decoded.get('exp')
         if jti and exp:
             await revoke_token(jti, exp)
-    except Exception as exc:
+    except (JWTError, KeyError, ValueError) as exc:
         logger.warning('Logout access token revocation skipped: %s', exc)
 
 
@@ -44,7 +44,7 @@ async def revoke_refresh_token(refresh_token: str) -> None:
         exp = decoded.get('exp')
         if jti and exp:
             await revoke_token(jti, exp)
-    except Exception as exc:
+    except (JWTError, KeyError, ValueError) as exc:
         logger.warning('Logout refresh token revocation skipped: %s', exc)
 
 

@@ -18,8 +18,8 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
  const avgSessionMins = Math.round(totalDuration / readingLog.length / 60);
  const totalMins = Math.round(totalDuration / 60);
  const bestSession = readingLog.reduce(
- (best, e) => (e.pagesRead > best.pagesRead ? e : best),
- readingLog[0],
+  (best, e) => (e.pagesRead > best.pagesRead ? e : best),
+  readingLog[0],
  );
  const avgWpm =
   totalPagesRead > 0 && totalMins > 0
@@ -88,49 +88,63 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
 
   {/* Session list */}
   <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-64 overflow-y-auto">
-  {readingLog.map((entry) => {
-   const date = new Date(entry.startedAt);
-   const dateStr = date.toLocaleDateString(locale, {
-   month: 'short',
-   day: 'numeric',
-   });
-   const timeStr = date.toLocaleTimeString(locale, {
-   hour: 'numeric',
-   minute: '2-digit',
-   });
-   const mins = Math.round(entry.duration / 60);
-   return (
-   <div
-    key={entry.id}
-    className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
-   >
-    <div className="text-xs text-gray-400 min-w-[52px] pt-0.5">
-    <div>{dateStr}</div>
-    <div className="text-[10px]">{timeStr}</div>
-    </div>
-    <div className="flex-1 min-w-0">
-    <div className="flex items-center gap-2 text-xs text-gray-500">
-     <span className="font-medium text-gray-700 dark:text-gray-300">
-     {t('timeM', { mins })}
-     </span>
-     {entry.pagesRead > 0 && <span>{entry.pagesRead} {t('unit_pg')}</span>}
-     {entry.highlights > 0 && (
-     <span className="text-amber-500">{entry.highlights} {t('unit_hl')}</span>
-     )}
-     {entry.notes > 0 && (
-     <span className="text-teal-500">{entry.notes} {t('unit_nt')}</span>
-     )}
-    </div>
-    {entry.summary && (
-     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed line-clamp-2">
-     {entry.summary}
-     </p>
-    )}
-    </div>
-   </div>
-   );
-  })}
+  {readingLog.map((entry) => (
+   <SessionEntryItem key={entry.id} entry={entry} t={t} locale={locale} />
+  ))}
   </div>
+ </div>
+ );
+});
+
+interface SessionEntryItemProps {
+ entry: ReadingLogEntry;
+ t: (key: string, params?: Record<string, string | number>) => string;
+ locale?: string;
+}
+
+const SessionEntryItem = React.memo(function SessionEntryItem({
+ entry,
+ t,
+ locale,
+}: SessionEntryItemProps) {
+ const date = new Date(entry.startedAt);
+ const dateStr = date.toLocaleDateString(locale, {
+ month: 'short',
+ day: 'numeric',
+ });
+ const timeStr = date.toLocaleTimeString(locale, {
+ hour: 'numeric',
+ minute: '2-digit',
+ });
+ const mins = Math.round(entry.duration / 60);
+
+ return (
+ <div
+  className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
+ >
+ <div className="text-xs text-gray-400 min-w-[52px] pt-0.5">
+  <div>{dateStr}</div>
+  <div className="text-[10px]">{timeStr}</div>
+ </div>
+ <div className="flex-1 min-w-0">
+  <div className="flex items-center gap-2 text-xs text-gray-500">
+  <span className="font-medium text-gray-700 dark:text-gray-300">
+   {t('timeM', { mins })}
+  </span>
+  {entry.pagesRead > 0 && <span>{entry.pagesRead} {t('unit_pg')}</span>}
+  {entry.highlights > 0 && (
+  <span className="text-amber-500">{entry.highlights} {t('unit_hl')}</span>
+  )}
+  {entry.notes > 0 && (
+  <span className="text-teal-500">{entry.notes} {t('unit_nt')}</span>
+  )}
+  </div>
+  {entry.summary && (
+  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed line-clamp-2">
+  {entry.summary}
+  </p>
+  )}
+ </div>
  </div>
  );
 });

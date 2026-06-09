@@ -133,7 +133,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
  if (filtered.length === 0) return null;
 
  return (
-  <div className="mt-12 pt-8 border-t border-surface-3">
+ <div className="mt-12 pt-8 border-t border-surface-3">
   <div className="flex items-center justify-between mb-5">
    <div>
     <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('free_books_title')}</h2>
@@ -155,23 +155,38 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
   </div>
   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
    {filtered.map((book) => (
-    <div key={book.title} className="group">
-     <Link href={`/search?q=${encodeURIComponent(book.title)}`}
-      aria-label={`${book.title} ${t('book_by_author', { author: book.author })}`}
-      className={`w-full aspect-[2/3] rounded-xl bg-gradient-to-br ${getBookCoverColors(book.title)[0]} ${getBookCoverColors(book.title)[1]} flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-all border border-white/10 block`}
-     >
-      <span className="text-2xl font-bold tracking-wide opacity-90">{getBookInitials(book.title)}</span>
-      <p className="text-[10px] mt-2 font-medium text-center leading-tight px-1 line-clamp-2">{book.title}</p>
-      {isDisplayableAuthor(book.author) && <p className="text-[9px] mt-1 opacity-60">{book.author}</p>}
-     </Link>
-     {book.subjects && book.subjects.length > 0 && (
-      <div className="mt-1.5 text-center">
-       <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{book.subjects[0]}</span>
-      </div>
-     )}
-    </div>
+   <FreeBookCard key={book.title} book={book} t={t} />
    ))}
   </div>
+ </div>
+ );
+});
+
+interface FreeBookCardProps {
+ book: FreeBook;
+ t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+const FreeBookCard = React.memo(function FreeBookCard({
+ book,
+ t,
+}: FreeBookCardProps) {
+ return (
+ <div className="group">
+  <Link
+  href={`/search?q=${encodeURIComponent(book.title)}`}
+  aria-label={`${book.title} ${t('book_by_author', { author: book.author })}`}
+  className={`w-full aspect-[2/3] rounded-xl bg-gradient-to-br ${getBookCoverColors(book.title)[0]} ${getBookCoverColors(book.title)[1]} flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-all border border-white/10 block`}
+  >
+  <span className="text-2xl font-bold tracking-wide opacity-90">{getBookInitials(book.title)}</span>
+  <p className="text-[10px] mt-2 font-medium text-center leading-tight px-1 line-clamp-2">{book.title}</p>
+  {isDisplayableAuthor(book.author) && <p className="text-[9px] mt-1 opacity-60">{book.author}</p>}
+  </Link>
+  {book.subjects && book.subjects.length > 0 && (
+  <div className="mt-1.5 text-center">
+   <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{book.subjects[0]}</span>
   </div>
+  )}
+ </div>
  );
 });

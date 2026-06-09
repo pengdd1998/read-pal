@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+import redis.exceptions
 
 from app.services import discovery_service
 
@@ -412,7 +413,7 @@ class TestGetFreeBooks:
         db.execute = AsyncMock(return_value=result_mock)
 
         with patch('app.core.cache.get_redis') as mock_redis_fn:
-            mock_redis_fn.side_effect = Exception('Connection refused')
+            mock_redis_fn.side_effect = redis.exceptions.ConnectionError('Connection refused')
 
             result = await discovery_service.get_free_books(db)
 
@@ -443,7 +444,7 @@ class TestGetFreeBooks:
                 mock_redis.get.return_value = None
                 return mock_redis
             # Second call (write) fails
-            raise Exception('Write failed')
+            raise redis.exceptions.ConnectionError('Write failed')
 
         with patch('app.core.cache.get_redis', side_effect=redis_factory):
             result = await discovery_service.get_free_books(db)

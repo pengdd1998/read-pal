@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+import redis.exceptions
 
 from app.services import reading_session_service
 from app.models.book import BookStatus
@@ -668,7 +669,7 @@ class TestGetSessionStats:
         db.execute = AsyncMock(return_value=result_mock)
 
         with patch('app.core.cache.get_redis') as mock_redis_fn:
-            mock_redis_fn.side_effect = Exception('Redis connection refused')
+            mock_redis_fn.side_effect = redis.exceptions.ConnectionError('Redis connection refused')
 
             stats = await reading_session_service.get_session_stats(db, user_id)
 

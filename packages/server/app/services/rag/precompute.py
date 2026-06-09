@@ -2,6 +2,8 @@
 
 from uuid import UUID
 
+from sqlalchemy.exc import DBAPIError
+
 from app.config import get_settings
 from app.services.rag._constants import logger
 from app.services.rag.chunking import _chunk_text
@@ -35,7 +37,7 @@ async def precompute_book_embeddings(
 
     try:
         _chunks_to_insert = await _generate_chunks(book_id, document_id, chapters)
-    except Exception as exc:
+    except (ValueError, KeyError, RuntimeError) as exc:
         logger.error('precompute.generation_failed book_id=%s: %s', str(book_id), str(exc))
         return
 
@@ -43,7 +45,7 @@ async def precompute_book_embeddings(
         async with async_session() as session:
             async with session.begin():
                 session.add_all(_chunks_to_insert)
-    except Exception as exc:
+    except DBAPIError as exc:
         logger.error('precompute.db_write_failed book_id=%s: %s', str(book_id), str(exc))
         return
 
@@ -73,7 +75,7 @@ async def _embed_chunk(
     """Get embedding for a single chunk, returning None on failure."""
     try:
         return await _get_embedding(chunk)
-    except Exception as exc:
+    except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('precompute.embedding_failed chunk_index=%s: %s', chunk_index, str(exc))
         return None
 

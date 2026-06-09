@@ -58,7 +58,7 @@ def _get_pdf_outlines(reader: 'PdfReader') -> list[dict]:
                 page_num = None
                 try:
                     page_num = reader.get_destination_page_number(item)
-                except Exception as exc:
+                except (ValueError, AttributeError, KeyError) as exc:
                     logger.warning('pdf_parser.outline_page_number_failed: %s', str(exc)[:200])
                 if title and page_num is not None:
                     results.append({
@@ -168,7 +168,7 @@ async def process_pdf(file_path: str) -> dict:
         outline_chapters = _build_pdf_chapters(outlines, pages_text, pages_html, total_pages)
         if outline_chapters:
             chapters = outline_chapters
-    except Exception as exc:
+    except (ValueError, AttributeError, KeyError) as exc:
         logger.warning('PDF outline processing failed: %s', exc)
 
     if not chapters:

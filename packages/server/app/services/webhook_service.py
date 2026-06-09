@@ -233,7 +233,7 @@ async def _deliver_with_retries(
                 continue
             logger.info('Webhook delivered: url=%s event=%s status=%d duration=%dms', url, event, response.status_code, duration_ms)
             return response.status_code, duration_ms, None
-        except Exception as exc:
+        except (httpx.HTTPError, httpx.TimeoutException, ConnectionError) as exc:
             last_error = str(exc)
             if attempt < max_retries:
                 delay = 2 ** attempt

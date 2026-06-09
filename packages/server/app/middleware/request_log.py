@@ -29,7 +29,7 @@ def _extract_user_id_from_jwt(token: str) -> str | None:
             payload_b64 += '=' * padding
         payload = json.loads(base64.urlsafe_b64decode(payload_b64))
         return str(payload.get('sub') or payload.get('userId') or '') or None
-    except Exception:
+    except (ValueError, KeyError, UnicodeDecodeError):
         logger.debug('jwt.extract_failed', error=True)
         return None
 

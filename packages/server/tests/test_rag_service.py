@@ -230,7 +230,7 @@ class TestGetEmbedding:
     @pytest.mark.asyncio
     async def test_api_failure(self):
         mock_client = AsyncMock()
-        mock_client.post = AsyncMock(side_effect=Exception('Network error'))
+        mock_client.post = AsyncMock(side_effect=ConnectionError('Network error'))
 
         with patch('app.services.rag.embedding._get_http_client', return_value=mock_client):
             with patch('app.services.rag.embedding.get_settings') as mock_settings:

@@ -39,7 +39,7 @@ async def _get_embedding(text: str) -> list[float] | None:
                 logger.warning('Embedding API returned unexpected shape: %s', str(data)[:200])
                 return None
             return embedding
-        except Exception as exc:
+        except (ConnectionError, TimeoutError, KeyError, ValueError) as exc:
             if attempt < MAX_RETRIES:
                 logger.debug('Embedding attempt %d failed, retrying: %s', attempt + 1, exc)
                 await asyncio.sleep(RETRY_DELAY * (attempt + 1))

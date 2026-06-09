@@ -6,6 +6,8 @@ import json
 import logging
 from typing import Any, Callable, Coroutine, TypeVar
 
+from redis.exceptions import RedisError
+
 from app.config import get_settings
 from app.core.redis import get_redis
 
@@ -16,11 +18,11 @@ T = TypeVar('T')
 async def cache_get(key: str) -> Any | None:
     """Read from Redis cache. Returns parsed JSON or None on miss/error."""
     try:
-        redis = get_redis()
-        cached = await redis.get(key)
+        r = get_redis()
+        cached = await r.get(key)
         if cached:
             return json.loads(cached)
-    except Exception as exc:
+    except (RedisError, json.JSONDecodeError) as exc:
         logger.warning('cache_read_miss key=%s: %s', key, str(exc)[:150])
     return None
 
@@ -28,10 +30,10 @@ async def cache_get(key: str) -> Any | None:
 async def cache_set(key: str, data: Any, ttl: int | None = None) -> None:
     """Write to Redis cache. Silently ignores errors."""
     try:
-        redis = get_redis()
+        r = get_redis()
         effective_ttl = ttl or get_settings().cache_data_ttl_seconds
-        await redis.setex(key, effective_ttl, json.dumps(data, default=str))
-    except Exception as exc:
+        await r.setex(key, effective_ttl, json.dumps(data, default=str))
+    except (RedisError, TypeError) as exc:
         logger.warning('cache_write_failed key=%s: %s', key, str(exc)[:150])
 
 

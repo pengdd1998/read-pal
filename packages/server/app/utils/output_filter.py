@@ -111,7 +111,7 @@ def validate_schema(
             return result.model_dump()
         result = schema_class.model_validate(data)
         return result.model_dump()
-    except Exception as exc:
+    except (ValueError, TypeError) as exc:
         logger.warning(
             'Schema validation failed for %s: %s. Data keys: %s',
             context, exc,

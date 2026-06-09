@@ -10,6 +10,8 @@ Mirrors the Node.js auth system exactly:
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
+
+import redis.exceptions
 from typing import Any
 
 from fastapi import Depends, HTTPException, status
@@ -135,7 +137,7 @@ async def revoke_token(jti: str, exp: int) -> None:
         ttl = max(exp - int(datetime.now(timezone.utc).timestamp()), 1)
         await r.setex(f'{TOKEN_BLACKLIST_PREFIX}{jti}', ttl, '1')
         _redis_ever_connected = True
-    except Exception:
+    except (redis.exceptions.RedisError, ConnectionError):
         logger.warning('Redis unavailable — token revocation stored in-memory only')
 
 
@@ -158,7 +160,7 @@ async def is_token_revoked(jti: str) -> bool:
             _in_memory_blacklist.add(jti)
             return True
         return False
-    except Exception:
+    except (redis.exceptions.RedisError, ConnectionError):
         logger.warning('auth.redis_blacklist_failed', jti=jti[:8] if jti else None)
         if jti in _in_memory_blacklist:
             return True
@@ -172,7 +174,7 @@ async def _was_password_reset(user_id: str, token_issued_at: float) -> bool:
         reset_marker = await r.get(f'pwd-reset:{user_id}')
         # If a reset marker exists, all tokens issued before it are invalid
         return reset_marker is not None
-    except Exception:
+    except (redis.exceptions.RedisError, ConnectionError):
         logger.warning('auth.pwd_reset_check_failed', user_id=user_id)
         return False
 

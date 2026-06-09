@@ -1,8 +1,11 @@
-export default function Loading() {
+import { getTranslations } from 'next-intl/server';
+
+export default async function Loading() {
+ const t = await getTranslations('common');
  return (
  <main className="min-h-[80vh] flex items-center justify-center animate-fade-in">
   <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" role="status">
-  <span className="sr-only">Loading</span>
+  <span className="sr-only">{t('loading')}</span>
  </div>
  </main>
  );

@@ -30,48 +30,75 @@ export const FictionCharacterList = React.memo(function FictionCharacterList({
   ) : (
   <div className="space-y-2">
    {characters.map((char) => (
-   <div key={char.name}>
-    <button
-    onClick={() => onCharacterClick(char.name)}
-    aria-label={selectedCharacter === char.name ? t('fiction_collapse', { name: char.name }) : t('fiction_expand', { name: char.name })}
-    className={`w-full text-left px-3 py-2.5 rounded-xl transition-all ${
-     selectedCharacter === char.name
-     ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700'
-     : 'bg-gray-50/50 dark:bg-gray-800/50 border border-transparent hover:bg-surface-1'
-    }`}
-    >
-    <div className="flex items-center justify-between">
-     <span className="text-sm font-medium text-gray-800">
-     {char.name}
-     </span>
-     <span className="text-xs text-gray-500 dark:text-gray-400">
-     {char.mentions}x
-     </span>
-    </div>
-    {selectedCharacter === char.name && (
-     <div className="mt-2 space-y-2">
-     <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-      &ldquo;{char.context}&rdquo;
-     </p>
-     {onAskCompanion && (
-      <button
-      onClick={(e) => {
-       e.stopPropagation();
-       onAskCompanion(char.name);
-      }}
-      aria-label={t('fiction_ask_about', { name: char.name.split(' ')[0] })}
-      className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline"
-      >
-      {t('fiction_ask_about', { name: char.name.split(' ')[0] })}
-      </button>
-     )}
-     </div>
-    )}
-    </button>
-   </div>
+   <CharacterItem
+    key={char.name}
+    char={char}
+    isSelected={selectedCharacter === char.name}
+    onCharacterClick={onCharacterClick}
+    onAskCompanion={onAskCompanion}
+    t={t}
+   />
    ))}
   </div>
   )}
+ </div>
+ );
+});
+
+interface CharacterItemProps {
+ char: Character;
+ isSelected: boolean;
+ onCharacterClick: (name: string) => void;
+ onAskCompanion?: (name: string) => void;
+ t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+const CharacterItem = React.memo(function CharacterItem({
+ char,
+ isSelected,
+ onCharacterClick,
+ onAskCompanion,
+ t,
+}: CharacterItemProps) {
+ return (
+ <div>
+  <button
+  onClick={() => onCharacterClick(char.name)}
+  aria-label={isSelected ? t('fiction_collapse', { name: char.name }) : t('fiction_expand', { name: char.name })}
+  className={`w-full text-left px-3 py-2.5 rounded-xl transition-all ${
+   isSelected
+   ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700'
+   : 'bg-gray-50/50 dark:bg-gray-800/50 border border-transparent hover:bg-surface-1'
+  }`}
+  >
+  <div className="flex items-center justify-between">
+   <span className="text-sm font-medium text-gray-800">
+   {char.name}
+   </span>
+   <span className="text-xs text-gray-500 dark:text-gray-400">
+   {char.mentions}x
+   </span>
+  </div>
+  {isSelected && (
+   <div className="mt-2 space-y-2">
+   <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+    &ldquo;{char.context}&rdquo;
+   </p>
+   {onAskCompanion && (
+   <button
+    onClick={(e) => {
+    e.stopPropagation();
+    onAskCompanion(char.name);
+    }}
+    aria-label={t('fiction_ask_about', { name: char.name.split(' ')[0] })}
+    className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline"
+   >
+    {t('fiction_ask_about', { name: char.name.split(' ')[0] })}
+   </button>
+   )}
+   </div>
+  )}
+  </button>
  </div>
  );
 });

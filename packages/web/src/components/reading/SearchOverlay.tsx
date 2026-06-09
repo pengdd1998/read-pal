@@ -97,34 +97,17 @@ export const SearchOverlay = React.memo(function SearchOverlay({
    <div className="max-h-64 overflow-y-auto border-t border-surface-2">
     {searchResults.length > 0 ? (
     searchResults.map((r) => (
-     <button
+    <SearchResultItem
      key={r.index}
-     onClick={() => {
+     result={r}
+     isCurrent={r.index === currentChapter}
+     onNavigate={() => {
       onNavigate(r.index);
       onClose();
       onQueryChange('');
      }}
-     className={`w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors ${
-      r.index === currentChapter ? 'bg-amber-50/50 dark:bg-amber-900/5' : ''
-     }`}
-     >
-     <div className="flex items-center gap-2">
-      <span className="text-xs text-amber-500 font-mono font-bold">{r.index + 1}</span>
-      <span className="text-sm font-medium text-gray-800 truncate">
-      {r.title}
-      </span>
-      {r.index === currentChapter && (
-      <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full font-medium">
-       {t('search_current')}
-      </span>
-      )}
-     </div>
-     {r.snippet && (
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2 leading-relaxed pl-5">
-      {r.snippet}
-      </p>
-     )}
-     </button>
+     t={t}
+    />
     ))
     ) : (
     <div className="px-4 py-6 text-center text-sm text-gray-400">
@@ -136,5 +119,45 @@ export const SearchOverlay = React.memo(function SearchOverlay({
   </div>
   </div>
  </div>
+ );
+});
+
+interface SearchResultItemProps {
+ result: SearchResult;
+ isCurrent: boolean;
+ onNavigate: () => void;
+ t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+const SearchResultItem = React.memo(function SearchResultItem({
+ result,
+ isCurrent,
+ onNavigate,
+ t,
+}: SearchResultItemProps) {
+ return (
+ <button
+  onClick={onNavigate}
+  className={`w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors ${
+  isCurrent ? 'bg-amber-50/50 dark:bg-amber-900/5' : ''
+  }`}
+ >
+ <div className="flex items-center gap-2">
+  <span className="text-xs text-amber-500 font-mono font-bold">{result.index + 1}</span>
+  <span className="text-sm font-medium text-gray-800 truncate">
+  {result.title}
+  </span>
+  {isCurrent && (
+  <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full font-medium">
+   {t('search_current')}
+  </span>
+  )}
+ </div>
+ {result.snippet && (
+  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2 leading-relaxed pl-5">
+  {result.snippet}
+  </p>
+ )}
+ </button>
  );
 });
