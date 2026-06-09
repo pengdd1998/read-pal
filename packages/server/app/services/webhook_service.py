@@ -165,6 +165,50 @@ async def _is_safe_webhook_url(url: str) -> bool:
     return True
 
 
+async def _deliver_with_retries(
+    url: str,
+    event: str,
+    body: dict,
+    headers: dict,
+    start: float,
+    max_retries: int = 3,
+) -> tuple[int | None, int, str | None]:
+    """Execute HTTP POST with retry loop and exponential backoff.
+
+    Returns (status_code, duration_ms, error).
+    """
+    last_error: str | None = None
+    for attempt in range(max_retries + 1):
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    url,
+                    json=body,
+                    headers=headers,
+                )
+            duration_ms = int((time.monotonic() - start) * 1000)
+            if response.status_code >= 500 and attempt < max_retries:
+                delay = 2 ** attempt
+                logger.warning('Webhook got %d, retry %d/%d in %ds: url=%s', response.status_code, attempt + 1, max_retries, delay, url)
+                await asyncio.sleep(delay)
+                continue
+            logger.info('Webhook delivered: url=%s event=%s status=%d duration=%dms', url, event, response.status_code, duration_ms)
+            return response.status_code, duration_ms, None
+        except Exception as exc:
+            last_error = str(exc)
+            if attempt < max_retries:
+                delay = 2 ** attempt
+                logger.warning('Webhook delivery attempt %d/%d failed, retrying in %ds: url=%s error=%s', attempt + 1, max_retries + 1, delay, url, str(exc)[:100])
+                await asyncio.sleep(delay)
+            else:
+                duration_ms = int((time.monotonic() - start) * 1000)
+                logger.error('Webhook delivery failed after %d attempts: url=%s event=%s duration=%dms error=%s', max_retries + 1, url, event, duration_ms, exc)
+                return None, duration_ms, last_error
+    # Should not reach here, but safety fallback
+    duration_ms = int((time.monotonic() - start) * 1000)
+    return None, duration_ms, last_error
+
+
 async def deliver_webhook(
     webhook: Webhook,
     event: str,
@@ -175,8 +219,7 @@ async def deliver_webhook(
     Retries up to 3 times with exponential backoff on transient failures.
     Returns (status_code, duration_ms, error).
     """
-    body = payload
-    body_str = json.dumps(body, separators=(',', ':'), sort_keys=True)
+    body_str = json.dumps(payload, separators=(',', ':'), sort_keys=True)
     signature = hmac.new(
         webhook.secret.encode(),
         body_str.encode(),
@@ -189,42 +232,18 @@ async def deliver_webhook(
         'X-Webhook-Event': event,
     }
 
-    start = time.monotonic()
     if not await _is_safe_webhook_url(webhook.url):
         logger.warning('webhook.blocked_internal_url url=%s', webhook.url)
         return None, 0, 'Webhook URL targets internal network'
 
-    max_retries = 3
-    last_error: str | None = None
-    for attempt in range(max_retries + 1):
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    webhook.url,
-                    json=body,
-                    headers=headers,
-                )
-            duration_ms = int((time.monotonic() - start) * 1000)
-            if response.status_code >= 500 and attempt < max_retries:
-                delay = 2 ** attempt
-                logger.warning('Webhook got %d, retry %d/%d in %ds: url=%s', response.status_code, attempt + 1, max_retries, delay, webhook.url)
-                await asyncio.sleep(delay)
-                continue
-            logger.info('Webhook delivered: url=%s event=%s status=%d duration=%dms', webhook.url, event, response.status_code, duration_ms)
-            return response.status_code, duration_ms, None
-        except Exception as exc:
-            last_error = str(exc)
-            if attempt < max_retries:
-                delay = 2 ** attempt
-                logger.warning('Webhook delivery attempt %d/%d failed, retrying in %ds: url=%s error=%s', attempt + 1, max_retries + 1, delay, webhook.url, str(exc)[:100])
-                await asyncio.sleep(delay)
-            else:
-                duration_ms = int((time.monotonic() - start) * 1000)
-                logger.error('Webhook delivery failed after %d attempts: url=%s event=%s duration=%dms error=%s', max_retries + 1, webhook.url, event, duration_ms, exc)
-                return None, duration_ms, last_error
-    # Should not reach here, but safety fallback
-    duration_ms = int((time.monotonic() - start) * 1000)
-    return None, duration_ms, last_error
+    start = time.monotonic()
+    return await _deliver_with_retries(
+        url=webhook.url,
+        event=event,
+        body=payload,
+        headers=headers,
+        start=start,
+    )
 
 
 async def log_delivery(
