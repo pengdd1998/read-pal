@@ -56,6 +56,7 @@ export const CollectionItem = React.memo(function CollectionItem({
   <div
   role="button"
   tabIndex={0}
+  aria-label={col.name}
   onClick={onSelect}
   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${

@@ -117,6 +117,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  <div
   role="button"
   tabIndex={0}
+  aria-label={t('upload_drag_here')}
   onClick={handleClick}
   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
   onDrop={handleDrop}
