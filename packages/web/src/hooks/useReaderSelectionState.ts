@@ -34,7 +34,7 @@ export function useReaderSelectionState({
   useEffect(() => {
     if (!selection.isCollapsed && !hasMadeSelection) {
       setHasMadeSelection(true);
-      try { localStorage.setItem('read-pal-selection-used', 'true'); } catch (err) { console.warn('Storage error:', err); }
+      try { localStorage.setItem('read-pal-selection-used', 'true'); } catch (err) { console.warn('useReaderSelectionState: localStorage write failed', err); }
     }
   }, [selection.isCollapsed, hasMadeSelection]);
 

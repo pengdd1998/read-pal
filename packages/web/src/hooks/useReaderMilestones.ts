@@ -30,7 +30,7 @@ export function useReaderMilestones({
       try {
         localStorage.setItem('read-pal-tour-complete', 'true');
         localStorage.removeItem('read-pal-tour-step');
-      } catch (err) { console.warn('Storage error:', err); }
+      } catch (err) { console.warn('useReaderMilestones: localStorage write failed', err); }
       const timer = setTimeout(() => setShowCompletion(true), 3000);
       return () => clearTimeout(timer);
     }

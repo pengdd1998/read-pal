@@ -20,10 +20,12 @@ export function ServiceWorkerRegistrar() {
  // Skip service worker in Capacitor — native handles caching
  if (isCapacitor()) return;
  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+ let mounted = true;
 
  navigator.serviceWorker
   .register('/sw.js')
   .then((reg) => {
+  if (!mounted) return;
   setRegistration(reg);
 
   if (reg.waiting) {
@@ -36,6 +38,7 @@ export function ServiceWorkerRegistrar() {
    if (!newWorker) return;
 
    newWorker.addEventListener('statechange', () => {
+   if (!mounted) return;
    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
     setUpdateAvailable(true);
    }
@@ -76,6 +79,7 @@ export function ServiceWorkerRegistrar() {
  navigator.serviceWorker.addEventListener('message', onMessage);
 
  return () => {
+  mounted = false;
   navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
   navigator.serviceWorker.removeEventListener('message', onMessage);
  };

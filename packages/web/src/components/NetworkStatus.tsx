@@ -41,6 +41,7 @@ export function NetworkStatus() {
  }, []);
 
  useEffect(() => {
+ let mounted = true;
  setOffline(!navigator.onLine);
  let syncTimer: ReturnType<typeof setTimeout> | undefined;
  let hideTimer: ReturnType<typeof setTimeout> | undefined;
@@ -53,20 +54,23 @@ export function NetworkStatus() {
  };
 
  const goOnline = async () => {
+  if (!mounted) return;
   setOffline(false);
   setShowBanner(true);
   try {
   const count = await countQueuedMutations();
+  if (!mounted) return;
   setQueuedCount(count);
   if (count > 0) {
    syncTimer = setTimeout(() => syncQueue(), 1000);
   }
   } catch (err) {
   console.warn('NetworkStatus: failed to count queued mutations on reconnect', err);
-  setQueuedCount(0);
+  if (mounted) setQueuedCount(0);
   }
   // Auto-hide "back online" after 4s
   hideTimer = setTimeout(() => {
+  if (!mounted) return;
   setShowBanner(false);
   setLastSync(null);
   }, 4000);
@@ -79,13 +83,14 @@ export function NetworkStatus() {
  (async () => {
   try {
   const count = await initQueue();
+  if (!mounted) return;
   setQueuedCount(count);
   if (count > 0 && navigator.onLine) {
    syncTimer = setTimeout(() => syncQueue(), 1000);
   }
   } catch (err) {
   console.warn('NetworkStatus: failed to initialize offline queue', err);
-  setQueuedCount(0);
+  if (mounted) setQueuedCount(0);
   }
  })();
 
@@ -93,15 +98,17 @@ export function NetworkStatus() {
  const onMutationQueued = async () => {
   try {
   const count = await countQueuedMutations();
+  if (!mounted) return;
   setQueuedCount(count);
   } catch (err) {
   console.warn('NetworkStatus: failed to count queued mutations after queue event', err);
-  setQueuedCount(0);
+  if (mounted) setQueuedCount(0);
   }
  };
  window.addEventListener('mutation-queued', onMutationQueued);
 
  return () => {
+  mounted = false;
   if (syncTimer) clearTimeout(syncTimer);
   if (hideTimer) clearTimeout(hideTimer);
   window.removeEventListener('offline', goOffline);

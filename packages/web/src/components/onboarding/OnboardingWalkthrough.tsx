@@ -54,7 +54,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
         });
       }
     } catch (err) {
-      console.warn('Storage error:', err);
+      console.warn('OnboardingWalkthrough: load state failed', err);
     }
   }, []);
 
@@ -62,7 +62,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
     try {
       localStorage.setItem(STORAGE_KEY, 'true');
     } catch (err) {
-      console.warn('Storage error:', err);
+      console.warn('OnboardingWalkthrough: save state failed', err);
     }
     setOverlayVisible(false);
     if (timerRef.current) clearTimeout(timerRef.current);

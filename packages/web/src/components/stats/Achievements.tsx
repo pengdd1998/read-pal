@@ -4,6 +4,26 @@ import React, { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ReadingStats } from './types';
 
+interface BadgeCardProps {
+ badge: { icon: string; title: string; desc: string; unlocked: boolean };
+}
+
+const BadgeCard = React.memo(function BadgeCard({ badge }: BadgeCardProps) {
+ return (
+ <div
+  className={`rounded-xl p-3 text-center transition-all ${
+   badge.unlocked
+   ? 'bg-gradient-to-br from-amber-50 to-teal-50 dark:from-amber-900/10 dark:to-teal-900/10 border border-amber-200 dark:border-amber-800'
+   : 'bg-gray-50/50 dark:bg-gray-800/50 opacity-50'
+  }`}
+ >
+  <div className={`text-2xl mb-1 ${badge.unlocked ? '' : 'grayscale'}`}>{badge.icon}</div>
+  <div className="text-xs font-semibold text-gray-900 dark:text-gray-100">{badge.title}</div>
+  <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{badge.desc}</div>
+ </div>
+ );
+});
+
 interface AchievementsProps {
  stats: ReadingStats;
 }
@@ -27,18 +47,7 @@ export const Achievements = React.memo(function Achievements({ stats }: Achievem
   <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('achievements_title')}</h2>
   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
   {badges.map((badge) => (
-   <div
-   key={badge.title}
-   className={`rounded-xl p-3 text-center transition-all ${
-    badge.unlocked
-    ? 'bg-gradient-to-br from-amber-50 to-teal-50 dark:from-amber-900/10 dark:to-teal-900/10 border border-amber-200 dark:border-amber-800'
-    : 'bg-gray-50/50 dark:bg-gray-800/50 opacity-50'
-   }`}
-   >
-   <div className={`text-2xl mb-1 ${badge.unlocked ? '' : 'grayscale'}`}>{badge.icon}</div>
-   <div className="text-xs font-semibold text-gray-900 dark:text-gray-100">{badge.title}</div>
-   <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{badge.desc}</div>
-   </div>
+   <BadgeCard key={badge.title} badge={badge} />
   ))}
   </div>
  </div>

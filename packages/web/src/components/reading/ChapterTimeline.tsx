@@ -12,6 +12,83 @@ interface ChapterStat {
  lastActivity: string;
 }
 
+interface TimelineChapterRowProps {
+ chapterIndex: number;
+ stat: ChapterStat | undefined;
+ isCurrent: boolean;
+ maxAnnotations: number;
+ title: string;
+ onSelect: (index: number) => void;
+ t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+const TimelineChapterRow = React.memo(function TimelineChapterRow({
+ chapterIndex,
+ stat,
+ isCurrent,
+ maxAnnotations,
+ title,
+ onSelect,
+ t,
+}: TimelineChapterRowProps) {
+ const total = stat ? stat.highlights + stat.notes : 0;
+ const barWidth = stat ? (total / maxAnnotations) * 100 : 0;
+ const isRead = stat && stat.lastActivity;
+
+ return (
+ <button
+  onClick={() => onSelect(chapterIndex)}
+  className={`w-full text-left p-3 rounded-xl transition-all duration-150 focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:outline-none ${
+  isCurrent
+   ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
+   : isRead
+   ? 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-surface-1 border border-transparent'
+   : 'border border-transparent hover:bg-gray-50/30 dark:hover:bg-gray-800/30'
+  }`}
+ >
+  <div className="flex items-center gap-2 mb-1">
+  {/* Progress dot */}
+  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+   isCurrent
+   ? 'bg-amber-500'
+   : isRead
+   ? 'bg-teal-400'
+   : 'bg-gray-300'
+  }`} />
+  <span className={`text-xs font-medium truncate ${
+   isCurrent
+   ? 'text-amber-700 dark:text-amber-300'
+   : 'text-gray-700 dark:text-gray-300'
+  }`}>
+   {title}
+  </span>
+  {isCurrent && (
+   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-medium ml-auto flex-shrink-0">
+   {t('timeline_here')}
+   </span>
+  )}
+  </div>
+
+  {/* Activity bar */}
+  {stat && (
+  <div className="flex items-center gap-2 mt-1.5">
+   <div className="flex-1 h-1.5 bg-surface-1 rounded-full overflow-hidden">
+   <div
+    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-400 transition-all duration-300"
+    style={{ width: `${barWidth}%` }}
+   />
+   </div>
+   <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">
+   {stat.highlights > 0 && <span>{stat.highlights}{t('highlight_abbr')}</span>}
+   {stat.notes > 0 && <span>{stat.notes}{t('note_abbr')}</span>}
+   {stat.bookmarks > 0 && <span>{stat.bookmarks}{t('bookmark_abbr')}</span>}
+   </div>
+  </div>
+  )}
+ </button>
+ );
+});
+
 interface ChapterTimelineProps {
  bookId: string;
  totalChapters: number;
@@ -115,68 +192,18 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
     </button>
    </div>
    ) : (
-   Array.from({ length: totalChapters }, (_, i) => {
-    const stat = statsMap.get(i);
-    const total = stat ? stat.highlights + stat.notes : 0;
-    const barWidth = stat ? (total / maxAnnotations) * 100 : 0;
-    const isCurrent = i === currentChapter;
-    const isRead = stat && stat.lastActivity;
-    const title = chapterTitles[i]?.title || t('timeline_chapter_fallback', { num: i + 1 });
-
-    return (
-    <button
+   Array.from({ length: totalChapters }, (_, i) => (
+    <TimelineChapterRow
      key={`chapter-${i}`}
-     onClick={() => onChapterSelect(i)}
-     className={`w-full text-left p-3 rounded-xl transition-all duration-150 focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:outline-none ${
-     isCurrent
-      ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
-      : isRead
-      ? 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-surface-1 border border-transparent'
-      : 'border border-transparent hover:bg-gray-50/30 dark:hover:bg-gray-800/30'
-     }`}
-    >
-     <div className="flex items-center gap-2 mb-1">
-     {/* Progress dot */}
-     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-      isCurrent
-      ? 'bg-amber-500'
-      : isRead
-      ? 'bg-teal-400'
-      : 'bg-gray-300'
-     }`} />
-     <span className={`text-xs font-medium truncate ${
-      isCurrent
-      ? 'text-amber-700 dark:text-amber-300'
-      : 'text-gray-700 dark:text-gray-300'
-     }`}>
-      {title}
-     </span>
-     {isCurrent && (
-      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-medium ml-auto flex-shrink-0">
-      {t('timeline_here')}
-      </span>
-     )}
-     </div>
-
-     {/* Activity bar */}
-     {stat && (
-     <div className="flex items-center gap-2 mt-1.5">
-      <div className="flex-1 h-1.5 bg-surface-1 rounded-full overflow-hidden">
-      <div
-       className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-400 transition-all duration-300"
-       style={{ width: `${barWidth}%` }}
-      />
-      </div>
-      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">
-      {stat.highlights > 0 && <span>{stat.highlights}{t('highlight_abbr')}</span>}
-      {stat.notes > 0 && <span>{stat.notes}{t('note_abbr')}</span>}
-      {stat.bookmarks > 0 && <span>{stat.bookmarks}{t('bookmark_abbr')}</span>}
-      </div>
-     </div>
-     )}
-    </button>
-    );
-   })
+     chapterIndex={i}
+     stat={statsMap.get(i)}
+     isCurrent={i === currentChapter}
+     maxAnnotations={maxAnnotations}
+     title={chapterTitles[i]?.title || t('timeline_chapter_fallback', { num: i + 1 })}
+     onSelect={onChapterSelect}
+     t={t}
+    />
+   ))
    )}
   </div>
   </div>

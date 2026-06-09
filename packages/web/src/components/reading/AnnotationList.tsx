@@ -6,6 +6,60 @@ import type { Annotation } from '@read-pal/shared';
 import type { FilterTab } from './FilterTabs';
 import { AnnotationCard } from './AnnotationCard';
 
+interface AnnotationRowProps {
+ annotation: Annotation;
+ bulkMode: boolean;
+ isSelected: boolean;
+ bookTitle?: string;
+ author?: string;
+ onDelete: (id: string) => void;
+ onUpdate: (updated: Annotation) => void;
+ onClick: (annotation: Annotation) => void;
+ onToggleSelect: (id: string) => void;
+ selectLabel: string;
+}
+
+const AnnotationRow = React.memo(function AnnotationRow({
+ annotation,
+ bulkMode,
+ isSelected,
+ bookTitle,
+ author,
+ onDelete,
+ onUpdate,
+ onClick,
+ onToggleSelect,
+ selectLabel,
+}: AnnotationRowProps) {
+ return (
+ <div className="relative">
+  {bulkMode && (
+  <div className="absolute top-1 left-0 z-10">
+   <label className="flex items-center justify-center min-w-[44px] min-h-[44px] cursor-pointer">
+   <input
+   type="checkbox"
+   checked={isSelected}
+   onChange={() => onToggleSelect(annotation.id)}
+   aria-label={selectLabel}
+   className="w-4 h-4 rounded border-surface-3 text-amber-500 focus:ring-amber-400 cursor-pointer"
+   />
+   </label>
+  </div>
+  )}
+  <div className={bulkMode ? 'pl-7' : ''}>
+  <AnnotationCard
+   annotation={annotation}
+   bookTitle={bookTitle}
+   author={author}
+   onDelete={onDelete}
+   onUpdate={onUpdate}
+   onClick={onClick}
+  />
+  </div>
+ </div>
+ );
+});
+
 interface AnnotationListProps {
  annotations: Annotation[];
  activeTab: FilterTab;
@@ -63,31 +117,19 @@ export const AnnotationList = React.memo(function AnnotationList({
  return (
  <>
   {annotations.map((annotation) => (
-  <div key={annotation.id} className="relative">
-   {bulkMode && (
-   <div className="absolute top-1 left-0 z-10">
-    <label className="flex items-center justify-center min-w-[44px] min-h-[44px] cursor-pointer">
-    <input
-    type="checkbox"
-    checked={selectedIds.has(annotation.id)}
-    onChange={() => onToggleSelect(annotation.id)}
-    aria-label={t('sidebar_select_annotation')}
-    className="w-4 h-4 rounded border-surface-3 text-amber-500 focus:ring-amber-400 cursor-pointer"
-    />
-    </label>
-   </div>
-   )}
-   <div className={bulkMode ? 'pl-7' : ''}>
-   <AnnotationCard
-    annotation={annotation}
-    bookTitle={bookTitle}
-    author={author}
-    onDelete={onDelete}
-    onUpdate={onUpdate}
-    onClick={handleClick}
-   />
-   </div>
-  </div>
+  <AnnotationRow
+   key={annotation.id}
+   annotation={annotation}
+   bulkMode={bulkMode}
+   isSelected={selectedIds.has(annotation.id)}
+   bookTitle={bookTitle}
+   author={author}
+   onDelete={onDelete}
+   onUpdate={onUpdate}
+   onClick={handleClick}
+   onToggleSelect={onToggleSelect}
+   selectLabel={t('sidebar_select_annotation')}
+  />
   ))}
  </>
  );

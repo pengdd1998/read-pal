@@ -36,7 +36,7 @@ export const WelcomeActions = React.memo(function WelcomeActions({
       <div className="mt-4">
         <button
           onClick={() => {
-            try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('Storage error:', err); }
+            try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('WelcomeActions: localStorage write failed', err); }
             router.push('/dashboard');
           }}
           className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center"
@@ -64,7 +64,7 @@ function SeedButton() {
     try {
       const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
       if (res.success && res.data) {
-        try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('Storage error:', err); }
+        try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('WelcomeActions: localStorage write failed', err); }
         router.push(`/read/${res.data.book.id}`);
       }
     } catch (err) {

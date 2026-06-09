@@ -26,4 +26,5 @@ export const ReadingPlanPanel: Dyn = dynamic(() => import('@/components/reading/
 export const StudyModePanel: Dyn = dynamic(() => import('@/components/reading/StudyModePanel').then((m) => ({ default: m.StudyModePanel })), { ssr: false });
 export const FictionPanel: Dyn = dynamic(() => import('@/components/reading/FictionPanel').then((m) => ({ default: m.FictionPanel })), { ssr: false });
 export const ChapterTimeline: Dyn = dynamic(() => import('@/components/reading/ChapterTimeline').then((m) => ({ default: m.ChapterTimeline })), { ssr: false });
+export const ShortcutsHelp: Dyn = dynamic(() => import('@/components/reading/ShortcutsHelp').then((m) => ({ default: m.ShortcutsHelp })), { ssr: false });
 export const FeatureTour: Dyn = dynamic(() => import('@/components/reading/FeatureTour').then((m) => ({ default: m.FeatureTour })), { ssr: false });

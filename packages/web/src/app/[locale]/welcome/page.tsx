@@ -98,7 +98,7 @@ export default function WelcomePage() {
       console.warn('Welcome: failed to save persona preference', err);
       toast(t('persona_save_error'), 'error');
     }
-    try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('Storage error:', err); }
+    try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('WelcomePage: localStorage write failed', err); }
 
     if (book) {
       router.push(`/read/${book.id}`);

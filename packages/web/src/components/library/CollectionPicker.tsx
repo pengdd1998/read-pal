@@ -6,6 +6,35 @@ import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import type { Collection } from '@read-pal/shared';
 
+interface CollectionCheckItemProps {
+ name: string;
+ isChecked: boolean;
+ isToggling: boolean;
+ onToggle: () => void;
+}
+
+const CollectionCheckItem = React.memo(function CollectionCheckItem({
+ name,
+ isChecked,
+ isToggling,
+ onToggle,
+}: CollectionCheckItemProps) {
+ return (
+  <button
+  onClick={onToggle}
+  disabled={isToggling}
+  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+  >
+  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+   isChecked ? 'border-primary-500 bg-primary-500' : 'border-surface-3'
+  }`}>
+   {isChecked && <svg aria-hidden="true" className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+  </div>
+  <span className="truncate">{name}</span>
+  </button>
+ );
+});
+
 interface CollectionPickerProps {
  bookId: string;
  onClose: () => void;
@@ -114,24 +143,15 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   </div>
   ) : (
   <div className="max-h-48 overflow-y-auto p-1.5">
-   {collections.map((col) => {
-   const inCol = isInCollection(col);
-   return (
-    <button
+   {collections.map((col) => (
+   <CollectionCheckItem
     key={col.id}
-    onClick={() => toggleBook(col)}
-    disabled={toggling === col.id}
-    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
-    >
-    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-     inCol ? 'border-primary-500 bg-primary-500' : 'border-surface-3'
-    }`}>
-     {inCol && <svg aria-hidden="true" className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-    </div>
-    <span className="truncate">{col.name}</span>
-    </button>
-   );
-   })}
+    name={col.name}
+    isChecked={isInCollection(col)}
+    isToggling={toggling === col.id}
+    onToggle={() => toggleBook(col)}
+   />
+   ))}
 
    {collections.length === 0 && !showCreate && (
    <p className="text-xs text-gray-400 dark:text-gray-500 px-2.5 py-2">{t('collection_picker_empty')}</p>

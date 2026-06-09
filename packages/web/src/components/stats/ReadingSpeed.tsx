@@ -102,26 +102,36 @@ function BookSpeedChart({ bookSpeeds }: { bookSpeeds: BookSpeed[] }) {
  <div>
   <span className="text-sm text-gray-600 dark:text-gray-400 mb-3 block">{t('speed_by_book')}</span>
   <div className="space-y-2.5">
-  {bookSpeeds.slice(0, 6).map((book) => {
-   const pct = Math.max(3, (book.wpm / maxWpm) * 100);
-   return (
-   <div key={book.bookId} className="flex items-center gap-3">
-    <span className="text-xs text-gray-600 dark:text-gray-400 w-28 truncate" title={book.title}>
-    {book.title}
-    </span>
-    <div className="flex-1 h-3 bg-surface-1 rounded-full overflow-hidden">
-    <div
-     className="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full transition-all duration-500"
-     style={{ width: `${pct}%` }}
-    />
-    </div>
-    <span className="text-xs font-semibold text-teal-600 dark:text-teal-400 w-16 text-right">
-    {Math.round(book.wpm)} {t('speed_wpm_unit')}
-    </span>
-   </div>
-   );
-  })}
+  {bookSpeeds.slice(0, 6).map((book) => (
+   <BookSpeedBar key={book.bookId} book={book} maxWpm={maxWpm} t={t} />
+  ))}
   </div>
  </div>
  );
 }
+
+interface BookSpeedBarProps {
+ book: BookSpeed;
+ maxWpm: number;
+ t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+const BookSpeedBar = React.memo(function BookSpeedBar({ book, maxWpm, t }: BookSpeedBarProps) {
+ const pct = Math.max(3, (book.wpm / maxWpm) * 100);
+ return (
+ <div className="flex items-center gap-3">
+  <span className="text-xs text-gray-600 dark:text-gray-400 w-28 truncate" title={book.title}>
+  {book.title}
+  </span>
+  <div className="flex-1 h-3 bg-surface-1 rounded-full overflow-hidden">
+  <div
+   className="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full transition-all duration-500"
+   style={{ width: `${pct}%` }}
+  />
+  </div>
+  <span className="text-xs font-semibold text-teal-600 dark:text-teal-400 w-16 text-right">
+  {Math.round(book.wpm)} {t('speed_wpm_unit')}
+  </span>
+ </div>
+ );
+});
