@@ -3,7 +3,7 @@
 Re-exports from the flashcard package for backward compatibility.
 """
 
-from app.services.flashcard import (
+from app.services.flashcard import (  # noqa: F401
     DEFAULT_EASE_FACTOR,
     MIN_EASE_FACTOR,
     count_total,

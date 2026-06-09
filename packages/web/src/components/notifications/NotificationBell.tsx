@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { formatRelativeTime } from '@/lib/date';
+import { useToast } from '@/components/Toast';
 
 interface Notification {
  id: string;
@@ -28,6 +29,7 @@ function getNotificationIcon(type: string) {
 }
 
 export const NotificationBell = memo(function NotificationBell() {
+ const { toast } = useToast();
  const t = useTranslations('common');
 
  const fmtTime = (d: string) => formatRelativeTime(d, {
@@ -91,6 +93,7 @@ export const NotificationBell = memo(function NotificationBell() {
  } catch (err) {
   if (staleRef.current) return;
   console.warn('Notifications: failed to load notifications', err);
+  toast(t('notification_load_failed'), 'error');
  } finally {
   loadingRef.current = false;
   setLoadingNotifs(false);
@@ -108,6 +111,7 @@ export const NotificationBell = memo(function NotificationBell() {
   setNotifications(prev);
   setUnreadCount(prevCount);
   console.warn('Notifications: failed to mark notification as read', err);
+  toast(t('notification_mark_read_failed'), 'error');
  }
  }
 
@@ -123,6 +127,7 @@ export const NotificationBell = memo(function NotificationBell() {
   setNotifications(prev);
   setUnreadCount(prevCount);
   console.warn('Notifications: failed to mark all as read', err);
+  toast(t('notification_mark_all_read_failed'), 'error');
  } finally {
   setMarkingAll(false);
  }

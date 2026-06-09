@@ -55,6 +55,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   if (!mountedRef.current) return;
   console.warn('ReadingPlanPanel: failed to fetch reading plan', e);
   setPlan(null);
+  toast(t('reading_plan_load_failed'), 'error');
  } finally {
   if (mountedRef.current) setLoading(false);
  }
@@ -77,6 +78,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   if (stale) return;
   console.warn('ReadingPlanPanel: failed to load reading plan on open', e);
   setPlan(null);
+  toast(t('reading_plan_load_failed'), 'error');
   } finally {
   if (!stale) setLoading(false);
   }

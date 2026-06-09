@@ -17,7 +17,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.synthesis import SynthesisResponse
-from app.services.cross_book_synthesis import (
+from app.services.cross_book_synthesis import (  # noqa: F401
   batch_collect_reading_data,
   condense_book_data,
   get_user_book_ids,

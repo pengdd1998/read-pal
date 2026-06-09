@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { authFetch } from '@/lib/auth-fetch';
+import { useToast } from '@/components/Toast';
 import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
 import { CompanionStep } from '@/components/onboarding/CompanionStep';
 import { ReadyStep } from '@/components/onboarding/ReadyStep';
@@ -30,6 +31,7 @@ const STEPS: Step[] = ['welcome', 'companion', 'ready'];
 export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough() {
   const router = useRouter();
   const t = useTranslations('welcome');
+  const { toast } = useToast();
   const [step, setStep] = useState<Step>('welcome');
   const [mounted, setMounted] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
@@ -89,6 +91,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
       });
     } catch (err) {
       console.warn('Onboarding: failed to save persona preference', err);
+      toast(t('persona_save_error'), 'error');
     }
     complete();
   }, [selectedPersona, complete]);

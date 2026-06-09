@@ -59,6 +59,9 @@
     "close_character_tracker": "关闭角色追踪器",
     "dismiss": "关闭",
     "notifications_no_notifications": "暂无通知",
+    "notification_load_failed": "加载通知失败",
+    "notification_mark_read_failed": "标记已读失败",
+    "notification_mark_all_read_failed": "全部标记已读失败",
     "notifications_mark_all_read": "全部标为已读",
     "just_now": "刚刚",
     "minutes_ago": "%n 分钟前",
@@ -446,6 +449,8 @@
     "upload_cancel": "取消",
     "card_offline_badge": "离线",
     "collection_picker_title": "添加到收藏夹",
+    "collection_picker_create_failed": "创建收藏夹失败",
+    "collection_picker_toggle_failed": "更新收藏夹失败"
     "collection_picker_empty": "还没有收藏夹",
     "collection_picker_placeholder": "名称...",
     "collection_picker_add": "添加",
@@ -825,6 +830,7 @@
     "reading_plan_generating": "正在生成...",
     "reading_plan_generated": "阅读计划已生成！",
     "reading_plan_error": "生成计划失败",
+    "reading_plan_load_failed": "加载阅读计划失败"
     "reading_plan_days": "天",
     "reading_plan_mark_complete": "标记今日完成",
     "reading_plan_day_complete": "今日已完成！",
@@ -965,6 +971,7 @@
     "session_retry_insight": "重试生成洞察",
     "share_questions_unavailable": "讨论问题生成失败。导学指南已创建，但不包含AI问题。",
     "quote_card_by": "作者：",
+    "quote_card_download_failed": "下载引用卡片失败"
     "knowledge_from": "来自",
     "book_by_author": "作者：{author}",
     "share_unknown_book": "未知书籍",
@@ -1335,6 +1342,7 @@
     "notifications_title": "通知",
     "push_notifications_label": "推送通知",
     "push_notifications_desc": "在您的设备上接收提醒",
+    "push_toggle_failed": "更新推送通知设置失败",
     "reading_reminders_label": "阅读提醒",
     "reading_reminders_desc": "当您没有阅读时收到每日提醒",
     "streak_milestones_label": "连续阅读里程碑",

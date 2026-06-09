@@ -3,6 +3,7 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { copyToClipboard } from '@/lib/clipboard';
+import { useToast } from '@/components/Toast';
 import { renderCardToCanvas } from './QuoteCardCanvas';
 import type { CardTheme } from './QuoteCard';
 
@@ -26,6 +27,7 @@ export function useQuoteCardActions({
   setCopied,
 }: UseQuoteCardActionsParams) {
   const tr = useTranslations('reader');
+  const { toast } = useToast();
   const byLabel = tr('quote_card_by');
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -44,6 +46,7 @@ export function useQuoteCardActions({
       link.click();
     } catch (err) {
       console.warn('useQuoteCardActions: failed to download quote card', err);
+      toast(tr('quote_card_download_failed'), 'error');
     } finally {
       setTimeout(() => { if (mountedRef.current) setDownloading(false); }, 600);
     }

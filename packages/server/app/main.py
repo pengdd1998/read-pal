@@ -7,8 +7,9 @@ import structlog
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.routing import APIRoute
+from starlette.responses import Response as StarletteResponse
 
 from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
@@ -204,7 +205,7 @@ app.add_middleware(
 
 # Security headers middleware
 @app.middleware('http')
-async def add_security_headers(request: Request, call_next):
+async def add_security_headers(request: Request, call_next) -> StarletteResponse:
     response = await call_next(request)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'

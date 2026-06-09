@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/components/Toast';
 import type { UserSettings } from '@/components/settings/types';
 import { isCapacitor } from '@/lib/capacitor';
 import { isPushEnabled, setPushEnabled } from '@/lib/notifications';
@@ -50,6 +51,7 @@ function ToggleSwitch({
 }
 
 export const NotificationsSection = React.memo(function NotificationsSection({ settings, saving, onSave }: NotificationsSectionProps) {
+ const { toast } = useToast();
  const t = useTranslations('settings_page');
  const [pushEnabled, setPushState] = useState(false);
  const [pushLoading, setPushLoading] = useState(false);
@@ -71,6 +73,7 @@ export const NotificationsSection = React.memo(function NotificationsSection({ s
   setPushState(next && ok);
  } catch (err) {
   console.warn("NotificationsSection: push toggle failed", err);
+  toast(t('push_toggle_failed'), 'error');
  } finally {
   setPushLoading(false);
  }
