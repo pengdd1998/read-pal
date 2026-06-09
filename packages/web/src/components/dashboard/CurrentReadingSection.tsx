@@ -86,7 +86,7 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
      {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{book.author}</p>}
      <div className="flex items-center gap-3 mt-2">
       <div className="flex-1 max-w-[180px]">
-      <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
+      <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2" role="progressbar" aria-valuenow={Math.round(book.progress)} aria-valuemin={0} aria-valuemax={100}>
        <div
        className="bg-primary-500 rounded-full h-2 transition-all duration-500 ease-out"
        style={{ width: `${Math.min(100, book.progress)}%` }}
@@ -129,7 +129,7 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
     {isDisplayableAuthor(currentBook.author) && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{currentBook.author}</p>}
     <div className="flex items-center gap-3 mt-2">
      <div className="flex-1 max-w-[180px]">
-     <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
+     <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2" role="progressbar" aria-valuenow={Math.round(currentBook.progress)} aria-valuemin={0} aria-valuemax={100}>
       <div
       className="bg-primary-500 rounded-full h-2 transition-all duration-500 ease-out"
       style={{ width: `${Math.min(100, currentBook.progress)}%` }}

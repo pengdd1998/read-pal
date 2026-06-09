@@ -21,7 +21,7 @@ interface StatsDataResult {
   error: string | null;
 }
 
-export function useStatsData(): StatsDataResult {
+export function useStatsData(): StatsDataResult & { refetch: () => void } {
   const t = useTranslations('stats');
   const [data, setData] = useState<DashboardData | null>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -30,9 +30,12 @@ export function useStatsData(): StatsDataResult {
   const [bookSpeeds, setBookSpeeds] = useState<BookSpeed[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let stale = false;
+    setLoading(true);
+    setError(null);
     Promise.all([
       api.get<DashboardData>('/api/stats/dashboard'),
       api.get<SessionData[]>('/api/reading-sessions'),
@@ -68,7 +71,9 @@ export function useStatsData(): StatsDataResult {
       .catch((err) => { console.warn('useStatsData: fetch failed', err); if (!stale) setError(t('error_load')); })
       .finally(() => { if (!stale) setLoading(false); });
     return () => { stale = true; };
-  }, [t]);
+  }, [t, retryCount]);
 
-  return { data, sessions, flashcardStats, speedData, bookSpeeds, loading, error };
+  const refetch = () => setRetryCount((c) => c + 1);
+
+  return { data, sessions, flashcardStats, speedData, bookSpeeds, loading, error, refetch };
 }
