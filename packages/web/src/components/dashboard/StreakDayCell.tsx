@@ -20,7 +20,7 @@ function getActivityLevel(pages: number, minutes: number): ActivityLevel {
 }
 
 const LEVEL_COLORS: Record<ActivityLevel, string> = {
- 0: 'bg-gray-100 dark:bg-gray-800',
+ 0: 'bg-surface-1',
  1: 'bg-amber-200 dark:bg-amber-900/50',
  2: 'bg-amber-300 dark:bg-amber-700/60',
  3: 'bg-amber-500 dark:bg-amber-600/80',
@@ -87,7 +87,7 @@ export function SkeletonHeatmap() {
   {Array.from({ length: 7 }).map((_, row) => (
   <div key={row} className="flex gap-[3px]">
    {Array.from({ length: 26 }).map((_, col) => (
-   <div key={col} className="w-[13px] h-[13px] rounded-[3px] bg-gray-100 dark:bg-gray-800 animate-pulse" />
+   <div key={col} className="w-[13px] h-[13px] rounded-[3px] bg-surface-1 animate-pulse" />
    ))}
   </div>
   ))}

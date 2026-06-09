@@ -62,7 +62,7 @@ export const ExportFilterPanel = React.memo(function ExportFilterPanel({
      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
      selectedTypes.has(opt.value)
       ? opt.color + ' ring-1 ring-current/20'
-      : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+      : 'bg-surface-1 text-gray-400 dark:text-gray-500'
      }`}
     >
      {t(opt.labelKey)}

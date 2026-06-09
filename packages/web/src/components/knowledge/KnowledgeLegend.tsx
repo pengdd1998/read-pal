@@ -14,7 +14,7 @@ export function KnowledgeLegend({ t }: KnowledgeLegendProps) {
    {t('legend_weight')}
   </div>
   <div className="flex items-center gap-2">
-   <div className="w-6 h-0.5 bg-gray-300 dark:bg-gray-600" />
+   <div className="w-6 h-0.5 bg-surface-3" />
    {t('legend_connection')}
   </div>
   <div className="flex items-center gap-2">

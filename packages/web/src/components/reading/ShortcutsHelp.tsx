@@ -1,15 +1,13 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface ShortcutsHelpProps {
  onClose: () => void;
 }
 
-/**
- * Keyboard shortcuts help modal for the reader.
- */
-export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
+export const ShortcutsHelp = React.memo(function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
  const t = useTranslations('reader');
  const shortcuts = [
  { keys: ['←', '→'], label: t('shortcut_prev_next') },
@@ -36,7 +34,7 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
     <span className="text-xs text-gray-600 dark:text-gray-400">{s.label}</span>
     <div className="flex gap-1">
     {s.keys.map((k) => (
-     <kbd key={k} className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-surface-3">{k}</kbd>
+     <kbd key={k} className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-surface-1 text-gray-700 dark:text-gray-300 border border-surface-3">{k}</kbd>
     ))}
     </div>
    </div>
@@ -46,4 +44,4 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
   </div>
  </div>
  );
-}
+});

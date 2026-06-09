@@ -94,7 +94,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   </div>
 
   {/* Progress bar */}
-  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-8"
+  <div className="w-full bg-surface-1 rounded-full h-1.5 mb-8"
    role="progressbar"
    aria-valuenow={currentIndex}
    aria-valuemin={0}

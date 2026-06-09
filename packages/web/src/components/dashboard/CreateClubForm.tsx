@@ -26,7 +26,7 @@ export const CreateClubForm = React.memo(function CreateClubForm({
  const tc = useTranslations('common');
 
  return (
- <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 space-y-3">
+ <div className="mb-4 p-4 rounded-xl bg-surface-1 space-y-3">
   <input
   type="text"
   placeholder={t('clubName')}

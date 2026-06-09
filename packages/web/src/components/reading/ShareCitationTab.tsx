@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { useToast } from '@/components/Toast';
@@ -20,7 +20,7 @@ interface ShareCitationTabProps {
  bookId: string;
 }
 
-export function ShareCitationTab({ bookId }: ShareCitationTabProps) {
+export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }: ShareCitationTabProps) {
  const t = useTranslations('reader');
  const { toast } = useToast();
  const [generating, setGenerating] = useState(false);
@@ -96,7 +96,7 @@ export function ShareCitationTab({ bookId }: ShareCitationTabProps) {
 
   {citationText && (
   <div className="space-y-2">
-   <pre className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words border border-surface-3">
+   <pre className="bg-surface-1 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words border border-surface-3">
    {citationText}
    </pre>
    <button
@@ -109,4 +109,4 @@ export function ShareCitationTab({ bookId }: ShareCitationTabProps) {
   )}
  </div>
  );
-}
+});

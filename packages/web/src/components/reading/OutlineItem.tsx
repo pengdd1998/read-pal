@@ -18,7 +18,7 @@ const TAG_COLORS: Record<string, string> = {
  surprising: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
 };
 
-const DEFAULT_TAG_COLOR = 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
+const DEFAULT_TAG_COLOR = 'bg-surface-1 text-gray-600 dark:text-gray-300';
 
 export const OutlineItem = memo(function OutlineItem({
  annotation,
@@ -67,7 +67,7 @@ export const OutlineItem = memo(function OutlineItem({
 
    <div className="flex items-center gap-1 mt-1 flex-wrap">
    {pageRef && (
-    <span className="text-[9px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">
+    <span className="text-[9px] text-gray-500 dark:text-gray-400 bg-surface-1 px-1 py-0.5 rounded">
     {pageRef}
     </span>
    )}

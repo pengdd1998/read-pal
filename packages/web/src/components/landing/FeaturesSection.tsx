@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Feature {
  icon: string;
  title: string;
@@ -10,7 +12,7 @@ interface FeaturesSectionProps {
  features: Feature[];
 }
 
-export function FeaturesSection({
+export const FeaturesSection = React.memo(function FeaturesSection({
  everything_title,
  everything_subtitle,
  features,
@@ -38,4 +40,4 @@ export function FeaturesSection({
   </div>
  </section>
  );
-}
+});

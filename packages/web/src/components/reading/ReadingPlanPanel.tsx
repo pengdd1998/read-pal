@@ -166,15 +166,15 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   <div className="flex-1 overflow-y-auto p-4">
    {loading ? (
    <div className="space-y-3">
-    <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
-    <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
-    <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded w-1/2 animate-pulse" />
+    <div className="h-4 bg-surface-1 rounded animate-pulse" />
+    <div className="h-4 bg-surface-1 rounded w-3/4 animate-pulse" />
+    <div className="h-4 bg-surface-1 rounded w-1/2 animate-pulse" />
    </div>
    ) : plan ? (
    <div className="space-y-4">
     {/* Progress */}
     <div className="flex items-center gap-2">
-    <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+    <div className="flex-1 bg-surface-1 rounded-full h-2">
      <div
      className="bg-amber-500 h-2 rounded-full transition-all"
      style={{ width: `${Math.min((plan.currentDay / plan.totalDays) * 100, 100)}%` }}

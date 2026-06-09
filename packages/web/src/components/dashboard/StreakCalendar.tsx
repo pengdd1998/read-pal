@@ -117,7 +117,7 @@ function StreakCalendarInner() {
   <div>
    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('streak_title')}</h3>
    {loading ? (
-   <div className="mt-1 h-4 w-40 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+   <div className="mt-1 h-4 w-40 bg-surface-1 rounded animate-pulse" />
    ) : error ? (
    <p className="text-sm text-red-500 dark:text-red-400 mt-1">{error}</p>
    ) : (
@@ -132,7 +132,7 @@ function StreakCalendarInner() {
     <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('streak_longest')}</div>
     <div className="text-lg font-bold text-gray-700 dark:text-gray-300 tabular-nums">{data.longestStreak}</div>
    </div>
-   <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
+   <div className="w-px h-8 bg-surface-2" />
    <div className="text-center">
     <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('streak_current')}</div>
     <div className="flex items-center justify-center gap-1">
@@ -191,7 +191,7 @@ function StreakCalendarInner() {
   {!loading && !error && (
   <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-500 dark:text-gray-400">
    <span>{t('heatmap_less')}</span>
-   <div className="w-[13px] h-[13px] rounded-[3px] bg-gray-100 dark:bg-gray-800" />
+   <div className="w-[13px] h-[13px] rounded-[3px] bg-surface-1" />
    <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-200 dark:bg-amber-900/50" />
    <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-300 dark:bg-amber-700/60" />
    <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-500 dark:bg-amber-600/80" />

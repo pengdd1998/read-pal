@@ -86,7 +86,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
     </span>
     <span className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">{t('challenges_progress', { progress: c.progress, target: c.target, unit: unitMap[c.unit] ?? c.unit })}</span>
    </div>
-   <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5" role="progressbar" aria-valuenow={Math.round(c.percentage)} aria-valuemin={0} aria-valuemax={100}>
+   <div className="w-full bg-surface-1 rounded-full h-1.5" role="progressbar" aria-valuenow={Math.round(c.percentage)} aria-valuemin={0} aria-valuemax={100}>
     <div
     className={`rounded-full h-1.5 transition-all duration-500 ${c.completed ? 'bg-green-500' : 'bg-primary-500'}`}
     style={{ width: `${Math.min(100, c.percentage)}%` }}

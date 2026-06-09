@@ -18,7 +18,7 @@ export default function BookDetailLoading() {
    <div className="h-5 bg-surface-2 rounded-full w-20 animate-pulse" />
    </div>
    <div className="flex-1 max-w-[200px]">
-   <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2" />
+   <div className="w-full bg-surface-1 rounded-full h-2" />
    </div>
   </div>
   </div>
@@ -42,7 +42,7 @@ export default function BookDetailLoading() {
   </div>
   <div className="space-y-3">
    {Array.from({ length: 3 }).map((_, i) => (
-   <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
+   <div key={i} className="h-16 bg-surface-1 rounded-xl animate-pulse" />
    ))}
   </div>
   </div>

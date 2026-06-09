@@ -31,7 +31,7 @@ export function RecentBooks({ books }: RecentBooksProps) {
     <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{book.title}</h3>
     {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{book.author}</p>}
     {book.progress > 0 && (
-    <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1 mt-1.5">
+    <div className="w-full bg-surface-1 rounded-full h-1 mt-1.5">
      <div className="bg-amber-400 rounded-full h-1" style={{ width: `${Math.min(100, Math.round(book.progress))}%` }} />
     </div>
     )}

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 
@@ -7,7 +8,7 @@ interface ShareQuoteTabProps {
  selectedAnnotation?: Annotation | null;
 }
 
-export function ShareQuoteTab({ selectedAnnotation }: ShareQuoteTabProps) {
+export const ShareQuoteTab = React.memo(function ShareQuoteTab({ selectedAnnotation }: ShareQuoteTabProps) {
  const t = useTranslations('reader');
 
  if (!selectedAnnotation || (selectedAnnotation.type !== 'highlight' && selectedAnnotation.type !== 'note')) {
@@ -38,4 +39,4 @@ export function ShareQuoteTab({ selectedAnnotation }: ShareQuoteTabProps) {
   </p>
  </div>
  );
-}
+});

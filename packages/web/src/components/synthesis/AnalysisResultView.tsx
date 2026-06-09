@@ -65,7 +65,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
    </h4>
    <div className="space-y-2">
    {result.references.map((ref) => (
-    <div key={ref.book.title + '-' + ref.type} className="p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-surface-3">
+    <div key={ref.book.title + '-' + ref.type} className="p-2.5 rounded-lg bg-surface-1 border border-surface-3">
     <div className="flex items-center gap-2 mb-1">
      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
      ref.type === 'supporting'
@@ -74,7 +74,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
       ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
       : ref.type === 'extending'
        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-       : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
+       : 'bg-surface-1 text-gray-600'
      }`}>
      {t(`ref_${ref.type}`, { defaultValue: ref.type })}
      </span>
@@ -99,7 +99,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
    </h4>
    <div className="space-y-2">
    {result.contradictions.map((c) => (
-    <div key={c.topic} className="p-2.5 rounded-lg border border-surface-3 bg-gray-50 dark:bg-gray-800">
+    <div key={c.topic} className="p-2.5 rounded-lg border border-surface-3 bg-surface-1">
     <div className="flex items-center gap-2 mb-2">
      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
      c.severity === 'high'
@@ -153,7 +153,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
    <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
    {t('analysis_label')}
    </h4>
-   <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-surface-3 max-h-[400px] overflow-y-auto">
+   <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-surface-1 rounded-lg p-3 border border-surface-3 max-h-[400px] overflow-y-auto">
    {textContent}
    </div>
   </div>

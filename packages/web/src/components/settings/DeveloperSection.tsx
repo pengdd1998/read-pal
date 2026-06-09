@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { ZoteroSection } from '@/components/settings/ZoteroSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
@@ -11,7 +12,7 @@ interface DeveloperSectionProps {
  settings?: UserSettings | null;
 }
 
-export function DeveloperSection({ settings }: DeveloperSectionProps) {
+export const DeveloperSection = React.memo(function DeveloperSection({ settings }: DeveloperSectionProps) {
  const t = useTranslations('settings_page');
  return (
  <>
@@ -67,4 +68,4 @@ export function DeveloperSection({ settings }: DeveloperSectionProps) {
   </section>
  </>
  );
-}
+});

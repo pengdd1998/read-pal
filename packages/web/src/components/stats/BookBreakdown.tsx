@@ -27,7 +27,7 @@ export const BookBreakdown = React.memo(function BookBreakdown({ books }: BookBr
     <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
     {book.title}
     </h3>
-    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-1">
+    <div className="w-full bg-surface-1 rounded-full h-1.5 mt-1">
     <div
      className={`h-full rounded-full transition-all duration-500 ${
      book.progress >= 100 ? 'bg-emerald-500' : 'bg-amber-500'

@@ -73,9 +73,9 @@ export default function SynthesisPage() {
    <div className="h-4 bg-surface-2 rounded-lg w-72 mt-2 animate-pulse" />
   </div>
   <div className="space-y-4">
-   <div className="h-24 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
-   <div className="h-48 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
-   <div className="h-64 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
+   <div className="h-24 rounded-xl bg-surface-1 animate-pulse" />
+   <div className="h-48 rounded-xl bg-surface-1 animate-pulse" />
+   <div className="h-64 rounded-xl bg-surface-1 animate-pulse" />
   </div>
   </div>
  );

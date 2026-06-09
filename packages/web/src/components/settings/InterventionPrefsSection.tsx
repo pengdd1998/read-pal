@@ -48,7 +48,7 @@ function ToggleSwitch({
   aria-checked={checked}
   aria-label={label}
   className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
-  checked ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+  checked ? 'bg-amber-500' : 'bg-surface-3'
   } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
  >
   <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
@@ -146,12 +146,12 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  return (
   <section className="mb-6 animate-slide-up">
   <div className="flex items-center gap-3 mb-4">
-   <div className="w-9 h-9 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
-   <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
+   <div className="w-9 h-9 rounded-xl bg-surface-2 animate-pulse" />
+   <div className="h-5 bg-surface-2 rounded-lg w-40 animate-pulse" />
   </div>
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-4">
    {Array.from({ length: 3 }).map((_, i) => (
-   <div key={i} className="h-10 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
+   <div key={i} className="h-10 bg-surface-1 rounded-xl animate-pulse" />
    ))}
   </div>
   </section>

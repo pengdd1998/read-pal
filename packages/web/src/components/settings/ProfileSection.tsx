@@ -22,13 +22,13 @@ export function ProfileSection({ userName, userEmail }: ProfileSectionProps) {
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-4">
   <div>
    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{t('name_label')}</label>
-   <div className="px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm border border-surface-3">
+   <div className="px-4 py-2.5 rounded-xl bg-surface-1 text-gray-700 dark:text-gray-300 text-sm border border-surface-3">
    {userName || t('not_set')}
    </div>
   </div>
   <div>
    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{t('email_label')}</label>
-   <div className="px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm border border-surface-3">
+   <div className="px-4 py-2.5 rounded-xl bg-surface-1 text-gray-700 dark:text-gray-300 text-sm border border-surface-3">
    {userEmail || t('not_set')}
    </div>
   </div>

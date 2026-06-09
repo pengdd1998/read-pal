@@ -187,7 +187,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   </button>
   <button
    onClick={onCancel}
-   className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+   className="px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors"
   >
    {tc('cancel')}
   </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { isCapacitor } from '@/lib/capacitor';
 import { cacheBook, isCached, removeCachedBook } from '@/lib/mobile-cache';
@@ -12,7 +12,7 @@ interface OfflineSaveButtonProps {
 
 type SaveState = 'idle' | 'cached' | 'saving' | 'error';
 
-export function OfflineSaveButton({ bookId }: OfflineSaveButtonProps) {
+export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId }: OfflineSaveButtonProps) {
  const t = useTranslations('reader');
  const [state, setState] = useState<SaveState>('idle');
  const [progress, setProgress] = useState(0);
@@ -136,7 +136,7 @@ export function OfflineSaveButton({ bookId }: OfflineSaveButtonProps) {
 
   {/* Mini progress bar at bottom of button */}
   {state === 'saving' && progress > 0 && (
-  <div className="absolute bottom-0 left-1 right-1 h-0.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+  <div className="absolute bottom-0 left-1 right-1 h-0.5 bg-surface-2 rounded-full overflow-hidden">
    <div
    className="h-full bg-amber-500 rounded-full transition-all duration-300"
    style={{ width: `${progress}%` }}
@@ -145,4 +145,4 @@ export function OfflineSaveButton({ bookId }: OfflineSaveButtonProps) {
   )}
  </button>
  );
-}
+});

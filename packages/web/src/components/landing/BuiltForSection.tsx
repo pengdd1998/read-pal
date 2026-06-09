@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Persona {
  emoji: string;
  title: string;
@@ -17,7 +19,7 @@ const CheckIcon = () => (
  </svg>
 );
 
-export function BuiltForSection({
+export const BuiltForSection = React.memo(function BuiltForSection({
  built_for_title,
  built_for_subtitle,
  personas,
@@ -53,4 +55,4 @@ export function BuiltForSection({
   </div>
  </section>
  );
-}
+});

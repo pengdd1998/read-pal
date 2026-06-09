@@ -134,7 +134,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
       ? 'bg-amber-500 dark:bg-amber-400'
       : day.minutes > 0
        ? 'bg-amber-300 dark:bg-amber-600'
-       : 'bg-gray-200 dark:bg-gray-700'
+       : 'bg-surface-2'
      }`}
      style={{ height: `${height}%` }}
      title={t('daily_tooltip', { date: day.date, minutes: day.minutes, pages: day.pages })}
@@ -154,7 +154,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
 
 function StatCard({ label, value, unit }: { label: string; value: string; unit?: string }) {
  return (
- <div className="text-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+ <div className="text-center p-2 rounded-lg bg-surface-1">
   <div>
   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{value}</span>
   {unit && <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">{unit}</span>}

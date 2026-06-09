@@ -50,7 +50,7 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
   </div>
 
   {/* Insight cards */}
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-100 dark:bg-gray-800">
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-surface-1">
   {[
    {
    label: t('sessions'),

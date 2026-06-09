@@ -26,7 +26,7 @@ export const ExportPreviewPanel = React.memo(function ExportPreviewPanel({
           {t('export_copy')}
         </button>
       </div>
-      <pre className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 overflow-auto max-h-40 whitespace-pre-wrap break-words border border-surface-3">
+      <pre className="bg-surface-1 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 overflow-auto max-h-40 whitespace-pre-wrap break-words border border-surface-3">
         {preview.slice(0, 2000)}{preview.length > 2000 ? '\n…' : ''}
       </pre>
     </div>

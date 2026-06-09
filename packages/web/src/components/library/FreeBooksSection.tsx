@@ -111,7 +111,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
     <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">{t('free_books_title')}</h3>
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
      {[1, 2, 3, 4].map((i) => (
-      <div key={i} className="animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800 h-32" />
+      <div key={i} className="animate-pulse rounded-xl bg-surface-1 h-32" />
      ))}
     </div>
    </div>

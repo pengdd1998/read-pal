@@ -138,7 +138,7 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
     <div className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">{t('currently_reading')}</div>
     <div className="font-medium text-sm text-gray-900 dark:text-gray-100">{card.currentlyReading.title}</div>
     {isDisplayableAuthor(card.currentlyReading.author) && <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{card.currentlyReading.author}</div>}
-    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+    <div className="w-full bg-surface-2 rounded-full h-2">
      <div
      className="bg-amber-500 rounded-full h-2 transition-all duration-500"
      style={{ width: `${Math.min(100, Math.max(0, card.currentlyReading.progress))}%` }}

@@ -22,7 +22,7 @@ export const BookProgressFooter = React.memo(function BookProgressFooter({
  const locale = useLocale();
 
  const STATUS_CONFIG = useMemo(() => ({
- unread: { label: t('card_unread'), ring: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
+ unread: { label: t('card_unread'), ring: 'bg-surface-1 text-gray-600 dark:text-gray-400' },
  reading: { label: t('card_reading'), ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
  completed: { label: t('card_completed'), ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
  } as const), [t]);
@@ -43,7 +43,7 @@ export const BookProgressFooter = React.memo(function BookProgressFooter({
   {/* Progress details */}
   {status !== 'unread' && (
   <div className="mt-auto pt-3">
-   <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
+   <div className="w-full bg-surface-1 rounded-full h-1.5 overflow-hidden">
    <div
     className={`h-full rounded-full transition-all duration-500 ease-out ${
     status === 'completed' ? 'bg-emerald-500' : 'bg-primary-500'

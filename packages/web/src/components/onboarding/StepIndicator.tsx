@@ -27,7 +27,7 @@ export const StepIndicator = React.memo(function StepIndicator({
                 ? 'w-6 h-2 bg-amber-500'
                 : isCompleted
                   ? 'w-2 h-2 bg-amber-400'
-                  : 'w-2 h-2 bg-gray-200 dark:bg-gray-700'
+                  : 'w-2 h-2 bg-surface-2'
             }`}
           />
         );

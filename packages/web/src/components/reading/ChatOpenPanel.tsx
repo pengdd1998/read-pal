@@ -80,7 +80,7 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
   >
   {/* Mobile drag handle */}
   <div className="flex justify-center pt-2 pb-1 md:hidden">
-   <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+   <div className="w-10 h-1 rounded-full bg-surface-3" />
   </div>
   <ChatPanelHeader
    friendEmoji={friendEmoji}

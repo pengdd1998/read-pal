@@ -36,7 +36,7 @@ export const FlashcardMetrics = React.memo(function FlashcardMetrics({ flashcard
    <span className="text-sm text-gray-600 dark:text-gray-400">{t('flashcards_retention')}</span>
    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{flashcardStats.retentionRate}%</span>
   </div>
-  <div className="h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+  <div className="h-2.5 bg-surface-1 rounded-full overflow-hidden">
    <div
    className="h-full bg-gradient-to-r from-amber-400 to-teal-500 rounded-full transition-all duration-500"
    style={{ width: `${Math.min(100, flashcardStats.retentionRate)}%` }}

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { SyncResult } from '@/lib/offline-sync';
 
@@ -7,8 +8,7 @@ interface SyncingBannerProps {
  queuedCount: number;
 }
 
-/** Shown while flushing queued mutations to the server. */
-export function SyncingBanner({ queuedCount }: SyncingBannerProps) {
+export const SyncingBanner = React.memo(function SyncingBanner({ queuedCount }: SyncingBannerProps) {
  const t = useTranslations('offline');
 
  return (
@@ -25,14 +25,14 @@ export function SyncingBanner({ queuedCount }: SyncingBannerProps) {
   </span>
  </div>
  );
-}
+});
 
 interface SyncResultBannerProps {
  result: SyncResult;
 }
 
 /** Shown after sync completes with success or partial failure. */
-export function SyncResultBanner({ result }: SyncResultBannerProps) {
+export const SyncResultBanner = React.memo(function SyncResultBanner({ result }: SyncResultBannerProps) {
  const t = useTranslations('offline');
  const isSuccess = result.failed === 0;
 
@@ -59,14 +59,14 @@ export function SyncResultBanner({ result }: SyncResultBannerProps) {
   </span>
  </div>
  );
-}
+});
 
 interface OfflineBannerProps {
  queuedCount: number;
 }
 
 /** Shown when the browser reports offline status. */
-export function OfflineBanner({ queuedCount }: OfflineBannerProps) {
+export const OfflineBanner = React.memo(function OfflineBanner({ queuedCount }: OfflineBannerProps) {
  const t = useTranslations('offline');
 
  return (
@@ -80,14 +80,14 @@ export function OfflineBanner({ queuedCount }: OfflineBannerProps) {
   </span>
  </div>
  );
-}
+});
 
 interface BackOnlineBannerProps {
  onDismiss: () => void;
 }
 
 /** Shown briefly when connectivity is restored. */
-export function BackOnlineBanner({ onDismiss }: BackOnlineBannerProps) {
+export const BackOnlineBanner = React.memo(function BackOnlineBanner({ onDismiss }: BackOnlineBannerProps) {
  const t = useTranslations('offline');
 
  return (
@@ -105,7 +105,7 @@ export function BackOnlineBanner({ onDismiss }: BackOnlineBannerProps) {
   </span>
  </div>
  );
-}
+});
 
 interface QueueBannerProps {
  queuedCount: number;
@@ -113,7 +113,7 @@ interface QueueBannerProps {
 }
 
 /** Shown when online but mutations are still queued. */
-export function QueueBanner({ queuedCount, onSync }: QueueBannerProps) {
+export const QueueBanner = React.memo(function QueueBanner({ queuedCount, onSync }: QueueBannerProps) {
  const t = useTranslations('offline');
 
  return (
@@ -130,4 +130,4 @@ export function QueueBanner({ queuedCount, onSync }: QueueBannerProps) {
   </span>
  </button>
  );
-}
+});

@@ -1,13 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
-/**
- * Nudge for new users to discover the AI companion.
- * Appears 4s after page load if tour is done but chat has never been opened.
- */
-export function CompanionNudge() {
+export const CompanionNudge = React.memo(function CompanionNudge() {
  const t = useTranslations('reader');
  const [visible, setVisible] = useState(false);
 
@@ -50,4 +46,4 @@ export function CompanionNudge() {
   </div>
  </div>
  );
-}
+});

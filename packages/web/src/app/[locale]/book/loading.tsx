@@ -6,12 +6,12 @@ export default function Loading() {
   <div className="flex-1 space-y-3">
    <div className="h-7 bg-surface-2 rounded-lg w-3/4 animate-pulse" />
    <div className="h-5 bg-surface-2 rounded-lg w-1/2 animate-pulse" />
-   <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded-lg w-1/3 animate-pulse" />
+   <div className="h-4 bg-surface-1 rounded-lg w-1/3 animate-pulse" />
   </div>
   </div>
   <div className="space-y-4">
-  <div className="h-32 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
-  <div className="h-24 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
+  <div className="h-32 bg-surface-1 rounded-xl animate-pulse" />
+  <div className="h-24 bg-surface-1 rounded-xl animate-pulse" />
   </div>
  </div>
  );

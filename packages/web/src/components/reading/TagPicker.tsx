@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { QUICK_TAGS } from './SelectionToolbar.constants';
@@ -9,7 +10,7 @@ interface TagPickerProps {
  onTagSelect: (color: string, tag: string) => void;
 }
 
-export function TagPicker({ variant, onTagSelect }: TagPickerProps) {
+export const TagPicker = React.memo(function TagPicker({ variant, onTagSelect }: TagPickerProps) {
  const t = useTranslations('reader');
 
  if (variant === 'mobile') {
@@ -51,4 +52,4 @@ export function TagPicker({ variant, onTagSelect }: TagPickerProps) {
   </div>
  </div>
  );
-}
+});

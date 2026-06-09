@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
 interface NotePopoverProps {
@@ -9,7 +9,7 @@ interface NotePopoverProps {
  onCancel: () => void;
 }
 
-export function NotePopover({ selectedText, onSave, onCancel }: NotePopoverProps) {
+export const NotePopover = React.memo(function NotePopover({ selectedText, onSave, onCancel }: NotePopoverProps) {
  const t = useTranslations('reader');
  const tc = useTranslations('common');
  const [note, setNote] = useState('');
@@ -62,4 +62,4 @@ export function NotePopover({ selectedText, onSave, onCancel }: NotePopoverProps
   </form>
  </div>
  );
-}
+});

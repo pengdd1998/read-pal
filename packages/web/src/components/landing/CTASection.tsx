@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from '@/i18n/navigation';
 
 interface CTASectionProps {
@@ -9,7 +10,7 @@ interface CTASectionProps {
  free_during_beta: string;
 }
 
-export function CTASection({
+export const CTASection = React.memo(function CTASection({
  love_text,
  star_button,
  cta_join_title,
@@ -53,4 +54,4 @@ export function CTASection({
   </section>
  </>
  );
-}
+});

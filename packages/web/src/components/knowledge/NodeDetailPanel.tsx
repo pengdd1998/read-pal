@@ -76,7 +76,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
    <span className="text-xs text-gray-500 dark:text-gray-400">{t('source_books_label')}</span>
    <div className="flex flex-wrap gap-1 mt-1">
    {node.sourceBookIds.map((bid) => (
-    <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
+    <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-surface-1 text-gray-600 dark:text-gray-400 rounded">
     {bookTitleMap?.get(bid) || bid.slice(0, 8) + '...'}
     </span>
    ))}

@@ -76,7 +76,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
    </button>
   ))}
 
-  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
+  <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Note */}
   <button
@@ -90,7 +90,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
    <span>{t('toolbar_note')}</span>
   </button>
 
-  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
+  <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Tag */}
   <button
@@ -108,7 +108,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
    <span>{t('toolbar_tag')}</span>
   </button>
 
-  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
+  <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Copy */}
   <button
@@ -131,7 +131,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
    </span>
   </button>
 
-  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
+  <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Share */}
   <button
@@ -145,7 +145,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
    <span>{t('toolbar_share')}</span>
   </button>
 
-  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
+  <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Ask AI */}
   {onAskAI && (

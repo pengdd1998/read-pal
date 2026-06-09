@@ -42,7 +42,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const STATUS_CONFIG = useMemo(() => ({
- unread: { label: t('card_unread'), dot: 'bg-gray-300 dark:bg-gray-600', ring: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
+ unread: { label: t('card_unread'), dot: 'bg-surface-3', ring: 'bg-surface-1 text-gray-600 dark:text-gray-400' },
  reading: { label: t('card_reading'), dot: 'bg-primary-400', ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
  completed: { label: t('card_completed'), dot: 'bg-emerald-400', ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
  } as const), [t]);

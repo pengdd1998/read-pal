@@ -44,7 +44,7 @@ export function CollectionCreateForm({
   onKeyDown={(e) => { if (e.key === 'Enter') onCreate(); if (e.key === 'Escape') onCancel(); }}
   placeholder={t('collections_name_placeholder')}
   aria-label={t('collections_name_placeholder')}
-  className="w-full px-2.5 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-surface-3 rounded-lg outline-none focus:ring-1 focus:ring-primary-400/50"
+  className="w-full px-2.5 py-1.5 text-sm bg-surface-1 border border-surface-3 rounded-lg outline-none focus:ring-1 focus:ring-primary-400/50"
   autoFocus
   />
   {/* Icon picker */}

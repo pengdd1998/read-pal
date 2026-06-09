@@ -76,7 +76,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    {t('select_book')}
    </label>
    {booksLoading ? (
-   <div className="h-10 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
+   <div className="h-10 bg-surface-1 rounded-lg animate-pulse" />
    ) : booksError ? (
    <div className="px-3 py-2.5 text-sm rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
     {booksError}
@@ -112,7 +112,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      mode === m.key
      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700'
-     : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-surface-3 hover:bg-gray-100 dark:hover:bg-gray-700'
+     : 'bg-surface-1 text-gray-600 dark:text-gray-400 border border-surface-3 hover:bg-gray-100 dark:hover:bg-gray-700'
     }`}
     >
     <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

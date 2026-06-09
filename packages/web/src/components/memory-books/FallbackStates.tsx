@@ -22,7 +22,7 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{error}</p>
   <div className="flex gap-3 justify-center">
   <button onClick={onRetry} className="btn btn-primary">{t('tryAgain')}</button>
-  <Link href="/memory-books" className="btn bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+  <Link href="/memory-books" className="btn bg-surface-1 text-gray-700 dark:text-gray-300">
    {t('backToMemoryBooks')}
   </Link>
   </div>

@@ -21,7 +21,7 @@ export const JoinClubForm = React.memo(function JoinClubForm({
  const t = useTranslations('bookClubs');
 
  return (
- <div className="mb-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 space-y-3">
+ <div className="mb-4 p-4 rounded-xl bg-surface-1 space-y-3">
   <input
   type="text"
   placeholder={t('enterCode')}

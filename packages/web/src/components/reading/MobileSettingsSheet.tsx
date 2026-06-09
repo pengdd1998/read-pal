@@ -60,7 +60,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
    <div className="flex items-center gap-3">
    <button
     onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))}
-    className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-sm font-bold text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
+    className="w-11 h-11 rounded-xl bg-surface-1 text-sm font-bold text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
     aria-label={t('settings_decrease_font')}
    >
     A-
@@ -68,7 +68,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
    <span className="text-sm font-bold text-amber-600 dark:text-amber-400 min-w-[2rem] text-center">{fontSize}</span>
    <button
     onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))}
-    className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-sm font-bold text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
+    className="w-11 h-11 rounded-xl bg-surface-1 text-sm font-bold text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
     aria-label={t('settings_increase_font')}
    >
     A+
@@ -82,7 +82,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
    <div className="flex items-center gap-3">
    <button
     onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))}
-    className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-sm font-bold text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
+    className="w-11 h-11 rounded-xl bg-surface-1 text-sm font-bold text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
     aria-label={t('settings_decrease_line_height')}
    >
     -
@@ -90,7 +90,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
    <span className="text-sm font-bold text-amber-600 dark:text-amber-400 min-w-[2.5rem] text-center">{lineHeight.toFixed(2)}</span>
    <button
     onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))}
-    className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-sm font-bold text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
+    className="w-11 h-11 rounded-xl bg-surface-1 text-sm font-bold text-gray-600 dark:text-gray-400 active:scale-95 transition-transform"
     aria-label={t('settings_increase_line_height')}
    >
     +
@@ -109,7 +109,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
     className={`py-2 rounded-xl text-xs font-medium transition-all active:scale-95 ${
      fontFamily === f.value
      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 ring-1 ring-amber-300 dark:ring-amber-700'
-     : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+     : 'bg-surface-1 text-gray-500 dark:text-gray-400'
     }`}
     >
     {t(f.labelKey)}
@@ -129,7 +129,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
     className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors active:scale-95 ${
      theme === themeKey
      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200'
-     : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+     : 'bg-surface-1 text-gray-500 dark:text-gray-400'
     }`}
     >
     {themeKey === 'light' ? `\u2600\uFE0F ${t('settings_theme_light')}` : themeKey === 'sepia' ? `\uD83D\uDCD6 ${t('settings_theme_sepia')}` : `\uD83C\uDF19 ${t('settings_theme_dark')}`}
@@ -147,7 +147,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
    <button
    onClick={() => onQuietModeChange(!quietMode)}
    className={`relative w-12 h-7 rounded-full transition-colors ${
-    quietMode ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+    quietMode ? 'bg-amber-500' : 'bg-surface-3'
    }`}
    role="switch"
    aria-checked={quietMode}

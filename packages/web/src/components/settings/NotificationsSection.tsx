@@ -39,7 +39,7 @@ function ToggleSwitch({
   aria-checked={checked}
   aria-label={label}
   className={`relative ${width} ${height} rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
-  checked ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+  checked ? 'bg-amber-500' : 'bg-surface-3'
   } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
  >
   <span className={`absolute top-0.5 left-0.5 ${dotSize} rounded-full bg-white shadow-sm transition-transform duration-200 ${

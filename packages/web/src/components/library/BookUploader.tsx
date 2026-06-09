@@ -176,7 +176,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
 
    {uploading && (
    <div className="mt-4">
-    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+    <div className="w-full bg-surface-2 rounded-full h-2 overflow-hidden">
     <div
      className="bg-gradient-to-r from-amber-500 to-teal-500 h-2 rounded-full transition-all duration-300 ease-out"
      style={{ width: `${uploadProgress}%` }}

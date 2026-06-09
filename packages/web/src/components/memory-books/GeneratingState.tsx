@@ -58,7 +58,7 @@ export default function GeneratingState({ genStep }: GeneratingStateProps) {
    {genStep === step ? (
     <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
    ) : (
-    <div className="w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-700" />
+    <div className="w-4 h-4 rounded-full bg-surface-2" />
    )}
    {stepLabels[step]}
    </div>

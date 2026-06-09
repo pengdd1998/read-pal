@@ -18,7 +18,7 @@ interface ChatFabButtonProps {
  ariaLabel: string;
 }
 
-export function ChatFabButton({
+export const ChatFabButton = React.memo(function ChatFabButton({
  btnRef,
  friendName,
  wasDragRef,
@@ -82,4 +82,4 @@ export function ChatFabButton({
   </svg>
  </button>
  );
-}
+});

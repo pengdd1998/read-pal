@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Friend {
  emoji: string;
  name: string;
@@ -11,7 +13,7 @@ interface PersonasSectionProps {
  friends: Friend[];
 }
 
-export function PersonasSection({
+export const PersonasSection = React.memo(function PersonasSection({
  personas_title,
  personas_subtitle,
  friends,
@@ -19,7 +21,7 @@ export function PersonasSection({
  return (
  <section aria-labelledby="landing-personas-title" className="px-4 sm:px-6 lg:px-8 py-20">
   <div className="text-center mb-14">
-  <h2 id="landing-personas-title" className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 tracking-tight font-display">
+  <h2 id="landing-personas-title" className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
    {personas_title}
   </h2>
   <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
@@ -38,4 +40,4 @@ export function PersonasSection({
   </div>
  </section>
  );
-}
+});

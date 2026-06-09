@@ -1,17 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
 interface SelectionHintProps {
  onDismiss: () => void;
 }
 
-/**
- * Selection hint for new readers.
- * Auto-dismisses after 3s for returning users.
- */
-export function SelectionHint({ onDismiss }: SelectionHintProps) {
+export const SelectionHint = React.memo(function SelectionHint({ onDismiss }: SelectionHintProps) {
  const t = useTranslations('reader');
  const [isReturningUser, setIsReturningUser] = useState(false);
 
@@ -41,4 +37,4 @@ export function SelectionHint({ onDismiss }: SelectionHintProps) {
   </div>
  </div>
  );
-}
+});

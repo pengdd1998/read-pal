@@ -88,7 +88,7 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
     <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[60%]">{b.title}</span>
     <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400">{b.wpm} {t('words_min')}</span>
    </div>
-   <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2" role="progressbar" aria-valuenow={Math.round(Math.min(100, Math.max(5, (b.wpm / maxWpm) * 100)))} aria-valuemin={0} aria-valuemax={100}>
+   <div className="w-full bg-surface-1 rounded-full h-2" role="progressbar" aria-valuenow={Math.round(Math.min(100, Math.max(5, (b.wpm / maxWpm) * 100)))} aria-valuemin={0} aria-valuemax={100}>
     <div
     className="rounded-full h-2 transition-all duration-500 bg-gradient-to-r from-amber-400 to-orange-400 dark:from-amber-500 dark:to-orange-500"
     style={{ width: `${Math.min(100, Math.max(5, (b.wpm / maxWpm) * 100))}%` }}

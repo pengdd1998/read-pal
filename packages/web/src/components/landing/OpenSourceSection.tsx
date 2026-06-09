@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface OpenSourceSectionProps {
  oss_title: string;
  oss_subtitle: string;
@@ -5,7 +7,7 @@ interface OpenSourceSectionProps {
  oss_stats: { value: string; label: string }[];
 }
 
-export function OpenSourceSection({
+export const OpenSourceSection = React.memo(function OpenSourceSection({
  oss_title,
  oss_subtitle,
  oss_tags,
@@ -42,4 +44,4 @@ export function OpenSourceSection({
   </div>
  </section>
  );
-}
+});

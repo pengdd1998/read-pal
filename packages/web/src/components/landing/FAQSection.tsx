@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Faq {
  q: string;
  a: string;
@@ -8,7 +10,7 @@ interface FAQSectionProps {
  faqs: Faq[];
 }
 
-export function FAQSection({ faq_title, faqs }: FAQSectionProps) {
+export const FAQSection = React.memo(function FAQSection({ faq_title, faqs }: FAQSectionProps) {
  const faqSchema = {
  '@context': 'https://schema.org',
  '@type': 'FAQPage',
@@ -45,4 +47,4 @@ export function FAQSection({ faq_title, faqs }: FAQSectionProps) {
   />
  </section>
  );
-}
+});
