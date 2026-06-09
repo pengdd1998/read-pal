@@ -58,6 +58,8 @@ export const OfflineSection = React.memo(function OfflineSection() {
   } catch (err) {
   if (stale) return;
   console.warn('OfflineSection: failed to load offline data', err);
+  setLoadError(true);
+  toast(t('offline_load_failed'), 'error');
   } finally {
   if (!stale) setLoading(false);
   }

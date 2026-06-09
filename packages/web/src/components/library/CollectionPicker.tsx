@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 import type { Collection } from '@read-pal/shared';
 
 interface CollectionPickerProps {
@@ -11,6 +12,7 @@ interface CollectionPickerProps {
 }
 
 export const CollectionPicker = React.memo(function CollectionPicker({ bookId, onClose }: CollectionPickerProps) {
+ const { toast } = useToast();
  const t = useTranslations('library');
  const [collections, setCollections] = useState<Collection[]>([]);
  const [loading, setLoading] = useState(true);
@@ -64,6 +66,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   }));
  } catch (err) {
   console.warn('Failed to toggle book in collection:', err);
+  toast(t('collection_picker_toggle_failed'), 'error');
   // Reload from server to revert optimistic update
   try {
    const retryRes = await api.get<{ items: Collection[] }>('/api/collections');
@@ -92,6 +95,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   }
  } catch (err) {
   console.warn('Failed to create collection:', err);
+  toast(t('collection_picker_create_failed'), 'error');
   // Keep name so user can retry
  } finally {
   if (mountedRef.current) setCreating(false);
