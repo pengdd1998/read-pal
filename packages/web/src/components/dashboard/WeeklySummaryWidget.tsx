@@ -127,6 +127,8 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
     return (
     <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
      <div
+     role="img"
+     aria-label={t('daily_tooltip', { date: day.date, minutes: day.minutes, pages: day.pages })}
      className={`w-full rounded-sm transition-all duration-300 ${
       isToday
       ? 'bg-amber-500 dark:bg-amber-400'
@@ -137,7 +139,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
      style={{ height: `${height}%` }}
      title={t('daily_tooltip', { date: day.date, minutes: day.minutes, pages: day.pages })}
      />
-     <span className={`text-[9px] ${isToday ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}>
+     <span className={`text-[9px] ${isToday ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'}`}>
      {DAY_LABELS[i]}
      </span>
     </div>

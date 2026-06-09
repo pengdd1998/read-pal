@@ -174,7 +174,7 @@ export function OfflineSection() {
      </div>
      <button
      onClick={() => handleRemoveCached(cb.bookId)}
-     className="min-h-[44px] px-3 py-1 text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+     className="min-h-[44px] px-3 py-1 text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      >
      {t('offline_remove')}
      </button>
