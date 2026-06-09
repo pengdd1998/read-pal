@@ -7,6 +7,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -33,7 +34,7 @@ async def query_books_batch(
       select(Book).where(Book.id.in_(book_ids), Book.user_id == user_id),
     )
     return {b.id: b for b in result.scalars().all()}
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to query books batch for user %s', user_id, exc_info=True)
     return {}
 
@@ -54,7 +55,7 @@ async def query_annotations_batch(
       if len(bucket) < MAX_ANNOTATIONS:
         bucket.append(ann)
     return buckets
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to query annotations batch for user %s', user_id, exc_info=True)
     return {}
 
@@ -75,7 +76,7 @@ async def query_messages_batch(
       if len(bucket) < MAX_CHAT_MESSAGES:
         bucket.append(msg)
     return buckets
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to query messages batch for user %s', user_id, exc_info=True)
     return {}
 
@@ -99,7 +100,7 @@ async def query_sessions_batch(
       if len(bucket) < MAX_READING_SESSIONS:
         bucket.append(sess)
     return buckets
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to query sessions batch for user %s', user_id, exc_info=True)
     return {}
 
@@ -143,6 +144,6 @@ async def get_user_book_ids(db: AsyncSession, user_id: UUID) -> list[UUID]:
       select(Book.id).where(Book.user_id == user_id),
     )
     return [row[0] for row in result.all()]
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to get user book IDs for user %s', user_id, exc_info=True)
     return []

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -19,7 +19,7 @@ interface PlanData {
  isActive: boolean;
 }
 
-export function ReadingPlanPanel({
+export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
  bookId,
  bookTitle,
  isOpen,
@@ -276,6 +276,6 @@ export function ReadingPlanPanel({
   </div>
  </>
  );
-}
+});
 
 export default ReadingPlanPanel;

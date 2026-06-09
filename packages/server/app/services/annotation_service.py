@@ -4,6 +4,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import String, cast, func, or_, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -48,8 +49,8 @@ async def get_annotations(
             .limit(per_page),
         )
         annotations = list(result.scalars().all())
-    except Exception as exc:
-        logger.error('get_annotations failed: %s', exc)
+    except DBAPIError:
+        logger.error('get_annotations failed', exc_info=True, user_id=user_id)
         raise
 
     return annotations, total
@@ -69,8 +70,8 @@ async def get_annotation(
             ),
         )
         return result.scalar_one_or_none()
-    except Exception as exc:
-        logger.error('get_annotation failed: %s', exc)
+    except DBAPIError:
+        logger.error('get_annotation failed', exc_info=True, annotation_id=str(annotation_id))
         raise
 
 
@@ -100,8 +101,8 @@ async def create_annotation(
         db.add(annotation)
         await db.flush()
         await db.refresh(annotation)
-    except Exception as exc:
-        logger.error('create_annotation failed: %s', exc)
+    except DBAPIError:
+        logger.error('create_annotation failed', exc_info=True, book_id=str(data.book_id))
         raise
 
     logger.info(
@@ -130,8 +131,8 @@ async def update_annotation(
             setattr(annotation, field, value)
 
         await db.flush()
-    except Exception as exc:
-        logger.error('update_annotation failed: %s', exc)
+    except DBAPIError:
+        logger.error('update_annotation failed', exc_info=True, annotation_id=str(annotation_id))
         raise
 
     logger.info('Annotation updated: %s for user %s', annotation_id, user_id)
@@ -151,8 +152,8 @@ async def delete_annotation(
     try:
         await db.delete(annotation)
         await db.flush()
-    except Exception as exc:
-        logger.error('delete_annotation failed: %s', exc)
+    except DBAPIError:
+        logger.error('delete_annotation failed', exc_info=True, annotation_id=str(annotation_id))
         raise
 
     logger.info('Annotation deleted: %s for user %s', annotation_id, user_id)
@@ -180,8 +181,8 @@ async def get_tags(
     try:
         result = await db.execute(q)
         rows = result.all()
-    except Exception as exc:
-        logger.error('get_tags failed: %s', exc)
+    except DBAPIError:
+        logger.error('get_tags failed', exc_info=True, user_id=user_id)
         raise
     tags = []
     for row in rows:
@@ -216,8 +217,8 @@ async def search_annotations(
             base.order_by(Annotation.created_at.desc()).limit(50),
         )
         return list(result.scalars().all())
-    except Exception as exc:
-        logger.error('search_annotations failed: %s', exc)
+    except DBAPIError:
+        logger.error('search_annotations failed', exc_info=True, user_id=user_id)
         raise
 
 
@@ -244,8 +245,8 @@ async def get_chapter_stats(
                 Annotation.type,
             ),
         )
-    except Exception as exc:
-        logger.error('get_chapter_stats failed: %s', exc)
+    except DBAPIError:
+        logger.error('get_chapter_stats failed', exc_info=True, book_id=str(book_id))
         raise
 
     chapters: dict[str, dict] = {}

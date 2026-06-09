@@ -46,37 +46,33 @@ class RequestLogMiddleware:
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    def _should_skip(self, scope: Scope) -> bool:
+        """Return True for non-HTTP or health-check paths."""
         if scope['type'] != 'http':
-            await self.app(scope, receive, send)
-            return
+            return True
+        return scope.get('path', '') in _SKIP_PATHS
 
-        path = scope.get('path', '')
-        if path in _SKIP_PATHS:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if self._should_skip(scope):
             await self.app(scope, receive, send)
             return
 
         request_id = uuid.uuid4().hex[:12]
         scope.setdefault('state', {})['request_id'] = request_id
-
+        path = scope.get('path', '')
         method = scope.get('method', 'GET')
+
+        bind_request_context(request_id=request_id, path=path, method=method)
+
         start = time.monotonic()
         status_code = 500
-
-        # Bind request context for downstream loggers
-        bind_request_context(request_id=request_id, path=path, method=method)
 
         async def send_wrapper(message: Message) -> None:
             nonlocal status_code
             if message['type'] == 'http.response.start':
                 status_code = message.get('status', 500)
-                # Attach request ID and rate-limit headers to response
                 headers = dict(message.get('headers', []))
-                headers[b'x-request-id'] = request_id.encode()
-                rl_headers = scope.get('state', {}).get('rate_limit_headers')
-                if rl_headers:
-                    for k, v in rl_headers.items():
-                        headers[k.lower().encode()] = v.encode()
+                _attach_response_headers(headers, request_id, scope)
                 message['headers'] = list(headers.items())
             await send(message)
 
@@ -85,36 +81,58 @@ class RequestLogMiddleware:
         except Exception:
             logger.error(
                 '%s %s → 500 (unhandled exception)',
-                method,
-                path,
-                status_code=status_code,
-                latency_ms=0,
+                method, path,
+                status_code=status_code, latency_ms=0,
                 exc_info=True,
             )
             raise
         finally:
-            latency_ms = int((time.monotonic() - start) * 1000)
-            # Extract user_id from JWT in Authorization header
-            user_id = None
-            headers = scope.get('headers') or []
-            for name, value in headers:
-                if name == b'authorization' and value.startswith(b'Bearer '):
-                    token = value[7:].decode('utf-8', errors='replace')
-                    user_id = _extract_user_id_from_jwt(token)
-                    if user_id:
-                        bind_user_id(user_id)
-                    break
+            _finalize_request_log(scope, method, path, start, status_code)
 
-            log_level = logging.WARNING if status_code >= 500 else logging.INFO
-            logger.log(
-                log_level,
-                '%s %s → %d (%dms)',
-                method,
-                path,
-                status_code,
-                latency_ms,
-                status_code=status_code,
-                latency_ms=latency_ms,
-                user_id=str(user_id) if user_id else None,
-            )
-            clear_request_context()
+
+def _attach_response_headers(
+    headers: dict[bytes, bytes],
+    request_id: str,
+    scope: Scope,
+) -> None:
+    """Inject request-id and rate-limit headers into the response."""
+    headers[b'x-request-id'] = request_id.encode()
+    rl_headers = scope.get('state', {}).get('rate_limit_headers')
+    if rl_headers:
+        for k, v in rl_headers.items():
+            headers[k.lower().encode()] = v.encode()
+
+
+def _extract_user_from_scope(scope: Scope) -> str | None:
+    """Extract user_id from JWT in Authorization header, if present."""
+    for name, value in scope.get('headers') or []:
+        if name == b'authorization' and value.startswith(b'Bearer '):
+            token = value[7:].decode('utf-8', errors='replace')
+            user_id = _extract_user_id_from_jwt(token)
+            if user_id:
+                bind_user_id(user_id)
+            return user_id
+    return None
+
+
+def _finalize_request_log(
+    scope: Scope,
+    method: str,
+    path: str,
+    start: float,
+    status_code: int,
+) -> None:
+    """Compute latency, extract user, and emit the structured log line."""
+    latency_ms = int((time.monotonic() - start) * 1000)
+    user_id = _extract_user_from_scope(scope)
+
+    log_level = logging.WARNING if status_code >= 500 else logging.INFO
+    logger.log(
+        log_level,
+        '%s %s → %d (%dms)',
+        method, path, status_code, latency_ms,
+        status_code=status_code,
+        latency_ms=latency_ms,
+        user_id=str(user_id) if user_id else None,
+    )
+    clear_request_context()

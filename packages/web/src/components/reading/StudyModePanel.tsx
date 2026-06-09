@@ -73,7 +73,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
       setActiveTab(tab);
       if (tab === 'mastery' && !mastery) onLoadMastery();
     }}
-    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     activeTab === tab
      ? 'bg-amber-200 dark:bg-amber-700 text-amber-900 dark:text-amber-100'
      : 'text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-800/50'
@@ -113,7 +113,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
      key={obj.id}
      aria-label={`${obj.completed ? t('completed', { defaultValue: 'Completed' }) : t('incomplete', { defaultValue: 'Incomplete' })}: ${obj.text}`}
      onClick={() => onToggleObjective(obj.id)}
-     className={`w-full text-left flex items-start gap-3 p-3 rounded-lg transition-colors ${
+     className={`w-full text-left flex items-start gap-3 p-3 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      obj.completed
       ? 'bg-emerald-50 dark:bg-emerald-900/20'
       : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -169,7 +169,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
       <button
       aria-label={t('reveal_answer_for', { defaultValue: 'Reveal answer for: {question}', question: check.question })}
       onClick={() => onRevealAnswer(check.id)}
-      className="w-full px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30 border-t border-surface-3 transition-colors"
+      className="w-full px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30 border-t border-surface-3 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
       >
       {t('reveal_answer')}
       </button>

@@ -5,6 +5,7 @@ from datetime import date
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
@@ -57,7 +58,7 @@ async def _query_daily_speed(
             .order_by(day_col)
         )
         return result.all()
-    except Exception:
+    except DBAPIError:
         logger.error('Failed to query daily reading speed for user %s', uid, exc_info=True)
         return []
 
@@ -96,7 +97,7 @@ async def get_reading_speed(
             'currentWpm': round(avg_wpm, 2),
             'speedOverTime': speed_over_time,
         }
-    except Exception:
+    except DBAPIError:
         logger.error('Failed to get reading speed for user %s', uid, exc_info=True)
         return {
             'averagePagesPerHour': 0,
@@ -161,6 +162,6 @@ async def get_reading_speed_by_book(
             })
 
         return books
-    except Exception:
+    except DBAPIError:
         logger.error('Failed to get reading speed by book for user %s', uid, exc_info=True)
         return []

@@ -71,7 +71,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
     const items = retryRes.data.items ?? (Array.isArray(retryRes.data) ? retryRes.data as unknown as Collection[] : []);
     setCollections(items);
    }
-  } catch { /* best effort reload */ }
+  } catch (retryErr) { console.warn('CollectionPicker: best effort reload failed', retryErr); }
  }
  if (mountedRef.current) setToggling(null);
  };

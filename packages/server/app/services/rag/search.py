@@ -11,6 +11,52 @@ from app.services.rag.embedding import _get_embedding
 from app.models.book_chunk import BookChunk
 
 
+def _build_embedding_literal(query_emb: list[float]) -> str:
+    """Format embedding vector as a SQL-ready literal string."""
+    return '[' + ','.join(
+        ('0.0' if v != v or abs(v) == float('inf') else str(v))
+        for v in query_emb
+    ) + ']'
+
+
+def _build_search_params(
+    emb_literal: str,
+    book_id: UUID,
+    top_k: int,
+    max_chapter_index: int | None,
+) -> tuple[dict[str, Any], str]:
+    """Build query params and chapter-clause for the pgVector SQL query."""
+    params: dict[str, Any] = {
+        'query_emb': emb_literal,
+        'book_id': str(book_id),
+        'distance_threshold': 0.7,
+        'limit': top_k,
+    }
+    chapter_clause = ''
+    if max_chapter_index is not None:
+        chapter_clause = 'AND bc.chapter_index <= :max_chapter_index'
+        params['max_chapter_index'] = max_chapter_index
+    return params, chapter_clause
+
+
+def _build_search_sql(chapter_clause: str) -> str:
+    """Assemble the pgVector cosine-distance SQL query."""
+    return (
+        'SELECT bc.chapter_index AS chapter_index, '
+        'bc.content AS content, '
+        'd.chapters AS chapters, '
+        '1 - (bc.embedding <=> :query_emb::vector) AS similarity '
+        'FROM book_chunks bc '
+        'JOIN documents d ON d.id = bc.document_id '
+        'WHERE bc.book_id = :book_id '
+        'AND bc.embedding IS NOT NULL '
+        'AND (bc.embedding <=> :query_emb::vector) < :distance_threshold '
+        + chapter_clause + ' '
+        'ORDER BY bc.embedding <=> :query_emb::vector '
+        'LIMIT :limit'
+    )
+
+
 async def _semantic_chapter_search(
     db: AsyncSession,
     book_id: UUID,
@@ -23,38 +69,13 @@ async def _semantic_chapter_search(
     if query_emb is None:
         return []
 
-    emb_literal = '[' + ','.join(
-        ('0.0' if v != v or abs(v) == float('inf') else str(v))
-        for v in query_emb
-    ) + ']'
-    distance_threshold = 0.7
-
-    params: dict[str, Any] = {
-        'query_emb': emb_literal,
-        'book_id': str(book_id),
-        'distance_threshold': distance_threshold,
-        'limit': top_k,
-    }
-    chapter_clause = ''
-    if max_chapter_index is not None:
-        chapter_clause = 'AND bc.chapter_index <= :max_chapter_index'
-        params['max_chapter_index'] = max_chapter_index
+    emb_literal = _build_embedding_literal(query_emb)
+    params, chapter_clause = _build_search_params(
+        emb_literal, book_id, top_k, max_chapter_index,
+    )
 
     try:
-        query_sql = (
-            'SELECT bc.chapter_index AS chapter_index, '
-            'bc.content AS content, '
-            'd.chapters AS chapters, '
-            '1 - (bc.embedding <=> :query_emb::vector) AS similarity '
-            'FROM book_chunks bc '
-            'JOIN documents d ON d.id = bc.document_id '
-            'WHERE bc.book_id = :book_id '
-            'AND bc.embedding IS NOT NULL '
-            'AND (bc.embedding <=> :query_emb::vector) < :distance_threshold '
-            + chapter_clause + ' '
-            'ORDER BY bc.embedding <=> :query_emb::vector '
-            'LIMIT :limit'
-        )
+        query_sql = _build_search_sql(chapter_clause)
         result = await db.execute(text(query_sql), params)
         rows = result.fetchall()
     except Exception as exc:

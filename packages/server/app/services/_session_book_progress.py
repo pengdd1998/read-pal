@@ -12,6 +12,7 @@ from uuid import UUID
 logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookStatus
@@ -58,8 +59,8 @@ async def update_book_with_page(
             Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
         )
         update_book_completion(book, now)
-    except Exception as exc:
-        logger.error('update_book_with_page failed: %s', exc)
+    except DBAPIError:
+        logger.error('update_book_with_page failed', exc_info=True, book_id=str(book_id))
         raise
 
 
@@ -84,8 +85,8 @@ async def update_book_scroll_only(
             book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
         if current_segment is not None:
             book.current_segment = current_segment
-    except Exception as exc:
-        logger.error('update_book_scroll_only failed: %s', exc)
+    except DBAPIError:
+        logger.error('update_book_scroll_only failed', exc_info=True, book_id=str(book_id))
         raise
 
 
@@ -119,6 +120,6 @@ async def update_book_heartbeat(
             Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
         )
         update_book_completion(book, utcnow())
-    except Exception as exc:
-        logger.error('update_book_heartbeat failed: %s', exc)
+    except DBAPIError:
+        logger.error('update_book_heartbeat failed', exc_info=True, book_id=str(book_id))
         raise

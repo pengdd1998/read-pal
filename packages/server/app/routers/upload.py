@@ -43,6 +43,52 @@ def _validate_upload_file(
     return get_file_type(filename), None
 
 
+def _build_book_response(book: object) -> dict:
+    """Build the success response dict from a book ORM object."""
+    return {
+        'success': True,
+        'data': {
+            'book': {
+                'id': str(book.id),
+                'title': book.title,
+                'author': book.author,
+                'fileType': book.file_type.value,
+                'totalPages': book.total_pages,
+                'status': book.status.value,
+            },
+        },
+    }
+
+
+async def _stream_and_validate(
+    file: UploadFile,
+    filename: str | None,
+    lang: str,
+) -> tuple[str, int]:
+    """Stream upload to temp file and validate; return (tmp_path, file_size)."""
+    try:
+        tmp_path, file_size = await stream_upload_to_tempfile(file)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail={
+                'code': 'FILE_TOO_LARGE',
+                'message': t(
+                    'errors.file_too_large_mb', lang,
+                    max_size=MAX_FILE_SIZE // (1024 * 1024),
+                ),
+            },
+        )
+
+    error = validate_file(filename, file_size, lang)
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={'code': 'VALIDATION_ERROR', 'message': error},
+        )
+    return tmp_path, file_size
+
+
 async def _process_upload(
     db: AsyncSession,
     user_id: UUID,
@@ -54,20 +100,7 @@ async def _process_upload(
     lang: str,
 ) -> tuple[str | None, dict]:
     """Stream file to temp, create book, return (tmp_path, response_dict)."""
-    try:
-        tmp_path, file_size = await stream_upload_to_tempfile(file)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail={'code': 'FILE_TOO_LARGE', 'message': t('errors.file_too_large_mb', lang, max_size=MAX_FILE_SIZE // (1024 * 1024))},
-        )
-
-    error = validate_file(file.filename, file_size, lang)
-    if error:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={'code': 'VALIDATION_ERROR', 'message': error},
-        )
+    tmp_path, file_size = await _stream_and_validate(file, file.filename, lang)
 
     book_title = title or html.escape(Path(file.filename).stem)
     book_author = author or ''
@@ -83,20 +116,7 @@ async def _process_upload(
         file_path=tmp_path,
         tags=tag_list,
     )
-
-    return tmp_path, {
-        'success': True,
-        'data': {
-            'book': {
-                'id': str(book.id),
-                'title': book.title,
-                'author': book.author,
-                'fileType': book.file_type.value,
-                'totalPages': book.total_pages,
-                'status': book.status.value,
-            },
-        },
-    }
+    return tmp_path, _build_book_response(book)
 
 
 @router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[upload_limiter])
