@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -11,7 +11,7 @@ interface ZoteroSectionProps {
  initialSettings?: UserSettings | null;
 }
 
-export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
+export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
  const { toast } = useToast();
  const t = useTranslations('settings_page');
  const [connected, setConnected] = useState(false);
@@ -147,4 +147,4 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
   </button>
  </div>
  );
-}
+});

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { isDisplayableAuthor } from '@/lib/book-cover';
@@ -13,7 +13,7 @@ interface CachedBook {
  cachedAt?: number;
 }
 
-export function OfflineSection() {
+export const OfflineSection = React.memo(function OfflineSection() {
  const { toast } = useToast();
  const t = useTranslations('settings_page');
  const [queueCount, setQueueCount] = useState(0);
@@ -152,7 +152,7 @@ export function OfflineSection() {
    {queueCount > 0 && (
    <button
     onClick={handleClearQueue}
-    className="min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 bg-surface-1 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {t('offline_clear_queue')}
    </button>
@@ -191,8 +191,8 @@ export function OfflineSection() {
    <div className="space-y-2">
     {[1, 2, 3].map((i) => (
     <div key={i} className="flex items-center gap-2 py-1.5">
-     <div className="w-4 h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-     <div className="flex-1 h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+     <div className="w-4 h-4 rounded bg-surface-2 animate-pulse" />
+     <div className="flex-1 h-4 rounded bg-surface-2 animate-pulse" />
     </div>
     ))}
    </div>
@@ -200,7 +200,7 @@ export function OfflineSection() {
    </div>
   ) : loadError ? (
    <div className="pt-4 border-t border-surface-2">
-   <p className="text-xs text-red-500">{t('offline_load_failed')}</p>
+   <p className="text-xs text-red-600 dark:text-red-400">{t('offline_load_failed')}</p>
    </div>
   ) : books.length > 0 && (
    <div className="pt-4 border-t border-surface-2">

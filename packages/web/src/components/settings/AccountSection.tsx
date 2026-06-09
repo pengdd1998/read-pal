@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
 import { useToast } from '@/components/Toast';
 
-export function AccountSection() {
+export const AccountSection = React.memo(function AccountSection() {
  const { toast } = useToast();
  const t = useTranslations('settings_page');
  const [deleting, setDeleting] = useState(false);
@@ -119,12 +119,12 @@ export function AccountSection() {
      autoFocus
      aria-label={t('account_delete_password_placeholder', { defaultValue: 'Your password' })}
     />
-    {deleteError && <p className="text-xs text-red-500 mb-3">{deleteError}</p>}
+    {deleteError && <p className="text-xs text-red-600 dark:text-red-400 mb-3">{deleteError}</p>}
     <div className="flex gap-2 justify-end">
      <button
       onClick={() => { setShowDeleteModal(false); setConfirmPassword(''); setDeleteError(''); }}
       disabled={deleting}
-      className="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+      className="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 bg-surface-1 hover:bg-surface-2 transition-colors disabled:opacity-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      >
       {t('account_delete_cancel', { defaultValue: 'Cancel' })}
      </button>
@@ -149,4 +149,4 @@ export function AccountSection() {
   )}
  </section>
  );
-}
+});

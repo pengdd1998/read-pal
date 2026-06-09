@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -70,7 +70,7 @@ const PREF_KEYS: { key: keyof InterventionPrefs; labelKey: string }[] = [
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
-export function InterventionPrefsSection() {
+export const InterventionPrefsSection = React.memo(function InterventionPrefsSection() {
  const t = useTranslations('settings_page');
  const { toast } = useToast();
  const [prefs, setPrefs] = useState<InterventionPrefs>(DEFAULT_PREFS);
@@ -253,4 +253,4 @@ export function InterventionPrefsSection() {
   </div>
  </section>
  );
-}
+});

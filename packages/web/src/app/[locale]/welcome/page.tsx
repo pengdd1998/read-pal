@@ -150,8 +150,7 @@ export default function WelcomePage() {
               personaName={persona.name}
               finishing={finishing}
               hasBook={!!book}
-              onFinishingChange={setFinishing}
-              onSeedError={() => {}}
+              onFinish={handleFinish}
             />
           </div>
         )}

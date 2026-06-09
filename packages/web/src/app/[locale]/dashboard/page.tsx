@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import { useRouter } from '@/i18n/navigation';
@@ -8,12 +8,14 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useDashboardData } from '@/hooks/useDashboardData';
 import { WelcomeSection } from '@/components/dashboard/WelcomeSection';
 import { CurrentReadingSection } from '@/components/dashboard/CurrentReadingSection';
 import type { InsightKey } from '@/components/dashboard/CurrentReadingSection';
 import { DashboardWidgetGrid } from '@/components/dashboard/DashboardWidgetGrid';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import type { DashboardData } from '@/components/dashboard/types';
+import { FlashcardReviewWidget } from '@/components/dashboard/FlashcardReviewWidget';
+import { ExploreMoreSection } from '@/components/dashboard/ExploreMoreSection';
 
 // Lazy-load heavy dashboard components
 const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse bg-surface-2 rounded-xl" /> });
@@ -38,13 +40,6 @@ function getTimeGreetingKey(): string {
   return 'greeting_night';
 }
 
-const STREAK_MILESTONES: Record<number, string> = {
-  3: 'streak_milestone_3',
-  7: 'streak_milestone_7',
-  14: 'streak_milestone_14',
-  30: 'streak_milestone_30',
-};
-
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
   usePageTitle(t('page_title'));
@@ -52,13 +47,8 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const firstName = user?.name?.split(' ')[0] || '';
   const [mounted, setMounted] = useState(false);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   const [seeding, setSeeding] = useState(false);
   const { toast } = useToast();
-  const celebratedMilestones = useRef<Set<number>>(new Set());
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -71,57 +61,7 @@ export default function DashboardPage() {
     setInsightOfDayKey(INSIGHTS_POOL_KEYS[new Date().getDate() % INSIGHTS_POOL_KEYS.length]);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    let lastFetchTime = 0;
-    const fetchDashboard = () => {
-      const now = Date.now();
-      if (now - lastFetchTime < 5000) return;
-      lastFetchTime = now;
-      api.get<DashboardData>('/api/stats/dashboard')
-        .then((res) => {
-          if (!cancelled) {
-            if (res.success) {
-              setDashboardData((res.data) ?? null);
-            } else {
-              setError(t('failed_load'));
-            }
-          }
-        })
-        .catch((err) => {
-          console.warn('Dashboard: failed to load data', err);
-          if (!cancelled) setError(t('failed_load'));
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-    };
-    fetchDashboard();
-    const onFocus = () => { if (!cancelled) fetchDashboard(); };
-    window.addEventListener('focus', onFocus);
-    return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [retryCount]);
-
-  const stats = dashboardData?.stats ?? null;
-  const recentBooks = dashboardData?.recentBooks ?? [];
-  const streak = stats?.readingStreak ?? 0;
-  const hasData = useMemo(
-    () => !loading && (recentBooks.length > 0 || (stats !== null && (stats.booksRead > 0 || stats.pagesRead > 0))),
-    [loading, recentBooks, stats],
-  );
-
-  // Streak milestone celebrations
-  useEffect(() => {
-    if (loading || streak === 0) return;
-    const msgKey = STREAK_MILESTONES[streak];
-    if (msgKey && !celebratedMilestones.current.has(streak)) {
-      celebratedMilestones.current.add(streak);
-      toast(t(msgKey), 'success', 5000);
-    }
-  }, [streak, loading, toast, t]);
+  const { stats, recentBooks, streak, hasData, loading, error, retry } = useDashboardData();
 
   const handleSeedSample = async () => {
     try {
@@ -166,7 +106,7 @@ export default function DashboardPage() {
         <div className="mb-8 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up flex items-center justify-between">
           <span>{error}</span>
           <button
-            onClick={() => setRetryCount((c) => c + 1)}
+            onClick={retry}
             className="ml-4 px-3 py-1 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
           >
             {t('retry')}

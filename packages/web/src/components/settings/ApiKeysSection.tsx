@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -13,7 +13,7 @@ interface ApiKeyData {
  createdAt: string;
 }
 
-export function ApiKeysSection() {
+export const ApiKeysSection = React.memo(function ApiKeysSection() {
  const { toast } = useToast();
  const t = useTranslations('settings_page');
  const locale = useLocale();
@@ -119,13 +119,13 @@ export function ApiKeysSection() {
   {loading ? (
   <div className="space-y-2">
    {Array.from({ length: 2 }).map((_, i) => (
-   <div key={i} className="h-12 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
+   <div key={i} className="h-12 bg-surface-1 rounded-xl animate-pulse" />
    ))}
   </div>
   ) : keys.length > 0 ? (
   <div className="space-y-2">
    {keys.map((k) => (
-   <div key={k.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-surface-3">
+   <div key={k.id} className="flex items-center justify-between p-3 rounded-xl bg-surface-1 border border-surface-3">
     <div className="min-w-0 flex-1">
     <div className="text-sm font-medium truncate">{k.name}</div>
     <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
@@ -138,7 +138,7 @@ export function ApiKeysSection() {
     onClick={() => handleRevoke(k.id)}
     disabled={revokingId === k.id}
     aria-label={`${t('api_key_revoke')} ${k.name}`}
-    className="ml-3 min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+    className="ml-3 min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
     {revokingId === k.id ? (
      <span className="flex items-center gap-1.5">
@@ -189,14 +189,14 @@ export function ApiKeysSection() {
   <button
    onClick={() => setShowCreate(true)}
    disabled={keys.length >= 5}
-   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-surface-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-surface-1 hover:bg-surface-2 border border-surface-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {t('api_key_create_button')} {keys.length >= 5 && t('api_key_max')}
   </button>
   )}
 
   {/* Usage example */}
-  <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-surface-3">
+  <div className="mt-3 p-3 rounded-xl bg-surface-1 border border-surface-3">
   <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{t('api_key_usage_example')}</p>
   <code className="text-xs text-gray-700 dark:text-gray-300 font-mono block whitespace-pre-wrap">
 {`curl -H "Authorization: Bearer rpk_..." \\
@@ -205,4 +205,4 @@ export function ApiKeysSection() {
   </div>
  </div>
  );
-}
+});

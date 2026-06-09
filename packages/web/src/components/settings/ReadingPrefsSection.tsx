@@ -166,7 +166,7 @@ function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProp
     className={`flex items-center gap-3 p-3 min-h-[44px] rounded-xl border-2 transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
     settings.friendPersona === p.id
      ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/10'
-     : 'border-surface-3 hover:border-gray-300 bg-gray-50 dark:bg-gray-800'
+     : 'border-surface-3 hover:border-surface-2 bg-surface-1'
     }`}
    >
     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center flex-shrink-0`}>
