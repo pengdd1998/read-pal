@@ -1,10 +1,12 @@
 'use client';
 
+import React from 'react';
+
 interface KnowledgeLegendProps {
  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-export function KnowledgeLegend({ t }: KnowledgeLegendProps) {
+export const KnowledgeLegend = React.memo(function KnowledgeLegend({ t }: KnowledgeLegendProps) {
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
   <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('legend_title')}</h3>
@@ -28,4 +30,4 @@ export function KnowledgeLegend({ t }: KnowledgeLegendProps) {
   </div>
  </div>
  );
-}
+});

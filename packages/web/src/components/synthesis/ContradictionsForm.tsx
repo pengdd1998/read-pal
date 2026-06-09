@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 // ============================================================================
@@ -11,9 +12,9 @@ interface ContradictionsFormProps {
  onTopicChange: (value: string) => void;
  minSeverity: 'low' | 'medium' | 'high';
  onMinSeverityChange: (value: 'low' | 'medium' | 'high') => void;
-}
+};
 
-export function ContradictionsForm({
+export const ContradictionsForm = React.memo(function ContradictionsForm({
  topic,
  onTopicChange,
  minSeverity,
@@ -62,4 +63,4 @@ export function ContradictionsForm({
   </div>
  </div>
  );
-}
+});;

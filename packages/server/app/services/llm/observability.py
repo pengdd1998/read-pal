@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
+from sqlalchemy.exc import DBAPIError
 
 from app.config import get_settings
 
@@ -186,7 +187,7 @@ class _TraceWriter:
                 await session.commit()
             logger.debug('Trace flush: %d records written', len(batch))
             return len(batch)
-        except Exception as exc:
+        except DBAPIError as exc:
             logger.warning(
                 'Trace flush failed (%d records dropped)',
                 len(batch),

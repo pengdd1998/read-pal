@@ -7,6 +7,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
@@ -125,7 +126,7 @@ async def fetch_other_books(
             {'id': str(r[0]), 'title': r[1], 'author': r[2] or 'Unknown'}
             for r in other_books
         ]
-    except Exception as exc:
+    except DBAPIError as exc:
         logger.warning(
             'Failed to query existing books for user %s', user_id,
             exc_info=True,

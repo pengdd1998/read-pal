@@ -14,6 +14,7 @@ from uuid import UUID
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation, AnnotationType
@@ -63,7 +64,7 @@ async def _load_book_info(
       'progress': float(book.progress),
       'status': book.status,
     }
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to load book info', exc_info=True, book_id=str(book_id), user_id=str(user_id))
     return None
 
@@ -122,7 +123,7 @@ async def _load_conversations(
       }
       for m in messages
     ]
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to load conversations', exc_info=True, book_id=str(book_id), user_id=str(user_id))
     return []
 
@@ -154,7 +155,7 @@ async def _load_reading_sessions(
       }
       for s in sessions
     ]
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to load reading sessions', exc_info=True, book_id=str(book_id), user_id=str(user_id))
     return []
 
@@ -210,7 +211,7 @@ async def _collect_reading_data(
     ))
 
     return data
-  except Exception:
+  except DBAPIError:
     logger.error('Failed to collect reading data', exc_info=True, book_id=str(book_id), user_id=str(user_id))
     return {}
 

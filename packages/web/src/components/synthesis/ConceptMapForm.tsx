@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 // ============================================================================
@@ -9,9 +10,9 @@ import { useTranslations } from 'next-intl';
 interface ConceptMapFormProps {
  topic: string;
  onTopicChange: (value: string) => void;
-}
+};
 
-export function ConceptMapForm({
+export const ConceptMapForm = React.memo(function ConceptMapForm({
  topic,
  onTopicChange,
 }: ConceptMapFormProps) {
@@ -34,4 +35,4 @@ export function ConceptMapForm({
   </div>
  </div>
  );
-}
+});;

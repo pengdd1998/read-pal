@@ -18,8 +18,6 @@ from app.models.chat_message import ChatMessage
 from app.models.memory_book import MemoryBook
 from app.models.reading_session import ReadingSession
 from app.services.stats.streaks import compute_streaks
-from app.services.stats import STATS_LOOKBACK_DELTA
-
 logger = logging.getLogger(__name__)
 
 _DASHBOARD_CACHE_TTL = None  # lazy-init from settings

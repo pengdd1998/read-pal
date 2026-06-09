@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 // ============================================================================
@@ -13,7 +14,7 @@ interface SynthesizeFormProps {
  onDepthChange: (value: 'brief' | 'standard' | 'deep') => void;
 }
 
-export function SynthesizeForm({
+export const SynthesizeForm = React.memo(function SynthesizeForm({
  query,
  onQueryChange,
  depth,
@@ -58,4 +59,4 @@ export function SynthesizeForm({
   </div>
  </div>
  );
-}
+});

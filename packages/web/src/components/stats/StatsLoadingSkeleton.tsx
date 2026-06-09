@@ -1,6 +1,8 @@
 'use client';
 
-export function StatsLoadingSkeleton() {
+import React from 'react';
+
+export const StatsLoadingSkeleton = React.memo(function StatsLoadingSkeleton() {
  return (
  <div className="space-y-4">
   {Array.from({ length: 4 }).map((_, i) => (
@@ -18,4 +20,4 @@ export function StatsLoadingSkeleton() {
   ))}
  </div>
  );
-}
+});

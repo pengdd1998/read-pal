@@ -7,58 +7,70 @@ from app.utils.sanitizer import sanitize_user_input
 from app.utils.token_budget import TokenBudget, estimate_tokens
 
 
-def run_token_budget_regression() -> list[EvalResult]:
-    """Verify token estimation is consistent and budget accounting is correct."""
-    results: list[EvalResult] = []
-
-    # Test 1: CJK estimation
+def _check_cjk_estimation() -> EvalResult:
+    """Verify CJK text token estimation returns positive count."""
     r = EvalResult('token_estimation/cjk', 'token_budget', 'cjk')
-    cjk_text = '这是一个中文测试' * 100
-    tokens = estimate_tokens(cjk_text)
+    tokens = estimate_tokens('这是一个中文测试' * 100)
     if tokens <= 0:
         r.fail(f'CJK estimation returned {tokens}')
-    results.append(r)
+    return r
 
-    # Test 2: Latin estimation
+
+def _check_latin_estimation() -> EvalResult:
+    """Verify Latin text token estimation returns positive count."""
     r = EvalResult('token_estimation/latin', 'token_budget', 'latin')
-    latin_text = 'This is a Latin text test ' * 100
-    tokens = estimate_tokens(latin_text)
+    tokens = estimate_tokens('This is a Latin text test ' * 100)
     if tokens <= 0:
         r.fail(f'Latin estimation returned {tokens}')
-    results.append(r)
+    return r
 
-    # Test 3: Budget accounting
+
+def _check_budget_accounting() -> EvalResult:
+    """Verify budget remaining decreases and used increases after add()."""
     r = EvalResult('token_budget/accounting', 'token_budget', 'accounting')
     budget = TokenBudget()
     initial_remaining = budget.remaining
-    text = 'Hello world ' * 50
-    budget.add(text, label='test')
+    budget.add('Hello world ' * 50, label='test')
     if budget.remaining >= initial_remaining:
         r.fail('Budget remaining did not decrease after add()')
     if budget.used <= 0:
         r.fail('Budget used is zero after add()')
-    results.append(r)
+    return r
 
-    # Test 4: Budget overflow
+
+def _check_budget_overflow() -> EvalResult:
+    """Verify oversized input is truncated and recorded."""
     r = EvalResult('token_budget/overflow', 'token_budget', 'overflow')
-    budget = TokenBudget(response_reserve=100)  # Very small budget
+    budget = TokenBudget(response_reserve=100)
     large_text = 'x' * 1_000_000
     result_text = budget.add(large_text, label='overflow_test')
     if not budget.truncations:
         r.fail('Expected truncation for oversized input')
     if result_text == large_text:
         r.fail('Large text was not truncated')
-    results.append(r)
+    return r
 
-    # Test 5: Empty string edge case
+
+def _check_empty_string() -> EvalResult:
+    """Verify empty string passes through unchanged."""
     r = EvalResult('token_budget/empty', 'token_budget', 'empty')
     budget = TokenBudget()
     result_text = budget.add('', label='empty')
     if result_text != '':
         r.fail('Empty string was modified')
-    results.append(r)
+    return r
 
-    return results
+
+def run_token_budget_regression() -> list[EvalResult]:
+    """Verify token estimation is consistent and budget accounting is correct."""
+    checks = [
+        _check_cjk_estimation,
+        _check_latin_estimation,
+        _check_budget_accounting,
+        _check_budget_overflow,
+        _check_empty_string,
+    ]
+    return [check() for check in checks]
 
 
 def run_sanitizer_regression() -> list[EvalResult]:

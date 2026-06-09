@@ -4,6 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import text, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.rag._constants import logger, _tokenize_with_bigrams
@@ -78,7 +79,7 @@ async def _semantic_chapter_search(
         query_sql = _build_search_sql(chapter_clause)
         result = await db.execute(text(query_sql), params)
         rows = result.fetchall()
-    except Exception as exc:
+    except DBAPIError as exc:
         logger.warning('pgVector search failed: %s', exc)
         return []
 
@@ -137,7 +138,7 @@ async def _keyword_chunk_search(
     try:
         result = await db.execute(stmt)
         chunks = result.scalars().all()
-    except Exception as exc:
+    except DBAPIError as exc:
         logger.warning('Keyword chunk search failed: %s', exc)
         return []
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth';
@@ -15,7 +15,7 @@ interface AuthFormProps {
  onSuccess: () => void;
 }
 
-export function AuthForm({ mode, onSuccess }: AuthFormProps) {
+export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFormProps) {
  const t = useTranslations('auth');
  const tc = useTranslations('common');
  const { login, register } = useAuth();
@@ -234,4 +234,4 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
   )}
  </div>
  );
-}
+});

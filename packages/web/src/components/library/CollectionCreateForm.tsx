@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { CollectionIcon } from './CollectionIcon';
 
@@ -21,7 +22,7 @@ interface CollectionCreateFormProps {
  onCancel: () => void;
 }
 
-export function CollectionCreateForm({
+export const CollectionCreateForm = React.memo(function CollectionCreateForm({
  newName,
  newIcon,
  newColor,
@@ -90,4 +91,4 @@ export function CollectionCreateForm({
   </div>
  </div>
  );
-}
+});

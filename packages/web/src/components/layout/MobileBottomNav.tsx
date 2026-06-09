@@ -1,12 +1,13 @@
 'use client';
 
+import React from 'react';
 import { Link } from '@/i18n/navigation';
 import { usePathname } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { BOTTOM_NAV_ITEMS } from '@/lib/nav-config';
 import { hapticLight } from '@/lib/haptics';
 
-export function MobileBottomNav() {
+export const MobileBottomNav = React.memo(function MobileBottomNav() {
  const pathname = usePathname();
  const t = useTranslations('nav');
 
@@ -39,4 +40,4 @@ export function MobileBottomNav() {
   </div>
  </nav>
  );
-}
+});

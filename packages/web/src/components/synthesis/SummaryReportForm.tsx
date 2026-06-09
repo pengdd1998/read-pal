@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 // ============================================================================
@@ -11,9 +12,9 @@ interface SummaryReportFormProps {
  onFocusChange: (value: string) => void;
  reportFormat: 'narrative' | 'structured' | 'academic';
  onReportFormatChange: (value: 'narrative' | 'structured' | 'academic') => void;
-}
+};
 
-export function SummaryReportForm({
+export const SummaryReportForm = React.memo(function SummaryReportForm({
  focus,
  onFocusChange,
  reportFormat,
@@ -58,4 +59,4 @@ export function SummaryReportForm({
   </div>
  </div>
  );
-}
+});;

@@ -108,6 +108,58 @@ async def _generate_all_sections(
     return sections
 
 
+async def _update_existing_memory_book(
+    db: AsyncSession,
+    existing: MemoryBook,
+    sections: list[dict[str, Any]],
+    stats: dict[str, Any],
+    html_content: str,
+    book_format: str,
+    mirror_title: str,
+) -> MemoryBook:
+    """Update an existing MemoryBook row in place."""
+    await db.execute(
+        update(MemoryBook)
+        .where(MemoryBook.id == existing.id)
+        .values(
+            sections=sections,
+            stats=stats,
+            html_content=html_content,
+            format=book_format,
+            title=mirror_title,
+            version=MemoryBook.version + 1,
+        )
+    )
+    await db.refresh(existing)
+    return existing
+
+
+async def _create_new_memory_book(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    sections: list[dict[str, Any]],
+    stats: dict[str, Any],
+    html_content: str,
+    book_format: str,
+    mirror_title: str,
+) -> MemoryBook:
+    """Insert a new MemoryBook row and return the ORM object."""
+    memory_book = MemoryBook(
+        user_id=user_id,
+        book_id=book_id,
+        title=mirror_title,
+        format=book_format,
+        sections=sections,
+        stats=stats,
+        html_content=html_content,
+    )
+    db.add(memory_book)
+    await db.flush()
+    await db.refresh(memory_book)
+    return memory_book
+
+
 async def _upsert_memory_book(
     db: AsyncSession,
     user_id: UUID,
@@ -131,34 +183,15 @@ async def _upsert_memory_book(
     mirror_title = f'{book_title} — Reading Mirror'
 
     if existing:
-        await db.execute(
-            update(MemoryBook)
-            .where(MemoryBook.id == existing.id)
-            .values(
-                sections=sections,
-                stats=stats,
-                html_content=html_content,
-                format=book_format,
-                title=mirror_title,
-                version=MemoryBook.version + 1,
-            )
+        return await _update_existing_memory_book(
+            db, existing, sections, stats,
+            html_content, book_format, mirror_title,
         )
-        await db.refresh(existing)
-        return existing
 
-    memory_book = MemoryBook(
-        user_id=user_id,
-        book_id=book_id,
-        title=mirror_title,
-        format=book_format,
-        sections=sections,
-        stats=stats,
-        html_content=html_content,
+    return await _create_new_memory_book(
+        db, user_id, book_id, sections, stats,
+        html_content, book_format, mirror_title,
     )
-    db.add(memory_book)
-    await db.flush()
-    await db.refresh(memory_book)
-    return memory_book
 
 
 async def generate(

@@ -6,6 +6,7 @@ from uuid import UUID
 
 import structlog
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -79,7 +80,7 @@ async def _gather_reading_stats(
             'total_chats': total_chats,
             'distinct_books': distinct_books,
         }
-    except Exception:
+    except DBAPIError:
         logger.error('Failed to gather reading stats for user %s', user_id, exc_info=True)
         return _EMPTY_STATS
 

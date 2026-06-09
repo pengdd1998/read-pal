@@ -64,14 +64,10 @@ async def send_reset_email(email: str, token: str) -> bool:
         return False
 
 
-async def validate_and_reset(
-    db: AsyncSession,
-    token: str,
-    new_password: str,
-) -> User:
-    """Validate a reset token and update the user's password.
+async def _validate_reset_token(token: str) -> dict:
+    """Look up a reset token in Redis and return its payload.
 
-    Raises ValueError if token is invalid or user not found.
+    Raises ValueError if token is missing or payload is malformed.
     Raises RuntimeError if Redis is unavailable.
     """
     try:
@@ -89,6 +85,18 @@ async def validate_and_reset(
     if not user_id:
         raise ValueError('Invalid reset token payload')
 
+    return payload
+
+
+async def _update_user_password(
+    db: AsyncSession,
+    user_id: str,
+    new_password: str,
+) -> User:
+    """Update the user's password hash in the database.
+
+    Raises ValueError if user is not found.
+    """
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
@@ -96,9 +104,11 @@ async def validate_and_reset(
 
     user.password_hash = hash_password(new_password)
     await db.commit()
+    return user
 
-    # Invalidate all existing sessions by storing a password reset timestamp in Redis
-    # The auth middleware checks this when validating tokens
+
+async def _invalidate_sessions(token: str, user_id: str) -> None:
+    """Invalidate all active sessions and consume the reset token."""
     try:
         redis = get_redis()
         await redis.set(
@@ -109,10 +119,28 @@ async def validate_and_reset(
     except Exception as exc:
         logger.warning('password_reset.invalidate_sessions_failed user=%s error=%s', user_id, exc)
 
-    # Consume token
     try:
+        redis = get_redis()
         await redis.delete(f'{_TOKEN_PREFIX}{token}')
     except Exception as exc:
         logger.warning('password_reset.redis_delete_failed user=%s error=%s', user_id, exc)
+
+
+async def validate_and_reset(
+    db: AsyncSession,
+    token: str,
+    new_password: str,
+) -> User:
+    """Validate a reset token and update the user's password.
+
+    Raises ValueError if token is invalid or user not found.
+    Raises RuntimeError if Redis is unavailable.
+    """
+    payload = await _validate_reset_token(token)
+    user_id = payload['userId']
+
+    user = await _update_user_password(db, user_id, new_password)
+    await _invalidate_sessions(token, user_id)
+
     logger.info('Password reset successful for user %s', user_id)
     return user

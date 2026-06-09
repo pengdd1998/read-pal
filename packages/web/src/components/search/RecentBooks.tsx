@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { getBookCoverColors, getBookInitials, isDisplayableAuthor } from '@/lib/book-cover';
 import { Link } from '@/i18n/navigation';
@@ -9,7 +10,7 @@ interface RecentBooksProps {
  books: Book[];
 }
 
-export function RecentBooks({ books }: RecentBooksProps) {
+export const RecentBooks = React.memo(function RecentBooks({ books }: RecentBooksProps) {
  const t = useTranslations('search');
 
  return (
@@ -41,4 +42,4 @@ export function RecentBooks({ books }: RecentBooksProps) {
   </div>
  </div>
  );
-}
+});

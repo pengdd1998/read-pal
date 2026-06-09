@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { authFetch } from '@/lib/auth-fetch';
@@ -27,7 +27,7 @@ const STEPS: Step[] = ['welcome', 'companion', 'ready'];
  * (e.g., returning users on a new device). If the user has already
  * completed the welcome page flow, this is skipped entirely.
  */
-export function OnboardingWalkthrough() {
+export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough() {
   const router = useRouter();
   const t = useTranslations('welcome');
   const [step, setStep] = useState<Step>('welcome');
@@ -184,4 +184,4 @@ export function OnboardingWalkthrough() {
       </div>
     </div>
   );
-}
+});

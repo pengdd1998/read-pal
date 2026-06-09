@@ -1,9 +1,10 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
-export function ExploreMoreSection() {
+export const ExploreMoreSection = React.memo(function ExploreMoreSection() {
  const t = useTranslations('dashboard');
 
  return (
@@ -68,4 +69,4 @@ export function ExploreMoreSection() {
   </div>
  </div>
  );
-}
+});

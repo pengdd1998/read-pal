@@ -1,9 +1,10 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
-export function EmptyState() {
+export const EmptyState = React.memo(function EmptyState() {
  const t = useTranslations('stats');
 
  return (
@@ -26,4 +27,4 @@ export function EmptyState() {
   </Link>
  </div>
  );
-}
+});

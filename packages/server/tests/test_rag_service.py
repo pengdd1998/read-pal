@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.exc import DBAPIError
 
 from app.services.rag import (
     RAG_CACHE_PREFIX,
@@ -304,7 +305,7 @@ class TestSemanticSearch:
     @pytest.mark.asyncio
     async def test_db_failure_returns_empty(self):
         mock_db = AsyncMock()
-        mock_db.execute = AsyncMock(side_effect=Exception('DB error'))
+        mock_db.execute = AsyncMock(side_effect=DBAPIError('stmt', {}, Exception('DB error')))
 
         with patch('app.services.rag.search._get_embedding', return_value=[0.1] * 2048):
             results = await _semantic_chapter_search(mock_db, uuid4(), 'test')

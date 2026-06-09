@@ -26,11 +26,8 @@ from app.eval.golden_dataset import ALL_GOLDEN
 from app.eval.mock_data import MOCK_RESPONSES, SCHEMA_MAP
 from app.eval.regression import run_sanitizer_regression, run_token_budget_regression
 from app.utils.output_filter import filter_output, validate_schema
-from app.utils.sanitizer import (
-    sanitize_chat_message,
-    sanitize_user_input,
-)
-from app.utils.token_budget import TokenBudget, estimate_tokens
+from app.utils.sanitizer import sanitize_chat_message
+from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.eval')
 
@@ -51,6 +48,86 @@ __all__ = [
 # Unit-mode evaluation (mocked LLM)
 # ---------------------------------------------------------------------------
 
+def _test_sanitization(
+    golden: dict[str, Any],
+    action: str,
+    result: EvalResult,
+) -> None:
+    """Validate input sanitization and injection wrapping."""
+    message = golden['input'].get('message', '')
+    if not message:
+        return
+
+    sanitized = sanitize_chat_message(message)
+    if not sanitized:
+        result.fail('Sanitization produced empty output')
+
+    if 'injection' not in action:
+        return
+
+    injection_patterns = [
+        'ignore previous instructions',
+        'forget everything',
+        'you are now a',
+    ]
+    for pattern in injection_patterns:
+        if pattern.lower() in message.lower():
+            if 'BEGIN USER PROVIDED DATA' not in sanitized:
+                result.fail(f'Injection pattern not wrapped: {pattern!r}')
+
+
+def _test_token_budget(
+    service: str,
+    action: str,
+    result: EvalResult,
+) -> str:
+    """Validate token budgeting. Returns the mock response for reuse."""
+    budget = TokenBudget()
+    mock_response = MOCK_RESPONSES.get(service, {}).get(action, '')
+    budget.add(mock_response, label=f'{service}_{action}')
+    if budget.remaining <= 0:
+        result.fail('Token budget exhausted on single response')
+    return mock_response
+
+
+def _test_schema_validation(
+    service: str,
+    action: str,
+    name: str,
+    expected: dict,
+    mock_response: str,
+    result: EvalResult,
+) -> None:
+    """Validate structured (JSON) outputs against schema."""
+    schema_map = SCHEMA_MAP.get(service, {})
+    schema_class = schema_map.get(action)
+    if not schema_class or not mock_response:
+        return
+
+    try:
+        parsed = json.loads(mock_response)
+        validated = validate_schema(parsed, schema_class, context=name)
+        if not validated:
+            result.fail('Schema validation returned empty dict')
+        validate_output_shape(validated, expected, result)
+    except json.JSONDecodeError as exc:
+        result.fail(f'Mock response is not valid JSON: {exc}')
+
+
+def _test_output_filtering(
+    expected: dict,
+    name: str,
+    mock_response: str,
+    result: EvalResult,
+) -> None:
+    """Validate text output filtering and shape."""
+    if expected.get('type') != 'str' or not mock_response:
+        return
+
+    filtered = filter_output(mock_response, context=name)
+    validate_output_shape(filtered, expected, result)
+
+
 def run_unit_eval() -> list[EvalResult]:
     """Run golden dataset tests against infrastructure with mock LLM responses.
 
@@ -62,58 +139,21 @@ def run_unit_eval() -> list[EvalResult]:
     for golden in ALL_GOLDEN:
         service = golden['service']
         action = golden['action']
-        expected = golden['expected_output']
         name = f'{service}/{action}'
-
         result = EvalResult(name, service, action)
 
-        # 1. Test input sanitization
-        message = golden['input'].get('message', '')
-        if message:
-            sanitized = sanitize_chat_message(message)
-            if not sanitized:
-                result.fail('Sanitization produced empty output')
+        _test_sanitization(golden, action, result)
 
-            # Injection test: sanitized content must be wrapped or neutralized
-            if 'injection' in action:
-                injection_patterns = [
-                    'ignore previous instructions',
-                    'forget everything',
-                    'you are now a',
-                ]
-                for pattern in injection_patterns:
-                    if pattern.lower() in message.lower():
-                        if 'BEGIN USER PROVIDED DATA' not in sanitized:
-                            result.fail(
-                                f'Injection pattern not wrapped: {pattern!r}',
-                            )
+        mock_response = _test_token_budget(service, action, result)
 
-        # 2. Test token budgeting
-        budget = TokenBudget()
-        mock_response = MOCK_RESPONSES.get(service, {}).get(action, '')
-        budget.add(mock_response, label=f'{service}_{action}')
-        if budget.remaining <= 0:
-            result.fail('Token budget exhausted on single response')
+        _test_schema_validation(
+            service, action, name, golden['expected_output'],
+            mock_response, result,
+        )
 
-        # 3. Test schema validation (for structured outputs)
-        schema_map = SCHEMA_MAP.get(service, {})
-        schema_class = schema_map.get(action)
-        if schema_class and mock_response:
-            try:
-                parsed = json.loads(mock_response)
-                validated = validate_schema(
-                    parsed, schema_class, context=name,
-                )
-                if not validated:
-                    result.fail('Schema validation returned empty dict')
-                validate_output_shape(validated, expected, result)
-            except json.JSONDecodeError as exc:
-                result.fail(f'Mock response is not valid JSON: {exc}')
-
-        # 4. Test output filtering (for text outputs)
-        if expected.get('type') == 'str' and mock_response:
-            filtered = filter_output(mock_response, context=name)
-            validate_output_shape(filtered, expected, result)
+        _test_output_filtering(
+            golden['expected_output'], name, mock_response, result,
+        )
 
         results.append(result)
 

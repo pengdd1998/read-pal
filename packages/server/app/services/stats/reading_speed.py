@@ -109,59 +109,71 @@ async def get_reading_speed(
         }
 
 
+async def _query_speed_by_book(
+    db: AsyncSession,
+    uid: UUID,
+) -> list[tuple]:
+    """Query reading speed stats grouped by book."""
+    rows = await db.execute(
+        select(
+            ReadingSession.book_id,
+            Book.title.label('book_title'),
+            Book.author.label('book_author'),
+            func.count(ReadingSession.id).label('total_sessions'),
+            func.coalesce(func.sum(ReadingSession.pages_read), 0).label(
+                'total_pages'
+            ),
+            func.coalesce(func.sum(ReadingSession.duration), 0).label(
+                'total_seconds'
+            ),
+            func.avg(
+                ReadingSession.pages_read
+                * 3600.0
+                / func.nullif(ReadingSession.duration, 0)
+            ).label('avg_pph'),
+        )
+        .join(Book, Book.id == ReadingSession.book_id)
+        .where(
+            and_(
+                ReadingSession.user_id == uid,
+                ReadingSession.duration >= _MIN_DURATION_SECS,
+            )
+        )
+        .group_by(ReadingSession.book_id, Book.title, Book.author)
+    )
+    return rows.all()
+
+
+def _map_book_speed_rows(rows: list[tuple]) -> list[dict]:
+    """Convert raw per-book speed rows into response dicts."""
+    books: list[dict] = []
+    for row in rows:
+        total_seconds = int(row[5])
+        total_minutes = total_seconds // 60
+        avg_pph = float(row[6]) if row[6] else 0
+        wpm = round(avg_pph * 250.0 / 60.0, 2)
+        books.append({
+            'bookId': str(row[0]),
+            'bookTitle': row[1],
+            'title': row[1],
+            'author': row[2],
+            'averagePagesPerHour': round(avg_pph, 2),
+            'totalSessions': int(row[3]),
+            'totalPagesRead': int(row[4]),
+            'totalMinutes': total_minutes,
+            'wpm': wpm,
+        })
+    return books
+
+
 async def get_reading_speed_by_book(
     db: AsyncSession,
     uid: UUID,
 ) -> list[dict]:
     """Return reading speed stats grouped by book."""
     try:
-        rows = await db.execute(
-            select(
-                ReadingSession.book_id,
-                Book.title.label('book_title'),
-                Book.author.label('book_author'),
-                func.count(ReadingSession.id).label('total_sessions'),
-                func.coalesce(func.sum(ReadingSession.pages_read), 0).label(
-                    'total_pages'
-                ),
-                func.coalesce(func.sum(ReadingSession.duration), 0).label(
-                    'total_seconds'
-                ),
-                func.avg(
-                    ReadingSession.pages_read
-                    * 3600.0
-                    / func.nullif(ReadingSession.duration, 0)
-                ).label('avg_pph'),
-            )
-            .join(Book, Book.id == ReadingSession.book_id)
-            .where(
-                and_(
-                    ReadingSession.user_id == uid,
-                    ReadingSession.duration >= _MIN_DURATION_SECS,
-                )
-            )
-            .group_by(ReadingSession.book_id, Book.title, Book.author)
-        )
-
-        books = []
-        for row in rows.all():
-            total_seconds = int(row[5])
-            total_minutes = total_seconds // 60
-            avg_pph = float(row[6]) if row[6] else 0
-            wpm = round(avg_pph * 250.0 / 60.0, 2)
-            books.append({
-                'bookId': str(row[0]),
-                'bookTitle': row[1],
-                'title': row[1],
-                'author': row[2],
-                'averagePagesPerHour': round(avg_pph, 2),
-                'totalSessions': int(row[3]),
-                'totalPagesRead': int(row[4]),
-                'totalMinutes': total_minutes,
-                'wpm': wpm,
-            })
-
-        return books
+        rows = await _query_speed_by_book(db, uid)
+        return _map_book_speed_rows(rows)
     except DBAPIError:
         logger.error('Failed to get reading speed by book for user %s', uid, exc_info=True)
         return []

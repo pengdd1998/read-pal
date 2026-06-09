@@ -1,9 +1,10 @@
 'use client';
 
+import React from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 
-export function Footer() {
+export const Footer = React.memo(function Footer() {
  const t = useTranslations('nav');
  const tc = useTranslations('common');
 
@@ -26,4 +27,4 @@ export function Footer() {
   </div>
  </footer>
  );
-}
+});

@@ -1,7 +1,7 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 import structlog
 from fastapi import FastAPI, Request
@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
 from sqlalchemy import select, text
+from sqlalchemy.exc import DBAPIError
 
 from app.config import get_settings
 from app.core.logging import setup_logging
@@ -97,7 +98,7 @@ async def lifespan(app: FastAPI):
             from app.db import init_db
             await init_db()
             logger.info('database_tables_created')
-        except Exception as exc:
+        except DBAPIError as exc:
             logger.warning('auto_create_tables_failed', error=str(exc))
 
     asyncio.create_task(_log_cleanup_loop())
@@ -237,7 +238,7 @@ async def _log_cleanup_loop() -> None:
                 deleted = await cleanup_old_logs(db, settings.llm_log_retention_days)
                 if deleted:
                     logger.info('cleaned_up_llm_logs', deleted=deleted, retention_days=settings.llm_log_retention_days)
-        except Exception as exc:
+        except DBAPIError as exc:
             logger.warning('llm_log_cleanup_failed', error=str(exc))
 
 
@@ -267,7 +268,7 @@ async def _stale_session_cleanup_loop() -> None:
                 if closed:
                     await db.commit()
                     logger.info('closed_stale_sessions', count=closed)
-        except Exception as exc:
+        except DBAPIError as exc:
             logger.warning('stale_session_cleanup_failed', error=str(exc))
 
 
@@ -290,7 +291,7 @@ async def _fix_absurd_session_durations() -> None:
             if fixed:
                 await db.commit()
                 logger.info('fixed_absurd_durations', count=fixed)
-    except Exception as exc:
+    except DBAPIError as exc:
         logger.warning('fix_absurd_durations_failed', error=str(exc))
 
 
@@ -303,7 +304,7 @@ async def health_check() -> dict[str, object]:
         async with async_session() as session:
             await session.execute(text('SELECT 1'))
         checks['database'] = {'status': 'ok'}
-    except Exception as exc:
+    except DBAPIError as exc:
         logger.error('health_check_database_error', error=str(exc))
         checks['database'] = {'status': 'error'}
 

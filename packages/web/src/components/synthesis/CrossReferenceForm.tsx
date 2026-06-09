@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 // ============================================================================
@@ -13,7 +14,7 @@ interface CrossReferenceFormProps {
  onAnalysisTypeChange: (value: 'supporting' | 'contradicting' | 'extending' | 'all') => void;
 }
 
-export function CrossReferenceForm({
+export const CrossReferenceForm = React.memo(function CrossReferenceForm({
  concept,
  onConceptChange,
  analysisType,
@@ -58,4 +59,4 @@ export function CrossReferenceForm({
   </div>
  </div>
  );
-}
+});

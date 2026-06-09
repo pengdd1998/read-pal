@@ -7,6 +7,7 @@ from uuid import UUID
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
@@ -29,7 +30,7 @@ async def _deactivate_existing_plan(
         if existing:
             existing.is_active = False
             await db.flush()
-    except Exception:
+    except DBAPIError:
         logger.error('Failed to deactivate existing plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
 
 
@@ -51,7 +52,7 @@ async def _save_new_plan(
         db.add(plan)
         await db.flush()
         return plan
-    except Exception:
+    except DBAPIError:
         logger.error('Failed to save new plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
         return None
 
@@ -194,7 +195,7 @@ async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book | N
         result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id)
         )
-    except Exception:
+    except DBAPIError:
         logger.error('Failed to load book', exc_info=True, book_id=str(book_id), user_id=str(user_id))
         return None
     book = result.scalar_one_or_none()
@@ -220,7 +221,7 @@ async def _get_active_plan(
             .limit(1)
         )
         return result.scalar_one_or_none()
-    except Exception:
+    except DBAPIError:
         logger.error('Failed to get active plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
         return None
 

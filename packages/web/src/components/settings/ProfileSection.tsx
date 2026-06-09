@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface ProfileSectionProps {
@@ -7,7 +8,7 @@ interface ProfileSectionProps {
  userEmail: string;
 }
 
-export function ProfileSection({ userName, userEmail }: ProfileSectionProps) {
+export const ProfileSection = React.memo(function ProfileSection({ userName, userEmail }: ProfileSectionProps) {
  const t = useTranslations('settings_page');
  return (
  <section className="mb-6 animate-slide-up stagger-1">
@@ -35,4 +36,4 @@ export function ProfileSection({ userName, userEmail }: ProfileSectionProps) {
   </div>
  </section>
  );
-}
+});

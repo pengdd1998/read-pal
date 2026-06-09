@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from sqlalchemy.exc import DBAPIError
 
 from app.services.llm import _TraceWriter, _log_call, _trace_writer
 
@@ -63,7 +64,7 @@ class TestTraceWriter:
         writer = _TraceWriter()
         writer.add(_make_trace(success=False, error_message='err'))
 
-        with patch('app.db.async_session', side_effect=Exception('DB down')):
+        with patch('app.db.async_session', side_effect=DBAPIError('stmt', {}, Exception('DB down'))):
             count = await writer.flush()
 
         assert count == 0
