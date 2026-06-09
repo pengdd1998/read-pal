@@ -1770,6 +1770,7 @@
     "pageTitle": "Book Clubs",
     "subtitle": "Read together, discuss, and grow",
     "backToDashboard": "Back to Dashboard",
+    "clubs_tabs_label": "Club tabs",
     "myClubs": "My Clubs ({count})",
     "discover": "Discover ({count})",
     "noJoinedClubs": "You haven't joined any clubs yet",

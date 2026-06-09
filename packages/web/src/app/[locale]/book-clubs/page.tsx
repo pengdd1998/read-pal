@@ -80,12 +80,14 @@ export default function BookClubsPage() {
   </div>
 
   {/* Tabs */}
-  <div className="flex gap-1 p-1 bg-surface-2 rounded-xl mb-6" role="tablist">
+  <div className="flex gap-1 p-1 bg-surface-2 rounded-xl mb-6" role="tablist" aria-label={t('clubs_tabs_label')}>
    {(['my', 'discover'] as const).map((tabKey) => (
    <button
     key={tabKey}
+    id={`club-tab-${tabKey}`}
     role="tab"
     aria-selected={tab === tabKey}
+    aria-controls={`club-panel-${tabKey}`}
     onClick={() => setTab(tabKey)}
     className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     tab === tabKey
@@ -98,6 +100,7 @@ export default function BookClubsPage() {
    ))}
   </div>
 
+  <div role="tabpanel" id={`club-panel-${tab}`} aria-labelledby={`club-tab-${tab}`}>
   {/* Loading */}
   {loading && (
    <div className="space-y-4">
@@ -166,6 +169,7 @@ export default function BookClubsPage() {
    ))}
    </div>
   )}
+  </div>
   </div>
  </main>
  );

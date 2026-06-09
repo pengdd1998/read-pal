@@ -1578,6 +1578,7 @@
     "pageTitle": "读书会",
     "subtitle": "一起阅读、讨论、成长",
     "backToDashboard": "返回仪表盘",
+    "clubs_tabs_label": "读书会标签页",
     "myClubs": "我的读书会 ({count})",
     "discover": "发现 ({count})",
     "noJoinedClubs": "你还没有加入任何读书会",
