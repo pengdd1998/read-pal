@@ -56,10 +56,12 @@ export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', 
  const [sortOption, setSortOption] = useState<SortOption>('addedAt-desc');
 
  const handleRetry = useCallback(() => {
+  let stale = false;
   setLoading(true);
   setError('');
   api.get<Book[]>('/api/books')
    .then((response) => {
+    if (stale) return;
     if (response.success && response.data) {
      setBooks(Array.isArray(response.data) ? response.data : []);
     } else {
@@ -67,10 +69,12 @@ export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', 
     }
    })
    .catch((err) => {
+    if (stale) return;
     console.warn('LibraryGrid: failed to load library', err);
     setError(t('failed_connect_server'));
    })
-   .finally(() => setLoading(false));
+   .finally(() => { if (!stale) setLoading(false); });
+  return () => { stale = true; };
  }, [t]);
 
  useEffect(() => {

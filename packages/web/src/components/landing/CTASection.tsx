@@ -20,7 +20,7 @@ export function CTASection({
  return (
  <>
   {/* GitHub Star CTA */}
-  <section className="px-4 sm:px-6 lg:px-8 py-12 text-center">
+  <section aria-label="GitHub repository" className="px-4 sm:px-6 lg:px-8 py-12 text-center">
   <div className="inline-flex items-center gap-4 px-6 py-4 rounded-2xl border border-surface-3 bg-surface-0 shadow-sm">
    <span className="text-gray-700 font-medium">{love_text}</span>
    <a
@@ -36,10 +36,10 @@ export function CTASection({
   </section>
 
   {/* CTA */}
-  <section className="relative overflow-hidden bg-gradient-to-br from-navy-700 via-navy-800 to-navy-900 py-16 sm:py-24 noise-overlay">
+  <section aria-labelledby="landing-cta-title" className="relative overflow-hidden bg-gradient-to-br from-navy-700 via-navy-800 to-navy-900 py-16 sm:py-24 noise-overlay">
   <div className="hero-orb hero-orb-1 opacity-30" />
   <div className="relative z-10 px-4 sm:px-6 lg:px-8 text-center">
-   <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-5 font-display">
+   <h2 id="landing-cta-title" className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-5 font-display">
    {cta_join_title}
    </h2>
    <p className="text-gray-300 text-lg mb-10">

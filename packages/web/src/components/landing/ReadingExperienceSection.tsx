@@ -10,10 +10,10 @@ export function ReadingExperienceSection({
  experiences,
 }: ReadingExperienceSectionProps) {
  return (
- <section className="bg-gradient-to-b from-surface-1 to-transparent py-20">
+ <section aria-labelledby="landing-reading-title" className="bg-gradient-to-b from-surface-1 to-transparent py-20">
   <div className="px-4 sm:px-6 lg:px-8">
   <div className="text-center mb-14">
-   <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-4 font-display">
+   <h2 id="landing-reading-title" className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-4 font-display">
    {reading_better_title}
    </h2>
    <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">

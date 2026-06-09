@@ -40,7 +40,7 @@ export function HowItWorksSection({
  return (
  <>
   {/* Social Proof Stats */}
-  <section className="bg-surface-1 pt-8 pb-4">
+  <section aria-label="Social proof statistics" className="bg-surface-1 pt-8 pb-4">
   <div className="px-4 sm:px-6 lg:px-8">
    <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center py-6">
    {stats.map((stat) => (
@@ -54,7 +54,7 @@ export function HowItWorksSection({
   </section>
 
   {/* How It Works */}
-  <section className="bg-surface-1 pt-4 pb-20">
+  <section aria-labelledby="landing-how-title" className="bg-surface-1 pt-4 pb-20">
   {/* Trust bar */}
   <div className="px-4 sm:px-6 lg:px-8 mb-16">
    <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-gray-500 dark:text-gray-400">
@@ -68,7 +68,7 @@ export function HowItWorksSection({
   </div>
   <div className="px-4 sm:px-6 lg:px-8">
    <div className="text-center mb-14">
-   <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
+   <h2 id="landing-how-title" className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
     {how_title}
    </h2>
    <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">

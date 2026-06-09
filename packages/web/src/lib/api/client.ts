@@ -234,6 +234,7 @@ export class ApiClient {
       success: true,
       data: undefined as unknown as T,
       error: undefined,
+      queued: true,
     };
   }
 

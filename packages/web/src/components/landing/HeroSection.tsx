@@ -18,7 +18,7 @@ export function HeroSection({
  cta_signin,
 }: HeroSectionProps) {
  return (
- <section className="relative overflow-hidden noise-overlay">
+ <section aria-labelledby="landing-hero-title" className="relative overflow-hidden noise-overlay">
   {/* Animated gradient orbs */}
   <div className="absolute inset-0 -z-10">
   <div className="hero-orb hero-orb-1" />
@@ -35,7 +35,7 @@ export function HeroSection({
    </span>
   </div>
 
-  <h1 className="mt-10 text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-gray-900 leading-[0.95] animate-slide-up font-display">
+  <h1 id="landing-hero-title" className="mt-10 text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-gray-900 leading-[0.95] animate-slide-up font-display">
    {hero_title_before}
    <br />
    <span className="text-gradient">{hero_title_highlight}</span>

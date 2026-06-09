@@ -196,6 +196,8 @@ export interface ApiResponse<T = unknown> {
     limit?: number;
     total?: number;
   };
+  /** True when the mutation was queued for offline sync instead of reaching the server */
+  queued?: boolean;
 }
 
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {

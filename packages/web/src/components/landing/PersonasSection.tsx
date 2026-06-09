@@ -17,9 +17,9 @@ export function PersonasSection({
  friends,
 }: PersonasSectionProps) {
  return (
- <section className="px-4 sm:px-6 lg:px-8 py-20">
+ <section aria-labelledby="landing-personas-title" className="px-4 sm:px-6 lg:px-8 py-20">
   <div className="text-center mb-14">
-  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 tracking-tight font-display">
+  <h2 id="landing-personas-title" className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 tracking-tight font-display">
    {personas_title}
   </h2>
   <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">

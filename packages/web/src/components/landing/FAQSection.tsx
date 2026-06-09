@@ -23,9 +23,9 @@ export function FAQSection({ faq_title, faqs }: FAQSectionProps) {
  };
 
  return (
- <section className="px-4 sm:px-6 lg:px-8 py-20">
+ <section aria-labelledby="landing-faq-title" className="px-4 sm:px-6 lg:px-8 py-20">
   <div className="text-center mb-14">
-  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
+  <h2 id="landing-faq-title" className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
    {faq_title}
   </h2>
   </div>

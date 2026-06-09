@@ -12,11 +12,11 @@ export function OpenSourceSection({
  oss_stats,
 }: OpenSourceSectionProps) {
  return (
- <section className="px-4 sm:px-6 lg:px-8 py-20">
+ <section aria-labelledby="landing-oss-title" className="px-4 sm:px-6 lg:px-8 py-20">
   <div className="rounded-3xl border border-surface-3 bg-gradient-to-br from-navy-700/5 to-primary-500/5 p-6 sm:p-10">
   <div className="grid sm:grid-cols-2 gap-8 items-center">
    <div>
-   <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
+   <h2 id="landing-oss-title" className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
     {oss_title}
    </h2>
    <p className="mt-4 text-gray-600 dark:text-gray-400 leading-relaxed">

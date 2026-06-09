@@ -9,7 +9,7 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.memory_book import MemoryBook
@@ -131,13 +131,19 @@ async def _upsert_memory_book(
     mirror_title = f'{book_title} — Reading Mirror'
 
     if existing:
-        existing.sections = sections
-        existing.stats = stats
-        existing.html_content = html_content
-        existing.format = book_format
-        existing.title = mirror_title
-        existing.version = (existing.version or 1) + 1
-        await db.flush()
+        await db.execute(
+            update(MemoryBook)
+            .where(MemoryBook.id == existing.id)
+            .values(
+                sections=sections,
+                stats=stats,
+                html_content=html_content,
+                format=book_format,
+                title=mirror_title,
+                version=MemoryBook.version + 1,
+            )
+        )
+        await db.refresh(existing)
         return existing
 
     memory_book = MemoryBook(

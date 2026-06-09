@@ -12,10 +12,10 @@ export function ApiEndpointTable() {
  filter
   ? endpoints.filter((e) =>
    e.path.toLowerCase().includes(filter.toLowerCase()) ||
-   e.description.toLowerCase().includes(filter.toLowerCase())
+   t(e.descriptionKey).toLowerCase().includes(filter.toLowerCase())
   )
   : endpoints,
- [filter]
+ [filter, t]
  );
 
  return (
@@ -41,7 +41,7 @@ export function ApiEndpointTable() {
     {ep.method}
    </span>
    <code className="text-sm font-mono text-gray-800 dark:text-gray-200 flex-1">{ep.path}</code>
-   <span className="text-xs text-gray-500 dark:text-gray-400">{ep.description}</span>
+   <span className="text-xs text-gray-500 dark:text-gray-400">{t(ep.descriptionKey)}</span>
    {ep.auth && (
     <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">{t('endpoints_auth_badge')}</span>
    )}
