@@ -57,8 +57,8 @@ export default function OfflinePage() {
         setCachedBooks(books);
         setLoading(false);
       }
-    } catch {
-      console.warn("offline: IndexedDB not available");
+    } catch (err) {
+      console.warn('OfflinePage: IndexedDB not available', err);
       if (!staleRef.current) setLoading(false);
     }
   }, []);

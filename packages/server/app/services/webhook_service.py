@@ -285,27 +285,3 @@ async def deliver_webhook(
     )
 
 
-async def log_delivery(
-    db: AsyncSession,
-    webhook_id: UUID,
-    user_id: UUID,
-    event: str,
-    url: str,
-    status_code: int | None,
-    duration_ms: int,
-    error: str | None,
-) -> WebhookDeliveryLog:
-    """Create a delivery log entry."""
-    log_entry = WebhookDeliveryLog(
-        webhook_id=webhook_id,
-        user_id=user_id,
-        event=event,
-        url=url,
-        status_code=status_code,
-        duration_ms=duration_ms,
-        error=error,
-    )
-    db.add(log_entry)
-    await db.flush()
-    await db.refresh(log_entry)
-    return log_entry

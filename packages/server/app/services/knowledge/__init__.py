@@ -303,7 +303,7 @@ async def _merge_cached_graphs_for_books(
                     all_nodes.append(node.model_dump(by_alias=True, mode='json'))
                 for edge in cached.edges:
                     all_edges.append(edge.model_dump(by_alias=True, mode='json'))
-        except Exception as exc:
+        except (ValueError, RuntimeError) as exc:
             logger.warning('Failed to load cached graph for book %s', bid, exc_info=True)
             continue
 

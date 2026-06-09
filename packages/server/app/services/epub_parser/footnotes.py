@@ -14,6 +14,6 @@ def annotate_footnotes(html_content: str) -> str:
             lambda m: m.group(1) + ' class="rp-footnote-ref"',
             html_content,
         )
-    except Exception as exc:
+    except (ValueError, TypeError) as exc:
         logger.warning('epub_parser.footnote_css_failed', error=str(exc)[:200])
     return html_content

@@ -59,7 +59,7 @@ function ResetPasswordForm() {
   setError(t('reset_failed'));
   }
  } catch (err) {
-  console.warn('Reset password: failed', err);
+  console.warn('ResetPassword: failed', err);
   setError(t('reset_failed_expired'));
  } finally {
   setLoading(false);

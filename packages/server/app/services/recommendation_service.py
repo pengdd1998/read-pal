@@ -101,7 +101,6 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
     Results are cached in Redis for 10 minutes.
     """
     from app.core.cache import cache_get_or_compute
-    from app.config import get_settings
 
     async def _compute() -> list[dict]:
         return await _compute_recommendations(db, user_id)

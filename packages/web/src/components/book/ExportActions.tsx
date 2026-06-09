@@ -56,7 +56,7 @@ export const ExportActions = React.memo(function ExportActions({
   );
   onExportSuccess(t('markdownExported'));
  } catch (error) {
-  console.warn('ExportActions_markdown_failed', error);
+  console.warn('ExportActions: markdown export failed', error);
   onExportError(t('failedToExport'));
  } finally {
   if (mountedRef.current) setExporting(null);
@@ -75,7 +75,7 @@ export const ExportActions = React.memo(function ExportActions({
   );
   onExportSuccess(t('jsonExported'));
  } catch (error) {
-  console.warn('ExportActions_json_failed', error);
+  console.warn('ExportActions: JSON export failed', error);
   onExportError(t('failedToExport'));
  } finally {
   if (mountedRef.current) setExporting(null);
@@ -95,7 +95,7 @@ export const ExportActions = React.memo(function ExportActions({
   );
   onExportSuccess(t('exportedToZotero'));
  } catch (error) {
-  console.warn('ExportActions_zotero_failed', error);
+  console.warn('ExportActions: Zotero export failed', error);
   onExportError(t('failedToExportZotero'));
  } finally {
   if (mountedRef.current) setZoteroExporting(false);

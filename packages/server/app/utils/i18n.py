@@ -77,10 +77,6 @@ def translate_error(exc: ValueError, lang: str = DEFAULT_LANGUAGE) -> str:
     return t('errors.validation_failed', lang)
 
 
-def get_supported_languages() -> list[str]:
-    return SUPPORTED_LANGUAGES
-
-
 async def _get_user_lang(db: 'AsyncSession', user_id: 'UUID') -> str:
     """Get user's language preference from settings."""
     from sqlalchemy import select

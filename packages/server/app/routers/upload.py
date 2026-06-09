@@ -145,7 +145,7 @@ async def upload_book(
         return result
     except HTTPException:
         raise
-    except Exception as exc:
+    except (ValueError, OSError, KeyError, RuntimeError) as exc:
         logger.warning('upload.parse_failed user=%s file=%s error=%s', user['id'], file.filename, exc)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

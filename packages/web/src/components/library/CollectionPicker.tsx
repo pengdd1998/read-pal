@@ -65,7 +65,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   return { ...c, bookIds: Array.from(ids) };
   }));
  } catch (err) {
-  console.warn('Failed to toggle book in collection:', err);
+  console.warn('CollectionPicker: toggle failed', err);
   toast(t('collection_picker_toggle_failed'), 'error');
   // Reload from server to revert optimistic update
   try {
@@ -94,7 +94,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   setShowCreate(false);
   }
  } catch (err) {
-  console.warn('Failed to create collection:', err);
+  console.warn('CollectionPicker: create failed', err);
   toast(t('collection_picker_create_failed'), 'error');
   // Keep name so user can retry
  } finally {

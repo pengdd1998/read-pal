@@ -40,7 +40,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
   router.push('/flashcards');
   }
  } catch (error) {
-  console.warn('FlashcardCard_generate_failed', error);
+  console.warn('FlashcardCard: generate failed', error);
   onError(t('failedToGenerateFlashcards'));
  } finally {
   if (mountedRef.current) setGenerating(false);

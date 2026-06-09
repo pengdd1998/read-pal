@@ -55,7 +55,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   setError(t('analysis_failed'));
   }
  } catch (error) {
-  console.warn('SingleBookAnalysisCard_analyze_failed', error);
+  console.warn('SingleBookAnalysisCard: analyze failed', error);
   setError(t('network_error'));
  } finally {
   setLoading(false);

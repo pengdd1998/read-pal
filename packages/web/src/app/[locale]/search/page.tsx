@@ -40,7 +40,7 @@ export default function SearchPage() {
   })
   .catch((err) => {
   if (stale) return;
-  console.warn('search: recent books load failed', err);
+  console.warn('SearchPage: recent books load failed', err);
   });
  }
  loadRecent();

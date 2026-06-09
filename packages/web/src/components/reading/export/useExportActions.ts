@@ -138,7 +138,7 @@ export function useExportActions(bookId: string): ExportActionsReturn {
       toast(t('export_downloaded_file', { filename }), 'success');
       analytics.track('export_completed', { format });
     } catch (error) {
-      console.warn('ExportPreviewModal_download_failed', error);
+      console.warn('useExportActions: download failed', error);
       toast(t('export_download_failed'), 'error');
     }
   };

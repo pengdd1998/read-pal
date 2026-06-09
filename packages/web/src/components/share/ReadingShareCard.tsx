@@ -43,7 +43,7 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
   setCard(res.data);
   }
  } catch (error) {
-  console.warn('ReadingShareCard_generate_failed', error);
+  console.warn('ReadingShareCard: generate failed', error);
   toast(t('failed_generate'), 'error');
  } finally {
   setLoading(false);

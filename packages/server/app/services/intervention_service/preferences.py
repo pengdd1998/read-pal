@@ -51,7 +51,7 @@ async def get_preferences(user_id: UUID) -> dict:
         raw = await redis.get(_prefs_redis_key(user_id))
         if raw:
             return json.loads(raw)
-    except Exception as exc:
+    except (json.JSONDecodeError, ValueError, ConnectionError) as exc:
         logger.warning('intervention_prefs.get_failed user=%s error=%s', user_id, exc)
     return {**DEFAULT_PREFS}
 

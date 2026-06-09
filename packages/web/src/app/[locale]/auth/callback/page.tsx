@@ -36,7 +36,7 @@ function OAuthCallback() {
   oauthLogin(token, user, refreshToken || undefined);
   router.push('/dashboard');
  } catch (err) {
-  console.warn('Auth callback: failed', err);
+  console.warn('AuthCallback: failed', err);
   router.replace(`/auth?mode=login&error=${encodeURIComponent(t('parse_response_failed'))}`);
  }
  }, [searchParams, router, oauthLogin, t]);

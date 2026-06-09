@@ -59,7 +59,7 @@ export function useShareAsImage(
         }, 'image/png');
       });
     } catch (err) {
-      console.warn('Share failed:', err);
+      console.warn('useShareAsImage: share failed', err);
     }
   }, [quoteText, bookTitle, author, fallbackBookTitle, fallbackAuthor]);
 }

@@ -306,7 +306,7 @@ async def _enrich_mastery_step(
     try:
         from app.services.study_mode_service import get_mastery
         return {'mastery': await get_mastery(db, user_id, book_id)}
-    except Exception:
+    except (ValueError, RuntimeError):
         logger.warning('Mastery enrichment skipped for book %s', book_id, exc_info=True)
         return {'mastery': {}}
 
@@ -319,7 +319,7 @@ async def _enrich_synthesis_step(
     """Fetch synthesis themes with graceful fallback."""
     try:
         return {'synthesis_themes': await enrich_with_synthesis_themes(db, user_id, book_id)}
-    except Exception:
+    except (ValueError, RuntimeError):
         logger.warning('Synthesis enrichment skipped for book %s', book_id, exc_info=True)
         return {'synthesis_themes': {}}
 

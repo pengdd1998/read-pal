@@ -42,7 +42,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   setCompareError(t('analysis_failed'));
   }
  } catch (error) {
-  console.warn('BookComparisonCard_compare_failed', error);
+  console.warn('BookComparisonCard: compare failed', error);
   setCompareError(t('network_error'));
  } finally {
   setCompareLoading(false);

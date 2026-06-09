@@ -265,7 +265,7 @@ async def _fetch_rag(
             db, user_id, book_id, rag_query,
             top_k=params['top_k'], max_chars=params['max_chars'],
         )
-    except Exception as exc:
+    except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('companion.rag_failed', error=str(exc))
         return ''
 
@@ -279,7 +279,7 @@ async def _fetch_memory(
     try:
         from app.services.conversation_memory import get_or_create_summary
         return await get_or_create_summary(db, user_id, book_id) or ''
-    except Exception as exc:
+    except (ValueError, RuntimeError) as exc:
         logger.warning('companion.memory_failed', error=str(exc))
         return ''
 

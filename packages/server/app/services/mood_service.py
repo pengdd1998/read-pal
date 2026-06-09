@@ -68,7 +68,7 @@ async def generate_mood_scene(
 
     try:
         raw = await safe_llm_call(messages, fallback='', log_label='mood-scene')
-    except Exception as exc:
+    except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('Mood scene LLM call failed, using fallback: %s', exc)
         return fallback
 

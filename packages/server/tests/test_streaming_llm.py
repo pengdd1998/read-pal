@@ -218,6 +218,8 @@ class TestStreamingErrors:
             patch('app.services.companion.context._load_book', return_value=mock_book),
             patch('app.services.companion.context._load_history', return_value=[]),
             patch('app.services.companion.context._load_annotations_context', return_value=''),
+            patch('app.services.companion.context._fetch_rag', return_value=''),
+            patch('app.services.companion.context._fetch_memory', return_value=''),
             patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
         ):
             chunks = []
@@ -272,6 +274,8 @@ class TestStreamingErrors:
             patch('app.services.companion.context._load_book', return_value=mock_book),
             patch('app.services.companion.context._load_history', return_value=[]),
             patch('app.services.companion.context._load_annotations_context', return_value=''),
+            patch('app.services.companion.context._fetch_rag', return_value=''),
+            patch('app.services.companion.context._fetch_memory', return_value=''),
             patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
             patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
         ):
@@ -326,6 +330,8 @@ class TestStreamingErrors:
             patch('app.services.companion.context._load_book', return_value=mock_book),
             patch('app.services.companion.context._load_history', return_value=[]),
             patch('app.services.companion.context._load_annotations_context', return_value=''),
+            patch('app.services.companion.context._fetch_rag', return_value=''),
+            patch('app.services.companion.context._fetch_memory', return_value=''),
             patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
             patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
             patch('app.services.companion.stream_cache._save_message', new_callable=AsyncMock) as mock_save,

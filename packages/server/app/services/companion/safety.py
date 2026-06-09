@@ -31,7 +31,7 @@ def persist_stream_log(
             user_id=str(user_id) if user_id else None,
             book_id=str(book_id) if book_id else None,
         )
-    except Exception as exc:
+    except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('companion.safety.observability_log_failed', error=str(exc)[:200])
 
 

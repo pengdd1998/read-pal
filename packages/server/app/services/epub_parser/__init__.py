@@ -25,10 +25,6 @@ logger = logging.getLogger('read-pal')
 _epub_metadata_var: ContextVar[dict] = ContextVar('_epub_metadata_var', default={})
 
 
-def _get_metadata() -> dict:
-    return _epub_metadata_var.get({})
-
-
 def _set_metadata(metadata: dict) -> None:
     _epub_metadata_var.set(metadata)
 

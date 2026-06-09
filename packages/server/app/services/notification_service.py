@@ -119,24 +119,3 @@ async def mark_all_read(
         return 0
 
 
-async def create_notification(
-    db: AsyncSession,
-    user_id: UUID,
-    type: str,
-    title: str,
-    message: str,
-    metadata: dict | None = None,
-) -> Notification:
-    """Internal helper: create a notification."""
-    notification = Notification(
-        user_id=user_id,
-        type=type,
-        title=title,
-        message=message,
-        metadata_=metadata,
-    )
-    db.add(notification)
-    await db.flush()
-    await db.refresh(notification)
-    logger.info('Notification created: id=%s user=%s type=%s', notification.id, user_id, type)
-    return notification

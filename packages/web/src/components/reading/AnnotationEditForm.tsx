@@ -46,7 +46,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   }
   onCancel();
  } catch (error) {
-  console.warn('AnnotationEditForm_save_failed', error);
+  console.warn('AnnotationEditForm: save failed', error);
   toast(t('card_failed_save'), 'error');
  }
  setSaving(false);

@@ -146,7 +146,7 @@ class TestParseResponse:
 class TestGenerateMoodScene:
     @pytest.mark.asyncio
     async def test_returns_fallback_on_llm_failure(self):
-        with patch('app.services.mood_service.safe_llm_call', side_effect=Exception('LLM down')):
+        with patch('app.services.mood_service.safe_llm_call', side_effect=RuntimeError('LLM down')):
             result = await generate_mood_scene(None, None, 'happy')
         assert result['mood'] == 'happy'
         assert 'scene' in result

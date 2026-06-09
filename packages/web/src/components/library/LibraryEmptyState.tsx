@@ -30,7 +30,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
   setError(t('failed_seed_sample'));
   }
  } catch (error) {
-  console.warn('LibraryEmptyState_seed_failed', error);
+  console.warn('LibraryEmptyState: seed failed', error);
   if (!mountedRef.current) return;
   setError(t('failed_seed_sample'));
  } finally {

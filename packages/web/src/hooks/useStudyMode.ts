@@ -92,7 +92,7 @@ export function useStudyMode(bookId: string) {
       // Mark chapter loaded only after both calls succeed
       currentChapterRef.current = chapterIndex;
     } catch (err) {
-      console.warn('Failed to load study mode data for chapter', err);
+      console.warn('useStudyMode: loadChapterStudy failed', err);
       if (mountedRef.current) setError('Failed to load study data');
     } finally {
       if (mountedRef.current) setLoading(false);
@@ -120,7 +120,7 @@ export function useStudyMode(bookId: string) {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (err) {
-      console.warn('Failed to save card checks:', err);
+      console.warn('useStudyMode: saveChecks failed', err);
       setSaveStatus('failed');
     }
   }, [bookId]);
@@ -133,7 +133,7 @@ export function useStudyMode(bookId: string) {
         setMastery(res.data);
       }
     } catch (err) {
-      console.warn('Failed to load mastery report', err);
+      console.warn('useStudyMode: loadMastery failed', err);
       setError('Failed to load mastery report');
     }
   }, [bookId]);

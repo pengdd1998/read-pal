@@ -80,8 +80,6 @@ def _build_summarize_messages(
     lang: str,
 ) -> tuple[list, TokenBudget]:
     """Build system + human messages for summarize and return (messages, budget)."""
-    from langchain_core.messages import HumanMessage, SystemMessage
-
     prompt_parts = [
         t('companion.summarize_prompt', lang, title=book_title, author=book_author),
     ]

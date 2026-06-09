@@ -27,7 +27,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
   onTagsChange?.(bookId, newTags);
   setTagInput('');
  } catch (error) {
-  console.warn('BookTagEditor_add_failed', error);
+  console.warn('BookTagEditor: add tag failed', error);
   toast(t('tag_update_failed'), 'error');
  }
  }, [tagInput, tags, bookId, onTagsChange, t, toast]);
@@ -38,7 +38,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
   await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
   onTagsChange?.(bookId, newTags);
  } catch (error) {
-  console.warn('BookTagEditor_remove_failed', error);
+  console.warn('BookTagEditor: remove tag failed', error);
   toast(t('tag_update_failed'), 'error');
  }
  }, [tags, bookId, onTagsChange]);

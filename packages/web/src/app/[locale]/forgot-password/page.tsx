@@ -23,8 +23,8 @@ export default function ForgotPasswordPage() {
  try {
   await api.post('/api/auth/forgot-password', { email });
   setSubmitted(true);
- } catch {
-  console.warn('Forgot password: request failed');
+ } catch (err) {
+  console.warn('ForgotPassword: request failed', err);
   // Gracefully handle any error — still show success
   // to avoid leaking whether an email exists in our system
   setSubmitted(true);

@@ -73,7 +73,7 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
   setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);
   }
  } catch (error) {
-  console.warn('OfflineSaveButton_failed', error);
+  console.warn('OfflineSaveButton: cache save failed', error);
   if (progressIntervalRef.current) { clearInterval(progressIntervalRef.current); progressIntervalRef.current = null; }
   setState('error');
   setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);

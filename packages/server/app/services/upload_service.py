@@ -277,8 +277,6 @@ async def _safe_precompute(
     chapters: list[dict],
 ) -> None:
     """Fire-and-forget embedding pre-computation with retry."""
-    import asyncio
-
     from app.services.rag import precompute_book_embeddings
 
     max_retries = 2
@@ -286,7 +284,7 @@ async def _safe_precompute(
         try:
             await precompute_book_embeddings(book_id, document_id, chapters)
             return
-        except Exception as exc:
+        except (ConnectionError, TimeoutError, ValueError) as exc:
             if attempt < max_retries:
                 delay = 2 ** attempt * 5
                 logger.warning(

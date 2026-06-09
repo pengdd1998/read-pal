@@ -19,7 +19,7 @@ from app.schemas.webhook import (
     WebhookUpdate,
 )
 from app.services import webhook_service
-from app.utils.i18n import t, translate_error
+from app.utils.i18n import translate_error
 from app.middleware.rate_limiter import api_limiter
 
 router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'], dependencies=[api_limiter])
