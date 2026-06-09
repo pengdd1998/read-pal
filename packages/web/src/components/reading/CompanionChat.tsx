@@ -139,13 +139,14 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
  });
 
  // Preload DOMPurify on mount
- useEffect(() => { preloadDOMPurify(); }, []);
+ const [purifyReady, setPurifyReady] = useState(false);
+  useEffect(() => { preloadDOMPurify(() => setPurifyReady(true)); }, []);
 
  // Check if any message is currently streaming
  const hasStreamingMessage = messages.some((m) => m.streaming);
 
  // Memoize sanitized assistant messages
- const sanitizedMessages = useSanitizedMessages(messages);
+ const sanitizedMessages = useSanitizedMessages(messages, purifyReady);
 
  // Auto-open, imperative handle, pending message effects
  useCompanionEffects({

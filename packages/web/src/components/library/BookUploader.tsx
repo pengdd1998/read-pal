@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
@@ -20,8 +20,11 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  const [dragOver, setDragOver] = useState(false);
  const fileInputRef = useRef<HTMLInputElement>(null);
  const abortControllerRef = useRef<AbortController | null>(null);
+	 const mountedRef = useRef(true);
 
- const cancelUpload = () => {
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+
+	 const cancelUpload = () => {
   abortControllerRef.current?.abort();
   abortControllerRef.current = null;
   setUploading(false);

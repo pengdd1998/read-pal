@@ -9,7 +9,10 @@ export interface SanitizedMessage extends Message {
   sanitized: string;
 }
 
-export function useSanitizedMessages(messages: Message[]): SanitizedMessage[] {
+export function useSanitizedMessages(
+  messages: Message[],
+  purifyReady = true,
+): SanitizedMessage[] {
   return useMemo(() => {
     const cache = new Map<string, string>();
     return [...messages]
@@ -25,5 +28,6 @@ export function useSanitizedMessages(messages: Message[]): SanitizedMessage[] {
         }
         return { ...msg, sanitized: cache.get(msg.id) || '' };
       });
-  }, [messages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, purifyReady]);
 }
