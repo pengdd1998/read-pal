@@ -4,6 +4,8 @@ import json
 import logging
 from uuid import UUID
 
+import redis.exceptions
+
 from app.core.redis import get_redis
 
 logger = logging.getLogger('read-pal.intervention_prefs')
@@ -72,7 +74,7 @@ async def update_preferences(
             json.dumps(prefs),
             ex=60 * 60 * 24 * 365,  # 1 year TTL
         )
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('intervention_prefs.set_failed user=%s error=%s', user_id, exc)
 
     return prefs

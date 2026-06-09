@@ -6,6 +6,7 @@ import logging
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
+import redis.exceptions
 from sqlalchemy import and_, case, func, select
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,7 +45,7 @@ async def invalidate_dashboard_cache(uid: UUID) -> None:
     try:
         redis = get_redis()
         await redis.delete(_dashboard_cache_key(uid))
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('Failed to invalidate dashboard cache for user %s: %s', uid, exc)
 
 
@@ -305,7 +306,7 @@ async def _read_dashboard_cache(uid: UUID) -> dict | None:
         cached = await redis.get(_dashboard_cache_key(uid))
         if cached is not None:
             return json.loads(cached)
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('Redis read failed for dashboard cache: %s', exc)
     return None
 
@@ -317,7 +318,7 @@ async def _write_dashboard_cache(uid: UUID, data: dict) -> None:
         await redis.set(
             _dashboard_cache_key(uid), json.dumps(data), ex=_get_cache_ttl(),
         )
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('Failed to cache dashboard stats for user %s: %s', uid, exc)
 
 

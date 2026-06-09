@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import type { AnnotationItem } from '@/types/book';
+import { useToast } from '@/components/Toast';
 
 interface ShareQuoteSectionProps {
  highlights: AnnotationItem[];
@@ -17,6 +18,7 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
  t,
 }: ShareQuoteSectionProps) {
  const [sharingIdx, setSharingIdx] = useState<number | null>(null);
+ const { toast } = useToast();
  const mountedRef = useRef(true);
  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
@@ -74,6 +76,7 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
   }, 'image/png');
  } catch (err) {
   console.warn("ShareQuoteSection: share failed", err);
+  toast(t('share_failed'), 'error');
   if (mountedRef.current) setSharingIdx(null);
  }
  };

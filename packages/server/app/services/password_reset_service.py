@@ -2,8 +2,10 @@
 
 import json
 import logging
+import smtplib
 import uuid
 
+import redis.exceptions
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,7 +38,7 @@ async def create_reset_token(db: AsyncSession, email: str) -> str | None:
             json.dumps({'userId': str(user.id), 'email': user.email}),
             ex=_TOKEN_TTL,
         )
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.error('password_reset.redis_set_failed email=%s error=%s', email, exc)
         raise RuntimeError('Service temporarily unavailable') from exc
     logger.info('Password reset requested for %s', email)
@@ -54,7 +56,7 @@ async def send_reset_email(email: str, token: str) -> bool:
         from app.services.email_service import send_password_reset_email
         await send_password_reset_email(email, token)
         return True
-    except Exception as exc:
+    except (smtplib.SMTPException, TimeoutError, ConnectionError, OSError) as exc:
         logger.warning(
             'Password reset email delivery failed for %s — '
             'user will not receive the reset link',
@@ -73,7 +75,7 @@ async def _validate_reset_token(token: str) -> dict:
     try:
         redis = get_redis()
         data = await redis.get(f'{_TOKEN_PREFIX}{token}')
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.error('password_reset.redis_get_failed error=%s', exc)
         raise RuntimeError('Service temporarily unavailable') from exc
 
@@ -116,13 +118,13 @@ async def _invalidate_sessions(token: str, user_id: str) -> None:
             str(uuid.uuid4()),
             ex=86400 * 30,  # 30 days — longer than any token TTL
         )
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('password_reset.invalidate_sessions_failed user=%s error=%s', user_id, exc)
 
     try:
         redis = get_redis()
         await redis.delete(f'{_TOKEN_PREFIX}{token}')
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('password_reset.redis_delete_failed user=%s error=%s', user_id, exc)
 
 

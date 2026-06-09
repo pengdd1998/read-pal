@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import timedelta
 
 import structlog
+import redis.exceptions
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -313,7 +314,7 @@ async def health_check() -> dict[str, object]:
         redis = get_redis()
         await redis.ping()
         checks['redis'] = {'status': 'ok'}
-    except Exception as exc:
+    except (redis.exceptions.RedisError, ConnectionError) as exc:
         logger.error('health_check_redis_error', error=str(exc))
         checks['redis'] = {'status': 'error'}
 

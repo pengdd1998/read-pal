@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { authFetch } from '@/lib/auth-fetch';
 import { analytics } from '@/lib/analytics';
 import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/ui';
+import { useToast } from '@/components/Toast';
 
 type AuthMode = 'login' | 'register';
 
@@ -19,6 +20,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
  const t = useTranslations('auth');
  const tc = useTranslations('common');
  const { login, register } = useAuth();
+ const { toast } = useToast();
  const [name, setName] = useState('');
  const [email, setEmail] = useState('');
  const [password, setPassword] = useState('');
@@ -62,6 +64,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
    });
   } catch (err) {
    console.warn("AuthForm: sample book seeding failed", err);
+   toast(tc('error'), 'error');
   }
   }
   onSuccess();

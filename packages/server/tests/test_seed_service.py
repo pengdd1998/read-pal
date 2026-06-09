@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+import redis.exceptions
 
 from app.models.annotation import AnnotationType
 from app.models.book import BookFileType, BookStatus
@@ -282,7 +283,7 @@ class TestSeedGraphCache:
         user_id = uuid4()
         book_id = uuid4()
 
-        with patch('app.core.redis.get_redis', side_effect=Exception('Redis down')):
+        with patch('app.core.redis.get_redis', side_effect=redis.exceptions.RedisError('Redis down')):
             # Should not raise — function catches all exceptions
             await _seed_graph_cache(user_id, book_id)
 

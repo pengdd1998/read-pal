@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 const ONBOARDING_KEY = 'read-pal-onboarding-complete';
 
@@ -53,6 +54,7 @@ export const WelcomeActions = React.memo(function WelcomeActions({
 function SeedButton() {
   const t = useTranslations('welcome');
   const router = useRouter();
+  const { toast } = useToast();
   const [seeding, setSeeding] = React.useState(false);
   const [seedError, setSeedError] = React.useState(false);
 
@@ -68,6 +70,7 @@ function SeedButton() {
     } catch (err) {
       console.warn('Welcome: failed to seed sample book', err);
       setSeedError(true);
+      toast(t('seed_error'), 'error');
     } finally {
       setSeeding(false);
     }

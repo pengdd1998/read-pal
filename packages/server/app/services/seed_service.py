@@ -7,6 +7,7 @@ import logging
 from datetime import datetime, timedelta, timezone as _tz
 from uuid import UUID
 
+import redis.exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation, AnnotationType
@@ -172,5 +173,5 @@ async def _seed_graph_cache(user_id: UUID, book_id: UUID) -> None:
             'Seeded knowledge graph cache for book %s (%d nodes, %d edges)',
             book_id, len(nodes), len(edges),
         )
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('Failed to seed knowledge graph cache', exc_info=True)

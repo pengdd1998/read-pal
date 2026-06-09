@@ -6,6 +6,7 @@ import hashlib
 from uuid import UUID
 
 import structlog
+import redis.exceptions
 
 from app.core.redis import get_redis as _get_redis
 from app.schemas.knowledge import GraphData
@@ -97,5 +98,5 @@ async def _persist_graph(
         pipe.setex(cache_key, _knowledge_cache_ttl(), graph_data.model_dump_json())
         pipe.setex(hash_key, _knowledge_cache_ttl(), content_hash)
         await pipe.execute()
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('knowledge.cache_write_failed', exc=str(exc)[:200])

@@ -60,6 +60,28 @@ async def list_webhooks(
         return []
 
 
+async def get_webhook(
+    db: AsyncSession,
+    user_id: UUID,
+    webhook_id: UUID,
+) -> Webhook:
+    """Get a single webhook by ID, verifying ownership."""
+    try:
+        result = await db.execute(
+            select(Webhook).where(
+                Webhook.id == webhook_id,
+                Webhook.user_id == user_id,
+            ),
+        )
+        webhook = result.scalar_one_or_none()
+    except DBAPIError:
+        logger.error('Failed to query webhook', exc_info=True, user_id=str(user_id), webhook_id=str(webhook_id))
+        raise ValueError('Failed to query webhook') from None
+    if webhook is None:
+        raise ValueError('Webhook not found')
+    return webhook
+
+
 async def update_webhook(
     db: AsyncSession,
     user_id: UUID,

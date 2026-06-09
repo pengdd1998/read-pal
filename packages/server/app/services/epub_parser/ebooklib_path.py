@@ -54,7 +54,7 @@ def _build_toc_map(book) -> dict[str, tuple[str, int]]:
     toc_map: dict[str, tuple[str, int]] = {}
     try:
         _flatten_toc(book.toc, toc_map, 0)
-    except Exception as exc:
+    except (KeyError, AttributeError, ValueError) as exc:
         logger.warning('EPUB TOC parsing failed: %s', exc)
     return toc_map
 
@@ -87,7 +87,7 @@ def _extract_metadata(book) -> dict:
                 metadata[key] = int(text[:4])
             elif key != 'year':
                 metadata[key] = text
-    except Exception as exc:
+    except (KeyError, AttributeError, UnicodeDecodeError) as exc:
         logger.warning('EPUB metadata extraction failed: %s', exc)
     return metadata
 
@@ -107,7 +107,7 @@ def _extract_images(book) -> dict[str, str]:
             mime = IMAGE_MIME_MAP.get(ext, 'image/jpeg')
             b64 = base64.b64encode(content).decode('ascii')
             image_map[name] = f'data:{mime};base64,{b64}'
-    except Exception as exc:
+    except (KeyError, AttributeError, ValueError) as exc:
         logger.warning('EPUB image extraction failed: %s', exc)
     return image_map
 
@@ -121,7 +121,7 @@ def _extract_css(book) -> str:
         for item in book.get_items_of_type(ebooklib.ITEM_STYLE):
             css_parts.append(item.get_content().decode('utf-8', errors='replace'))
         return sanitize_epub_css('\n'.join(css_parts))
-    except Exception as exc:
+    except (KeyError, AttributeError, UnicodeDecodeError) as exc:
         logger.debug('EPUB CSS extraction failed: %s', exc)
         return ''
 
@@ -237,7 +237,7 @@ def _enrich_html(
 
     try:
         enriched = rewrite_image_sources(html, image_map, item_name)
-    except Exception as exc:
+    except (KeyError, ValueError) as exc:
         logger.debug('Image source rewrite failed for %s', item_name, exc_info=True)
         enriched = html
 
@@ -283,6 +283,6 @@ def _extract_cover(book) -> str | None:
                     mime = IMAGE_MIME_MAP.get(ext, 'image/jpeg')
                     b64 = base64.b64encode(data).decode('ascii')
                     return f'data:{mime};base64,{b64}'
-    except Exception as exc:
+    except (KeyError, AttributeError, ValueError) as exc:
         logger.warning('epub_parser.image_embedding_failed: %s', str(exc)[:200])
     return None

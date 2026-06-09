@@ -7,6 +7,7 @@ import logging
 import re
 import zipfile
 from pathlib import Path
+from xml.etree.ElementTree import ParseError as XMLParseError
 
 from app.services.epub_parser.css import extract_epub_css
 from app.services.epub_parser.footnotes import annotate_footnotes
@@ -52,7 +53,7 @@ async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]
                 cover_uri = extract_cover(
                     zf, opf_data.get('manifest', {}), opf_data, opf_path,
                 )
-            except Exception as exc:
+            except (KeyError, zipfile.BadZipFile, ValueError) as exc:
                 logger.warning('epub_parser.cover_image_extraction_failed: %s', str(exc)[:200])
 
     _store_metadata(metadata, cover_uri)
@@ -71,7 +72,7 @@ def _parse_structure(zf: zipfile.ZipFile) -> tuple:
     # Parse container → OPF
     try:
         opf_path_raw = parse_epub_container(zf)
-    except Exception as exc:
+    except (KeyError, zipfile.BadZipFile, XMLParseError) as exc:
         logger.warning('EPUB container parsing failed: %s', exc)
         opf_path_raw = None
 
@@ -81,7 +82,7 @@ def _parse_structure(zf: zipfile.ZipFile) -> tuple:
             opf_xml = zf.read(opf_path).decode('utf-8', errors='replace')
             opf_data = parse_opf(opf_xml, opf_path)
             metadata = opf_data.get('metadata', {})
-        except Exception as exc:
+        except (KeyError, zipfile.BadZipFile, UnicodeDecodeError) as exc:
             logger.warning('OPF parsing failed: %s', exc)
 
     # Parse TOC (NCX then NAV)
@@ -92,14 +93,14 @@ def _parse_structure(zf: zipfile.ZipFile) -> tuple:
     if opf_data:
         try:
             image_map = extract_images(zf, opf_data.get('manifest', {}), opf_path)
-        except Exception as exc:
+        except (KeyError, zipfile.BadZipFile, ValueError) as exc:
             logger.warning('Image extraction failed: %s', exc)
 
     # Extract CSS
     if opf_data:
         try:
             css_str = extract_epub_css(zf, opf_data.get('manifest', {}), opf_path)
-        except Exception as exc:
+        except (KeyError, zipfile.BadZipFile, UnicodeDecodeError) as exc:
             logger.warning('CSS extraction failed: %s', exc)
 
     return opf_data, toc_map, image_map, css_str, metadata, opf_path
@@ -120,7 +121,7 @@ def _parse_toc(
             ncx_path = resolve_epub_path(opf_path, ncx_href)
             ncx_xml = zf.read(ncx_path).decode('utf-8', errors='replace')
             toc_entries = parse_ncx(ncx_xml)
-    except Exception as exc:
+    except (KeyError, zipfile.BadZipFile, UnicodeDecodeError, XMLParseError) as exc:
         logger.warning('NCX parsing failed: %s', exc)
 
     try:
@@ -129,7 +130,7 @@ def _parse_toc(
             nav_path = resolve_epub_path(opf_path, nav_href)
             nav_xml = zf.read(nav_path).decode('utf-8', errors='replace')
             toc_entries = parse_nav(nav_xml)
-    except Exception as exc:
+    except (KeyError, zipfile.BadZipFile, UnicodeDecodeError, XMLParseError) as exc:
         logger.warning('Nav parsing failed: %s', exc)
 
     for title, href, level in toc_entries:
@@ -190,7 +191,7 @@ def _build_chapters(
         resolved = resolve_epub_path(opf_path, href)
         try:
             raw_html = zf.read(resolved).decode('utf-8', errors='replace')
-        except Exception as exc:
+        except (KeyError, zipfile.BadZipFile, UnicodeDecodeError) as exc:
             logger.debug('Failed to read chapter from ZIP: %s', resolved, exc_info=True)
             continue
 
@@ -253,7 +254,7 @@ def _enrich_html(
 
     try:
         enriched = rewrite_image_sources(html, image_map, resolved)
-    except Exception as exc:
+    except (KeyError, ValueError) as exc:
         logger.debug('Image source rewrite failed for %s', resolved, exc_info=True)
         enriched = html
 

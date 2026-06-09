@@ -6,6 +6,8 @@ import hashlib
 import logging
 import time
 
+import redis.exceptions
+
 logger = logging.getLogger('read-pal.llm.cache')
 
 from langchain_core.messages import BaseMessage
@@ -50,7 +52,7 @@ async def _cache_get(key: str) -> str | None:
         from app.core.redis import get_redis as _get_redis
         r = _get_redis()
         return await r.get(key)
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('llm.cache_read_failed: %s', str(exc)[:200])
         return None
 
@@ -69,5 +71,5 @@ async def _cache_set(key: str, value: str) -> None:
         from app.core.redis import get_redis as _get_redis
         r = _get_redis()
         await r.setex(key, ttl, value)
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('llm.cache_write_failed: %s', str(exc)[:200])

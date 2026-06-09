@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+import redis.exceptions
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -66,7 +67,7 @@ async def _check_rag_cache(cache_key: str, max_chars: int) -> str | None:
         cached = await get_redis().get(cache_key)
         if cached:
             return cached[:max_chars]
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('Redis RAG cache read failed: %s', exc)
     return None
 
@@ -129,7 +130,7 @@ async def _save_rag_cache(cache_key: str, content: str) -> None:
     """Write RAG context to Redis cache with TTL."""
     try:
         await get_redis().setex(cache_key, _rag_cache_ttl(), content)
-    except Exception as exc:
+    except redis.exceptions.RedisError as exc:
         logger.warning('Redis RAG cache write failed: %s', exc)
 
 
