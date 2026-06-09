@@ -102,14 +102,14 @@ export function ApiKeysSection() {
    <button
     onClick={() => copyKey(newKey)}
     aria-label={t('api_key_copy')}
-    className="min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex-shrink-0"
+    className="min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {t('api_key_copy')}
    </button>
    </div>
    <button
    onClick={() => setNewKey(null)}
-   className="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 min-h-[44px] px-2"
+   className="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 min-h-[44px] px-2 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    {t('api_key_dismiss')}
    </button>
@@ -180,7 +180,7 @@ export function ApiKeysSection() {
    </button>
    <button
    onClick={() => { setShowCreate(false); setNewKeyName(''); }}
-   className="min-h-[44px] px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+   className="min-h-[44px] px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    {t('api_key_cancel')}
    </button>
@@ -189,7 +189,7 @@ export function ApiKeysSection() {
   <button
    onClick={() => setShowCreate(true)}
    disabled={keys.length >= 5}
-   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-surface-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-surface-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {t('api_key_create_button')} {keys.length >= 5 && t('api_key_max')}
   </button>

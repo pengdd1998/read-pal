@@ -104,7 +104,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
     key={col.id}
     onClick={() => toggleBook(col)}
     disabled={toggling === col.id}
-    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
     <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
      inCol ? 'border-primary-500 bg-primary-500' : 'border-gray-300 dark:border-gray-600'

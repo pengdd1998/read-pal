@@ -92,7 +92,7 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
   <button
    onClick={handleDisconnect}
    disabled={saving}
-   className="min-h-[44px] px-4 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+   className="min-h-[44px] px-4 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {saving ? t('zotero_disconnecting') : t('zotero_disconnect')}
   </button>

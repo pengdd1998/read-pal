@@ -143,7 +143,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
    <button
    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowCollectionPicker((v) => !v); }}
    aria-label={t('card_add_to_collection')}
-   className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
+   className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -186,7 +186,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
     <div className="flex gap-1.5">
     <button
      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteCancel(); }}
-     className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+     className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      {t('card_cancel')}
     </button>
