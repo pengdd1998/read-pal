@@ -31,7 +31,7 @@ const FOOTER_CLASSES = {
  sepia: 'border-amber-200/40 bg-amber-100/90',
 } as const;
 
-export function ReaderFooter({
+export const ReaderFooter = React.memo(function ReaderFooter({
  currentPage,
  totalPages,
  theme,
@@ -93,4 +93,4 @@ export function ReaderFooter({
   </div>
  </footer>
  );
-}
+});

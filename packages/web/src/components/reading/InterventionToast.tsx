@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -34,7 +34,7 @@ const INTERVENTION_COLORS: Record<string, string> = {
  high: 'border-orange-300 dark:border-orange-700',
 };
 
-export function InterventionToast({
+export const InterventionToast = React.memo(function InterventionToast({
  bookId,
  currentPage,
  totalPages,
@@ -192,4 +192,4 @@ export function InterventionToast({
   </div>
  </div>
  );
-}
+});

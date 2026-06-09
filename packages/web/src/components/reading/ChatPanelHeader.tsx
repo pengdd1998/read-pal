@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 interface ChatPanelHeaderProps {
  friendEmoji: string;
  friendName: string;
@@ -10,7 +12,7 @@ interface ChatPanelHeaderProps {
  t: (key: string, params?: Record<string, unknown>) => string;
 }
 
-export function ChatPanelHeader({
+export const ChatPanelHeader = React.memo(function ChatPanelHeader({
  friendEmoji,
  friendName,
  aiHealthy,
@@ -73,4 +75,4 @@ export function ChatPanelHeader({
   </button>
  </div>
  );
-}
+});

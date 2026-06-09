@@ -12,7 +12,7 @@ interface ChatInputProps {
  t: (key: string, params?: Record<string, unknown>) => string;
 }
 
-export function ChatInput({
+export const ChatInput = React.memo(function ChatInput({
  input,
  loading,
  onInputChange,
@@ -62,4 +62,4 @@ export function ChatInput({
   )}
  </div>
  );
-}
+});

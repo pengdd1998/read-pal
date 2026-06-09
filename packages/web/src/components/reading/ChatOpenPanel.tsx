@@ -31,7 +31,7 @@ interface ChatOpenPanelProps {
  t: TranslateFn;
 }
 
-export function ChatOpenPanel({
+export const ChatOpenPanel = React.memo(function ChatOpenPanel({
  friendEmoji,
  friendName,
  aiHealthy,
@@ -120,4 +120,4 @@ export function ChatOpenPanel({
   </div>
  </>
  );
-}
+});

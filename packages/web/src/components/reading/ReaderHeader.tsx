@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 
@@ -56,7 +56,7 @@ function ActiveIconStyle(theme: string, color: 'amber' | 'teal' | 'purple' = 'am
  return `${ICON_BASE} ${c}`;
 }
 
-export function ReaderHeader(props: ReaderHeaderProps) {
+export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeaderProps) {
  const {
  bookId, bookTitle, author, currentChapter, totalChapters, readingWpm, isPaused,
  isBookmarked, annotationsCount, theme, searchOpen, sidebarOpen, synthesisOpen,
@@ -189,4 +189,4 @@ export function ReaderHeader(props: ReaderHeaderProps) {
   {settingsMenu}
  </div>
  );
-}
+});
