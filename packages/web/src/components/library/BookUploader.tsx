@@ -129,7 +129,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
    ? 'border-amber-400 dark:border-amber-600 bg-amber-50/30 dark:bg-amber-900/10'
    : dragOver
     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-[1.01]'
-    : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
+    : 'border-surface-3 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
   }`}
  >
   <input

@@ -125,7 +125,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
 
   {/* Note */}
   {annotation.note && (
-  <div className="mt-2 px-2.5 py-1.5 rounded-md bg-white/50 dark:bg-gray-800/50 text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+  <div className="mt-2 px-2.5 py-1.5 rounded-md bg-white/50 dark:bg-gray-800/50 text-xs text-gray-600 dark:text-gray-400 border border-surface-3">
    {annotation.note}
   </div>
   )}

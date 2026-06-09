@@ -12,7 +12,7 @@ export const StatsLink = React.memo(function StatsLink({ label }: StatsLinkProps
     <div className="mt-5 animate-fade-in">
       <Link
         href="/stats"
-        className="flex items-center justify-between p-4 rounded-xl bg-surface-0 border border-gray-200 dark:border-gray-700 hover:border-amber-200 dark:hover:border-amber-800 transition-colors"
+        className="flex items-center justify-between p-4 rounded-xl bg-surface-0 border border-surface-3 hover:border-amber-200 dark:hover:border-amber-800 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">

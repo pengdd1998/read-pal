@@ -58,7 +58,7 @@ export default function LibraryPage() {
 
   <div className="flex items-center gap-2">
    {/* Quick Search */}
-   <div className="hidden sm:flex items-center bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2">
+   <div className="hidden sm:flex items-center bg-surface-0 rounded-xl border border-surface-3 px-3 py-2">
    <svg aria-hidden="true" className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
    </svg>
@@ -80,7 +80,7 @@ export default function LibraryPage() {
    </div>
 
    {/* View Toggle */}
-   <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-gray-200 dark:border-gray-700 animate-slide-up stagger-2">
+   <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-surface-3 animate-slide-up stagger-2">
    <button
     onClick={() => setViewMode('grid')}
     className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-lg transition-all duration-200 ${
@@ -118,7 +118,7 @@ export default function LibraryPage() {
 
   {/* Mobile search bar */}
   <div className="sm:hidden mb-6">
-  <div className="flex items-center bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2.5">
+  <div className="flex items-center bg-surface-0 rounded-xl border border-surface-3 px-3 py-2.5">
    <svg aria-hidden="true" className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
    </svg>

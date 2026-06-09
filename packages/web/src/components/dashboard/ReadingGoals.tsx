@@ -194,13 +194,13 @@ export const ReadingGoals = React.memo(function ReadingGoals() {
    <div className="flex items-center gap-3">
     <button onClick={() => adjustMinutes(-5)} disabled={pendingMinutes <= 10 || saving}
     aria-label={t('goals_decrease_aria')}
-    className="w-11 h-11 rounded-lg bg-surface-1 text-gray-600 dark:text-gray-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1">
+    className="w-11 h-11 rounded-lg bg-surface-1 text-gray-600 dark:text-gray-400 flex items-center justify-center hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1">
     <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
     </button>
     <span className="text-lg font-bold text-gray-900 dark:text-gray-100 tabular-nums w-14 text-center">{pendingMinutes}</span>
     <button onClick={() => adjustMinutes(5)} disabled={pendingMinutes >= 120 || saving}
     aria-label={t('goals_increase_aria')}
-    className="w-11 h-11 rounded-lg bg-surface-1 text-gray-600 dark:text-gray-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1">
+    className="w-11 h-11 rounded-lg bg-surface-1 text-gray-600 dark:text-gray-400 flex items-center justify-center hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1">
     <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
     </button>
    </div>
@@ -210,7 +210,7 @@ export const ReadingGoals = React.memo(function ReadingGoals() {
     {saving ? t('goals_saving') : t('goals_save')}
     </button>
     <button onClick={() => setEditingGoal(false)} disabled={saving}
-    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-surface-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
+    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-surface-1 text-gray-600 dark:text-gray-400 hover:bg-surface-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
     {t('goals_cancel')}
     </button>
    </div>

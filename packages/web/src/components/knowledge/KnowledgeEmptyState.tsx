@@ -43,7 +43,7 @@ export const KnowledgeEmptyState = React.memo(function KnowledgeEmptyState({
         </div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{buildingTitle}</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">{buildingDesc}</p>
-        <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <div className="bg-surface-0 rounded-xl border border-surface-3 p-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />

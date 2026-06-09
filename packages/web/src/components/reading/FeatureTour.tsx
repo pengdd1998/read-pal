@@ -179,7 +179,7 @@ export const FeatureTour = React.memo(function FeatureTour() {
   style={{ top, left }}
   onClick={(e) => e.stopPropagation()}
   >
-  <div className="bg-surface-0 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+  <div className="bg-surface-0 rounded-xl shadow-2xl border border-surface-2 overflow-hidden">
    <div className="px-4 pt-3 pb-2">
    <div className="flex items-center gap-2 mb-1">
     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
@@ -190,7 +190,7 @@ export const FeatureTour = React.memo(function FeatureTour() {
    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{t(current.descKey)}</p>
    </div>
 
-   <div className="px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
+   <div className="px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between border-t border-surface-2">
    <button
     onClick={handleSkip}
     className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center"

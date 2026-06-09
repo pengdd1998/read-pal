@@ -81,7 +81,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
   {/* Note */}
   <button
    onMouseDown={(e) => { e.preventDefault(); onToggleNote(); }}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors"
    aria-label={t('toolbar_add_note')}
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -98,7 +98,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
    showTagPicker
     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+    : 'text-gray-700 dark:text-gray-300 hover:bg-surface-1'
    }`}
    aria-label={t('toolbar_tag_and_highlight')}
   >
@@ -114,7 +114,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
   <button
    onMouseDown={(e) => e.preventDefault()}
    onClick={onCopy}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors"
    aria-label={t('toolbar_copy_text')}
   >
    {copied ? (
@@ -136,7 +136,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
   {/* Share */}
   <button
    onMouseDown={(e) => { e.preventDefault(); onShowQuoteCard(); }}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors"
    aria-label={t('toolbar_share_as_quote')}
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

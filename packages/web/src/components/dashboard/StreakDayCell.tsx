@@ -28,7 +28,7 @@ const LEVEL_COLORS: Record<ActivityLevel, string> = {
 };
 
 const HOVER_COLORS: Record<ActivityLevel, string> = {
- 0: 'hover:bg-gray-200 dark:hover:bg-gray-700',
+ 0: 'hover:bg-surface-2',
  1: 'hover:bg-amber-300 dark:hover:bg-amber-800/60',
  2: 'hover:bg-amber-400 dark:hover:bg-amber-600/70',
  3: 'hover:bg-amber-600 dark:hover:bg-amber-500/90',

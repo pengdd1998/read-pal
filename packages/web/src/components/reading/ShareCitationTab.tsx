@@ -78,7 +78,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
    className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
     citationFormat === fmt.value
     ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-400/30'
-    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+    : 'border-surface-3 hover:border-surface-3'
    }`}
    >
    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t(fmt.labelKey)}</span>

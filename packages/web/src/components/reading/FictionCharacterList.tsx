@@ -37,7 +37,7 @@ export const FictionCharacterList = React.memo(function FictionCharacterList({
     className={`w-full text-left px-3 py-2.5 rounded-xl transition-all ${
      selectedCharacter === char.name
      ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700'
-     : 'bg-gray-50/50 dark:bg-gray-800/50 border border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
+     : 'bg-gray-50/50 dark:bg-gray-800/50 border border-transparent hover:bg-surface-1'
     }`}
     >
     <div className="flex items-center justify-between">

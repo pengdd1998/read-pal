@@ -77,7 +77,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
    </div>
    <button
    onClick={onClose}
-   className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="p-1.5 rounded-lg hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={t('timeline_close')}
    >
    <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -131,7 +131,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
      isCurrent
       ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
       : isRead
-      ? 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent'
+      ? 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-surface-1 border border-transparent'
       : 'border border-transparent hover:bg-gray-50/30 dark:hover:bg-gray-800/30'
      }`}
     >

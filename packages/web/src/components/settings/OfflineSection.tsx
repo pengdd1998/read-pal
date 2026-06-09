@@ -220,7 +220,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
       else next.delete(book.id);
       setSelectedBooks(next);
       }}
-      className="rounded border-gray-300 dark:border-gray-600 text-teal-600 focus:ring-teal-500"
+      className="rounded border-surface-3 text-teal-600 focus:ring-teal-500"
      />
      <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{book.title}</span>
      {isDisplayableAuthor(book.author) && <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{book.author}</span>}

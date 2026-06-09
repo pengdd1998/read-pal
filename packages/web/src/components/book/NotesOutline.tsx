@@ -97,13 +97,13 @@ export const NotesOutline = React.memo(function NotesOutline({
      new Set(outlineChapters.map((c) => c.chapterIndex)),
     )
     }
-    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {t('expandAll')}
    </button>
    <button
     onClick={() => setOutlineExpanded(new Set())}
-    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {t('collapseAll')}
    </button>

@@ -153,7 +153,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
    </h3>
    <button
    onClick={onClose}
-   className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+   className="p-1 rounded-lg hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
    aria-label={t('close_label')}
    >
    <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

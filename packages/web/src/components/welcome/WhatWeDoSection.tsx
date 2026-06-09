@@ -24,7 +24,7 @@ export const WhatWeDoSection = React.memo(function WhatWeDoSection({ visible }: 
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
-      <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 text-left space-y-4">
+      <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 text-left space-y-4">
         <h2 className="font-semibold text-lg text-center">{t('what_we_do_title')}</h2>
         {ITEMS.map((item) => (
           <div key={item.titleKey} className="flex items-start gap-3">

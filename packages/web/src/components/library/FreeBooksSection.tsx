@@ -107,7 +107,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
 
  if (loading) {
   return (
-   <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+   <div className="mt-12 pt-8 border-t border-surface-3">
     <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">{t('free_books_title')}</h3>
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
      {[1, 2, 3, 4].map((i) => (
@@ -119,7 +119,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
  }
  if (error) {
   return (
-   <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 text-center">
+   <div className="mt-12 pt-8 border-t border-surface-3 text-center">
    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('toast_suggestions_fail')}</p>
    <button
     onClick={fetchSuggestions}
@@ -133,7 +133,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
  if (filtered.length === 0) return null;
 
  return (
-  <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+  <div className="mt-12 pt-8 border-t border-surface-3">
   <div className="flex items-center justify-between mb-5">
    <div>
     <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('free_books_title')}</h2>

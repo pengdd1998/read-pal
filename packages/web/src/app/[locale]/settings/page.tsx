@@ -171,7 +171,7 @@ export default function SettingsPage() {
       <div className="mt-8 animate-slide-up stagger-4">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl text-sm font-medium bg-surface-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors border border-surface-3"
+          className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl text-sm font-medium bg-surface-2 hover:bg-surface-2 transition-colors border border-surface-3"
         >
           <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />

@@ -127,13 +127,13 @@ export const OutlinePanel = React.memo(function OutlinePanel({
    <div className="flex gap-1">
    <button
     onClick={expandAll}
-    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {t('outline_expand_all')}
    </button>
    <button
     onClick={collapseAll}
-    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {t('outline_collapse_all')}
    </button>

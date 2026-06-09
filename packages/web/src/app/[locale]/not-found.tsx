@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 
 const secondaryLinkClass =
- 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors';
+ 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors';
 
 export default async function NotFound() {
  const t = await getTranslations('common');

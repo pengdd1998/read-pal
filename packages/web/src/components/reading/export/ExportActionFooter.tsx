@@ -35,7 +35,7 @@ export const ExportActionFooter = React.memo(function ExportActionFooter({
         <button
           onClick={onPreview}
           disabled={loading}
-          className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
+          className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-surface-1 disabled:opacity-50 transition-colors"
         >
           {loading ? t('export_loading') : hasPreview ? t('export_refresh') : t('export_preview_button')}
         </button>

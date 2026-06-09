@@ -160,7 +160,7 @@ function BookClubsWidgetInner() {
   <div className="flex items-center gap-2">
    <button
    onClick={() => { setShowJoin(!showJoin); setShowCreate(false); setError(null); }}
-   className="text-xs px-3 py-1.5 rounded-lg border border-surface-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="text-xs px-3 py-1.5 rounded-lg border border-surface-3 text-gray-600 dark:text-gray-400 hover:bg-surface-1 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    {t('join')}
    </button>

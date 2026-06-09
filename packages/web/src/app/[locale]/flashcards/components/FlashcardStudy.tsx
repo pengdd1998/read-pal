@@ -174,7 +174,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   )}
 
   {/* Stats footer */}
-  <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800">
+  <div className="mt-10 pt-6 border-t border-surface-2">
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center max-sm:gap-2 max-sm:text-[10px]">
    <div>
    <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{stats.due}</div>

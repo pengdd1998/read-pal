@@ -48,7 +48,7 @@ export function CrossReferenceForm({
     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     analysisType === v
      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200'
-     : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+     : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-surface-2'
     }`}
    >
     {t('synthesis_type_' + v)}

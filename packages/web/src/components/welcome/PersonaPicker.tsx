@@ -40,7 +40,7 @@ export const PersonaPicker = React.memo(function PersonaPicker({
               className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all duration-200 text-left min-h-[44px] ${
                 isSelected
                   ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/15 ring-1 ring-amber-400/30'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-surface-2'
+                  : 'border-surface-3 hover:border-surface-3 hover:bg-surface-2'
               }`}
             >
               <span className="text-xl">{p.emoji}</span>

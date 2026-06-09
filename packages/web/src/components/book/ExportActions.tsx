@@ -107,7 +107,7 @@ export const ExportActions = React.memo(function ExportActions({
   <button
   onClick={handleExportMarkdown}
   disabled={exporting === 'markdown'}
-  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
+  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
   >
   <svg aria-hidden="true"
    className="w-4 h-4"
@@ -127,7 +127,7 @@ export const ExportActions = React.memo(function ExportActions({
   <button
   onClick={handleExportJSON}
   disabled={exporting === 'json'}
-  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
+  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
   >
   <svg aria-hidden="true"
    className="w-4 h-4"

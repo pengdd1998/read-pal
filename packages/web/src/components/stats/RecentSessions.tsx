@@ -20,7 +20,7 @@ export const RecentSessions = React.memo(function RecentSessions({ sessions }: R
   <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('recent_sessions')}</h2>
   <div className="space-y-2">
   {sessions.slice(0, 10).map((session) => (
-   <div key={session.startedAt} className="flex items-center gap-3 py-2 border-b border-gray-50 dark:border-gray-700 last:border-0">
+   <div key={session.startedAt} className="flex items-center gap-3 py-2 border-b border-surface-2 last:border-0">
    <div className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" />
    <span className="text-sm text-gray-600 dark:text-gray-400 flex-1 truncate">
     {session.bookTitle || (session.startedAt ? new Date(session.startedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric' }) : '—')}

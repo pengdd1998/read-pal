@@ -6,7 +6,7 @@ export const KnowledgeSidebarSkeleton = React.memo(function KnowledgeSidebarSkel
   return (
     <>
       {/* Cross-book themes skeleton */}
-      <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
         <div className="h-4 bg-surface-2 rounded w-28 mb-3 animate-pulse" />
         <div className="space-y-2">
           <div className="h-3 bg-surface-2 rounded w-full animate-pulse" />
@@ -16,7 +16,7 @@ export const KnowledgeSidebarSkeleton = React.memo(function KnowledgeSidebarSkel
       </div>
 
       {/* Knowledge gaps skeleton */}
-      <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
         <div className="h-4 bg-surface-2 rounded w-32 mb-3 animate-pulse" />
         <div className="space-y-2">
           <div className="h-3 bg-surface-2 rounded w-full animate-pulse" />
@@ -25,7 +25,7 @@ export const KnowledgeSidebarSkeleton = React.memo(function KnowledgeSidebarSkel
       </div>
 
       {/* Legend skeleton */}
-      <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
         <div className="h-4 bg-surface-2 rounded w-16 mb-3 animate-pulse" />
         <div className="flex flex-wrap gap-2">
           <div className="h-6 bg-surface-2 rounded-full w-20 animate-pulse" />

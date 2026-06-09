@@ -28,7 +28,7 @@ export function LanguageSwitcher() {
    className={`px-2.5 py-1 text-sm rounded-md transition-colors min-h-[44px] inline-flex items-center ${
    locale === lang.code
     ? 'bg-amber-600 text-white'
-    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+    : 'text-gray-600 dark:text-gray-300 hover:bg-surface-1'
    }`}
    aria-label={tc('switch_to_language', { language: lang.label })}
   >

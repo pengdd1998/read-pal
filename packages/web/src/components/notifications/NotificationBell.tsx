@@ -132,7 +132,7 @@ export const NotificationBell = memo(function NotificationBell() {
  <div className="relative" ref={dropdownRef}>
   <button
   onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadNotifications(); }}
-  className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+  className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors"
   aria-label={t('notifications')}
   >
   <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -170,7 +170,7 @@ export const NotificationBell = memo(function NotificationBell() {
     <button
      key={notif.id}
      onClick={() => !notif.read && markAsRead(notif.id)}
-     className={`w-full text-left px-4 py-3 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+     className={`w-full text-left px-4 py-3 border-b border-surface-2 hover:bg-surface-1 transition-colors ${
      !notif.read ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''
      }`}
     >

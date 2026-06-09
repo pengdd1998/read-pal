@@ -62,7 +62,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
   </div>
   <div className="space-y-2">
   {topRecs.map((r) => (
-   <div key={r.title + '-' + r.author} className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+   <div key={r.title + '-' + r.author} className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-1 transition-colors">
    <div className="w-8 h-10 rounded bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center flex-shrink-0">
     <span className="text-xs">{'\uD83D\uDCD6'}</span>
    </div>

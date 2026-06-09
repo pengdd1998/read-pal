@@ -61,7 +61,7 @@ export const CollectionItem = React.memo(function CollectionItem({
   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    isActive
    ? 'bg-primary-50 dark:bg-primary-900/20 font-medium'
-   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+   : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
   }`}
   style={isActive ? { color: col.color || 'rgb(245, 158, 11)' } : undefined}
   >
