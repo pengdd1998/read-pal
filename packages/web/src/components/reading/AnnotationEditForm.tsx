@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { type Annotation, ANNOTATION_COLORS } from '@read-pal/shared';
 import { api } from '@/lib/api';
@@ -14,7 +14,7 @@ interface AnnotationEditFormProps {
  onCancel: () => void;
 }
 
-export function AnnotationEditForm({ annotation, borderColor, onUpdate, onCancel }: AnnotationEditFormProps) {
+export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annotation, borderColor, onUpdate, onCancel }: AnnotationEditFormProps) {
  const t = useTranslations('reader');
  const tc = useTranslations('common');
  const { toast } = useToast();
@@ -194,4 +194,4 @@ export function AnnotationEditForm({ annotation, borderColor, onUpdate, onCancel
   </div>
  </div>
  );
-}
+});

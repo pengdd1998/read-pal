@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
@@ -13,7 +13,7 @@ interface SessionSummaryModalProps {
  onBackToLibrary: () => void;
 }
 
-export function SessionSummaryModal({
+export const SessionSummaryModal = React.memo(function SessionSummaryModal({
  duration,
  chaptersRead,
  totalChapters,
@@ -137,4 +137,4 @@ export function SessionSummaryModal({
   </div>
  </div>
  );
-}
+});

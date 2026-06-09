@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 
 const TOUR_KEY = 'read-pal-tour-complete';
@@ -18,7 +18,7 @@ const STEP_KEYS: { targetId: string; titleKey: string; descKey: string; position
  * Shows sequential tooltips pointing to key UI elements.
  * Persists completion in localStorage so it only shows once.
  */
-export function FeatureTour() {
+export const FeatureTour = React.memo(function FeatureTour() {
  const t = useTranslations('reader');
  const [step, setStep] = useState<number | null>(null);
  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -225,4 +225,4 @@ export function FeatureTour() {
   </div>
  </>
  );
-}
+});

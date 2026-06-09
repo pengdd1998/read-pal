@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -17,7 +17,7 @@ interface BookComparisonCardProps {
  books: BookOption[];
 }
 
-export function BookComparisonCard({ books }: BookComparisonCardProps) {
+export const BookComparisonCard = React.memo(function BookComparisonCard({ books }: BookComparisonCardProps) {
  const t = useTranslations('synthesis');
  const { toast } = useToast();
  const [compareBook1, setCompareBook1] = useState<string>('');
@@ -142,4 +142,4 @@ export function BookComparisonCard({ books }: BookComparisonCardProps) {
   )}
  </div>
  );
-}
+});

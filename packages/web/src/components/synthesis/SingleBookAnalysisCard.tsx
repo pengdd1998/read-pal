@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -29,7 +29,7 @@ interface SingleBookAnalysisCardProps {
  booksError: string | null;
 }
 
-export function SingleBookAnalysisCard({ books, booksLoading, booksError }: SingleBookAnalysisCardProps) {
+export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard({ books, booksLoading, booksError }: SingleBookAnalysisCardProps) {
  const t = useTranslations('synthesis');
  const { toast } = useToast();
  const [selectedBookId, setSelectedBookId] = useState<string>('');
@@ -189,4 +189,4 @@ export function SingleBookAnalysisCard({ books, booksLoading, booksError }: Sing
   )}
  </>
  );
-}
+});

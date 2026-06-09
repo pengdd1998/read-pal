@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -14,7 +14,7 @@ interface BookCompletionModalProps {
  onClose: () => void;
 }
 
-export function BookCompletionModal({
+export const BookCompletionModal = React.memo(function BookCompletionModal({
  bookId,
  bookTitle,
  totalHighlights,
@@ -109,4 +109,4 @@ export function BookCompletionModal({
   </div>
  </div>
  );
-}
+});

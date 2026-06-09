@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -15,7 +15,7 @@ import {
 } from '@/components/synthesis';
 import type { SynthesisAction, AnalysisResult, SynthesisPanelProps } from '@/components/synthesis';
 
-export function SynthesisPanel({
+export const SynthesisPanel = React.memo(function SynthesisPanel({
  bookId,
  bookTitle,
  author,
@@ -226,6 +226,6 @@ export function SynthesisPanel({
   </div>
  </>
  );
-}
+});
 
 export default SynthesisPanel;

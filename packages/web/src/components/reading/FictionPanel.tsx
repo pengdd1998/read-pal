@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { extractCharacters, detectMood } from './FictionPanel.utils';
 import { FictionMoodIndicator } from './FictionMoodIndicator';
@@ -16,7 +16,7 @@ interface FictionPanelProps {
  onAskAboutCharacter?: (name: string) => void;
 }
 
-export function FictionPanel({
+export const FictionPanel = React.memo(function FictionPanel({
  chapterContent,
  chapterIndex,
  onAskAboutCharacter,
@@ -113,4 +113,4 @@ export function FictionPanel({
   )}
  </>
  );
-}
+});

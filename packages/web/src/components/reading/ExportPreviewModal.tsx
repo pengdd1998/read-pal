@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
@@ -148,12 +148,19 @@ export const ExportPreviewModal = React.memo(function ExportPreviewModal({ bookI
  );
  };
 
+ const handleToggleType = useCallback((type: string) => { toggleType(type); setPreview(null); }, []);
+ const handleSetSelectedTag = useCallback((tag: string) => { setSelectedTag(tag); setPreview(null); }, []);
+ const handleToggleShowFilters = useCallback(() => setShowFilters((v) => !v), []);
+ const handleClearFilters = useCallback(() => { clearFilters(); setPreview(null); }, []);
+ const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => { if (e.target === backdropRef.current) onClose(); }, [onClose]);
+ const handleBackdropKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => { if (e.key === 'Escape') onClose(); }, [onClose]);
+
  return (
  <div
   ref={backdropRef}
   className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-  onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
-  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+  onClick={handleBackdropClick}
+  onKeyDown={handleBackdropKeyDown}
  >
   <div role="dialog" aria-modal="true" aria-label={t('export_title')} className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-surface-3">
   {/* Header */}
@@ -218,10 +225,10 @@ export const ExportPreviewModal = React.memo(function ExportPreviewModal({ bookI
     availableTags={availableTags}
     showFilters={showFilters}
     hasActiveFilters={hasActiveFilters}
-    onToggleType={(type) => { toggleType(type); setPreview(null); }}
-    onSetSelectedTag={(tag) => { setSelectedTag(tag); setPreview(null); }}
-    onToggleShowFilters={() => setShowFilters(!showFilters)}
-    onClearFilters={() => { clearFilters(); setPreview(null); }}
+    onToggleType={handleToggleType}
+    onSetSelectedTag={handleSetSelectedTag}
+    onToggleShowFilters={handleToggleShowFilters}
+    onClearFilters={handleClearFilters}
    />
    )}
 

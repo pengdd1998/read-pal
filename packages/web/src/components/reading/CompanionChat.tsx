@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, forwardRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, forwardRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { preloadDOMPurify } from '@/lib/dompurify';
 import { useToast } from '@/components/Toast';
@@ -171,6 +171,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
  setIsOpen(true);
  }, []);
 
+ const handleClose = useCallback(() => setIsOpen(false), [setIsOpen]);
+
  // Action handlers
  const {
  toggleCompanionMode,
@@ -226,7 +228,7 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
    aiHealthy={aiHealthy}
    companionMode={companionMode}
    onToggleMode={toggleCompanionMode}
-   onClose={() => setIsOpen(false)}
+   onClose={handleClose}
    loading={loading}
    connecting={connecting}
    hasStreamingMessage={hasStreamingMessage}

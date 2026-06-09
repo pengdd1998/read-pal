@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { useToast } from '@/components/Toast';
@@ -16,7 +16,7 @@ interface DiscussionTabProps {
  progress?: number;
 }
 
-export function ShareDiscussionTab({
+export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
  annotations,
  bookId,
  bookTitle,
@@ -282,4 +282,4 @@ export function ShareDiscussionTab({
   )}
  </div>
  );
-}
+});
