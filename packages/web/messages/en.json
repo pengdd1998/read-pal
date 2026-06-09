@@ -971,7 +971,8 @@
     "share_unknown_author": "Unknown Author",
     "retry": "Retry",
     "network_error_hint": "Could not reach the server. Check your internet connection and try again.",
-    "book_not_found_hint": "This book may have been removed or is temporarily unavailable."
+    "book_not_found_hint": "This book may have been removed or is temporarily unavailable.",
+    "chapter_announcement": "Chapter {num}: {title}"
   },
   "stats": {
     "title": "Reading Stats",

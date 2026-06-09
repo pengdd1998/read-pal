@@ -65,7 +65,8 @@ export const AnnotationList = React.memo(function AnnotationList({
   {annotations.map((annotation) => (
   <div key={annotation.id} className="relative">
    {bulkMode && (
-   <div className="absolute top-3 left-2 z-10">
+   <div className="absolute top-1 left-0 z-10">
+    <label className="flex items-center justify-center min-w-[44px] min-h-[44px] cursor-pointer">
     <input
     type="checkbox"
     checked={selectedIds.has(annotation.id)}
@@ -73,6 +74,7 @@ export const AnnotationList = React.memo(function AnnotationList({
     aria-label={t('sidebar_select_annotation')}
     className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400 cursor-pointer"
     />
+    </label>
    </div>
    )}
    <div className={bulkMode ? 'pl-7' : ''}>

@@ -971,7 +971,8 @@
     "share_unknown_author": "未知作者",
     "retry": "重试",
     "network_error_hint": "无法连接到服务器，请检查网络后重试。",
-    "book_not_found_hint": "这本书可能已被移除或暂时不可用。"
+    "book_not_found_hint": "这本书可能已被移除或暂时不可用。",
+    "chapter_announcement": "第 {num} 章：{title}"
   },
   "stats": {
     "title": "阅读统计",

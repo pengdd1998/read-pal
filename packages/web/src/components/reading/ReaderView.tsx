@@ -196,6 +196,10 @@ export const ReaderView = React.memo(function ReaderView({
   onToggleControls?.();
   }}
  >
+  {/* Screen reader chapter announcement */}
+  <div className="sr-only" aria-live="polite" aria-atomic="true">
+  {chapterTitle && t('chapter_announcement', { num: currentPage + 1, title: chapterTitle })}
+  </div>
   {/* Thin chapter progress bar */}
   <div className={`h-[3px] shrink-0 ${progressBg[theme]} rounded-none overflow-hidden`}>
   <div

@@ -45,8 +45,10 @@ export function useStatsData(): StatsDataResult & { refetch: () => void } {
     ])
       .then(([dashRes, sessRes, fcRes, speedRes, bookSpeedRes]) => {
         if (stale) return;
+        let anySuccess = false;
         if (dashRes.success && dashRes.data) {
           setData(dashRes.data);
+          anySuccess = true;
         }
         if (sessRes.success && sessRes.data) {
           const raw = sessRes.data;
@@ -57,15 +59,22 @@ export function useStatsData(): StatsDataResult & { refetch: () => void } {
             bookTitle: s.bookTitle || '',
           }));
           setSessions(sessData.slice(0, 30));
+          anySuccess = true;
         }
         if (fcRes.success && fcRes.data) {
           setFlashcardStats(fcRes.data);
+          anySuccess = true;
         }
         if (speedRes.success && speedRes.data) {
           setSpeedData(speedRes.data);
+          anySuccess = true;
         }
         if (bookSpeedRes.success && bookSpeedRes.data) {
           setBookSpeeds(Array.isArray(bookSpeedRes.data) ? bookSpeedRes.data : []);
+          anySuccess = true;
+        }
+        if (!anySuccess) {
+          setError(t('error_load'));
         }
       })
       .catch((err) => { console.warn('useStatsData: fetch failed', err); if (!stale) setError(t('error_load')); })
