@@ -63,8 +63,9 @@ export function useChatActions({
       });
     } catch (err) {
       console.warn('ChatActions: failed to submit feedback', err);
+      toast(t('feedback_submit_error'), 'error');
     }
-  }, [bookId]);
+  }, [bookId, toast, t]);
 
   return {
     toggleCompanionMode,

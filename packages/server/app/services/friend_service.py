@@ -6,6 +6,8 @@ from uuid import UUID
 
 import structlog
 
+from sqlalchemy.exc import DBAPIError
+
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.utils import utcnow
@@ -33,12 +35,16 @@ async def _get_or_create_relationship(
     user_id: UUID,
 ) -> FriendRelationship:
     """Return the existing relationship or create a default one."""
-    result = await db.execute(
-        select(FriendRelationship).where(
-            FriendRelationship.user_id == user_id,
-        ),
-    )
-    rel = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(FriendRelationship).where(
+                FriendRelationship.user_id == user_id,
+            ),
+        )
+        rel = result.scalar_one_or_none()
+    except DBAPIError:
+        logger.error('Failed to query friend relationship', exc_info=True, user_id=str(user_id))
+        raise ValueError('Failed to load friend relationship') from None
     if rel is not None:
         return rel
 
@@ -54,16 +60,20 @@ async def _load_history(
     persona: str,
 ) -> list[HumanMessage | AIMessage]:
     """Load recent conversation history for a persona."""
-    result = await db.execute(
-        select(FriendConversation)
-        .where(
-            FriendConversation.user_id == user_id,
-            FriendConversation.persona == persona,
+    try:
+        result = await db.execute(
+            select(FriendConversation)
+            .where(
+                FriendConversation.user_id == user_id,
+                FriendConversation.persona == persona,
+            )
+            .order_by(FriendConversation.created_at.desc())
+            .limit(HISTORY_LIMIT)
         )
-        .order_by(FriendConversation.created_at.desc())
-        .limit(HISTORY_LIMIT)
-    )
-    rows = list(reversed(result.scalars().all()))
+        rows = list(reversed(result.scalars().all()))
+    except DBAPIError:
+        logger.error('Failed to load friend history', exc_info=True, user_id=str(user_id), persona=persona)
+        raise ValueError('Failed to load conversation history') from None
     messages: list[HumanMessage | AIMessage] = []
     for row in rows:
         if row.role == 'user':
@@ -84,13 +94,17 @@ async def _build_system_message(
     parts = [persona_template.template]
 
     if book_id is not None:
-        result = await db.execute(
-            select(Book).where(
-                Book.id == book_id,
-                Book.user_id == user_id,
-            ),
-        )
-        book = result.scalar_one_or_none()
+        try:
+            result = await db.execute(
+                select(Book).where(
+                    Book.id == book_id,
+                    Book.user_id == user_id,
+                ),
+            )
+            book = result.scalar_one_or_none()
+        except DBAPIError:
+            logger.error('Failed to query book for friend context', exc_info=True, user_id=str(user_id), book_id=str(book_id))
+            book = None
         if book is not None:
             context_str = FRIEND_BOOK_CONTEXT.template.format(
                 title=book.title, author=book.author, progress=book.progress or 0,

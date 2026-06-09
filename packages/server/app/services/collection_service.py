@@ -4,6 +4,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.collection import Collection
@@ -39,13 +40,17 @@ async def get_collection(
     collection_id: UUID,
 ) -> Collection | None:
     """Get a collection by ID. Verifies ownership."""
-    result = await db.execute(
-        select(Collection).where(
-            Collection.id == collection_id,
-            Collection.user_id == user_id,
-        ),
-    )
-    return result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(Collection).where(
+                Collection.id == collection_id,
+                Collection.user_id == user_id,
+            ),
+        )
+        return result.scalar_one_or_none()
+    except DBAPIError:
+        logger.error('Failed to get collection', exc_info=True, user_id=str(user_id), collection_id=str(collection_id))
+        return None
 
 
 async def list_collections(
@@ -53,12 +58,16 @@ async def list_collections(
     user_id: UUID,
 ) -> list[Collection]:
     """List all collections for a user."""
-    result = await db.execute(
-        select(Collection)
-        .where(Collection.user_id == user_id)
-        .order_by(Collection.created_at.desc()),
-    )
-    return list(result.scalars().all())
+    try:
+        result = await db.execute(
+            select(Collection)
+            .where(Collection.user_id == user_id)
+            .order_by(Collection.created_at.desc()),
+        )
+        return list(result.scalars().all())
+    except DBAPIError:
+        logger.error('Failed to list collections', exc_info=True, user_id=str(user_id))
+        return []
 
 
 async def update_collection(
@@ -68,13 +77,17 @@ async def update_collection(
     data: CollectionUpdate,
 ) -> Collection:
     """Update a collection. Verifies ownership."""
-    result = await db.execute(
-        select(Collection).where(
-            Collection.id == collection_id,
-            Collection.user_id == user_id,
-        ),
-    )
-    collection = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(Collection).where(
+                Collection.id == collection_id,
+                Collection.user_id == user_id,
+            ),
+        )
+        collection = result.scalar_one_or_none()
+    except DBAPIError:
+        logger.error('Failed to query collection for update', exc_info=True, user_id=str(user_id), collection_id=str(collection_id))
+        raise ValueError('Failed to query collection') from None
     if collection is None:
         raise ValueError('Collection not found')
 
@@ -94,13 +107,17 @@ async def delete_collection(
     collection_id: UUID,
 ) -> None:
     """Delete a collection. Verifies ownership."""
-    result = await db.execute(
-        select(Collection).where(
-            Collection.id == collection_id,
-            Collection.user_id == user_id,
-        ),
-    )
-    collection = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(Collection).where(
+                Collection.id == collection_id,
+                Collection.user_id == user_id,
+            ),
+        )
+        collection = result.scalar_one_or_none()
+    except DBAPIError:
+        logger.error('Failed to query collection for delete', exc_info=True, user_id=str(user_id), collection_id=str(collection_id))
+        raise ValueError('Failed to query collection') from None
     if collection is None:
         raise ValueError('Collection not found')
 
@@ -115,13 +132,17 @@ async def _get_owned_collection(
     collection_id: UUID,
 ) -> Collection:
     """Fetch a collection verifying ownership. Raises ValueError if missing."""
-    result = await db.execute(
-        select(Collection).where(
-            Collection.id == collection_id,
-            Collection.user_id == user_id,
-        ),
-    )
-    collection = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(Collection).where(
+                Collection.id == collection_id,
+                Collection.user_id == user_id,
+            ),
+        )
+        collection = result.scalar_one_or_none()
+    except DBAPIError:
+        logger.error('Failed to query owned collection', exc_info=True, user_id=str(user_id), collection_id=str(collection_id))
+        raise ValueError('Failed to query collection') from None
     if collection is None:
         raise ValueError('Collection not found')
     return collection

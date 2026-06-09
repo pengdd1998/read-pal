@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { TYPE_OPTIONS } from './ExportPreviewModal.constants';
 
@@ -15,7 +16,7 @@ interface ExportFilterPanelProps {
  onClearFilters: () => void;
 }
 
-export function ExportFilterPanel({
+export const ExportFilterPanel = React.memo(function ExportFilterPanel({
  selectedTypes,
  selectedTag,
  availableTags,
@@ -101,4 +102,4 @@ export function ExportFilterPanel({
   )}
  </div>
  );
-}
+});

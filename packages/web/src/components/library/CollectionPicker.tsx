@@ -16,6 +16,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  const [loading, setLoading] = useState(true);
  const [showCreate, setShowCreate] = useState(false);
  const [newName, setNewName] = useState('');
+ const [creating, setCreating] = useState(false);
  const [toggling, setToggling] = useState<string | null>(null);
  const ref = useRef<HTMLDivElement>(null);
  const mountedRef = useRef(true);
@@ -63,12 +64,21 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   }));
  } catch (err) {
   console.warn('Failed to toggle book in collection:', err);
+  // Reload from server to revert optimistic update
+  try {
+   const retryRes = await api.get<{ items: Collection[] }>('/api/collections');
+   if (mountedRef.current && retryRes.success && retryRes.data) {
+    const items = retryRes.data.items ?? (Array.isArray(retryRes.data) ? retryRes.data as unknown as Collection[] : []);
+    setCollections(items);
+   }
+  } catch { /* best effort reload */ }
  }
  if (mountedRef.current) setToggling(null);
  };
 
  const handleCreate = async () => {
- if (!newName.trim()) return;
+ if (!newName.trim() || creating) return;
+ setCreating(true);
  try {
   const res = await api.post<Collection>('/api/collections', {
   name: newName.trim(),
@@ -82,6 +92,9 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   }
  } catch (err) {
   console.warn('Failed to create collection:', err);
+  // Keep name so user can retry
+ } finally {
+  if (mountedRef.current) setCreating(false);
  }
  };
 
@@ -136,7 +149,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
     className="flex-1 px-2 py-1 text-xs bg-gray-50 dark:bg-gray-800 border border-surface-3 rounded outline-none focus:ring-1 focus:ring-primary-400/50"
     autoFocus
    />
-   <button onClick={handleCreate} className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('collection_picker_add')}</button>
+   <button onClick={handleCreate} disabled={creating} className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:opacity-50">{creating ? '...' : t('collection_picker_add')}</button>
    </div>
   ) : (
    <button

@@ -972,7 +972,8 @@
     "retry": "重试",
     "network_error_hint": "无法连接到服务器，请检查网络后重试。",
     "book_not_found_hint": "这本书可能已被移除或暂时不可用。",
-    "chapter_announcement": "第 {num} 章：{title}"
+    "chapter_announcement": "第 {num} 章：{title}",
+    "feedback_submit_error": "反馈提交失败，请重试。"
   },
   "stats": {
     "title": "阅读统计",

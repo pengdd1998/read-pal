@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Chapter } from '@read-pal/shared';
 
@@ -20,7 +20,7 @@ interface SearchOverlayProps {
  onClose: () => void;
 }
 
-export function SearchOverlay({
+export const SearchOverlay = React.memo(function SearchOverlay({
  searchQuery,
  onQueryChange,
  currentChapter,
@@ -137,4 +137,4 @@ export function SearchOverlay({
   </div>
  </div>
  );
-}
+});

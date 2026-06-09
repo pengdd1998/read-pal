@@ -72,7 +72,7 @@ export const AnnotationList = React.memo(function AnnotationList({
     checked={selectedIds.has(annotation.id)}
     onChange={() => onToggleSelect(annotation.id)}
     aria-label={t('sidebar_select_annotation')}
-    className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400 cursor-pointer"
+    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-400 cursor-pointer"
     />
     </label>
    </div>

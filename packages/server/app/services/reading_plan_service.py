@@ -194,13 +194,13 @@ async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book | N
         result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id)
         )
-        book = result.scalar_one_or_none()
-        if book is None:
-            raise ValueError(f'Book {book_id} not found for user {user_id}')
-        return book
     except Exception:
         logger.error('Failed to load book', exc_info=True, book_id=str(book_id), user_id=str(user_id))
         return None
+    book = result.scalar_one_or_none()
+    if book is None:
+        raise ValueError(f'Book {book_id} not found for user {user_id}')
+    return book
 
 
 async def _get_active_plan(

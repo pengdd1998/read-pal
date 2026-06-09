@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface ReaderSettingsMenuProps {
@@ -20,7 +21,7 @@ interface ReaderSettingsMenuProps {
   onShowShortcuts: () => void;
 }
 
-export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
+export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
   const {
     show, theme, fontSize, lineHeight, fontFamily, quietMode, bgEnabled,
     onClose, onFontSizeChange, onLineHeightChange, onFontFamilyChange,
@@ -148,4 +149,4 @@ export function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
       </div>
     </>
   );
-}
+});

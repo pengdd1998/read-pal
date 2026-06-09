@@ -4,7 +4,6 @@ Scores a curated pool against the user's reading history (authors, genres/tags)
 and returns the top 5 matches.  No LLM calls.
 """
 
-import json
 import logging
 from collections import Counter
 from uuid import UUID

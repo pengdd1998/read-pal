@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { copyToClipboard } from '@/lib/clipboard';
@@ -31,6 +31,9 @@ export function ShareReadingCard() {
  const [card, setCard] = useState<ReadingCardData | null>(null);
  const [loading, setLoading] = useState(false);
  const [copied, setCopied] = useState(false);
+ const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+ useEffect(() => { return () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); }; }, []);
 
  const generateCard = async () => {
  setLoading(true);
@@ -69,7 +72,7 @@ export function ShareReadingCard() {
  const ok = await copyToClipboard(shareText);
  if (ok) {
   setCopied(true);
-  setTimeout(() => setCopied(false), 2000);
+  copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
  }
  };
 
@@ -104,7 +107,7 @@ export function ShareReadingCard() {
   ) : (
   <div className="space-y-4">
    {/* Visual Card */}
-   <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-lg max-w-md">
+   <div className="rounded-2xl border-2 border-amber-200 dark:border-amber-800 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 p-6 shadow-lg max-w-md">
    <div className="flex items-center gap-2 mb-4">
     <span className="text-2xl">{'\uD83D\uDCDA'}</span>
     <div>

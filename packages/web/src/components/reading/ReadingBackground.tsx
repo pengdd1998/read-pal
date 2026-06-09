@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
@@ -16,7 +16,7 @@ interface MoodSceneData {
  color: string;
 }
 
-export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) {
+export const ReadingBackground = React.memo(function ReadingBackground({ content, enabled }: ReadingBackgroundProps) {
  const t = useTranslations('reader');
  const [sceneData, setSceneData] = useState<MoodSceneData | null>(null);
  const [loading, setLoading] = useState(false);
@@ -105,4 +105,4 @@ export function ReadingBackground({ content, enabled }: ReadingBackgroundProps) 
   )}
  </div>
  );
-}
+});

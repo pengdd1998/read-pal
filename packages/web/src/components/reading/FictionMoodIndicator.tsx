@@ -1,3 +1,4 @@
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { type MoodType, MOOD_COLORS, MOOD_ICONS } from './FictionPanel.utils';
 
@@ -5,7 +6,7 @@ interface FictionMoodIndicatorProps {
  mood: MoodType;
 }
 
-export function FictionMoodIndicator({ mood }: FictionMoodIndicatorProps) {
+export const FictionMoodIndicator = React.memo(function FictionMoodIndicator({ mood }: FictionMoodIndicatorProps) {
  const t = useTranslations('reader');
 
  return (
@@ -21,4 +22,4 @@ export function FictionMoodIndicator({ mood }: FictionMoodIndicatorProps) {
   </div>
  </div>
  );
-}
+});

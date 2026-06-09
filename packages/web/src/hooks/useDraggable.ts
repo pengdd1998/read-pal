@@ -127,6 +127,7 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableReturn {
     moved: boolean;
   } | null>(null);
   const wasDragRef = useRef(false);
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
   // Persist position on change
@@ -186,7 +187,8 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableReturn {
     if (wasMoved) {
       setIsSnapping(true);
       setBtnPos((prev) => snapToEdge(prev, btnSize, edgeMargin, headerMinY));
-      setTimeout(() => setIsSnapping(false), 260);
+      if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
+      snapTimerRef.current = setTimeout(() => setIsSnapping(false), 260);
       return wasMoved;
     }
     return false;

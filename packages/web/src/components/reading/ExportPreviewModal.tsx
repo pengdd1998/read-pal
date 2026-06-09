@@ -148,10 +148,10 @@ export const ExportPreviewModal = React.memo(function ExportPreviewModal({ bookI
  );
  };
 
- const handleToggleType = useCallback((type: string) => { toggleType(type); setPreview(null); }, []);
- const handleSetSelectedTag = useCallback((tag: string) => { setSelectedTag(tag); setPreview(null); }, []);
+ const handleToggleType = useCallback((type: string) => { toggleType(type); setPreview(null); }, [toggleType]);
+ const handleSetSelectedTag = useCallback((tag: string) => { setSelectedTag(tag); setPreview(null); }, [setSelectedTag]);
  const handleToggleShowFilters = useCallback(() => setShowFilters((v) => !v), []);
- const handleClearFilters = useCallback(() => { clearFilters(); setPreview(null); }, []);
+ const handleClearFilters = useCallback(() => { clearFilters(); setPreview(null); }, [clearFilters]);
  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => { if (e.target === backdropRef.current) onClose(); }, [onClose]);
  const handleBackdropKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => { if (e.key === 'Escape') onClose(); }, [onClose]);
 

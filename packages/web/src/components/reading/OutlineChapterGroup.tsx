@@ -36,6 +36,7 @@ export const OutlineChapterGroup = memo(function OutlineChapterGroup({
   <button
   onClick={() => onToggle(chapter.chapterIndex)}
   aria-expanded={isExpanded}
+  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${chapter.label}`}
   className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors text-left"
   >
   <svg aria-hidden="true"

@@ -972,7 +972,8 @@
     "retry": "Retry",
     "network_error_hint": "Could not reach the server. Check your internet connection and try again.",
     "book_not_found_hint": "This book may have been removed or is temporarily unavailable.",
-    "chapter_announcement": "Chapter {num}: {title}"
+    "chapter_announcement": "Chapter {num}: {title}",
+    "feedback_submit_error": "Failed to submit feedback. Please try again."
   },
   "stats": {
     "title": "Reading Stats",

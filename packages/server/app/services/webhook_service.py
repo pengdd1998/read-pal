@@ -14,6 +14,7 @@ from uuid import UUID
 
 import httpx
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.webhook import Webhook, WebhookDeliveryLog
@@ -47,12 +48,16 @@ async def list_webhooks(
     user_id: UUID,
 ) -> list[Webhook]:
     """List all webhooks for a user."""
-    result = await db.execute(
-        select(Webhook)
-        .where(Webhook.user_id == user_id)
-        .order_by(Webhook.created_at.desc()),
-    )
-    return list(result.scalars().all())
+    try:
+        result = await db.execute(
+            select(Webhook)
+            .where(Webhook.user_id == user_id)
+            .order_by(Webhook.created_at.desc()),
+        )
+        return list(result.scalars().all())
+    except DBAPIError:
+        logger.error('Failed to list webhooks', exc_info=True, user_id=str(user_id))
+        return []
 
 
 async def update_webhook(
@@ -62,13 +67,17 @@ async def update_webhook(
     data: WebhookUpdate,
 ) -> Webhook:
     """Update a webhook. Verifies ownership."""
-    result = await db.execute(
-        select(Webhook).where(
-            Webhook.id == webhook_id,
-            Webhook.user_id == user_id,
-        ),
-    )
-    webhook = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(Webhook).where(
+                Webhook.id == webhook_id,
+                Webhook.user_id == user_id,
+            ),
+        )
+        webhook = result.scalar_one_or_none()
+    except DBAPIError:
+        logger.error('Failed to query webhook for update', exc_info=True, user_id=str(user_id), webhook_id=str(webhook_id))
+        raise ValueError('Failed to query webhook') from None
     if webhook is None:
         raise ValueError('Webhook not found')
 
@@ -91,13 +100,17 @@ async def delete_webhook(
     webhook_id: UUID,
 ) -> None:
     """Delete a webhook. Verifies ownership."""
-    result = await db.execute(
-        select(Webhook).where(
-            Webhook.id == webhook_id,
-            Webhook.user_id == user_id,
-        ),
-    )
-    webhook = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(Webhook).where(
+                Webhook.id == webhook_id,
+                Webhook.user_id == user_id,
+            ),
+        )
+        webhook = result.scalar_one_or_none()
+    except DBAPIError:
+        logger.error('Failed to query webhook for delete', exc_info=True, user_id=str(user_id), webhook_id=str(webhook_id))
+        raise ValueError('Failed to query webhook') from None
     if webhook is None:
         raise ValueError('Webhook not found')
 
@@ -114,32 +127,36 @@ async def get_delivery_logs(
     per_page: int = 20,
 ) -> tuple[list[WebhookDeliveryLog], int]:
     """Get delivery logs for a webhook. Verifies ownership."""
-    # Verify ownership
-    wh_result = await db.execute(
-        select(Webhook.id).where(
-            Webhook.id == webhook_id,
-            Webhook.user_id == user_id,
-        ),
-    )
-    if wh_result.scalar_one_or_none() is None:
-        raise ValueError('Webhook not found')
+    try:
+        # Verify ownership
+        wh_result = await db.execute(
+            select(Webhook.id).where(
+                Webhook.id == webhook_id,
+                Webhook.user_id == user_id,
+            ),
+        )
+        if wh_result.scalar_one_or_none() is None:
+            raise ValueError('Webhook not found')
 
-    count_result = await db.execute(
-        select(func.count())
-        .select_from(WebhookDeliveryLog)
-        .where(WebhookDeliveryLog.webhook_id == webhook_id),
-    )
-    total = count_result.scalar() or 0
+        count_result = await db.execute(
+            select(func.count())
+            .select_from(WebhookDeliveryLog)
+            .where(WebhookDeliveryLog.webhook_id == webhook_id),
+        )
+        total = count_result.scalar() or 0
 
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        select(WebhookDeliveryLog)
-        .where(WebhookDeliveryLog.webhook_id == webhook_id)
-        .order_by(WebhookDeliveryLog.created_at.desc())
-        .offset(offset)
-        .limit(per_page),
-    )
-    return list(result.scalars().all()), total
+        offset = (page - 1) * per_page
+        result = await db.execute(
+            select(WebhookDeliveryLog)
+            .where(WebhookDeliveryLog.webhook_id == webhook_id)
+            .order_by(WebhookDeliveryLog.created_at.desc())
+            .offset(offset)
+            .limit(per_page),
+        )
+        return list(result.scalars().all()), total
+    except DBAPIError:
+        logger.error('Failed to get delivery logs', exc_info=True, user_id=str(user_id), webhook_id=str(webhook_id))
+        return [], 0
 
 
 async def _is_safe_webhook_url(url: str) -> bool:
