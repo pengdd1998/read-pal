@@ -32,6 +32,7 @@ interface GenreTemplate {
 
 /** Pick a random element from an array. */
 function pickRandom<T>(arr: T[]): T {
+  if (arr.length === 0) return '' as T;
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
@@ -169,6 +170,9 @@ const ACADEMIC_KEYWORDS = [
   'proceedings', 'monograph', 'scholarly',
 ];
 
+/** Word-boundary match helper — avoids substring false positives (e.g. "api" inside "apiary"). */
+const hasWord = (text: string, word: string) => new RegExp(`\\b${word}\\b`, 'i').test(text);
+
 /**
  * Detect the book genre from metadata or title.
  *
@@ -192,18 +196,18 @@ export function detectGenre(
   // 1. Check explicit genre metadata
   if (genreList && genreList.length > 0) {
     const combined = genreList.join(' ').toLowerCase();
-    if (FICTION_KEYWORDS.some((k) => combined.includes(k))) return 'fiction';
-    if (TECHNICAL_KEYWORDS.some((k) => combined.includes(k))) return 'technical';
-    if (ACADEMIC_KEYWORDS.some((k) => combined.includes(k))) return 'academic';
+    if (FICTION_KEYWORDS.some((k) => hasWord(combined, k))) return 'fiction';
+    if (TECHNICAL_KEYWORDS.some((k) => hasWord(combined, k))) return 'technical';
+    if (ACADEMIC_KEYWORDS.some((k) => hasWord(combined, k))) return 'academic';
     // Genre exists but doesn't match specific categories → nonfiction
     return 'nonfiction';
   }
 
   // 2. Heuristic from title + description
   const searchText = `${title || ''} ${description || ''}`.toLowerCase();
-  if (FICTION_KEYWORDS.some((k) => searchText.includes(k))) return 'fiction';
-  if (TECHNICAL_KEYWORDS.some((k) => searchText.includes(k))) return 'technical';
-  if (ACADEMIC_KEYWORDS.some((k) => searchText.includes(k))) return 'academic';
+  if (FICTION_KEYWORDS.some((k) => hasWord(searchText, k))) return 'fiction';
+  if (TECHNICAL_KEYWORDS.some((k) => hasWord(searchText, k))) return 'technical';
+  if (ACADEMIC_KEYWORDS.some((k) => hasWord(searchText, k))) return 'academic';
 
   // 3. Default
   return 'default';

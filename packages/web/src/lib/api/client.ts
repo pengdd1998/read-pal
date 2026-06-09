@@ -47,6 +47,7 @@ export class ApiClient {
   constructor() {
     this.client = axios.create({
       baseURL: API_URL,
+      timeout: 15_000,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -218,7 +219,7 @@ export class ApiClient {
   private isOfflineError(err: unknown): boolean {
     if (typeof window !== 'undefined' && !navigator.onLine) return true;
     if (axios.isAxiosError(err)) return !err.response;
-    return true;
+    return false;
   }
 
   /** Return a queued response that the caller can treat as success */
