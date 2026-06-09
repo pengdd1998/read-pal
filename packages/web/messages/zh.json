@@ -1575,7 +1575,8 @@
     "offline_saved_locally": "离线 — 更改已保存在本地",
     "sync_success": "所有 {count} 个待处理更改已同步！",
     "sync_partial": "已同步 {count}/{total}",
-    "back_online": "已恢复在线"
+    "back_online": "已恢复在线",
+    "loading": "正在加载离线内容..."
   },
   "bookClubs": {
     "pageTitle": "读书会",

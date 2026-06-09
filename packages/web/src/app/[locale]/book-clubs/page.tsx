@@ -28,7 +28,7 @@ export default function BookClubsPage() {
  useEffect(() => {
  let cancelled = false;
 
- async function fetch() {
+ async function fetchData() {
   try {
   const [myRes, discRes] = await Promise.all([
    api.get<ClubListItem[]>('/api/book-clubs'),
@@ -52,8 +52,10 @@ export default function BookClubsPage() {
   }
  }
 
- fetch();
- return () => { cancelled = true; };
+ fetchData();
+ const onFocus = () => { fetchData(); };
+ window.addEventListener('focus', onFocus);
+ return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
  }, []);
 
  const displayClubs = tab === 'my' ? myClubs : discoverClubs;

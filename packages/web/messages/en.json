@@ -1575,7 +1575,8 @@
     "offline_saved_locally": "Offline — changes saved locally",
     "sync_success": "All {count} queued changes synced!",
     "sync_partial": "Synced {count} of {total}",
-    "back_online": "Back online"
+    "back_online": "Back online",
+    "loading": "Loading offline content..."
   },
   "welcome": {
     "page_title": "Welcome",

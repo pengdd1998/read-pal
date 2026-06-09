@@ -97,7 +97,9 @@ export default function FlashcardsPage() {
  useEffect(() => {
  let stale = false;
  fetchDecks().finally(() => { if (!stale) setLoading(false); });
- return () => { stale = true; };
+ const onFocus = () => { fetchDecks(); };
+ window.addEventListener('focus', onFocus);
+ return () => { stale = true; window.removeEventListener('focus', onFocus); };
  }, [fetchDecks]);
 
  const handleRate = useCallback(async (rating: number) => {

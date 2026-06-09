@@ -29,7 +29,8 @@ export default function SearchPage() {
  // Load recent books for recommendations when no search
  useEffect(() => {
  let stale = false;
- api.get<Book[]>('/api/books')
+ function loadRecent() {
+  api.get<Book[]>('/api/books')
   .then((res) => {
   if (stale) return;
   if (res.success && res.data) {
@@ -41,7 +42,11 @@ export default function SearchPage() {
   if (stale) return;
   console.warn('search: recent books load failed', err);
   });
- return () => { stale = true; };
+ }
+ loadRecent();
+ const onFocus = () => { loadRecent(); };
+ window.addEventListener('focus', onFocus);
+ return () => { stale = true; window.removeEventListener('focus', onFocus); };
  }, []);
 
  // Debounced search across books, annotations, and semantic index

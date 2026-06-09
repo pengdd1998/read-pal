@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useTranslations } from 'next-intl';
@@ -31,6 +31,15 @@ export default function KnowledgePage() {
  svgRef,
  refetch,
  } = useKnowledgeGraph(t('error_load'));
+
+ // Refetch when tab regains focus
+ useEffect(() => {
+  function handleFocus() {
+   refetch();
+  }
+  window.addEventListener('focus', handleFocus);
+  return () => window.removeEventListener('focus', handleFocus);
+ }, [refetch]);
 
  const handleNodeClick = useCallback((node: SimNode) => {
  setSelectedNode((prev) => (prev?.id === node.id ? null : node));
@@ -67,7 +76,7 @@ export default function KnowledgePage() {
  return (
   <div className="min-h-screen bg-surface-1 flex items-center justify-center">
   <div className="text-center max-w-md px-6">
-   <div className="text-5xl mb-4">⚠️</div>
+   <div className="text-5xl mb-4" aria-hidden="true">⚠️</div>
    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{t('error_title')}</h1>
    <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
    <button
@@ -88,7 +97,7 @@ export default function KnowledgePage() {
  return (
   <div className="min-h-screen bg-surface-1 flex items-center justify-center">
   <div className="text-center max-w-md px-6">
-   <div className="text-5xl mb-4">🧠</div>
+   <div className="text-5xl mb-4" aria-hidden="true">🧠</div>
    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{t('setup_title')}</h1>
    <p className="text-gray-600 dark:text-gray-400 mb-6">
    {t('setup_desc')}
