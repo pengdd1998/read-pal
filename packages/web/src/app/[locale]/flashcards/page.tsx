@@ -175,16 +175,16 @@ export default function FlashcardsPage() {
   {toastEl}
   <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <div className="mb-8">
-   <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
+   <div className="h-7 bg-surface-2 rounded-lg w-40 animate-pulse" />
    </div>
    <div className="space-y-3">
    {[1, 2, 3].map((i) => (
     <div key={i} className="card">
     <div className="flex items-center gap-3">
-     <div className="w-10 h-14 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+     <div className="w-10 h-14 bg-surface-1 rounded-lg animate-pulse" />
      <div className="flex-1">
-     <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-3/4 animate-pulse mb-2" />
-     <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/2 animate-pulse" />
+     <div className="h-4 bg-surface-1 rounded w-3/4 animate-pulse mb-2" />
+     <div className="h-3 bg-surface-1 rounded w-1/2 animate-pulse" />
      </div>
     </div>
     </div>
@@ -201,10 +201,10 @@ export default function FlashcardsPage() {
   {toastEl}
   <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <div className="mb-8">
-   <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
+   <div className="h-7 bg-surface-2 rounded-lg w-40 animate-pulse" />
    </div>
    <div className="card">
-   <div className="h-48 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
+   <div className="h-48 bg-surface-1 rounded-xl animate-pulse" />
    </div>
   </main>
   </>

@@ -73,7 +73,7 @@ export default function BookDetailPage() {
  : 0;
  }, [remainingChapters, readingWpm]);
  const statusConfig = useMemo(() => ({
- unread: { label: t('notStarted'), color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
+ unread: { label: t('notStarted'), color: 'bg-surface-1 text-gray-600 dark:text-gray-400' },
  reading: { label: t('reading'), color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' },
  completed: { label: t('completed'), color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' },
  }), [t]);
@@ -138,7 +138,7 @@ export default function BookDetailPage() {
   {/* Progress */}
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 mb-6 animate-slide-up stagger-2">
   <h2 className="font-semibold mb-4">{t('progress')}</h2>
-  <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden mb-3" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100} aria-label={t('progressAriaLabel', { pct: progressPct })}>
+  <div className="w-full bg-surface-1 rounded-full h-3 overflow-hidden mb-3" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100} aria-label={t('progressAriaLabel', { pct: progressPct })}>
    <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-500 transition-all duration-500" style={{ width: `${progressPct}%` }} />
   </div>
   <div className="flex items-center justify-between text-sm">
@@ -183,7 +183,7 @@ export default function BookDetailPage() {
   <div className="mb-6 animate-slide-up stagger-3">
    <div className="flex flex-wrap gap-1.5">
    {tags.slice(0, 15).map((tag) => (
-    <span key={tag.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-amber-900/20 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-default">
+    <span key={tag.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-1 text-gray-600 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-amber-900/20 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-default">
     {tag.name}
     <span className="text-[9px] text-gray-500 dark:text-gray-400">{tag.count}</span>
     </span>

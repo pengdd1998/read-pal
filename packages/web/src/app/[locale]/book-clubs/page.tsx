@@ -108,8 +108,8 @@ export default function BookClubsPage() {
    <div className="space-y-4">
    {[1, 2, 3].map((i) => (
     <div key={i} className="rounded-xl border border-surface-2 bg-surface-0 p-5 animate-pulse">
-    <div className="h-5 w-40 bg-gray-100 dark:bg-gray-800 rounded mb-2" />
-    <div className="h-3 w-56 bg-gray-100 dark:bg-gray-800 rounded" />
+    <div className="h-5 w-40 bg-surface-1 rounded mb-2" />
+    <div className="h-3 w-56 bg-surface-1 rounded" />
     </div>
    ))}
    </div>

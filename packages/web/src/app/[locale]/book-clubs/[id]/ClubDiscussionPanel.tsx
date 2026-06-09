@@ -101,7 +101,7 @@ export function ClubDiscussionPanel({
     onSend();
     }
    }}
-   className="flex-1 px-3 py-2 rounded-lg border border-surface-3 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+   className="flex-1 px-3 py-2 rounded-lg border border-surface-3 bg-surface-1 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
    maxLength={2000}
    disabled={sending}
    />

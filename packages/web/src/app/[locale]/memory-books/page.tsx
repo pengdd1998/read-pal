@@ -150,10 +150,10 @@ export default function MemoryBooksPage() {
    {Array.from({ length: 3 }).map((_, i) => (
    <div key={i} className="bg-surface-0 rounded-xl border border-surface-3 p-5 animate-pulse">
     <div className="flex items-center gap-3">
-    <div className="w-12 h-16 bg-gray-100 dark:bg-gray-800 rounded-lg" />
+    <div className="w-12 h-16 bg-surface-1 rounded-lg" />
     <div className="flex-1">
-     <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-40 mb-2" />
-     <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-24" />
+     <div className="h-4 bg-surface-1 rounded w-40 mb-2" />
+     <div className="h-3 bg-surface-1 rounded w-24" />
     </div>
     </div>
    </div>

@@ -43,7 +43,7 @@ export const FilterTabs = React.memo(function FilterTabs({ activeTab, counts, on
    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] ${
     activeTab === tab
     ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
-    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+    : 'bg-surface-1 text-gray-500 dark:text-gray-400'
    }`}>
     {counts[tab]}
    </span>

@@ -69,8 +69,8 @@ export default function SynthesisPage() {
  return (
   <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
   <div className="mb-8">
-   <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-48 animate-pulse" />
-   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-72 mt-2 animate-pulse" />
+   <div className="h-8 bg-surface-2 rounded-lg w-48 animate-pulse" />
+   <div className="h-4 bg-surface-2 rounded-lg w-72 mt-2 animate-pulse" />
   </div>
   <div className="space-y-4">
    <div className="h-24 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />

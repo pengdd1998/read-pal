@@ -116,7 +116,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
      className={`w-full text-left flex items-start gap-3 p-3 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      obj.completed
       ? 'bg-emerald-50 dark:bg-emerald-900/20'
-      : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+      : 'bg-surface-1 hover:bg-surface-2'
      }`}
     >
      <span className={`flex-shrink-0 mt-0.5 ${obj.completed ? 'text-emerald-500' : 'text-gray-300'}`}>
@@ -216,7 +216,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
      {Math.round(mastery.overallMastery * 100)}%
     </span>
     </div>
-    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
     <div
      className="h-full bg-gradient-to-r from-amber-400 to-emerald-500 rounded-full transition-all duration-500"
      style={{ width: `${mastery.overallMastery * 100}%` }}
@@ -226,13 +226,13 @@ export const StudyModePanel = React.memo(function StudyModePanel({
 
    {/* Stats grid */}
    <div className="grid grid-cols-2 gap-3">
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+    <div className="bg-surface-1 rounded-lg p-3">
     <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
      {mastery.chaptersCompleted}/{mastery.totalChapters}
     </div>
     <div className="text-xs text-gray-500 dark:text-gray-400">{t('chapters_read')}</div>
     </div>
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+    <div className="bg-surface-1 rounded-lg p-3">
     <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
      {mastery.cardsDue}
     </div>

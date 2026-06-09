@@ -146,7 +146,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
    onChange={(e) => setSearchQuery(e.target.value)}
    placeholder={t('outline_search_placeholder')}
    aria-label={t('outline_search_placeholder')}
-   className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-surface-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all mb-2"
+   className="w-full px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all mb-2"
   />
 
   <div className="flex gap-1">
@@ -163,7 +163,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
     className={`px-2 py-1 rounded text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${
     filterType === opt.key
      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+     : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-surface-2'
     }`}
    >
     {opt.label}

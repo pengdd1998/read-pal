@@ -22,7 +22,7 @@ export function TagPicker({ variant, onTagSelect }: TagPickerProps) {
     key={qt.id}
     onClick={() => onTagSelect(ANNOTATION_COLORS[0], qt.id)}
     aria-label={t(qt.labelKey)}
-    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-surface-3 text-xs font-medium text-gray-700 dark:text-gray-300 active:scale-95 transition-all hover:border-amber-300 dark:hover:border-amber-700"
+    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 text-xs font-medium text-gray-700 dark:text-gray-300 active:scale-95 transition-all hover:border-amber-300 dark:hover:border-amber-700"
    >
     <span aria-hidden="true">{qt.emoji}</span>
     {t(qt.labelKey)}

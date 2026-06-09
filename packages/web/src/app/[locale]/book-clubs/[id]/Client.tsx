@@ -38,9 +38,9 @@ export default function BookClubDetailPage() {
   <main className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
    <div className="animate-pulse space-y-4">
-   <div className="h-8 w-48 bg-gray-100 dark:bg-gray-800 rounded" />
-   <div className="h-4 w-64 bg-gray-100 dark:bg-gray-800 rounded" />
-   <div className="h-40 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+   <div className="h-8 w-48 bg-surface-1 rounded" />
+   <div className="h-4 w-64 bg-surface-1 rounded" />
+   <div className="h-40 bg-surface-1 rounded-xl" />
    </div>
   </div>
   </main>
