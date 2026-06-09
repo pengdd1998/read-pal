@@ -71,12 +71,17 @@ export function useReaderProgress({
   const wpmFetchedRef = useRef(false);
   useEffect(() => {
     if (loading || wpmFetchedRef.current) return;
-    wpmFetchedRef.current = true;
     let cancelled = false;
     api.get<{ currentWpm: number; trend: string }>('/api/stats/reading-speed')
-      .then((res) => { if (!cancelled && res.success && res.data && res.data.currentWpm > 0) setReadingWpm(res.data.currentWpm); })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.success && res.data && res.data.currentWpm > 0) {
+          wpmFetchedRef.current = true;
+          setReadingWpm(res.data.currentWpm);
+        }
+      })
       .catch((err) => { if (!cancelled) console.warn('Reader: reading speed fetch failed', err); });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; wpmFetchedRef.current = false; };
   }, [loading]);
 
   return { readingWpm };

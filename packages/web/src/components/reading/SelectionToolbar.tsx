@@ -70,16 +70,7 @@ export const SelectionToolbar = React.memo(function SelectionToolbar({
  [text, onHighlight],
  );
 
- const handleTagAndHighlight = useCallback(
- (color: string, tag: string) => {
-  hapticMedium();
-  onHighlight(text, color, [tag]);
-  setHighlightToast(true);
-  setShowTagPicker(false);
-  timersRef.current.push(setTimeout(() => { if (mountedRef.current) setHighlightToast(false); }, 1200));
- },
- [text, onHighlight],
- );
+ const handleTagAndHighlight = useCallback((color: string, tag: string) => handleHighlight(color, [tag]), [handleHighlight]);
 
  useEffect(() => {
  const handleKeyDown = (e: KeyboardEvent) => {

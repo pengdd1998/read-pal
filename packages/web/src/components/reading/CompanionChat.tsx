@@ -195,8 +195,8 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
  () => {
   const tp = t as (key: string, params?: Record<string, string | number>) => string;
   return companionMode === 'socratic'
-  ? getSocraticPrompts(tp, bookTitle)
-  : getGenreTemplate(genre).suggestedPrompts(tp, bookTitle);
+  ? getSocraticPrompts(tp, bookTitle ?? '')
+  : getGenreTemplate(genre).suggestedPrompts(tp, bookTitle ?? '');
  },
  [companionMode, genre, bookTitle, t],
  );

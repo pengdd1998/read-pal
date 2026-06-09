@@ -44,13 +44,18 @@ export function useReaderMilestones({
   useEffect(() => {
     if (loading || chaptersLength === 0) return;
     const pct = ((currentChapter + 1) / chaptersLength) * 100;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let highestMilestone: number | null = null;
     for (const m of [25, 50, 75]) {
       if (pct >= m && !shownMilestones.current.has(m)) {
         shownMilestones.current.add(m);
-        setMilestone(`${m}%`);
-        const timer = setTimeout(() => setMilestone(null), 3000);
-        return () => clearTimeout(timer);
+        highestMilestone = m;
+        timers.push(setTimeout(() => setMilestone(null), 3000));
       }
     }
+    if (highestMilestone !== null) {
+      setMilestone(`${highestMilestone}%`);
+    }
+    return () => { timers.forEach(clearTimeout); };
   }, [currentChapter, chaptersLength, loading, setMilestone]);
 }

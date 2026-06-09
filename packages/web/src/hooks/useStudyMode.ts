@@ -38,6 +38,7 @@ export function useStudyMode(bookId: string) {
   const [mastery, setMastery] = useState<MasteryReport | null>(null);
   const currentChapterRef = useRef(-1);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reqIdRef = useRef(0);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -53,6 +54,7 @@ export function useStudyMode(bookId: string) {
     chapterContent: string,
   ) => {
     if (!enabled || chapterIndex === currentChapterRef.current) return;
+    const reqId = ++reqIdRef.current;
     setLoading(true);
     setError(null);
 
@@ -66,6 +68,7 @@ export function useStudyMode(bookId: string) {
       });
 
       const rawObj = (objRes.success && objRes.data) ? objRes.data : {};
+      if (reqId !== reqIdRef.current) return;
       const newObjectives: ChapterObjective[] = Array.isArray(rawObj)
         ? rawObj
         : ((rawObj as Record<string, unknown>).objectives as ChapterObjective[]) ?? [];
@@ -82,6 +85,7 @@ export function useStudyMode(bookId: string) {
       });
 
       const rawChecks = (checkRes.success && checkRes.data) ? checkRes.data : {};
+      if (reqId !== reqIdRef.current) return;
       if (!mountedRef.current) return;
       setChecks(Array.isArray(rawChecks) ? rawChecks : ((rawChecks as Record<string, unknown>).checks as ConceptCheck[]) ?? []);
       setRevealedAnswers(new Set());
@@ -113,6 +117,7 @@ export function useStudyMode(bookId: string) {
         checks: checksToSave,
       });
       setSaveStatus('saved');
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (err) {
       console.warn('Failed to save card checks:', err);
@@ -123,6 +128,7 @@ export function useStudyMode(bookId: string) {
   const loadMastery = useCallback(async () => {
     try {
       const res = await api.get<MasteryReport>(`/api/study-mode/mastery/${bookId}`);
+      if (!mountedRef.current) return;
       if (res.success && res.data) {
         setMastery(res.data);
       }
