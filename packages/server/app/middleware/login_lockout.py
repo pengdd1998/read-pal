@@ -51,7 +51,7 @@ class LoginLockout:
             return False, None
 
         except Exception:
-            logger.debug('Redis unavailable — cannot check lockout for %s', email)
+            logger.warning('Redis unavailable — cannot check lockout for %s', email)
             return False, None
 
     async def record_failed_login(self, email: str) -> None:
@@ -78,14 +78,14 @@ class LoginLockout:
             )
 
         except Exception:
-            logger.debug('Redis unavailable — cannot record failed login for %s', email)
+            logger.warning('Redis unavailable — cannot record failed login for %s', email)
 
     async def clear_failed_logins(self, email: str) -> None:
         """Delete the lockout key on successful login."""
         try:
             await self.redis.delete(f'{LOCKOUT_PREFIX}{email}')
         except Exception:
-            logger.debug('Redis unavailable — cannot clear lockout for %s', email)
+            logger.warning('Redis unavailable — cannot clear lockout for %s', email)
 
 
 # --- Lazy singleton -----------------------------------------------------------

@@ -76,7 +76,7 @@ class RateLimiter:
             return True, headers
 
         except Exception:
-            logger.debug('Redis unavailable — using in-memory rate-limit fallback')
+            logger.warning('Redis unavailable — using in-memory rate-limit fallback')
             _evict_expired(now)
             return self._memory_check(key, now, limit, window_seconds)
 
