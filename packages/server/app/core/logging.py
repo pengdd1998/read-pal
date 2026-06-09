@@ -1,7 +1,5 @@
 """Structured logging setup — structlog with stdlib backend."""
 
-from __future__ import annotations
-
 import logging
 import sys
 

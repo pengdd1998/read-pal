@@ -1,5 +1,6 @@
 'use client';
 
+import React, { memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';
@@ -28,7 +29,7 @@ interface MobileSelectionToolbarProps {
  onAskAI?: (text: string) => void;
 }
 
-export function MobileSelectionToolbar({
+export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
  text,
  showNote,
  showQuoteCard,
@@ -202,4 +203,4 @@ export function MobileSelectionToolbar({
   </div>
  </div>
  );
-}
+});

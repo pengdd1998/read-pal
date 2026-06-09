@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { THEMES, renderCardToCanvas } from './QuoteCardCanvas';
 import { useQuoteCardActions } from './useQuoteCardActions';
@@ -16,7 +16,7 @@ interface QuoteCardProps {
  onClose: () => void;
 }
 
-export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) {
+export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) {
  const [theme, setTheme] = useState<CardTheme>('warm');
  const [downloading, setDownloading] = useState(false);
  const [copied, setCopied] = useState(false);
@@ -219,4 +219,4 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
   </div>
  </div>
  );
-}
+});

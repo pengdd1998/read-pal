@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { copyToClipboard } from '@/lib/clipboard';
@@ -25,7 +25,7 @@ interface ReadingCardData {
  generatedAt: string;
 }
 
-export function ShareReadingCard() {
+export const ShareReadingCard = memo(function ShareReadingCard() {
  const t = useTranslations('shareCard');
  const { toast } = useToast();
  const [card, setCard] = useState<ReadingCardData | null>(null);
@@ -187,4 +187,4 @@ export function ShareReadingCard() {
   )}
  </div>
  );
-}
+});

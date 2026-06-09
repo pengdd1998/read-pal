@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, forwardRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, forwardRef, useMemo, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { preloadDOMPurify } from '@/lib/dompurify';
 import { useToast } from '@/components/Toast';
@@ -41,7 +41,7 @@ interface CompanionChatProps {
  onReady?: (handle: CompanionChatHandle) => void;
 }
 
-export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({
+const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(function CompanionChat({
  bookId,
  currentPage,
  totalPages,
@@ -248,3 +248,5 @@ export const CompanionChat = forwardRef<CompanionChatHandle, CompanionChatProps>
  </>
  );
 });
+
+export const CompanionChat = memo(CompanionChatInner);

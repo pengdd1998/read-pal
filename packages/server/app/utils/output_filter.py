@@ -93,7 +93,12 @@ def filter_stream_chunk(text: str, *, context: str = 'stream') -> str | None:
     return _redact_pii(text, context=context)
 
 
-def validate_schema(data: dict | list, schema_class, *, context: str = 'llm_output') -> dict:
+def validate_schema(
+    data: dict | list,
+    schema_class: type,
+    *,
+    context: str = 'llm_output',
+) -> dict:
     """Validate LLM output against a Pydantic schema.
 
     Returns validated data on success, or empty dict on failure.

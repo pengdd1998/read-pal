@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { getAuthToken } from '@/lib/auth-fetch';
@@ -27,7 +27,7 @@ function getNotificationIcon(type: string) {
  }
 }
 
-export function NotificationBell() {
+export const NotificationBell = memo(function NotificationBell() {
  const t = useTranslations('common');
 
  const fmtTime = (d: string) => formatRelativeTime(d, {
@@ -201,4 +201,4 @@ export function NotificationBell() {
   )}
  </div>
  );
-}
+});

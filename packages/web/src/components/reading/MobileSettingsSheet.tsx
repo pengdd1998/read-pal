@@ -1,5 +1,6 @@
 'use client';
 
+import React, { memo } from 'react';
 import { useTranslations } from 'next-intl';
 
 interface MobileSettingsSheetProps {
@@ -23,7 +24,7 @@ const FONT_OPTIONS: { value: string; labelKey: string }[] = [
  { value: "'Merriweather', Georgia, serif", labelKey: 'font_merri' },
 ];
 
-export function MobileSettingsSheet({
+export const MobileSettingsSheet = memo(function MobileSettingsSheet({
  fontSize,
  theme,
  quietMode,
@@ -160,4 +161,4 @@ export function MobileSettingsSheet({
   </div>
  </div>
  );
-}
+});
