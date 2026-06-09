@@ -26,7 +26,7 @@ export function ApiQuickStart() {
    </p>
   </div>
   <div>
-   <h3 className="font-semibold text-gray-800 mb-2">{t('step2_title')}</h3>
+   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('step2_title')}</h3>
    <div className="bg-stone-900 rounded-lg p-4 text-sm font-mono overflow-x-auto">
    <div className="text-stone-400 mb-1">{t('step2_comment')}</div>
    <div className="text-green-400">
@@ -38,7 +38,7 @@ export function ApiQuickStart() {
    </div>
   </div>
   <div>
-   <h3 className="font-semibold text-gray-800 mb-2">{t('step3_title')}</h3>
+   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('step3_title')}</h3>
    <div className="bg-stone-900 rounded-lg p-4 text-sm font-mono overflow-x-auto">
    <div className="text-stone-400 mb-1">{t('step3_comment')}</div>
    <div className="text-green-400">

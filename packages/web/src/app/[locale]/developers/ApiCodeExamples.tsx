@@ -10,7 +10,7 @@ export function ApiCodeExamples() {
   <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-4">{t('code_examples')}</h2>
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
-   <h3 className="font-semibold text-gray-800 mb-2">{t('code_python')}</h3>
+   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('code_python')}</h3>
    <div className="bg-stone-900 rounded-lg p-3 font-mono text-xs overflow-x-auto">
    <div className="text-stone-400">{'import requests'}</div>
    <div className="text-stone-400">{"API = 'https://your-readpal-instance.com'"}</div>
@@ -25,7 +25,7 @@ export function ApiCodeExamples() {
    </div>
   </div>
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
-   <h3 className="font-semibold text-gray-800 mb-2">{t('code_javascript')}</h3>
+   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('code_javascript')}</h3>
    <div className="bg-stone-900 rounded-lg p-3 font-mono text-xs overflow-x-auto">
    <div className="text-stone-400">{"const API = 'https://your-readpal-instance.com';"}</div>
    <div className="text-stone-400">{'const KEY = "rpk_YOUR_KEY";'}</div>

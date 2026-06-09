@@ -17,7 +17,7 @@ export function ApiExportFormats() {
     <th className="pb-2 font-semibold">{t('export_use_case')}</th>
    </tr>
    </thead>
-   <tbody className="divide-y divide-gray-200">
+   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
    <tr><td className="py-2 font-mono">csv</td><td>text/csv</td><td>{t('export_csv_use')}</td></tr>
    <tr><td className="py-2 font-mono">json</td><td>application/json</td><td>{t('export_json_use')}</td></tr>
    <tr><td className="py-2 font-mono">bibtex</td><td>application/x-bibtex</td><td>{t('export_bibtex_use')}</td></tr>

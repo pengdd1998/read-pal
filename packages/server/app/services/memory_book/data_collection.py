@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import structlog
 from typing import Any
 from uuid import UUID
@@ -222,12 +224,44 @@ async def _collect_book_data(
     if book_meta is None:
         return {}
 
-    highlights, notes = await _fetch_annotations(db, user_id, book_id)
-    conversations = await _fetch_conversations(db, user_id, book_id)
-    reading_sessions, raw_sessions = await _fetch_reading_sessions(
-        db, user_id, book_id,
+    # All four fetches are independent — run in parallel with graceful degradation
+    results = await asyncio.gather(
+        _fetch_annotations(db, user_id, book_id),
+        _fetch_conversations(db, user_id, book_id),
+        _fetch_reading_sessions(db, user_id, book_id),
+        _fetch_flashcards(db, user_id, book_id),
+        return_exceptions=True,
     )
-    flashcards = await _fetch_flashcards(db, user_id, book_id)
+
+    # Unpack results, falling back to safe defaults on failure
+    ann_result = results[0]
+    if isinstance(ann_result, Exception):
+        logger.warning('Annotations fetch failed for book %s', book_id, exc_info=ann_result)
+        highlights, notes = [], []
+    else:
+        highlights, notes = ann_result
+
+    conv_result = results[1]
+    if isinstance(conv_result, Exception):
+        logger.warning('Conversations fetch failed for book %s', book_id, exc_info=conv_result)
+        conversations: list[dict[str, Any]] = []
+    else:
+        conversations = conv_result
+
+    sess_result = results[2]
+    if isinstance(sess_result, Exception):
+        logger.warning('Reading sessions fetch failed for book %s', book_id, exc_info=sess_result)
+        reading_sessions, raw_sessions = [], []
+    else:
+        reading_sessions, raw_sessions = sess_result
+
+    fc_result = results[3]
+    if isinstance(fc_result, Exception):
+        logger.warning('Flashcards fetch failed for book %s', book_id, exc_info=fc_result)
+        flashcards: list[dict[str, Any]] = []
+    else:
+        flashcards = fc_result
+
     stats = _build_stats(highlights, notes, conversations, raw_sessions)
     stats['total_flashcards'] = len(flashcards)
 
@@ -254,32 +288,50 @@ async def _collect_enriched_data(
 
     enriched: dict[str, Any] = {**data}
 
-    # Knowledge graph concepts + edges for concept_web section
-    kg = await enrich_with_knowledge_graph(db, user_id, book_id)
-    enriched.update(kg)
+    # Build coroutines for all independent enrichment steps
+    async def _enrich_kg() -> dict[str, Any]:
+        return await enrich_with_knowledge_graph(db, user_id, book_id)
 
-    # Study mode mastery
-    try:
-        from app.services.study_mode_service import get_mastery
-        enriched['mastery'] = await get_mastery(db, user_id, book_id)
-    except Exception as exc:
-        logger.warning('Mastery enrichment skipped for book %s', book_id, exc_info=True)
-        enriched['mastery'] = {}
+    async def _enrich_mastery() -> dict[str, Any]:
+        try:
+            from app.services.study_mode_service import get_mastery
+            return {'mastery': await get_mastery(db, user_id, book_id)}
+        except Exception as exc:
+            logger.warning('Mastery enrichment skipped for book %s', book_id, exc_info=True)
+            return {'mastery': {}}
 
-    # Synthesis themes
-    enriched['synthesis_themes'] = await enrich_with_synthesis_themes(
-        db, user_id, book_id,
+    async def _enrich_synthesis() -> dict[str, Any]:
+        return {
+            'synthesis_themes': await enrich_with_synthesis_themes(
+                db, user_id, book_id,
+            ),
+        }
+
+    async def _enrich_metrics() -> dict[str, Any]:
+        return await enrich_reading_metrics(
+            data.get('reading_sessions', []),
+            data.get('highlights', []),
+        )
+
+    async def _enrich_other_books() -> dict[str, Any]:
+        return await fetch_other_books(db, user_id, book_id)
+
+    # Run all enrichment in parallel with graceful degradation
+    results = await asyncio.gather(
+        _enrich_kg(),
+        _enrich_mastery(),
+        _enrich_synthesis(),
+        _enrich_metrics(),
+        _enrich_other_books(),
+        return_exceptions=True,
     )
 
-    # Reading pace, session details, and first highlight
-    metrics = await enrich_reading_metrics(
-        data.get('reading_sessions', []),
-        data.get('highlights', []),
-    )
-    enriched.update(metrics)
-
-    # User's other completed books (for recommendations + threads)
-    books = await fetch_other_books(db, user_id, book_id)
-    enriched.update(books)
+    for result in results:
+        if isinstance(result, Exception):
+            logger.warning(
+                'Enrichment step failed for book %s', book_id, exc_info=result,
+            )
+            continue
+        enriched.update(result)
 
     return enriched

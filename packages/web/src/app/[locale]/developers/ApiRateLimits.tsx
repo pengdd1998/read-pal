@@ -17,7 +17,7 @@ export function ApiRateLimits() {
     <th className="pb-2 font-semibold">{t('rate_window')}</th>
    </tr>
    </thead>
-   <tbody className="divide-y divide-gray-200">
+   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
    <tr><td className="py-2">{t('rate_ai_chat')}</td><td>10</td><td>{t('rate_minute')}</td></tr>
    <tr><td className="py-2">{t('rate_data_export')}</td><td>5</td><td>{t('rate_minute')}</td></tr>
    <tr><td className="py-2">{t('rate_zotero')}</td><td>5</td><td>{t('rate_minute')}</td></tr>
