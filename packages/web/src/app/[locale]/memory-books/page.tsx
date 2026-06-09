@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { isDisplayableAuthor } from '@/lib/book-cover';
@@ -47,6 +47,7 @@ interface Book {
 
 export default function MemoryBooksPage() {
  const t = useTranslations('memoryBooks');
+ const locale = useLocale();
  usePageTitle(t('pageTitle'));
  const [memoryBooks, setMemoryBooks] = useState<MemoryBook[]>([]);
  const [books, setBooks] = useState<Book[]>([]);
@@ -54,6 +55,8 @@ export default function MemoryBooksPage() {
  const [generating, setGenerating] = useState<string | null>(null);
  const [error, setError] = useState<string | null>(null);
  const router = useRouter();
+ const mountedRef = useRef(true);
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  useEffect(() => {
  let stale = false;
@@ -71,7 +74,7 @@ export default function MemoryBooksPage() {
    setBooks(list.filter((b) => b.progress > 10));
   }
   })
-  .catch(() => { if (!stale) setError(t('failedToLoad')); })
+  .catch((err) => { console.warn('MemoryBooks: failed to load', err); if (!stale) setError(t('failedToLoad')); })
   .finally(() => { if (!stale) setLoading(false); });
   return () => { stale = true; };
  }, [t]);
@@ -85,15 +88,18 @@ export default function MemoryBooksPage() {
   });
   if (res.success && res.data) {
   analytics.track('reading_book_generated');
+  if (!mountedRef.current) return;
   // Navigate to the personal book page
   router.push(`/memory-books/${bookId}`);
   } else {
    setError(t('failedToGenerate'));
   }
- } catch {
+ } catch (err) {
+  console.warn('MemoryBooks: generate failed', err);
+  if (!mountedRef.current) return;
   setError(t('failedToGenerate'));
  } finally {
-  setGenerating(null);
+  if (mountedRef.current) setGenerating(null);
  }
  };
  const eligibleBooks = useMemo(() => {
@@ -102,18 +108,18 @@ export default function MemoryBooksPage() {
  }, [memoryBooks, books]);
 
  const formatDuration = (seconds: number) => {
- if (seconds < 60) return `${seconds}s`;
+ if (seconds < 60) return t('durationSec', { count: seconds });
  const m = Math.floor(seconds / 60);
- if (m < 60) return `${m}m`;
+ if (m < 60) return t('durationMin', { count: m });
  const h = Math.floor(m / 60);
- return `${h}h ${m % 60}m`;
+ return t('durationHm', { hours: h, mins: m % 60 });
  };
 
  return (
  <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
   {/* Back */}
   <div className="mb-6">
-  <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+  <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
    </svg>
@@ -126,8 +132,8 @@ export default function MemoryBooksPage() {
   <div className="flex items-center gap-3">
    <span className="text-3xl">{'\uD83D\uDCD5'}</span>
    <div>
-   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('title')}</h1>
-   <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
+   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
+   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('subtitle')}</p>
    </div>
   </div>
   </div>
@@ -140,14 +146,14 @@ export default function MemoryBooksPage() {
 
   {/* Loading */}
   {loading && (
-  <div className="space-y-4">
+  <div className="space-y-4" role="status" aria-busy="true">
    {Array.from({ length: 3 }).map((_, i) => (
    <div key={i} className="bg-surface-0 rounded-xl border border-surface-3 p-5 animate-pulse">
     <div className="flex items-center gap-3">
-    <div className="w-12 h-16 bg-gray-100 rounded-lg" />
+    <div className="w-12 h-16 bg-gray-100 dark:bg-gray-800 rounded-lg" />
     <div className="flex-1">
-     <div className="h-4 bg-gray-100 rounded w-40 mb-2" />
-     <div className="h-3 bg-gray-100 rounded w-24" />
+     <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-40 mb-2" />
+     <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-24" />
     </div>
     </div>
    </div>
@@ -158,7 +164,7 @@ export default function MemoryBooksPage() {
   {/* Existing personal reading books */}
   {!loading && memoryBooks.length > 0 && (
   <div className="mb-8">
-   <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('yourBooks')}</h2>
+   <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('yourBooks')}</h2>
    <div className="space-y-3">
    {memoryBooks.map((mb) => {
     const isPersonalBook = mb.format === 'personal_book';
@@ -174,32 +180,32 @@ export default function MemoryBooksPage() {
      <div className={`w-12 h-16 rounded-lg flex items-center justify-center flex-shrink-0 ${
       isPersonalBook
       ? 'bg-gradient-to-br from-amber-200 to-amber-300 dark:from-amber-900/40 dark:to-amber-800/40'
-      : 'bg-gradient-to-br from-gray-100 to-gray-200'
+      : 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700'
      }`}>
       <span className="text-2xl">{isPersonalBook ? '\uD83D\uDCD5' : '\uD83D\uDCD3'}</span>
      </div>
      <div className="flex-1 min-w-0">
-      <h3 className="font-semibold text-gray-900 truncate">
+      <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
       {mb.book?.title || mb.title}
       </h3>
-      <p className="text-xs text-gray-500 mt-0.5">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
       {isPersonalBook
        ? t('chapters', { count: sectionCount })
        : t('moments', { count: mb.moments?.length || 0 })}
       {' \u00B7 '}
-      {mb.generatedAt ? new Date(mb.generatedAt).toLocaleDateString() : t('unknownDate')}
+      {mb.generatedAt ? new Date(mb.generatedAt).toLocaleDateString(locale) : t('unknownDate')}
       </p>
       {mb.stats && (
       <div className="flex gap-3 mt-2">
        <span className="text-xs text-amber-600 dark:text-amber-400">{t('highlights', { count: mb.stats.totalHighlights })}</span>
        <span className="text-xs text-teal-600 dark:text-teal-400">{t('notes', { count: mb.stats.totalNotes })}</span>
        {mb.stats.readingDuration && mb.stats.readingDuration > 0 && (
-       <span className="text-xs text-gray-400">{formatDuration(mb.stats.readingDuration)}</span>
+       <span className="text-xs text-gray-400 dark:text-gray-500">{formatDuration(mb.stats.readingDuration)}</span>
        )}
       </div>
       )}
      </div>
-     <svg aria-hidden="true" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+     <svg aria-hidden="true" className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
      </svg>
      </div>
@@ -213,7 +219,7 @@ export default function MemoryBooksPage() {
   {/* Generate new */}
   {!loading && eligibleBooks.length > 0 && (
   <div>
-   <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('generateNew')}</h2>
+   <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('generateNew')}</h2>
    <div className="space-y-2">
    {eligibleBooks.map((book) => (
     <div key={book.id} className="bg-surface-0 rounded-xl border border-surface-3 p-4 flex items-center gap-4">
@@ -221,13 +227,13 @@ export default function MemoryBooksPage() {
      <span className="text-lg">{'\uD83D\uDCD6'}</span>
     </div>
     <div className="flex-1 min-w-0">
-     <h3 className="font-medium text-sm text-gray-900 truncate">{book.title}</h3>
-     <p className="text-xs text-gray-500">{isDisplayableAuthor(book.author) ? `${book.author} · ` : ''}{t('complete', { percent: Math.round(book.progress) })}</p>
+     <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{book.title}</h3>
+     <p className="text-xs text-gray-500 dark:text-gray-400">{isDisplayableAuthor(book.author) ? `${book.author} · ` : ''}{t('complete', { percent: Math.round(book.progress) })}</p>
     </div>
     <button
      onClick={() => handleGenerate(book.id)}
      disabled={generating === book.id}
-     className="px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50"
+     className="px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
      {generating === book.id ? t('generating') : t('generate')}
     </button>
@@ -243,8 +249,8 @@ export default function MemoryBooksPage() {
    <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center">
    <span className="text-3xl">{'\uD83D\uDCD5'}</span>
    </div>
-   <h2 className="text-xl font-bold text-gray-900 mb-2">{t('emptyTitle')}</h2>
-   <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('emptyTitle')}</h2>
+   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
    {t('emptyDesc')}
    </p>
    <Link href="/library" className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">

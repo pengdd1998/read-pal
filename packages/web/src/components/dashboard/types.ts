@@ -26,12 +26,6 @@ export interface RecentBook {
   coverUrl?: string;
 }
 
-export interface AgentInsight {
-  agent: string;
-  icon: string;
-  message: string;
-}
-
 export interface ChallengeItem {
   id: string;
   title: string;

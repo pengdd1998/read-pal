@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
@@ -10,25 +10,31 @@ interface LibraryEmptyStateProps {
  uploaderRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function LibraryEmptyState({ onBookAdded, uploaderRef }: LibraryEmptyStateProps) {
+export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookAdded, uploaderRef }: LibraryEmptyStateProps) {
  const t = useTranslations('library');
  const [seeding, setSeeding] = useState(false);
  const [error, setError] = useState('');
+ const mountedRef = useRef(true);
+
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const handleSeedSample = async () => {
  setError('');
  try {
   setSeeding(true);
   const res = await api.post<{ book: Book }>('/api/books/seed-sample');
+  if (!mountedRef.current) return;
   if (res.success && res.data?.book) {
   onBookAdded(res.data.book);
   } else {
   setError(t('failed_seed_sample'));
   }
- } catch {
+ } catch (error) {
+  console.warn('LibraryEmptyState_seed_failed', error);
+  if (!mountedRef.current) return;
   setError(t('failed_seed_sample'));
  } finally {
-  setSeeding(false);
+  if (mountedRef.current) setSeeding(false);
  }
  };
 
@@ -46,10 +52,10 @@ export function LibraryEmptyState({ onBookAdded, uploaderRef }: LibraryEmptyStat
    </svg>
    </div>
   </div>
-  <h3 className="font-bold text-gray-900 text-xl mb-2">
+  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-xl mb-2">
    {t('start_reading_journey')}
   </h3>
-  <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6 leading-relaxed">
+  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6 leading-relaxed">
    {t('empty_state_desc')}
   </p>
 
@@ -68,7 +74,7 @@ export function LibraryEmptyState({ onBookAdded, uploaderRef }: LibraryEmptyStat
    <button
    onClick={() => uploaderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
    aria-label={t('upload_own_book')}
-   className="btn bg-surface-0 border border-surface-3 text-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:text-amber-700 dark:hover:text-amber-300 transition-all flex items-center gap-2"
+   className="btn bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-600 hover:text-amber-700 dark:hover:text-amber-300 transition-all flex items-center gap-2"
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -77,7 +83,7 @@ export function LibraryEmptyState({ onBookAdded, uploaderRef }: LibraryEmptyStat
    </button>
   </div>
 
-  <p className="text-xs text-gray-400 flex items-center justify-center gap-1.5">
+  <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1.5">
    <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
    </svg>
@@ -98,4 +104,4 @@ export function LibraryEmptyState({ onBookAdded, uploaderRef }: LibraryEmptyStat
   )}
  </div>
  );
-}
+});

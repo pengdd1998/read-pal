@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { SessionData } from './types';
 
@@ -11,13 +11,13 @@ interface ActivityHeatmapProps {
 const DAYS = 84;
 
 const COLORS = [
- 'bg-gray-100',
+ 'bg-gray-100 dark:bg-gray-800',
  'bg-amber-200 dark:bg-amber-800',
  'bg-amber-400 dark:bg-amber-600',
  'bg-amber-600 dark:bg-amber-400',
 ];
 
-export function ActivityHeatmap({ sessions }: ActivityHeatmapProps) {
+export const ActivityHeatmap = React.memo(function ActivityHeatmap({ sessions }: ActivityHeatmapProps) {
  const t = useTranslations('stats');
  const locale = useLocale();
 
@@ -51,13 +51,13 @@ export function ActivityHeatmap({ sessions }: ActivityHeatmapProps) {
 
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
-  <h2 className="font-semibold text-gray-900 mb-4">{t('activity_title')}</h2>
+  <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('activity_title')}</h2>
   <div className="flex flex-wrap gap-1">
   {cells}
   </div>
-  <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
+  <div className="flex items-center gap-2 mt-3 text-xs text-gray-500 dark:text-gray-400">
   <span>{t('heatmap_less')}</span>
-  <div className="w-3 h-3 rounded-sm bg-gray-100" />
+  <div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800" />
   <div className="w-3 h-3 rounded-sm bg-amber-200 dark:bg-amber-800" />
   <div className="w-3 h-3 rounded-sm bg-amber-400 dark:bg-amber-600" />
   <div className="w-3 h-3 rounded-sm bg-amber-600 dark:bg-amber-400" />
@@ -65,4 +65,4 @@ export function ActivityHeatmap({ sessions }: ActivityHeatmapProps) {
   </div>
  </div>
  );
-}
+});

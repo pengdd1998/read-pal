@@ -9,12 +9,18 @@ import { useAuth } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { routing } from '@/i18n/routing';
 
 type AuthMode = 'login' | 'register';
 
 /** Strip locale prefix from a path so next-intl's router.push doesn't double-prefix. */
 function stripLocale(path: string): string {
- return path.replace(/^\/(en|zh)(\/|$)/, '/');
+ for (const locale of routing.locales) {
+  if (path.startsWith(`/${locale}/`) || path === `/${locale}`) {
+   return path.slice(`/${locale}`.length) || '/';
+  }
+ }
+ return path;
 }
 
 function AuthPageContent() {
@@ -32,10 +38,13 @@ function AuthPageContent() {
  if (m === 'login' || m === 'register') setMode(m);
  }, [searchParams]);
 
- // Redirect if already authenticated (skip if we just registered)
  const justRegisteredRef = useRef(false);
+ const redirectingRef = useRef(false);
+
+ // Redirect if already authenticated (e.g., page refresh or direct visit)
  useEffect(() => {
- if (isAuthenticated && !justRegisteredRef.current) {
+ if (isAuthenticated && !justRegisteredRef.current && !redirectingRef.current) {
+  redirectingRef.current = true;
   const next = searchParams?.get('next') || '/dashboard';
   router.push(stripLocale(next));
  }
@@ -49,6 +58,8 @@ function AuthPageContent() {
  };
 
  const handleSuccess = () => {
+ if (redirectingRef.current) return;
+ redirectingRef.current = true;
  if (mode === 'register') {
   justRegisteredRef.current = true;
   router.push('/welcome');
@@ -68,12 +79,12 @@ function AuthPageContent() {
    <span className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
     r
    </span>
-   <span className="text-2xl font-display font-bold text-gray-900">read-pal</span>
+   <span className="text-2xl font-display font-bold text-gray-900 dark:text-gray-100">read-pal</span>
    </Link>
-   <h2 className="text-4xl xl:text-5xl font-bold font-display text-gray-900 leading-tight mb-5">
+   <h2 className="text-4xl xl:text-5xl font-bold font-display text-gray-900 dark:text-gray-100 leading-tight mb-5">
    {mode === 'login' ? t('login_title') : t('register_title')}
    </h2>
-   <p className="text-lg text-gray-600 leading-relaxed">
+   <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
    {mode === 'login'
     ? t('login_subtitle_alt')
     : t('register_subtitle_alt')}
@@ -86,7 +97,7 @@ function AuthPageContent() {
    ].map((f) => (
     <div key={f.label} className="text-center p-4 rounded-2xl bg-surface-2/60 backdrop-blur-sm">
     <div className="text-3xl mb-3">{f.emoji}</div>
-    <div className="text-sm text-gray-600 font-semibold">{f.label}</div>
+    <div className="text-sm text-gray-600 dark:text-gray-400 font-semibold">{f.label}</div>
     </div>
    ))}
    </div>
@@ -102,10 +113,10 @@ function AuthPageContent() {
     r
    </span>
    </Link>
-   <h1 className="text-2xl font-bold font-display text-gray-900">
+   <h1 className="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">
    {mode === 'login' ? t('login_title') : t('register_title')}
    </h1>
-   <p className="text-sm text-gray-600 mt-1">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
    {mode === 'login' ? t('login_subtitle_alt') : t('register_subtitle_alt')}
    </p>
   </div>
@@ -119,8 +130,8 @@ function AuthPageContent() {
    onClick={() => switchMode('register')}
    className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] ${
     mode === 'register'
-    ? 'bg-surface-0 text-gray-900 shadow-xs'
-    : 'text-gray-500 hover:text-gray-700'
+    ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-xs'
+    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
    }`}
    >
    {t('sign_up_tab')}
@@ -132,8 +143,8 @@ function AuthPageContent() {
    onClick={() => switchMode('login')}
    className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] ${
     mode === 'login'
-    ? 'bg-surface-0 text-gray-900 shadow-xs'
-    : 'text-gray-500 hover:text-gray-700'
+    ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-xs'
+    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
    }`}
    >
    {t('sign_in_tab')}
@@ -155,7 +166,7 @@ export default function AuthPage() {
  return (
  <Suspense fallback={
   <div className="min-h-[80vh] flex items-center justify-center">
-  <div className="flex items-center gap-2 text-gray-500">
+  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
    <LoadingSpinner />
    {tc('loading')}
   </div>

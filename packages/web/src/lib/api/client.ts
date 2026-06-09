@@ -191,6 +191,7 @@ export class ApiClient {
       return result;
     } catch (err) {
       if (this.isOfflineError(err)) {
+        console.warn('API client: request failed (offline queue)', err);
         return this.queueOfflineResponse<T>(url, method.toUpperCase(), data);
       }
       throw err;
@@ -261,6 +262,7 @@ export class ApiClient {
         if (signal?.aborted || (err as DOMException)?.name === 'AbortError') {
           throw err;
         }
+        console.warn('API client: retry failed', err);
         lastError = err;
         const status = (err as AxiosError).response?.status;
         if (!isRetryableStatus(status) && status) break;

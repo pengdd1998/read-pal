@@ -94,6 +94,7 @@ export function useQuoteCardActions({
       } catch (err) {
         // User cancelled share sheet — not an error
         if ((err as DOMException).name !== 'AbortError') {
+          console.warn('QuoteCard: share failed', err);
           // Fallback: download
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');

@@ -43,14 +43,14 @@ export default function GlobalError({
    minHeight: '100vh',
    padding: '2rem',
    fontFamily: 'system-ui, -apple-system, sans-serif',
-   backgroundColor: '#f9fafb',
-   color: '#111827',
+   backgroundColor: 'var(--surface-0, #fefdfb)',
+   color: 'var(--gray-900, #1e1812)',
   }}>
    <div style={{
     width: 56,
     height: 56,
     borderRadius: '50%',
-    backgroundColor: '#fef3c7',
+    backgroundColor: 'var(--surface-2, #f0e9e0)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -62,11 +62,11 @@ export default function GlobalError({
    <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>
     {m.title}
    </h1>
-   <p style={{ color: '#6b7280', marginBottom: 24, textAlign: 'center', maxWidth: 400 }}>
+   <p style={{ color: 'var(--gray-500, #8a7b68)', marginBottom: 24, textAlign: 'center', maxWidth: 400 }}>
     {m.message}
    </p>
    {error.digest && (
-    <p style={{ color: '#9ca3af', fontSize: 12, marginBottom: 16 }}>
+    <p style={{ color: 'var(--gray-400, #7a6b58)', fontSize: 12, marginBottom: 16 }}>
      {m.error_id} {error.digest}
     </p>
    )}
@@ -90,8 +90,8 @@ export default function GlobalError({
      href="/"
      style={{
       padding: '10px 20px',
-      backgroundColor: '#f3f4f6',
-      color: '#374151',
+      backgroundColor: 'var(--surface-2, #f0e9e0)',
+      color: 'var(--gray-800, #302820)',
       border: 'none',
       borderRadius: 8,
       fontSize: 14,

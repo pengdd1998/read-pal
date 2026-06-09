@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { MirrorSection } from '@/components/reading-mirror/SectionRenderer';
@@ -34,10 +34,10 @@ interface ReadingMirror {
 
 export default function ReadingMirrorPage() {
  const t = useTranslations('memoryBooks');
+ const locale = useLocale();
  const tc = useTranslations('common');
  usePageTitle(t('detailPageTitle'));
  const params = useParams();
- const locale = (params?.locale as string) || 'en';
  const bookId = (params?.bookId ?? '') as string;
 
  const [mirror, setMirror] = useState<ReadingMirror | null>(null);
@@ -69,7 +69,8 @@ export default function ReadingMirrorPage() {
   setBookAuthor(bookRes.data.author);
   setCoverUrl(bookRes.data.coverUrl);
   }
- }).catch(() => {
+ }).catch((err) => {
+  console.warn('MemoryBookDetail: failed to load', err);
   if (!stale) setError(t('failedToLoad'));
   })
  .finally(() => { if (!stale) setLoading(false); });
@@ -104,7 +105,8 @@ export default function ReadingMirrorPage() {
   setError(t('generationEmpty'));
   setGenStep('error');
   }
- } catch {
+ } catch (err) {
+  console.warn('MemoryBookDetail: generate failed', err);
   if (genTimerRef.current) { clearInterval(genTimerRef.current); genTimerRef.current = null; }
   if (!mountedRef.current) return;
   setError(t('generationFailedError'));
@@ -143,8 +145,8 @@ export default function ReadingMirrorPage() {
  if (loading) {
  return (
   <div className="px-4 sm:px-6 lg:px-8 py-12 text-center">
-  <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-  <p className="text-gray-500">{t('loading')}</p>
+  <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" role="status" aria-label="Loading" />
+  <p className="text-gray-500 dark:text-gray-400">{t('loading')}</p>
   </div>
  );
  }
@@ -182,9 +184,9 @@ export default function ReadingMirrorPage() {
    </svg>
    </Link>
    <div>
-   <h1 className="text-lg font-bold text-gray-900">{bookTitle || mirror.title}</h1>
-   <p className="text-xs text-gray-400">
-    {t('generatedDate', { date: mirror.generatedAt ? new Date(mirror.generatedAt).toLocaleDateString() : '' })}
+   <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{bookTitle || mirror.title}</h1>
+   <p className="text-xs text-gray-400 dark:text-gray-500">
+    {t('generatedDate', { date: mirror.generatedAt ? new Date(mirror.generatedAt).toLocaleDateString(locale) : '' })}
     {mirror.version > 1 && <span className="ml-1 opacity-60">(v{mirror.version})</span>}
    </p>
    </div>

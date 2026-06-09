@@ -173,6 +173,7 @@ async def _was_password_reset(user_id: str, token_issued_at: float) -> bool:
         # If a reset marker exists, all tokens issued before it are invalid
         return reset_marker is not None
     except Exception:
+        logger.warning('auth.pwd_reset_check_failed', user_id=user_id)
         return False
 
 
@@ -233,7 +234,6 @@ async def _authenticate_jwt(token: str, db: AsyncSession) -> dict[str, Any]:
     if user_id and await _was_password_reset(user_id, payload.get('iat', 0)):
         _raise_401('TOKEN_REVOKED', t('errors.token_revoked'))
 
-    result = await db.execute(select(User).where(User.id == user_id))
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
 

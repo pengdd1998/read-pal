@@ -132,7 +132,8 @@ async function doRefresh(): Promise<boolean> {
       return true;
     }
     return false;
-  } catch {
+  } catch (err) {
+    console.warn('Token refresh failed:', err);
     return false;
   }
 }

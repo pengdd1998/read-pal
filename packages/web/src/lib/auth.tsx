@@ -122,8 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
  try {
   await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
- } catch {
-  // Logout is idempotent — ignore errors
+ } catch (e) {
+  console.warn('Logout request failed (idempotent):', e);
  }
  await clearAuthTokens();
  await removeItem('user');

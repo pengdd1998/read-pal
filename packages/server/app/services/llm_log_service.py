@@ -134,13 +134,13 @@ async def _aggregate_by_model(
     )
     return [
         {
-            'model': row[0],
-            'calls': int(row[1]),
-            'promptTokens': int(row[2]),
-            'completionTokens': int(row[3]),
-            'totalTokens': int(row[4]),
-            'totalCost': float(row[5] or 0),
-            'avgLatencyMs': round(float(row[6] or 0), 1),
+            'model': row.model,
+            'calls': int(row.calls),
+            'promptTokens': int(row.prompt_tokens),
+            'completionTokens': int(row.completion_tokens),
+            'totalTokens': int(row.total_tokens),
+            'totalCost': float(row.total_cost or 0),
+            'avgLatencyMs': round(float(row.avg_latency_ms or 0), 1),
         }
         for row in rows.all()
     ]
@@ -163,9 +163,9 @@ async def _aggregate_by_label(
     )
     return [
         {
-            'label': row[0],
-            'calls': int(row[1]),
-            'totalTokens': int(row[2]),
+            'label': row.label,
+            'calls': int(row.calls),
+            'totalTokens': int(row.total_tokens),
         }
         for row in rows.all()
     ]

@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 
 const secondaryLinkClass =
- 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors';
+ 'inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors';
 
 export default async function NotFound() {
  const t = await getTranslations('common');
@@ -11,7 +11,7 @@ export default async function NotFound() {
   <div className="text-center px-4">
   <h1 className="text-5xl font-bold">404</h1>
   <h2 className="mt-4 text-xl font-semibold">{t('not_found_title')}</h2>
-  <p className="mt-2 text-gray-600 max-w-md mx-auto">
+  <p className="mt-2 text-gray-600 dark:text-gray-400 max-w-md mx-auto">
    {t('not_found_desc')}
   </p>
   <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

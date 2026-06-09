@@ -179,21 +179,21 @@ export function FeatureTour() {
   style={{ top, left }}
   onClick={(e) => e.stopPropagation()}
   >
-  <div className="bg-surface-0 rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+  <div className="bg-surface-0 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
    <div className="px-4 pt-3 pb-2">
    <div className="flex items-center gap-2 mb-1">
     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
     {step + 1}
     </span>
-    <h4 className="text-sm font-semibold text-gray-900">{t(current.titleKey)}</h4>
+    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(current.titleKey)}</h4>
    </div>
-   <p className="text-xs text-gray-500 leading-relaxed">{t(current.descKey)}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{t(current.descKey)}</p>
    </div>
 
-   <div className="px-4 py-2.5 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
+   <div className="px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
    <button
     onClick={handleSkip}
-    className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors min-h-[44px] inline-flex items-center"
+    className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center"
    >
     {t('tour_skip')}
    </button>
@@ -215,7 +215,7 @@ export function FeatureTour() {
 
     <button
     onClick={handleNext}
-    className="px-3 py-1 rounded-lg text-[11px] font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors min-h-[44px] inline-flex items-center"
+    className="px-3 py-1 rounded-lg text-[11px] font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
     {isLast ? t('tour_got_it') : t('tour_next')}
     </button>

@@ -69,8 +69,8 @@ export function consumeSSEStream(
         if (token) {
           onToken(token);
         }
-      } catch {
-        // Ignore malformed JSON lines
+      } catch (err) {
+        console.warn('SSE: malformed JSON line:', payload, err);
       }
     }
   };
@@ -86,6 +86,7 @@ export function consumeSSEStream(
       safeDone();
     } catch (err) {
       if (!controller.signal.aborted) {
+        console.warn('SSE: stream read failed', err);
         safeError('Stream read failed');
       }
     } finally {

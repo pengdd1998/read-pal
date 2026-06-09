@@ -30,7 +30,7 @@ export function ChatInput({
    onKeyDown={onKeyDown}
    placeholder={t('companion_placeholder')}
    aria-label={t('companion_aria_message')}
-   className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-surface-0 px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
+   className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-surface-0 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
    rows={2}
    disabled={loading}
    maxLength={4000}
@@ -38,7 +38,7 @@ export function ChatInput({
   {loading ? (
    <button
    onClick={onStop}
-   className="self-end shrink-0 px-3 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-medium transition-colors"
+   className="self-end shrink-0 px-3 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
    {t('companion_stop')}
    </button>
@@ -47,7 +47,7 @@ export function ChatInput({
    onClick={onSend}
    disabled={!input.trim()}
    aria-label={t('companion_aria_send')}
-   className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 shadow-soft disabled:opacity-50"
+   className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 shadow-soft disabled:opacity-50 focus-visible:outline-white"
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

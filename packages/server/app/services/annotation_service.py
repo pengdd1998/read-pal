@@ -158,7 +158,13 @@ async def get_tags(
     if book_id:
         q = q.where(Annotation.book_id == book_id)
     result = await db.execute(q)
-    return [{'name': row[0], 'count': row[1]} for row in result.all() if row[0]]
+    rows = result.all()
+    tags = []
+    for row in rows:
+        name = row[0]
+        if name:
+            tags.append({'name': name, 'count': row[1]})
+    return tags
 
 
 async def search_annotations(

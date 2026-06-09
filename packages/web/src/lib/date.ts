@@ -34,7 +34,8 @@ export function formatRelativeTime(dateStr: string, labels?: RelativeTimeLabels,
     const diffDay = Math.floor(diffHr / 24);
     if (diffDay < 7) return l.days_ago.replace('%n', String(diffDay));
     return date.toLocaleDateString(locale || undefined, { month: 'short', day: 'numeric' });
-  } catch {
+  } catch (err) {
+    console.warn('formatRelativeTime: invalid date:', dateStr, err);
     return dateStr;
   }
 }

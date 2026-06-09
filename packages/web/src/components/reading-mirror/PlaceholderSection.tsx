@@ -34,8 +34,8 @@ export default function PlaceholderSection({ sectionType, title, message }: Plac
   .placeholder-section {
    text-align: center;
    padding: 3rem 1.5rem;
-   background: #f9f5f0;
-   border: 1px dashed #f0e9e0;
+   background: var(--surface-1, #f9f5f0);
+   border: 1px dashed var(--surface-3, #e4dace);
    border-radius: 0.75rem;
    margin: 1rem 0;
   }
@@ -48,11 +48,11 @@ export default function PlaceholderSection({ sectionType, title, message }: Plac
    font-family: 'Crimson Pro', Georgia, serif;
    font-size: 1.25rem;
    font-weight: 600;
-   color: #4a3f33;
+   color: var(--gray-700, #4a3f33);
    margin: 0 0 0.5rem;
   }
   .placeholder-message {
-   color: #8a7e72;
+   color: var(--gray-400, #7a6b58);
    font-size: 0.9rem;
    font-style: italic;
    margin: 0;

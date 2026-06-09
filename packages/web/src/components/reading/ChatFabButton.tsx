@@ -63,7 +63,7 @@ export function ChatFabButton({
   if (dragRef.current?.moved) e.preventDefault();
   }}
   onTouchEnd={() => { onDragEnd(); }}
-  className="fixed z-40 flex items-center justify-center w-14 h-14 rounded-full select-none touch-none"
+  className="fixed z-40 flex items-center justify-center w-14 h-14 rounded-full select-none touch-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   style={{
   left: btnPos.x,
   top: btnPos.y,

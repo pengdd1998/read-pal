@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Collection } from '@read-pal/shared';
@@ -13,7 +13,7 @@ interface CollectionsSidebarProps {
  onSelectCollection: (id: string | null, bookIds?: string[]) => void;
 }
 
-export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: CollectionsSidebarProps) {
+export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activeCollectionId, onSelectCollection }: CollectionsSidebarProps) {
  const { toast } = useToast();
  const t = useTranslations('library');
  const [collections, setCollections] = useState<Collection[]>([]);
@@ -27,6 +27,9 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
  const [collapsed, setCollapsed] = useState(false);
  const [creating, setCreating] = useState(false);
  const [error, setError] = useState(false);
+ const mountedRef = useRef(true);
+
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const ICONS: { value: string; label: string }[] = useMemo(() => [
  { value: 'folder', label: t('icon_folder') },
@@ -72,6 +75,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
   icon: newIcon,
   color: newColor,
   });
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setCollections((prev) => [res.data as Collection, ...prev]);
   setNewName('');
@@ -80,10 +84,12 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
   setShowCreate(false);
   toast(t('collections_created'), 'success');
   }
- } catch {
+ } catch (err) {
+  console.warn('CollectionsSidebar: create failed', err);
+  if (!mountedRef.current) return;
   toast(t('collections_create_failed'), 'error');
  } finally {
-  setCreating(false);
+  if (mountedRef.current) setCreating(false);
  }
  };
 
@@ -93,8 +99,11 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
  if (activeCollectionId === id) onSelectCollection(null);
  try {
   await api.delete(`/api/collections/${id}`);
+  if (!mountedRef.current) return;
   toast(t('collections_deleted'), 'success');
- } catch {
+ } catch (err) {
+  console.warn('CollectionsSidebar: delete failed', err);
+  if (!mountedRef.current) return;
   setCollections(prev);
   toast(t('collections_delete_failed'), 'error');
  }
@@ -104,21 +113,24 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
  if (!editName.trim()) { setEditingId(null); return; }
  try {
   const res = await api.patch<Collection>(`/api/collections/${id}`, { name: editName.trim() });
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setCollections((prev) => prev.map((c) => (c.id === id ? (res.data as Collection) : c)));
   }
- } catch {
+ } catch (err) {
+  console.warn('CollectionsSidebar: rename failed', err);
+  if (!mountedRef.current) return;
   toast(t('collections_rename_failed'), 'error');
  }
- setEditingId(null);
+ if (mountedRef.current) setEditingId(null);
  };
 
  if (loading) {
  return (
   <div className="space-y-2 pr-4">
-  <div className="h-5 w-24 bg-gray-100 rounded animate-pulse" />
+  <div className="h-5 w-24 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
   {[1, 2, 3].map((i) => (
-   <div key={i} className="h-8 bg-gray-50/50 rounded-lg animate-pulse" />
+   <div key={i} className="h-8 bg-gray-50/50 dark:bg-gray-800/50 rounded-lg animate-pulse" />
   ))}
   </div>
  );
@@ -130,7 +142,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
   <p className="text-xs text-red-500 mb-2">{t('collections_load_failed')}</p>
   <button
    onClick={loadCollections}
-   className="text-xs text-primary-600 hover:text-primary-700 underline"
+   className="text-xs text-primary-600 hover:text-primary-700 underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {t('collections_retry')}
   </button>
@@ -144,7 +156,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
   <div className="flex items-center justify-between mb-3">
   <button
    onClick={() => setCollapsed((v) => !v)}
-   className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors"
+   className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    <svg aria-hidden="true" className={`w-3 h-3 transition-transform ${collapsed ? '' : 'rotate-90'}`} fill="currentColor" viewBox="0 0 20 20">
    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -153,7 +165,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
   </button>
   <button
    onClick={() => setShowCreate((v) => !v)}
-   className="p-1 rounded-md text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 transition-colors"
+   className="p-1 rounded-md text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
    title={t('collections_new')}
    aria-label={t('collections_new')}
   >
@@ -184,10 +196,10 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
    {/* All books button */}
    <button
    onClick={() => onSelectCollection(null)}
-   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
+   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 mb-1 ${
     activeCollectionId === null
     ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium'
-    : 'text-gray-600 hover:bg-gray-100'
+    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
    }`}
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -214,7 +226,7 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
    ))}
 
    {collections.length === 0 && !showCreate && (
-   <p className="text-xs text-gray-400 px-3 py-2">
+   <p className="text-xs text-gray-400 dark:text-gray-500 px-3 py-2">
     {t('collections_empty')}
    </p>
    )}
@@ -222,4 +234,4 @@ export function CollectionsSidebar({ activeCollectionId, onSelectCollection }: C
   )}
  </div>
  );
-}
+});

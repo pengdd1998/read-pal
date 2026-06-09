@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 import type { UserSettings } from '@/components/settings/types';
@@ -20,7 +21,6 @@ const PERSONAS = [
 
 function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
  const t = useTranslations('settings');
- const ts = useTranslations('settings_page');
  return (
  <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-5">
   {/* Theme */}
@@ -64,7 +64,7 @@ function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) 
    disabled={saving}
    aria-label={t('font_size_label')}
   />
-  <div className="flex justify-between text-xs text-gray-500 mt-1">
+  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
    <span>A</span>
    <span className="text-lg">A</span>
   </div>
@@ -139,7 +139,7 @@ function ReadingGoalsCard({ settings, saving, onSave }: ReadingPrefsSectionProps
    disabled={saving}
    aria-label={t('daily_reading_time')}
   />
-  <div className="flex justify-between text-xs text-gray-500 mt-1">
+  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
    <span>5{t('min_suffix')}</span>
    <span>1{t('hr_suffix')}</span>
    <span>2{t('hr_suffix')}</span>
@@ -166,7 +166,7 @@ function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProp
     className={`flex items-center gap-3 p-3 min-h-[44px] rounded-xl border-2 transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
     settings.friendPersona === p.id
      ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/10'
-     : 'border-surface-3 hover:border-gray-300 bg-gray-50/50/50'
+     : 'border-surface-3 hover:border-gray-300 bg-gray-50 dark:bg-gray-800'
     }`}
    >
     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center flex-shrink-0`}>
@@ -174,7 +174,7 @@ function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProp
     </div>
     <div className="text-left">
     <div className="font-medium text-sm">{p.name}</div>
-    <div className="text-xs text-gray-500">{t(`persona_${p.id}_desc`)}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400">{t(`persona_${p.id}_desc`)}</div>
     </div>
     {settings.friendPersona === p.id && (
     <svg aria-hidden="true" className="w-5 h-5 text-amber-500 ml-auto flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -209,7 +209,7 @@ function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProp
     <div className="text-sm font-medium">
     {t(labelKey)}
     </div>
-    <div className="text-xs text-gray-500 mt-0.5">{t(`${labelKey}_desc`)}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t(`${labelKey}_desc`)}</div>
    </button>
    ))}
   </div>
@@ -218,7 +218,7 @@ function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProp
  );
 }
 
-export function ReadingPrefsSection({ settings, saving, onSave }: ReadingPrefsSectionProps) {
+export const ReadingPrefsSection = React.memo(function ReadingPrefsSection({ settings, saving, onSave }: ReadingPrefsSectionProps) {
  const t = useTranslations('settings_page');
  return (
  <>
@@ -260,4 +260,4 @@ export function ReadingPrefsSection({ settings, saving, onSave }: ReadingPrefsSe
   </section>
  </>
  );
-}
+});

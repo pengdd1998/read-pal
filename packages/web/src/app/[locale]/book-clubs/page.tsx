@@ -44,7 +44,8 @@ export default function BookClubsPage() {
    setDiscoverClubs(Array.isArray(d) ? d : ((d as Record<string, unknown>)?.items as ClubListItem[]) || []);
    }
   }
-  } catch {
+  } catch (err) {
+  console.warn('BookClubs: failed to load', err);
   if (!cancelled) setError(t('clubs_failed_load', { defaultValue: 'Failed to load book clubs' }));
   } finally {
   if (!cancelled) setLoading(false);
@@ -58,21 +59,21 @@ export default function BookClubsPage() {
  const displayClubs = tab === 'my' ? myClubs : discoverClubs;
 
  return (
- <main className="min-h-screen bg-gray-50/50">
+ <main className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
   {/* Header */}
   <div className="flex items-center justify-between mb-6">
    <div>
-   <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
     {'\uD83D\uDCDA'} {t('pageTitle')}
    </h1>
-   <p className="text-sm text-gray-500 mt-1">
+   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
     {t('subtitle')}
    </p>
    </div>
    <Link
    href="/dashboard"
-   className="text-sm text-gray-400 hover:text-gray-600 transition-colors min-h-[44px] inline-flex items-center px-2"
+   className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center px-2"
    >
    {t('backToDashboard')}
    </Link>
@@ -86,10 +87,10 @@ export default function BookClubsPage() {
     role="tab"
     aria-selected={tab === tabKey}
     onClick={() => setTab(tabKey)}
-    className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors ${
+    className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     tab === tabKey
-     ? 'bg-surface-0 text-gray-900 shadow-sm'
-     : 'text-gray-500 hover:text-gray-700'
+     ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-sm'
+     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
     }`}
    >
     {tabKey === 'my' ? t('myClubs', { count: myClubs.length }) : t('discover', { count: discoverClubs.length })}
@@ -102,8 +103,8 @@ export default function BookClubsPage() {
    <div className="space-y-4">
    {[1, 2, 3].map((i) => (
     <div key={i} className="rounded-xl border border-surface-2 bg-surface-0 p-5 animate-pulse">
-    <div className="h-5 w-40 bg-gray-100 rounded mb-2" />
-    <div className="h-3 w-56 bg-gray-100 rounded" />
+    <div className="h-5 w-40 bg-gray-100 dark:bg-gray-800 rounded mb-2" />
+    <div className="h-3 w-56 bg-gray-100 dark:bg-gray-800 rounded" />
     </div>
    ))}
    </div>
@@ -119,7 +120,7 @@ export default function BookClubsPage() {
   {!loading && !error && displayClubs.length === 0 && (
    <div className="text-center py-16">
    <span className="text-4xl block mb-3">{'\uD83D\uDCDA'}</span>
-   <p className="text-gray-500 mb-1">
+   <p className="text-gray-500 dark:text-gray-400 mb-1">
     {tab === 'my' ? t('noJoinedClubs') : t('noPublicClubs')}
    </p>
    {tab === 'my' && (
@@ -141,7 +142,7 @@ export default function BookClubsPage() {
     <div className="flex items-start justify-between">
      <div className="flex-1 min-w-0">
      <div className="flex items-center gap-2">
-      <h3 className="font-semibold text-gray-900 truncate">
+      <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
       {club.name}
       </h3>
       {club.isPrivate && (
@@ -151,7 +152,7 @@ export default function BookClubsPage() {
       )}
      </div>
      {club.description && (
-      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
       {club.description}
       </p>
      )}

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface AnnotationSearchBarProps {
@@ -7,7 +8,7 @@ interface AnnotationSearchBarProps {
  onChange: (value: string) => void;
 }
 
-export function AnnotationSearchBar({ value, onChange }: AnnotationSearchBarProps) {
+export const AnnotationSearchBar = React.memo(function AnnotationSearchBar({ value, onChange }: AnnotationSearchBarProps) {
  const t = useTranslations('reader');
 
  return (
@@ -18,8 +19,8 @@ export function AnnotationSearchBar({ value, onChange }: AnnotationSearchBarProp
   onChange={(e) => onChange(e.target.value)}
   placeholder={t('sidebar_search_annotations')}
   aria-label={t('sidebar_search_annotations')}
-  className="w-full px-3 py-2 rounded-lg bg-gray-50 border border-surface-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all"
+  className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-surface-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus-visible:ring-1 focus-visible:ring-amber-400/50 focus:border-amber-400 transition-all"
   />
  </div>
  );
-}
+});

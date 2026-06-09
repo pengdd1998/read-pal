@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { ShareDiscussionTab } from './ShareDiscussionTab';
@@ -27,7 +27,7 @@ const TABS: { key: ShareTab; labelKey: string }[] = [
  { key: 'citation', labelKey: 'share_tab_citation' },
 ];
 
-export function ShareDialog({
+export const ShareDialog = React.memo(function ShareDialog({
  annotations,
  bookId,
  bookTitle,
@@ -57,13 +57,13 @@ export function ShareDialog({
   >
   {/* Header */}
   <div className="px-5 py-4 border-b border-surface-3 flex items-center justify-between">
-   <h3 className="text-lg font-semibold text-gray-900">
+   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
    {t('share_title')}
    </h3>
    <button
    onClick={onClose}
    aria-label={t('share_close_dialog')}
-   className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+   className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -79,10 +79,10 @@ export function ShareDialog({
     role="tab"
     aria-selected={activeTab === tab.key}
     onClick={() => setActiveTab(tab.key)}
-    className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative ${
+    className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
     activeTab === tab.key
      ? 'text-amber-600 dark:text-amber-400'
-     : 'text-gray-500 hover:text-gray-700'
+     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
     }`}
    >
     {t(tab.labelKey)}
@@ -97,7 +97,7 @@ export function ShareDialog({
   <div className="flex-1 overflow-y-auto p-5 space-y-4">
    {/* Book info */}
    {bookTitle && (
-   <p className="text-sm text-gray-500">
+   <p className="text-sm text-gray-500 dark:text-gray-400">
     {bookTitle}{author ? ` ${t('share_by_author', { author })}` : ''}
    </p>
    )}
@@ -128,4 +128,4 @@ export function ShareDialog({
   </div>
  </div>
  );
-}
+});

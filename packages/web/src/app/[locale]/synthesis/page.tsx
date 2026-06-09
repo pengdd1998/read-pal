@@ -36,7 +36,8 @@ export default function SynthesisPage() {
   if (!cancelled && res.success && res.data) {
    setBooks(res.data);
   }
-  } catch {
+  } catch (err) {
+  console.warn('Synthesis: failed to load books', err);
   if (!cancelled) setBooksError(t('network_error'));
   } finally {
   if (!cancelled) setBooksLoading(false);
@@ -56,7 +57,8 @@ export default function SynthesisPage() {
   } else {
   setError(t('analysis_failed'));
   }
- } catch {
+ } catch (err) {
+  console.warn('Synthesis: analysis failed', err);
   setError(t('network_error'));
  } finally {
   setLoading(false);
@@ -67,13 +69,13 @@ export default function SynthesisPage() {
  return (
   <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
   <div className="mb-8">
-   <div className="h-8 bg-gray-200 rounded-lg w-48 animate-pulse" />
-   <div className="h-4 bg-gray-200 rounded-lg w-72 mt-2 animate-pulse" />
+   <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-48 animate-pulse" />
+   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-72 mt-2 animate-pulse" />
   </div>
   <div className="space-y-4">
-   <div className="h-24 rounded-xl bg-gray-100 animate-pulse" />
-   <div className="h-48 rounded-xl bg-gray-100 animate-pulse" />
-   <div className="h-64 rounded-xl bg-gray-100 animate-pulse" />
+   <div className="h-24 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
+   <div className="h-48 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
+   <div className="h-64 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
   </div>
   </div>
  );
@@ -83,10 +85,10 @@ export default function SynthesisPage() {
  <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
   {/* Header */}
   <div className="mb-8">
-  <h1 className="text-2xl font-bold text-gray-900">
+  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
    {t('page_title')}
   </h1>
-  <p className="mt-1 text-sm text-gray-500">
+  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
    {t('page_subtitle')}
   </p>
   </div>

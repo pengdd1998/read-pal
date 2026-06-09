@@ -11,7 +11,9 @@ from pathlib import Path
 from app.services.epub_parser.constants import IMAGE_MIME_MAP, MAX_IMAGE_SIZE, NS_DC, OUTER_DOC_WRAPPER
 from app.services.epub_parser.css import sanitize_epub_css
 from app.services.epub_parser.footnotes import annotate_footnotes
-from app.services.epub_parser.html_helpers import count_images, extract_html_title
+from app.services.epub_parser.html_helpers import (
+    count_images, extract_html_heading, extract_html_title,
+)
 from app.services.epub_parser.images import rewrite_image_sources
 
 logger = logging.getLogger('read-pal')
@@ -265,7 +267,7 @@ def _resolve_chapter_title(
     for href, (t, _lvl) in toc_map.items():
         if href.endswith(item_name) or item_name.endswith(href):
             return t
-    return extract_html_title(raw_html) or Path(item_name).stem
+    return extract_html_title(raw_html) or extract_html_heading(raw_html) or Path(item_name).stem
 
 
 def _extract_cover(book) -> str | None:

@@ -82,6 +82,7 @@ export function createMark(
     try {
       range.surroundContents(mark);
     } catch {
+      console.warn('Annotation marks: surroundContents failed, using fallback');
       const fragment = range.extractContents();
       mark.appendChild(fragment);
       range.insertNode(mark);

@@ -11,7 +11,7 @@ interface BookTagEditorProps {
  onTagsChange?: (id: string, tags: string[]) => void;
 }
 
-export function BookTagEditor({ bookId, tags, onTagsChange }: BookTagEditorProps) {
+export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, onTagsChange }: BookTagEditorProps) {
  const t = useTranslations('library');
  const { toast } = useToast();
  const [editingTags, setEditingTags] = useState(false);
@@ -26,17 +26,19 @@ export function BookTagEditor({ bookId, tags, onTagsChange }: BookTagEditorProps
   await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
   onTagsChange?.(bookId, newTags);
   setTagInput('');
- } catch {
+ } catch (error) {
+  console.warn('BookTagEditor_add_failed', error);
   toast(t('tag_update_failed'), 'error');
  }
- }, [tagInput, tags, bookId, onTagsChange]);
+ }, [tagInput, tags, bookId, onTagsChange, t, toast]);
 
  const handleRemoveTag = useCallback(async (tag: string) => {
  const newTags = tags.filter((t) => t !== tag);
  try {
   await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
   onTagsChange?.(bookId, newTags);
- } catch {
+ } catch (error) {
+  console.warn('BookTagEditor_remove_failed', error);
   toast(t('tag_update_failed'), 'error');
  }
  }, [tags, bookId, onTagsChange]);
@@ -84,4 +86,4 @@ export function BookTagEditor({ bookId, tags, onTagsChange }: BookTagEditorProps
   )}
  </div>
  );
-}
+});

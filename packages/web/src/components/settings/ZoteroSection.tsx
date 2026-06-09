@@ -53,7 +53,8 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
   setConnected(true);
   toast(t('zotero_connected') + (valRes.data.username ? ` (${valRes.data.username})` : ''), 'success');
   }
- } catch {
+ } catch (err) {
+  console.warn('ZoteroSection: connect failed', err);
   setValidationError(t('zotero_connect_failed'));
  } finally {
   setValidating(false);
@@ -68,7 +69,8 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
   setApiKey('');
   setUserId('');
   toast(t('zotero_disconnected'), 'success');
- } catch {
+ } catch (err) {
+  console.warn('ZoteroSection: disconnect failed', err);
   toast(t('zotero_disconnect_failed'), 'error');
  } finally {
   setSaving(false);
@@ -82,9 +84,9 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <polyline points="20 6 9 17 4 12" />
    </svg>
-   {t('zotero_connected_label')} {userId && <span className="text-gray-400">{t('zotero_user_label', { userId })}</span>}
+   {t('zotero_connected_label')} {userId && <span className="text-gray-400 dark:text-gray-500">{t('zotero_user_label', { userId })}</span>}
   </div>
-  <p className="text-xs text-gray-500">
+  <p className="text-xs text-gray-500 dark:text-gray-400">
    {t('zotero_export_desc')}
   </p>
   <button
@@ -102,7 +104,7 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
  <div className="space-y-3">
   <div className="space-y-2">
   <div>
-   <label htmlFor="zotero-api-key" className="block text-xs font-medium text-gray-600 mb-1">{t('zotero_api_key_label')}</label>
+   <label htmlFor="zotero-api-key" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_api_key_label')}</label>
    <input
    id="zotero-api-key"
    type="password"
@@ -111,11 +113,11 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
    placeholder={t('zotero_api_key_placeholder')}
    aria-invalid={validationError ? true : undefined}
    aria-describedby={validationError ? 'zotero-error' : undefined}
-   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    />
   </div>
   <div>
-   <label htmlFor="zotero-user-id" className="block text-xs font-medium text-gray-600 mb-1">{t('zotero_user_id')}</label>
+   <label htmlFor="zotero-user-id" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_user_id')}</label>
    <input
    id="zotero-user-id"
    type="text"
@@ -124,7 +126,7 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
    placeholder={t('zotero_user_id_placeholder')}
    aria-invalid={validationError ? true : undefined}
    aria-describedby={validationError ? 'zotero-error' : undefined}
-   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    />
   </div>
   </div>
@@ -133,13 +135,13 @@ export function ZoteroSection({ initialSettings }: ZoteroSectionProps) {
    {validationError}
   </p>
   )}
-  <p className="text-[10px] text-gray-400">
+  <p className="text-[10px] text-gray-400 dark:text-gray-500">
   {t('zotero_get_key')} <span className="text-blue-500">zotero.org/settings/keys</span>
   </p>
   <button
   onClick={handleConnect}
   disabled={validating || !apiKey.trim() || !userId.trim()}
-  className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+  className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
   {validating ? t('zotero_validating') : t('zotero_connect')}
   </button>

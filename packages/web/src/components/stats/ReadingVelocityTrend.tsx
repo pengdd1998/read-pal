@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { SessionData } from './types';
 
@@ -8,7 +8,7 @@ interface ReadingVelocityTrendProps {
  sessions: SessionData[];
 }
 
-export function ReadingVelocityTrend({ sessions }: ReadingVelocityTrendProps) {
+export const ReadingVelocityTrend = React.memo(function ReadingVelocityTrend({ sessions }: ReadingVelocityTrendProps) {
  const t = useTranslations('stats');
 
  const { points, areaPath, durLine, avgPages } = useMemo(() => {
@@ -45,8 +45,8 @@ export function ReadingVelocityTrend({ sessions }: ReadingVelocityTrendProps) {
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
   <div className="flex items-center justify-between mb-4">
-  <h2 className="font-semibold text-gray-900">{t('reading_velocity')}</h2>
-  <span className="text-xs text-gray-400">
+  <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('reading_velocity')}</h2>
+  <span className="text-xs text-gray-400 dark:text-gray-500">
    {t('avg_pages_session', { count: avgPages })}
   </span>
   </div>
@@ -73,13 +73,13 @@ export function ReadingVelocityTrend({ sessions }: ReadingVelocityTrendProps) {
   <div className="flex items-center gap-4 mt-2 text-xs">
   <div className="flex items-center gap-1.5">
    <div className="w-3 h-0.5 bg-amber-500 rounded" />
-   <span className="text-gray-500">{t('legend_pages')}</span>
+   <span className="text-gray-500 dark:text-gray-400">{t('legend_pages')}</span>
   </div>
   <div className="flex items-center gap-1.5">
    <div className="w-3 h-0.5 border-t border-dashed border-teal-500" />
-   <span className="text-gray-500">{t('legend_duration')}</span>
+   <span className="text-gray-500 dark:text-gray-400">{t('legend_duration')}</span>
   </div>
   </div>
  </div>
  );
-}
+});

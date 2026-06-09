@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { FlashcardStats } from './types';
 
@@ -7,7 +8,7 @@ interface FlashcardMetricsProps {
  flashcardStats: FlashcardStats;
 }
 
-export function FlashcardMetrics({ flashcardStats }: FlashcardMetricsProps) {
+export const FlashcardMetrics = React.memo(function FlashcardMetrics({ flashcardStats }: FlashcardMetricsProps) {
  const t = useTranslations('stats');
 
  if (flashcardStats.totalCards === 0) return null;
@@ -20,7 +21,7 @@ export function FlashcardMetrics({ flashcardStats }: FlashcardMetricsProps) {
 
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
-  <h2 className="font-semibold text-gray-900 mb-4">{t('flashcards_title')}</h2>
+  <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('flashcards_title')}</h2>
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
   {metrics.map((item) => (
    <div key={item.label} className={`${item.bg} rounded-xl p-3 text-center`}>
@@ -32,10 +33,10 @@ export function FlashcardMetrics({ flashcardStats }: FlashcardMetricsProps) {
   </div>
   <div>
   <div className="flex items-center justify-between mb-1.5">
-   <span className="text-sm text-gray-600">{t('flashcards_retention')}</span>
+   <span className="text-sm text-gray-600 dark:text-gray-400">{t('flashcards_retention')}</span>
    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{flashcardStats.retentionRate}%</span>
   </div>
-  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+  <div className="h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
    <div
    className="h-full bg-gradient-to-r from-amber-400 to-teal-500 rounded-full transition-all duration-500"
    style={{ width: `${Math.min(100, flashcardStats.retentionRate)}%` }}
@@ -44,4 +45,4 @@ export function FlashcardMetrics({ flashcardStats }: FlashcardMetricsProps) {
   </div>
  </div>
  );
-}
+});

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Link } from '@/i18n/navigation';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 
 interface FlashcardCardProps {
@@ -12,7 +12,7 @@ interface FlashcardCardProps {
  onError: (msg: string) => void;
 }
 
-export function FlashcardCard({
+export const FlashcardCard = React.memo(function FlashcardCard({
  bookId,
  totalAnnotations,
  flashcardCount,
@@ -20,6 +20,9 @@ export function FlashcardCard({
  onError,
 }: FlashcardCardProps) {
  const [generating, setGenerating] = useState(false);
+ const mountedRef = useRef(true);
+ const router = useRouter();
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  if (totalAnnotations === 0) return null;
 
@@ -34,12 +37,13 @@ export function FlashcardCard({
   },
   );
   if (res.success && res.data) {
-  window.location.href = '/flashcards';
+  router.push('/flashcards');
   }
- } catch {
+ } catch (error) {
+  console.warn('FlashcardCard_generate_failed', error);
   onError(t('failedToGenerateFlashcards'));
  } finally {
-  setGenerating(false);
+  if (mountedRef.current) setGenerating(false);
  }
  };
 
@@ -48,17 +52,17 @@ export function FlashcardCard({
   <div className="flex items-center gap-3 mb-3">
   <span className="text-2xl">{'📇'}</span>
   <div>
-   <h2 className="font-semibold text-gray-900">
+   <h2 className="font-semibold text-gray-900 dark:text-gray-100">
    {t('flashcardReview')}
    </h2>
-   <p className="text-xs text-gray-500">{t('flashcardReviewDesc')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400">{t('flashcardReviewDesc')}</p>
   </div>
   </div>
   <div className="flex items-center gap-3">
   <button
    onClick={handleGenerate}
    disabled={generating}
-   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-teal-500 hover:bg-teal-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-teal-500 hover:bg-teal-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {generating ? (
    <>
@@ -124,4 +128,4 @@ export function FlashcardCard({
   </div>
  </div>
  );
-}
+});

@@ -11,8 +11,8 @@ export function EmptyState() {
   <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 flex items-center justify-center text-3xl">
   📊
   </div>
-  <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('no_stats_title')}</h2>
-  <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('no_stats_title')}</h2>
+  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">
   {t('no_stats_desc')}
   </p>
   <Link

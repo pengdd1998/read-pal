@@ -72,7 +72,8 @@ export function OfflineSaveButton({ bookId }: OfflineSaveButtonProps) {
   // Reset after 2s
   setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);
   }
- } catch {
+ } catch (error) {
+  console.warn('OfflineSaveButton_failed', error);
   if (progressIntervalRef.current) { clearInterval(progressIntervalRef.current); progressIntervalRef.current = null; }
   setState('error');
   setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);
@@ -135,7 +136,7 @@ export function OfflineSaveButton({ bookId }: OfflineSaveButtonProps) {
 
   {/* Mini progress bar at bottom of button */}
   {state === 'saving' && progress > 0 && (
-  <div className="absolute bottom-0 left-1 right-1 h-0.5 bg-gray-200 rounded-full overflow-hidden">
+  <div className="absolute bottom-0 left-1 right-1 h-0.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
    <div
    className="h-full bg-amber-500 rounded-full transition-all duration-300"
    style={{ width: `${progress}%` }}

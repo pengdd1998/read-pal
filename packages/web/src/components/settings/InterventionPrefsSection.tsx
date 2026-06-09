@@ -48,7 +48,7 @@ function ToggleSwitch({
   aria-checked={checked}
   aria-label={label}
   className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
-  checked ? 'bg-amber-500' : 'bg-gray-300'
+  checked ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
   } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
  >
   <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
@@ -88,7 +88,8 @@ export function InterventionPrefsSection() {
   if (res.success && res.data) {
   setPrefs({ ...DEFAULT_PREFS, ...res.data });
   }
- } catch {
+ } catch (err) {
+  console.warn('InterventionPrefsSection: load failed', err);
   setError(t('failed_load_retry'));
  }
  setLoading(false);
@@ -116,7 +117,8 @@ export function InterventionPrefsSection() {
   } else {
   setError(t('failed_save'));
   }
- } catch {
+ } catch (err) {
+  console.warn('InterventionPrefsSection: save failed', err);
   setError(t('failed_save_retry'));
  }
  setSaving(false);
@@ -144,12 +146,12 @@ export function InterventionPrefsSection() {
  return (
   <section className="mb-6 animate-slide-up">
   <div className="flex items-center gap-3 mb-4">
-   <div className="w-9 h-9 rounded-xl bg-gray-200 animate-pulse" />
-   <div className="h-5 bg-gray-200 rounded-lg w-40 animate-pulse" />
+   <div className="w-9 h-9 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
+   <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
   </div>
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-4">
    {Array.from({ length: 3 }).map((_, i) => (
-   <div key={i} className="h-10 bg-gray-100 rounded-xl animate-pulse" />
+   <div key={i} className="h-10 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
    ))}
   </div>
   </section>
@@ -166,7 +168,7 @@ export function InterventionPrefsSection() {
   </div>
   <div>
    <h2 className="text-lg font-semibold">{t('intervention_prefs_title')}</h2>
-   <p className="text-xs text-gray-500">
+   <p className="text-xs text-gray-500 dark:text-gray-400">
    {t('intervention_prefs_desc')}
    </p>
   </div>
@@ -210,13 +212,13 @@ export function InterventionPrefsSection() {
    <label className="text-sm font-medium block mb-2">{t('quiet_hours')}</label>
    <div className="flex items-center gap-3">
    <div className="flex-1">
-    <span className="text-xs text-gray-500 mr-2">
+    <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
     {t('quiet_hours_start')}
     </span>
     <select
     value={prefs.quietHoursStart ?? ''}
     onChange={(e) => handleQuietHoursChange('quietHoursStart', e.target.value)}
-    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
     aria-label={t('quiet_hours_start')}
     >
     <option value="">--</option>
@@ -227,15 +229,15 @@ export function InterventionPrefsSection() {
     ))}
     </select>
    </div>
-   <span className="text-gray-400 text-sm">-</span>
+   <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
    <div className="flex-1">
-    <span className="text-xs text-gray-500 mr-2">
+    <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
     {t('quiet_hours_end')}
     </span>
     <select
     value={prefs.quietHoursEnd ?? ''}
     onChange={(e) => handleQuietHoursChange('quietHoursEnd', e.target.value)}
-    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
     aria-label={t('quiet_hours_end')}
     >
     <option value="">--</option>

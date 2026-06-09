@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { AnalysisResult } from './types';
 
@@ -11,7 +12,7 @@ interface AnalysisResultViewProps {
  result: AnalysisResult;
 }
 
-export function AnalysisResultView({ result }: AnalysisResultViewProps) {
+export const AnalysisResultView = React.memo(function AnalysisResultView({ result }: AnalysisResultViewProps) {
  const t = useTranslations('synthesis');
  const content = result.analysis || result.synthesis || result.report || result.summary || '';
  const textContent = typeof content === 'string' ? content : '';
@@ -21,7 +22,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
   {/* Themes */}
   {result.themes && result.themes.length > 0 && (
   <div>
-   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+   <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
    {t('key_themes')}
    </h4>
    <div className="flex flex-wrap gap-1.5">
@@ -43,12 +44,12 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
   {/* Insights */}
   {result.insights && result.insights.length > 0 && (
   <div>
-   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+   <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
    {t('key_insights')}
    </h4>
    <ul className="space-y-1.5">
    {result.insights.map((insight) => (
-    <li key={insight} className="text-xs text-gray-700 pl-3 border-l-2 border-teal-400">
+    <li key={insight} className="text-xs text-gray-700 dark:text-gray-300 pl-3 border-l-2 border-teal-400">
     {insight}
     </li>
    ))}
@@ -59,12 +60,12 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
   {/* Cross-references */}
   {result.references && result.references.length > 0 && (
   <div>
-   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+   <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
    {t('references_found')}
    </h4>
    <div className="space-y-2">
    {result.references.map((ref) => (
-    <div key={ref.book.title + '-' + ref.type} className="p-2.5 rounded-lg bg-gray-50 border border-surface-3">
+    <div key={ref.book.title + '-' + ref.type} className="p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-surface-3">
     <div className="flex items-center gap-2 mb-1">
      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
      ref.type === 'supporting'
@@ -73,15 +74,15 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
       ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
       : ref.type === 'extending'
        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-       : 'bg-gray-100 text-gray-600'
+       : 'bg-gray-100 dark:bg-gray-700 text-gray-600'
      }`}>
-     {ref.type}
+     {t(`ref_${ref.type}`, { defaultValue: ref.type })}
      </span>
      <span className="text-xs font-medium text-gray-800 truncate">
      {ref.book.title}
      </span>
     </div>
-    <p className="text-[11px] text-gray-500 line-clamp-2">
+    <p className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2">
      {ref.explanation}
     </p>
     </div>
@@ -93,12 +94,12 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
   {/* Contradictions */}
   {result.contradictions && result.contradictions.length > 0 && (
   <div>
-   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+   <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
    {t('contradictions_count', { count: result.contradictions.length })}
    </h4>
    <div className="space-y-2">
    {result.contradictions.map((c) => (
-    <div key={c.topic} className="p-2.5 rounded-lg border border-surface-3 bg-gray-50">
+    <div key={c.topic} className="p-2.5 rounded-lg border border-surface-3 bg-gray-50 dark:bg-gray-800">
     <div className="flex items-center gap-2 mb-2">
      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
      c.severity === 'high'
@@ -107,7 +108,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
       ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
       : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
      }`}>
-     {c.severity}
+     {t(`severity_${c.severity}`, { defaultValue: c.severity })}
      </span>
      <span className="text-xs font-medium text-gray-800 truncate">
      {c.topic}
@@ -115,12 +116,12 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
      <div className="p-2 rounded bg-surface-0 border border-gray-100">
-     <p className="font-medium text-gray-700 mb-0.5">{c.position1.book.title}</p>
-     <p className="text-gray-500 line-clamp-3">{c.position1.claim}</p>
+     <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position1.book.title}</p>
+     <p className="text-gray-500 dark:text-gray-400 line-clamp-3">{c.position1.claim}</p>
      </div>
      <div className="p-2 rounded bg-surface-0 border border-gray-100">
-     <p className="font-medium text-gray-700 mb-0.5">{c.position2.book.title}</p>
-     <p className="text-gray-500 line-clamp-3">{c.position2.claim}</p>
+     <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position2.book.title}</p>
+     <p className="text-gray-500 dark:text-gray-400 line-clamp-3">{c.position2.claim}</p>
      </div>
     </div>
     </div>
@@ -136,7 +137,7 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
 
   {/* Report meta */}
   {result.booksCovered !== undefined && (
-  <div className="flex items-center gap-3 text-xs text-gray-500">
+  <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
    <span className="flex items-center gap-1">
    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -149,17 +150,17 @@ export function AnalysisResultView({ result }: AnalysisResultViewProps) {
   {/* Main analysis text */}
   {textContent && (
   <div>
-   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+   <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
    {t('analysis_label')}
    </h4>
-   <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 rounded-lg p-3 border border-surface-3 max-h-[400px] overflow-y-auto">
+   <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-surface-3 max-h-[400px] overflow-y-auto">
    {textContent}
    </div>
   </div>
   )}
  </div>
  );
-}
+});
 
 // ============================================================================
 // Concept Map Sub-view
@@ -169,7 +170,7 @@ function ConceptMapView({ result }: { result: AnalysisResult }) {
  const t = useTranslations('synthesis');
  return (
  <div>
-  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+  <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
   {t('concept_map_label', { nodes: result.nodes?.length || 0, edges: result.edges?.length || 0 })}
   </h4>
   <div className="flex flex-wrap gap-1.5 mb-3">
@@ -187,14 +188,14 @@ function ConceptMapView({ result }: { result: AnalysisResult }) {
    }`}
    >
    {node.label}
-   <span className="ml-1 text-[9px] opacity-40">{node.type}</span>
+   <span className="ml-1 text-[9px] opacity-40">{t(`node_${node.type}`, { defaultValue: node.type })}</span>
    </span>
   ))}
   </div>
   {result.edges && result.edges.length > 0 && (
   <div className="space-y-1">
    {result.edges.slice(0, 15).map((edge) => (
-   <div key={edge.source + '-' + edge.target} className="text-[11px] text-gray-500 flex items-center gap-1">
+   <div key={edge.source + '-' + edge.target} className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
     <span className="truncate max-w-[80px]">{edge.source}</span>
     <svg className="w-3 h-3 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />

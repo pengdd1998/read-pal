@@ -149,7 +149,7 @@ export function OnboardingWalkthrough() {
   {/* Skip */}
   <button
    onClick={complete}
-   className="absolute top-4 right-4 text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors z-10"
+   className="absolute top-4 right-4 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
   >
    {t('onboarding_skip')}
   </button>
@@ -160,15 +160,15 @@ export function OnboardingWalkthrough() {
    {step === 'welcome' && (
    <div className="text-center">
     <div className="text-6xl mb-6">{'📚'}</div>
-    <h2 className="text-2xl font-bold text-gray-900 mb-3">
+    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
     {t('onboarding_welcome_title')}
     </h2>
-    <p className="text-gray-500 leading-relaxed max-w-sm mx-auto mb-8">
+    <p className="text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm mx-auto mb-8">
     {t('onboarding_welcome_desc')}
     </p>
     <button
     onClick={() => goTo('companion')}
-    className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98]"
+    className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
     {t('onboarding_lets_go')}
     </button>
@@ -179,10 +179,10 @@ export function OnboardingWalkthrough() {
    {step === 'companion' && (
    <div>
     <div className="text-center mb-6">
-    <h2 className="text-xl font-bold text-gray-900 mb-2">
+    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
      {t('onboarding_pick_title')}
     </h2>
-    <p className="text-sm text-gray-500">
+    <p className="text-sm text-gray-500 dark:text-gray-400">
      {t('onboarding_pick_subtitle')}
     </p>
     </div>
@@ -194,19 +194,19 @@ export function OnboardingWalkthrough() {
      <button
       key={p.id}
       onClick={() => setSelectedPersona(p.id)}
-      className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-left ${
+      className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-left focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
       isSelected
        ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/15 ring-1 ring-amber-400/30'
-       : 'border-surface-3 hover:border-gray-300 hover:bg-gray-50/50'
+       : 'border-surface-3 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
       }`}
      >
       <span className="text-2xl">{p.emoji}</span>
       <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2">
-       <span className="font-semibold text-sm text-gray-900">{p.name}</span>
+       <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{p.name}</span>
        <span className="text-xs text-gray-400">{t(p.personalityKey)}</span>
       </div>
-      <p className="text-xs text-gray-500 mt-0.5">{t(p.descKey)}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t(p.descKey)}</p>
       </div>
       {isSelected && (
       <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
@@ -221,13 +221,13 @@ export function OnboardingWalkthrough() {
     <div className="flex items-center justify-between">
     <button
      onClick={() => goTo('welcome')}
-     className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+     className="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      {tc('back')}
     </button>
     <button
      onClick={() => goTo('ready')}
-     className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98]"
+     className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
      {t('onboarding_continue_with', { name: persona.name })}
     </button>
@@ -241,23 +241,23 @@ export function OnboardingWalkthrough() {
     <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center shadow-sm">
     <span className="text-4xl">{persona.emoji}</span>
     </div>
-    <h2 className="text-xl font-bold text-gray-900 mb-2">
+    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
     {t('onboarding_ready_title', { name: persona.name })}
     </h2>
-    <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">
+    <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
     {t('onboarding_ready_desc', { name: persona.name })}
     </p>
     <div className="flex flex-col gap-3 max-w-xs mx-auto">
     <button
      onClick={goToWelcome}
-     className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] text-center"
+     className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] text-center focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
      {tc('getStarted')}
     </button>
     <button
      onClick={handleFinish}
      disabled={saving}
-     className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
+     className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      {saving ? t('onboarding_saving') : t('onboarding_skip_for_now')}
     </button>
@@ -283,7 +283,7 @@ export function OnboardingWalkthrough() {
      ? 'w-6 h-2 bg-amber-500'
      : isCompleted
       ? 'w-2 h-2 bg-amber-400'
-      : 'w-2 h-2 bg-gray-200'
+      : 'w-2 h-2 bg-gray-200 dark:bg-gray-700'
     }`}
     />
    );

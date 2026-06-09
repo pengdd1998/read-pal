@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ClubDetail } from './types';
 
@@ -9,7 +9,7 @@ interface ClubHeaderCardProps {
  memberCount: number;
 }
 
-export function ClubHeaderCard({ club, memberCount }: ClubHeaderCardProps) {
+export const ClubHeaderCard = React.memo(function ClubHeaderCard({ club, memberCount }: ClubHeaderCardProps) {
  const t = useTranslations('bookClubs');
  const [copiedCode, setCopiedCode] = useState(false);
  const timerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -31,7 +31,7 @@ export function ClubHeaderCard({ club, memberCount }: ClubHeaderCardProps) {
     {'📚'}
    </div>
    <div>
-    <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
     {club.name}
     {club.isPrivate && (
      <svg aria-hidden="true" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -39,13 +39,13 @@ export function ClubHeaderCard({ club, memberCount }: ClubHeaderCardProps) {
      </svg>
     )}
     </h1>
-    <p className="text-sm text-gray-500 mt-0.5">
+    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
     {memberCount === 1 ? t('memberCount', { count: memberCount }) : t('memberCountPlural', { count: memberCount })} &middot; {t('max', { count: club.maxMembers })}
     </p>
    </div>
    </div>
    {club.description && (
-   <p className="text-sm text-gray-600 mt-3">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
     {club.description}
    </p>
    )}
@@ -57,16 +57,16 @@ export function ClubHeaderCard({ club, memberCount }: ClubHeaderCardProps) {
   <span className="text-xs text-gray-400 uppercase tracking-wide font-medium">{t('inviteCode')}</span>
   <button
    onClick={copyInviteCode}
-   className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-surface-3 hover:border-primary-400 transition-colors min-h-[44px]"
+   className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-surface-3 hover:border-primary-400 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
   >
-   <code className="text-sm font-mono font-bold tracking-widest text-gray-700">
+   <code className="text-sm font-mono font-bold tracking-widest text-gray-700 dark:text-gray-300">
    {club.inviteCode}
    </code>
-   <span className="text-[10px] text-gray-500">
+   <span className="text-[10px] text-gray-500 dark:text-gray-400">
    {copiedCode ? t('copied') : t('copy')}
    </span>
   </button>
   </div>
  </div>
  );
-}
+});

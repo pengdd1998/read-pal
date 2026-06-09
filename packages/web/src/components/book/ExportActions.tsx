@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { authFetch } from '@/lib/auth-fetch';
 import type { BookData } from '@/types/book';
 
@@ -14,7 +14,7 @@ interface ExportActionsProps {
  onExportError: (msg: string) => void;
 }
 
-export function ExportActions({
+export const ExportActions = React.memo(function ExportActions({
  bookId,
  book,
  totalAnnotations,
@@ -25,6 +25,8 @@ export function ExportActions({
 }: ExportActionsProps) {
  const [zoteroExporting, setZoteroExporting] = useState(false);
  const [exporting, setExporting] = useState<string | null>(null);
+ const mountedRef = useRef(true);
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  if (totalAnnotations === 0) return null;
 
@@ -53,10 +55,11 @@ export function ExportActions({
   `annotations-${book.title.replace(/\s+/g, '-')}.md`,
   );
   onExportSuccess(t('markdownExported'));
- } catch {
+ } catch (error) {
+  console.warn('ExportActions_markdown_failed', error);
   onExportError(t('failedToExport'));
  } finally {
-  setExporting(null);
+  if (mountedRef.current) setExporting(null);
  }
  };
 
@@ -71,10 +74,11 @@ export function ExportActions({
   `annotations-${book.title.replace(/\s+/g, '-')}.json`,
   );
   onExportSuccess(t('jsonExported'));
- } catch {
+ } catch (error) {
+  console.warn('ExportActions_json_failed', error);
   onExportError(t('failedToExport'));
  } finally {
-  setExporting(null);
+  if (mountedRef.current) setExporting(null);
  }
  };
 
@@ -90,10 +94,11 @@ export function ExportActions({
    `annotations-${book.title.replace(/\s+/g, '-')}.rdf`,
   );
   onExportSuccess(t('exportedToZotero'));
- } catch {
+ } catch (error) {
+  console.warn('ExportActions_zotero_failed', error);
   onExportError(t('failedToExportZotero'));
  } finally {
-  setZoteroExporting(false);
+  if (mountedRef.current) setZoteroExporting(false);
  }
  };
 
@@ -102,7 +107,7 @@ export function ExportActions({
   <button
   onClick={handleExportMarkdown}
   disabled={exporting === 'markdown'}
-  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
   >
   <svg aria-hidden="true"
    className="w-4 h-4"
@@ -122,7 +127,7 @@ export function ExportActions({
   <button
   onClick={handleExportJSON}
   disabled={exporting === 'json'}
-  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
   >
   <svg aria-hidden="true"
    className="w-4 h-4"
@@ -143,7 +148,7 @@ export function ExportActions({
   <button
    onClick={handleExportZotero}
    disabled={zoteroExporting}
-   className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+   className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
   >
    <span className="font-bold text-sm">Z</span>
    {zoteroExporting ? t('exporting') : t('exportToZotero')}
@@ -151,4 +156,4 @@ export function ExportActions({
   )}
  </div>
  );
-}
+});

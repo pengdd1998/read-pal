@@ -18,10 +18,10 @@ export function FeaturesSection({
  return (
  <section className="px-4 sm:px-6 lg:px-8 py-20">
   <div className="text-center mb-14">
-  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight font-display">
+  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
    {everything_title}
   </h2>
-  <p className="mt-4 text-gray-600 max-w-xl mx-auto text-lg">
+  <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">
    {everything_subtitle}
   </p>
   </div>
@@ -30,8 +30,8 @@ export function FeaturesSection({
    <div key={f.title} className="flex items-start gap-4 p-5 rounded-2xl border border-surface-3 bg-surface-0 hover:shadow-md transition-shadow">
    <span className="text-3xl flex-shrink-0">{f.icon}</span>
    <div>
-    <h3 className="font-bold text-gray-900 mb-1">{f.title}</h3>
-    <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+    <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-1">{f.title}</h3>
+    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
    </div>
    </div>
   ))}

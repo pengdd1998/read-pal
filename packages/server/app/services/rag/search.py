@@ -42,7 +42,9 @@ async def _semantic_chapter_search(
 
     try:
         query_sql = (
-            'SELECT bc.chapter_index, bc.content, d.chapters, '
+            'SELECT bc.chapter_index AS chapter_index, '
+            'bc.content AS content, '
+            'd.chapters AS chapters, '
             '1 - (bc.embedding <=> :query_emb::vector) AS similarity '
             'FROM book_chunks bc '
             'JOIN documents d ON d.id = bc.document_id '
@@ -65,15 +67,16 @@ async def _semantic_chapter_search(
 def _rows_to_results(rows: list[tuple]) -> list[dict[str, Any]]:
     results = []
     for row in rows:
-        chapter_index = row[0]
-        chapters = row[2]
+        mapped = row._mapping  # type: ignore[union-attr]
+        chapter_index = mapped['chapter_index']
+        chapters = mapped['chapters']
         chapter_title = 'Untitled'
         if isinstance(chapters, list) and 0 <= chapter_index < len(chapters):
             chapter_title = chapters[chapter_index].get('title', 'Untitled')
         results.append({
             'title': chapter_title,
-            'content': row[1],
-            'similarity': float(row[3]),
+            'content': mapped['content'],
+            'similarity': float(mapped['similarity']),
         })
     return results
 

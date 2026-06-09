@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { AnnotationItem } from '@/types/book';
 
 interface ShareQuoteSectionProps {
@@ -10,13 +10,15 @@ interface ShareQuoteSectionProps {
  t: (key: string) => string;
 }
 
-export function ShareQuoteSection({
+export const ShareQuoteSection = React.memo(function ShareQuoteSection({
  highlights,
  bookTitle,
  bookAuthor,
  t,
 }: ShareQuoteSectionProps) {
  const [sharingIdx, setSharingIdx] = useState<number | null>(null);
+ const mountedRef = useRef(true);
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const handleShareQuote = async (text: string, idx: number) => {
  setSharingIdx(idx);
@@ -25,10 +27,11 @@ export function ShareQuoteSection({
   const { renderCardToCanvas } = await import(
   '@/components/reading/QuoteCard'
   );
+  if (!mountedRef.current) return;
   renderCardToCanvas(canvas, text, bookTitle, bookAuthor, 'warm');
   canvas.toBlob(async (blob) => {
   if (!blob) {
-   setSharingIdx(null);
+   if (mountedRef.current) setSharingIdx(null);
    return;
   }
   const file = new File([blob], 'read-pal-quote.png', {
@@ -43,6 +46,7 @@ export function ShareQuoteSection({
    });
    } catch (err) {
    if ((err as DOMException).name !== 'AbortError') {
+    console.warn('ShareQuote: share failed', err);
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -66,11 +70,11 @@ export function ShareQuoteSection({
    URL.revokeObjectURL(url);
    }
   }
-  setSharingIdx(null);
+  if (mountedRef.current) setSharingIdx(null);
   }, 'image/png');
  } catch (err) {
   console.warn("ShareQuoteSection: share failed", err);
-  setSharingIdx(null);
+  if (mountedRef.current) setSharingIdx(null);
  }
  };
 
@@ -79,10 +83,10 @@ export function ShareQuoteSection({
   <div className="flex items-center gap-3 mb-3">
   <span className="text-2xl">{'✨'}</span>
   <div>
-   <h3 className="text-sm font-semibold text-gray-900">
+   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
    {t('shareAQuote')}
    </h3>
-   <p className="text-xs text-gray-500">
+   <p className="text-xs text-gray-500 dark:text-gray-400">
    {t('shareAQuoteDesc')}
    </p>
   </div>
@@ -93,13 +97,13 @@ export function ShareQuoteSection({
    key={h.id}
    className="flex items-start gap-3 group p-2.5 rounded-xl hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors"
    >
-   <p className="flex-1 text-sm text-gray-700 italic line-clamp-2 leading-relaxed">
+   <p className="flex-1 text-sm text-gray-700 dark:text-gray-300 italic line-clamp-2 leading-relaxed">
     &ldquo;{h.content}&rdquo;
    </p>
    <button
     onClick={() => handleShareQuote(h.content, i)}
     disabled={sharingIdx === i}
-    className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-surface-0 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors disabled:opacity-50"
+    className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-surface-0 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {sharingIdx === i ? (
     <svg aria-hidden="true"
@@ -143,4 +147,4 @@ export function ShareQuoteSection({
   </div>
  </div>
  );
-}
+});

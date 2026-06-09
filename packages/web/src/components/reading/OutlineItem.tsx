@@ -18,7 +18,7 @@ const TAG_COLORS: Record<string, string> = {
  surprising: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
 };
 
-const DEFAULT_TAG_COLOR = 'bg-gray-100 text-gray-600';
+const DEFAULT_TAG_COLOR = 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
 
 export const OutlineItem = memo(function OutlineItem({
  annotation,
@@ -46,7 +46,7 @@ export const OutlineItem = memo(function OutlineItem({
     ? 'font-medium text-blue-700 dark:text-blue-300'
     : annotation.type === 'bookmark'
     ? 'text-purple-600 dark:text-purple-400'
-    : 'text-gray-600'
+    : 'text-gray-600 dark:text-gray-400'
    } ${annotation.type === 'highlight' ? 'line-clamp-2' : 'line-clamp-3'}`}>
    {annotation.type === 'highlight' && annotation.color && (
     <span
@@ -60,14 +60,14 @@ export const OutlineItem = memo(function OutlineItem({
    </p>
 
    {annotation.note && (
-   <p className="text-[10px] text-gray-500 mt-0.5 italic line-clamp-1">
+   <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 italic line-clamp-1">
     {annotation.note.length > 80 ? annotation.note.slice(0, 80) + '...' : annotation.note}
    </p>
    )}
 
    <div className="flex items-center gap-1 mt-1 flex-wrap">
    {pageRef && (
-    <span className="text-[9px] text-gray-500 bg-gray-100 px-1 py-0.5 rounded">
+    <span className="text-[9px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">
     {pageRef}
     </span>
    )}

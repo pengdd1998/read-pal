@@ -36,7 +36,7 @@ export const OutlineChapterGroup = memo(function OutlineChapterGroup({
   <button
   onClick={() => onToggle(chapter.chapterIndex)}
   aria-expanded={isExpanded}
-  className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+  className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors text-left"
   >
   <svg aria-hidden="true"
    className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
@@ -47,7 +47,7 @@ export const OutlineChapterGroup = memo(function OutlineChapterGroup({
   >
    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
   </svg>
-  <span className="text-sm font-medium text-gray-700 flex-1">
+  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">
    {chapter.label}
   </span>
   <div className="flex items-center gap-1.5">

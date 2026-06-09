@@ -449,7 +449,10 @@
     "collection_picker_new": "新建收藏夹",
     "memory_books_link_title": "阅读镜像",
     "memory_books_link_desc": "记录你的阅读旅程",
-    "failed_seed_sample": "加载示例图书失败"
+    "failed_seed_sample": "加载示例图书失败",
+    "book_by_author": "作者：{author}",
+    "meta_title": "我的书库 | read-pal",
+    "meta_description": "浏览和管理你的个人阅读收藏。"
   },
   "reader": {
     "companion_title": "阅读伴侣",
@@ -802,6 +805,9 @@
     "outline_chapter": "第 {number} 章",
     "outline_other": "其他",
     "outline_all": "全部 ({count})",
+    "outline_filter_highlights": "高亮 ({count})",
+    "outline_filter_notes": "笔记 ({count})",
+    "outline_filter_bookmarks": "书签 ({count})",
     "synthesis_title": "综合分析",
     "synthesis_close_label": "关闭综合分析面板",
     "synthesis_close_esc": "关闭 (Esc)",
@@ -830,6 +836,12 @@
     "synthesis_tab_label": "分析模式",
     "fiction_story_tracker": "故事追踪",
     "fiction_chapter_mood": "章节氛围",
+    "fiction_mood_tense": "紧张",
+    "fiction_mood_joyful": "欢快",
+    "fiction_mood_sad": "悲伤",
+    "fiction_mood_mysterious": "神秘",
+    "fiction_mood_romantic": "浪漫",
+    "fiction_mood_action": "动作",
     "fiction_characters": "本章角色",
     "fiction_no_characters": "尚未检测到角色。继续阅读！",
     "fiction_ask_about": "向阅读伙伴询问 {name} →",
@@ -951,7 +963,9 @@
     "share_questions_unavailable": "讨论问题生成失败。导学指南已创建，但不包含AI问题。",
     "quote_card_by": "作者：",
     "knowledge_from": "来自",
-    "book_by_author": "作者：{author}"
+    "book_by_author": "作者：{author}",
+    "share_unknown_book": "未知书籍",
+    "share_unknown_author": "未知作者"
   },
   "stats": {
     "title": "阅读统计",
@@ -1418,7 +1432,9 @@
     "account_delete_password_placeholder": "您的密码",
     "account_delete_password_required": "请输入密码",
     "account_delete_cancel": "取消",
-    "offline_load_failed": "加载离线数据失败。请刷新页面。"
+    "offline_load_failed": "加载离线数据失败。请刷新页面。",
+    "meta_title": "设置 | read-pal",
+    "meta_description": "管理你的 read-pal 账户、阅读偏好和AI伴读设置。"
   },
   "search": {
     "page_title": "搜索",
@@ -1442,7 +1458,10 @@
     "your_library": "你的书架",
     "search_across_library": "搜索你的书架",
     "search_across_desc": "按书名或作者查找书籍，搜索高亮和笔记，或通过 AI 语义搜索发现相关段落。",
-    "add_books_started": "添加书籍开始使用"
+    "add_books_started": "添加书籍开始使用",
+    "type_highlight": "高亮",
+    "type_note": "笔记",
+    "type_bookmark": "书签"
   },
   "flashcards": {
     "page_title": "闪卡",
@@ -1584,6 +1603,7 @@
     "noMessages": "还没有消息。开始对话吧！",
     "discussionPlaceholder": "分享你的想法...",
     "send": "发送",
+    "sending": "发送中...",
     "backToClubs": "返回读书会",
     "leaveClub": "退出读书会",
     "leaveConfirm": "确定退出这个读书会吗？",
@@ -1693,7 +1713,12 @@
     "startReading": "开始阅读",
     "readAgain": "再次阅读",
     "continueReading": "继续阅读",
-    "dismiss": "关闭"
+    "dismiss": "关闭",
+    "timeHm": "{hours}小时 {mins}分钟",
+    "timeM": "{mins}分钟",
+    "unit_pg": "页",
+    "unit_hl": "个标注",
+    "unit_nt": "条笔记"
   },
   "memoryBooks": {
     "pageTitle": "阅读镜像",
@@ -1740,7 +1765,10 @@
     "regenerate_title": "重新生成",
     "download_html_title": "下载 HTML",
     "print_save_pdf": "打印 / 保存 PDF",
-    "section_aria": "章节"
+    "section_aria": "章节",
+    "durationSec": "{count}秒",
+    "durationMin": "{count}分钟",
+    "durationHm": "{hours}小时 {mins}分钟"
   },
   "welcome": {
     "page_title": "欢迎",
@@ -2090,7 +2118,18 @@
     "contradictions_count": "矛盾 ({count})",
     "books_covered": "{count, plural, one {# 本书涵盖} other {# 本书涵盖}}",
     "analysis_label": "分析",
-    "concept_map_label": "概念图（{nodes} 个节点，{edges} 条边）"
+    "concept_map_label": "概念图（{nodes} 个节点，{edges} 条边）",
+    "ref_supporting": "支持",
+    "ref_contradicting": "矛盾",
+    "ref_extending": "延伸",
+    "severity_high": "高",
+    "severity_medium": "中",
+    "severity_low": "低",
+    "node_concept": "概念",
+    "node_book": "书籍",
+    "node_theme": "主题",
+    "node_character": "角色",
+    "node_event": "事件"
   },
   "seo": {
     "knowledge_title": "知识图谱 | read-pal",
@@ -2103,6 +2142,8 @@
     "stats_description": "追踪你的阅读进度——阅读速度、连续天数、阅读时长、已读页数和活动热力图。",
     "book_clubs_title": "读书会 | read-pal",
     "book_clubs_description": "与朋友一起讨论书籍——创建或加入读书会，分享进度，与其他读者交流笔记。",
+    "book_club_detail_title": "读书会 | read-pal",
+    "book_club_detail_description": "查看并参与你的读书会讨论。",
     "memory_books_title": "阅读镜像 | read-pal",
     "memory_books_description": "你的个人阅读日记——精美的 AI 生成阅读旅程汇编，包含高亮和洞察。",
     "developers_title": "开发者 API | read-pal",
@@ -2130,7 +2171,13 @@
     "section_threads": "书与书之间的线索",
     "section_reader_became": "你成为了怎样的读者",
     "section_recommendations": "这将引领你走向何方",
-    "empty_sections": "尚未生成章节。请尝试为你的书籍添加更多高亮和笔记。"
+    "empty_sections": "尚未生成章节。请尝试为你的书籍添加更多高亮和笔记。",
+    "no_recommendations": "暂无推荐。",
+    "urgency_now": "接下来读",
+    "urgency_soon": "加入队列",
+    "urgency_someday": "以后再说",
+    "no_highlights": "暂无高亮内容。",
+    "go_to_passage": "跳转到原文"
   },
   "errors": {
     "connection_problem": "网络连接问题",

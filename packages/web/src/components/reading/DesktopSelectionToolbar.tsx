@@ -75,12 +75,12 @@ export function DesktopSelectionToolbar({
    </button>
   ))}
 
-  <div className="w-px h-6 bg-gray-200 mx-1.5" />
+  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
 
   {/* Note */}
   <button
    onMouseDown={(e) => { e.preventDefault(); onToggleNote(); }}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
    aria-label={t('toolbar_add_note')}
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -89,7 +89,7 @@ export function DesktopSelectionToolbar({
    <span>{t('toolbar_note')}</span>
   </button>
 
-  <div className="w-px h-6 bg-gray-200 mx-1.5" />
+  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
 
   {/* Tag */}
   <button
@@ -97,7 +97,7 @@ export function DesktopSelectionToolbar({
    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
    showTagPicker
     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-    : 'text-gray-700 hover:bg-gray-100'
+    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
    }`}
    aria-label={t('toolbar_tag_and_highlight')}
   >
@@ -107,13 +107,13 @@ export function DesktopSelectionToolbar({
    <span>{t('toolbar_tag')}</span>
   </button>
 
-  <div className="w-px h-6 bg-gray-200 mx-1.5" />
+  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
 
   {/* Copy */}
   <button
    onMouseDown={(e) => e.preventDefault()}
    onClick={onCopy}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
    aria-label={t('toolbar_copy_text')}
   >
    {copied ? (
@@ -130,12 +130,12 @@ export function DesktopSelectionToolbar({
    </span>
   </button>
 
-  <div className="w-px h-6 bg-gray-200 mx-1.5" />
+  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
 
   {/* Share */}
   <button
    onMouseDown={(e) => { e.preventDefault(); onShowQuoteCard(); }}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
    aria-label={t('toolbar_share_as_quote')}
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -144,7 +144,7 @@ export function DesktopSelectionToolbar({
    <span>{t('toolbar_share')}</span>
   </button>
 
-  <div className="w-px h-6 bg-gray-200 mx-1.5" />
+  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1.5" />
 
   {/* Ask AI */}
   {onAskAI && (
@@ -153,7 +153,7 @@ export function DesktopSelectionToolbar({
     onAskAI(text);
     onDismiss();
    }}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 transition-colors active:scale-95"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 transition-colors active:scale-95 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    aria-label={t('toolbar_ask_ai_about')}
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -25,7 +25,6 @@ const PROTECTED_PREFIXES = [
   '/book-clubs',
   '/knowledge',
   '/synthesis',
-  '/challenges',
   '/offline',
   '/welcome',
 ];

@@ -53,13 +53,13 @@ async def chat(
                 'message': t('errors.validation_failed'),
             },
         ) from exc
-    except Exception as exc:
-        logger.exception('Friend chat error')
+    except (ConnectionError, TimeoutError) as exc:
+        logger.exception('Friend chat connection error')
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
-                'code': 'INTERNAL_ERROR',
-                'message': t('errors.friend_response_failed'),
+                'code': 'AI_UNAVAILABLE',
+                'message': t('errors.ai_unavailable'),
             },
         ) from exc
 

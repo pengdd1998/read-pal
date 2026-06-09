@@ -9,14 +9,14 @@ export function FictionMoodIndicator({ mood }: FictionMoodIndicatorProps) {
  const t = useTranslations('reader');
 
  return (
- <div className="px-4 py-3 border-b border-gray-100">
-  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+ <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
   {t('fiction_chapter_mood')}
   </p>
-  <div className="flex items-center gap-2">
-  <div className={`w-3 h-3 rounded-full ${MOOD_COLORS[mood]}`} />
+  <div className="flex items-center gap-2" role="status" aria-label={t(`fiction_mood_${mood}`)}>
+  <div className={`w-3 h-3 rounded-full ${MOOD_COLORS[mood]}`} aria-hidden="true" />
   <span className="text-sm text-gray-700">
-   {MOOD_ICONS[mood]} {mood.charAt(0).toUpperCase() + mood.slice(1)}
+   {MOOD_ICONS[mood]} {t(`fiction_mood_${mood}`)}
   </span>
   </div>
  </div>

@@ -102,6 +102,7 @@ async def lifespan(app: FastAPI):
 
     asyncio.create_task(_log_cleanup_loop())
     asyncio.create_task(_stale_session_cleanup_loop())
+    await _fix_absurd_session_durations()
 
     from app.services.llm import _trace_writer
     _trace_writer.start()
@@ -131,14 +132,17 @@ app = FastAPI(
 # ~79 router endpoints without per-endpoint try/except still return
 # meaningful status codes instead of opaque 500s.
 
+class NotFoundError(ValueError):
+    """ValueError subclass that maps to 404 instead of 400."""
+
+
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
-    """ValueError → 400 Bad Request (or 404 for 'not found' messages)."""
-    msg = str(exc)
-    is_not_found = 'not found' in msg.lower()
+    """ValueError → 400 (or 404 for NotFoundError subclass)."""
+    is_not_found = isinstance(exc, NotFoundError)
     code = 'NOT_FOUND' if is_not_found else 'INVALID_INPUT'
     status_code = 404 if is_not_found else 400
-    logger.warning('ValueError on %s: %s', request.url.path, msg[:200])
+    logger.warning('ValueError on %s: %s', request.url.path, str(exc)[:200])
     user_msg = 'Resource not found' if is_not_found else 'Invalid input'
     return JSONResponse(
         status_code=status_code,
@@ -243,7 +247,7 @@ async def _stale_session_cleanup_loop() -> None:
         await asyncio.sleep(7200)  # 2 hours
         try:
             from app.models.reading_session import ReadingSession
-            cutoff = datetime.now(timezone.utc) - timedelta(hours=2)
+            cutoff = utcnow() - timedelta(hours=2)
             async with async_session() as db:
                 result = await db.execute(
                     select(ReadingSession).where(
@@ -251,19 +255,43 @@ async def _stale_session_cleanup_loop() -> None:
                         ReadingSession.updated_at < cutoff,
                     ),
                 )
-                now = datetime.now(timezone.utc)
+                now = utcnow()
                 closed = 0
                 for session in result.scalars().all():
                     session.is_active = False
                     session.ended_at = now
                     if not session.duration and session.started_at:
-                        session.duration = int((now - session.started_at).total_seconds())
+                        raw_dur = int((now - session.started_at).total_seconds())
+                        session.duration = min(raw_dur, 43200)
                     closed += 1
                 if closed:
                     await db.commit()
                     logger.info('closed_stale_sessions', count=closed)
         except Exception as exc:
             logger.warning('stale_session_cleanup_failed', error=str(exc))
+
+
+async def _fix_absurd_session_durations() -> None:
+    """One-time startup fix: cap sessions with durations > 12h to a reasonable max."""
+    MAX_SESSION_SECONDS = 43200  # 12 hours
+    try:
+        from app.models.reading_session import ReadingSession
+        async with async_session() as db:
+            result = await db.execute(
+                select(ReadingSession).where(
+                    ReadingSession.duration > MAX_SESSION_SECONDS,
+                ),
+            )
+            fixed = 0
+            for session in result.scalars().all():
+                old_dur = session.duration
+                session.duration = MAX_SESSION_SECONDS
+                fixed += 1
+            if fixed:
+                await db.commit()
+                logger.info('fixed_absurd_durations', count=fixed)
+    except Exception as exc:
+        logger.warning('fix_absurd_durations_failed', error=str(exc))
 
 
 @app.get('/api/v1/health')

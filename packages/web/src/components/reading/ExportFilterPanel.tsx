@@ -37,7 +37,7 @@ export function ExportFilterPanel({
   className={`flex items-center gap-2 text-xs font-medium transition-colors ${
    hasActiveFilters
    ? 'text-amber-600 dark:text-amber-400'
-   : 'text-gray-500 hover:text-gray-700'
+   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
   }`}
   >
   <svg aria-hidden="true" className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -47,10 +47,10 @@ export function ExportFilterPanel({
   </button>
 
   {showFilters && (
-  <div className="mt-2 p-3 bg-gray-50/50 rounded-xl border border-surface-3 space-y-3">
+  <div className="mt-2 p-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-surface-3 space-y-3">
    {/* Type filters */}
    <div>
-   <p className="text-xs text-gray-500 mb-1.5">{t('export_include_types')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('export_include_types')}</p>
    <div className="flex flex-wrap gap-1.5">
     {TYPE_OPTIONS.map((opt) => (
     <button
@@ -61,7 +61,7 @@ export function ExportFilterPanel({
      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
      selectedTypes.has(opt.value)
       ? opt.color + ' ring-1 ring-current/20'
-      : 'bg-gray-100 text-gray-400'
+      : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
      }`}
     >
      {t(opt.labelKey)}
@@ -73,12 +73,12 @@ export function ExportFilterPanel({
    {/* Tag filter */}
    {availableTags.length > 0 && (
    <div>
-    <p className="text-xs text-gray-500 mb-1.5">{t('export_filter_by_tag')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('export_filter_by_tag')}</p>
     <select
     value={selectedTag}
     onChange={(e) => onSetSelectedTag(e.target.value)}
     aria-label={t('export_filter_by_tag')}
-    className="w-full px-3 py-1.5 text-xs bg-surface-0 border border-gray-200 rounded-lg text-gray-700 focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
+    className="w-full px-3 py-1.5 text-xs bg-surface-0 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
     >
     <option value="">{t('export_all_tags')}</option>
     {availableTags.map((tag) => (
@@ -92,7 +92,7 @@ export function ExportFilterPanel({
    <button
     onClick={onClearFilters}
     aria-label={t('export_clear_filters_btn')}
-    className="text-xs text-gray-400 hover:text-gray-600"
+    className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
    >
     {t('export_clear_filters_btn')}
    </button>

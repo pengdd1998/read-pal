@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import type { FilterTab } from './FilterTabs';
@@ -19,7 +19,7 @@ interface AnnotationListProps {
  onToggleSelect: (id: string) => void;
 }
 
-export function AnnotationList({
+export const AnnotationList = React.memo(function AnnotationList({
  annotations,
  activeTab,
  bulkMode,
@@ -89,4 +89,4 @@ export function AnnotationList({
   ))}
  </>
  );
-}
+});

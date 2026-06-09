@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 
@@ -16,6 +16,7 @@ interface ApiKeyData {
 export function ApiKeysSection() {
  const { toast } = useToast();
  const t = useTranslations('settings_page');
+ const locale = useLocale();
  const [keys, setKeys] = useState<ApiKeyData[]>([]);
  const [loading, setLoading] = useState(true);
  const [creating, setCreating] = useState(false);
@@ -30,7 +31,8 @@ export function ApiKeysSection() {
   if (res.success && res.data) {
   setKeys(res.data);
   }
- } catch {
+ } catch (err) {
+  console.warn('ApiKeysSection: load failed', err);
   toast(t('api_key_load_failed'), 'error');
  }
  setLoading(false);
@@ -54,7 +56,8 @@ export function ApiKeysSection() {
   await loadKeys();
   toast(t('api_key_created_toast'), 'success');
   }
- } catch {
+ } catch (err) {
+  console.warn('ApiKeysSection: create failed', err);
   toast(t('api_key_create_failed'), 'error');
  }
  setCreating(false);
@@ -68,7 +71,8 @@ export function ApiKeysSection() {
   setKeys((prev) => prev.filter((k) => k.id !== id));
   toast(t('api_key_revoked_toast'), 'success');
   }
- } catch {
+ } catch (err) {
+  console.warn('ApiKeysSection: revoke failed', err);
   toast(t('api_key_revoke_failed'), 'error');
  }
  setRevokingId(null);
@@ -78,7 +82,8 @@ export function ApiKeysSection() {
   try {
    await navigator.clipboard.writeText(key);
    toast(t('api_key_copied_toast'), 'success');
-  } catch {
+  } catch (err) {
+   console.warn('ApiKeysSection: copy failed', err);
    toast(t('api_key_copy_failed'), 'error');
   }
  }
@@ -104,7 +109,7 @@ export function ApiKeysSection() {
    </div>
    <button
    onClick={() => setNewKey(null)}
-   className="mt-2 text-xs text-gray-500 hover:text-gray-700 min-h-[44px] px-2"
+   className="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 min-h-[44px] px-2"
    >
    {t('api_key_dismiss')}
    </button>
@@ -114,19 +119,19 @@ export function ApiKeysSection() {
   {loading ? (
   <div className="space-y-2">
    {Array.from({ length: 2 }).map((_, i) => (
-   <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+   <div key={i} className="h-12 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
    ))}
   </div>
   ) : keys.length > 0 ? (
   <div className="space-y-2">
    {keys.map((k) => (
-   <div key={k.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-surface-3">
+   <div key={k.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-surface-3">
     <div className="min-w-0 flex-1">
     <div className="text-sm font-medium truncate">{k.name}</div>
-    <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
      <code className="font-mono">{k.keyPrefix}...</code>
-     <span>{t('api_key_created_label')} {new Date(k.createdAt).toLocaleDateString()}</span>
-     {k.lastUsedAt && <span>{t('api_key_last_used')} {new Date(k.lastUsedAt).toLocaleDateString()}</span>}
+     <span>{t('api_key_created_label')} {new Date(k.createdAt).toLocaleDateString(locale)}</span>
+     {k.lastUsedAt && <span>{t('api_key_last_used')} {new Date(k.lastUsedAt).toLocaleDateString(locale)}</span>}
     </div>
     </div>
     <button
@@ -149,7 +154,7 @@ export function ApiKeysSection() {
    ))}
   </div>
   ) : (
-  <p className="text-sm text-gray-500">
+  <p className="text-sm text-gray-500 dark:text-gray-400">
    {t('api_key_empty')}
   </p>
   )}
@@ -162,20 +167,20 @@ export function ApiKeysSection() {
    onChange={(e) => setNewKeyName(e.target.value)}
    placeholder={t('api_key_name_placeholder')}
    aria-label={t('api_key_name_placeholder')}
-   className="flex-1 px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="flex-1 px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
    autoFocus
    />
    <button
    onClick={handleCreate}
    disabled={creating || !newKeyName.trim()}
-   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
    {creating ? t('api_key_creating') : t('api_key_create')}
    </button>
    <button
    onClick={() => { setShowCreate(false); setNewKeyName(''); }}
-   className="min-h-[44px] px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700"
+   className="min-h-[44px] px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
    >
    {t('api_key_cancel')}
    </button>
@@ -184,16 +189,16 @@ export function ApiKeysSection() {
   <button
    onClick={() => setShowCreate(true)}
    disabled={keys.length >= 5}
-   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 border border-surface-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-surface-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
   >
    {t('api_key_create_button')} {keys.length >= 5 && t('api_key_max')}
   </button>
   )}
 
   {/* Usage example */}
-  <div className="mt-3 p-3 rounded-xl bg-gray-50 border border-surface-3">
-  <p className="text-xs font-medium text-gray-600 mb-1.5">{t('api_key_usage_example')}</p>
-  <code className="text-xs text-gray-700 font-mono block whitespace-pre-wrap">
+  <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-surface-3">
+  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{t('api_key_usage_example')}</p>
+  <code className="text-xs text-gray-700 dark:text-gray-300 font-mono block whitespace-pre-wrap">
 {`curl -H "Authorization: Bearer rpk_..." \\
  ${typeof window !== 'undefined' ? window.location.origin : ''}/api/books`}
   </code>

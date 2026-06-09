@@ -185,7 +185,8 @@ function addCopyButton(pre: HTMLPreElement, language: string | null): void {
       await navigator.clipboard.writeText(text);
       btn.textContent = 'Copied!';
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
-    } catch {
+    } catch (err) {
+      console.warn('Code block copy failed:', err);
       btn.textContent = 'Failed';
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     }

@@ -30,8 +30,6 @@ export function SynthesisPanel({
  const [error, setError] = useState<string | null>(null);
  const abortRef = useRef<AbortController | null>(null);
 
- const handleBackdropKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Escape') onClose(); }, [onClose]);
-
  // Form state for each action
  const [concept, setConcept] = useState('');
  const [topic, setTopic] = useState('');
@@ -107,6 +105,7 @@ export function SynthesisPanel({
   }
  } catch (err) {
   if ((err as Error).name === 'AbortError' || (err as Error).name === 'CanceledError') return;
+  console.warn('SynthesisPanel: analysis failed', err);
   setError(t('synthesis_network_error'));
   toast(t('synthesis_analysis_failed'), 'error');
  } finally {
@@ -149,7 +148,7 @@ export function SynthesisPanel({
    </svg>
    <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">{t('synthesis_title')}</h2>
    </div>
-   <button onClick={onClose} className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label={t('synthesis_close_label')} title={t('synthesis_close_esc')}>
+   <button onClick={onClose} className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label={t('synthesis_close_label')} title={t('synthesis_close_esc')}>
    <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>
@@ -157,8 +156,8 @@ export function SynthesisPanel({
   </div>
 
   {bookTitle && (
-   <div className="px-4 py-2 bg-gray-50/50 border-b border-surface-2">
-   <p className="text-xs text-gray-500 truncate">
+   <div className="px-4 py-2 bg-gray-50/50 dark:bg-gray-800/50 border-b border-surface-2">
+   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
     {bookTitle}{author ? t('synthesis_by_author', { author }) : ''}
    </p>
    </div>
@@ -173,7 +172,7 @@ export function SynthesisPanel({
     role="tab"
     aria-selected={activeTab === tab.key}
     className={`flex items-center gap-1.5 px-2.5 py-2.5 text-[11px] font-medium transition-colors relative whitespace-nowrap ${
-    activeTab === tab.key ? 'text-amber-700 dark:text-amber-300' : 'text-gray-400 hover:text-gray-600'
+    activeTab === tab.key ? 'text-amber-700 dark:text-amber-300' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
     }`}
    >
     {tab.icon}
@@ -185,7 +184,7 @@ export function SynthesisPanel({
 
   {/* Content */}
   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-   <p className="text-xs text-gray-500">
+   <p className="text-xs text-gray-500 dark:text-gray-400">
    {t(TABS.find((t) => t.key === activeTab)?.description ?? '')}
    </p>
    {renderForm()}
@@ -195,7 +194,7 @@ export function SynthesisPanel({
    {loading && (
    <div aria-live="polite" className="flex items-center gap-3 py-8 justify-center">
     <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-600 border-t-transparent" />
-    <span className="text-sm text-gray-500">{t('synthesis_analyzing')}</span>
+    <span className="text-sm text-gray-500 dark:text-gray-400">{t('synthesis_analyzing')}</span>
    </div>
    )}
    {!loading && result && <AnalysisResultView result={result} />}
@@ -211,7 +210,7 @@ export function SynthesisPanel({
 
   {/* Run button */}
   <div className="px-4 py-3 border-t border-surface-3">
-   <button onClick={handleAnalyze} disabled={loading} className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
+   <button onClick={handleAnalyze} disabled={loading} className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
    {loading ? (
     <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />{t('synthesis_analyzing_btn')}</>
    ) : (

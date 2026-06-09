@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import type { DiscussionMessage } from './types';
 
 interface ClubDiscussionPanelProps {
@@ -22,6 +22,7 @@ const MessageItem = React.memo(function MessageItem({
  msg: DiscussionMessage;
  fallbackName: string;
 }) {
+ const locale = useLocale();
  return (
   <div className="flex gap-3">
   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center text-xs font-bold text-primary-700 dark:text-primary-300 shrink-0">
@@ -29,14 +30,14 @@ const MessageItem = React.memo(function MessageItem({
   </div>
   <div className="flex-1 min-w-0">
    <div className="flex items-baseline gap-2">
-   <span className="text-sm font-medium text-gray-900">
+   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
     {msg.author?.name || fallbackName}
    </span>
-   <span className="text-[10px] text-gray-500">
-    {new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} {new Date(msg.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+   <span className="text-[10px] text-gray-500 dark:text-gray-400">
+    {new Date(msg.createdAt).toLocaleDateString(locale, { month: 'short', day: 'numeric' })} {new Date(msg.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
    </span>
    </div>
-   <p className="text-sm text-gray-600 mt-0.5 whitespace-pre-wrap break-words">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 whitespace-pre-wrap break-words">
    {msg.content}
    </p>
   </div>
@@ -58,7 +59,7 @@ export function ClubDiscussionPanel({
 
  return (
  <div className="rounded-2xl border border-surface-2 bg-surface-0 p-6 shadow-sm mb-6">
-  <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+  <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
   <span className="text-lg">{'💬'}</span>
   {t('discussion')}
   </h2>
@@ -79,7 +80,7 @@ export function ClubDiscussionPanel({
   {sendError && (
   <div className="mb-3 flex items-center gap-2 text-xs text-red-500">
    <span>{sendError}</span>
-   <button onClick={onClearSendError} className="underline hover:text-red-700 min-h-[44px] inline-flex items-center">
+   <button onClick={onClearSendError} className="underline hover:text-red-700 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded">
     {t('dismiss', { defaultValue: 'Dismiss' })}
    </button>
   </div>
@@ -100,16 +101,16 @@ export function ClubDiscussionPanel({
     onSend();
     }
    }}
-   className="flex-1 px-3 py-2 rounded-lg border border-surface-3 bg-gray-50 text-sm text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+   className="flex-1 px-3 py-2 rounded-lg border border-surface-3 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
    maxLength={2000}
    disabled={sending}
    />
    <button
    onClick={onSend}
    disabled={sending || !newMessage.trim()}
-   className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-700 disabled:opacity-50 transition-colors shrink-0 min-h-[44px]"
+   className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-700 disabled:opacity-50 transition-colors shrink-0 min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
-   {sending ? '...' : t('send')}
+   {sending ? t('sending') : t('send')}
    </button>
   </div>
   )}

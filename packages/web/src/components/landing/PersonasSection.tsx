@@ -19,10 +19,10 @@ export function PersonasSection({
  return (
  <section className="px-4 sm:px-6 lg:px-8 py-20">
   <div className="text-center mb-14">
-  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight font-display">
+  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100 tracking-tight font-display">
    {personas_title}
   </h2>
-  <p className="mt-4 text-gray-600 max-w-2xl mx-auto text-lg">
+  <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
    {personas_subtitle}
   </p>
   </div>
@@ -31,8 +31,8 @@ export function PersonasSection({
   {friends.map((friend) => (
    <div key={friend.name} className={`card-hover text-center border-l-4 ${friend.accent}`}>
    <div className="text-4xl mb-3">{friend.emoji}</div>
-   <h3 className="font-bold text-gray-900">{friend.name}</h3>
-   <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{friend.desc}</p>
+   <h3 className="font-bold text-gray-900 dark:text-gray-100">{friend.name}</h3>
+   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">{friend.desc}</p>
    </div>
   ))}
   </div>

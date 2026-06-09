@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface BulkActionBarProps {
@@ -14,7 +15,7 @@ interface BulkActionBarProps {
  onExitBulkMode: () => void;
 }
 
-export function BulkActionBar({
+export const BulkActionBar = React.memo(function BulkActionBar({
  selectedCount,
  totalCount,
  confirmDelete,
@@ -36,7 +37,7 @@ export function BulkActionBar({
   </span>
   <button
    onClick={selectedCount === totalCount ? onDeselectAll : onSelectAll}
-   className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline"
+   className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {selectedCount === totalCount ? t('sidebar_deselect_all') : t('sidebar_select_all')}
   </button>
@@ -45,7 +46,7 @@ export function BulkActionBar({
   {selectedCount > 0 && !confirmDelete && (
    <button
    onClick={onBulkDelete}
-   className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors active:scale-95"
+   className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors active:scale-95 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
    {t('sidebar_delete_count', { count: selectedCount })}
    </button>
@@ -55,13 +56,13 @@ export function BulkActionBar({
    <span className="text-xs text-red-600 dark:text-red-400">{tc('confirm_delete')}</span>
    <button
     onClick={onConfirmBulkDelete}
-    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors min-h-[44px]"
+    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white hover:bg-red-600 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {tc('yes')}
    </button>
    <button
     onClick={onCancelBulkDelete}
-    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 min-h-[44px]"
+    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {tc('cancel')}
    </button>
@@ -69,11 +70,11 @@ export function BulkActionBar({
   )}
   <button
    onClick={onExitBulkMode}
-   className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+   className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {t('sidebar_done')}
   </button>
   </div>
  </div>
  );
-}
+});

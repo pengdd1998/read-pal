@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -45,14 +45,14 @@ export interface BookClub {
 function Skeleton() {
  return (
  <div className="rounded-2xl border border-surface-2 bg-surface-0 p-5 sm:p-6 shadow-sm">
-  <div className="h-5 w-32 bg-gray-100 rounded animate-pulse mb-4" />
+  <div className="h-5 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-4" />
   <div className="space-y-3">
   {[1, 2].map((i) => (
    <div key={i} className="flex items-center gap-3">
-   <div className="w-10 h-10 rounded-lg bg-gray-100 animate-pulse" />
+   <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
    <div className="flex-1">
-    <div className="h-4 w-28 bg-gray-100 rounded animate-pulse mb-1" />
-    <div className="h-3 w-20 bg-gray-100 rounded animate-pulse" />
+    <div className="h-4 w-28 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
+    <div className="h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
    </div>
    </div>
   ))}
@@ -77,6 +77,8 @@ function BookClubsWidgetInner() {
  const [error, setError] = useState<string | null>(null);
  const [creating, setCreating] = useState(false);
  const [joining, setJoining] = useState(false);
+ const mountedRef = useRef(true);
+ useEffect(() => () => { mountedRef.current = false; }, []);
 
  useEffect(() => {
  let cancelled = false;
@@ -88,7 +90,7 @@ function BookClubsWidgetInner() {
    setClubs(list);
   }
   })
-  .catch(() => { if (!cancelled) setError(t('clubs_failed_load', { defaultValue: 'Failed to load book clubs' })); })
+  .catch((err) => { console.warn('BookClubsWidget: fetch failed', err); if (!cancelled) setError(t('clubs_failed_load', { defaultValue: 'Failed to load book clubs' })); })
   .finally(() => {
   if (!cancelled) setLoading(false);
   });
@@ -104,13 +106,15 @@ function BookClubsWidgetInner() {
   name: newName.trim(),
   description: newDesc.trim() || undefined,
   });
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setClubs((prev) => [res.data as BookClub, ...prev]);
   setShowCreate(false);
   setNewName('');
   setNewDesc('');
   }
- } catch {
+ } catch (err) {
+  console.warn('BookClubsWidget: create failed', err);
   setError(t('failedToLoad'));
  } finally {
   setCreating(false);
@@ -126,6 +130,7 @@ function BookClubsWidgetInner() {
   '/api/book-clubs/join-code',
   { inviteCode: joinCode.trim().toUpperCase() },
   );
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   const listRes = await api.get<BookClub[]>('/api/book-clubs');
   if (listRes.success && listRes.data) {
@@ -134,7 +139,8 @@ function BookClubsWidgetInner() {
   setShowJoin(false);
   setJoinCode('');
   }
- } catch {
+ } catch (err) {
+  console.warn('BookClubsWidget: join failed', err);
   setError(t('clubNotFound'));
  } finally {
   setJoining(false);
@@ -147,20 +153,20 @@ function BookClubsWidgetInner() {
  <div className="rounded-2xl border border-surface-2 bg-surface-0 p-5 sm:p-6 shadow-sm">
   {/* Header */}
   <div className="flex items-center justify-between mb-4">
-  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
    <span className="text-xl">{'📚'}</span>
    {t('pageTitle')}
   </h3>
   <div className="flex items-center gap-2">
    <button
    onClick={() => { setShowJoin(!showJoin); setShowCreate(false); setError(null); }}
-   className="text-xs px-3 py-1.5 rounded-lg border border-surface-3 text-gray-600 hover:bg-gray-50 transition-colors min-h-[44px] inline-flex items-center"
+   className="text-xs px-3 py-1.5 rounded-lg border border-surface-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    {t('join')}
    </button>
    <button
    onClick={() => { setShowCreate(!showCreate); setShowJoin(false); setError(null); }}
-   className="text-xs px-3 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors min-h-[44px] inline-flex items-center"
+   className="text-xs px-3 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    + {t('create')}
    </button>
@@ -192,16 +198,16 @@ function BookClubsWidgetInner() {
   )}
 
   {error && (
-  <p className="text-xs text-red-500 mb-3">{error}</p>
+  <p className="text-xs text-red-500 dark:text-red-400 mb-3">{error}</p>
   )}
 
   {/* Club list */}
   {clubs.length === 0 ? (
   <div className="text-center py-6">
-   <p className="text-sm text-gray-400 mb-2">
+   <p className="text-sm text-gray-400 dark:text-gray-500 mb-2">
    {t('noClubsYet')}
    </p>
-   <p className="text-xs text-gray-400">
+   <p className="text-xs text-gray-400 dark:text-gray-500">
    {t('noClubsHint')}
    </p>
   </div>

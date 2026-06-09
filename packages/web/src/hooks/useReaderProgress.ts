@@ -47,7 +47,7 @@ export function useReaderProgress({
           current_segment: segment,
           saved_at: Date.now(),
         }));
-      } catch { /* ignore quota errors */ }
+      } catch (e) { console.warn('useReaderProgress: localStorage save failed:', e); }
       try {
         fetch(`${API_BASE_URL}/api/books/${bookId}`, {
           method: 'PATCH',

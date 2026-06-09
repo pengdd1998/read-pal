@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface SidebarBackdropProps {
@@ -7,7 +8,7 @@ interface SidebarBackdropProps {
  onClose: () => void;
 }
 
-export function SidebarBackdrop({ visible, onClose }: SidebarBackdropProps) {
+export const SidebarBackdrop = React.memo(function SidebarBackdrop({ visible, onClose }: SidebarBackdropProps) {
  const t = useTranslations('reader');
 
  if (!visible) return null;
@@ -22,4 +23,4 @@ export function SidebarBackdrop({ visible, onClose }: SidebarBackdropProps) {
   aria-label={t('sidebar_close_annotations')}
  />
  );
-}
+});

@@ -54,7 +54,8 @@ export function SingleBookAnalysisCard({ books, booksLoading, booksError }: Sing
   } else {
   setError(t('analysis_failed'));
   }
- } catch {
+ } catch (error) {
+  console.warn('SingleBookAnalysisCard_analyze_failed', error);
   setError(t('network_error'));
  } finally {
   setLoading(false);
@@ -71,11 +72,11 @@ export function SingleBookAnalysisCard({ books, booksLoading, booksError }: Sing
 
   {/* Book selector */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 mb-1 block">
+   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">
    {t('select_book')}
    </label>
    {booksLoading ? (
-   <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+   <div className="h-10 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
    ) : booksError ? (
    <div className="px-3 py-2.5 text-sm rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
     {booksError}
@@ -98,7 +99,7 @@ export function SingleBookAnalysisCard({ books, booksLoading, booksError }: Sing
 
   {/* Mode selector */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 mb-2 block">
+   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">
    {t('analysis_mode')}
    </label>
    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('analysis_mode')}>
@@ -108,10 +109,10 @@ export function SingleBookAnalysisCard({ books, booksLoading, booksError }: Sing
     role="radio"
     aria-checked={mode === m.key}
     onClick={() => setMode(m.key)}
-    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      mode === m.key
      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700'
-     : 'bg-gray-50 text-gray-600 border border-surface-3 hover:bg-gray-100'
+     : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-surface-3 hover:bg-gray-100 dark:hover:bg-gray-700'
     }`}
     >
     <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -125,7 +126,7 @@ export function SingleBookAnalysisCard({ books, booksLoading, booksError }: Sing
 
   {/* Query input */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 mb-1 block">
+   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">
    {t('query_label')}
    </label>
    <textarea
@@ -141,7 +142,7 @@ export function SingleBookAnalysisCard({ books, booksLoading, booksError }: Sing
   <button
    onClick={handleAnalyze}
    disabled={loading || !selectedBookId || !query.trim()}
-   className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+   className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {loading ? (
    <>

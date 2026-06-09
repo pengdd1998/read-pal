@@ -35,6 +35,9 @@ IMG_SRC_RE = re.compile(
 TITLE_RE = re.compile(
     r'<title[^>]*>(.*?)</title>', re.IGNORECASE | re.DOTALL,
 )
+HEADING_RE = re.compile(
+    r'<h[1-3][^>]*>(.*?)</h[1-3]>', re.IGNORECASE | re.DOTALL,
+)
 IMG_COUNT_RE = re.compile(r'<img[\s>]', re.IGNORECASE)
 
 # CSS sanitization patterns

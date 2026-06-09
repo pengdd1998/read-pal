@@ -59,14 +59,21 @@ def _apply_update_fields(session: ReadingSession, update_data: dict) -> None:
             setattr(session, field, value)
 
 
+# Maximum reasonable duration for a single reading session (2 hours).
+# Sessions exceeding this are likely idle tabs, not active reading.
+_MAX_SESSION_SECONDS = 7200
+
+
 def _finalize_session_duration(session: ReadingSession, now) -> None:
     """Compute and set session duration if not already set.
 
     Prefers client-reported duration (which excludes paused time) over
-    wall-clock computation from timestamps.
+    wall-clock computation from timestamps. Caps wall-clock fallback
+    to avoid inflated durations from idle tabs.
     """
     if not session.duration and session.started_at:
-        session.duration = int((now - session.started_at).total_seconds())
+        raw = int((now - session.started_at).total_seconds())
+        session.duration = min(raw, _MAX_SESSION_SECONDS)
 
 
 def _resolve_heartbeat_pages(body) -> tuple[int | None, float | None, str | None]:
@@ -103,7 +110,8 @@ async def create_session(
         old.is_active = False
         old.ended_at = now
         if not old.duration and old.started_at:
-            old.duration = int((now - old.started_at).total_seconds())
+            raw_dur = int((now - old.started_at).total_seconds())
+            old.duration = min(raw_dur, _MAX_SESSION_SECONDS)
     session = ReadingSession(
         user_id=user_id,
         book_id=data.book_id,

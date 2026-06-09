@@ -47,6 +47,7 @@ function capture(payload: Record<string, unknown>): void {
     keepalive: true,
   }).catch(() => {
     // Swallow — analytics must never break the app.
+    console.warn('Analytics: event send failed');
   });
 }
 

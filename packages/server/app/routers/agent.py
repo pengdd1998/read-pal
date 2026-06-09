@@ -49,7 +49,7 @@ async def llm_health() -> dict:
 
     try:
         return await check_llm_health()
-    except Exception as exc:
+    except (ConnectionError, TimeoutError) as exc:
         logger.error('Health check failed: %s', exc)
         return {'healthy': False, 'error': 'Health check failed'}
 
@@ -167,7 +167,7 @@ async def discussion_questions(
         )
     except ValueError as exc:
         raise_not_found(exc, lang)
-    except Exception as exc:
+    except (ConnectionError, TimeoutError) as exc:
         logger.error('Discussion questions failed: %s', exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -189,7 +189,7 @@ async def mood_scene(
             db, UUID(current_user['id']),
             mood=body.mood, text=body.text, lang=lang,
         )
-    except Exception as exc:
+    except (ConnectionError, TimeoutError) as exc:
         logger.error('Mood scene generation failed: %s', exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -229,7 +229,7 @@ async def create_reading_plan(
         )
     except ValueError as exc:
         raise_not_found(exc, lang)
-    except Exception as exc:
+    except (ConnectionError, TimeoutError) as exc:
         logger.error('Reading plan generation failed: %s', exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

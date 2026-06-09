@@ -64,7 +64,7 @@ export function useChatHistory({
             }
           }
         }
-      } catch { toast(t('companion_history_load_error'), 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
+      } catch (err) { console.warn('useChatHistory: load failed', err); toast(t('companion_history_load_error'), 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
     };
     load();
     return () => {

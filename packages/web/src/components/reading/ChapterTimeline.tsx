@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
@@ -21,7 +21,7 @@ interface ChapterTimelineProps {
  onClose: () => void;
 }
 
-export function ChapterTimeline({
+export const ChapterTimeline = React.memo(function ChapterTimeline({
  bookId,
  totalChapters,
  currentChapter,
@@ -77,17 +77,17 @@ export function ChapterTimeline({
    </div>
    <button
    onClick={onClose}
-   className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+   className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={t('timeline_close')}
    >
-   <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>
    </button>
   </div>
 
   {/* Legend */}
-  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-[10px] text-gray-500">
+  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400">
    <span className="flex items-center gap-1">
    <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" /> {t('timeline_highlights')}
    </span>
@@ -104,13 +104,13 @@ export function ChapterTimeline({
    {loading ? (
    <div className="space-y-2">
     {Array.from({ length: 8 }).map((_, i) => (
-    <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+    <div key={i} className="h-12 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
     ))}
    </div>
    ) : error ? (
    <div className="flex flex-col items-center gap-3 py-8 text-center">
-    <p className="text-sm text-gray-500">{t('timeline_load_failed')}</p>
-    <button onClick={loadStats} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors">
+    <p className="text-sm text-gray-500 dark:text-gray-400">{t('timeline_load_failed')}</p>
+    <button onClick={loadStats} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
      {t('timeline_retry')}
     </button>
    </div>
@@ -127,12 +127,12 @@ export function ChapterTimeline({
     <button
      key={`chapter-${i}`}
      onClick={() => onChapterSelect(i)}
-     className={`w-full text-left p-3 rounded-xl transition-all duration-150 ${
+     className={`w-full text-left p-3 rounded-xl transition-all duration-150 focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:outline-none ${
      isCurrent
       ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
       : isRead
-      ? 'bg-gray-50/50 hover:bg-gray-100 border border-transparent'
-      : 'border border-transparent hover:bg-gray-50/30'
+      ? 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent'
+      : 'border border-transparent hover:bg-gray-50/30 dark:hover:bg-gray-800/30'
      }`}
     >
      <div className="flex items-center gap-2 mb-1">
@@ -147,7 +147,7 @@ export function ChapterTimeline({
      <span className={`text-xs font-medium truncate ${
       isCurrent
       ? 'text-amber-700 dark:text-amber-300'
-      : 'text-gray-700'
+      : 'text-gray-700 dark:text-gray-300'
      }`}>
       {title}
      </span>
@@ -161,13 +161,13 @@ export function ChapterTimeline({
      {/* Activity bar */}
      {stat && (
      <div className="flex items-center gap-2 mt-1.5">
-      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
       <div
        className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-400 transition-all duration-300"
        style={{ width: `${barWidth}%` }}
       />
       </div>
-      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 flex-shrink-0">
+      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">
       {stat.highlights > 0 && <span>{stat.highlights}{t('highlight_abbr')}</span>}
       {stat.notes > 0 && <span>{stat.notes}{t('note_abbr')}</span>}
       {stat.bookmarks > 0 && <span>{stat.bookmarks}{t('bookmark_abbr')}</span>}
@@ -192,4 +192,4 @@ export function ChapterTimeline({
   `}</style>
  </div>
  );
-}
+});

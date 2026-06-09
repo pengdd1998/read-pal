@@ -78,7 +78,8 @@ export function useBookContent(
           const annData = annotationsResult.data;
           setAnnotations(Array.isArray(annData) ? annData : []);
         }
-      } catch {
+      } catch (err) {
+        console.warn('useBookContent: fetch failed', err);
         if (!cancelled) setError(connectFailedMessage);
       } finally {
         if (!cancelled) setLoading(false);

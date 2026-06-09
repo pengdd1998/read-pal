@@ -1,11 +1,16 @@
+import React from 'react';
 import { Link } from '@/i18n/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Highlight } from './types';
 
 interface HighlightResultCardProps {
  highlight: Highlight;
 }
 
-export function HighlightResultCard({ highlight }: HighlightResultCardProps) {
+export const HighlightResultCard = React.memo(function HighlightResultCard({ highlight }: HighlightResultCardProps) {
+ const locale = useLocale();
+ const t = useTranslations('search');
+ const typeLabel = t(`type_${highlight.type}`, { defaultValue: highlight.type });
  return (
  <Link
   href={`/read/${highlight.bookId}`}
@@ -17,9 +22,9 @@ export function HighlightResultCard({ highlight }: HighlightResultCardProps) {
   </span>
   <div className="flex-1 min-w-0">
    <p className="text-sm text-gray-700 line-clamp-2">{highlight.content}</p>
-   <p className="text-xs text-gray-400 mt-1">{highlight.type} &middot; {new Date(highlight.createdAt).toLocaleDateString()}</p>
+   <p className="text-xs text-gray-400 mt-1">{typeLabel} &middot; {new Date(highlight.createdAt).toLocaleDateString(locale)}</p>
   </div>
   </div>
  </Link>
  );
-}
+});

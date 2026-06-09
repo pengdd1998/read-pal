@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
@@ -25,6 +25,8 @@ export function SessionSummaryModal({
  const [aiSummary, setAiSummary] = useState<string | null>(null);
  const [summaryLoading, setSummaryLoading] = useState(false);
  const [summaryError, setSummaryError] = useState(false);
+ const mountedRef = useRef(true);
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const handleBackdropKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Escape') onKeepReading(); }, [onKeepReading]);
  const handlePanelClick = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
@@ -60,21 +62,21 @@ export function SessionSummaryModal({
   >
   <div className="text-center">
    <div className="text-4xl mb-3">{'\uD83D\uDCD6'}</div>
-   <h3 className="text-lg font-bold text-gray-900 mb-1">{t('session_title')}</h3>
-   <p className="text-sm text-gray-500 mb-4">{t('session_great_reading')}</p>
+   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('session_title')}</h3>
+   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('session_great_reading')}</p>
 
    <div className="grid grid-cols-2 gap-3 mb-4">
    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
     <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
     {Math.floor(duration / 60)}m {duration % 60}s
     </div>
-    <div className="text-xs text-gray-500 mt-1">{t('session_time_spent')}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('session_time_spent')}</div>
    </div>
    <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
     <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
     {chaptersRead}/{totalChapters}
     </div>
-    <div className="text-xs text-gray-500 mt-1">{t('session_chapters_read')}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('session_chapters_read')}</div>
    </div>
    </div>
 
@@ -98,7 +100,7 @@ export function SessionSummaryModal({
     </svg>
     {t('session_reading_insight')}
     </div>
-    <p className="text-xs text-gray-700 leading-relaxed">{aiSummary}</p>
+    <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{aiSummary}</p>
    </div>
    )}
    {summaryError && !summaryLoading && !aiSummary && (
@@ -109,24 +111,24 @@ export function SessionSummaryModal({
      if (sessionId) {
       setSummaryLoading(true);
       api.post<{ summary: string }>(`/api/reading-sessions/${sessionId}/summarize`)
-       .then((res) => { if (res.success && res.data?.summary) setAiSummary(res.data.summary); })
-       .catch(() => setSummaryError(true))
-       .finally(() => setSummaryLoading(false));
+       .then((res) => { if (mountedRef.current && res.success && res.data?.summary) setAiSummary(res.data.summary); })
+       .catch((err) => { console.warn('SessionSummaryModal: AI summary retry failed', err); if (mountedRef.current) setSummaryError(true); })
+       .finally(() => { if (mountedRef.current) setSummaryLoading(false); });
      }
-    }} className="mt-1 text-[10px] text-amber-600 hover:underline">{t('session_retry_insight')}</button>
+    }} className="mt-1 text-[10px] text-amber-600 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('session_retry_insight')}</button>
    </div>
    )}
 
    <div className="flex gap-3">
    <button
     onClick={onKeepReading}
-    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {t('session_keep_reading')}
    </button>
    <button
     onClick={onBackToLibrary}
-    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {t('back_to_library')}
    </button>

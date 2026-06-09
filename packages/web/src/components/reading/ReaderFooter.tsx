@@ -70,7 +70,7 @@ export function ReaderFooter({
   <button
    onClick={onPrevPage}
    disabled={currentPage === 0}
-   className="w-10 h-8 sm:w-auto sm:px-3 sm:h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/[0.04] dark:hover:bg-white/[0.04] active:bg-black/[0.08] dark:active:bg-white/[0.08] transition-all shrink-0 text-gray-500"
+   className="w-10 h-8 sm:w-auto sm:px-3 sm:h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/[0.04] dark:hover:bg-white/[0.04] active:bg-black/[0.08] dark:active:bg-white/[0.08] transition-all shrink-0 text-gray-500 dark:text-gray-400"
    aria-label={t('reader_prev_chapter')}
   >
    <ChevronLeft className="w-4 h-4" />
@@ -84,7 +84,7 @@ export function ReaderFooter({
   <button
    onClick={onNextPage}
    disabled={currentPage >= totalPages - 1}
-   className="w-10 h-8 sm:w-auto sm:px-3 sm:h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/[0.04] dark:hover:bg-white/[0.04] active:bg-black/[0.08] dark:active:bg-white/[0.08] transition-all shrink-0 text-gray-500"
+   className="w-10 h-8 sm:w-auto sm:px-3 sm:h-8 flex items-center justify-center gap-1 rounded-md text-xs font-medium disabled:opacity-20 disabled:cursor-not-allowed hover:bg-black/[0.04] dark:hover:bg-white/[0.04] active:bg-black/[0.08] dark:active:bg-white/[0.08] transition-all shrink-0 text-gray-500 dark:text-gray-400"
    aria-label={t('reader_next_chapter')}
   >
    <span className="hidden sm:inline">{t('reader_next')}</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
@@ -24,7 +24,7 @@ interface ExportPreviewModalProps {
 
 const DEFAULT_TYPES = new Set(['highlight', 'note', 'bookmark']);
 
-export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onClose }: ExportPreviewModalProps) {
+export const ExportPreviewModal = React.memo(function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onClose }: ExportPreviewModalProps) {
  const t = useTranslations('reader');
  const [format, setFormat] = useState<ExportFormat>('bookclub');
  const [preview, setPreview] = useState<string | null>(null);
@@ -102,6 +102,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
   if (!ctrl.signal.aborted) setPreview(text);
  } catch (err) {
   if (ctrl.signal.aborted) return;
+  console.warn('ExportPreviewModal: preview failed', err);
   toast(t('export_failed_preview'), 'error');
  } finally {
   if (!ctrl.signal.aborted) setLoading(false);
@@ -133,7 +134,8 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
   URL.revokeObjectURL(url);
   toast(t('export_downloaded_file', { filename }), 'success');
   analytics.track('export_completed', { format });
- } catch {
+ } catch (error) {
+  console.warn('ExportPreviewModal_download_failed', error);
   toast(t('export_download_failed'), 'error');
  }
  };
@@ -157,11 +159,11 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
   {/* Header */}
   <div className="px-5 py-4 border-b border-surface-3 flex items-center justify-between">
    <div>
-   <h3 className="text-lg font-semibold text-gray-900">
+   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
     {t('export_title')}
    </h3>
    {bookTitle && (
-    <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">
+    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-xs">
     {bookTitle}
     </p>
    )}
@@ -169,7 +171,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
    <button
    onClick={onClose}
    aria-label={t('export_close_dialog')}
-   className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+   className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -184,7 +186,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
    const items = FORMATS.filter((f) => f.category === cat.key);
    return (
     <div key={cat.key}>
-    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
      {t(cat.labelKey)}
     </p>
     <div className="grid grid-cols-2 gap-2">
@@ -193,14 +195,14 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
       key={f.value}
       onClick={() => { setFormat(f.value); setPreview(null); }}
       aria-label={`${t(f.label)} - ${t(f.description)}`}
-      className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
+      className={`text-left px-3 py-2.5 rounded-xl border transition-all focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
       format === f.value
        ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-400/30'
-       : 'border-gray-200 hover:border-gray-300'
+       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
       }`}
      >
-      <span className="text-sm font-medium text-gray-900">{t(f.label)}</span>
-      <span className="block text-xs text-gray-500 mt-0.5">{t(f.description)}</span>
+      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t(f.label)}</span>
+      <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t(f.description)}</span>
      </button>
      ))}
     </div>
@@ -227,7 +229,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
    {preview && (
    <div className="mt-3">
     <div className="flex items-center justify-between mb-1.5">
-    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('export_preview_label')}</span>
+    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('export_preview_label')}</span>
     <button
      onClick={handleCopy}
      aria-label={t('export_copy')}
@@ -236,7 +238,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
      {t('export_copy')}
     </button>
     </div>
-    <pre className="bg-gray-50 rounded-lg p-3 text-xs text-gray-700 overflow-auto max-h-40 whitespace-pre-wrap break-words border border-surface-3">
+    <pre className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 overflow-auto max-h-40 whitespace-pre-wrap break-words border border-surface-3">
     {preview.slice(0, 2000)}{preview.length > 2000 ? '\n…' : ''}
     </pre>
    </div>
@@ -248,14 +250,14 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
    <button
    onClick={handlePreview}
    disabled={loading}
-   className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+   className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
    >
    {loading ? t('export_loading') : preview ? t('export_refresh') : t('export_preview_button')}
    </button>
    <button
    onClick={handleDownload}
    disabled={loading}
-   className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors"
+   className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
    {t('export_download')}
    </button>
@@ -282,12 +284,12 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
      readOnly
      value={shareLink}
      aria-label={t('export_share_via_link')}
-     className="flex-1 px-3 py-2 text-xs bg-gray-50 border border-surface-3 rounded-lg text-gray-700"
+     className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300"
      onClick={(e) => (e.target as HTMLInputElement).select()}
     />
     <button
      onClick={() => { navigator.clipboard.writeText(shareLink); toast(t('export_link_copied'), 'success'); }}
-     className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+     className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
      {t('export_copy')}
     </button>
@@ -298,4 +300,4 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
   </div>
  </div>
  );
-}
+});

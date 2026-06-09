@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { DayCell, SkeletonHeatmap } from './StreakDayCell';
@@ -31,7 +31,7 @@ function todayISO(): string {
  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function StreakCalendar() {
+function StreakCalendarInner() {
  const t = useTranslations('stats');
  const monthLabels = useMemo(() => MONTH_KEYS.map((k) => t(k)), [t]);
  const dayLabels = useMemo(() => DAY_KEYS.map((k) => (k ? t(k) : '')), [t]);
@@ -48,7 +48,8 @@ export default function StreakCalendar() {
   .then((res) => {
   if (!cancelled && res.success && res.data) setData(res.data);
   })
-  .catch(() => {
+  .catch((err) => {
+  console.warn('StreakCalendar: failed to load calendar', err);
   if (!cancelled) setError(t('calendar_load_error'));
   })
   .finally(() => {
@@ -114,13 +115,13 @@ export default function StreakCalendar() {
   {/* Header */}
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
   <div>
-   <h3 className="text-lg font-bold text-gray-900">{t('streak_title')}</h3>
+   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('streak_title')}</h3>
    {loading ? (
-   <div className="mt-1 h-4 w-40 bg-gray-100 rounded animate-pulse" />
+   <div className="mt-1 h-4 w-40 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
    ) : error ? (
-   <p className="text-sm text-red-500 mt-1">{error}</p>
+   <p className="text-sm text-red-500 dark:text-red-400 mt-1">{error}</p>
    ) : (
-   <p className="text-sm text-gray-500 mt-0.5">
+   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
     {t('active_days', { active: data?.totalDaysActive ?? 0, total: totalDays })}
    </p>
    )}
@@ -128,12 +129,12 @@ export default function StreakCalendar() {
   {!loading && !error && data && (
    <div className="flex items-center gap-3 sm:gap-4">
    <div className="text-center">
-    <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide font-medium">{t('streak_longest')}</div>
-    <div className="text-lg font-bold text-gray-700 tabular-nums">{data.longestStreak}</div>
+    <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('streak_longest')}</div>
+    <div className="text-lg font-bold text-gray-700 dark:text-gray-300 tabular-nums">{data.longestStreak}</div>
    </div>
-   <div className="w-px h-8 bg-gray-200" />
+   <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
    <div className="text-center">
-    <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide font-medium">{t('streak_current')}</div>
+    <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('streak_current')}</div>
     <div className="flex items-center justify-center gap-1">
     <span className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{data.currentStreak}</span>
     {data.currentStreak > 0 && <span className="text-xl" role="img" aria-label={t('fire_streak_aria')}>{'🔥'}</span>}
@@ -148,8 +149,8 @@ export default function StreakCalendar() {
   <SkeletonHeatmap />
   ) : error ? (
   <div className="h-32 flex flex-col items-center justify-center gap-2">
-   <p className="text-sm text-gray-400">{error}</p>
-   <button onClick={fetchData} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline">{t('retry')}</button>
+   <p className="text-sm text-gray-400 dark:text-gray-500">{error}</p>
+   <button onClick={fetchData} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
   </div>
   ) : (
   <div className="overflow-x-auto">
@@ -158,7 +159,7 @@ export default function StreakCalendar() {
     const nextCol = monthMarkers[i + 1]?.col ?? weeks.length;
     const spanCols = nextCol - m.col;
     return (
-    <div key={`${m.label}-${m.col}`} className="text-[10px] text-gray-400 font-medium" style={{ width: `${spanCols * 16}px` }}>
+    <div key={`${m.label}-${m.col}`} className="text-[10px] text-gray-400 dark:text-gray-500 font-medium" style={{ width: `${spanCols * 16}px` }}>
      {spanCols >= 2 ? m.label : ''}
     </div>
     );
@@ -167,7 +168,7 @@ export default function StreakCalendar() {
    <div className="flex gap-0">
    <div className="flex flex-col gap-[3px] mr-1">
     {dayLabels.map((label, i) => (
-    <div key={i} className="h-[13px] flex items-center text-[10px] text-gray-400 font-medium leading-none pr-1">{label}</div>
+    <div key={i} className="h-[13px] flex items-center text-[10px] text-gray-400 dark:text-gray-500 font-medium leading-none pr-1">{label}</div>
     ))}
    </div>
    <div className="flex gap-[3px]">
@@ -188,9 +189,9 @@ export default function StreakCalendar() {
 
   {/* Legend */}
   {!loading && !error && (
-  <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-500">
+  <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-500 dark:text-gray-400">
    <span>{t('heatmap_less')}</span>
-   <div className="w-[13px] h-[13px] rounded-[3px] bg-gray-100" />
+   <div className="w-[13px] h-[13px] rounded-[3px] bg-gray-100 dark:bg-gray-800" />
    <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-200 dark:bg-amber-900/50" />
    <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-300 dark:bg-amber-700/60" />
    <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-500 dark:bg-amber-600/80" />
@@ -201,3 +202,5 @@ export default function StreakCalendar() {
  </div>
  );
 }
+
+export default React.memo(StreakCalendarInner);

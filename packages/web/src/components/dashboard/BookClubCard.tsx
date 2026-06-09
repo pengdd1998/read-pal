@@ -37,7 +37,7 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
  <Link
   key={club.id}
   href={`/book-clubs/${club.id}`}
-  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50/50 transition-colors group"
+  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors group focus-visible:ring-2 focus-visible:ring-amber-400"
  >
   {/* Club avatar */}
   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center text-lg shrink-0">
@@ -46,7 +46,7 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
 
   <div className="flex-1 min-w-0">
   <div className="flex items-center gap-2">
-   <span className="text-sm font-semibold text-gray-900 truncate">
+   <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
    {club.name}
    </span>
    {club.isPrivate && (
@@ -61,7 +61,7 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
    )}
   </div>
   <div className="flex items-center gap-3 mt-0.5">
-   <span className="text-xs text-gray-400">
+   <span className="text-xs text-gray-400 dark:text-gray-500">
    {(club.clubMembers || []).length} {(club.clubMembers || []).length !== 1 ? t('memberCountPlural', { count: (club.clubMembers || []).length }) : t('memberCount', { count: 1 })}
    </span>
    {club.currentBookId && (

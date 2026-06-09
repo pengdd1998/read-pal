@@ -70,7 +70,8 @@ const icons: Record<string, JSX.Element> = {
 function useSafeTranslations(namespace: string) {
  try {
  return useTranslations(namespace);
- } catch {
+ } catch (err) {
+ console.warn('PageError: i18n context unavailable, using fallbacks:', err);
  return (key: string, params?: Record<string, string>) => {
   let text = fallbacks[key] || key;
   if (params) {
@@ -121,11 +122,11 @@ export function PageError({
    {icons[icon]}
   </div>
 
-  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
    {displayTitle}
   </h2>
 
-  <p className="text-gray-500 mb-6 max-w-sm text-center">
+  <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm text-center">
    {displayMessage}
   </p>
 

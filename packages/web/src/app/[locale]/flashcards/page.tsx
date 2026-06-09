@@ -50,18 +50,23 @@ export default function FlashcardsPage() {
  const [completed, setCompleted] = useState(false);
  const [toast, setToast] = useState<string | null>(null);
  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const mountedRef = useRef(true);
 
  useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const fetchDecks = useCallback(async () => {
  try {
   const res = await api.get<{ decks: DeckInfo[]; totalCards: number; totalDue: number }>('/api/flashcards/decks');
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setDecks(res.data.decks);
   setDeckTotalCards(res.data.totalCards);
   setDeckTotalDue(res.data.totalDue);
   }
- } catch {
+ } catch (err) {
+  if (!mountedRef.current) return;
+  console.warn('FlashcardsPage: fetchDecks failed', err);
   setToast(t('toast_load_decks'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
@@ -74,16 +79,19 @@ export default function FlashcardsPage() {
   ? `/api/flashcards/review?limit=20&bookId=${bookId}`
   : '/api/flashcards/review?limit=20';
   const res = await api.get<{ flashcards: FlashcardData[]; stats: ReviewStats }>(url);
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setCards(res.data.flashcards);
   setStats(res.data.stats);
   if (res.data.flashcards.length === 0) setCompleted(true);
   }
- } catch {
+ } catch (err) {
+  if (!mountedRef.current) return;
+  console.warn('FlashcardsPage: fetchCards failed', err);
   setToast(t('toast_load_cards'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
- setLoading(false);
+ if (mountedRef.current) setLoading(false);
  }, [t]);
 
  useEffect(() => {
@@ -98,17 +106,20 @@ export default function FlashcardsPage() {
  setReviewing(true);
  try {
   await api.post(`/api/flashcards/${card.id}/review`, { rating });
+  if (!mountedRef.current) return;
   if (currentIndex + 1 >= cards.length) {
   setCompleted(true);
   } else {
   setCurrentIndex(currentIndex + 1);
   setShowAnswer(false);
   }
- } catch {
+ } catch (err) {
+  if (!mountedRef.current) return;
+  console.warn('FlashcardsPage: handleRate failed', err);
   setToast(t('toast_save_review'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
- setReviewing(false);
+ if (mountedRef.current) setReviewing(false);
  }, [cards, currentIndex, t]);
 
  // Keyboard shortcuts for review mode
@@ -138,6 +149,7 @@ export default function FlashcardsPage() {
  setCurrentIndex(0);
  setShowAnswer(false);
  await fetchCards(bookId);
+ if (!mountedRef.current) return;
  setMode('review');
  };
 
@@ -161,16 +173,16 @@ export default function FlashcardsPage() {
   {toastEl}
   <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <div className="mb-8">
-   <div className="h-7 bg-gray-200 rounded-lg w-40 animate-pulse" />
+   <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
    </div>
    <div className="space-y-3">
    {[1, 2, 3].map((i) => (
     <div key={i} className="card">
     <div className="flex items-center gap-3">
-     <div className="w-10 h-14 bg-gray-100 rounded-lg animate-pulse" />
+     <div className="w-10 h-14 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
      <div className="flex-1">
-     <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse mb-2" />
-     <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse" />
+     <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-3/4 animate-pulse mb-2" />
+     <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/2 animate-pulse" />
      </div>
     </div>
     </div>
@@ -187,10 +199,10 @@ export default function FlashcardsPage() {
   {toastEl}
   <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <div className="mb-8">
-   <div className="h-7 bg-gray-200 rounded-lg w-40 animate-pulse" />
+   <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-lg w-40 animate-pulse" />
    </div>
    <div className="card">
-   <div className="h-48 bg-gray-100 rounded-xl animate-pulse" />
+   <div className="h-48 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
    </div>
   </main>
   </>

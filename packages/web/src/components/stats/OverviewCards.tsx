@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { formatTime } from '@/lib/stats-utils';
 import type { ReadingStats, SessionData } from './types';
@@ -10,7 +10,7 @@ interface OverviewCardsProps {
  sessions: SessionData[];
 }
 
-export function OverviewCards({ stats, sessions }: OverviewCardsProps) {
+export const OverviewCards = React.memo(function OverviewCards({ stats, sessions }: OverviewCardsProps) {
  const t = useTranslations('stats');
 
  const { totalMinutes, totalPages, cards } = useMemo(() => {
@@ -36,4 +36,4 @@ export function OverviewCards({ stats, sessions }: OverviewCardsProps) {
   ))}
  </div>
  );
-}
+});

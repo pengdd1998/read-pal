@@ -7,7 +7,7 @@ export function ApiCodeExamples() {
 
  return (
  <section>
-  <h2 className="text-xl font-bold font-serif text-gray-900 mb-4">{t('code_examples')}</h2>
+  <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-4">{t('code_examples')}</h2>
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
    <h3 className="font-semibold text-gray-800 mb-2">{t('code_python')}</h3>

@@ -3,9 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const DRAG_THRESHOLD = 6; // px movement to distinguish drag from click
-const EDGE_MARGIN = 20; // px from viewport edge when snapped
-const BTN_SIZE = 56; // button width/height in px
-const HEADER_MIN_Y = 64; // minimum Y position — button must stay below the reader header
 const SNAP_TRANSITION = 'left 0.25s cubic-bezier(0.16,1,0.3,1), top 0.25s cubic-bezier(0.16,1,0.3,1)';
 
 export interface DragPosition {

@@ -90,7 +90,7 @@ export default function ReadPage() {
   <div className="flex items-center justify-center h-dvh bg-surface-1">
   <div className="text-center">
    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4" />
-   <p className="text-gray-600">{t('loading')}</p>
+   <p className="text-gray-600 dark:text-gray-400">{t('loading')}</p>
   </div>
   </div>
  );
@@ -328,7 +328,7 @@ export default function ReadPage() {
   )}
   <button
   onClick={handleOpenShortcutsHelp}
-  className="hidden sm:flex fixed bottom-5 right-20 z-10 w-11 h-11 rounded-full bg-surface-0/60 backdrop-blur-sm border border-gray-200/50/50 text-gray-300 hover:text-amber-500 hover:border-amber-300/50 transition-all items-center justify-center"
+  className="hidden sm:flex fixed bottom-5 right-20 z-10 w-11 h-11 rounded-full bg-surface-0/60 backdrop-blur-sm border border-gray-200/50/50 dark:border-gray-700/50 text-gray-300 hover:text-amber-500 hover:border-amber-300/50 transition-all items-center justify-center"
   aria-label={t('keyboard_shortcuts_help')}
   >
   <span className="text-xs font-bold">?</span>

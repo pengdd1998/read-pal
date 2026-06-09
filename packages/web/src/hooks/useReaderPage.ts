@@ -113,7 +113,8 @@ export function useReaderPage() {
     setChapterFade('in');
     try {
       await api.patch(`/api/books/${bookId}`, { current_page: chapterIndex, current_segment: 0 });
-    } catch {
+    } catch (err) {
+      console.warn('useReaderPage: progress save failed', err);
       if (mountedRef.current) toast(t('failed_save_progress'), 'error');
     } finally {
       navigatingRef.current = false;

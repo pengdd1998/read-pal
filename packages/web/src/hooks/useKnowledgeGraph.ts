@@ -71,7 +71,8 @@ export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn
           setEdges(rawEdgesRef.current);
           dataLoadedRef.current = true;
         }
-      } catch {
+      } catch (err) {
+        console.warn('useKnowledgeGraph: fetch failed', err);
         if (!stale) setError(errorMessage);
       } finally {
         if (!stale) setLoading(false);

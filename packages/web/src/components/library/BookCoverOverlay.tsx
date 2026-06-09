@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -21,7 +21,7 @@ interface BookCoverOverlayProps {
  showDeleteConfirm: boolean;
 }
 
-export function BookCoverOverlay({
+export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  bookId,
  title,
  coverUrl,
@@ -37,9 +37,12 @@ export function BookCoverOverlay({
  const [cachingOffline, setCachingOffline] = useState(false);
  const [cachedOffline, setCachedOffline] = useState(false);
  const [showCollectionPicker, setShowCollectionPicker] = useState(false);
+ const mountedRef = useRef(true);
+
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const STATUS_CONFIG = useMemo(() => ({
- unread: { label: t('card_unread'), dot: 'bg-gray-300', ring: 'bg-gray-100 text-gray-600' },
+ unread: { label: t('card_unread'), dot: 'bg-gray-300 dark:bg-gray-600', ring: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
  reading: { label: t('card_reading'), dot: 'bg-primary-400', ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
  completed: { label: t('card_completed'), dot: 'bg-emerald-400', ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
  } as const), [t]);
@@ -60,6 +63,7 @@ export function BookCoverOverlay({
  if (cachingOffline || cachedOffline) return;
  setCachingOffline(true);
  const success = await cacheBookOffline(bookId);
+ if (!mountedRef.current) return;
  setCachedOffline(success);
  setCachingOffline(false);
  }, [bookId, cachingOffline, cachedOffline]);
@@ -102,7 +106,8 @@ export function BookCoverOverlay({
   {/* Info */}
   <button
    onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/book/${bookId}`); }}
-   className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
+   className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+
    aria-label={t('card_book_details')}
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -114,7 +119,7 @@ export function BookCoverOverlay({
   <button
    onClick={handleCacheOffline}
    aria-label={cachedOffline ? t('card_available_offline') : t('card_save_offline')}
-   className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${
+   className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    cachedOffline
     ? 'text-emerald-400'
     : cachingOffline
@@ -155,7 +160,7 @@ export function BookCoverOverlay({
    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onShowDeleteConfirm(); }}
    disabled={deleting}
    aria-label={t('card_delete_book')}
-   className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${
+   className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     deleting
     ? 'text-white/40 cursor-wait'
     : 'text-white/80 hover:text-red-400 hover:bg-red-500/20'
@@ -187,7 +192,7 @@ export function BookCoverOverlay({
     </button>
     <button
      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteConfirm(); }}
-     className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-red-600 text-white hover:bg-red-500 transition-colors"
+     className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-red-600 text-white hover:bg-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
      {t('card_delete')}
     </button>
@@ -198,4 +203,4 @@ export function BookCoverOverlay({
   </div>
  </div>
  );
-}
+});

@@ -7,7 +7,7 @@ import { useQuoteCardActions } from './useQuoteCardActions';
 
 export type CardTheme = 'warm' | 'dark';
 
-export { wrapText, renderCardToCanvas } from './QuoteCardCanvas';
+export { renderCardToCanvas } from './QuoteCardCanvas';
 
 interface QuoteCardProps {
  text: string;
@@ -170,7 +170,7 @@ export function QuoteCard({ text, bookTitle, author, onClose }: QuoteCardProps) 
    {/* Native Share / Download */}
    <button
     onClick={handleNativeShare}
-    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md hover:shadow-lg"
+    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md hover:shadow-lg focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     title={typeof navigator.share === 'function' ? tc('share_via_apps') : tc('download_image')}
    aria-label={typeof navigator.share === 'function' ? tc('share_via_apps') : tc('download_image')}
    >

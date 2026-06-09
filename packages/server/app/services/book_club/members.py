@@ -53,8 +53,9 @@ async def join_club(
     db.add(member)
     try:
         await db.flush()
-    except IntegrityError:
+    except IntegrityError as exc:
         await db.rollback()
+        logger.debug('join_club IntegrityError: %s', exc)
         raise ValueError('Already a member of this club') from None
 
     logger.info('User %s joined club %s', user_id, club.id)

@@ -20,7 +20,7 @@ export default function RegisterPage() {
 
  return (
  <main className="min-h-[80vh] flex items-center justify-center">
-  <div className="flex items-center gap-2 text-gray-500">
+  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
   <LoadingSpinner />
   {tc('loading')}
   </div>

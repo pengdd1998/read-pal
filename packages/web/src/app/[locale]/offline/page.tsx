@@ -58,7 +58,7 @@ export default function OfflinePage() {
      if (data?.data?.title) title = data.data.title;
      if (data?.data?.author) author = data.data.author;
     }
-   } catch { /* metadata not cached */ }
+   } catch { console.warn('Offline: metadata not cached'); }
    books.push({
     bookId: item.bookId,
     title,
@@ -111,10 +111,10 @@ export default function OfflinePage() {
   </div>
 
   {/* Title */}
-  <h1 className="text-2xl font-bold text-gray-900 mb-2">
+  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
    {isOnline ? t('online_title') : t('offline_title')}
   </h1>
-  <p className="text-gray-500 mb-6">
+  <p className="text-gray-500 dark:text-gray-400 mb-6">
    {isOnline ? t('online_desc') : t('offline_desc')}
   </p>
 
@@ -161,7 +161,7 @@ export default function OfflinePage() {
        </svg>
       </div>
       <div className="flex-1 min-w-0">
-       <p className="text-sm font-medium text-gray-900 truncate">
+       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
        {book.title}
        </p>
        <p className="text-xs text-gray-400">

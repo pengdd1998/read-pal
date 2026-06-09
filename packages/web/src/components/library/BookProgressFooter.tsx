@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface BookProgressFooterProps {
  status: 'unread' | 'reading' | 'completed';
@@ -11,7 +11,7 @@ interface BookProgressFooterProps {
  lastReadAt?: Date | string;
 }
 
-export function BookProgressFooter({
+export const BookProgressFooter = React.memo(function BookProgressFooter({
  status,
  progress,
  currentPage,
@@ -19,9 +19,10 @@ export function BookProgressFooter({
  lastReadAt,
 }: BookProgressFooterProps) {
  const t = useTranslations('library');
+ const locale = useLocale();
 
  const STATUS_CONFIG = useMemo(() => ({
- unread: { label: t('card_unread'), ring: 'bg-gray-100 text-gray-600' },
+ unread: { label: t('card_unread'), ring: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' },
  reading: { label: t('card_reading'), ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
  completed: { label: t('card_completed'), ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
  } as const), [t]);
@@ -29,8 +30,8 @@ export function BookProgressFooter({
  const cfg = STATUS_CONFIG[status];
 
  const formattedDate = useMemo(() => lastReadAt
- ? new Date(lastReadAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
- : null, [lastReadAt]);
+ ? new Date(lastReadAt).toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+ : null, [lastReadAt, locale]);
 
  return (
  <>
@@ -42,7 +43,7 @@ export function BookProgressFooter({
   {/* Progress details */}
   {status !== 'unread' && (
   <div className="mt-auto pt-3">
-   <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+   <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
    <div
     className={`h-full rounded-full transition-all duration-500 ease-out ${
     status === 'completed' ? 'bg-emerald-500' : 'bg-primary-500'
@@ -51,7 +52,7 @@ export function BookProgressFooter({
    />
    </div>
    <div className="flex items-center justify-between mt-1.5">
-   <p className="text-[10px] text-gray-400 tabular-nums">
+   <p className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
     {t('card_pages', { current: currentPage, total: totalPages })}
    </p>
    <p className="text-[10px] text-primary-500 font-semibold tabular-nums">
@@ -63,10 +64,10 @@ export function BookProgressFooter({
 
   {/* Last read */}
   {formattedDate && (
-  <p className="text-[10px] text-gray-400 mt-2">
+  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
    {formattedDate}
   </p>
   )}
  </>
  );
-}
+});

@@ -25,7 +25,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
    setRecs(res.data.recommendations ?? []);
   }
   })
-  .catch(() => { if (!cancelled) setError(true); })
+  .catch((err) => { console.warn('DashboardRecommendations: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });
  return () => { cancelled = true; };
  }, []);
@@ -46,8 +46,8 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
  if (error) {
  return (
   <div className="card text-center py-4">
-  <p className="text-xs text-gray-400 mb-2">{t('failed_load_recommendations')}</p>
-  <button onClick={fetchRecs} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline">{t('retry')}</button>
+  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('failed_load_recommendations')}</p>
+  <button onClick={fetchRecs} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
   </div>
  );
  }
@@ -57,20 +57,20 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
  return (
  <div className="card">
   <div className="flex items-center justify-between mb-3">
-  <h3 className="text-sm font-semibold text-gray-900">{t('recommended_title')}</h3>
+  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('recommended_title')}</h3>
   <Link href="/search" className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline">{t('see_all')}</Link>
   </div>
   <div className="space-y-2">
   {topRecs.map((r) => (
-   <div key={r.title + '-' + r.author} className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50/50 transition-colors">
+   <div key={r.title + '-' + r.author} className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
    <div className="w-8 h-10 rounded bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center flex-shrink-0">
     <span className="text-xs">{'\uD83D\uDCD6'}</span>
    </div>
    <div className="min-w-0 flex-1">
-    <p className="text-xs font-medium text-gray-900 truncate">{r.title}</p>
-    {isDisplayableAuthor(r.author) && <p className="text-[10px] text-gray-400 truncate">{r.author}</p>}
+    <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{r.title}</p>
+    {isDisplayableAuthor(r.author) && <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{r.author}</p>}
    </div>
-   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 whitespace-nowrap">{r.genre ? t(`genre_${r.genre.toLowerCase().replace('-', '_')}`) || r.genre : ''}</span>
+   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 whitespace-nowrap">{r.genre ? t(`genre_${r.genre.toLowerCase().replace('-', '_')}`) || r.genre : ''}</span>
    </div>
   ))}
   </div>

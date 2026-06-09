@@ -28,7 +28,7 @@ export default function SectionNav({
  const tr = useTranslations('readingMirror');
  const [activeSection, setActiveSection] = useState(0);
 
- if (sections.length === 0) return <p className="text-center text-gray-500 py-12">{tr('empty_sections')}</p>;
+ if (sections.length === 0) return <p className="text-center text-gray-500 dark:text-gray-400 py-12">{tr('empty_sections')}</p>;
 
  return (
  <>
@@ -38,7 +38,7 @@ export default function SectionNav({
    value={activeSection}
    onChange={(e) => setActiveSection(parseInt(e.target.value, 10))}
    aria-label={t('section_aria')}
-   className="w-full px-3 py-2 rounded-lg border border-surface-3 bg-surface-0 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+   className="w-full px-3 py-2 rounded-lg border border-surface-3 bg-surface-0 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
   >
    {sections.map((section, i) => (
    <option key={section.id || i} value={i}>
@@ -60,7 +60,7 @@ export default function SectionNav({
     className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
      activeSection === i
      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+     : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
     }`}
     >
     {getSectionTitle(section.type, tr)}
@@ -83,7 +83,7 @@ export default function SectionNav({
     />
    ) : (
     <div className="text-center py-20">
-    <p className="text-gray-500">{t('noContent')}</p>
+    <p className="text-gray-500 dark:text-gray-400">{t('noContent')}</p>
     </div>
    )}
    </div>

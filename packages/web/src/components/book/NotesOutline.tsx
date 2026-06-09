@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import type {
  AnnotationItem,
  AnnotationStats,
@@ -13,7 +13,7 @@ interface NotesOutlineProps {
  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-export function NotesOutline({
+export const NotesOutline = React.memo(function NotesOutline({
  allAnnotations,
  annotationStats,
  t,
@@ -97,13 +97,13 @@ export function NotesOutline({
      new Set(outlineChapters.map((c) => c.chapterIndex)),
     )
     }
-    className="text-[10px] text-gray-500 hover:text-gray-700 px-1.5 py-0.5 rounded hover:bg-gray-100 transition-colors"
+    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {t('expandAll')}
    </button>
    <button
     onClick={() => setOutlineExpanded(new Set())}
-    className="text-[10px] text-gray-500 hover:text-gray-700 px-1.5 py-0.5 rounded hover:bg-gray-100 transition-colors"
+    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {t('collapseAll')}
    </button>
@@ -129,10 +129,10 @@ export function NotesOutline({
    <button
     key={opt.key}
     onClick={() => setOutlineFilter(opt.key)}
-    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${
     outlineFilter === opt.key
      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
     }`}
    >
     {opt.label}
@@ -141,7 +141,7 @@ export function NotesOutline({
   </div>
   </div>
   {/* Chapter tree */}
-  <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+  <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-80 overflow-y-auto">
   {outlineChapters.map((chapter) => {
    const isExpanded = outlineExpanded.has(chapter.chapterIndex);
    const totalCount =
@@ -160,7 +160,7 @@ export function NotesOutline({
      return next;
      });
     }}
-    className="w-full flex items-center gap-2 px-5 py-3 hover:bg-gray-50/50 transition-colors text-left"
+    className="w-full flex items-center gap-2 px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-amber-400"
     >
     <svg aria-hidden="true"
      className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
@@ -175,7 +175,7 @@ export function NotesOutline({
      d="M9 5l7 7-7 7"
      />
     </svg>
-    <span className="text-sm font-medium text-gray-700 flex-1">
+    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">
      {chapter.label}
     </span>
     <div className="flex items-center gap-1.5">
@@ -218,7 +218,7 @@ export function NotesOutline({
         {ann.tags.slice(0, 3).map((tag) => (
         <span
          key={tag}
-         className="text-[9px] bg-gray-100 text-gray-500 px-1 py-0.5 rounded"
+         className="text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1 py-0.5 rounded"
         >
          {tag}
         </span>
@@ -239,7 +239,7 @@ export function NotesOutline({
        {'\u{1F58D}'}
       </span>
       <div className="flex-1 min-w-0">
-       <p className="text-xs text-gray-600 line-clamp-2">
+       <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
        {ann.content}
        </p>
        {ann.note && (
@@ -260,7 +260,7 @@ export function NotesOutline({
       <span className="text-[10px] mt-0.5 flex-shrink-0">
        {'\u{1F516}'}
       </span>
-      <p className="text-xs text-gray-600 line-clamp-2">
+      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
        {ann.content || t('bookmark')}
       </p>
       </div>
@@ -279,4 +279,4 @@ export function NotesOutline({
   </div>
  </div>
  );
-}
+});

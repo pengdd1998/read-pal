@@ -59,7 +59,7 @@ async def get_graph(
         graph_data = await build_graph(
             db, UUID(current_user['id']), book_id, force_rebuild=force_rebuild,
         )
-    except Exception as exc:
+    except (ConnectionError, TimeoutError) as exc:
         logger.error('Knowledge graph build failed: %s', exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -99,7 +99,7 @@ async def get_knowledge_gaps(
     """Detect knowledge gaps in the user's combined knowledge graph."""
     try:
         gaps = await detect_gaps(db, UUID(current_user['id']))
-    except Exception as exc:
+    except (ConnectionError, TimeoutError) as exc:
         logger.error('Knowledge gaps detection failed: %s', exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

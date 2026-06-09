@@ -12,6 +12,7 @@ from app.services.epub_parser.css import extract_epub_css
 from app.services.epub_parser.footnotes import annotate_footnotes
 from app.services.epub_parser.html_helpers import (
     count_images,
+    extract_html_heading,
     extract_html_title,
     resolve_epub_path,
 )
@@ -284,6 +285,7 @@ def _resolve_title(
         return toc_entry[0]
     return (
         extract_html_title(raw_html)
+        or extract_html_heading(raw_html)
         or Path(resolved).stem.replace('-', ' ').title()
     )
 

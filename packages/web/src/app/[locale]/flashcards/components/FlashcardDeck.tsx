@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { isDisplayableAuthor } from '@/lib/book-cover';
@@ -19,7 +20,7 @@ interface FlashcardDeckProps {
  onStartReview: (bookId: string | null) => void;
 }
 
-export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: FlashcardDeckProps) {
+export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: FlashcardDeckProps) {
  const t = useTranslations('flashcards');
 
  return (
@@ -29,14 +30,14 @@ export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: Fl
   <div className="flex items-center justify-between mb-6">
   <button
    onClick={() => window.history.back()}
-   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px]"
+   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400"
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
    </svg>
    {t('back_to_decks')}
   </button>
-  <span className="text-sm font-semibold text-gray-900">{t('page_title')}</span>
+  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('page_title')}</span>
   </div>
 
   {/* Total stats */}
@@ -44,15 +45,15 @@ export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: Fl
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center max-sm:gap-2">
    <div>
    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{totalDue}</div>
-   <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('due_label')}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('due_label')}</div>
    </div>
    <div>
    <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{totalCards - totalDue}</div>
-   <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('reviewed_label')}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('reviewed_label')}</div>
    </div>
    <div>
-   <div className="text-2xl font-bold text-gray-600">{totalCards}</div>
-   <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('total_label')}</div>
+   <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{totalCards}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('total_label')}</div>
    </div>
   </div>
   </div>
@@ -61,7 +62,7 @@ export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: Fl
   {totalDue > 0 && (
   <button
    onClick={() => onStartReview(null)}
-   className="w-full btn btn-primary mb-6 hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200"
+   className="w-full btn btn-primary mb-6 hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {t('review_all', { count: totalDue })}
   </button>
@@ -73,7 +74,7 @@ export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: Fl
    <button
    key={deck.bookId}
    onClick={() => deck.due > 0 ? onStartReview(deck.bookId) : undefined}
-   className={`w-full card text-left group transition-all duration-200 ${
+   className={`w-full card text-left group transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-400 ${
     deck.due > 0
     ? 'hover:border-teal-200 dark:hover:border-teal-800 hover:shadow-sm cursor-pointer'
     : 'opacity-70'
@@ -88,12 +89,12 @@ export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: Fl
     )}
     </div>
     <div className="flex-1 min-w-0">
-    <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
      {deck.bookTitle}
     </h3>
-    {isDisplayableAuthor(deck.author) && <p className="text-xs text-gray-400 truncate">{deck.author}</p>}
+    {isDisplayableAuthor(deck.author) && <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{deck.author}</p>}
     <div className="flex items-center gap-3 mt-1.5">
-     <span className="text-xs text-gray-500">{t('cards_count', { count: deck.total })}</span>
+     <span className="text-xs text-gray-500 dark:text-gray-400">{t('cards_count', { count: deck.total })}</span>
      {deck.due > 0 ? (
      <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{t('due_count', { count: deck.due })}</span>
      ) : (
@@ -120,4 +121,4 @@ export function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: Fl
   </div>
  </main>
  );
-}
+});

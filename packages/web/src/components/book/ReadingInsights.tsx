@@ -1,14 +1,15 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import type { ReadingLogEntry } from '@/types/book';
 
 interface ReadingInsightsProps {
  readingLog: ReadingLogEntry[];
  t: (key: string, params?: Record<string, string | number>) => string;
+ locale?: string;
 }
 
-export function ReadingInsights({ readingLog, t }: ReadingInsightsProps) {
+export const ReadingInsights = React.memo(function ReadingInsights({ readingLog, t, locale }: ReadingInsightsProps) {
  if (readingLog.length === 0) return null;
 
  const { totalDuration, totalPagesRead, avgSessionMins, totalMins, bestSession, avgWpm } = useMemo(() => {
@@ -49,7 +50,7 @@ export function ReadingInsights({ readingLog, t }: ReadingInsightsProps) {
   </div>
 
   {/* Insight cards */}
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-100">
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-100 dark:bg-gray-800">
   {[
    {
    label: t('sessions'),
@@ -60,8 +61,8 @@ export function ReadingInsights({ readingLog, t }: ReadingInsightsProps) {
    label: t('time'),
    value:
     totalMins >= 60
-    ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`
-    : `${totalMins}m`,
+    ? t('timeHm', { hours: Math.floor(totalMins / 60), mins: totalMins % 60 })
+    : t('timeM', { mins: totalMins }),
    sub: t('pages', { count: totalPagesRead }),
    },
    {
@@ -76,7 +77,7 @@ export function ReadingInsights({ readingLog, t }: ReadingInsightsProps) {
    },
   ].map((item) => (
    <div key={item.label} className="bg-surface-0 p-3 text-center">
-   <div className="text-lg font-bold text-gray-900">
+   <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
     {item.value}
    </div>
    <div className="text-[10px] text-gray-500">{item.label}</div>
@@ -86,14 +87,14 @@ export function ReadingInsights({ readingLog, t }: ReadingInsightsProps) {
   </div>
 
   {/* Session list */}
-  <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+  <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-64 overflow-y-auto">
   {readingLog.map((entry) => {
    const date = new Date(entry.startedAt);
-   const dateStr = date.toLocaleDateString(undefined, {
+   const dateStr = date.toLocaleDateString(locale, {
    month: 'short',
    day: 'numeric',
    });
-   const timeStr = date.toLocaleTimeString(undefined, {
+   const timeStr = date.toLocaleTimeString(locale, {
    hour: 'numeric',
    minute: '2-digit',
    });
@@ -101,7 +102,7 @@ export function ReadingInsights({ readingLog, t }: ReadingInsightsProps) {
    return (
    <div
     key={entry.id}
-    className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/50 transition-colors"
+    className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
    >
     <div className="text-xs text-gray-400 min-w-[52px] pt-0.5">
     <div>{dateStr}</div>
@@ -109,19 +110,19 @@ export function ReadingInsights({ readingLog, t }: ReadingInsightsProps) {
     </div>
     <div className="flex-1 min-w-0">
     <div className="flex items-center gap-2 text-xs text-gray-500">
-     <span className="font-medium text-gray-700">
-     {mins}m
+     <span className="font-medium text-gray-700 dark:text-gray-300">
+     {t('timeM', { mins })}
      </span>
-     {entry.pagesRead > 0 && <span>{entry.pagesRead} pg</span>}
+     {entry.pagesRead > 0 && <span>{entry.pagesRead} {t('unit_pg')}</span>}
      {entry.highlights > 0 && (
-     <span className="text-amber-500">{entry.highlights}h</span>
+     <span className="text-amber-500">{entry.highlights} {t('unit_hl')}</span>
      )}
      {entry.notes > 0 && (
-     <span className="text-teal-500">{entry.notes}n</span>
+     <span className="text-teal-500">{entry.notes} {t('unit_nt')}</span>
      )}
     </div>
     {entry.summary && (
-     <p className="text-xs text-gray-600 mt-1 leading-relaxed line-clamp-2">
+     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed line-clamp-2">
      {entry.summary}
      </p>
     )}
@@ -132,4 +133,4 @@ export function ReadingInsights({ readingLog, t }: ReadingInsightsProps) {
   </div>
  </div>
  );
-}
+});

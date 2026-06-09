@@ -40,6 +40,7 @@ export function useShareAsImage(
               });
             } catch (err) {
               if ((err as DOMException).name !== 'AbortError') {
+                console.warn('ShareAsImage: share failed', err);
                 downloadBlob(blob);
               }
             }

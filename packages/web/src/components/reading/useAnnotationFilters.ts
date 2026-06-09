@@ -70,22 +70,3 @@ export function useAnnotationFilters({
 
   return { filtered, tagCounts, uniqueTags, counts };
 }
-
-export function useBulkSelection(filtered: Annotation[]) {
-  const toggleSelect = useCallback((id: string, prev: Set<string>): Set<string> => {
-    const next = new Set(prev);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    return next;
-  }, []);
-
-  const selectAll = useCallback((): Set<string> => {
-    return new Set(filtered.map((a) => a.id));
-  }, [filtered]);
-
-  const deselectAll = useCallback((): Set<string> => {
-    return new Set();
-  }, []);
-
-  return { toggleSelect, selectAll, deselectAll };
-}

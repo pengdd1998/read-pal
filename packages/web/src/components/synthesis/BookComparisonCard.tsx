@@ -41,7 +41,8 @@ export function BookComparisonCard({ books }: BookComparisonCardProps) {
   } else {
   setCompareError(t('analysis_failed'));
   }
- } catch {
+ } catch (error) {
+  console.warn('BookComparisonCard_compare_failed', error);
   setCompareError(t('network_error'));
  } finally {
   setCompareLoading(false);
@@ -108,7 +109,7 @@ export function BookComparisonCard({ books }: BookComparisonCardProps) {
   <button
   onClick={handleCompare}
   disabled={compareLoading || !compareBook1 || !compareBook2 || compareBook1 === compareBook2}
-  className="w-full px-4 py-2 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+  className="w-full px-4 py-2 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
   {compareLoading ? (
    <>

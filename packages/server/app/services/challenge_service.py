@@ -124,7 +124,10 @@ async def get_highlight_streak(
     week_ago = today - timedelta(days=6)
     # Single query: all highlights in the 7-day date range
     result = await db.execute(
-        select(func.date(Annotation.created_at), func.count()).where(
+        select(
+            func.date(Annotation.created_at).label('date'),
+            func.count().label('count'),
+        ).where(
             and_(
                 Annotation.user_id == user_id,
                 Annotation.type == 'highlight',
@@ -134,7 +137,7 @@ async def get_highlight_streak(
         ).group_by(func.date(Annotation.created_at)),
     )
     # Build a set of dates that have at least one highlight
-    active_dates = {row[0] for row in result.all() if (row[1] or 0) > 0}
+    active_dates = {row.date for row in result.all() if (row.count or 0) > 0}
     # Walk backwards from today to count consecutive active days
     streak = 0
     for day_offset in range(7):

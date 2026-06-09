@@ -32,7 +32,7 @@ export const TagFilterChips = React.memo(function TagFilterChips({
    onClick={() => onToggleTag(tag)}
    aria-pressed={selectedTags.includes(tag)}
    aria-label={selectedTags.includes(tag) ? t('sidebar_unfilter_tag', { tag }) : t('sidebar_filter_tag', { tag })}
-   className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium transition-all duration-150 active:scale-95 ${
+   className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium transition-all duration-150 active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-400 ${
     selectedTags.includes(tag)
     ? tag === 'discuss'
      ? 'bg-teal-500 text-white'
@@ -41,7 +41,7 @@ export const TagFilterChips = React.memo(function TagFilterChips({
      : tag === 'question'
      ? 'bg-blue-500 text-white'
      : 'bg-amber-500 text-white'
-    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
    }`}
    >
    #{tag}
@@ -54,7 +54,7 @@ export const TagFilterChips = React.memo(function TagFilterChips({
    <button
    onClick={onClearTags}
    aria-label={t('sidebar_clear_all_tags')}
-   className="px-1.5 py-0.5 rounded-full text-[10px] text-gray-500 hover:text-gray-600 transition-colors"
+   className="px-1.5 py-0.5 rounded-full text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    {t('sidebar_clear')}
    </button>

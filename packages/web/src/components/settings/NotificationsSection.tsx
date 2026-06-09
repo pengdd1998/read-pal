@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { UserSettings } from '@/components/settings/types';
 import { isCapacitor } from '@/lib/capacitor';
@@ -39,7 +39,7 @@ function ToggleSwitch({
   aria-checked={checked}
   aria-label={label}
   className={`relative ${width} ${height} rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
-  checked ? 'bg-amber-500' : 'bg-gray-300'
+  checked ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
   } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
  >
   <span className={`absolute top-0.5 left-0.5 ${dotSize} rounded-full bg-white shadow-sm transition-transform duration-200 ${
@@ -49,7 +49,7 @@ function ToggleSwitch({
  );
 }
 
-export function NotificationsSection({ settings, saving, onSave }: NotificationsSectionProps) {
+export const NotificationsSection = React.memo(function NotificationsSection({ settings, saving, onSave }: NotificationsSectionProps) {
  const t = useTranslations('settings_page');
  const [pushEnabled, setPushState] = useState(false);
  const [pushLoading, setPushLoading] = useState(false);
@@ -92,7 +92,7 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
    <div className="flex items-center justify-between">
    <div>
     <label className="text-sm font-medium">{t('push_notifications_label')}</label>
-    <p className="text-xs text-gray-500 mt-0.5">{t('push_notifications_desc')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('push_notifications_desc')}</p>
    </div>
    <ToggleSwitch
     checked={pushEnabled}
@@ -108,7 +108,7 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
    <div className="flex items-center justify-between">
    <div>
     <label className="text-sm font-medium">{t('reading_reminders_label')}</label>
-    <p className="text-xs text-gray-500 mt-0.5">{t('reading_reminders_desc')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('reading_reminders_desc')}</p>
    </div>
    <ToggleSwitch
     checked={settings.notificationsEnabled}
@@ -124,7 +124,7 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
    <div className="flex items-center justify-between">
    <div>
     <label className="text-sm font-medium">{t('streak_milestones_label')}</label>
-    <p className="text-xs text-gray-500 mt-0.5">{t('streak_milestones_desc')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('streak_milestones_desc')}</p>
    </div>
    <ToggleSwitch
     checked={settings.streakAlerts !== false}
@@ -141,7 +141,7 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
    <div className="flex items-center justify-between">
    <div>
     <label className="text-sm font-medium">{t('friend_messages_label')}</label>
-    <p className="text-xs text-gray-500 mt-0.5">{t('friend_messages_desc')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('friend_messages_desc')}</p>
    </div>
    <ToggleSwitch
     checked={settings.friendMessages !== false}
@@ -155,4 +155,4 @@ export function NotificationsSection({ settings, saving, onSave }: Notifications
   </div>
  </section>
  );
-}
+});

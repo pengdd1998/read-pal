@@ -45,7 +45,8 @@ export function AnnotationEditForm({ annotation, borderColor, onUpdate, onCancel
   }
   }
   onCancel();
- } catch {
+ } catch (error) {
+  console.warn('AnnotationEditForm_save_failed', error);
   toast(t('card_failed_save'), 'error');
  }
  setSaving(false);
@@ -98,7 +99,7 @@ export function AnnotationEditForm({ annotation, borderColor, onUpdate, onCancel
   </div>
 
   {/* Content (read-only) */}
-  <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed mb-2">
+  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed mb-2">
   {annotation.content}
   </p>
 
@@ -108,7 +109,7 @@ export function AnnotationEditForm({ annotation, borderColor, onUpdate, onCancel
   onChange={(e) => setEditNote(e.target.value)}
   placeholder={t('card_add_note')}
   aria-label={t('card_add_note')}
-  className="w-full px-2.5 py-1.5 rounded-md bg-white/50 text-xs text-gray-700 border border-gray-200 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 resize-none"
+  className="w-full px-2.5 py-1.5 rounded-md bg-white/50 dark:bg-gray-800/50 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 resize-none"
   rows={2}
   autoFocus
   />
@@ -142,10 +143,10 @@ export function AnnotationEditForm({ annotation, borderColor, onUpdate, onCancel
    onKeyDown={handleTagKeyDown}
    placeholder={editTags.length === 0 ? t('card_add_tags') : t('card_add_tag')}
    aria-label={editTags.length === 0 ? t('card_add_tags') : t('card_add_tag')}
-   className="w-full px-2.5 py-1 rounded-md bg-white/50 text-xs text-gray-700 border border-gray-200 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400"
+   className="w-full px-2.5 py-1 rounded-md bg-white/50 dark:bg-gray-800/50 text-xs text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400 dark:placeholder-gray-500"
    />
    {tagInput && filteredPresets.length > 0 && (
-   <div className="absolute top-full left-0 right-0 mt-1 bg-surface-0 border border-gray-200 rounded-md shadow-sm z-10 max-h-24 overflow-y-auto">
+   <div className="absolute top-full left-0 right-0 mt-1 bg-surface-0 border border-gray-200 dark:border-gray-700 rounded-md shadow-sm z-10 max-h-24 overflow-y-auto">
     {filteredPresets.map((preset) => (
     <button
      key={preset}
@@ -180,13 +181,13 @@ export function AnnotationEditForm({ annotation, borderColor, onUpdate, onCancel
   <button
    onClick={handleSave}
    disabled={saving}
-   className="px-3 py-1 rounded-md bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-50 transition-colors"
+   className="px-3 py-1 rounded-md bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {saving ? t('card_saving') : t('card_save')}
   </button>
   <button
    onClick={onCancel}
-   className="px-3 py-1 rounded-md bg-gray-100 text-xs text-gray-600 hover:bg-gray-200 transition-colors"
+   className="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
   >
    {tc('cancel')}
   </button>

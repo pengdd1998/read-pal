@@ -34,7 +34,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
  fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/google/status`, { signal: ctrl.signal })
   .then((r) => r.json())
   .then((d) => { if (!ctrl.signal.aborted) setGoogleConfigured(d?.data?.configured ?? false); })
-  .catch(() => { if (!ctrl.signal.aborted) setGoogleConfigured(false); });
+  .catch((err) => { if (!ctrl.signal.aborted) { console.warn('AuthForm: Google status check failed', err); setGoogleConfigured(false); } });
  return () => { ctrl.abort(); };
  }, []);
 
@@ -66,6 +66,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
   }
   onSuccess();
  } catch (err: unknown) {
+  console.warn('AuthForm: auth failed', err);
   setError(getUserFriendlyError(err, (k: string) => tc(k)));
  } finally {
   setLoading(false);
@@ -78,7 +79,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
   {/* Name field -- register only */}
   {mode === 'register' && (
    <div>
-   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+   <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
     {t('name_label_short')}
    </label>
    <input
@@ -97,7 +98,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
   )}
 
   <div>
-   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+   <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
    {t('email_label_short')}
    </label>
    <input
@@ -114,7 +115,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
   </div>
 
   <div>
-   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+   <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
    {t('password_label')}
    </label>
    <div className="relative">
@@ -157,7 +158,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
   {/* Confirm Password -- register only */}
   {mode === 'register' && (
    <div>
-   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
     {t('confirm_password_label')}
    </label>
    <input
@@ -219,7 +220,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
    </div>
    <a
    href={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/google`}
-   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
    >
    <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>

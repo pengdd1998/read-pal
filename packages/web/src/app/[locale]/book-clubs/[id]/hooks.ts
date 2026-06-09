@@ -21,7 +21,8 @@ export function useBookClubDetail(clubId: string) {
         if (!cancelled && res.success && res.data) {
           setClub(res.data);
         }
-      } catch {
+      } catch (err) {
+        console.warn('useBookClubDetail: fetch failed', err);
         if (!cancelled) setError(t('failedToLoad'));
       } finally {
         if (!cancelled) setLoading(false);
@@ -54,7 +55,8 @@ export function useBookClubProgress(clubId: string, currentBookId?: string) {
           setProgress(res.data.progress);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('useBookClubProgress: fetch failed', err);
         if (!cancelled) setError(t('progress_failed_load', { defaultValue: 'Failed to load reading progress' }));
       })
       .finally(() => {
@@ -87,7 +89,8 @@ export function useBookClubDiscussion(clubId: string) {
           setMessages(Array.isArray(res.data) ? res.data : []);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('useBookClubDiscussion: fetch failed', err);
         if (!cancelled) setError(t('discussions_failed_load', { defaultValue: 'Failed to load discussions' }));
       });
 
@@ -108,7 +111,8 @@ export function useBookClubDiscussion(clubId: string) {
       } else {
         setSendError(t('failedToSend'));
       }
-    } catch {
+    } catch (err) {
+      console.warn('useBookClubDiscussion: sendMessage failed', err);
       setSendError(t('failedToSend'));
     } finally {
       setSending(false);

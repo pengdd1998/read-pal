@@ -3,7 +3,6 @@
 import type { CardTheme } from './QuoteCard';
 
 export const THEMES: Record<CardTheme, {
- label: string;
  bg: string;
  bgGradient: string;
  textColor: string;
@@ -18,7 +17,6 @@ export const THEMES: Record<CardTheme, {
  canvasQuoteMark: string;
 }> = {
  warm: {
- label: 'Warm',
  bg: 'bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100',
  bgGradient: '',
  textColor: 'text-amber-950',
@@ -36,7 +34,6 @@ export const THEMES: Record<CardTheme, {
  canvasQuoteMark: 'rgba(253, 230, 138, 0.6)',
  },
  dark: {
- label: 'Dark',
  bg: 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900',
  bgGradient: '',
  textColor: 'text-gray-100',

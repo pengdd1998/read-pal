@@ -65,14 +65,14 @@ export function AccountSection() {
    <div className="pt-3 border-t border-surface-2">
    <button
     onClick={handleSignOut}
-    className="min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors"
+    className="min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {t('account_sign_out')}
    </button>
    </div>
    <div className="pt-3 border-t border-surface-2">
    <details className="group">
-    <summary className="cursor-pointer text-xs text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors list-none flex items-center gap-1.5 min-h-[44px]">
+    <summary className="cursor-pointer text-xs text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors list-none flex items-center gap-1.5 min-h-[44px]">
     <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
@@ -84,7 +84,7 @@ export function AccountSection() {
     </p>
     <button
      onClick={() => setShowDeleteModal(true)}
-     className="min-h-[44px] px-4 py-2 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+     className="min-h-[44px] px-4 py-2 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
     >
      {t('account_delete_button')}
     </button>
@@ -109,7 +109,7 @@ export function AccountSection() {
     onClick={(e) => e.stopPropagation()}
    >
     <h3 className="text-lg font-bold text-red-600 mb-2">{t('account_delete_heading')}</h3>
-    <p className="text-sm text-gray-600 mb-4">{t('account_delete_confirm_password', { defaultValue: 'Enter your password to confirm account deletion. This action cannot be undone.' })}</p>
+    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('account_delete_confirm_password', { defaultValue: 'Enter your password to confirm account deletion. This action cannot be undone.' })}</p>
     <input
      type="password"
      value={confirmPassword}
@@ -124,14 +124,14 @@ export function AccountSection() {
      <button
       onClick={() => { setShowDeleteModal(false); setConfirmPassword(''); setDeleteError(''); }}
       disabled={deleting}
-      className="px-4 py-2 rounded-lg text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50 min-h-[44px]"
+      className="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      >
       {t('account_delete_cancel', { defaultValue: 'Cancel' })}
      </button>
      <button
       onClick={handleDeleteAccount}
       disabled={deleting || !confirmPassword.trim()}
-      className="px-4 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+      className="px-4 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
      >
       {deleting ? (
        <span className="flex items-center gap-1.5">

@@ -68,8 +68,8 @@ export default function KnowledgePage() {
   <div className="min-h-screen bg-surface-1 flex items-center justify-center">
   <div className="text-center max-w-md px-6">
    <div className="text-5xl mb-4">⚠️</div>
-   <h1 className="text-2xl font-bold text-gray-900 mb-3">{t('error_title')}</h1>
-   <p className="text-gray-600 mb-6">{error}</p>
+   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{t('error_title')}</h1>
+   <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
    <button
    onClick={refetch}
    className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors text-sm min-h-[44px]"
@@ -89,12 +89,12 @@ export default function KnowledgePage() {
   <div className="min-h-screen bg-surface-1 flex items-center justify-center">
   <div className="text-center max-w-md px-6">
    <div className="text-5xl mb-4">🧠</div>
-   <h1 className="text-2xl font-bold text-gray-900 mb-3">{t('setup_title')}</h1>
-   <p className="text-gray-600 mb-6">
+   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{t('setup_title')}</h1>
+   <p className="text-gray-600 dark:text-gray-400 mb-6">
    {t('setup_desc')}
    </p>
-   <div className="bg-surface-0 rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
-   <p className="font-medium text-gray-700 mb-2">{t('setup_required')}</p>
+   <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-500 dark:text-gray-400">
+   <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">{t('setup_required')}</p>
    <p>{t('setup_instructions')}</p>
    </div>
    <button
@@ -118,11 +118,11 @@ export default function KnowledgePage() {
    {/* Decorative mini-graph preview */}
    <div className="mx-auto mb-6 w-48 h-36 relative opacity-30">
    <svg aria-hidden="true" viewBox="0 0 200 140" className="w-full h-full">
-    <line x1="60" y1="40" x2="120" y2="70" stroke="#94a3b8" strokeWidth="1.5" />
-    <line x1="120" y1="70" x2="80" y2="110" stroke="#94a3b8" strokeWidth="1.5" />
-    <line x1="60" y1="40" x2="150" y2="35" stroke="#94a3b8" strokeWidth="1.5" />
-    <line x1="120" y1="70" x2="160" y2="100" stroke="#94a3b8" strokeWidth="1.5" />
-    <line x1="80" y1="110" x2="40" y2="80" stroke="#94a3b8" strokeWidth="1.5" />
+    <line x1="60" y1="40" x2="120" y2="70" stroke="var(--gray-400)" strokeWidth="1.5" />
+    <line x1="120" y1="70" x2="80" y2="110" stroke="var(--gray-400)" strokeWidth="1.5" />
+    <line x1="60" y1="40" x2="150" y2="35" stroke="var(--gray-400)" strokeWidth="1.5" />
+    <line x1="120" y1="70" x2="160" y2="100" stroke="var(--gray-400)" strokeWidth="1.5" />
+    <line x1="80" y1="110" x2="40" y2="80" stroke="var(--gray-400)" strokeWidth="1.5" />
     <circle cx="60" cy="40" r="12" fill="#0d9488" opacity="0.6" />
     <circle cx="120" cy="70" r="16" fill="#7c3aed" opacity="0.6" />
     <circle cx="80" cy="110" r="10" fill="#ea580c" opacity="0.6" />
@@ -131,11 +131,11 @@ export default function KnowledgePage() {
     <circle cx="40" cy="80" r="8" fill="#d97706" opacity="0.6" />
    </svg>
    </div>
-   <h1 className="text-2xl font-bold text-gray-900 mb-3">{t('building_title')}</h1>
-   <p className="text-gray-600 mb-6">
+   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{t('building_title')}</h1>
+   <p className="text-gray-600 dark:text-gray-400 mb-6">
    {t('building_desc')}
    </p>
-   <div className="bg-surface-0 rounded-xl border border-gray-200 p-4 text-sm text-gray-500 mb-6">
+   <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
    <div className="space-y-2">
     <div className="flex items-center gap-2">
     <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />
@@ -168,17 +168,17 @@ export default function KnowledgePage() {
  return (
  <div className="min-h-screen bg-surface-1">
   {/* Header */}
-  <div className="border-b border-gray-200 bg-surface-0">
+  <div className="border-b border-gray-200 dark:border-gray-700 bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
    <div>
-   <h1 className="text-xl font-bold text-gray-900">{t('header_title')}</h1>
-   <p className="text-sm text-gray-500">
+   <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('header_title')}</h1>
+   <p className="text-sm text-gray-500 dark:text-gray-400">
     {t('header_stats', { nodes: nodes.length, edges: edges.length })}
    </p>
    </div>
    <button
    onClick={() => router.push('/library')}
-   className="text-sm text-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
+   className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
    >
    {t('library_link')}
    </button>
@@ -207,32 +207,32 @@ export default function KnowledgePage() {
    {loading ? (
     <>
     {/* Cross-book themes skeleton */}
-    <div className="bg-surface-0 rounded-xl border border-gray-200 p-4">
-     <div className="h-4 bg-gray-200 rounded w-28 mb-3 animate-pulse" />
+    <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28 mb-3 animate-pulse" />
      <div className="space-y-2">
-     <div className="h-3 bg-gray-200 rounded w-full animate-pulse" />
-     <div className="h-3 bg-gray-200 rounded w-4/5 animate-pulse" />
-     <div className="h-3 bg-gray-200 rounded w-3/4 animate-pulse" />
+     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse" />
+     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/5 animate-pulse" />
+     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />
      </div>
     </div>
 
     {/* Knowledge gaps skeleton */}
-    <div className="bg-surface-0 rounded-xl border border-gray-200 p-4">
-     <div className="h-4 bg-gray-200 rounded w-32 mb-3 animate-pulse" />
+    <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-3 animate-pulse" />
      <div className="space-y-2">
-     <div className="h-3 bg-gray-200 rounded w-full animate-pulse" />
-     <div className="h-3 bg-gray-200 rounded w-2/3 animate-pulse" />
+     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse" />
+     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3 animate-pulse" />
      </div>
     </div>
 
     {/* Legend skeleton */}
-    <div className="bg-surface-0 rounded-xl border border-gray-200 p-4">
-     <div className="h-4 bg-gray-200 rounded w-16 mb-3 animate-pulse" />
+    <div className="bg-surface-0 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-3 animate-pulse" />
      <div className="flex flex-wrap gap-2">
-     <div className="h-6 bg-gray-200 rounded-full w-20 animate-pulse" />
-     <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse" />
-     <div className="h-6 bg-gray-200 rounded-full w-24 animate-pulse" />
-     <div className="h-6 bg-gray-200 rounded-full w-18 animate-pulse" />
+     <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20 animate-pulse" />
+     <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16 animate-pulse" />
+     <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-24 animate-pulse" />
+     <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-18 animate-pulse" />
      </div>
     </div>
     </>

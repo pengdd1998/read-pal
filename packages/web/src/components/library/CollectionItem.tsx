@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { Collection } from '@read-pal/shared';
 import { CollectionIcon } from './CollectionIcon';
@@ -17,7 +18,7 @@ interface CollectionItemProps {
  onCancelEdit: () => void;
 }
 
-export function CollectionItem({
+export const CollectionItem = React.memo(function CollectionItem({
  collection: col,
  isActive,
  isEditing,
@@ -42,7 +43,7 @@ export function CollectionItem({
    onKeyDown={(e) => { if (e.key === 'Enter') onRename(); if (e.key === 'Escape') onCancelEdit(); }}
    onBlur={() => onRename()}
    aria-label={t('collections_name_placeholder')}
-   className="flex-1 px-2 py-1 text-sm bg-gray-50 border border-surface-3 rounded outline-none focus:ring-1 focus:ring-primary-400/50"
+   className="flex-1 px-2 py-1 text-sm bg-gray-50 dark:bg-gray-800 border border-surface-3 rounded outline-none focus:ring-1 focus:ring-primary-400/50"
    autoFocus
    />
   </div>
@@ -60,18 +61,18 @@ export function CollectionItem({
   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
    isActive
    ? 'bg-primary-50 dark:bg-primary-900/20 font-medium'
-   : 'text-gray-600 hover:bg-gray-100'
+   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
   }`}
   style={isActive ? { color: col.color || 'rgb(245, 158, 11)' } : undefined}
   >
   <CollectionIcon icon={col.icon || 'folder'} color={col.color || 'rgb(245, 158, 11)'} />
   <span className="flex-1 text-left truncate">{col.name}</span>
-  <span className="text-[10px] text-gray-400">{col.bookCount ?? (col.bookIds || []).length}</span>
+  <span className="text-[10px] text-gray-400 dark:text-gray-500">{col.bookCount ?? (col.bookIds || []).length}</span>
   {/* Hover actions */}
   <div className="hidden md:group-hover:flex items-center gap-0.5">
    <button
    onClick={(e) => { e.stopPropagation(); onStartEdit(); }}
-   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-400 hover:text-gray-600"
+   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    title={t('collections_rename')}
    aria-label={t('collections_rename')}
    >
@@ -81,7 +82,7 @@ export function CollectionItem({
    </button>
    <button
    onClick={(e) => { e.stopPropagation(); onDelete(); }}
-   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-400 hover:text-red-500"
+   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:text-red-500 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    title={t('collections_delete')}
    aria-label={t('collections_delete')}
    >
@@ -93,4 +94,4 @@ export function CollectionItem({
   </div>
  </div>
  );
-}
+});

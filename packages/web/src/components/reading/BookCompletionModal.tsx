@@ -36,7 +36,8 @@ export function BookCompletionModal({
   format: 'personal_book',
   });
   router.push(`/memory-books/${bookId}`);
- } catch {
+ } catch (error) {
+  console.warn('BookCompletionModal_failed', error);
   setGenerating(false);
   setGenError(t('completion_failed_generate'));
  }
@@ -56,21 +57,21 @@ export function BookCompletionModal({
   onClick={(e) => e.stopPropagation()}
   >
   <div className="text-6xl mb-4">{'\uD83C\uDF89'}</div>
-  <h3 className="text-2xl font-bold text-gray-900 mb-1">{t('completion_title')}</h3>
-  <p className="text-gray-500 mb-5">{t('completion_subtitle')} <strong>{bookTitle}</strong></p>
+  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">{t('completion_title')}</h3>
+  <p className="text-gray-500 dark:text-gray-400 mb-5">{t('completion_subtitle')} <strong>{bookTitle}</strong></p>
 
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
    <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalHighlights}</div>
-   <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_highlights')}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('completion_highlights')}</div>
    </div>
    <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
    <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{totalNotes}</div>
-   <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_notes')}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('completion_notes')}</div>
    </div>
    <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3">
    <div className="text-xl font-bold text-violet-600 dark:text-violet-400">{totalChapters}</div>
-   <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_chapters')}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('completion_chapters')}</div>
    </div>
   </div>
 
@@ -79,7 +80,7 @@ export function BookCompletionModal({
    <button
     onClick={handleGeneratePersonalBook}
     disabled={generating}
-    className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all shadow-md disabled:opacity-60 mb-3"
+    className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all shadow-md disabled:opacity-60 mb-3 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {generating ? (
     <span className="flex items-center justify-center gap-2">
@@ -101,7 +102,7 @@ export function BookCompletionModal({
 
   <button
    onClick={onClose}
-   className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+   className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
   >
    {t('completion_keep_exploring')}
   </button>

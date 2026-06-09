@@ -41,11 +41,11 @@ export default function GeneratingState({ genStep }: GeneratingStateProps) {
  return (
  <div className="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
   <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 flex items-center justify-center">
-  <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+  <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" role="status" aria-label={t('creatingTitle')} />
   </div>
   <h2 className="text-xl font-bold text-gray-900 mb-2">{t('creatingTitle')}</h2>
   <p className="text-sm text-gray-500 mb-6">{t('creatingDesc')}</p>
-  <div className="space-y-2">
+  <div className="space-y-2" aria-live="polite">
   {STEPS.map((step) => (
    <div
    key={step}
@@ -58,7 +58,7 @@ export default function GeneratingState({ genStep }: GeneratingStateProps) {
    {genStep === step ? (
     <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
    ) : (
-    <div className="w-4 h-4 rounded-full bg-gray-200" />
+    <div className="w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-700" />
    )}
    {stepLabels[step]}
    </div>

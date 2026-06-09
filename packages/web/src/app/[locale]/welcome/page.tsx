@@ -126,7 +126,7 @@ export default function WelcomePage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 text-gray-500">
+            <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
               <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
               {t('preparing')}
             </div>
@@ -148,7 +148,7 @@ export default function WelcomePage() {
           ) : (
             <>
               <h1 className="text-3xl font-bold mb-2">{t('greeting', { name: persona.name })}</h1>
-              <p className="text-gray-600 text-lg leading-relaxed">
+              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
                 {t('intro')}
               </p>
             </>
@@ -162,7 +162,7 @@ export default function WelcomePage() {
               step >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
-            <div className="bg-surface-0 rounded-2xl border border-gray-200 p-6 text-left space-y-4">
+            <div className="bg-surface-0 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 text-left space-y-4">
               <h2 className="font-semibold text-lg text-center">{t('what_we_do_title')}</h2>
               {[
                 { icon: '📖', titleKey: 'read_together', descKey: 'read_together_desc' },
@@ -173,7 +173,7 @@ export default function WelcomePage() {
                   <span className="text-xl mt-0.5">{item.icon}</span>
                   <div>
                     <div className="font-medium text-sm">{t(item.titleKey)}</div>
-                    <div className="text-xs text-gray-500">{t(item.descKey)}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{t(item.descKey)}</div>
                   </div>
                 </div>
               ))}
@@ -190,7 +190,7 @@ export default function WelcomePage() {
           >
             {/* Persona selection */}
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                 {t('pick_companion')}
               </h3>
               <div className="grid grid-cols-1 gap-1.5 text-left">
@@ -203,14 +203,14 @@ export default function WelcomePage() {
                       className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all duration-200 text-left min-h-[44px] ${
                         isSelected
                           ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/15 ring-1 ring-amber-400/30'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-surface-2'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-surface-2'
                       }`}
                     >
                       <span className="text-xl">{p.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-gray-900">{p.name}</span>
-                          <span className="text-[10px] text-gray-500">{t(p.personalityKey)}</span>
+                          <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{p.name}</span>
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400">{t(p.personalityKey)}</span>
                         </div>
                       </div>
                       {isSelected && (
@@ -234,7 +234,7 @@ export default function WelcomePage() {
                   <div className="font-semibold text-sm">
                     {book?.title || t('sample_book_title')}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     {t('sample_book_ready')}
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export default function WelcomePage() {
                     try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('Storage error:', err); }
                     router.push('/dashboard');
                   }}
-                  className="text-sm text-gray-400 hover:text-gray-600 transition-colors min-h-[44px] inline-flex items-center"
+                  className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center"
                 >
                   {t('go_dashboard')}
                 </button>

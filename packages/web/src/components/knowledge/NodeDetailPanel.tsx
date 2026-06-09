@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import type { SimNode, VisualizationEdge } from '@/types/knowledge';
 
 interface NodeDetailPanelProps {
@@ -33,7 +34,7 @@ function getFreshnessInfo(freshness: number): { label: string; colorClass: strin
  return { label: 'freshness_stale', colorClass: FRESHNESS_CLASSES.stale };
 }
 
-export function NodeDetailPanel({ node, connectedEdges, allNodes, onDeselect, t, bookTitleMap }: NodeDetailPanelProps) {
+export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, connectedEdges, allNodes, onDeselect, t, bookTitleMap }: NodeDetailPanelProps) {
  const nodeType = node.type || 'concept';
  const freshness = node.freshness ?? 1.0;
  const { label: freshnessLabel, colorClass: freshnessColorClass } = getFreshnessInfo(freshness);
@@ -41,30 +42,30 @@ export function NodeDetailPanel({ node, connectedEdges, allNodes, onDeselect, t,
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
   <div className="flex items-center gap-2 mb-2">
-  <h3 className="font-semibold text-gray-900">{node.label}</h3>
+  <h3 className="font-semibold text-gray-900 dark:text-gray-100">{node.label}</h3>
   <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getTypeBadgeClass(node.type)}`}>
    {nodeType}
   </span>
   </div>
   {node.bookTitle && (
-  <p className="text-sm text-gray-500 mb-3">{t('from_label', { title: node.bookTitle })}</p>
+  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('from_label', { title: node.bookTitle })}</p>
   )}
   {node.description && (
-  <p className="text-sm text-gray-600 mb-3">{node.description}</p>
+  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{node.description}</p>
   )}
   <div className="text-sm space-y-1">
   <div>
-   <span className="text-gray-500">{t('connections_label')} </span>
-   <span className="font-medium text-gray-900">{connectedEdges.length}</span>
+   <span className="text-gray-500 dark:text-gray-400">{t('connections_label')} </span>
+   <span className="font-medium text-gray-900 dark:text-gray-100">{connectedEdges.length}</span>
   </div>
   {(node.annotationCount ?? 0) > 0 && (
    <div>
-   <span className="text-gray-500">{t('annotation_count_label')} </span>
-   <span className="font-medium text-gray-900">{node.annotationCount}</span>
+   <span className="text-gray-500 dark:text-gray-400">{t('annotation_count_label')} </span>
+   <span className="font-medium text-gray-900 dark:text-gray-100">{node.annotationCount}</span>
    </div>
   )}
   <div>
-   <span className="text-gray-500">{t('freshness_label')} </span>
+   <span className="text-gray-500 dark:text-gray-400">{t('freshness_label')} </span>
    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${freshnessColorClass}`}>
    {t(freshnessLabel)}
    </span>
@@ -72,10 +73,10 @@ export function NodeDetailPanel({ node, connectedEdges, allNodes, onDeselect, t,
   </div>
   {node.sourceBookIds && node.sourceBookIds.length > 0 && (
   <div className="mt-2">
-   <span className="text-xs text-gray-500">{t('source_books_label')}</span>
+   <span className="text-xs text-gray-500 dark:text-gray-400">{t('source_books_label')}</span>
    <div className="flex flex-wrap gap-1 mt-1">
    {node.sourceBookIds.map((bid) => (
-    <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+    <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
     {bookTitleMap?.get(bid) || bid.slice(0, 8) + '...'}
     </span>
    ))}
@@ -90,8 +91,8 @@ export function NodeDetailPanel({ node, connectedEdges, allNodes, onDeselect, t,
    return (
     <div key={e.source + "-" + e.target + "-" + e.label} className="flex items-center gap-2 text-sm">
     <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-    <span className="text-gray-600">{e.label}</span>
-    <span className="text-gray-900 font-medium">{otherNode?.label || otherId}</span>
+    <span className="text-gray-600 dark:text-gray-400">{e.label}</span>
+    <span className="text-gray-900 dark:text-gray-100 font-medium">{otherNode?.label || otherId}</span>
     </div>
    );
    })}
@@ -100,10 +101,10 @@ export function NodeDetailPanel({ node, connectedEdges, allNodes, onDeselect, t,
   <button
   onClick={onDeselect}
   aria-label={t('close_details')}
-  className="mt-3 text-xs text-gray-400 hover:text-gray-600"
+  className="mt-3 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
   {t('deselect')}
   </button>
  </div>
  );
-}
+});

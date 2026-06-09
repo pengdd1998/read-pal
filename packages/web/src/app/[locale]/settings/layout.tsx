@@ -1,11 +1,13 @@
-import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
- title: 'Settings',
- description: 'Manage your read-pal account, reading preferences, and companion settings.',
- robots: { index: false, follow: true },
-};
+export async function generateMetadata() {
+  const t = await getTranslations('settings_page');
+  return {
+    title: t('meta_title'),
+    description: t('meta_description'),
+  };
+}
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
- return children;
+  return <>{children}</>;
 }

@@ -31,7 +31,7 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
    setError(true);
   }
   })
-  .catch(() => { if (!cancelled) setError(true); })
+  .catch((err) => { console.warn('ReadingSpeedWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });
  return () => { cancelled = true; };
  }, []);
@@ -52,10 +52,10 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
  if (error) {
  return (
   <div className="card text-center py-4">
-  <p className="text-xs text-gray-400 mb-2">{t('reading_speed_load_failed')}</p>
+  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('reading_speed_load_failed')}</p>
   <button
    onClick={fetchData}
-   className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline"
+   className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400"
   >
    {t('retry')}
   </button>
@@ -76,8 +76,8 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
  return (
  <div className="card">
   <div className="flex items-center justify-between mb-3">
-  <h3 className="text-sm font-semibold text-gray-900">{t('reading_speed_title')}</h3>
-  <span className="text-[10px] text-gray-400">
+  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('reading_speed_title')}</h3>
+  <span className="text-[10px] text-gray-400 dark:text-gray-500">
    {avgWpm > 0 ? `${avgWpm} ${t('words_min')}` : t('words_min')}
   </span>
   </div>
@@ -85,10 +85,10 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
   {activeBooks.slice(0, 6).map((b) => (
    <div key={b.bookId}>
    <div className="flex items-center justify-between mb-1">
-    <span className="text-xs text-gray-700 font-medium truncate max-w-[60%]">{b.title}</span>
-    <span className="text-xs tabular-nums text-gray-500">{b.wpm} {t('words_min')}</span>
+    <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[60%]">{b.title}</span>
+    <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400">{b.wpm} {t('words_min')}</span>
    </div>
-   <div className="w-full bg-gray-100 rounded-full h-2">
+   <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
     <div
     className="rounded-full h-2 transition-all duration-500 bg-gradient-to-r from-amber-400 to-orange-400 dark:from-amber-500 dark:to-orange-500"
     style={{ width: `${Math.min(100, Math.max(5, (b.wpm / maxWpm) * 100))}%` }}

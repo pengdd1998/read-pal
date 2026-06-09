@@ -57,7 +57,8 @@ export default function SettingsPage() {
   if (d.name) setUserName(d.name);
   if (d.email) setUserEmail(d.email);
   }
- } catch {
+ } catch (err) {
+  console.warn('Settings: load failed', err);
   setError(t('failed_load_retry'));
  }
  setLoading(false);
@@ -89,7 +90,8 @@ export default function SettingsPage() {
   if (previousSettings) setSettings(previousSettings);
   setError(t('failed_save'));
   }
- } catch {
+ } catch (err) {
+  console.warn('Settings: save failed', err);
   if (previousSettings) setSettings(previousSettings);
   setError(t('failed_save_retry'));
  }
@@ -120,26 +122,26 @@ export default function SettingsPage() {
   <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
   {/* Header skeleton */}
   <div className="mb-8">
-   <div className="h-8 bg-gray-200 rounded-lg w-32 animate-pulse" />
-   <div className="h-4 bg-gray-200 rounded-lg w-56 mt-2 animate-pulse" />
+   <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-32 animate-pulse" />
+   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-56 mt-2 animate-pulse" />
   </div>
 
   {/* Section skeleton */}
   {Array.from({ length: 3 }).map((_, i) => (
    <div key={i} className="mb-6">
    <div className="flex items-center gap-3 mb-4">
-    <div className="w-9 h-9 rounded-xl bg-gray-200 animate-pulse" />
-    <div className="h-5 bg-gray-200 rounded-lg w-32 animate-pulse" />
+    <div className="w-9 h-9 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
+    <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-lg w-32 animate-pulse" />
    </div>
    <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-5">
-    <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
+    <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-24 animate-pulse" />
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
     {Array.from({ length: 3 }).map((_, j) => (
-     <div key={j} className="h-10 bg-gray-100 rounded-xl animate-pulse" />
+     <div key={j} className="h-10 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
     ))}
     </div>
-    <div className="h-4 bg-gray-100 rounded w-20 animate-pulse" />
-    <div className="h-2 bg-gray-100 rounded-full animate-pulse" />
+    <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-20 animate-pulse" />
+    <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
    </div>
    </div>
   ))}
@@ -157,7 +159,7 @@ export default function SettingsPage() {
    </svg>
    </div>
    <p className="text-lg font-semibold mb-4">{t('failed_load')}</p>
-   {error && <p className="text-sm text-gray-500 mb-4">{error}</p>}
+   {error && <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{error}</p>}
    <button onClick={loadSettings} className="btn btn-primary min-h-[44px]">{t('retry')}</button>
   </div>
   </div>
@@ -169,7 +171,7 @@ export default function SettingsPage() {
   {/* Header */}
   <div className="mb-6 sm:mb-8 animate-slide-up">
   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('page_title')}</h1>
-  <p className="text-sm sm:text-base text-gray-600 mt-1">{t('customize_experience')}</p>
+  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">{t('customize_experience')}</p>
   </div>
 
   {/* Saving indicator */}
@@ -217,7 +219,7 @@ export default function SettingsPage() {
    </div>
    <div>
    <h2 className="text-lg font-semibold">{t('language_title')}</h2>
-   <p className="text-xs text-gray-500">{t('language_desc')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400">{t('language_desc')}</p>
    </div>
   </div>
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-4">
@@ -228,7 +230,7 @@ export default function SettingsPage() {
     className={`flex-1 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
     locale === 'en'
      ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-2 border-violet-300 dark:border-violet-700'
-     : 'bg-surface-2 text-gray-700 border-2 border-transparent hover:bg-gray-300'
+     : 'bg-surface-2 text-gray-700 dark:text-gray-300 border-2 border-transparent hover:bg-gray-300 dark:hover:bg-gray-600'
     }`}
    >
     {tc('english')}
@@ -239,7 +241,7 @@ export default function SettingsPage() {
     className={`flex-1 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
     locale === 'zh'
      ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-2 border-violet-300 dark:border-violet-700'
-     : 'bg-surface-2 text-gray-700 border-2 border-transparent hover:bg-gray-300'
+     : 'bg-surface-2 text-gray-700 dark:text-gray-300 border-2 border-transparent hover:bg-gray-300 dark:hover:bg-gray-600'
     }`}
    >
     {tc('chinese')}
@@ -255,7 +257,7 @@ export default function SettingsPage() {
   <div className="mt-8 animate-slide-up stagger-4">
   <Link
    href="/dashboard"
-   className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl text-sm font-medium bg-surface-2 hover:bg-gray-300 transition-colors border border-surface-3"
+   className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl text-sm font-medium bg-surface-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors border border-surface-3"
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />

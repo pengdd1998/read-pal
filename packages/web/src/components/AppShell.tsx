@@ -84,7 +84,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   <div className="px-4 sm:px-6 lg:px-8">
    <div className="flex items-center justify-between h-14 sm:h-16">
    <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-    <Link href="/dashboard" className="flex items-center gap-2 text-base sm:text-lg font-display font-bold tracking-tight text-gray-900 shrink-0">
+    <Link href="/dashboard" className="flex items-center gap-2 text-base sm:text-lg font-display font-bold tracking-tight text-gray-900 dark:text-gray-100 shrink-0">
     <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold">r</span>
     <span className="hidden sm:inline">read-pal</span>
     </Link>
@@ -97,7 +97,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       className={`nav-link relative px-2 py-2 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out shrink-0 ${
        active
        ? 'nav-link-active text-primary-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'
-       : 'text-gray-500 hover:text-primary-700 hover:bg-surface-2/60'
+       : 'text-gray-500 dark:text-gray-400 hover:text-primary-700 hover:bg-surface-2/60'
       }`}>
       <span className="flex items-center gap-1.5">
        <svg aria-hidden="true" className={`w-4 h-4 transition-all duration-200 shrink-0 ${active ? 'text-amber-600 dark:text-amber-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
@@ -128,15 +128,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
      </button>
      <NotificationBell />
      {navMode === 'full' && (
-     <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[160px]">{user?.name || user?.email}</span>
+     <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate max-w-[160px]">{user?.name || user?.email}</span>
      )}
-     <button onClick={logout} className="hidden md:inline-flex btn btn-ghost text-xs sm:text-sm text-gray-500 hover:text-primary-700 dark:hover:text-white">{tc('logout')}</button>
+     <button onClick={logout} className="hidden md:inline-flex btn btn-ghost text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-700 dark:hover:text-white">{tc('logout')}</button>
     </>
     ) : (
     <Link href="/auth?mode=login" className="btn btn-secondary text-sm">{tc('login')}</Link>
     )}
     {mounted && isAuthenticated && navMode === 'mobile' && (
-    <button onClick={() => setMobileOpen(!mobileOpen)} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-500 hover:bg-surface-2 transition-colors"
+    <button onClick={() => setMobileOpen(!mobileOpen)} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-surface-2 transition-colors"
      aria-label={mobileOpen ? tc('close_menu') : tc('open_menu')} aria-expanded={mobileOpen}>
      <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
      {mobileOpen
@@ -159,7 +159,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out ${
       active
       ? 'text-primary-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-l-2 border-amber-500'
-      : 'text-gray-500 hover:bg-surface-2/60'
+      : 'text-gray-500 dark:text-gray-400 hover:bg-surface-2/60'
      }`}>
      <svg aria-hidden="true" className={`w-4 h-4 transition-colors duration-200 ${active ? 'text-amber-600 dark:text-amber-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
@@ -170,7 +170,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     })}
     <div className="flex items-center justify-between pt-2 mt-2 border-t border-surface-2">
     <LanguageSwitcher />
-    <button onClick={() => { handleMobileNav(); logout(); }} className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-surface-2/60 transition-colors">
+    <button onClick={() => { handleMobileNav(); logout(); }} className="px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:bg-surface-2/60 transition-colors">
      {tc('logout')}
     </button>
     </div>

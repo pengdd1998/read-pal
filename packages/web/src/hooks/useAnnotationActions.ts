@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
 import type { Chapter, Annotation } from '@read-pal/shared';
@@ -50,16 +50,18 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
 
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCreatingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const loadAnnotations = useCallback(async () => {
     try {
       const result = await api.get<Annotation[]>('/api/annotations', { book_id: bookId });
       if (result.success && result.data) {
         const data = result.data;
-        setAnnotations(Array.isArray(data) ? data : []);
+        if (mountedRef.current) setAnnotations(Array.isArray(data) ? data : []);
       }
-    } catch {
-      toastError(toast.failed_load_annotations);
+    } catch (e) {
+      console.warn('AnnotationActions: failed to load annotations', e);
+      if (mountedRef.current) toastError(toast.failed_load_annotations);
     }
   }, [bookId, setAnnotations, toastError, toast.failed_load_annotations]);
 
@@ -101,7 +103,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         setAnnotations((prev) => [...prev, annotation]);
         analytics.track('annotation_created', { type: 'highlight' });
       }
-    } catch {
+    } catch (e) {
+      console.warn('AnnotationActions: failed to save highlight', e);
       toastError(toast.failed_save_highlight);
     }
     dismissSelection();
@@ -139,7 +142,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         setAnnotations((prev) => [...prev, annotation]);
         analytics.track('annotation_created', { type: 'note' });
       }
-    } catch {
+    } catch (e) {
+      console.warn('AnnotationActions: failed to save note', e);
       toastError(toast.failed_save_note);
     }
     dismissSelection();
@@ -159,7 +163,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         setAnnotations((p) => p.filter((a) => a.id !== removedId));
         try {
           await api.delete(`/api/annotations/${removedId}`);
-        } catch {
+        } catch (e) {
+          console.warn('AnnotationActions: failed to remove bookmark', e);
           setAnnotations((p) => [...p, annotations.find((a) => a.id === removedId)!].filter(Boolean));
           toastError(toast.failed_remove_bookmark);
         }
@@ -187,7 +192,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
           setAnnotations((prev) => [...prev, annotation]);
           analytics.track('annotation_created', { type: 'bookmark' });
         }
-      } catch {
+      } catch (e) {
+        console.warn('AnnotationActions: failed to add bookmark', e);
         toastError(toast.failed_add_bookmark);
       }
     }
@@ -199,7 +205,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     setAnnotations((p) => p.filter((a) => a.id !== id));
     try {
       await api.delete(`/api/annotations/${id}`);
-    } catch {
+    } catch (e) {
+      console.warn('AnnotationActions: failed to delete annotation', e);
       if (removed) setAnnotations((p) => [...p, removed]);
       toastError(toast.failed_delete_annotation);
     }
@@ -230,7 +237,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     setAnnotations((p) => p.map((a) => (a.id === updated.id ? updated : a)));
     try {
       await api.patch(`/api/annotations/${updated.id}`, updated as unknown as Record<string, unknown>);
-    } catch {
+    } catch (e) {
+      console.warn('AnnotationActions: failed to update annotation', e);
       setAnnotations(prev);
       toastError(toast.failed_update_annotation);
     }
@@ -248,6 +256,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     () => annotations.some((a) => a.type === 'bookmark' && Number(a.location?.pageIndex) === currentChapter),
     [annotations, currentChapter],
   );
+
+  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
   return {
     loadAnnotations,

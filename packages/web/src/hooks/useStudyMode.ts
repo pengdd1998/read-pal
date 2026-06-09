@@ -39,8 +39,10 @@ export function useStudyMode(bookId: string) {
   const currentChapterRef = useRef(-1);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const mountedRef = useRef(true);
   useEffect(() => {
     return () => {
+      mountedRef.current = false;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, []);
@@ -67,6 +69,7 @@ export function useStudyMode(bookId: string) {
       const newObjectives: ChapterObjective[] = Array.isArray(rawObj)
         ? rawObj
         : ((rawObj as Record<string, unknown>).objectives as ChapterObjective[]) ?? [];
+      if (!mountedRef.current) return;
       setObjectives(newObjectives);
 
       // Generate concept checks
@@ -79,15 +82,16 @@ export function useStudyMode(bookId: string) {
       });
 
       const rawChecks = (checkRes.success && checkRes.data) ? checkRes.data : {};
+      if (!mountedRef.current) return;
       setChecks(Array.isArray(rawChecks) ? rawChecks : ((rawChecks as Record<string, unknown>).checks as ConceptCheck[]) ?? []);
       setRevealedAnswers(new Set());
       // Mark chapter loaded only after both calls succeed
       currentChapterRef.current = chapterIndex;
     } catch (err) {
       console.warn('Failed to load study mode data for chapter', err);
-      setError('Failed to load study data');
+      if (mountedRef.current) setError('Failed to load study data');
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, [enabled, bookId]);
 

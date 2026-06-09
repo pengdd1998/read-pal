@@ -46,7 +46,7 @@ export function HowItWorksSection({
    {stats.map((stat) => (
     <div key={stat.label}>
     <div className="text-2xl sm:text-3xl font-bold text-primary-500">{stat.value}</div>
-    <div className="text-sm text-gray-500 mt-1">{stat.label}</div>
+    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{stat.label}</div>
     </div>
    ))}
    </div>
@@ -57,7 +57,7 @@ export function HowItWorksSection({
   <section className="bg-surface-1 pt-4 pb-20">
   {/* Trust bar */}
   <div className="px-4 sm:px-6 lg:px-8 mb-16">
-   <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-gray-500">
+   <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-gray-500 dark:text-gray-400">
    {trust_items.map((item) => (
     <span key={item} className="flex items-center gap-1.5">
     <CheckIcon />
@@ -68,10 +68,10 @@ export function HowItWorksSection({
   </div>
   <div className="px-4 sm:px-6 lg:px-8">
    <div className="text-center mb-14">
-   <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight font-display">
+   <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight font-display">
     {how_title}
    </h2>
-   <p className="mt-4 text-gray-600 max-w-xl mx-auto text-lg">
+   <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">
     {how_subtitle}
    </p>
    </div>
@@ -83,8 +83,8 @@ export function HowItWorksSection({
      {STEP_ICONS[i]}
     </div>
     <div className="text-xs font-mono font-bold text-primary-500 tracking-wider mb-2">{step.number}</div>
-    <h3 className="text-lg font-bold text-gray-900 mb-2">{step.title}</h3>
-    <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
+    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">{step.title}</h3>
+    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{step.desc}</p>
     </div>
    ))}
    </div>

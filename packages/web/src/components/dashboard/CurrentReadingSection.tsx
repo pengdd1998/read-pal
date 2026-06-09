@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { isDisplayableAuthor } from '@/lib/book-cover';
@@ -22,7 +22,7 @@ interface CurrentReadingSectionProps {
  insightOfDayKey: InsightKey | null;
 }
 
-export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDayKey }: CurrentReadingSectionProps) {
+export const CurrentReadingSection = React.memo(function CurrentReadingSection({ recentBooks, stats, loading, insightOfDayKey }: CurrentReadingSectionProps) {
  const t = useTranslations('dashboard');
  const tc = useTranslations('common');
  const locale = useLocale();
@@ -45,7 +45,7 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
  <div className="space-y-5 animate-fade-in">
   {/* Card 1: Current Reading */}
   <div>
-  <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+  <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
    {activeBooks.length > 1 ? t('currently_reading') : t('current_reading')}
   </h2>
   {loading ? (
@@ -76,28 +76,28 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
      </div>
      <div className="flex-1 min-w-0">
      <div className="flex items-center gap-2">
-      <h3 className="font-semibold text-gray-900 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+      <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
       {book.title}
       </h3>
       {i === 0 && activeBooks.length > 1 && (
       <span className="text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-1.5 py-0.5 rounded-full whitespace-nowrap">{t('latest_badge')}</span>
       )}
      </div>
-     {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>}
+     {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{book.author}</p>}
      <div className="flex items-center gap-3 mt-2">
       <div className="flex-1 max-w-[180px]">
-      <div className="w-full bg-gray-100 rounded-full h-2">
+      <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
        <div
        className="bg-primary-500 rounded-full h-2 transition-all duration-500 ease-out"
        style={{ width: `${Math.min(100, book.progress)}%` }}
        />
       </div>
       </div>
-      <span className="text-xs text-gray-400 tabular-nums font-medium">{book.progress}%</span>
+      <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums font-medium">{book.progress}%</span>
      </div>
      </div>
      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-     <span className="text-[10px] text-gray-400 whitespace-nowrap">{fmtTime(book.lastRead)}</span>
+     <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">{fmtTime(book.lastRead)}</span>
      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
       {t('continue_button')}
       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -123,24 +123,24 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
     )}
     </div>
     <div className="flex-1 min-w-0">
-    <h3 className="font-semibold text-gray-900 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+    <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
      {currentBook.title}
     </h3>
-    {isDisplayableAuthor(currentBook.author) && <p className="text-xs text-gray-500 mt-0.5">{currentBook.author}</p>}
+    {isDisplayableAuthor(currentBook.author) && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{currentBook.author}</p>}
     <div className="flex items-center gap-3 mt-2">
      <div className="flex-1 max-w-[180px]">
-     <div className="w-full bg-gray-100 rounded-full h-2">
+     <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
       <div
       className="bg-primary-500 rounded-full h-2 transition-all duration-500 ease-out"
       style={{ width: `${Math.min(100, currentBook.progress)}%` }}
       />
      </div>
      </div>
-     <span className="text-xs text-gray-400 tabular-nums font-medium">{currentBook.progress}%</span>
+     <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums font-medium">{currentBook.progress}%</span>
     </div>
     </div>
     <div className="flex flex-col items-end gap-2 flex-shrink-0">
-    <span className="text-[10px] text-gray-400 whitespace-nowrap">{fmtTime(currentBook.lastRead)}</span>
+    <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">{fmtTime(currentBook.lastRead)}</span>
     <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
      {t('continue_button')}
      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -152,7 +152,7 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
    </Link>
   ) : (
    <div className="card text-center py-10">
-   <p className="text-sm text-gray-500 mb-4">{t('no_active_reading')}</p>
+   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('no_active_reading')}</p>
    <Link href="/library" className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
     {t('pick_book')}
    </Link>
@@ -173,8 +173,8 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
    <div key={s.label} className="card py-3 px-3 flex items-center gap-2">
     <span className="text-lg">{s.icon}</span>
     <div>
-    <div className="text-lg font-bold text-gray-900 tabular-nums">{s.value}</div>
-    <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wide leading-tight">{s.label}</div>
+    <div className="text-lg font-bold text-gray-900 dark:text-gray-100 tabular-nums">{s.value}</div>
+    <div className="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide leading-tight">{s.label}</div>
     </div>
    </div>
    ))}
@@ -191,7 +191,7 @@ export function CurrentReadingSection({ recentBooks, stats, loading, insightOfDa
   <InsightCard insightKey={insightOfDayKey} />
  </div>
  );
-}
+});
 
 // Reading Streak sub-component
 function ReadingStreakCard({ streak, loading }: { streak: number; loading: boolean }) {
@@ -214,15 +214,15 @@ function ReadingStreakCard({ streak, loading }: { streak: number; loading: boole
   <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 tabular-nums">
    {loading ? <SkeletonPulse className="h-8 w-10 inline-block" /> : streak}
   </div>
-  <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t('day_streak')}</div>
+  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{t('day_streak')}</div>
   </div>
   {streak === 0 && !loading && (
-  <p className="text-xs text-gray-400">{t('start_streak')}</p>
+  <p className="text-xs text-gray-400 dark:text-gray-500">{t('start_streak')}</p>
   )}
   {streak >= 3 && !loading && (
   <div className="text-right">
    <p className="text-xs text-orange-500 dark:text-orange-400 font-medium">{t('keep_going')}</p>
-   <p className="text-[10px] text-gray-400">{t('next_milestone', { days: streak < 7 ? 7 : streak < 14 ? 14 : streak < 30 ? 30 : 60 })}</p>
+   <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('next_milestone', { days: streak < 7 ? 7 : streak < 14 ? 14 : streak < 30 ? 30 : 60 })}</p>
   </div>
   )}
  </div>
@@ -248,7 +248,7 @@ function QuickActions() {
    className={`card flex flex-col items-center gap-2 py-4 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200 bg-gradient-to-br ${action.color}`}
   >
    <span className="text-xl">{action.icon}</span>
-   <span className="text-xs font-medium text-gray-700">{action.label}</span>
+   <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{action.label}</span>
   </Link>
   ))}
  </div>
@@ -267,7 +267,7 @@ function InsightCard({ insightKey }: { insightKey: InsightKey | null }) {
    <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
    {insightKey ? t(insightKey.agentKey) : ''}
    </div>
-   <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
    {insightKey ? t(insightKey.key) : ''}
    </p>
   </div>

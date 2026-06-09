@@ -43,8 +43,8 @@ export function ShareDiscussionTab({
   const res = await api.post<{ questions: string[] }>(
   '/api/agents/discussion-questions',
   {
-   bookTitle: bookTitle || 'Unknown Book',
-   author: author || 'Unknown Author',
+   bookTitle: bookTitle || t('share_unknown_book'),
+   author: author || t('share_unknown_author'),
    annotations: highlights.slice(0, 15).map((a) => ({ content: a.content })),
   },
   );
@@ -69,8 +69,8 @@ export function ShareDiscussionTab({
 
   const html = generateDiscussionGuideHtml({
   book: {
-   title: bookTitle || 'Unknown Book',
-   author: author || 'Unknown Author',
+   title: bookTitle || t('share_unknown_book'),
+   author: author || t('share_unknown_author'),
    totalPages,
    currentPage,
    progress,
@@ -90,7 +90,8 @@ export function ShareDiscussionTab({
 
   setGuideHtml(html);
   toast(t('share_guide_generated'), 'success');
- } catch {
+ } catch (err) {
+  console.warn('ShareDiscussionTab: generate failed', err);
   toast(t('share_failed_generate'), 'error');
  } finally {
   setGenerating(false);
@@ -136,7 +137,8 @@ export function ShareDiscussionTab({
   await navigator.clipboard.writeText(fullUrl);
   toast(t('share_link_copied'), 'success');
   }
- } catch {
+ } catch (err) {
+  console.warn('ShareDiscussionTab: share link failed', err);
   toast(t('share_failed_share_link'), 'error');
  } finally {
   setSharing(false);
@@ -145,7 +147,7 @@ export function ShareDiscussionTab({
 
  return (
  <div className="space-y-4">
-  <p className="text-xs text-gray-500">
+  <p className="text-xs text-gray-500 dark:text-gray-400">
   {t('share_discussion_desc')}
   </p>
 
@@ -154,7 +156,7 @@ export function ShareDiscussionTab({
    aria-label={t('share_generate_guide')}
    onClick={handleGenerateGuide}
    disabled={generating || !hasAnnotations}
-   className="w-full px-4 py-3 text-sm font-medium rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+   className="w-full px-4 py-3 text-sm font-medium rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {generating ? (
    <span className="flex items-center justify-center gap-2">
@@ -171,8 +173,8 @@ export function ShareDiscussionTab({
   ) : (
   <>
    {/* Preview */}
-   <div className="rounded-xl border border-gray-200 overflow-hidden">
-   <div className="bg-gray-50 p-3 max-h-48 overflow-y-auto">
+   <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+   <div className="bg-gray-50 dark:bg-gray-800 p-3 max-h-48 overflow-y-auto">
     <iframe
     srcDoc={guideHtml}
     title={t('share_tab_discussion')}
@@ -188,7 +190,7 @@ export function ShareDiscussionTab({
     <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">
     {t('share_ai_discussion_questions')}
     </p>
-    <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700">
+    <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
     {questions.map((q, i) => (
      <li key={q}>{q}</li>
     ))}
@@ -204,32 +206,32 @@ export function ShareDiscussionTab({
    <button
     aria-label={t('export_copy')}
     onClick={handleCopyGuide}
-    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
    >
-    <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
     </svg>
-    <span className="text-xs text-gray-600">{t('export_copy')}</span>
+    <span className="text-xs text-gray-600 dark:text-gray-400">{t('export_copy')}</span>
    </button>
    <button
     aria-label={t('share_html')}
     onClick={handleDownloadGuide}
-    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
    >
-    <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
     </svg>
-    <span className="text-xs text-gray-600">{t('share_html')}</span>
+    <span className="text-xs text-gray-600 dark:text-gray-400">{t('share_html')}</span>
    </button>
    <button
     aria-label={t('share_print')}
     onClick={handlePrintGuide}
-    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+    className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
    >
-    <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
     </svg>
-    <span className="text-xs text-gray-600">{t('share_print')}</span>
+    <span className="text-xs text-gray-600 dark:text-gray-400">{t('share_print')}</span>
    </button>
    <button
     aria-label={t('share_link')}
@@ -247,7 +249,7 @@ export function ShareDiscussionTab({
    <button
    aria-label={t('share_regenerate')}
    onClick={() => { setGuideHtml(null); setQuestions([]); setShareLink(null); }}
-   className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+   className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
    >
    {t('share_regenerate')}
    </button>
@@ -259,12 +261,12 @@ export function ShareDiscussionTab({
     readOnly
     value={shareLink}
     aria-label={t('share_link')}
-    className="flex-1 px-3 py-2 text-xs bg-gray-50 border border-surface-3 rounded-lg text-gray-700"
+    className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300"
     onClick={(e) => (e.target as HTMLInputElement).select()}
     />
     <button
     onClick={() => { navigator.clipboard.writeText(shareLink); toast(t('share_link_copied'), 'success'); }}
-    className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+    className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
     {t('export_copy')}
     </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import type { Annotation } from '@read-pal/shared';
@@ -38,7 +38,7 @@ interface AnnotationsSidebarProps {
 
 type ViewMode = 'list' | 'outline';
 
-export function AnnotationsSidebar({
+export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
  annotations,
  bookId,
  bookTitle,
@@ -230,4 +230,4 @@ export function AnnotationsSidebar({
   )}
  </>
  );
-}
+});

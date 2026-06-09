@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { ClubMember } from './types';
 
@@ -8,12 +9,12 @@ interface ClubMembersListProps {
  memberCount: number;
 }
 
-export function ClubMembersList({ members, memberCount }: ClubMembersListProps) {
+export const ClubMembersList = React.memo(function ClubMembersList({ members, memberCount }: ClubMembersListProps) {
  const t = useTranslations('bookClubs');
 
  return (
  <div className="rounded-2xl border border-surface-2 bg-surface-0 p-6 shadow-sm mb-6">
-  <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+  <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
   <span className="text-lg">{'👥'}</span>
   {t('membersTitle', { count: memberCount })}
   </h2>
@@ -21,13 +22,13 @@ export function ClubMembersList({ members, memberCount }: ClubMembersListProps) 
   {members.map((member) => (
    <div
    key={member.id}
-   className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50/50 transition-colors"
+   className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
    >
    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center text-sm font-bold text-primary-700 dark:text-primary-300">
     {(member.user?.name || 'M')[0].toUpperCase()}
    </div>
    <div className="flex-1 min-w-0">
-    <span className="text-sm font-medium text-gray-900 truncate">
+    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
     {member.user?.name || t('memberName')}
     </span>
    </div>
@@ -46,4 +47,4 @@ export function ClubMembersList({ members, memberCount }: ClubMembersListProps) 
   </div>
  </div>
  );
-}
+});

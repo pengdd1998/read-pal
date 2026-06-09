@@ -37,8 +37,9 @@ export default function DevelopersPage() {
    setApiKeyHint(keys[0].keyPrefix + '...');
   }
   })
-  .catch(() => {
+  .catch((err) => {
   if (stale) return;
+  console.warn('Developers: API key fetch failed', err);
   setApiKeyError(t('api_key_fetch_error'));
   })
   .finally(() => {

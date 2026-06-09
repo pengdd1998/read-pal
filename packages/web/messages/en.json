@@ -449,7 +449,10 @@
     "collection_picker_new": "New collection",
     "memory_books_link_title": "Reading Mirrors",
     "memory_books_link_desc": "Your reading journey captured",
-    "failed_seed_sample": "Failed to load sample book"
+    "failed_seed_sample": "Failed to load sample book",
+    "book_by_author": "by {author}",
+    "meta_title": "My Library | read-pal",
+    "meta_description": "Browse and manage your personal reading collection on read-pal."
   },
   "reader": {
     "companion_title": "Reading Companion",
@@ -802,6 +805,9 @@
     "outline_chapter": "Chapter {number}",
     "outline_other": "Other",
     "outline_all": "All ({count})",
+    "outline_filter_highlights": "Highlights ({count})",
+    "outline_filter_notes": "Notes ({count})",
+    "outline_filter_bookmarks": "Bookmarks ({count})",
     "synthesis_title": "Synthesis",
     "synthesis_close_label": "Close synthesis panel",
     "synthesis_close_esc": "Close (Esc)",
@@ -830,6 +836,12 @@
     "synthesis_tab_label": "Analysis modes",
     "fiction_story_tracker": "Story Tracker",
     "fiction_chapter_mood": "Chapter Mood",
+    "fiction_mood_tense": "Tense",
+    "fiction_mood_joyful": "Joyful",
+    "fiction_mood_sad": "Sad",
+    "fiction_mood_mysterious": "Mysterious",
+    "fiction_mood_romantic": "Romantic",
+    "fiction_mood_action": "Action",
     "fiction_characters": "Characters in This Chapter",
     "fiction_no_characters": "No characters detected yet. Keep reading!",
     "fiction_ask_about": "Ask companion about {name} →",
@@ -951,7 +963,9 @@
     "share_questions_unavailable": "Discussion questions could not be generated. The guide was created without AI questions.",
     "quote_card_by": "by",
     "knowledge_from": "from",
-    "book_by_author": "by {author}"
+    "book_by_author": "by {author}",
+    "share_unknown_book": "Unknown Book",
+    "share_unknown_author": "Unknown Author"
   },
   "stats": {
     "title": "Reading Stats",
@@ -1418,7 +1432,9 @@
     "account_delete_password_placeholder": "Your password",
     "account_delete_password_required": "Please enter your password",
     "account_delete_cancel": "Cancel",
-    "offline_load_failed": "Failed to load offline data. Please refresh the page."
+    "offline_load_failed": "Failed to load offline data. Please refresh the page.",
+    "meta_title": "Settings | read-pal",
+    "meta_description": "Manage your read-pal account, reading preferences, and companion settings."
   },
   "search": {
     "page_title": "Search",
@@ -1442,7 +1458,10 @@
     "your_library": "Your Library",
     "search_across_library": "Search across your library",
     "search_across_desc": "Find books by title or author, search highlights and notes, or discover relevant passages with AI-powered semantic search.",
-    "add_books_started": "Add books to get started"
+    "add_books_started": "Add books to get started",
+    "type_highlight": "Highlight",
+    "type_note": "Note",
+    "type_bookmark": "Bookmark"
   },
   "flashcards": {
     "page_title": "Flashcards",
@@ -1776,6 +1795,7 @@
     "noMessages": "No messages yet. Start the conversation\\!",
     "discussionPlaceholder": "Share your thoughts...",
     "send": "Send",
+    "sending": "Sending...",
     "backToClubs": "Back to Clubs",
     "leaveClub": "Leave Club",
     "leaveConfirm": "Leave this book club?",
@@ -1885,7 +1905,12 @@
     "startReading": "Start Reading",
     "readAgain": "Read Again",
     "continueReading": "Continue Reading",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "timeHm": "{hours}h {mins}m",
+    "timeM": "{mins}m",
+    "unit_pg": "pg",
+    "unit_hl": "hl",
+    "unit_nt": "nt"
   },
   "memoryBooks": {
     "pageTitle": "Reading Mirrors",
@@ -1932,7 +1957,10 @@
     "regenerate_title": "Regenerate",
     "download_html_title": "Download HTML",
     "print_save_pdf": "Print / Save PDF",
-    "section_aria": "Section"
+    "section_aria": "Section",
+    "durationSec": "{count}s",
+    "durationMin": "{count}m",
+    "durationHm": "{hours}h {mins}m"
   },
   "shareCard": {
     "button_generate": "Share My Reading Progress",
@@ -2090,7 +2118,18 @@
     "contradictions_count": "Contradictions ({count})",
     "books_covered": "{count, plural, one {# book covered} other {# books covered}}",
     "analysis_label": "Analysis",
-    "concept_map_label": "Concept Map ({nodes} nodes, {edges} edges)"
+    "concept_map_label": "Concept Map ({nodes} nodes, {edges} edges)",
+    "ref_supporting": "Supporting",
+    "ref_contradicting": "Contradicting",
+    "ref_extending": "Extending",
+    "severity_high": "High",
+    "severity_medium": "Medium",
+    "severity_low": "Low",
+    "node_concept": "Concept",
+    "node_book": "Book",
+    "node_theme": "Theme",
+    "node_character": "Character",
+    "node_event": "Event"
   },
   "seo": {
     "knowledge_title": "Knowledge Graph | read-pal",
@@ -2103,6 +2142,8 @@
     "stats_description": "Track your reading progress — velocity, streaks, time spent, pages read, and activity heatmaps.",
     "book_clubs_title": "Book Clubs | read-pal",
     "book_clubs_description": "Discuss books with friends — create or join book clubs, share progress, and compare notes with other readers.",
+    "book_club_detail_title": "Book Club | read-pal",
+    "book_club_detail_description": "View and participate in your book club discussions.",
     "memory_books_title": "Memory Books | read-pal",
     "memory_books_description": "Your personal reading journal — beautiful AI-generated compilations of your reading journeys with highlights and insights.",
     "developers_title": "Developer API | read-pal",
@@ -2130,7 +2171,13 @@
     "section_threads": "Threads Between Books",
     "section_reader_became": "The Reader You Became",
     "section_recommendations": "Where This Leads",
-    "empty_sections": "No sections generated yet. Try adding more highlights and notes to your book."
+    "empty_sections": "No sections generated yet. Try adding more highlights and notes to your book.",
+    "no_recommendations": "No recommendations available yet.",
+    "urgency_now": "Read Next",
+    "urgency_soon": "Add to Queue",
+    "urgency_someday": "For Later",
+    "no_highlights": "No highlights to display yet.",
+    "go_to_passage": "Go to passage"
   },
   "errors": {
     "connection_problem": "Connection problem",

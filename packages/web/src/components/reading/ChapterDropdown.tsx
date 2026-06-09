@@ -25,7 +25,7 @@ interface ChapterDropdownProps {
  * Chapter dropdown / bottom-sheet for the reader footer.
  * Syncs with an external TOC toggle and closes on outside click.
  */
-export function ChapterDropdown({
+export const ChapterDropdown = React.memo(function ChapterDropdown({
  currentPage,
  totalPages,
  currentSegment,
@@ -81,7 +81,7 @@ export function ChapterDropdown({
     ? 'text-gray-400 hover:bg-white/5'
     : theme === 'sepia'
     ? 'text-amber-800/60 hover:bg-black/5'
-    : 'text-gray-500 hover:bg-black/5'
+    : 'text-gray-500 dark:text-gray-400 hover:bg-black/5'
   }`}
   aria-label={t('reader_open_chapter_list')}
   aria-expanded={showChapterMenu}
@@ -149,7 +149,7 @@ export function ChapterDropdown({
       ? 'text-gray-300 hover:bg-gray-700/60'
       : theme === 'sepia'
        ? 'text-amber-900/80 hover:bg-amber-100/40'
-       : 'text-gray-700 hover:bg-amber-50'
+       : 'text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800/50'
      }`}
     >
      <span className={`flex-shrink-0 w-6 text-xs font-mono text-right ${
@@ -173,4 +173,4 @@ export function ChapterDropdown({
   )}
  </div>
  );
-}
+});

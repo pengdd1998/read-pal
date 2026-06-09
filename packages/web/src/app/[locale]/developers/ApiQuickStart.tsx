@@ -14,11 +14,11 @@ export function ApiQuickStart() {
 
  return (
  <section>
-  <h2 className="text-xl font-bold font-serif text-gray-900 mb-4">{t('quick_start')}</h2>
+  <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-4">{t('quick_start')}</h2>
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 space-y-4">
   <div>
-   <h3 className="font-semibold text-gray-800 mb-2">{t('step1_title')}</h3>
-   <p className="text-sm text-gray-600">
+   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('step1_title')}</h3>
+   <p className="text-sm text-gray-600 dark:text-gray-400">
    {t('step1_desc', {
     link: t('step1_link'),
     code: 'rpk_',

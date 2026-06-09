@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
@@ -19,7 +19,7 @@ interface FreeBooksSectionProps {
  searchQuery: string;
 }
 
-export function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
+export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
  const t = useTranslations('library');
  const tc = useTranslations('common');
  const { toast } = useToast();
@@ -27,19 +27,23 @@ export function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState(false);
  const [importing, setImporting] = useState<string | null>(null);
+ const mountedRef = useRef(true);
+
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const fetchSuggestions = useCallback(() => {
   setLoading(true);
   setError(false);
-  api.get<{ books: FreeBook[] }>('/api/discovery/free-books')
+  api.get<{ items: FreeBook[] }>('/api/discovery/free-books')
    .then((res) => {
-    if (res.success && res.data?.books) {
-     setSuggestions(res.data.books.slice(0, 6));
+    if (res.success && res.data?.items) {
+     setSuggestions(res.data.items.slice(0, 6));
     } else {
      setError(true);
     }
    })
-   .catch(() => {
+   .catch((err) => {
+    console.warn('FreeBooksSection: suggestions fetch failed', err);
     setError(true);
     toast(t('toast_suggestions_fail'), 'error');
    })
@@ -49,17 +53,18 @@ export function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
  useEffect(() => {
   let stale = false;
   setLoading(true);
-  api.get<{ books: FreeBook[] }>('/api/discovery/free-books')
+  api.get<{ items: FreeBook[] }>('/api/discovery/free-books')
    .then((res) => {
     if (stale) return;
-    if (res.success && res.data?.books) {
-     setSuggestions(res.data.books.slice(0, 6));
+    if (res.success && res.data?.items) {
+     setSuggestions(res.data.items.slice(0, 6));
     } else {
      setError(true);
     }
    })
-   .catch(() => {
+   .catch((err) => {
     if (stale) return;
+    console.warn('FreeBooksSection: free books fetch failed', err);
     setError(true);
     toast(t('toast_suggestions_fail'), 'error');
    })
@@ -74,16 +79,19 @@ export function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
   setImporting('sample');
   try {
    const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
+   if (!mountedRef.current) return;
    if (res.success && res.data) {
     toast(t('toast_sample_added'), 'success');
     window.dispatchEvent(new CustomEvent('library-refresh'));
    } else {
     toast(t('toast_add_book_fail'), 'error');
    }
-  } catch {
+  } catch (err) {
+   console.warn('FreeBooksSection: seed sample failed', err);
+   if (!mountedRef.current) return;
    toast(t('toast_add_book_retry'), 'error');
   } finally {
-   setImporting(null);
+   if (mountedRef.current) setImporting(null);
   }
  };
 
@@ -99,11 +107,11 @@ export function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
 
  if (loading) {
   return (
-   <div className="mt-12 pt-8 border-t border-gray-200">
-    <h3 className="text-sm font-medium text-gray-700 mb-4">{t('free_books_title')}</h3>
+   <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">{t('free_books_title')}</h3>
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
      {[1, 2, 3, 4].map((i) => (
-      <div key={i} className="animate-pulse rounded-xl bg-gray-100 h-32" />
+      <div key={i} className="animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800 h-32" />
      ))}
     </div>
    </div>
@@ -111,11 +119,11 @@ export function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
  }
  if (error) {
   return (
-   <div className="mt-12 pt-8 border-t border-gray-200 text-center">
-   <p className="text-sm text-gray-500 mb-3">{t('toast_suggestions_fail')}</p>
+   <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 text-center">
+   <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('toast_suggestions_fail')}</p>
    <button
     onClick={fetchSuggestions}
-    className="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-surface-1 border border-surface-3 text-gray-600 hover:bg-surface-2 transition-colors"
+    className="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-surface-1 border border-surface-3 text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {tc('retry')}
    </button>
@@ -125,18 +133,18 @@ export function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
  if (filtered.length === 0) return null;
 
  return (
-  <div className="mt-12 pt-8 border-t border-gray-200">
+  <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
   <div className="flex items-center justify-between mb-5">
    <div>
-    <h2 className="text-lg font-bold text-gray-900 mb-1">{t('free_books_title')}</h2>
-    <p className="text-sm text-gray-500">{t('free_books_desc')}</p>
+    <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('free_books_title')}</h2>
+    <p className="text-sm text-gray-500 dark:text-gray-400">{t('free_books_desc')}</p>
    </div>
    <div className="flex items-center gap-3">
     <button
      onClick={handleSeedSample}
      disabled={importing === 'sample'}
      aria-label={importing === 'sample' ? t('adding') : t('quick_start')}
-     className="min-h-[44px] text-sm font-medium px-4 py-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+     className="min-h-[44px] text-sm font-medium px-4 py-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
     >
      {importing === 'sample' ? t('adding') : t('quick_start')}
     </button>
@@ -166,4 +174,4 @@ export function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
   </div>
   </div>
  );
-}
+});

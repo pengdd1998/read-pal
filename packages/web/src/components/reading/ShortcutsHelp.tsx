@@ -24,7 +24,7 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
   <div className="bg-surface-0 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm p-5 animate-scale-in" onClick={(e) => e.stopPropagation()}>
   <div className="flex items-center justify-between mb-4">
    <h3 className="text-sm font-bold text-gray-800">{t('keyboard_shortcuts_title')}</h3>
-   <button onClick={onClose} className="p-2 -m-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors" aria-label={t('close_label')}>
+   <button onClick={onClose} className="p-2 -m-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors" aria-label={t('close_label')}>
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>
@@ -33,16 +33,16 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
   <div className="space-y-2.5">
    {shortcuts.map((s) => (
    <div key={s.label} className="flex items-center justify-between">
-    <span className="text-xs text-gray-600">{s.label}</span>
+    <span className="text-xs text-gray-600 dark:text-gray-400">{s.label}</span>
     <div className="flex gap-1">
     {s.keys.map((k) => (
-     <kbd key={k} className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-gray-100 text-gray-700 border border-surface-3">{k}</kbd>
+     <kbd key={k} className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-surface-3">{k}</kbd>
     ))}
     </div>
    </div>
    ))}
   </div>
-  <p className="mt-4 text-[10px] text-gray-500 text-center">{t('swipe_hint')}</p>
+  <p className="mt-4 text-[10px] text-gray-500 dark:text-gray-400 text-center">{t('swipe_hint')}</p>
   </div>
  </div>
  );

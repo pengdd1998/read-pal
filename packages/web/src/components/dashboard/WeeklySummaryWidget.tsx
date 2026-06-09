@@ -27,6 +27,7 @@ interface WeeklySummaryData {
 
 export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  const t = useTranslations('dashboard');
+ const locale = useLocale();
  const DAY_LABELS = useMemo(
  () => [t('day_mon'), t('day_tue'), t('day_wed'), t('day_thu'), t('day_fri'), t('day_sat'), t('day_sun')],
  [t],
@@ -43,7 +44,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
   .then((res) => {
   if (!cancelled && res.data) setData(res.data);
   })
-  .catch(() => { if (!cancelled) setError(true); })
+  .catch((err) => { console.warn('WeeklySummaryWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });
  return () => { cancelled = true; };
  }, []);
@@ -67,10 +68,10 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  if (error) {
  return (
   <div className="card text-center py-4">
-  <p className="text-xs text-gray-400 mb-2">{t('weekly_summary_load_failed')}</p>
+  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('weekly_summary_load_failed')}</p>
   <button
    onClick={fetchData}
-   className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline"
+   className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400"
   >
    {t('retry')}
   </button>
@@ -87,22 +88,22 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  <div className="card">
   {/* Header */}
   <div className="flex items-center justify-between mb-3">
-  <h3 className="text-sm font-semibold text-gray-900">
+  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
    {t('weekly_summary_title')}
   </h3>
-  <span className="text-[10px] text-gray-400">
+  <span className="text-[10px] text-gray-400 dark:text-gray-500">
    {(() => {
     const d1 = new Date(data.weekStart + 'T00:00:00');
     const d2 = new Date(data.weekEnd + 'T00:00:00');
     const fmt: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-    return `${d1.toLocaleDateString(undefined, fmt)} ~ ${d2.toLocaleDateString(undefined, fmt)}`;
+    return `${d1.toLocaleDateString(locale, fmt)} ~ ${d2.toLocaleDateString(locale, fmt)}`;
    })()}
   </span>
   </div>
 
   {isEmpty ? (
   <div className="text-center py-6">
-   <p className="text-xs text-gray-400">{t('weekly_summary_empty')}</p>
+   <p className="text-xs text-gray-400 dark:text-gray-500">{t('weekly_summary_empty')}</p>
   </div>
   ) : (
   <>
@@ -131,7 +132,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
       ? 'bg-amber-500 dark:bg-amber-400'
       : day.minutes > 0
        ? 'bg-amber-300 dark:bg-amber-600'
-       : 'bg-gray-200'
+       : 'bg-gray-200 dark:bg-gray-700'
      }`}
      style={{ height: `${height}%` }}
      title={t('daily_tooltip', { date: day.date, minutes: day.minutes, pages: day.pages })}
@@ -151,12 +152,12 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
 
 function StatCard({ label, value, unit }: { label: string; value: string; unit?: string }) {
  return (
- <div className="text-center p-2 rounded-lg bg-gray-50/50">
+ <div className="text-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
   <div>
-  <span className="text-lg font-bold text-gray-900">{value}</span>
-  {unit && <span className="text-[10px] text-gray-400 ml-1">{unit}</span>}
+  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{value}</span>
+  {unit && <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">{unit}</span>}
   </div>
-  <p className="text-[10px] text-gray-500 mt-0.5">{label}</p>
+  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
  </div>
  );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface SearchBarProps {
@@ -8,7 +9,7 @@ interface SearchBarProps {
  onQueryChange: (value: string) => void;
 }
 
-export function SearchBar({ query, searching, onQueryChange }: SearchBarProps) {
+export const SearchBar = React.memo(function SearchBar({ query, searching, onQueryChange }: SearchBarProps) {
  const t = useTranslations('search');
 
  return (
@@ -34,4 +35,4 @@ export function SearchBar({ query, searching, onQueryChange }: SearchBarProps) {
   )}
  </div>
  );
-}
+});

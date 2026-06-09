@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface BookmarkToggleProps {
@@ -7,7 +8,7 @@ interface BookmarkToggleProps {
  onToggle: () => void;
 }
 
-export function BookmarkToggle({ isBookmarked, onToggle }: BookmarkToggleProps) {
+export const BookmarkToggle = React.memo(function BookmarkToggle({ isBookmarked, onToggle }: BookmarkToggleProps) {
  const t = useTranslations('reader');
 
  return (
@@ -16,7 +17,7 @@ export function BookmarkToggle({ isBookmarked, onToggle }: BookmarkToggleProps) 
   className={`w-11 h-11 flex items-center justify-center rounded-lg transition-all duration-150 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 ${
   isBookmarked
    ? 'text-amber-500 hover:text-amber-600'
-   : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/80/60'
+   : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100/80/60 dark:hover:bg-gray-700'
   }`}
   aria-label={isBookmarked ? t('bookmark_remove') : t('bookmark_add')}
   aria-pressed={isBookmarked}
@@ -32,4 +33,4 @@ export function BookmarkToggle({ isBookmarked, onToggle }: BookmarkToggleProps) 
   )}
  </button>
  );
-}
+});

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { copyToClipboard } from '@/lib/clipboard';
 import { useIsMobile } from '@/hooks/useMediaQuery';
 import { hapticMedium } from '@/lib/haptics';
@@ -20,7 +20,7 @@ interface SelectionToolbarProps {
  onAskAI?: (text: string) => void;
 }
 
-export function SelectionToolbar({
+export const SelectionToolbar = React.memo(function SelectionToolbar({
  text,
  rect,
  range,
@@ -43,6 +43,7 @@ export function SelectionToolbar({
 
  const handleCopy = useCallback(async () => {
  const ok = await copyToClipboard(text);
+ if (!mountedRef.current) return;
  if (ok) {
   setCopied(true);
   setTimeout(() => {
@@ -162,4 +163,4 @@ export function SelectionToolbar({
   onDismiss={onDismiss}
  />
  );
-}
+});

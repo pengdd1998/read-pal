@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
@@ -39,7 +39,7 @@ function sortBooks(bookList: Book[], sortOption: SortOption): Book[] {
  return sorted;
 }
 
-export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGridProps) {
+export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGridProps) {
  const t = useTranslations('library');
  const tc = useTranslations('common');
  const [books, setBooks] = useState<Book[]>([]);
@@ -47,6 +47,9 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
  const [error, setError] = useState('');
  const [seeding, setSeeding] = useState(false);
  const uploaderRef = useRef<HTMLDivElement>(null);
+ const mountedRef = useRef(true);
+
+ useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
  const [searchQuery, setSearchQuery] = useState('');
  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -110,9 +113,10 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
   await api.delete(`/api/books/${id}`);
  } catch (err) {
   console.warn('LibraryGrid: failed to delete book', err);
+  if (!mountedRef.current) return;
   setBooks(prev);
  } finally {
-  deletingRef.current.delete(id);
+  if (mountedRef.current) deletingRef.current.delete(id);
  }
  };
 
@@ -121,6 +125,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
  try {
   setSeeding(true);
   const res = await api.post<{ book: Book }>('/api/books/seed-sample');
+  if (!mountedRef.current) return;
   if (res.success && res.data?.book) {
   setBooks((prev) => [res.data!.book, ...prev]);
   } else {
@@ -128,9 +133,10 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
   }
  } catch (err) {
   console.warn('LibraryGrid: failed to seed sample book', err);
+  if (!mountedRef.current) return;
   setError(t('failed_seed_sample'));
  } finally {
-  setSeeding(false);
+  if (mountedRef.current) setSeeding(false);
  }
  };
 
@@ -166,9 +172,9 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
    {Array.from({ length: 8 }).map((_, i) => (
    <div key={i} className="animate-pulse">
-    <div className="aspect-[3/4] bg-gray-100 rounded-xl mb-3" />
-    <div className="h-4 bg-gray-100 rounded w-3/4" />
-    <div className="h-3 bg-gray-100 rounded w-1/2 mt-2" />
+    <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-800 rounded-xl mb-3" />
+    <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-3/4" />
+    <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/2 mt-2" />
    </div>
    ))}
   </div>
@@ -218,7 +224,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
    />
 
    <div className="flex items-center justify-between animate-slide-up">
-   <p className="text-sm text-gray-500">
+   <p className="text-sm text-gray-500 dark:text-gray-400">
     {filteredBooks.length === books.length
     ? t('books_in_library', { count: books.length })
     : t('books_of_total', { filtered: filteredBooks.length, total: books.length })}
@@ -227,7 +233,7 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
     onClick={handleSeedSample}
     disabled={seeding}
     aria-label={seeding ? t('loading_sample') : t('add_sample_book')}
-    className="min-h-[44px] px-3 text-xs text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+    className="min-h-[44px] px-3 text-xs text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {seeding ? t('loading_sample') : t('add_sample_book')}
    </button>
@@ -265,13 +271,13 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
     </div>
-    <p className="text-gray-500 mb-1">
+    <p className="text-gray-500 dark:text-gray-400 mb-1">
     {t('no_books_match', { query: searchQuery })}
     {statusFilter !== 'all' ? ` ${t('with_status', { status: statusFilter })}` : ''}
     </p>
     <button
     onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}
-    className="min-h-[44px] px-3 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+    className="min-h-[44px] px-3 text-sm text-primary-600 dark:text-primary-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
     {t('clear_filters')}
     </button>
@@ -281,4 +287,4 @@ export function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGri
   )}
  </div>
  );
-}
+});

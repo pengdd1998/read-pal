@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth-fetch';
 import { formatRelativeTime } from '@/lib/date';
 
 interface Notification {
@@ -71,6 +72,8 @@ export function NotificationBell() {
 
  async function loadNotifications() {
  if (loadingRef.current) return;
+ // Skip if auth token not yet available (race on page load)
+ if (!getAuthToken()) return;
  loadingRef.current = true;
  setLoadingNotifs(true);
  try {
@@ -129,7 +132,7 @@ export function NotificationBell() {
  <div className="relative" ref={dropdownRef}>
   <button
   onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadNotifications(); }}
-  className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+  className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
   aria-label={t('notifications')}
   >
   <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -145,7 +148,7 @@ export function NotificationBell() {
   {isOpen && (
   <div className="absolute right-0 top-full mt-2 w-80 bg-surface-0 rounded-xl border border-surface-3 shadow-lg z-50 overflow-hidden">
    <div className="flex items-center justify-between px-4 py-3 border-b border-surface-2">
-   <h3 className="text-sm font-semibold text-gray-900">{t('notifications')}</h3>
+   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('notifications')}</h3>
    {unreadCount > 0 && (
     <button
     onClick={markAllRead}
@@ -167,7 +170,7 @@ export function NotificationBell() {
     <button
      key={notif.id}
      onClick={() => !notif.read && markAsRead(notif.id)}
-     className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+     className={`w-full text-left px-4 py-3 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
      !notif.read ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''
      }`}
     >
@@ -175,14 +178,14 @@ export function NotificationBell() {
      <span className="text-lg flex-shrink-0 mt-0.5">{getNotificationIcon(notif.type)}</span>
      <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2">
-      <span className="text-sm font-medium text-gray-900 truncate">
+      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
        {notif.title}
       </span>
       {!notif.read && (
        <span className="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0" />
       )}
       </div>
-      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
       {notif.message}
       </p>
       <span className="text-[10px] text-gray-400 mt-1 block">

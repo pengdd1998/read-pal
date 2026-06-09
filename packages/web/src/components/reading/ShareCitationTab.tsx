@@ -49,6 +49,7 @@ export function ShareCitationTab({ bookId }: ShareCitationTabProps) {
   if (!ctrl.signal.aborted) setCitationText(text);
  } catch (err) {
   if (ctrl.signal.aborted) return;
+  console.warn('ShareCitationTab: citation failed', err);
   toast(t('share_citation_failed'), 'error');
  } finally {
   if (!ctrl.signal.aborted) setGenerating(false);
@@ -65,7 +66,7 @@ export function ShareCitationTab({ bookId }: ShareCitationTabProps) {
 
  return (
  <div className="space-y-3">
-  <p className="text-xs text-gray-500">
+  <p className="text-xs text-gray-500 dark:text-gray-400">
   {t('share_citation_desc')}
   </p>
 
@@ -77,10 +78,10 @@ export function ShareCitationTab({ bookId }: ShareCitationTabProps) {
    className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
     citationFormat === fmt.value
     ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-400/30'
-    : 'border-gray-200 hover:border-gray-300'
+    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
    }`}
    >
-   <span className="text-sm font-medium text-gray-900">{t(fmt.labelKey)}</span>
+   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t(fmt.labelKey)}</span>
    </button>
   ))}
   </div>
@@ -88,14 +89,14 @@ export function ShareCitationTab({ bookId }: ShareCitationTabProps) {
   <button
   onClick={handleFetchCitation}
   disabled={generating}
-  className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors"
+  className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
   {generating ? t('share_citation_loading') : citationText ? t('share_citation_refresh') : t('share_citation_get')}
   </button>
 
   {citationText && (
   <div className="space-y-2">
-   <pre className="bg-gray-50 rounded-lg p-3 text-xs text-gray-700 whitespace-pre-wrap break-words border border-surface-3">
+   <pre className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words border border-surface-3">
    {citationText}
    </pre>
    <button

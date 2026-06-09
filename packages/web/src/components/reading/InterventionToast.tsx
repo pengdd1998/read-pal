@@ -153,7 +153,7 @@ export function InterventionToast({
   <div className="flex items-start gap-3">
    <span className="text-xl flex-shrink-0">{INTERVENTION_ICONS[intervention.type] || '\uD83D\uDCA1'}</span>
    <div className="flex-1 min-w-0">
-   <p className="text-sm text-gray-900 leading-relaxed">{intervention.message}</p>
+   <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">{intervention.message}</p>
    <div className="flex items-center gap-2 mt-2">
     <button
     onClick={handleHelpful}
@@ -173,7 +173,7 @@ export function InterventionToast({
     <button
     onClick={handleDismiss}
     disabled={submitting}
-    className="text-xs text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+    className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors disabled:opacity-50"
     >
     {t('dismiss')}
     </button>

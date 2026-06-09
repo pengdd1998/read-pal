@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { getColor } from '@/lib/knowledge-colors';
 import type { SimNode, VisualizationEdge } from '@/types/knowledge';
@@ -18,7 +18,7 @@ interface KnowledgeGraphProps {
  clickHintLabel: string;
 }
 
-export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
+export const KnowledgeGraph = React.memo(React.forwardRef<SVGSVGElement, KnowledgeGraphProps>(
  function KnowledgeGraph(
  {
   nodes,
@@ -46,20 +46,20 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
  return (
   <div className="lg:col-span-2 bg-surface-0 rounded-xl border border-surface-3 overflow-hidden">
   <div className="p-3 border-b border-surface-2 flex items-center justify-between">
-   <span className="text-sm font-medium text-gray-700">{conceptMapLabel}</span>
-   <span className="text-xs text-gray-400">{clickHintLabel}</span>
+   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{conceptMapLabel}</span>
+   <span className="text-xs text-gray-400 dark:text-gray-500">{clickHintLabel}</span>
   </div>
   {loading ? (
-   <div className="relative bg-gray-50/50" style={{ height: dimensions.height || 420 }}>
+   <div className="relative bg-gray-50/50 dark:bg-gray-800/50" style={{ height: dimensions.height || 420 }}>
    <svg className="w-full h-full" viewBox="0 0 600 420">
     {/* Skeleton connection lines */}
-    <line x1="120" y1="100" x2="300" y2="180" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
-    <line x1="300" y1="180" x2="200" y2="300" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
-    <line x1="300" y1="180" x2="460" y2="120" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
-    <line x1="460" y1="120" x2="500" y2="280" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
-    <line x1="200" y1="300" x2="350" y2="350" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
-    <line x1="120" y1="100" x2="80" y2="250" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
-    <line x1="500" y1="280" x2="350" y2="350" stroke="#e5e7eb" strokeWidth="1.5" opacity="0.4" />
+    <line x1="120" y1="100" x2="300" y2="180" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
+    <line x1="300" y1="180" x2="200" y2="300" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
+    <line x1="300" y1="180" x2="460" y2="120" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
+    <line x1="460" y1="120" x2="500" y2="280" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
+    <line x1="200" y1="300" x2="350" y2="350" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
+    <line x1="120" y1="100" x2="80" y2="250" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
+    <line x1="500" y1="280" x2="350" y2="350" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
     {/* Skeleton node circles */}
     <circle cx="120" cy="100" r="14" fill="#0d9488" opacity="0.2" className="animate-pulse" />
     <circle cx="300" cy="180" r="18" fill="#7c3aed" opacity="0.2" className="animate-pulse" />
@@ -80,7 +80,7 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
    >
    <defs>
     <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
-    <polygon points="0 0, 6 2, 0 4" fill="#94a3b8" />
+    <polygon points="0 0, 6 2, 0 4" fill="var(--gray-400)" />
     </marker>
    </defs>
 
@@ -101,7 +101,7 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
      y1={source.y}
      x2={target.x}
      y2={target.y}
-     stroke={isDimmed ? '#e5e7eb' : isHighlighted ? '#0d9488' : '#cbd5e1'}
+     stroke={isDimmed ? 'var(--gray-200)' : isHighlighted ? '#0d9488' : 'var(--gray-300)'}
      strokeWidth={isHighlighted ? 2 : 1}
      strokeOpacity={isDimmed ? 0.3 : 0.7}
      markerEnd={isHighlighted ? 'url(#arrowhead)' : undefined}
@@ -149,7 +149,7 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
      x={nx}
      y={ny + radius + 14}
      textAnchor="middle"
-     className="text-[10px] fill-gray-700 pointer-events-none"
+     className="text-[10px] fill-gray-700 dark:fill-gray-300 pointer-events-none"
      fontWeight="500"
      >
      {node.label.length > 16 ? node.label.slice(0, 15) + '…' : node.label}
@@ -162,4 +162,4 @@ export const KnowledgeGraph = forwardRef<SVGSVGElement, KnowledgeGraphProps>(
   </div>
  );
  },
-);
+));

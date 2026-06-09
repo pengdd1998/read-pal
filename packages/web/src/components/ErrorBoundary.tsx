@@ -58,11 +58,11 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Rec
     </svg>
    </div>
 
-   <h3 className="text-sm font-semibold text-gray-900 mb-1">
+   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
     {this.props.label ? t('in_section', { label: this.props.label }) : t('something_wrong')}
    </h3>
 
-   <p className="text-xs text-gray-500 mb-3">{errorMessage}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{errorMessage}</p>
 
    {isChunkError && (
     <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
@@ -73,21 +73,21 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Rec
    <div className="flex items-center justify-center gap-2">
     <button
     onClick={this.handleRetry}
-    className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-amber-500 text-white hover:bg-amber-600 active:scale-[0.98] transition-all"
+    className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-amber-500 text-white hover:bg-amber-600 active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
     {t('try_again')}
     </button>
     {isChunkError ? (
     <button
      onClick={() => window.location.reload()}
-     className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-[0.98] transition-all"
+     className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-[0.98] transition-all"
     >
      {t('reload_page')}
     </button>
     ) : (
     <button
      onClick={this.handleGoHome}
-     className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-[0.98] transition-all"
+     className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-[0.98] transition-all"
     >
      {t('go_home')}
     </button>

@@ -65,7 +65,7 @@ export function useStatsData(): StatsDataResult {
           setBookSpeeds(Array.isArray(bookSpeedRes.data) ? bookSpeedRes.data : []);
         }
       })
-      .catch(() => { if (!stale) setError(t('error_load')); })
+      .catch((err) => { console.warn('useStatsData: fetch failed', err); if (!stale) setError(t('error_load')); })
       .finally(() => { if (!stale) setLoading(false); });
     return () => { stale = true; };
   }, [t]);

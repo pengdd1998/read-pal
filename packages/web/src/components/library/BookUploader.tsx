@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
@@ -11,7 +11,7 @@ interface BookUploaderProps {
 
 const VALID_MIME_TYPES = ['application/epub+zip', 'application/pdf', 'application/octet-stream'];
 
-export function BookUploader({ onUploadComplete }: BookUploaderProps) {
+export const BookUploader = React.memo(function BookUploader({ onUploadComplete }: BookUploaderProps) {
  const t = useTranslations('library');
  const [uploading, setUploading] = useState(false);
  const [uploadProgress, setUploadProgress] = useState(0);
@@ -66,6 +66,7 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
   }
  } catch (err: unknown) {
   if ((err as DOMException)?.name === 'AbortError') return;
+  console.warn('BookUploader: upload failed', err);
   const isNetwork = (err as { response?: unknown; code?: string })?.code === 'ERR_NETWORK'
    || (err as { response?: unknown })?.response === undefined;
   setError(isNetwork ? t('upload_network_error') : t('upload_failed'));
@@ -111,18 +112,21 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
 
  return (
  <div
+  role="button"
+  tabIndex={0}
   onClick={handleClick}
+  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
   onDrop={handleDrop}
   onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
   onDragLeave={() => setDragOver(false)}
-  className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 overflow-hidden ${
+  className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
   success
    ? 'border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/20'
    : uploading
    ? 'border-amber-400 dark:border-amber-600 bg-amber-50/30 dark:bg-amber-900/10'
    : dragOver
     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-[1.01]'
-    : 'border-gray-300 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
+    : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-950/10'
   }`}
  >
   <input
@@ -163,25 +167,25 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
    <h3 className="text-lg font-semibold mb-1">
    {uploading ? t('uploading') : t('upload_drag_here')}
    </h3>
-   <p className="text-gray-500 text-sm">
+   <p className="text-gray-500 dark:text-gray-400 text-sm">
    {t('upload_format_hint')}
    </p>
 
    {uploading && (
    <div className="mt-4">
-    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
     <div
      className="bg-gradient-to-r from-amber-500 to-teal-500 h-2 rounded-full transition-all duration-300 ease-out"
      style={{ width: `${uploadProgress}%` }}
     />
     </div>
     <div className="flex items-center justify-between mt-2">
-    <p className="text-xs text-gray-500">
+    <p className="text-xs text-gray-500 dark:text-gray-400">
      {uploadProgress < 100 ? t('upload_progress', { progress: uploadProgress }) : t('upload_processing')}
     </p>
     <button
      onClick={(e) => { e.stopPropagation(); cancelUpload(); }}
-     className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+     className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      aria-label={t('upload_cancel')}
     >
      {t('upload_cancel')}
@@ -199,4 +203,4 @@ export function BookUploader({ onUploadComplete }: BookUploaderProps) {
   )}
  </div>
  );
-}
+});
