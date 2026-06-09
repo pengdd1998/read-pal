@@ -7,6 +7,7 @@ interface BulkActionBarProps {
  selectedCount: number;
  totalCount: number;
  confirmDelete: boolean;
+ deleting?: boolean;
  onBulkDelete: () => void;
  onConfirmBulkDelete: () => void;
  onCancelBulkDelete: () => void;
@@ -19,6 +20,7 @@ export const BulkActionBar = React.memo(function BulkActionBar({
  selectedCount,
  totalCount,
  confirmDelete,
+ deleting = false,
  onBulkDelete,
  onConfirmBulkDelete,
  onCancelBulkDelete,

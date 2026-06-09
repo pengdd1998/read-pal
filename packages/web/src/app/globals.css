@@ -893,6 +893,29 @@
 }
 .animate-slide-up-mobile { animation: slide-up-mobile 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* Flashcard 3D flip */
+.flashcard-container { perspective: 1000px; }
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flashcard-inner.flipped { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back {
+  width: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flashcard-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 /* ============================================================================
    Reduced Motion
    ============================================================================ */
