@@ -968,7 +968,10 @@
     "knowledge_from": "来自",
     "book_by_author": "作者：{author}",
     "share_unknown_book": "未知书籍",
-    "share_unknown_author": "未知作者"
+    "share_unknown_author": "未知作者",
+    "retry": "重试",
+    "network_error_hint": "无法连接到服务器，请检查网络后重试。",
+    "book_not_found_hint": "这本书可能已被移除或暂时不可用。"
   },
   "stats": {
     "title": "阅读统计",
@@ -2242,5 +2245,8 @@
     "network_welcome": "无法完成引导流程，请检查网络后重试。",
     "global_update": "应用可能已更新，请刷新页面获取最新版本。",
     "network_error": "网络错误，请检查连接后重试。"
+  },
+  "bookDetail": {
+    "progressAriaLabel": "阅读进度：{pct}%"
   }
 }

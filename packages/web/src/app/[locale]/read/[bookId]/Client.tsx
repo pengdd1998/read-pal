@@ -96,11 +96,19 @@ export default function ReadPage() {
  );
  }
  if (error || !book || chapters.length === 0) {
- return (
-  <div className="flex items-center justify-center h-dvh">
-  <div className="text-center">
-   <p className="text-xl font-semibold mb-4">{error || t('unable_to_load')}</p>
-   <Link href="/library" className="btn btn-primary">{t('back_to_library')}</Link>
+  const isNetworkError = error === t('failed_connect');
+  return (
+  <div className="flex items-center justify-center h-dvh bg-surface-1">
+  <div className="text-center max-w-md px-4">
+   <div className="text-4xl mb-4">{isNetworkError ? '🔌' : '📖'}</div>
+   <p className="text-xl font-semibold mb-2">{error || t('unable_to_load')}</p>
+   <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+    {isNetworkError ? t('network_error_hint') : t('book_not_found_hint')}
+   </p>
+   <div className="flex gap-3 justify-center">
+    <button onClick={() => window.location.reload()} className="btn btn-secondary">{t('retry')}</button>
+    <Link href="/library" className="btn btn-primary">{t('back_to_library')}</Link>
+   </div>
   </div>
   </div>
  );

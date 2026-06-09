@@ -96,7 +96,7 @@ function AuthPageContent() {
     { emoji: '💡', label: t('feature_knowledge_graph') },
    ].map((f) => (
     <div key={f.label} className="text-center p-4 rounded-2xl bg-surface-2/60 backdrop-blur-sm">
-    <div className="text-3xl mb-3">{f.emoji}</div>
+    <div className="text-3xl mb-3"><span aria-hidden="true">{f.emoji}</span></div>
     <div className="text-sm text-gray-600 dark:text-gray-400 font-semibold">{f.label}</div>
     </div>
    ))}

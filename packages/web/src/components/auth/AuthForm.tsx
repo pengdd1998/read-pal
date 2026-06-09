@@ -133,7 +133,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
    <button
     type="button"
     onClick={() => setShowPassword(!showPassword)}
-    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px]"
     aria-label={showPassword ? t('hide_password') : t('show_password')}
    >
     <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -194,7 +194,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
   <button
    type="submit"
    disabled={loading}
-   className="btn btn-primary w-full rounded-xl"
+   className="btn btn-primary w-full rounded-xl min-h-[44px]"
   >
    {loading ? (
    <span className="flex items-center gap-2">
@@ -220,7 +220,7 @@ export function AuthForm({ mode, onSuccess }: AuthFormProps) {
    </div>
    <a
    href={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/google`}
-   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
    >
    <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>

@@ -24,7 +24,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   theme: 'light',
   quietMode: false,
   fontFamily: "'Literata', 'Source Serif 4', Georgia, serif",
-  lineHeight: 1.85,
+  lineHeight: 1.9,
 };
 
 function loadSettings(bookId: string): ReaderSettings | null {

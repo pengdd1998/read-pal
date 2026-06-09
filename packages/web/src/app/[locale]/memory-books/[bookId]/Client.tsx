@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { MirrorSection } from '@/components/reading-mirror/SectionRenderer';
 import GeneratingState, { type GenerationStep } from '@/components/memory-books/GeneratingState';
@@ -36,6 +37,7 @@ export default function ReadingMirrorPage() {
  const t = useTranslations('memoryBooks');
  const locale = useLocale();
  const tc = useTranslations('common');
+ const { toast } = useToast();
  usePageTitle(t('detailPageTitle'));
  const params = useParams();
  const bookId = (params?.bookId ?? '') as string;
@@ -53,14 +55,15 @@ export default function ReadingMirrorPage() {
  useEffect(() => () => { mountedRef.current = false; if (genTimerRef.current) clearInterval(genTimerRef.current); }, []);
 
  // Fetch existing mirror + book metadata
- useEffect(() => {
+ const fetchData = useCallback(() => {
  if (!bookId) return;
- let stale = false;
+ setLoading(true);
+ setError(null);
  Promise.all([
   api.get<ReadingMirror>(`/api/v1/reading-book/${bookId}`),
   api.get<{ title: string; author: string; coverUrl?: string }>(`/api/books/${bookId}`),
  ]).then(([mirrorRes, bookRes]) => {
-  if (stale) return;
+  if (!mountedRef.current) return;
   if (mirrorRes.success && mirrorRes.data) {
   setMirror(mirrorRes.data);
   }
@@ -71,11 +74,19 @@ export default function ReadingMirrorPage() {
   }
  }).catch((err) => {
   console.warn('MemoryBookDetail: failed to load', err);
-  if (!stale) setError(t('failedToLoad'));
+  if (mountedRef.current) setError(t('failedToLoad'));
   })
- .finally(() => { if (!stale) setLoading(false); });
- return () => { stale = true; };
- }, [bookId]);
+ .finally(() => { if (mountedRef.current) setLoading(false); });
+ }, [bookId, t]);
+
+ useEffect(() => { fetchData(); }, [fetchData]);
+
+ // Refetch on tab focus
+ useEffect(() => {
+ const onFocus = () => { if (!generating) fetchData(); };
+ window.addEventListener('focus', onFocus);
+ return () => window.removeEventListener('focus', onFocus);
+ }, [fetchData, generating]);
 
  // Generate reading mirror
  const handleGenerate = useCallback(async () => {
@@ -123,7 +134,7 @@ export default function ReadingMirrorPage() {
  const url = URL.createObjectURL(blob);
  const a = document.createElement('a');
  a.href = url;
- a.download = `${bookTitle.replace(/[^a-zA-Z0-9]/g, '_')}_reading_mirror.html`;
+ a.download = `${bookTitle.replace(/[<>:\"/\\|?*]/g, '_')}_reading_mirror.html`;
  a.click();
  URL.revokeObjectURL(url);
  }, [mirror, bookTitle]);
@@ -132,12 +143,14 @@ export default function ReadingMirrorPage() {
  const handlePrint = useCallback(() => {
  if (!mirror?.htmlContent) return;
  const printWindow = window.open('', '_blank');
- if (printWindow) {
-  printWindow.document.write(mirror.htmlContent);
-  printWindow.document.close();
-  printWindow.onload = () => printWindow.print();
+ if (!printWindow) {
+  toast(t('popupBlocked', { defaultValue: 'Pop-up blocked. Please allow pop-ups for this site.' }), 'error');
+  return;
  }
- }, [mirror]);
+ printWindow.document.write(mirror.htmlContent);
+ printWindow.document.close();
+ printWindow.onload = () => printWindow.print();
+ }, [mirror, toast, t]);
 
  // ---------------------------------------------------------------------------
  // Loading state
@@ -145,7 +158,7 @@ export default function ReadingMirrorPage() {
  if (loading) {
  return (
   <div className="px-4 sm:px-6 lg:px-8 py-12 text-center">
-  <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" role="status" aria-label="Loading" />
+  <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" role="status" aria-label={t('loading')} />
   <p className="text-gray-500 dark:text-gray-400">{t('loading')}</p>
   </div>
  );
@@ -159,7 +172,7 @@ export default function ReadingMirrorPage() {
  }
 
  if (error && !mirror) {
- return <ErrorState error={error} onRetry={handleGenerate} />;
+ return <ErrorState error={error} onRetry={fetchData} />;
  }
 
  if (!mirror) {

@@ -169,7 +169,7 @@ async def process_pdf(file_path: str) -> dict:
         if outline_chapters:
             chapters = outline_chapters
     except Exception as exc:
-        logger.debug('PDF outline processing failed: %s', exc)
+        logger.warning('PDF outline processing failed: %s', exc)
 
     if not chapters:
         chapters = _build_fallback_chapters(pages_text, pages_html, total_pages)

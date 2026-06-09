@@ -55,7 +55,7 @@ def _build_toc_map(book) -> dict[str, tuple[str, int]]:
     try:
         _flatten_toc(book.toc, toc_map, 0)
     except Exception as exc:
-        logger.debug('EPUB TOC parsing failed: %s', exc)
+        logger.warning('EPUB TOC parsing failed: %s', exc)
     return toc_map
 
 
@@ -88,7 +88,7 @@ def _extract_metadata(book) -> dict:
             elif key != 'year':
                 metadata[key] = text
     except Exception as exc:
-        logger.debug('EPUB metadata extraction failed: %s', exc)
+        logger.warning('EPUB metadata extraction failed: %s', exc)
     return metadata
 
 
@@ -108,7 +108,7 @@ def _extract_images(book) -> dict[str, str]:
             b64 = base64.b64encode(content).decode('ascii')
             image_map[name] = f'data:{mime};base64,{b64}'
     except Exception as exc:
-        logger.debug('EPUB image extraction failed: %s', exc)
+        logger.warning('EPUB image extraction failed: %s', exc)
     return image_map
 
 

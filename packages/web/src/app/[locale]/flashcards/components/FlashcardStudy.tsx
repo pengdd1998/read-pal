@@ -96,7 +96,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   {/* Progress bar */}
   <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-8"
    role="progressbar"
-   aria-valuenow={currentIndex + 1}
+   aria-valuenow={currentIndex}
    aria-valuemin={0}
    aria-valuemax={cards.length}
    aria-label={t('progress_label', { defaultValue: 'Study progress' })}

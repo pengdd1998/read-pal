@@ -138,7 +138,7 @@ export default function BookDetailPage() {
   {/* Progress */}
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 mb-6 animate-slide-up stagger-2">
   <h2 className="font-semibold mb-4">{t('progress')}</h2>
-  <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden mb-3" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100} aria-label={`Reading progress: ${progressPct}%`}>
+  <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden mb-3" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100} aria-label={t('progressAriaLabel', { pct: progressPct })}>
    <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-500 transition-all duration-500" style={{ width: `${progressPct}%` }} />
   </div>
   <div className="flex items-center justify-between text-sm">
@@ -204,7 +204,7 @@ export default function BookDetailPage() {
   {book.progress > 10 && (
   <div className="bg-gradient-to-r from-amber-50 to-teal-50 dark:from-amber-900/10 dark:to-teal-900/10 rounded-2xl border border-amber-200/50 dark:border-amber-800/30 p-5 mb-6 animate-slide-up stagger-4">
    <div className="flex items-center gap-3 mb-3">
-   <span className="text-2xl">{'📕'}</span>
+   <span className="text-2xl" aria-hidden="true">{'📕'}</span>
    <div>
     <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('personalReadingBook')}</h2>
     <p className="text-xs text-gray-500 dark:text-gray-400">{t('personalReadingBookDesc')}</p>
@@ -233,7 +233,7 @@ export default function BookDetailPage() {
   <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/10 dark:to-purple-900/10 rounded-2xl border border-violet-200/50 dark:border-violet-800/30 p-5 mb-6 animate-slide-up stagger-4">
   <div className="flex items-center justify-between">
    <div className="flex items-center gap-3">
-   <span className="text-2xl">{'🗣️'}</span>
+   <span className="text-2xl" aria-hidden="true">{'🗣️'}</span>
    <div>
     <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('knowledgeGraph')}</h2>
     <p className="text-xs text-gray-500 dark:text-gray-400">{t('knowledgeGraphDesc')}</p>

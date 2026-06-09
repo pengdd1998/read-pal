@@ -15,5 +15,5 @@ def annotate_footnotes(html_content: str) -> str:
             html_content,
         )
     except Exception as exc:
-        logger.debug('epub_parser.footnote_css_failed', error=str(exc)[:200])
+        logger.warning('epub_parser.footnote_css_failed', error=str(exc)[:200])
     return html_content

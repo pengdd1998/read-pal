@@ -968,7 +968,10 @@
     "knowledge_from": "from",
     "book_by_author": "by {author}",
     "share_unknown_book": "Unknown Book",
-    "share_unknown_author": "Unknown Author"
+    "share_unknown_author": "Unknown Author",
+    "retry": "Retry",
+    "network_error_hint": "Could not reach the server. Check your internet connection and try again.",
+    "book_not_found_hint": "This book may have been removed or is temporarily unavailable."
   },
   "stats": {
     "title": "Reading Stats",
@@ -2242,5 +2245,8 @@
     "network_welcome": "Could not complete onboarding. Please check your connection and try again.",
     "global_update": "The app may have been updated. Please reload to get the latest version.",
     "network_error": "Network error. Please check your connection and try again."
+  },
+  "bookDetail": {
+    "progressAriaLabel": "Reading progress: {pct}%"
   }
 }
