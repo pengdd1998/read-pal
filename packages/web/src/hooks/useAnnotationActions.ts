@@ -257,7 +257,12 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     [annotations, currentChapter],
   );
 
-  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    };
+  }, []);
 
   return {
     loadAnnotations,

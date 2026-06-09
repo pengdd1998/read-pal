@@ -37,7 +37,11 @@ export const SelectionToolbar = React.memo(function SelectionToolbar({
  const [showQuoteCard, setShowQuoteCard] = useState(false);
  const [showTagPicker, setShowTagPicker] = useState(false);
  const mountedRef = useRef(true);
- useEffect(() => () => { mountedRef.current = false; }, []);
+ const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+ useEffect(() => () => {
+  mountedRef.current = false;
+  timersRef.current.forEach((t) => clearTimeout(t));
+ }, []);
 
  const isMobile = useIsMobile();
 
@@ -46,12 +50,12 @@ export const SelectionToolbar = React.memo(function SelectionToolbar({
  if (!mountedRef.current) return;
  if (ok) {
   setCopied(true);
-  setTimeout(() => {
+  timersRef.current.push(setTimeout(() => {
   if (mountedRef.current) {
    setCopied(false);
    onDismiss();
   }
-  }, 1200);
+  }, 1200));
  }
  }, [text, onDismiss]);
 
@@ -61,7 +65,7 @@ export const SelectionToolbar = React.memo(function SelectionToolbar({
   onHighlight(text, color, tags);
   setHighlightToast(true);
   setShowTagPicker(false);
-  setTimeout(() => { if (mountedRef.current) setHighlightToast(false); }, 1200);
+  timersRef.current.push(setTimeout(() => { if (mountedRef.current) setHighlightToast(false); }, 1200));
  },
  [text, onHighlight],
  );
@@ -72,7 +76,7 @@ export const SelectionToolbar = React.memo(function SelectionToolbar({
   onHighlight(text, color, [tag]);
   setHighlightToast(true);
   setShowTagPicker(false);
-  setTimeout(() => { if (mountedRef.current) setHighlightToast(false); }, 1200);
+  timersRef.current.push(setTimeout(() => { if (mountedRef.current) setHighlightToast(false); }, 1200));
  },
  [text, onHighlight],
  );
