@@ -88,16 +88,8 @@ async def get_book_chapters(
 ) -> dict:
     """Return chapter list for a book (used by offline caching)."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
-    book = await book_service.get_book(db, UUID(current_user['id']), book_id)
-    if book is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
-        )
-    from app.services.upload_service import get_book_content
-    data = await get_book_content(db, UUID(current_user['id']), book_id, lang)
-    chapters = data.get('chapters', []) if data else []
-    return {'success': True, 'data': {'chapters': [{'id': c['id']} for c in chapters]}}
+    chapters = await book_service.get_book_chapter_ids(db, UUID(current_user['id']), book_id, lang)
+    return {'success': True, 'data': {'chapters': chapters}}
 
 
 @router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)

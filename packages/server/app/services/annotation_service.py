@@ -37,16 +37,20 @@ async def get_annotations(
         base = base.where(Annotation.type == type)
         count_base = count_base.where(Annotation.type == type)
 
-    total_result = await db.execute(count_base)
-    total = total_result.scalar() or 0
+    try:
+        total_result = await db.execute(count_base)
+        total = total_result.scalar() or 0
 
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        base.order_by(Annotation.created_at.desc())
-        .offset(offset)
-        .limit(per_page),
-    )
-    annotations = list(result.scalars().all())
+        offset = (page - 1) * per_page
+        result = await db.execute(
+            base.order_by(Annotation.created_at.desc())
+            .offset(offset)
+            .limit(per_page),
+        )
+        annotations = list(result.scalars().all())
+    except Exception as exc:
+        logger.error('get_annotations failed: %s', exc)
+        raise
 
     return annotations, total
 
@@ -57,13 +61,17 @@ async def get_annotation(
     annotation_id: UUID,
 ) -> Annotation | None:
     """Return a single annotation, verifying ownership."""
-    result = await db.execute(
-        select(Annotation).where(
-            Annotation.id == annotation_id,
-            Annotation.user_id == user_id,
-        ),
-    )
-    return result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(Annotation).where(
+                Annotation.id == annotation_id,
+                Annotation.user_id == user_id,
+            ),
+        )
+        return result.scalar_one_or_none()
+    except Exception as exc:
+        logger.error('get_annotation failed: %s', exc)
+        raise
 
 
 async def create_annotation(
@@ -72,25 +80,29 @@ async def create_annotation(
     data: AnnotationCreate,
 ) -> Annotation:
     """Create a new annotation after verifying book ownership."""
-    book = await db.scalar(
-        select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
-    )
-    if book is None:
-        raise ValueError('Book not found')
+    try:
+        book = await db.scalar(
+            select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
+        )
+        if book is None:
+            raise ValueError('Book not found')
 
-    annotation = Annotation(
-        user_id=user_id,
-        book_id=data.book_id,
-        type=data.type,
-        location=data.location,
-        content=data.content,
-        color=data.color,
-        note=data.note,
-        tags=data.tags if data.tags else [],
-    )
-    db.add(annotation)
-    await db.flush()
-    await db.refresh(annotation)
+        annotation = Annotation(
+            user_id=user_id,
+            book_id=data.book_id,
+            type=data.type,
+            location=data.location,
+            content=data.content,
+            color=data.color,
+            note=data.note,
+            tags=data.tags if data.tags else [],
+        )
+        db.add(annotation)
+        await db.flush()
+        await db.refresh(annotation)
+    except Exception as exc:
+        logger.error('create_annotation failed: %s', exc)
+        raise
 
     logger.info(
         'Annotation created: %s (%s) for user %s',
@@ -112,11 +124,15 @@ async def update_annotation(
     if annotation is None:
         return None
 
-    update_data = data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(annotation, field, value)
+    try:
+        update_data = data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(annotation, field, value)
 
-    await db.flush()
+        await db.flush()
+    except Exception as exc:
+        logger.error('update_annotation failed: %s', exc)
+        raise
 
     logger.info('Annotation updated: %s for user %s', annotation_id, user_id)
     return annotation
@@ -132,8 +148,12 @@ async def delete_annotation(
     if annotation is None:
         return False
 
-    await db.delete(annotation)
-    await db.flush()
+    try:
+        await db.delete(annotation)
+        await db.flush()
+    except Exception as exc:
+        logger.error('delete_annotation failed: %s', exc)
+        raise
 
     logger.info('Annotation deleted: %s for user %s', annotation_id, user_id)
     return True
@@ -157,8 +177,12 @@ async def get_tags(
     )
     if book_id:
         q = q.where(Annotation.book_id == book_id)
-    result = await db.execute(q)
-    rows = result.all()
+    try:
+        result = await db.execute(q)
+        rows = result.all()
+    except Exception as exc:
+        logger.error('get_tags failed: %s', exc)
+        raise
     tags = []
     for row in rows:
         name = row[0]
@@ -187,8 +211,14 @@ async def search_annotations(
     if book_id:
         base = base.where(Annotation.book_id == book_id)
 
-    result = await db.execute(base.order_by(Annotation.created_at.desc()).limit(50))
-    return list(result.scalars().all())
+    try:
+        result = await db.execute(
+            base.order_by(Annotation.created_at.desc()).limit(50),
+        )
+        return list(result.scalars().all())
+    except Exception as exc:
+        logger.error('search_annotations failed: %s', exc)
+        raise
 
 
 async def get_chapter_stats(
@@ -200,19 +230,23 @@ async def get_chapter_stats(
     chapter_col = func.coalesce(
         cast(Annotation.location['chapter'], String), 'Unknown',
     ).label('chapter')
-    result = await db.execute(
-        select(
-            chapter_col,
-            Annotation.type,
-            func.count(Annotation.id).label('count'),
-        ).where(
-            Annotation.user_id == user_id,
-            Annotation.book_id == book_id,
-        ).group_by(
-            chapter_col,
-            Annotation.type,
-        ),
-    )
+    try:
+        result = await db.execute(
+            select(
+                chapter_col,
+                Annotation.type,
+                func.count(Annotation.id).label('count'),
+            ).where(
+                Annotation.user_id == user_id,
+                Annotation.book_id == book_id,
+            ).group_by(
+                chapter_col,
+                Annotation.type,
+            ),
+        )
+    except Exception as exc:
+        logger.error('get_chapter_stats failed: %s', exc)
+        raise
 
     chapters: dict[str, dict] = {}
     for row in result.all():

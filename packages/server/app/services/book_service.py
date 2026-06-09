@@ -217,3 +217,17 @@ async def _cleanup_collection_orphans(db: AsyncSession, book_id: UUID) -> None:
     )
     for col in result.scalars():
         col.book_ids = [bid for bid in (col.book_ids or []) if bid != str(book_id)]
+
+
+async def get_book_chapter_ids(
+    db: AsyncSession, user_id: UUID, book_id: UUID, lang: str,
+) -> list[dict[str, str]]:
+    """Return chapter ID list for a book (used by offline caching)."""
+    from app.services.upload_service import get_book_content
+    book = await get_book(db, user_id, book_id)
+    if book is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail={'code': 'NOT_FOUND', 'message': f'Book {book_id} not found'})
+    data = await get_book_content(db, user_id, book_id, lang)
+    chapters = data.get('chapters', []) if data else []
+    return [{'id': c['id']} for c in chapters]

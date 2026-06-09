@@ -161,7 +161,7 @@ export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', 
  setBooks((prev) => prev.map((b) => (b.id === id ? { ...b, tags: newTags } : b)));
  }, []);
 
- const handleBookAdded = useCallback((book: any) => {
+ const handleBookAdded = useCallback((book: Book) => {
  setBooks((prev) => [book, ...prev]);
  }, []);
 
