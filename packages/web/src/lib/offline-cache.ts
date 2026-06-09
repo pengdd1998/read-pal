@@ -3,7 +3,7 @@ import { cacheBook, isCached } from '@/lib/mobile-cache';
 import { cacheBookForOffline } from '@/lib/offline-queue';
 import { api } from '@/lib/api';
 
-export function openOfflineDB(): Promise<IDBDatabase> {
+function openOfflineDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open('readpal-offline', 2);
     req.onupgradeneeded = () => {

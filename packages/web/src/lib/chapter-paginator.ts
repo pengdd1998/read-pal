@@ -118,13 +118,3 @@ export function splitChapterIntoPages(
   return pages.length > 0 ? pages : [{ html, charOffset: 0 }];
 }
 
-/**
- * Quick estimate of page count without full splitting.
- */
-export function estimatePageCount(
-  html: string,
-  maxChars: number = DEFAULT_MAX_CHARS_PER_PAGE,
-): number {
-  if (!html) return 1;
-  return Math.max(1, Math.ceil(html.length / maxChars));
-}

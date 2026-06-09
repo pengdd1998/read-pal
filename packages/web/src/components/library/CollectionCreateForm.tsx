@@ -53,7 +53,7 @@ export function CollectionCreateForm({
    <button
    key={ic.value}
    onClick={() => onIconChange(ic.value)}
-   aria-label={`Select ${ic.label} icon`}
+   aria-label={t('select_icon', { label: ic.label })}
    className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${newIcon === ic.value ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
    title={ic.label}
    >
@@ -67,7 +67,7 @@ export function CollectionCreateForm({
    <button
    key={c}
    onClick={() => onColorChange(c)}
-   aria-label={`Select ${c} color`}
+   aria-label={t('select_color', { color: c })}
    className={`w-5 h-5 rounded-full transition-transform focus-visible:ring-2 focus-visible:ring-amber-400 ${newColor === c ? 'scale-125 ring-2 ring-offset-1 ring-gray-300 dark:ring-gray-600' : 'hover:scale-110'}`}
    style={{ backgroundColor: c }}
    />

@@ -48,13 +48,6 @@ function stripDangerousTags(html: string): string {
 }
 
 /**
- * Returns true if DOMPurify has finished loading and is ready.
- */
-export function isDOMPurifyReady(): boolean {
-  return _domPurify !== null;
-}
-
-/**
  * Fire-and-forget preload. Accepts an optional onReady callback invoked
  * once DOMPurify is loaded, so callers can trigger a re-render to
  * re-sanitize content that was handled by the fallback.

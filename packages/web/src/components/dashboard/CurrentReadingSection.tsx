@@ -69,7 +69,7 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
     <div className="flex items-center gap-4">
      <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
      {book.coverUrl ? (
-      <Image src={book.coverUrl} alt={`Cover of ${book.title}`} width={56} height={80} className="w-full h-full object-cover rounded-lg" />
+      <Image src={book.coverUrl} alt={t('cover_of', { title: book.title })} width={56} height={80} className="w-full h-full object-cover rounded-lg" />
      ) : (
       <span className="text-white text-xl">{'\uD83D\uDCD6'}</span>
      )}
@@ -117,7 +117,7 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
    <div className="flex items-center gap-4">
     <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
     {currentBook.coverUrl ? (
-     <Image src={currentBook.coverUrl} alt={`Cover of ${currentBook.title}`} width={56} height={80} className="w-full h-full object-cover rounded-lg" />
+     <Image src={currentBook.coverUrl} alt={t('cover_of', { title: currentBook.title })} width={56} height={80} className="w-full h-full object-cover rounded-lg" />
     ) : (
      <span className="text-white text-xl">{'\uD83D\uDCD6'}</span>
     )}

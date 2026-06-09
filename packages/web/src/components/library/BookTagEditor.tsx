@@ -54,7 +54,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
    {editingTags && (
    <button
     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveTag(tag); }}
-    aria-label={`Remove tag ${tag}`}
+    aria-label={t('remove_tag', { tag })}
     className="ml-0.5 text-amber-400 hover:text-red-500 p-1 -m-1 min-w-[20px] min-h-[20px] flex items-center justify-center"
    >
     x
