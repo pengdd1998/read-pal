@@ -132,7 +132,7 @@ export default function WelcomePage() {
             </div>
           ) : error ? (
             <div className="space-y-4">
-              <p className="text-red-600 text-lg">{error}</p>
+              <p className="text-red-600 dark:text-red-400 text-lg">{error}</p>
               <button
                 onClick={() => {
                   setError(null);

@@ -54,7 +54,7 @@ export function AccountSection() {
 
  return (
  <section className="mt-10 animate-slide-up stagger-3">
-  <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+  <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
   <svg aria-hidden="true" className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
@@ -108,13 +108,13 @@ export function AccountSection() {
     className="bg-surface-0 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 animate-scale-in"
     onClick={(e) => e.stopPropagation()}
    >
-    <h3 className="text-lg font-bold text-red-600 mb-2">{t('account_delete_heading')}</h3>
+    <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">{t('account_delete_heading')}</h3>
     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('account_delete_confirm_password', { defaultValue: 'Enter your password to confirm account deletion. This action cannot be undone.' })}</p>
     <input
      type="password"
      value={confirmPassword}
      onChange={(e) => setConfirmPassword(e.target.value)}
-     className="w-full px-3 py-2 border border-surface-3 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none mb-3"
+     className="w-full px-3 py-2 border border-surface-3 rounded-lg text-sm bg-surface-0 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none mb-3"
      placeholder={t('account_delete_password_placeholder', { defaultValue: 'Your password' })}
      autoFocus
      aria-label={t('account_delete_password_placeholder', { defaultValue: 'Your password' })}
