@@ -450,7 +450,7 @@
     "card_offline_badge": "离线",
     "collection_picker_title": "添加到收藏夹",
     "collection_picker_create_failed": "创建收藏夹失败",
-    "collection_picker_toggle_failed": "更新收藏夹失败"
+    "collection_picker_toggle_failed": "更新收藏夹失败",
     "collection_picker_empty": "还没有收藏夹",
     "collection_picker_placeholder": "名称...",
     "collection_picker_add": "添加",
@@ -830,7 +830,7 @@
     "reading_plan_generating": "正在生成...",
     "reading_plan_generated": "阅读计划已生成！",
     "reading_plan_error": "生成计划失败",
-    "reading_plan_load_failed": "加载阅读计划失败"
+    "reading_plan_load_failed": "加载阅读计划失败",
     "reading_plan_days": "天",
     "reading_plan_mark_complete": "标记今日完成",
     "reading_plan_day_complete": "今日已完成！",
@@ -971,7 +971,7 @@
     "session_retry_insight": "重试生成洞察",
     "share_questions_unavailable": "讨论问题生成失败。导学指南已创建，但不包含AI问题。",
     "quote_card_by": "作者：",
-    "quote_card_download_failed": "下载引用卡片失败"
+    "quote_card_download_failed": "下载引用卡片失败",
     "knowledge_from": "来自",
     "book_by_author": "作者：{author}",
     "share_unknown_book": "未知书籍",
