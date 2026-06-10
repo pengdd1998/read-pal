@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { getBookInitials, getBookCoverColors } from '@/lib/book-cover';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 

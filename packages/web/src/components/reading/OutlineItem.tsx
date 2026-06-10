@@ -34,7 +34,8 @@ export const OutlineItem = memo(function OutlineItem({
  return (
  <button
   onClick={() => onClick(annotation)}
-  className="w-full text-left px-6 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors group"
+  aria-label={t('outline_item_aria', { defaultValue: '{type} annotation', type: annotation.type })}
+  className="w-full text-left px-6 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors group min-h-[44px]"
  >
   <div className="flex items-start gap-2">
   <span className="text-[10px] mt-0.5 flex-shrink-0">

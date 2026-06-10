@@ -92,7 +92,7 @@ const CharacterItem = React.memo(function CharacterItem({
     onAskCompanion(char.name);
     }}
     aria-label={t('fiction_ask_about', { name: char.name.split(' ')[0] })}
-    className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline"
+    className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline min-h-[44px] inline-flex items-center"
    >
     {t('fiction_ask_about', { name: char.name.split(' ')[0] })}
    </button>

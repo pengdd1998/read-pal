@@ -17,7 +17,7 @@ const BadgeCard = React.memo(function BadgeCard({ badge }: BadgeCardProps) {
    : 'bg-gray-50/50 dark:bg-gray-800/50 opacity-50'
   }`}
  >
-  <div className={`text-2xl mb-1 ${badge.unlocked ? '' : 'grayscale'}`}>{badge.icon}</div>
+  <div className={`text-2xl mb-1 ${badge.unlocked ? '' : 'grayscale'}`} aria-hidden="true">{badge.icon}</div>
   <div className="text-xs font-semibold text-gray-900 dark:text-gray-100">{badge.title}</div>
   <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{badge.desc}</div>
  </div>

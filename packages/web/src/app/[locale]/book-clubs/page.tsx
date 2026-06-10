@@ -119,7 +119,7 @@ export default function BookClubsPage() {
   {!loading && error && (
    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl p-4 text-sm flex items-center justify-between">
    <span>{error}</span>
-   <button onClick={() => window.location.reload()} className="text-xs font-medium underline hover:no-underline">t('retry')</button>
+   <button onClick={() => window.location.reload()} className="text-xs font-medium underline hover:no-underline min-h-[44px] inline-flex items-center">{t('retry')}</button>
    </div>
   )}
 
@@ -134,7 +134,7 @@ export default function BookClubsPage() {
     <p className="text-sm text-gray-400 dark:text-gray-500 mb-3">
     {t('discoverHint')}
     </p>
-    <button onClick={() => setTab('discover')} className="text-sm text-amber-600 dark:text-amber-400 font-medium hover:underline">t('discoverClubs')</button>
+    <button onClick={() => setTab('discover')} className="text-sm text-amber-600 dark:text-amber-400 font-medium hover:underline min-h-[44px] inline-flex items-center">{t('discoverClubs')}</button>
     </div>
    )}
    </div>

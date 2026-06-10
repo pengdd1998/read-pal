@@ -74,6 +74,7 @@ export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCar
    <button
    key={deck.bookId}
    onClick={() => deck.due > 0 ? onStartReview(deck.bookId) : undefined}
+   aria-label={t('review_deck_aria', { defaultValue: 'Review {title}, {count} due', title: deck.bookTitle, count: deck.due })}
    className={`w-full card text-left group transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-400 ${
     deck.due > 0
     ? 'hover:border-teal-200 dark:hover:border-teal-800 hover:shadow-sm cursor-pointer'

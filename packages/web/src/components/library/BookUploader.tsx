@@ -201,8 +201,9 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   )}
 
   {error && (
-  <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-lg text-sm">
-   {error}
+  <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-lg text-sm flex items-center justify-between">
+   <span>{error}</span>
+   <button onClick={() => { setError(''); }} className="text-xs font-medium underline hover:no-underline">{t("retry", { defaultValue: "Retry" })}</button>
   </div>
   )}
  </div>

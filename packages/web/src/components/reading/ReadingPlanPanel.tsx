@@ -217,7 +217,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
    /* Generate form */
    <div className="space-y-4">
     {error && (
-    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300">{error}</div>
+    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{error}</span><button onClick={handleGenerate} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap">{t("retry", { defaultValue: "Retry" })}</button></div>
     )}
     <p className="text-sm text-gray-600 dark:text-gray-400">
     {t('reading_plan_no_plan')}

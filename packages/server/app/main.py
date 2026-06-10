@@ -1,5 +1,6 @@
 import asyncio
 import os
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 import structlog
@@ -69,7 +70,7 @@ class ApiCompatMiddleware:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: startup + shutdown."""
     is_prod = os.getenv('APP_ENV', 'development') == 'production'
     setup_logging(level=settings.log_level, json_output=is_prod or settings.log_json)
@@ -136,7 +137,7 @@ app.add_middleware(
 
 # Security headers
 @app.middleware('http')
-async def add_security_headers(request: Request, call_next) -> StarletteResponse:
+async def add_security_headers(request: Request, call_next: Callable[[Request], Awaitable[StarletteResponse]]) -> StarletteResponse:
     response = await call_next(request)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'

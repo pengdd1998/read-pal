@@ -29,7 +29,7 @@ export const OverviewCards = React.memo(function OverviewCards({ stats, sessions
  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
   {cards.map((item, i) => (
   <div key={item.label} className={`stagger-${i + 1} animate-slide-up ${item.bg} rounded-xl p-4 text-center`}>
-   <span className="text-2xl">{item.icon}</span>
+   <span className="text-2xl" aria-hidden="true">{item.icon}</span>
    <div className={`text-2xl font-bold ${item.color} mt-1`}>{item.value}</div>
    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.label}</div>
   </div>

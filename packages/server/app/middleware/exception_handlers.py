@@ -6,7 +6,7 @@ meaningful status codes instead of opaque 500s.
 """
 
 import structlog
-from fastapi import Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -67,7 +67,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
-def register_exception_handlers(app) -> None:
+def register_exception_handlers(app: 'FastAPI') -> None:
     """Attach all exception handlers to the FastAPI app."""
     app.add_exception_handler(ValueError, value_error_handler)
     app.add_exception_handler(PermissionError, permission_error_handler)

@@ -198,7 +198,7 @@ function BookClubsWidgetInner() {
   )}
 
   {error && (
-  <p className="text-xs text-red-500 dark:text-red-400 mb-3">{error}</p>
+  <div className="text-xs text-red-500 dark:text-red-400 mb-3 flex items-center justify-between"><span>{error}</span><button onClick={() => window.location.reload()} className="font-medium underline hover:no-underline">{t("retry", { defaultValue: "Retry" })}</button></div>
   )}
 
   {/* Club list */}

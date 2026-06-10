@@ -84,7 +84,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   onClick={(e) => e.stopPropagation()}
  >
   {/* Color picker */}
-  <div className="flex items-center gap-1.5 mb-2">
+  <div className="flex items-center gap-1 mb-2 min-h-[44px]">
   {ANNOTATION_COLORS.map((c) => (
    <button
    key={c}

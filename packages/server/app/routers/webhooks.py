@@ -62,11 +62,6 @@ async def test_webhook(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
         ) from exc
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
-        ) from exc
     # Actually deliver the test webhook
     test_result = await webhook_service.deliver_webhook(
         webhook=wh,
