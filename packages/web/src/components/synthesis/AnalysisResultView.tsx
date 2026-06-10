@@ -43,11 +43,11 @@ const ReferenceItem = React.memo(function ReferenceItem({ ref: refData, t }: {
               ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               : refData.type === 'extending'
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-surface-1 text-gray-600'
+                : 'bg-surface-1 text-gray-600 dark:text-gray-400'
         }`}>
           {t(`ref_${refData.type}`, { defaultValue: refData.type })}
         </span>
-        <span className="text-xs font-medium text-gray-800 truncate">
+        <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
           {refData.book.title}
         </span>
       </div>
@@ -79,16 +79,16 @@ const ContradictionItem = React.memo(function ContradictionItem({ c, t }: {
         }`}>
           {t(`severity_${c.severity}`, { defaultValue: c.severity })}
         </span>
-        <span className="text-xs font-medium text-gray-800 truncate">
+        <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
           {c.topic}
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-        <div className="p-2 rounded bg-surface-0 border border-gray-100">
+        <div className="p-2 rounded bg-surface-0 border border-gray-100 dark:border-gray-700">
           <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position1.book.title}</p>
           <p className="text-gray-500 dark:text-gray-400 line-clamp-3">{c.position1.claim}</p>
         </div>
-        <div className="p-2 rounded bg-surface-0 border border-gray-100">
+        <div className="p-2 rounded bg-surface-0 border border-gray-100 dark:border-gray-700">
           <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position2.book.title}</p>
           <p className="text-gray-500 dark:text-gray-400 line-clamp-3">{c.position2.claim}</p>
         </div>

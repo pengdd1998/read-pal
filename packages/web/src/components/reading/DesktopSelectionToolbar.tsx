@@ -69,7 +69,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
    key={color}
    onMouseDown={(e) => e.preventDefault()}
    onClick={() => onHighlight(color)}
-   className="min-w-[44px] min-h-[44px] rounded-full border-2 border-transparent hover:border-gray-400 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center justify-center"
+   className="min-w-[44px] min-h-[44px] rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center justify-center"
    aria-label={t('toolbar_highlight_in', { color })}
    >
    <span className="w-7 h-7 rounded-full" style={{ backgroundColor: color }} />

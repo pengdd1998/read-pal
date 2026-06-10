@@ -53,7 +53,7 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
    ? 'bg-amber-500'
    : isRead
    ? 'bg-teal-400'
-   : 'bg-gray-300'
+   : 'bg-gray-300 dark:bg-gray-600'
   }`} />
   <span className={`text-xs font-medium truncate ${
    isCurrent

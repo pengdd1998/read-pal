@@ -37,7 +37,7 @@ export const DashboardHeader = React.memo(function DashboardHeader({
   const title = !hasData && !loading
     ? (greeting || welcome)
     : (mounted && firstName)
-      ? welcomeBackName.replace('{name}', firstName)
+      ? welcomeBackName
       : welcomeBack;
 
   return (

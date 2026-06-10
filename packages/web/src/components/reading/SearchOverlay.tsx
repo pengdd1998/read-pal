@@ -144,7 +144,7 @@ const SearchResultItem = React.memo(function SearchResultItem({
  >
  <div className="flex items-center gap-2">
   <span className="text-xs text-amber-500 font-mono font-bold">{result.index + 1}</span>
-  <span className="text-sm font-medium text-gray-800 truncate">
+  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
   {result.title}
   </span>
   {isCurrent && (

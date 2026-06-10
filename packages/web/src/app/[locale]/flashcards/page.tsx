@@ -173,7 +173,7 @@ export default function FlashcardsPage() {
  return (
   <>
   {toastEl}
-  <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+  <main id="main-content" aria-label={t('page_title')} className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <div className="mb-8">
    <div className="h-7 bg-surface-2 rounded-lg w-40 animate-pulse" />
    </div>
@@ -199,7 +199,7 @@ export default function FlashcardsPage() {
  return (
   <>
   {toastEl}
-  <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+  <main id="main-content" aria-label={t('page_title')} className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <div className="mb-8">
    <div className="h-7 bg-surface-2 rounded-lg w-40 animate-pulse" />
    </div>

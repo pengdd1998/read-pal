@@ -11,6 +11,7 @@ import time
 from collections.abc import Callable
 
 import redis.asyncio as aioredis
+import redis.exceptions
 from fastapi import Depends, HTTPException, Request, status
 
 from app.core.redis import get_redis

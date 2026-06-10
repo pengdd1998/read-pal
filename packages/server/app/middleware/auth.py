@@ -9,6 +9,7 @@ Mirrors the Node.js auth system exactly:
 
 import logging
 import uuid
+from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 
 import redis.exceptions
@@ -40,7 +41,7 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 
 # --- Redis client for blacklist -----------------------------------------------
 
-_in_memory_blacklist: set[str] = set()
+_in_memory_blacklist: OrderedDict[str, None] = OrderedDict()
 _redis_ever_connected: bool = False
 _MAX_IN_MEMORY_BLACKLIST = 10_000
 
@@ -124,13 +125,10 @@ async def revoke_token(jti: str, exp: int) -> None:
     global _redis_ever_connected
 
     # Always record in-memory so the fallback is up-to-date
-    _in_memory_blacklist.add(jti)
-    if len(_in_memory_blacklist) > _MAX_IN_MEMORY_BLACKLIST:
-        # Evict oldest entries (simple set doesn't preserve order, but
-        # this prevents unbounded growth)
-        to_remove = len(_in_memory_blacklist) - _MAX_IN_MEMORY_BLACKLIST
-        for key in list(_in_memory_blacklist)[:to_remove]:
-            _in_memory_blacklist.discard(key)
+    _in_memory_blacklist[jti] = None
+    _in_memory_blacklist.move_to_end(jti)
+    while len(_in_memory_blacklist) > _MAX_IN_MEMORY_BLACKLIST:
+        _in_memory_blacklist.popitem(last=False)
 
     try:
         r = _get_redis()
@@ -157,12 +155,14 @@ async def is_token_revoked(jti: str) -> bool:
         exists = await r.exists(f'{TOKEN_BLACKLIST_PREFIX}{jti}')
         _redis_ever_connected = True
         if exists:
-            _in_memory_blacklist.add(jti)
+            _in_memory_blacklist[jti] = None
+            _in_memory_blacklist.move_to_end(jti)
             return True
         return False
     except (redis.exceptions.RedisError, ConnectionError):
         logger.warning('auth.redis_blacklist_failed', jti=jti[:8] if jti else None)
         if jti in _in_memory_blacklist:
+            _in_memory_blacklist.move_to_end(jti)
             return True
         return False
 

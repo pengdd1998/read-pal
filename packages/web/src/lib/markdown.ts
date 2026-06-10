@@ -5,8 +5,8 @@
  */
 export function renderSimpleMarkdown(text: string): string {
   let html = text;
-  html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-200 rounded p-2 my-1 overflow-x-auto text-xs"><code>$1</code></pre>');
-  html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-200 px-1 rounded text-xs break-all">$1</code>');
+  html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-surface-2 rounded p-2 my-1 overflow-x-auto text-xs"><code>$1</code></pre>');
+  html = html.replace(/`([^`]+)`/g, '<code class="bg-surface-2 px-1 rounded text-xs break-all">$1</code>');
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
   html = html.replace(/\n/g, '<br />');

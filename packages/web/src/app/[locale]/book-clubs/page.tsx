@@ -61,7 +61,7 @@ export default function BookClubsPage() {
  const displayClubs = tab === 'my' ? myClubs : discoverClubs;
 
  return (
- <main className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+ <main id="main-content" aria-label="Book Clubs" className="min-h-screen bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
   {/* Header */}
   <div className="flex items-center justify-between mb-6">

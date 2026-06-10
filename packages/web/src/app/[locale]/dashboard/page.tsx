@@ -82,7 +82,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <main id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       <DashboardHeader
         loading={loading}
         mounted={mounted}
@@ -91,7 +91,7 @@ export default function DashboardPage() {
         streak={streak}
         greetingKey={greetingKey}
         greeting={t(greetingKey) || ''}
-        welcomeBackName={t('welcome_back_name')}
+        welcomeBackName={t('welcome_back_name', { name: firstName || t('welcome_back') })}
         welcomeBack={t('welcome_back')}
         welcome={t('welcome')}
         streakMessage={t('streak_message', { streak })}

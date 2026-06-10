@@ -73,7 +73,7 @@ const CharacterItem = React.memo(function CharacterItem({
   }`}
   >
   <div className="flex items-center justify-between">
-   <span className="text-sm font-medium text-gray-800">
+   <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
    {char.name}
    </span>
    <span className="text-xs text-gray-500 dark:text-gray-400">

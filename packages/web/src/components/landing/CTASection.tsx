@@ -43,7 +43,7 @@ export const CTASection = React.memo(function CTASection({
    <h2 id="landing-cta-title" className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-5 font-display">
    {cta_join_title}
    </h2>
-   <p className="text-gray-300 text-lg mb-10">
+   <p className="text-gray-300 dark:text-gray-400 text-lg mb-10">
    {cta_join_subtitle}
    </p>
    <Link href="/auth?mode=register" className="btn btn-primary btn-glow px-10 py-4 text-base rounded-2xl shadow-glow-amber">

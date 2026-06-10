@@ -57,16 +57,16 @@ export default function ReadPage() {
 
  const handleAskAISelection = useCallback((text: string) => {
   const truncated = text.length > 200 ? text.slice(0, 200) + '...' : text;
-  chatHandleRef.current?.openWithMessage(`Can you explain this passage: '${truncated}'`);
- }, [chatHandleRef]);
+  chatHandleRef.current?.openWithMessage(t('explain_passage_prompt', { text: truncated }));
+ }, [chatHandleRef, t]);
 
  const handleCompanionReady = useCallback((handle: CompanionChatHandle) => {
   chatHandleRef.current = handle;
  }, [chatHandleRef]);
 
  const handleAskAboutCharacter = useCallback((name: string) => {
-  chatHandleRef.current?.openWithMessage(`Tell me about ${name} — their role, motivations, and how they've developed so far.`);
- }, [chatHandleRef]);
+  chatHandleRef.current?.openWithMessage(t('tell_about_character_prompt', { name }));
+ }, [chatHandleRef, t]);
 
  const handleTimelineChapterSelect = useCallback((i: number) => {
   handleChapterChange(i);

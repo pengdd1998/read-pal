@@ -31,17 +31,19 @@ async def _invoke_with_retry(
 ) -> Any:
     """Invoke LLM with exponential backoff on 429 rate limit errors."""
     last_exc: Exception | None = None
-    for attempt, backoff in enumerate(_RATE_LIMIT_BACKOFFS):
+    max_attempts = len(_RATE_LIMIT_BACKOFFS) + 1
+    for attempt in range(max_attempts):
         try:
             return await llm.ainvoke(messages)
         except Exception as exc:
             last_exc = exc
             if _is_rate_limited(exc) and attempt < len(_RATE_LIMIT_BACKOFFS):
+                backoff = _RATE_LIMIT_BACKOFFS[attempt]
                 logger.warning(
                     'llm_rate_limited',
                     label=log_label,
                     attempt=attempt + 1,
-                    max_attempts=len(_RATE_LIMIT_BACKOFFS),
+                    max_attempts=max_attempts,
                     backoff_seconds=backoff,
                 )
                 await asyncio.sleep(backoff)

@@ -51,7 +51,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
   className="absolute bottom-0 left-0 right-0 bg-surface-0 rounded-t-2xl shadow-2xl p-5 animate-scale-in overscroll-contain max-h-[80vh] overflow-y-auto safe-area-bottom"
   onClick={(e) => e.stopPropagation()}
   >
-  <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4" />
+  <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mb-4" />
   <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4">{t('settings_title')}</h3>
 
   {/* Font size */}

@@ -47,7 +47,7 @@ export default function LibraryPage() {
  }, []);
 
  return (
- <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
+ <main id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
   <div className="flex justify-between items-center mb-6 sm:mb-8">
   <div className="animate-slide-up">
    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('title')}</h1>

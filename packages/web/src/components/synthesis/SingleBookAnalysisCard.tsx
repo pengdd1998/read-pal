@@ -64,7 +64,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
  <>
   {/* Single-book analysis form */}
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-5 mb-6">
-  <h3 className="text-sm font-semibold text-gray-800 mb-4">
+  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
    {t('single_book_title')}
   </h3>
 
@@ -83,7 +83,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    <select
     value={selectedBookId}
     onChange={(e) => setSelectedBookId(e.target.value)}
-    className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800"
+    className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200"
    >
     <option value="">{t('choose_book')}</option>
     {books.map((book) => (
@@ -132,7 +132,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    onChange={(e) => setQuery(e.target.value)}
    placeholder={t('query_placeholder')}
    rows={3}
-   className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 resize-none"
+   className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 resize-none"
    />
   </div>
 
@@ -169,7 +169,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   {/* Result */}
   {result && (
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-5">
-   <h3 className="text-sm font-semibold text-gray-800 mb-4">
+   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
    {t('results_title')}
    </h3>
    <AnalysisResultView result={result} />

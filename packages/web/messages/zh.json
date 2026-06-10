@@ -985,7 +985,9 @@
     "network_error_hint": "无法连接到服务器，请检查网络后重试。",
     "book_not_found_hint": "这本书可能已被移除或暂时不可用。",
     "chapter_announcement": "第 {num} 章：{title}",
-    "feedback_submit_error": "反馈提交失败，请重试。"
+    "feedback_submit_error": "反馈提交失败，请重试。",
+    "explain_passage_prompt": "请解释这段文字：'{text}'",
+    "tell_about_character_prompt": "介绍一下{name}——他们的角色、动机以及到目前为止的发展。"
   },
   "stats": {
     "title": "阅读统计",
