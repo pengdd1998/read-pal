@@ -48,9 +48,9 @@ async def forgot_password(
                     'token created but user will not receive reset link',
                     body.email,
                 )
-    except Exception as exc:
+    except (ValueError, RuntimeError, OSError) as exc:
         logger.warning(
-            'Unexpected error in forgot-password flow for %s',
+            'Error in forgot-password flow for %s',
             body.email,
             exc_info=True,
         )

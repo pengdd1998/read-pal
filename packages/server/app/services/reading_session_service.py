@@ -6,6 +6,7 @@ Public API is re-exported from sub-modules so existing imports
 
 import asyncio
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from app.utils import utcnow
@@ -64,7 +65,7 @@ def _apply_update_fields(session: ReadingSession, update_data: dict) -> None:
 _MAX_SESSION_SECONDS = 7200
 
 
-def _finalize_session_duration(session: ReadingSession, now) -> None:
+def _finalize_session_duration(session: ReadingSession, now: datetime) -> None:
     """Compute and set session duration if not already set.
 
     Prefers client-reported duration (which excludes paused time) over
@@ -76,7 +77,7 @@ def _finalize_session_duration(session: ReadingSession, now) -> None:
         session.duration = min(raw, _MAX_SESSION_SECONDS)
 
 
-def _resolve_heartbeat_pages(body) -> tuple[int | None, float | None, str | None]:
+def _resolve_heartbeat_pages(body: SessionUpdate) -> tuple[int | None, float | None, str | None]:
     """Extract page/scroll/segment fields from heartbeat body."""
     pages_read = body.pages_read or body.pagesRead
     scroll_progress = body.scroll_progress or body.scrollProgress

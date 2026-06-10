@@ -42,7 +42,7 @@ def _get_pdf_outlines(reader: 'PdfReader') -> list[dict]:
 
     results: list[dict] = []
 
-    def _walk(items, level: int) -> None:
+    def _walk(items: list, level: int) -> None:
         for item in items:
             if isinstance(item, list):
                 _walk(item, level + 1)

@@ -103,7 +103,8 @@ async def validate_zotero_key(
     current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Validate a Zotero API key by fetching the user profile."""
-    url = f'https://api.zotero.org/users/{body.userId}/keys/{body.apiKey}'
+    ZOTERO_API_BASE = 'https://api.zotero.org'
+    url = f'{ZOTERO_API_BASE}/users/{body.userId}/keys/{body.apiKey}'
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(

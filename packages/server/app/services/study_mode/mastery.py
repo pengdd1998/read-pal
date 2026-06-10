@@ -26,7 +26,7 @@ def _build_flashcard(
     book_id: UUID,
     question: str,
     answer: str,
-    now,
+    now: datetime,
 ) -> Flashcard:
     """Build a single Flashcard ORM object with SM-2 defaults."""
     return Flashcard(

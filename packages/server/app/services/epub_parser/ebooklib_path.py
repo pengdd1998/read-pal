@@ -7,6 +7,7 @@ import base64
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 from app.services.epub_parser.constants import IMAGE_MIME_MAP, MAX_IMAGE_SIZE, NS_DC, OUTER_DOC_WRAPPER
 from app.services.epub_parser.css import sanitize_epub_css
@@ -49,7 +50,7 @@ def process_epub_ebooklib(file_path: str) -> dict | None:
     }
 
 
-def _build_toc_map(book) -> dict[str, tuple[str, int]]:
+def _build_toc_map(book: Any) -> dict[str, tuple[str, int]]:
     """Flatten ebooklib TOC tree into {href: (title, tocLevel)}."""
     toc_map: dict[str, tuple[str, int]] = {}
     try:
@@ -59,7 +60,7 @@ def _build_toc_map(book) -> dict[str, tuple[str, int]]:
     return toc_map
 
 
-def _flatten_toc(toc, result: dict[str, tuple[str, int]], level: int) -> None:
+def _flatten_toc(toc: Any, result: dict[str, tuple[str, int]], level: int) -> None:
     """Recursively flatten ebooklib TOC entries."""
     for entry in toc:
         if hasattr(entry, 'href') and hasattr(entry, 'title'):
@@ -73,7 +74,7 @@ def _flatten_toc(toc, result: dict[str, tuple[str, int]], level: int) -> None:
             _flatten_toc(entry, result, level)
 
 
-def _extract_metadata(book) -> dict:
+def _extract_metadata(book: Any) -> dict:
     """Extract metadata from ebooklib book object."""
     metadata: dict = {}
     try:
@@ -92,7 +93,7 @@ def _extract_metadata(book) -> dict:
     return metadata
 
 
-def _extract_images(book) -> dict[str, str]:
+def _extract_images(book: Any) -> dict[str, str]:
     """Extract images from ebooklib book into {name: data_uri} map."""
     import ebooklib
 
@@ -112,7 +113,7 @@ def _extract_images(book) -> dict[str, str]:
     return image_map
 
 
-def _extract_css(book) -> str:
+def _extract_css(book: Any) -> str:
     """Extract and sanitize CSS from ebooklib book."""
     import ebooklib
 
@@ -126,7 +127,7 @@ def _extract_css(book) -> str:
         return ''
 
 
-def _ordered_spine_items(book) -> list:
+def _ordered_spine_items(book: Any) -> list[Any]:
     """Return document items in spine order, or all documents if no spine."""
     import ebooklib
 
@@ -143,7 +144,7 @@ def _ordered_spine_items(book) -> list:
 
 
 def _process_chapter_item(
-    item,
+    item: Any,
     toc_map: dict[str, tuple[str, int]],
     image_map: dict[str, str],
     css_str: str,
@@ -180,7 +181,7 @@ def _process_chapter_item(
 
 
 def _build_chapters(
-    book,
+    book: Any,
     toc_map: dict[str, tuple[str, int]],
     image_map: dict[str, str],
     css_str: str,
@@ -270,7 +271,7 @@ def _resolve_chapter_title(
     return extract_html_title(raw_html) or extract_html_heading(raw_html) or Path(item_name).stem
 
 
-def _extract_cover(book) -> str | None:
+def _extract_cover(book: Any) -> str | None:
     """Extract cover image as data URI from ebooklib book."""
     import ebooklib
 
