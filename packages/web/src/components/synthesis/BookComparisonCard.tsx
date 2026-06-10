@@ -3,7 +3,6 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
 
@@ -19,8 +18,7 @@ interface BookComparisonCardProps {
 
 export const BookComparisonCard = React.memo(function BookComparisonCard({ books }: BookComparisonCardProps) {
  const t = useTranslations('synthesis');
- const { toast } = useToast();
- const [compareBook1, setCompareBook1] = useState<string>('');
+  const [compareBook1, setCompareBook1] = useState<string>('');
  const [compareBook2, setCompareBook2] = useState<string>('');
  const [compareLoading, setCompareLoading] = useState(false);
  const [compareResult, setCompareResult] = useState<AnalysisResult | null>(null);

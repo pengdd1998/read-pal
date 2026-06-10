@@ -12,7 +12,7 @@ interface ReadingInsightsProps {
 export const ReadingInsights = React.memo(function ReadingInsights({ readingLog, t, locale }: ReadingInsightsProps) {
  if (readingLog.length === 0) return null;
 
- const { totalDuration, totalPagesRead, avgSessionMins, totalMins, bestSession, avgWpm } = useMemo(() => {
+ const { totalPagesRead, avgSessionMins, totalMins, bestSession, avgWpm } = useMemo(() => {
  const totalDuration = readingLog.reduce((sum, e) => sum + e.duration, 0);
  const totalPagesRead = readingLog.reduce((sum, e) => sum + e.pagesRead, 0);
  const avgSessionMins = Math.round(totalDuration / readingLog.length / 60);

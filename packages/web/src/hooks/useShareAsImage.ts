@@ -24,7 +24,7 @@ export function useShareAsImage(
         'warm',
       );
 
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         canvas.toBlob(async (blob) => {
           if (!blob) { resolve(); return; }
 

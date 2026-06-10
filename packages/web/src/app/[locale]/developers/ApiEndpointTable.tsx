@@ -35,7 +35,7 @@ export function ApiEndpointTable() {
   {filtered.length === 0 && (
    <div className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">{t('endpoints_no_match')}</div>
   )}
-  {filtered.map((ep, i) => (
+  {filtered.map((ep) => (
    <div key={ep.method + "-" + ep.path} className="px-4 py-3 flex items-center gap-3 hover:bg-surface-1">
    <span className={`px-2 py-0.5 rounded text-xs font-bold ${methodColor(ep.method)}`}>
     {ep.method}

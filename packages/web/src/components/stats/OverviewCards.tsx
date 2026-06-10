@@ -13,7 +13,7 @@ interface OverviewCardsProps {
 export const OverviewCards = React.memo(function OverviewCards({ stats, sessions }: OverviewCardsProps) {
  const t = useTranslations('stats');
 
- const { totalMinutes, totalPages, cards } = useMemo(() => {
+ const { cards } = useMemo(() => {
  const totalMinutes = Math.round(sessions.reduce((acc, s) => acc + (s.duration || 0), 0) / 60);
  const totalPages = sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
  const cards = [

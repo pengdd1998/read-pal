@@ -19,20 +19,20 @@ import {
 
 export default function ReadPage() {
  const {
- bookId, t, router,
+ bookId, t,
  book, chapters, currentChapter, annotations, loading, error,
- chapterContent, chapterTitle, chapterFade,
+ chapterContent, chapterFade,
  currentSegment, totalSegments, pageContent,
  contentRef, chatHandleRef,
  fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode,
  fontFamily, setFontFamily, lineHeight, setLineHeight,
- bgEnabled, setBgEnabled, highlightMode, setHighlightMode,
+ bgEnabled, setBgEnabled, highlightMode,
  readingWpm, hasMadeSelection, setHasMadeSelection,
  sessionSummary, setSessionSummary, sessionIdRef,
- chapterScrollProgress, setChapterScrollProgress, isFiction, chapterTitles, genreMetadata, bookDescription,
+ setChapterScrollProgress, isFiction, chapterTitles, genreMetadata, bookDescription,
  ui, handleChapterChange, handleBack, handleShowSettings,
  handleToggleStudyMode, handleBackToLibrary,
- setCurrentChapter, setCurrentSegment,
+ setCurrentSegment,
  annotationActions, selection, studyMode,
  } = useReaderPage();
 

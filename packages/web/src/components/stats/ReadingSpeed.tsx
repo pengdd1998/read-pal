@@ -80,7 +80,7 @@ function WpmTrend({ data }: { data: SpeedData }) {
    points={points.map((p) => `${p.x},${p.y}`).join(' ')}
    fill="none" stroke="#14b8a6" strokeWidth={2} strokeLinejoin="round"
   />
-  {points.map((p, i) => (
+  {points.map((p) => (
    <circle key={p.x + "-" + p.y} cx={p.x} cy={p.y} r={2.5} fill="#14b8a6" />
   ))}
   <defs>

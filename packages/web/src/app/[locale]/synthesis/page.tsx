@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { BookComparisonCard } from '@/components/synthesis/BookComparisonCard';
 import { SingleBookAnalysisCard } from '@/components/synthesis/SingleBookAnalysisCard';
@@ -18,8 +17,7 @@ interface BookOption {
 
 export default function SynthesisPage() {
  const t = useTranslations('synthesis');
- const { toast } = useToast();
- usePageTitle(t('page_title'));
+  usePageTitle(t('page_title'));
  const [books, setBooks] = useState<BookOption[]>([]);
  const [booksLoading, setBooksLoading] = useState(true);
  const [booksError, setBooksError] = useState<string | null>(null);

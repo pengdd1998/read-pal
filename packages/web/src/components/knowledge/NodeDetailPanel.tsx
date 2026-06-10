@@ -85,7 +85,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
   )}
   {connectedEdges.length > 0 && (
   <div className="mt-3 space-y-1.5">
-   {connectedEdges.map((e, i) => {
+   {connectedEdges.map((e) => {
    const otherId = e.source === node.id ? e.target : e.source;
    const otherNode = allNodes.find((n) => n.id === otherId);
    return (

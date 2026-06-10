@@ -85,7 +85,7 @@ export const KnowledgeGraph = React.memo(React.forwardRef<SVGSVGElement, Knowled
    </defs>
 
    {/* Edges */}
-   {edges.map((edge, i) => {
+   {edges.map((edge) => {
     const source = nodeMap.get(edge.source);
     const target = nodeMap.get(edge.target);
     if (!source || !target) return null;

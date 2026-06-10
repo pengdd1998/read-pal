@@ -3,7 +3,6 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
 
@@ -31,8 +30,7 @@ interface SingleBookAnalysisCardProps {
 
 export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard({ books, booksLoading, booksError }: SingleBookAnalysisCardProps) {
  const t = useTranslations('synthesis');
- const { toast } = useToast();
- const [selectedBookId, setSelectedBookId] = useState<string>('');
+  const [selectedBookId, setSelectedBookId] = useState<string>('');
  const [mode, setMode] = useState<AnalysisMode>('cross_reference');
  const [query, setQuery] = useState('');
  const [loading, setLoading] = useState(false);

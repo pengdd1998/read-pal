@@ -60,7 +60,7 @@ export const ReadingVelocityTrend = React.memo(function ReadingVelocityTrend({ s
   {/* Duration line */}
   <path d={durLine} fill="none" stroke="#14b8a6" strokeWidth={1.5} strokeDasharray="4 2" />
   {/* Data points */}
-  {points.map((p, i) => (
+  {points.map((p) => (
    <circle key={p.x + "-" + p.y} cx={p.x} cy={p.y} r={2.5} fill="#f59e0b" />
   ))}
   <defs>

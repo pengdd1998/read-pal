@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { useToast } from '@/components/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { ProfileSection } from '@/components/settings/ProfileSection';
 import { ReadingPrefsSection } from '@/components/settings/ReadingPrefsSection';
@@ -23,7 +22,6 @@ export default function SettingsPage() {
   usePageTitle(t('page_title'));
   const router = useRouter();
   const { user: authUser } = useAuth();
-  const { toast } = useToast();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

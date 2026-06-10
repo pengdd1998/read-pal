@@ -119,9 +119,8 @@ const ConceptNodeChip = React.memo(function ConceptNodeChip({ node, t }: {
   );
 });
 
-const EdgeRow = React.memo(function EdgeRow({ edge, t }: {
+const EdgeRow = React.memo(function EdgeRow({ edge }: {
   edge: { source: string; target: string; label: string };
-  t: (key: string, params?: Record<string, string | number>) => string;
 }) {
   return (
     <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
@@ -260,7 +259,7 @@ function ConceptMapView({ result }: { result: AnalysisResult }) {
       {result.edges && result.edges.length > 0 && (
         <div className="space-y-1">
           {result.edges.slice(0, 15).map((edge) => (
-            <EdgeRow key={edge.source + '-' + edge.target} edge={edge} t={t} />
+            <EdgeRow key={edge.source + '-' + edge.target} edge={edge} />
           ))}
         </div>
       )}
