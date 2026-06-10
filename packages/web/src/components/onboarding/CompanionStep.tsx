@@ -3,6 +3,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Check } from '@/components/icons';
+import { PersonaIcon } from '@/components/onboarding/OnboardingWalkthrough';
 
 interface PersonaInfo {
   readonly id: string;
@@ -56,7 +57,7 @@ export const CompanionStep = React.memo(function CompanionStep({
                   : 'border-surface-3 hover:border-surface-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
               }`}
             >
-              <span className="text-2xl">{p.emoji}</span>
+              {p.emoji === '🦉' || p.emoji === '🌊' ? <span className="text-2xl">{p.emoji}</span> : <PersonaIcon type={p.emoji} className="w-6 h-6 text-gray-600 dark:text-gray-300" />}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{p.name}</span>

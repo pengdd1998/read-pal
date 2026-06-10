@@ -23,11 +23,11 @@ const StreakCalendar = dynamic(() => import('@/components/dashboard/StreakCalend
 const BookClubsWidget = dynamic(() => import('@/components/dashboard/BookClubsWidget').then((m) => ({ default: m.default })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse bg-surface-2 rounded-xl" /> });
 
 const INSIGHTS_POOL_KEYS: InsightKey[] = [
-  { agentKey: 'agent_companion', icon: '📖', key: 'insight_companion' },
-  { agentKey: 'agent_research', icon: '🔬', key: 'insight_research' },
-  { agentKey: 'agent_coach', icon: '🎯', key: 'insight_coach' },
-  { agentKey: 'agent_synthesis', icon: '🧠', key: 'insight_synthesis' },
-  { agentKey: 'agent_friend', icon: '🤝', key: 'insight_friend' },
+  { agentKey: 'agent_companion', icon: 'book-open', key: 'insight_companion' },
+  { agentKey: 'agent_research', icon: 'microscope', key: 'insight_research' },
+  { agentKey: 'agent_coach', icon: 'target', key: 'insight_coach' },
+  { agentKey: 'agent_synthesis', icon: 'brain', key: 'insight_synthesis' },
+  { agentKey: 'agent_friend', icon: 'handshake', key: 'insight_friend' },
 ] as const;
 
 function getTimeGreetingKey(): string {
