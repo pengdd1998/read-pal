@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
@@ -21,7 +22,7 @@ interface Cluster {
  highlights: HighlightQuote[];
 }
 
-export default function HighlightClusterSection({ data, bookId, locale }: HighlightClusterSectionProps) {
+export default React.memo(function HighlightClusterSection({ data, bookId, locale }: HighlightClusterSectionProps) {
  const t = useTranslations('readingMirror');
  const clusters = (data.clusters as Cluster[]) || [];
 
@@ -126,4 +127,4 @@ export default function HighlightClusterSection({ data, bookId, locale }: Highli
   `}</style>
  </div>
  );
-}
+})

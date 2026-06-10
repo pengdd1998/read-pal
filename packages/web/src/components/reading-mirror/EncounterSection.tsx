@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
@@ -11,7 +11,7 @@ interface EncounterSectionProps {
  coverUrl?: string;
 }
 
-export default function EncounterSection({ data, bookTitle, bookAuthor, coverUrl }: EncounterSectionProps) {
+export default React.memo(function EncounterSection({ data, bookTitle, bookAuthor, coverUrl }: EncounterSectionProps) {
  const t = useTranslations('readingMirror');
  const prologue = data.prologue as Record<string, string> | undefined;
  const stats = data.stats as Record<string, unknown> | undefined;
@@ -119,4 +119,4 @@ export default function EncounterSection({ data, bookTitle, bookAuthor, coverUrl
   )}
  </div>
  );
-}
+})

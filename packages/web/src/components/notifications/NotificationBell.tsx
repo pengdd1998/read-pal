@@ -203,7 +203,7 @@ export const NotificationBell = memo(function NotificationBell() {
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-6 text-center text-sm text-gray-400">
-                {loadingNotifs ? 'Loading...' : t('notifications_no_notifications')}
+                {loadingNotifs ? t('loading') : t('notifications_no_notifications')}
               </div>
             ) : (
               notifications.map((notif) => (
