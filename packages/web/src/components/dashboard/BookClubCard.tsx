@@ -41,8 +41,8 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
   className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors group focus-visible:ring-2 focus-visible:ring-amber-400"
  >
   {/* Club avatar */}
-  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center text-lg shrink-0">
-  {'📚'}
+  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getBookCoverColors(club.name)[0]} flex items-center justify-center shrink-0`}>
+   <span className={`text-xs font-bold ${getBookCoverColors(club.name)[1]}`}>{getBookInitials(club.name)}</span>
   </div>
 
   <div className="flex-1 min-w-0">

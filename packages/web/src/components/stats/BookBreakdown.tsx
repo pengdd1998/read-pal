@@ -35,7 +35,7 @@ const BookProgressRow = React.memo(function BookProgressRow({ book }: BookProgre
  return (
  <Link href={`/read/${book.id}`} className="flex items-center gap-3 group">
   <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-400/30 to-amber-600/50 flex items-center justify-center flex-shrink-0">
-  <span className="text-sm">{'📖'}</span>
+  <span className={`text-xs font-bold ${getBookCoverColors(book.title)[1]}`}>{getBookInitials(book.title)}</span>
   </div>
   <div className="flex-1 min-w-0">
   <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">

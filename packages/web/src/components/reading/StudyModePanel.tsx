@@ -49,7 +49,9 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b border-amber-200 dark:border-amber-800">
   <div className="flex items-center justify-between">
    <div className="flex items-center gap-2">
-   <span className="text-lg">📚</span>
+   <svg aria-hidden="true" className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
    <h3 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">{tr('study_mode_title')}</h3>
    </div>
    {mastery && (
