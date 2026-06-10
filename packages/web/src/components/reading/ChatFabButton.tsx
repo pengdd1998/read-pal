@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 interface ChatFabButtonProps {
  btnRef: React.Ref<HTMLButtonElement>;
@@ -33,6 +33,18 @@ export const ChatFabButton = React.memo(function ChatFabButton({
  onOpen,
  ariaLabel,
 }: ChatFabButtonProps) {
+ const fabStyle = useMemo(() => ({
+  left: btnPos.x,
+  top: btnPos.y,
+  background: 'linear-gradient(135deg, rgb(20, 184, 166), rgb(16, 185, 129))',
+  boxShadow: isDragging
+   ? '0 8px 24px -4px rgba(20, 184, 166, 0.3), 0 4px 12px -2px rgba(16, 185, 129, 0.2)'
+   : '0 4px 14px -2px rgba(30, 42, 56, 0.12), 0 2px 6px -1px rgba(30, 42, 56, 0.06)',
+  transition: isDragging ? 'box-shadow 0.15s ease' : isSnapping ? `box-shadow 0.15s ease, ${snapTransition}` : 'box-shadow 0.15s ease, transform 0.2s ease',
+  transform: isDragging ? 'scale(1.08)' : undefined,
+  cursor: isDragging ? 'grabbing' : 'grab',
+ }), [btnPos.x, btnPos.y, isDragging, isSnapping, snapTransition]);
+
  return (
  <button
   ref={btnRef}
@@ -64,17 +76,7 @@ export const ChatFabButton = React.memo(function ChatFabButton({
   }}
   onTouchEnd={() => { onDragEnd(); }}
   className="fixed z-40 flex items-center justify-center w-14 h-14 rounded-full select-none touch-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
-  style={{
-  left: btnPos.x,
-  top: btnPos.y,
-  background: 'linear-gradient(135deg, rgb(20, 184, 166), rgb(16, 185, 129))',
-  boxShadow: isDragging
-   ? '0 8px 24px -4px rgba(20, 184, 166, 0.3), 0 4px 12px -2px rgba(16, 185, 129, 0.2)'
-   : '0 4px 14px -2px rgba(30, 42, 56, 0.12), 0 2px 6px -1px rgba(30, 42, 56, 0.06)',
-  transition: isDragging ? 'box-shadow 0.15s ease' : isSnapping ? `box-shadow 0.15s ease, ${snapTransition}` : 'box-shadow 0.15s ease, transform 0.2s ease',
-  transform: isDragging ? 'scale(1.08)' : undefined,
-  cursor: isDragging ? 'grabbing' : 'grab',
-  }}
+  style={fabStyle}
   aria-label={ariaLabel}
  >
   <svg aria-hidden="true" className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

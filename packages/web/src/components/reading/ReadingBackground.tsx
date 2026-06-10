@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 
@@ -75,15 +75,16 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
  if (!enabled) return null;
 
  const bgColor = sceneData?.color || '#4A90D9';
+ const gradientStyle = useMemo(() => ({
+  background: `linear-gradient(135deg, ${bgColor}22 0%, ${bgColor}44 40%, ${bgColor}11 100%)`,
+ }), [bgColor]);
 
  return (
  <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
   {/* Dynamic gradient based on mood color */}
   <div
   className="absolute inset-0 transition-all duration-[2000ms]"
-  style={{
-   background: `linear-gradient(135deg, ${bgColor}22 0%, ${bgColor}44 40%, ${bgColor}11 100%)`,
-  }}
+  style={gradientStyle}
   />
   <div className="absolute inset-0 bg-black/5 dark:bg-surface-0/30" />
 

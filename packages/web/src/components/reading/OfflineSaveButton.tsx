@@ -70,13 +70,13 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
   setState('error');
   await hapticMedium();
   // Reset after 2s
-  setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);
+  resetTimerRef.current = setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);
   }
  } catch (error) {
   console.warn('OfflineSaveButton: cache save failed', error);
   if (progressIntervalRef.current) { clearInterval(progressIntervalRef.current); progressIntervalRef.current = null; }
   setState('error');
-  setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);
+  resetTimerRef.current = setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);
  }
  setProgress(0);
  }, [bookId, state]);
