@@ -21,8 +21,8 @@ export const HighlightResultCard = React.memo(function HighlightResultCard({ hig
    {highlight.type === 'highlight' ? '✍️' : highlight.type === 'note' ? '📝' : '🔖'}
   </span>
   <div className="flex-1 min-w-0">
-   <p className="text-sm text-gray-700 line-clamp-2">{highlight.content}</p>
-   <p className="text-xs text-gray-400 mt-1">{typeLabel} &middot; {new Date(highlight.createdAt).toLocaleDateString(locale)}</p>
+   <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{highlight.content}</p>
+   <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{typeLabel} &middot; {new Date(highlight.createdAt).toLocaleDateString(locale)}</p>
   </div>
   </div>
  </Link>

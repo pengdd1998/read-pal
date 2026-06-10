@@ -80,7 +80,7 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
    <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
     {item.value}
    </div>
-   <div className="text-[10px] text-gray-500">{item.label}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400">{item.label}</div>
    <div className="text-[9px] text-gray-400 mt-0.5">{item.sub}</div>
    </div>
   ))}
@@ -127,7 +127,7 @@ const SessionEntryItem = React.memo(function SessionEntryItem({
   <div className="text-[10px]">{timeStr}</div>
  </div>
  <div className="flex-1 min-w-0">
-  <div className="flex items-center gap-2 text-xs text-gray-500">
+  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
   <span className="font-medium text-gray-700 dark:text-gray-300">
    {t('timeM', { mins })}
   </span>
