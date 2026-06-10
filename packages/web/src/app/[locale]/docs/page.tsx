@@ -165,7 +165,7 @@ export default async function DocsPage({
    <span>{t('breadcrumb_docs')}</span>
    </div>
    <h1 className="text-4xl font-bold font-display tracking-tight">{t('header_title')}</h1>
-   <p className="text-gray-300 mt-3 text-lg max-w-2xl">
+   <p className="text-gray-600 dark:text-gray-300 mt-3 text-lg max-w-2xl">
    {t('header_subtitle')}
    </p>
   </div>

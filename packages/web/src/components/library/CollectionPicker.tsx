@@ -45,6 +45,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  const t = useTranslations('library');
  const [collections, setCollections] = useState<Collection[]>([]);
  const [loading, setLoading] = useState(true);
+ const [loadError, setLoadError] = useState(false);
  const [showCreate, setShowCreate] = useState(false);
  const [newName, setNewName] = useState('');
  const [creating, setCreating] = useState(false);
@@ -62,7 +63,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
   setCollections(items);
   }
- }).catch((err) => { console.warn("CollectionPicker: failed to load collections", err); }).finally(() => setLoading(false));
+ }).catch((err) => { console.warn("CollectionPicker: failed to load collections", err); setLoadError(true); }).finally(() => setLoading(false));
   return () => { stale = true; };
  }, []);
 
@@ -141,6 +142,8 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   <div className="p-3 space-y-2">
    {[1, 2].map((i) => <div key={i} className="h-6 bg-surface-1 rounded animate-pulse" />)}
   </div>
+  ) : loadError ? (
+  <p className="text-xs text-red-500 dark:text-red-400 px-3 py-4 text-center">{t('collection_picker_load_failed')}</p>
   ) : (
   <div className="max-h-48 overflow-y-auto p-1.5">
    {collections.map((col) => (

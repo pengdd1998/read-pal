@@ -15,6 +15,7 @@ import { useLibraryBooks } from './useLibraryBooks';
 interface LibraryGridProps {
   viewMode?: 'grid' | 'list';
   collectionBookIds?: string[] | null;
+  searchQuery?: string;
 }
 
 function sortBooks(bookList: Book[], sortOption: SortOption): Book[] {
@@ -42,7 +43,7 @@ function sortBooks(bookList: Book[], sortOption: SortOption): Book[] {
   return sorted;
 }
 
-export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', collectionBookIds }: LibraryGridProps) {
+export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', collectionBookIds, searchQuery: externalSearch }: LibraryGridProps) {
   const t = useTranslations('library');
   const {
     books,
@@ -62,13 +63,14 @@ export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', 
   const [sortOption, setSortOption] = React.useState<SortOption>('addedAt-desc');
   const uploaderRef = useRef<HTMLDivElement>(null);
 
+  const effectiveSearch = externalSearch || searchQuery;
   const filteredBooks = useMemo(() => sortBooks(
     books.filter((book) => {
       if (collectionBookIds && !collectionBookIds.includes(book.id)) return false;
       const matchesStatus = statusFilter === 'all' || book.status === statusFilter;
       if (!matchesStatus) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+      if (effectiveSearch.trim()) {
+        const q = effectiveSearch.toLowerCase();
         const matchesText = (book.title || '').toLowerCase().includes(q)
           || (book.author || '').toLowerCase().includes(q);
         const matchesTags = (book.tags || []).some((tag) => tag.includes(q));
@@ -77,7 +79,7 @@ export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', 
       return true;
     }),
     sortOption,
-  ), [books, statusFilter, searchQuery, sortOption, collectionBookIds]);
+  ), [books, statusFilter, effectiveSearch, sortOption, collectionBookIds]);
 
   if (loading) {
     return <LibraryLoadingSkeleton />;

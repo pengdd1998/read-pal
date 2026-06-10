@@ -21,6 +21,7 @@ export function NetworkStatus() {
  const [showBanner, setShowBanner] = useState(false);
  const [queuedCount, setQueuedCount] = useState(0);
  const [syncing, setSyncing] = useState(false);
+ const [syncError, setSyncError] = useState(false);
  const [lastSync, setLastSync] = useState<SyncResult | null>(null);
  const [isAuthenticated] = useState(!!getAuthToken());
 
@@ -36,6 +37,7 @@ export function NetworkStatus() {
   }
  } catch (err) {
   console.warn('NetworkStatus: failed to sync offline queue', err);
+  setSyncError(true);
  }
  setSyncing(false);
  }, []);
@@ -124,6 +126,17 @@ export function NetworkStatus() {
  if (!showBanner && queuedCount === 0) return null;
 
  if (syncing) return <SyncingBanner queuedCount={queuedCount} />;
+
+ if (syncError) {
+ return (
+  <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+   <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm shadow-lg">
+   <span>Sync failed. Will retry later.</span>
+   <button onClick={() => setSyncError(false)} className="text-amber-500 hover:text-amber-700 dark:hover:text-amber-200 font-medium text-xs min-h-[44px]">Dismiss</button>
+   </div>
+  </div>
+ );
+ }
 
  if (lastSync && lastSync.total > 0) {
  return <SyncResultBanner result={lastSync} />;

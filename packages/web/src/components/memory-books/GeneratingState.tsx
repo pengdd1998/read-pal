@@ -10,6 +10,7 @@ export type GenerationStep =
  | 'curating'
  | 'synthesizing'
  | 'rendering'
+ | 'finishing'
  | 'done'
  | 'error';
 
@@ -19,6 +20,7 @@ const STEPS: readonly GenerationStep[] = [
  'curating',
  'synthesizing',
  'rendering',
+ 'finishing',
 ] as const;
 
 interface GeneratingStateProps {
@@ -35,6 +37,7 @@ export default React.memo(function GeneratingState({ genStep }: GeneratingStateP
  curating: t('stepCurating'),
  synthesizing: t('stepSynthesizing'),
  rendering: t('stepRendering'),
+ finishing: t('stepFinishing'),
  done: t('stepDone'),
  error: t('stepError'),
  };

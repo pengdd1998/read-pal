@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -58,26 +58,35 @@ export default function MemoryBooksPage() {
  const mountedRef = useRef(true);
  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
- useEffect(() => {
- let stale = false;
- Promise.all([
-  api.get<MemoryBook[]>('/api/v1/reading-book'),
-  api.get<Book[]>('/api/books'),
- ])
-  .then(([mbRes, booksRes]) => {
-   if (stale) return;
-  if (mbRes.success && mbRes.data) {
-   setMemoryBooks(Array.isArray(mbRes.data) ? mbRes.data : []);
-  }
-  if (booksRes.success && booksRes.data) {
-   const list = Array.isArray(booksRes.data) ? booksRes.data : [];
-   setBooks(list.filter((b) => b.progress > 10));
-  }
-  })
-  .catch((err) => { console.warn('MemoryBooks: failed to load', err); if (!stale) setError(t('failedToLoad')); })
-  .finally(() => { if (!stale) setLoading(false); });
-  return () => { stale = true; };
+ const fetchData = useCallback(() => {
+  setLoading(true);
+  setError(null);
+  Promise.all([
+   api.get<MemoryBook[]>('/api/v1/reading-book'),
+   api.get<Book[]>('/api/books'),
+  ])
+   .then(([mbRes, booksRes]) => {
+    if (!mountedRef.current) return;
+    if (mbRes.success && mbRes.data) {
+     setMemoryBooks(Array.isArray(mbRes.data) ? mbRes.data : []);
+    }
+    if (booksRes.success && booksRes.data) {
+     const list = Array.isArray(booksRes.data) ? booksRes.data : [];
+     setBooks(list.filter((b) => b.progress > 10));
+    }
+   })
+   .catch((err) => { console.warn('MemoryBooks: failed to load', err); if (mountedRef.current) setError(t('failedToLoad')); })
+   .finally(() => { if (mountedRef.current) setLoading(false); });
  }, [t]);
+
+ useEffect(() => { fetchData(); }, [fetchData]);
+
+ // Refetch on tab focus
+ useEffect(() => {
+  const onFocus = () => { if (!generating) fetchData(); };
+  window.addEventListener('focus', onFocus);
+  return () => window.removeEventListener('focus', onFocus);
+ }, [fetchData, generating]);
 
  const handleGenerate = async (bookId: string) => {
  setGenerating(bookId);
@@ -116,7 +125,7 @@ export default function MemoryBooksPage() {
  };
 
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
+ <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in" id="main-content" aria-label={t('pageTitle')}>
   {/* Back */}
   <div className="mb-6">
   <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
@@ -139,8 +148,14 @@ export default function MemoryBooksPage() {
   </div>
 
   {error && (
-  <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm">
-   {error}
+  <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm flex items-center justify-between" role="alert">
+   <span>{error}</span>
+   <button
+    onClick={fetchData}
+    className="ml-4 px-3 py-1 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 min-h-[44px]"
+   >
+    {t('tryAgain')}
+   </button>
   </div>
   )}
 

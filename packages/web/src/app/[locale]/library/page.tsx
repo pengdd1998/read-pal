@@ -147,7 +147,7 @@ export default function LibraryPage() {
 
   {/* Main grid */}
   <div className="flex-1 min-w-0">
-   <LibraryGrid viewMode={viewMode} collectionBookIds={collectionBookIds} />
+   <LibraryGrid viewMode={viewMode} collectionBookIds={collectionBookIds} searchQuery={searchQuery} />
   </div>
   </div>
 

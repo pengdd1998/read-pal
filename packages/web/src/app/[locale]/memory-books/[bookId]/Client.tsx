@@ -93,12 +93,14 @@ export default function ReadingMirrorPage() {
  setGenerating(true);
  setError(null);
 
- const steps: GenerationStep[] = ['collecting', 'analyzing', 'curating', 'synthesizing', 'rendering'];
+ const steps: GenerationStep[] = ['collecting', 'analyzing', 'curating', 'synthesizing', 'rendering', 'finishing'];
  let stepIdx = 0;
  if (genTimerRef.current) clearInterval(genTimerRef.current);
  genTimerRef.current = setInterval(() => {
   stepIdx++;
-  if (stepIdx < steps.length && mountedRef.current) setGenStep(steps[stepIdx]);
+  if (stepIdx < steps.length && mountedRef.current) {
+   setGenStep(steps[stepIdx]);
+  }
  }, 5000);
  setGenStep(steps[0]);
 

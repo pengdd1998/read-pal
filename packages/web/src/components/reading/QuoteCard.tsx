@@ -135,7 +135,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
     className={`w-7 h-7 rounded-full bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 border-2 transition-all duration-200 ${
     theme === 'dark'
      ? 'border-amber-500 scale-110 shadow-glow-amber'
-     : 'border-transparent hover:border-gray-500 hover:scale-105'
+     : 'border-transparent hover:border-gray-500 dark:hover:border-gray-400 hover:scale-105'
     }`}
     aria-label={tc('dark_theme')}
    />

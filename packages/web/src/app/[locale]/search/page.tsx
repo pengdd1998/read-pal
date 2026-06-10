@@ -41,6 +41,7 @@ export default function SearchPage() {
   .catch((err) => {
   if (stale) return;
   console.warn('SearchPage: recent books load failed', err);
+  setRecentBooks([]);
   });
  }
  loadRecent();

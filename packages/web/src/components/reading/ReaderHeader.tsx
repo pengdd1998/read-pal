@@ -44,7 +44,7 @@ const HEADER_CLASSES = {
 } as const;
 
 const ICON_BASE = 'w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-150';
-const ICON_IDLE = `${ICON_BASE} text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 active:bg-gray-200/60`;
+const ICON_IDLE = `${ICON_BASE} text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 active:bg-gray-200/60 dark:active:bg-gray-600/60`;
 
 function ActiveIconStyle(theme: string, color: 'amber' | 'teal' | 'purple' = 'amber') {
  const colors = {

@@ -151,10 +151,28 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
     </svg>
    </button>
    </div>
-   {mode === 'register' && password.length > 0 && password.length < 8 && (
-   <p className="text-xs text-amber-600 dark:text-amber-400 mt-1" role="alert">
-    {t('password_min_error')}
-   </p>
+   {mode === 'register' && password.length > 0 && (
+   <div className="mt-2 space-y-1" role="alert" aria-label={t('password_requirements')}>
+    {([
+     { key: 'req_min_8', met: password.length >= 8 },
+     { key: 'req_uppercase', met: /[A-Z]/.test(password) },
+     { key: 'req_lowercase', met: /[a-z]/.test(password) },
+     { key: 'req_digit', met: /\d/.test(password) },
+    ]).map(({ key, met }) => (
+     <div key={key} className={`flex items-center gap-1.5 text-xs ${met ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+      {met ? (
+       <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+       </svg>
+      ) : (
+       <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <circle cx="12" cy="12" r="10" />
+       </svg>
+      )}
+      <span>{t(key)}</span>
+     </div>
+    ))}
+   </div>
    )}
   </div>
 
