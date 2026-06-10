@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ANNOTATION_COLORS } from '@read-pal/shared';
 import { NotePopover } from './NotePopover';

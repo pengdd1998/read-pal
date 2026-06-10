@@ -60,7 +60,7 @@ export default function SectionNav({
     className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
      activeSection === i
      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-     : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1'
+     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1'
     }`}
     >
     {getSectionTitle(section.type, tr)}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, forwardRef, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useMemo, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { preloadDOMPurify } from '@/lib/dompurify';
 import { useToast } from '@/components/Toast';
