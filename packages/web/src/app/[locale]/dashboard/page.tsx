@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
-import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/Toast';
@@ -43,7 +42,6 @@ function getTimeGreetingKey(): string {
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
   usePageTitle(t('page_title'));
-  const router = useRouter();
   const { user } = useAuth();
   const firstName = user?.name?.split(' ')[0] || '';
   const [mounted, setMounted] = useState(false);

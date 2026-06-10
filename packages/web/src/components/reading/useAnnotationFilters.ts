@@ -1,4 +1,5 @@
-import { useMemo, useCallback } from 'react';
+'use client';
+import { useMemo } from 'react';
 import type { Annotation } from '@read-pal/shared';
 import type { FilterTab } from './FilterTabs';
 

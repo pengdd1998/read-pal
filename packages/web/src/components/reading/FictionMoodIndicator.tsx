@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { type MoodType, MOOD_COLORS, MOOD_ICONS } from './FictionPanel.utils';

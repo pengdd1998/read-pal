@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
 
 interface LanguageSectionProps {
   onLanguageChange: (locale: 'en' | 'zh') => void;

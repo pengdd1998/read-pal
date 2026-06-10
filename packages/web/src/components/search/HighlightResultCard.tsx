@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';

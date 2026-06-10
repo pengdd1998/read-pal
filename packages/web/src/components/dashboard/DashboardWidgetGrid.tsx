@@ -7,8 +7,6 @@ import { WeeklySummaryWidget } from '@/components/dashboard/WeeklySummaryWidget'
 import { ReadingSpeedWidget } from '@/components/dashboard/ReadingSpeedWidget';
 import { DashboardChallenges } from '@/components/dashboard/DashboardChallenges';
 import { DashboardRecommendations } from '@/components/dashboard/DashboardRecommendations';
-import { FlashcardReviewWidget } from '@/components/dashboard/FlashcardReviewWidget';
-import { ExploreMoreSection } from '@/components/dashboard/ExploreMoreSection';
 import { StatsLink } from '@/components/dashboard/StatsLink';
 
 interface DashboardWidgetGridProps {
