@@ -1,24 +1,23 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from datetime import timedelta
 
 import structlog
 import redis.exceptions
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from starlette.responses import Response as StarletteResponse
 
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from app.config import get_settings
 from app.core.logging import setup_logging
 from app.core.redis import get_redis
 from app.db import async_session
+from app.middleware.exception_handlers import NotFoundError, register_exception_handlers
 from app.middleware.request_log import RequestLogMiddleware
 
 logger = structlog.get_logger('read-pal')
@@ -29,10 +28,6 @@ _is_production = os.getenv('APP_ENV', 'development') == 'production'
 
 class ApiCompatMiddleware:
     """Pure ASGI middleware — rewrites paths without breaking CORS.
-
-    BaseHTTPMiddleware wraps responses in a way that strips CORS headers
-    added by inner middleware (CORSMiddleware). Rewriting as pure ASGI
-    avoids this by passing scope/send directly to the next app.
 
     Rewrites:
       /api/*            -> /api/v1/*  (except /api/docs, /api/openapi)
@@ -54,7 +49,6 @@ class ApiCompatMiddleware:
         if scope['type'] == 'http':
             path = scope.get('path', '')
 
-            # Step 1: /api/ -> /api/v1/
             if (
                 path.startswith('/api/')
                 and not path.startswith('/api/v1/')
@@ -63,7 +57,6 @@ class ApiCompatMiddleware:
             ):
                 path = path.replace('/api/', '/api/v1/', 1)
 
-            # Step 2: legacy route name rewrites
             for old_prefix, new_prefix in self._PATH_REWRITES:
                 if path.startswith(old_prefix):
                     path = path.replace(old_prefix, new_prefix, 1)
@@ -77,17 +70,12 @@ class ApiCompatMiddleware:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan: startup + shutdown via modern FastAPI pattern."""
-    # --- Startup ---
+    """Application lifespan: startup + shutdown."""
     is_prod = os.getenv('APP_ENV', 'development') == 'production'
     setup_logging(level=settings.log_level, json_output=is_prod or settings.log_json)
     from app.utils.i18n import load_translations
     load_translations()
-    logger.info(
-        'api_starting',
-        env=settings.app_env,
-        model=settings.default_model,
-    )
+    logger.info('api_starting', env=settings.app_env, model=settings.default_model)
 
     try:
         settings.validate_production()
@@ -103,9 +91,12 @@ async def lifespan(app: FastAPI):
         except DBAPIError as exc:
             logger.warning('auto_create_tables_failed', error=str(exc))
 
-    asyncio.create_task(_log_cleanup_loop())
-    asyncio.create_task(_stale_session_cleanup_loop())
-    await _fix_absurd_session_durations()
+    from app.core.background_tasks import (
+        log_cleanup_loop, stale_session_cleanup_loop, fix_absurd_session_durations,
+    )
+    asyncio.create_task(log_cleanup_loop())
+    asyncio.create_task(stale_session_cleanup_loop())
+    await fix_absurd_session_durations()
 
     from app.services.llm import _trace_writer
     _trace_writer.start()
@@ -113,7 +104,6 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # --- Shutdown ---
     from app.services.llm import shutdown_llm
     from app.core.redis import close_redis
     await shutdown_llm()
@@ -130,70 +120,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# --- Structured exception handlers ---
-# These convert domain exceptions into proper HTTP responses so that
-# ~79 router endpoints without per-endpoint try/except still return
-# meaningful status codes instead of opaque 500s.
+# Structured exception handlers
+register_exception_handlers(app)
 
-class NotFoundError(ValueError):
-    """ValueError subclass that maps to 404 instead of 400."""
-
-
-@app.exception_handler(ValueError)
-async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
-    """ValueError → 400 (or 404 for NotFoundError subclass)."""
-    is_not_found = isinstance(exc, NotFoundError)
-    code = 'NOT_FOUND' if is_not_found else 'INVALID_INPUT'
-    status_code = 404 if is_not_found else 400
-    logger.warning('ValueError on %s: %s', request.url.path, str(exc)[:200])
-    user_msg = 'Resource not found' if is_not_found else 'Invalid input'
-    return JSONResponse(
-        status_code=status_code,
-        content={'detail': {'code': code, 'message': user_msg}},
-    )
-
-
-@app.exception_handler(PermissionError)
-async def permission_error_handler(request: Request, exc: PermissionError) -> JSONResponse:
-    """PermissionError → 403 Forbidden."""
-    logger.warning('PermissionError on %s: %s', request.url.path, str(exc)[:200])
-    return JSONResponse(
-        status_code=403,
-        content={'detail': {'code': 'FORBIDDEN', 'message': 'You do not have permission to perform this action'}},
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-    """Return structured 422 responses without exposing internal field details."""
-    errors = exc.errors()
-    messages = []
-    for err in errors:
-        field = '.'.join(str(loc) for loc in err.get('loc', []))
-        msg = err.get('msg', 'Invalid value')
-        messages.append(f'{field}: {msg}' if field else msg)
-    return JSONResponse(
-        status_code=422,
-        content={
-            'detail': {
-                'code': 'VALIDATION_ERROR',
-                'message': '; '.join(messages),
-            },
-        },
-    )
-
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Catch-all: genuine unexpected errors → 500."""
-    logger.error('Unhandled exception: %s', exc, exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={'detail': {'code': 'INTERNAL_ERROR', 'message': 'Internal server error'}},
-    )
-
-
-# CORS — configurable origins (defaults to localhost:3000 in dev)
+# CORS
 _cors_origins = [o.strip() for o in settings.cors_origins.split(',') if o.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -204,13 +134,12 @@ app.add_middleware(
 )
 
 
-# Security headers middleware
+# Security headers
 @app.middleware('http')
 async def add_security_headers(request: Request, call_next) -> StarletteResponse:
     response = await call_next(request)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
-    # Prevent browser/CDN caching of API responses — avoids stale progress data
     if request.url.path.startswith('/api/'):
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
@@ -219,87 +148,13 @@ async def add_security_headers(request: Request, call_next) -> StarletteResponse
     return response
 
 
-# Rewrite /api/ → /api/v1/ for frontend compatibility
 app.add_middleware(ApiCompatMiddleware)
-
-# Request logging middleware (outermost — logs after CORS/security rewrites)
 app.add_middleware(RequestLogMiddleware)
-
-
-async def _log_cleanup_loop() -> None:
-    """Background task that periodically cleans up old LLM logs."""
-    try:
-        from app.services.llm_log_service import cleanup_old_logs
-    except ImportError:
-        logger.info('log_cleanup_skipped_no_module')
-        return
-    while True:
-        await asyncio.sleep(86400)  # 24 hours
-        try:
-            async with async_session() as db:
-                deleted = await cleanup_old_logs(db, settings.llm_log_retention_days)
-                if deleted:
-                    logger.info('cleaned_up_llm_logs', deleted=deleted, retention_days=settings.llm_log_retention_days)
-        except DBAPIError as exc:
-            logger.warning('llm_log_cleanup_failed', error=str(exc))
-
-
-async def _stale_session_cleanup_loop() -> None:
-    """Background task that finalizes orphaned reading sessions."""
-    while True:
-        await asyncio.sleep(7200)  # 2 hours
-        try:
-            from app.models.reading_session import ReadingSession
-            cutoff = utcnow() - timedelta(hours=2)
-            async with async_session() as db:
-                result = await db.execute(
-                    select(ReadingSession).where(
-                        ReadingSession.is_active.is_(True),
-                        ReadingSession.updated_at < cutoff,
-                    ),
-                )
-                now = utcnow()
-                closed = 0
-                for session in result.scalars().all():
-                    session.is_active = False
-                    session.ended_at = now
-                    if not session.duration and session.started_at:
-                        raw_dur = int((now - session.started_at).total_seconds())
-                        session.duration = min(raw_dur, 43200)
-                    closed += 1
-                if closed:
-                    await db.commit()
-                    logger.info('closed_stale_sessions', count=closed)
-        except DBAPIError as exc:
-            logger.warning('stale_session_cleanup_failed', error=str(exc))
-
-
-async def _fix_absurd_session_durations() -> None:
-    """One-time startup fix: cap sessions with durations > 12h to a reasonable max."""
-    MAX_SESSION_SECONDS = 43200  # 12 hours
-    try:
-        from app.models.reading_session import ReadingSession
-        async with async_session() as db:
-            result = await db.execute(
-                select(ReadingSession).where(
-                    ReadingSession.duration > MAX_SESSION_SECONDS,
-                ),
-            )
-            fixed = 0
-            for session in result.scalars().all():
-                old_dur = session.duration
-                session.duration = MAX_SESSION_SECONDS
-                fixed += 1
-            if fixed:
-                await db.commit()
-                logger.info('fixed_absurd_durations', count=fixed)
-    except DBAPIError as exc:
-        logger.warning('fix_absurd_durations_failed', error=str(exc))
 
 
 @app.get('/api/v1/health')
 async def health_check() -> dict[str, object]:
-    """Health check endpoint — verifies DB and Redis connectivity."""
+    """Health check — verifies DB and Redis connectivity."""
     checks: dict[str, dict[str, str]] = {}
 
     try:
@@ -323,71 +178,28 @@ async def health_check() -> dict[str, object]:
 
 
 # --- Router includes ---
-from app.routers import (
-    account,
-    agent,
-    api_keys,
-    annotations,
-    auth,
-    book_clubs,
-    books,
-    challenges,
-    collections,
-    discovery,
-    export,
-    flashcards,
-    friend,
-    interventions,
-    knowledge,
-    logs,
-    notifications,
-    password_reset,
-    reading_book,
-    reading_sessions,
-    recommendations,
-    settings as settings_router,
-    share,
-    stats,
-    study_mode,
-    synthesis,
-    upload,
-    webhooks,
-)  # noqa: E402
+from app.routers import (  # noqa: E402
+    account, agent, api_keys, annotations, auth, book_clubs, books,
+    challenges, collections, discovery, export, flashcards, friend,
+    interventions, knowledge, logs, notifications, password_reset,
+    reading_book, reading_sessions, recommendations,
+    settings as settings_router, share, stats, study_mode, synthesis,
+    upload, webhooks,
+)
 
 for r in [
-    auth.router,
-    password_reset.router,
-    account.router,
-    agent.router,
-    api_keys.router,
-    friend.router,
-    books.router,
-    annotations.router,
-    reading_sessions.router,
-    settings_router.router,
-    knowledge.router,
-    logs.router,
-    synthesis.router,
-    reading_book.router,
-    export.router,
-    book_clubs.router,
-    collections.router,
-    flashcards.router,
-    notifications.router,
-    share.router,
-    webhooks.router,
-    upload.router,
-    stats.router,
-    discovery.router,
-    challenges.router,
-    recommendations.router,
-    interventions.router,
-    study_mode.router,
+    auth.router, password_reset.router, account.router, agent.router,
+    api_keys.router, friend.router, books.router, annotations.router,
+    reading_sessions.router, settings_router.router, knowledge.router,
+    logs.router, synthesis.router, reading_book.router, export.router,
+    book_clubs.router, collections.router, flashcards.router,
+    notifications.router, share.router, webhooks.router, upload.router,
+    stats.router, discovery.router, challenges.router,
+    recommendations.router, interventions.router, study_mode.router,
 ]:
     app.include_router(r)
 
-# Strip trailing slashes from all routes AFTER they are registered.
-# This prevents 307 redirects when clients call /api/v1/books instead of /api/v1/books/
+# Strip trailing slashes to prevent 307 redirects
 for route in app.routes:
     if isinstance(route, APIRoute):
         route.path_format = route.path_format.rstrip('/')

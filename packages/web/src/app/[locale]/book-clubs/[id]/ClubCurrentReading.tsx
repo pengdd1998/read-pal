@@ -3,7 +3,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { isDisplayableAuthor } from '@/lib/book-cover';
+import { isDisplayableAuthor, getBookInitials, getBookCoverColors } from '@/lib/book-cover';
 import type { ClubDetail, MemberProgress } from './types';
 
 interface ClubCurrentReadingProps {
@@ -24,8 +24,8 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
   {club.currentBook ? (
   <div>
    <div className="flex items-center gap-3 mb-4">
-   <div className="w-10 h-14 rounded bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center text-lg">
-    {'📕'}
+   <div className={`w-10 h-14 rounded bg-gradient-to-br ${getBookCoverColors(club.currentBook.title)[0]} flex items-center justify-center`}>
+	    <span className={`${getBookCoverColors(club.currentBook.title)[1]} text-xs font-bold`}>{getBookInitials(club.currentBook.title)}</span>
    </div>
    <div>
     <p className="font-semibold text-gray-900 dark:text-gray-100">{club.currentBook.title}</p>

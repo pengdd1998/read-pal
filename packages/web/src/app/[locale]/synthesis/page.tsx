@@ -105,7 +105,7 @@ export default function SynthesisPage() {
    <button
    onClick={handleCrossBook}
    disabled={loading}
-   className="px-4 py-2 text-sm font-medium rounded-xl bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+   className="px-4 py-2.5 text-sm font-medium rounded-xl bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 min-h-[44px]"
    >
    {loading ? (
     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
@@ -120,8 +120,9 @@ export default function SynthesisPage() {
   </div>
 
   {error && (
-  <div className="mb-6 p-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
-   {error}
+  <div className="mb-6 p-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300 flex items-center justify-between">
+   <span>{error}</span>
+   <button onClick={() => { setError(null); handleCrossBook(); }} className="text-xs font-medium underline hover:no-underline">{t('retry', { defaultValue: 'Retry' })}</button>
   </div>
   )}
 

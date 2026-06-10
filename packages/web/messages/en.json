@@ -1600,7 +1600,9 @@
     "sync_success": "All {count} queued changes synced!",
     "sync_partial": "Synced {count} of {total}",
     "back_online": "Back online",
-    "loading": "Loading offline content..."
+    "loading": "Loading offline content...",
+    "sync_failed": "Sync failed. Will retry later.",
+    "dismiss": "Dismiss"
   },
   "welcome": {
     "page_title": "Welcome",
@@ -1881,14 +1883,15 @@
     "noClubsHint": "Create a club or join one with an invite code",
     "adminBadge": "Admin",
     "reading": "Reading",
-    "discoverClubs": "Discover public clubs",
+    "discoverClubs": "Discover clubs",
     "failedToSend": "Failed to send message. Please try again.",
     "private_club": "Private club",
     "dismiss": "Dismiss",
     "clubs_failed_load": "Failed to load book clubs",
     "progress_failed_load": "Failed to load reading progress",
     "discussions_failed_load": "Failed to load discussions",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "retry": "Retry"
   },
   "book": {
     "pageTitle": "Book Details",

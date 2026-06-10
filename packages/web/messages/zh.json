@@ -1600,7 +1600,9 @@
     "sync_success": "所有 {count} 个待处理更改已同步！",
     "sync_partial": "已同步 {count}/{total}",
     "back_online": "已恢复在线",
-    "loading": "正在加载离线内容..."
+    "loading": "正在加载离线内容...",
+    "sync_failed": "同步失败，稍后将重试。",
+    "dismiss": "关闭"
   },
   "bookClubs": {
     "pageTitle": "读书会",
@@ -1655,14 +1657,15 @@
     "noClubsHint": "创建一个读书会，或用邀请码加入",
     "adminBadge": "管理员",
     "reading": "阅读中",
-    "discoverClubs": "发现公开读书会",
+    "discoverClubs": "发现俱乐部",
     "failedToSend": "发送消息失败，请重试。",
     "private_club": "私密读书会",
     "dismiss": "关闭",
     "clubs_failed_load": "加载读书会失败",
     "progress_failed_load": "加载阅读进度失败",
     "discussions_failed_load": "加载讨论失败",
-    "cancel": "取消"
+    "cancel": "取消",
+    "retry": "重试"
   },
   "book": {
     "pageTitle": "书籍详情",

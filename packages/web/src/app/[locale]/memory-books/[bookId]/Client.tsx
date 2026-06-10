@@ -159,9 +159,26 @@ export default function ReadingMirrorPage() {
  // ---------------------------------------------------------------------------
  if (loading) {
  return (
-  <div className="px-4 sm:px-6 lg:px-8 py-12 text-center">
-  <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" role="status" aria-label={t('loading')} />
-  <p className="text-gray-500 dark:text-gray-400">{t('loading')}</p>
+  <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
+  {/* Back link skeleton */}
+  <div className="mb-8">
+   <div className="h-4 bg-surface-2 rounded-lg w-20 animate-pulse" />
+  </div>
+  {/* Title skeleton */}
+  <div className="mb-6">
+   <div className="h-8 bg-surface-2 rounded-lg w-3/4 animate-pulse mb-3" />
+   <div className="h-4 bg-surface-2 rounded-lg w-1/2 animate-pulse" />
+  </div>
+  {/* Section cards skeleton */}
+  <div className="space-y-4">
+   {Array.from({ length: 4 }).map((_, i) => (
+   <div key={i} className="bg-surface-0 rounded-2xl border border-surface-3 p-6 animate-pulse">
+    <div className="h-5 bg-surface-1 rounded w-1/3 mb-3" />
+    <div className="h-4 bg-surface-1 rounded w-full mb-2" />
+    <div className="h-4 bg-surface-1 rounded w-4/5" />
+   </div>
+   ))}
+  </div>
   </div>
  );
  }

@@ -87,10 +87,32 @@ export default function ReadPage() {
  // --- Render ---
  if (loading) {
  return (
-  <main id="main-content" aria-label={t('readingPage', { defaultValue: 'Reading' })} className="flex items-center justify-center h-dvh bg-surface-1">
-  <div className="text-center">
-   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4" role="status" />
-   <p className="text-gray-600 dark:text-gray-400">{t('loading')}</p>
+  <main id="main-content" aria-label={t('readingPage', { defaultValue: 'Reading' })} className="h-dvh bg-surface-1">
+  {/* Reader skeleton loader */}
+  <div className="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center px-4 gap-3">
+   <div className="w-8 h-8 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse" />
+   <div className="flex-1">
+   <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-1" />
+   <div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+   </div>
+   <div className="flex gap-2">
+   {[...Array(4)].map((_, i) => (
+    <div key={i} className="w-8 h-8 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse" />
+   ))}
+   </div>
+  </div>
+  <div className="max-w-3xl mx-auto px-6 py-8">
+   <div className="h-8 w-64 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-6" />
+   {[...Array(6)].map((_, i) => (
+   <div key={i} className="mb-4">
+   <div className="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-2" style={{ width: `${70 + Math.random() * 30}%` }} />
+   <div className="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" style={{ width: `${50 + Math.random() * 40}%` }} />
+   </div>
+   ))}
+   <div className="flex justify-between mt-8">
+   <div className="h-10 w-24 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
+   <div className="h-10 w-24 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
+   </div>
   </div>
   </main>
  );

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import React, { useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { isDisplayableAuthor } from '@/lib/book-cover';
+import { isDisplayableAuthor, getBookInitials, getBookCoverColors } from '@/lib/book-cover';
 import { formatRelativeTime } from '@/lib/date';
 import { SkeletonPulse } from './SkeletonPulse';
 import type { RecentBook, DashboardStats } from './types';
@@ -36,11 +36,11 @@ const ActiveBookCard = React.memo(function ActiveBookCard({ book, isFirst, isMul
       className={`block card group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 ${isFirst && isMultiple ? 'ring-1 ring-primary-200 dark:ring-primary-800' : ''}`}
     >
       <div className="flex items-center gap-4">
-        <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+        <div className={`w-14 h-20 rounded-lg bg-gradient-to-br ${book.coverUrl ? 'from-primary-400 to-primary-600' : getBookCoverColors(book.title)[0]} flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm`}>
           {book.coverUrl ? (
             <Image src={book.coverUrl} alt={coverAlt} width={56} height={80} className="w-full h-full object-cover rounded-lg" />
           ) : (
-            <span className="text-white text-xl">{'📖'}</span>
+            <span className={`${getBookCoverColors(book.title)[1]} text-sm font-bold`}>{getBookInitials(book.title)}</span>
           )}
         </div>
         <div className="flex-1 min-w-0">
@@ -147,11 +147,11 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
             className="block card group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200"
           >
             <div className="flex items-center gap-4">
-              <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+              <div className={`w-14 h-20 rounded-lg bg-gradient-to-br ${currentBook.coverUrl ? 'from-primary-400 to-primary-600' : getBookCoverColors(currentBook.title)[0]} flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm`}>
                 {currentBook.coverUrl ? (
                   <Image src={currentBook.coverUrl} alt={t('cover_of', { title: currentBook.title })} width={56} height={80} className="w-full h-full object-cover rounded-lg" />
                 ) : (
-                  <span className="text-white text-xl">{'📖'}</span>
+                  <span className={`${getBookCoverColors(currentBook.title)[1]} text-sm font-bold`}>{getBookInitials(currentBook.title)}</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">

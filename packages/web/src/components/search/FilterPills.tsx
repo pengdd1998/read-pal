@@ -34,7 +34,7 @@ export const FilterPills = React.memo(function FilterPills({ filter, results, hi
    key={f.key}
    aria-pressed={filter === f.key}
    onClick={() => onFilterChange(f.key)}
-   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] ${
     filter === f.key
     ? 'bg-amber-500 text-white'
     : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-amber-900/30'

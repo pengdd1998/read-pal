@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import type { BookProgress } from './types';
+import { getBookInitials, getBookCoverColors } from '@/lib/book-cover';
 
 interface BookBreakdownProps {
  books: BookProgress[];
