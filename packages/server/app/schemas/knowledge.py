@@ -11,24 +11,24 @@ class GraphNode(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    id: str
-    label: str
-    type: str  # 'concept', 'character', 'theme', 'location'
-    size: int = 1
+    id: str = Field(..., min_length=1, max_length=128)
+    label: str = Field(..., min_length=1, max_length=256)
+    type: str = Field(..., pattern=r'^(concept|character|theme|location|other)$')
+    size: int = Field(default=1, ge=1)
     metadata: dict = {}
-    description: str = ''
+    description: str = Field(default='', max_length=2000)
     source_book_ids: list[str] = Field(default_factory=list)
-    annotation_count: int = 0
+    annotation_count: int = Field(default=0, ge=0)
     freshness: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
 class GraphEdge(BaseModel):
     """An edge connecting two nodes in the knowledge graph."""
 
-    source: str
-    target: str
-    label: str = ''
-    weight: float = 1.0
+    source: str = Field(..., min_length=1, max_length=128)
+    target: str = Field(..., min_length=1, max_length=128)
+    label: str = Field(default='', max_length=256)
+    weight: float = Field(default=1.0, ge=0.0)
 
 
 class GraphData(BaseModel):

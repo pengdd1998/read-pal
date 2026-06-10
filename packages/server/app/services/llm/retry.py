@@ -7,6 +7,7 @@ from typing import Any
 
 import structlog
 from langchain_core.messages import BaseMessage
+from langchain_core.exceptions import OutputParserException
 from langchain_openai import ChatOpenAI
 
 logger = structlog.get_logger('read-pal.llm')
@@ -35,6 +36,16 @@ async def _invoke_with_retry(
     for attempt in range(max_attempts):
         try:
             return await llm.ainvoke(messages)
+        except (ConnectionError, TimeoutError, asyncio.TimeoutError) as exc:
+            # Network-level errors: retry once
+            last_exc = exc
+            if attempt < 1:
+                logger.warning('llm_network_error', label=log_label, error=str(exc)[:200])
+                await asyncio.sleep(2)
+                continue
+            raise
+        except OutputParserException:
+            raise
         except Exception as exc:
             last_exc = exc
             if _is_rate_limited(exc) and attempt < len(_RATE_LIMIT_BACKOFFS):

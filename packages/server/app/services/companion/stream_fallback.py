@@ -45,6 +45,7 @@ async def _stream_from_fallback_llm(
             request_id=request_id, provider=provider_name,
             error=str(init_exc)[:500],
         )
+        yield sse_chunk('[Fallback provider unavailable. Please try again.]')
         return
     logger.info(
         'companion.stream.fallback_retry',

@@ -79,10 +79,11 @@ class RequestLogMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         except Exception:
+            elapsed_ms = int((time.monotonic() - start) * 1000)
             logger.error(
                 '%s %s → 500 (unhandled exception)',
                 method, path,
-                status_code=status_code, latency_ms=0,
+                status_code=status_code, latency_ms=elapsed_ms,
                 exc_info=True,
             )
             raise
