@@ -5,6 +5,13 @@ import { useTranslations } from 'next-intl';
 import EncounterSection from './EncounterSection';
 import HighlightClusterSection from './HighlightClusterSection';
 import RecommendationSection from './RecommendationSection';
+import ConversationsSection from './ConversationsSection';
+import ConceptWebSection from './ConceptWebSection';
+import ReaderBecameSection from './ReaderBecameSection';
+import AnnotationsWovenSection from './AnnotationsWovenSection';
+import WhatStuckSection from './WhatStuckSection';
+import AttentionMapSection from './AttentionMapSection';
+import ThreadsSection from './ThreadsSection';
 import PlaceholderSection from './PlaceholderSection';
 
 export interface MirrorSection {
@@ -66,8 +73,12 @@ export default React.memo(function SectionRenderer({
  }
 
  // Placeholder sections (Phase 2)
- const hasContent = data.prologue || data.clusters || data.recommendations;
- const isRenderableType = section.type === 'encounter' || section.type === 'highlights' || section.type === 'recommendations';
+ const hasContent = data.prologue || data.clusters || data.recommendations
+  || data.breakthroughs || data.phases || data.hub_concepts || data.essay
+  || data.stuck || data.slipping || data.peaks || data.threads;
+ const isRenderableType = ['encounter', 'highlights', 'recommendations',
+  'conversations', 'concept_web', 'reader_became', 'annotations_woven',
+  'what_stuck', 'attention_map', 'threads'].includes(section.type);
  if (section.placeholder || (!hasContent && !isRenderableType)) {
  const isKnownPlaceholder = ['attention_map', 'annotations_woven', 'conversations', 'concept_web', 'what_stuck', 'threads', 'reader_became'].includes(section.type);
  if (isKnownPlaceholder) {
@@ -104,6 +115,27 @@ export default React.memo(function SectionRenderer({
 
  case 'recommendations':
   return <RecommendationSection data={data} />;
+
+ case 'conversations':
+  return <ConversationsSection data={data} />;
+
+ case 'concept_web':
+  return <ConceptWebSection data={data} />;
+
+ case 'reader_became':
+  return <ReaderBecameSection data={data} />;
+
+ case 'annotations_woven':
+  return <AnnotationsWovenSection data={data} />;
+
+ case 'what_stuck':
+  return <WhatStuckSection data={data} />;
+
+ case 'attention_map':
+  return <AttentionMapSection data={data} />;
+
+ case 'threads':
+  return <ThreadsSection data={data} />;
 
  default:
   // Fallback for any unrecognized section type
