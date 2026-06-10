@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 
 interface PageErrorProps {
@@ -84,7 +85,7 @@ function useSafeTranslations(namespace: string) {
  }
 }
 
-export function PageError({
+export const PageError = memo(function PageError({
  error,
  reset,
  title,
@@ -156,4 +157,4 @@ export function PageError({
   </div>
  </div>
  );
-}
+});

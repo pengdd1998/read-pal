@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from '@/i18n/navigation';
 
 interface HeroSectionProps {
@@ -9,7 +10,7 @@ interface HeroSectionProps {
  cta_signin: string;
 }
 
-export function HeroSection({
+export const HeroSection = memo(function HeroSection({
  beta_badge,
  hero_title_before,
  hero_title_highlight,
@@ -65,4 +66,4 @@ export function HeroSection({
   </div>
  </section>
  );
-}
+});

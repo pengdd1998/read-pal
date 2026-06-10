@@ -5,8 +5,6 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import type { DashboardData } from '@/components/dashboard/types';
-import type { InsightKey } from '@/components/dashboard/CurrentReadingSection';
-
 const STREAK_MILESTONES: Record<number, string> = {
   3: 'streak_milestone_3',
   7: 'streak_milestone_7',

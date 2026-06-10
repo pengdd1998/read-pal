@@ -30,7 +30,9 @@ const CheckIcon = () => (
  </svg>
 );
 
-export function HowItWorksSection({
+import { memo } from 'react';
+
+export const HowItWorksSection = memo(function HowItWorksSection({
  stats,
  trust_items,
  how_title,
@@ -92,4 +94,4 @@ export function HowItWorksSection({
   </section>
  </>
  );
-}
+});

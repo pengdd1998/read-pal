@@ -24,7 +24,6 @@ import {
 
 import {
   STALE_TTL,
-  MAX_CACHE_SIZE,
   type CacheEntry,
   getCacheTTL,
   pruneStaleEntries,
@@ -88,6 +87,7 @@ export class ApiClient {
           break;
         }
 
+        console.warn(`API client: retry ${attempt}/${attempts}`, status ?? 'network error');
         const baseDelay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
         const jitter = Math.random() * baseDelay * 0.3;
         await sleep(baseDelay + jitter);

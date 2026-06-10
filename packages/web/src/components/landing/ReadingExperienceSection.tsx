@@ -4,7 +4,9 @@ interface ReadingExperienceSectionProps {
  experiences: { icon: string; title: string; desc: string }[];
 }
 
-export function ReadingExperienceSection({
+import { memo } from 'react';
+
+export const ReadingExperienceSection = memo(function ReadingExperienceSection({
  reading_better_title,
  reading_better_subtitle,
  experiences,
@@ -33,4 +35,4 @@ export function ReadingExperienceSection({
   </div>
  </section>
  );
-}
+});

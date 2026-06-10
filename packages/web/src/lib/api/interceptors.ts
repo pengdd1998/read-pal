@@ -5,7 +5,7 @@
  * - Response: 401 handling with automatic token refresh
  */
 
-import axios, { AxiosError, AxiosRequestConfig, AxiosInstance } from 'axios';
+import { AxiosError, AxiosRequestConfig, AxiosInstance } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
 import {
   getAuthToken,

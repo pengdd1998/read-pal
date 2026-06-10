@@ -46,7 +46,9 @@ export function BookDetailLoading() {
  );
 }
 
-export function BookDetailError({
+import { memo } from 'react';
+
+export const BookDetailError = memo(function BookDetailError({
  error,
  t,
 }: {
@@ -73,4 +75,4 @@ export function BookDetailError({
   </div>
  </div>
  );
-}
+});

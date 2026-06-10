@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
+import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
 interface Toast {
@@ -47,7 +47,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
  );
 }
 
-function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
+const ToastItem = React.memo(function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
  const tc = useTranslations('common');
  const [visible, setVisible] = useState(false);
 
@@ -83,4 +83,4 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
   </button>
  </div>
  );
-}
+});

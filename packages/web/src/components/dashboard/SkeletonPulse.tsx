@@ -1,5 +1,7 @@
 'use client';
 
-export function SkeletonPulse({ className = '' }: { className?: string }) {
+import { memo } from 'react';
+
+export const SkeletonPulse = memo(function SkeletonPulse({ className = '' }: { className?: string }) {
  return <div className={`bg-surface-1 rounded animate-pulse ${className}`} />;
-}
+});

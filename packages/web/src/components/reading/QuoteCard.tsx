@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
-import { THEMES, renderCardToCanvas } from './QuoteCardCanvas';
+import { THEMES } from './QuoteCardCanvas';
 import { useQuoteCardActions } from './useQuoteCardActions';
 
 export type CardTheme = 'warm' | 'dark';
