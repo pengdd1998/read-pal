@@ -170,7 +170,7 @@ const ReadingFriendCard = React.memo(function ReadingFriendCard({ settings, savi
     }`}
    >
     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center flex-shrink-0`}>
-    <span className="text-lg">{p.emoji}</span>
+    <span className="text-lg" aria-hidden="true">{p.emoji}</span>
     </div>
     <div className="text-left">
     <div className="font-medium text-sm">{p.name}</div>
