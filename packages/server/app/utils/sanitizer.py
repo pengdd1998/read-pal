@@ -1,11 +1,12 @@
-"""Input sanitizer for LLM prompt injection defense.
+"""Input sanitizer for LLM prompt injection defense and XSS prevention.
 
 Sanitizes user-provided content before injection into system prompts.
-Provides defense-in-depth against prompt injection attacks.
+Provides defense-in-depth against prompt injection attacks and stored XSS.
 """
 
 from __future__ import annotations
 
+import html
 import logging
 import re
 
@@ -116,3 +117,53 @@ def _wrap_as_data(text: str) -> str:
         f'{text}\n'
         '[END USER PROVIDED DATA]'
     )
+
+
+# HTML tag pattern for XSS stripping
+_HTML_TAG_RE = re.compile(r'<[^>]+>')
+_JS_ATTR_RE = re.compile(
+    r'\b(on\w+)\s*=\s*["\'][^"\']*["\']',
+    re.IGNORECASE,
+)
+
+
+def strip_html(text: str) -> str:
+    """Strip HTML tags and JavaScript event handlers from user input.
+
+    Used to prevent stored XSS in user-editable fields like book titles,
+    authors, tags, and annotation content/note.
+    """
+    if not text:
+        return text
+    # Remove JS event handlers first (onerror=, onclick=, etc.)
+    text = _JS_ATTR_RE.sub('', text)
+    # Strip all HTML tags
+    text = _HTML_TAG_RE.sub('', text)
+    return text.strip()
+
+
+def sanitize_book_field(text: str, *, max_length: int = 500) -> str:
+    """Sanitize a book metadata field (title, author) for safe storage."""
+    if not text:
+        return text
+    text = strip_html(text)
+    if len(text) > max_length:
+        text = text[:max_length]
+    return text
+
+
+def sanitize_annotation_content(text: str, *, max_length: int = 50000) -> str:
+    """Sanitize annotation content — strip dangerous HTML but allow basic text.
+
+    Annotations may contain rich text from the reader, so we strip only
+    dangerous tags (script, event handlers) rather than all HTML.
+    """
+    if not text:
+        return text
+    # Remove script tags and their content
+    text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    # Remove event handlers
+    text = _JS_ATTR_RE.sub('', text)
+    if len(text) > max_length:
+        text = text[:max_length]
+    return text

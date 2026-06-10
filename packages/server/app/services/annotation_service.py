@@ -3,6 +3,13 @@
 import logging
 from uuid import UUID
 
+from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.book import Book
+from app.utils.sanitizer import sanitize_annotation_content, strip_html
+
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,19 +74,29 @@ async def get_annotation(
 
 async def create_annotation(
     db: AsyncSession,
-    user_id: str,
+    user_id: UUID,
     data: AnnotationCreate,
 ) -> Annotation:
     """Create a new annotation."""
+    # M5: Validate book exists and belongs to user
+    book_result = await db.execute(
+        select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
+    )
+    if book_result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+        )
+
     annotation = Annotation(
         user_id=user_id,
         book_id=data.book_id,
         type=data.type,
         location=data.location,
-        content=data.content,
+        content=sanitize_annotation_content(data.content),
         color=data.color,
-        note=data.note,
-        tags=data.tags,
+        note=strip_html(data.note) if data.note else None,
+        tags=[strip_html(t) for t in (data.tags or [])],
     )
     db.add(annotation)
     await db.flush()
@@ -106,6 +123,15 @@ async def update_annotation(
         return None
 
     update_data = data.model_dump(exclude_unset=True)
+
+    # Sanitize text fields to prevent stored XSS
+    if 'content' in update_data:
+        update_data['content'] = sanitize_annotation_content(update_data['content'])
+    if 'note' in update_data and update_data['note']:
+        update_data['note'] = strip_html(update_data['note'])
+    if 'tags' in update_data and update_data['tags']:
+        update_data['tags'] = [strip_html(t) for t in update_data['tags']]
+
     for field, value in update_data.items():
         setattr(annotation, field, value)
 

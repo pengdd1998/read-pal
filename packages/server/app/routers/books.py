@@ -30,16 +30,20 @@ router = APIRouter(prefix='/api/v1/books', tags=['books'])
 @router.get('', response_model=BookListResponse)
 async def list_books(
     status_filter: str | None = Query(None, alias='status'),
+    q: str | None = Query(None, description='Search books by title or author'),
+    tag: str | None = Query(None, description='Filter by tag'),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> BookListResponse:
-    """List user's books with optional status filter and pagination."""
+    """List user's books with optional status, search, and tag filters."""
     books, total = await book_service.get_user_books(
         db,
         UUID(current_user['id']),
         status=status_filter,
+        search=q,
+        tag=tag,
         page=page,
         per_page=per_page,
     )
@@ -149,12 +153,30 @@ async def seed_sample_book(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Create a sample book for testing."""
+    """Create a sample book for testing. Idempotent — returns existing if one already exists."""
     title = body.title if body else 'Sample Book'
     author = body.author if body else 'Sample Author'
+    uid = UUID(current_user['id'])
+
+    # L2: Check if a sample book already exists for this user
+    from sqlalchemy import select as sa_select
+    existing = await db.execute(
+        sa_select(Book).where(
+            Book.user_id == uid,
+            Book.title == title,
+            Book.author == author,
+            Book.tags.contains(['sample']),
+        ),
+    )
+    existing_book = existing.scalar_one_or_none()
+    if existing_book:
+        return {
+            'success': True,
+            'data': BookResponse.model_validate(existing_book).model_dump(by_alias=True, mode='json'),
+        }
 
     sample = Book(
-        user_id=UUID(current_user['id']),
+        user_id=uid,
         title=title,
         author=author,
         file_type=BookFileType.epub,

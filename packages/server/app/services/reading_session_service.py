@@ -5,6 +5,8 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
+from fastapi import HTTPException, status
+
 from app.utils import utcnow
 
 from sqlalchemy import func, select
@@ -23,6 +25,31 @@ async def create_session(
     data: SessionCreate,
 ) -> ReadingSession:
     """Create a new reading session, mark it active, update book status."""
+    # M5: Validate book exists and belongs to user
+    result = await db.execute(
+        select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
+    )
+    book = result.scalar_one_or_none()
+    if book is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
+        )
+
+    # M4: Check for existing active session on this book
+    active_result = await db.execute(
+        select(ReadingSession).where(
+            ReadingSession.user_id == user_id,
+            ReadingSession.book_id == data.book_id,
+            ReadingSession.is_active == True,  # noqa: E712
+        ),
+    )
+    if active_result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={'code': 'CONFLICT', 'message': 'An active session already exists for this book'},
+        )
+
     now = utcnow()
     session = ReadingSession(
         user_id=user_id,
@@ -33,11 +60,7 @@ async def create_session(
     db.add(session)
 
     # Update book status to 'reading'
-    result = await db.execute(
-        select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
-    )
-    book = result.scalar_one_or_none()
-    if book and book.status != BookStatus.reading:
+    if book.status != BookStatus.reading:
         book.status = BookStatus.reading
         if book.started_at is None:
             book.started_at = now

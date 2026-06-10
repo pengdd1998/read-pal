@@ -14,19 +14,19 @@ class AnnotationCreate(BaseModel):
     book_id: UUID
     type: Literal['highlight', 'note', 'bookmark']
     location: dict = Field(default_factory=lambda: {'page': 0, 'chapter': 0})
-    content: str = Field(min_length=1)
+    content: str = Field(min_length=1, max_length=50000)
     color: str | None = Field(None, max_length=7)
-    note: str | None = None
-    tags: list[str] = []
+    note: str | None = Field(None, max_length=10000)
+    tags: list[str] = Field(default_factory=list, max_length=20)
 
 
 class AnnotationUpdate(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    content: str | None = Field(None, min_length=1)
+    content: str | None = Field(None, min_length=1, max_length=50000)
     color: str | None = Field(None, max_length=7)
-    note: str | None = None
-    tags: list[str] | None = None
+    note: str | None = Field(None, max_length=10000)
+    tags: list[str] | None = Field(None, max_length=20)
 
 
 class AnnotationResponse(BaseModel):

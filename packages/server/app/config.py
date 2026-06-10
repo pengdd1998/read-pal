@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     llm_max_retries: int = 3
     circuit_failure_threshold: int = 5
     circuit_reset_timeout_seconds: int = 30
+    max_embedding_calls: int = 300
+    embedding_enabled: bool = False
 
     # JWT — default is None; dev convenience value set in model_validator below
     jwt_secret: str | None = None
@@ -94,6 +96,12 @@ class Settings(BaseSettings):
     app_env: str = 'development'
     frontend_url: str = 'http://localhost:3000'
     cors_origins: str = 'http://localhost:3000'  # Comma-separated allowed origins
+
+    # Logging
+    log_level: str = 'INFO'
+    log_json: bool = False
+    llm_log_enabled: bool = False
+    llm_log_retention_days: int = 90
 
     # SMTP (optional — console fallback when unset)
     smtp_host: str | None = None
