@@ -5,6 +5,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import String, cast, func, select, distinct
+from sqlalchemy.sql.elements import BooleanClauseList
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -18,7 +19,7 @@ def _escape_like(q: str) -> str:
     return q.replace('%', r'\%').replace('_', r'\_')
 
 
-def _tags_search(pattern: str):
+def _tags_search(pattern: str) -> BooleanClauseList:
     """Build a tags search expression that works on both SQLite and PostgreSQL.
 
     SQLite stores ARRAY as a JSON-like string; PostgreSQL uses native arrays.

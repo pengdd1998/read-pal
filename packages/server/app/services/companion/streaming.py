@@ -8,6 +8,7 @@ from typing import Any
 from uuid import UUID
 
 import structlog
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.companion.constants import STREAM_FLUSH_SIZE
@@ -199,7 +200,7 @@ async def _stream_via_provider(
                 db, user_id, book_id, message, messages,
                 collected_parts, request_id,
             )
-        except Exception as exc:
+        except DBAPIError as exc:
             logger.error(
                 'companion.stream.persist_failed',
                 request_id=request_id,

@@ -1,9 +1,10 @@
 """Data-fetching helpers for intervention analysis."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.sql.selectable import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reading_session import ReadingSession
@@ -12,9 +13,9 @@ from app.utils import utcnow
 
 def _build_session_query(
     user_id: UUID,
-    since,
+    since: datetime,
     book_id: UUID | None = None,
-):
+) -> Select:
     """Build a ReadingSession query scoped to *user_id* and *since*."""
     q = select(ReadingSession).where(
         ReadingSession.user_id == user_id,

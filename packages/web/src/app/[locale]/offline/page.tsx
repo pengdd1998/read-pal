@@ -44,7 +44,7 @@ export default function OfflinePage() {
             if (data?.data?.title) title = data.data.title;
             if (data?.data?.author) author = data.data.author;
           }
-        } catch { console.warn('OfflinePage: metadata not cached'); }
+        } catch (err) { console.warn('OfflinePage: metadata not cached', err); }
         books.push({
           bookId: item.bookId,
           title,

@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  try {
   const saved = localStorage.getItem('user');
   return saved ? JSON.parse(saved) : null;
- } catch { console.warn("auth: failed to parse stored user"); return null; }
+ } catch (err) { console.warn("auth: failed to parse stored user", err); return null; }
  });
  const [loading, setLoading] = useState(() => {
  // Already hydrated from localStorage on web; Capacitor needs async load

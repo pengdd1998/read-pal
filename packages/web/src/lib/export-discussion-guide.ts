@@ -96,16 +96,16 @@ export async function copyDiscussionGuide(html: string): Promise<boolean> {
         }),
       ]);
       return true;
-    } catch {
-      console.warn('Clipboard write failed, falling back to writeText');
+    } catch (err) {
+      console.warn('Clipboard write failed, falling back to writeText', err);
     }
   }
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(html);
       return true;
-    } catch {
-      console.warn('Clipboard writeText also failed');
+    } catch (err) {
+      console.warn('Clipboard writeText also failed', err);
     }
   }
   return false;
