@@ -1,8 +1,9 @@
 'use client';
 
+import React from 'react';
 import { Link } from '@/i18n/navigation';
 
-export function BookDetailLoading() {
+export const BookDetailLoading = React.memo(function BookDetailLoading() {
  return (
  <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
   {/* Back link skeleton */}
@@ -44,7 +45,7 @@ export function BookDetailLoading() {
   </div>
  </div>
  );
-}
+});
 
 import { memo } from 'react';
 
