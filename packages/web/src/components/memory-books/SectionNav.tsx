@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import SectionRenderer, {
  getSectionTitle,
@@ -16,7 +16,7 @@ interface SectionNavProps {
  locale: string;
 }
 
-export default function SectionNav({
+export default React.memo(function SectionNav({
  sections,
  bookId,
  bookTitle,
@@ -91,4 +91,4 @@ export default function SectionNav({
   </div>
  </>
  );
-}
+});

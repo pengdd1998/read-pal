@@ -308,12 +308,12 @@ export default function ReadPage() {
   />
   )}
   {highlightMode && (
-  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm">
+  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm" role="status" aria-live="polite">
    {t('tap_to_highlight')}
   </div>
   )}
   {ui.milestone && (
-  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 animate-fade-in">
+  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 animate-fade-in" role="status" aria-live="polite">
    <div className="px-4 py-1.5 rounded-full bg-surface-0/90 backdrop-blur-sm text-amber-700 dark:text-amber-300 text-xs font-medium shadow-md border border-amber-200/50 dark:border-amber-800/50">
    {ui.milestone} {t('milestone_complete')}
    </div>

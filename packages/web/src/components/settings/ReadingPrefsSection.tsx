@@ -19,7 +19,7 @@ const PERSONAS = [
  { id: 'sam', name: 'Sam', emoji: '📚', color: 'from-blue-100 to-sky-100 dark:from-blue-900/30 dark:to-sky-900/30', accent: 'text-blue-600 dark:text-blue-400' },
 ] as const;
 
-function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
+const AppearanceCard = React.memo(function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
  const t = useTranslations('settings');
  return (
  <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-5">
@@ -90,9 +90,9 @@ function AppearanceCard({ settings, saving, onSave }: ReadingPrefsSectionProps) 
   </fieldset>
  </div>
  );
-}
+});
 
-function ReadingGoalsCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
+const ReadingGoalsCard = React.memo(function ReadingGoalsCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
  const t = useTranslations('settings');
  return (
  <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-5">
@@ -147,9 +147,9 @@ function ReadingGoalsCard({ settings, saving, onSave }: ReadingPrefsSectionProps
   </div>
  </div>
  );
-}
+});
 
-function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
+const ReadingFriendCard = React.memo(function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProps) {
  const t = useTranslations('settings');
  return (
  <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-5">
@@ -216,7 +216,7 @@ function ReadingFriendCard({ settings, saving, onSave }: ReadingPrefsSectionProp
   </fieldset>
  </div>
  );
-}
+});
 
 export const ReadingPrefsSection = React.memo(function ReadingPrefsSection({ settings, saving, onSave }: ReadingPrefsSectionProps) {
  const t = useTranslations('settings_page');

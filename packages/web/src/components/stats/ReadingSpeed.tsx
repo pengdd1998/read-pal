@@ -51,7 +51,7 @@ export const ReadingSpeed = React.memo(function ReadingSpeed({ speedData, bookSp
  );
 });
 
-function WpmTrend({ data }: { data: SpeedData }) {
+const WpmTrend = React.memo(function WpmTrend({ data }: { data: SpeedData }) {
  const t = useTranslations('stats');
 
  const trendData = data.speedOverTime;
@@ -92,9 +92,9 @@ function WpmTrend({ data }: { data: SpeedData }) {
   </svg>
  </div>
  );
-}
+});
 
-function BookSpeedChart({ bookSpeeds }: { bookSpeeds: BookSpeed[] }) {
+const BookSpeedChart = React.memo(function BookSpeedChart({ bookSpeeds }: { bookSpeeds: BookSpeed[] }) {
  const t = useTranslations('stats');
  const maxWpm = Math.max(...bookSpeeds.map((b) => b.wpm), 1);
 
@@ -108,7 +108,7 @@ function BookSpeedChart({ bookSpeeds }: { bookSpeeds: BookSpeed[] }) {
   </div>
  </div>
  );
-}
+});
 
 interface BookSpeedBarProps {
  book: BookSpeed;
