@@ -45,7 +45,7 @@ export const ChatPanelHeader = React.memo(function ChatPanelHeader({
    ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
    : companionMode === 'scholar'
     ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1'
+    : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1'
   }`}
   title={companionMode === 'socratic' ? t('companion_mode_socratic_title') : companionMode === 'scholar' ? t('companion_mode_scholar_title') : t('companion_mode_casual_title')}
   aria-label={t('companion_aria_switch_mode', { mode: companionMode })}

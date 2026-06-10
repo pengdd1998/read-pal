@@ -79,7 +79,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
   <button
    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingTags(true); }}
    aria-label={t('card_add_tag')}
-   className="px-1.5 py-0.5 rounded text-[9px] text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+   className="px-1.5 py-0.5 rounded text-[9px] text-gray-400 dark:text-gray-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
   >
    {t('card_plus_tag')}
   </button>

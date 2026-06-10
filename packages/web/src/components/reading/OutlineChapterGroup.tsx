@@ -40,7 +40,7 @@ export const OutlineChapterGroup = memo(function OutlineChapterGroup({
   className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors text-left"
   >
   <svg aria-hidden="true"
-   className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+   className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
    fill="none"
    viewBox="0 0 24 24"
    stroke="currentColor"
@@ -82,7 +82,7 @@ export const OutlineChapterGroup = memo(function OutlineChapterGroup({
    <OutlineItem key={bm.id} annotation={bm} onClick={onScrollToAnnotation} />
    ))}
    {totalCount === 0 && (
-   <p className="text-[10px] text-gray-400 px-8 py-1">{noItemsLabel}</p>
+   <p className="text-[10px] text-gray-400 dark:text-gray-500 px-8 py-1">{noItemsLabel}</p>
    )}
   </div>
   )}

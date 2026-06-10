@@ -142,7 +142,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
   <div className="flex items-center justify-between mt-5">
    <div>
    <span className="text-sm text-gray-600 dark:text-gray-400">{t('settings_quiet_mode')}</span>
-   <p className="text-[10px] text-gray-400 mt-0.5">{t('settings_quiet_desc')}</p>
+   <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{t('settings_quiet_desc')}</p>
    </div>
    <button
    onClick={() => onQuietModeChange(!quietMode)}

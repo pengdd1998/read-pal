@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -12,7 +13,7 @@ interface EmptyCtaProps {
  onGenerate: () => void;
 }
 
-export function ErrorState({ error, onRetry }: ErrorStateProps) {
+export const ErrorState = React.memo(function ErrorState({ error, onRetry }: ErrorStateProps) {
  const t = useTranslations('memoryBooks');
 
  return (
@@ -28,9 +29,9 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
   </div>
  </div>
  );
-}
+});
 
-export function EmptyCta({ onGenerate }: EmptyCtaProps) {
+export const EmptyCta = React.memo(function EmptyCta({ onGenerate }: EmptyCtaProps) {
  const t = useTranslations('memoryBooks');
 
  return (
@@ -53,4 +54,4 @@ export function EmptyCta({ onGenerate }: EmptyCtaProps) {
   </div>
  </div>
  );
-}
+});

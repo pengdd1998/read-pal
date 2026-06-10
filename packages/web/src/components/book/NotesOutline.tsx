@@ -66,8 +66,8 @@ export const NotesOutline = React.memo(function NotesOutline({
  if (allAnnotations.length === 0) {
  return (
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-5 mb-6 animate-slide-up stagger-3 text-center">
-  <p className="text-gray-400 text-sm">{t('noAnnotationsYet')}</p>
-  <p className="text-gray-400 text-xs mt-1">{t('startReadingHint')}</p>
+  <p className="text-gray-400 dark:text-gray-500 text-sm">{t('noAnnotationsYet')}</p>
+  <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">{t('startReadingHint')}</p>
   </div>
  );
  }
@@ -78,7 +78,7 @@ export const NotesOutline = React.memo(function NotesOutline({
   <div className="flex items-center justify-between mb-3">
    <div>
    <h2 className="font-semibold">{t('notesOutline')}</h2>
-   <p className="text-[10px] text-gray-400 mt-0.5">
+   <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
     {outlineChapters.length === 1
     ? t('annotationsAcrossChapters', {
      count: allAnnotations.length,
@@ -163,7 +163,7 @@ export const NotesOutline = React.memo(function NotesOutline({
     className="w-full flex items-center gap-2 px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-amber-400"
     >
     <svg aria-hidden="true"
-     className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+     className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
      fill="none"
      viewBox="0 0 24 24"
      stroke="currentColor"
@@ -209,7 +209,7 @@ export const NotesOutline = React.memo(function NotesOutline({
        {ann.content}
        </p>
        {ann.note && (
-       <p className="text-[10px] text-gray-400 mt-0.5 italic line-clamp-1">
+       <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic line-clamp-1">
         {ann.note}
        </p>
        )}
@@ -243,7 +243,7 @@ export const NotesOutline = React.memo(function NotesOutline({
        {ann.content}
        </p>
        {ann.note && (
-       <p className="text-[10px] text-gray-400 mt-0.5 italic line-clamp-1">
+       <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic line-clamp-1">
         {ann.note}
        </p>
        )}
@@ -267,7 +267,7 @@ export const NotesOutline = React.memo(function NotesOutline({
      </div>
      ))}
      {totalCount === 0 && (
-     <p className="text-[10px] text-gray-400 px-7 py-1">
+     <p className="text-[10px] text-gray-400 dark:text-gray-500 px-7 py-1">
       {t('noMatchingItems')}
      </p>
      )}

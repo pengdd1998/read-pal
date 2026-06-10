@@ -222,7 +222,7 @@ function BookClubsWidgetInner() {
   {/* Discover link */}
   <Link
   href="/book-clubs"
-  className="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+  className="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
   >
   {t('discoverClubs')}
   <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
