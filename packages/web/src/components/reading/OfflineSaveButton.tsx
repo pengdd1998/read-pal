@@ -91,7 +91,7 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
   ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
   : state === 'error'
    ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
-   : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20';
+   : 'text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20';
 
  return (
  <button

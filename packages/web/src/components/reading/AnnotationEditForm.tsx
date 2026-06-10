@@ -167,7 +167,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
     key={preset}
     onClick={() => addTag(preset)}
     aria-label={t('add_tag_aria', { tag: preset })}
-    className="px-1.5 py-0.5 rounded text-[10px] text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-surface-3"
+    className="px-1.5 py-0.5 rounded text-[10px] text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-surface-3"
     >
     +{preset}
     </button>
