@@ -27,7 +27,7 @@ async def get_settings(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return the authenticated user's settings."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     result = await db.execute(
         select(User).where(User.id == UUID(current_user['id'])),
     )
@@ -55,7 +55,7 @@ async def update_settings(
     Body should be a JSON object to merge into existing settings:
     ``{"theme": "dark", "fontSize": 18}``
     """
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     result = await db.execute(
         select(User).where(User.id == UUID(current_user['id'])),
     )
@@ -80,7 +80,7 @@ async def get_reading_goals(
 ) -> dict:
     """Get reading goals with computed progress from today's sessions."""
     uid = UUID(current_user['id'])
-    lang = await _get_user_lang(db, uid)
+    lang = current_user.get('lang') or await _get_user_lang(db, uid)
 
     result = await db.execute(
         select(User).where(User.id == uid),

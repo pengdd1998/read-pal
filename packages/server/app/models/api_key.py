@@ -47,7 +47,7 @@ class ApiKey(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         'user_id',
         UUID(as_uuid=True),
-        ForeignKey('users.id'),
+        ForeignKey('users.id', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )

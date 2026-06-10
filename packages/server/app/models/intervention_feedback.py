@@ -54,4 +54,4 @@ class InterventionFeedback(Base):
         'User',
         back_populates='intervention_feedback',
     )
-    book: Mapped[Optional['Book']] = relationship('Book')
+    book: Mapped[Optional['Book']] = relationship('Book', back_populates='intervention_feedback')

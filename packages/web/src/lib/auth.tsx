@@ -3,18 +3,19 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { api } from './api';
-import { getAuthToken, getAuthTokenAsync, setAuthTokens, clearAuthTokens } from './auth-fetch';
+import { getAuthToken, getAuthTokenAsync, getRefreshTokenAsync, setAuthTokens, clearAuthTokens } from './auth-fetch';
 import { isCapacitor } from './capacitor';
 import { getItem, setItem, removeItem } from './native-storage';
 
-/** Set a simple cookie so Next.js middleware can detect auth state */
-function setAuthCookie(token: string) {
+/** Set a simple non-HttpOnly cookie so Next.js middleware can detect auth state.
+ *  The actual secure tokens are stored in HttpOnly cookies set by the server. */
+function setAuthSignalCookie() {
   if (isCapacitor()) return; // No server middleware in static export
   const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`;
+  document.cookie = `auth_token=1; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`;
 }
 
-function clearAuthCookie() {
+function clearAuthSignalCookie() {
   if (isCapacitor()) return;
   document.cookie = 'auth_token=; path=/; max-age=0';
 }
@@ -44,11 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Load auth state from storage on mount
   useEffect(() => {
     if (isCapacitor()) {
-      // Async load from Capacitor Preferences
+      // Async load from Capacitor Preferences (mobile uses Bearer tokens)
       getAuthTokenAsync().then(async (savedToken) => {
         const savedUser = await getItem('user');
         if (savedToken && savedUser) {
@@ -58,14 +60,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       });
     } else {
-      // Sync load from localStorage (web/PWA)
+      // Web: auth is cookie-based (HttpOnly). We just need to check
+      // if the auth_signal cookie exists + load user profile from localStorage.
       try {
-        const savedToken = getAuthToken();
+        const hasAuthCookie = typeof document !== 'undefined' &&
+          document.cookie.includes('auth_token=');
         const savedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-        if (savedToken && savedUser) {
-          setToken(savedToken);
+        if (hasAuthCookie && savedUser) {
+          // Token value is irrelevant for web — cookies handle auth.
+          // Set a placeholder so isAuthenticated is true.
+          setToken('cookie');
           setUser(JSON.parse(savedUser));
-          setAuthCookie(savedToken);
         }
       } catch {
         // Invalid stored data
@@ -76,17 +81,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const persistAuth = useCallback(async (newToken: string, newUser: User, newRefreshToken?: string) => {
+    // Store user profile for display purposes
     await removeItem('user');
     await setItem('user', JSON.stringify(newUser));
-    // Store both tokens
-    if (newRefreshToken) {
-      await setAuthTokens(newToken, newRefreshToken);
+
+    if (isCapacitor()) {
+      // Mobile: store tokens in native secure storage
+      if (newRefreshToken) {
+        await setAuthTokens(newToken, newRefreshToken);
+      } else {
+        await setItem('auth_token', newToken);
+      }
+      setToken(newToken);
     } else {
-      await setItem('auth_token', newToken);
-      if (typeof window !== 'undefined') localStorage.setItem('auth_token', newToken);
+      // Web: HttpOnly cookies are already set by the server response.
+      // Set a non-HttpOnly signal cookie for the Next.js middleware.
+      setAuthSignalCookie();
+      // Store token value as placeholder (not used for actual auth — cookies handle that)
+      setToken('cookie');
+      // Still save to localStorage as fallback during transition
+      if (newRefreshToken) {
+        await setAuthTokens(newToken, newRefreshToken);
+      }
     }
-    setAuthCookie(newToken);
-    setToken(newToken);
     setUser(newUser);
   }, []);
 
@@ -115,8 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [persistAuth]);
 
   const logout = useCallback(async () => {
-    // Get refresh token to send with logout request
-    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+    // Get refresh token to send with logout request (mobile only — web uses cookie)
+    const refreshToken = isCapacitor()
+      ? await getRefreshTokenAsync()
+      : (typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null);
     try {
       await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
     } catch {
@@ -127,12 +146,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user');
     }
-    clearAuthCookie();
+    clearAuthSignalCookie();
     setToken(null);
     setUser(null);
-    const router = useRouter();
     router.push('/login');
-  }, []);
+  }, [router]);
 
   const oauthLogin = useCallback(async (newToken: string, newUser: User) => {
     await persistAuth(newToken, newUser);

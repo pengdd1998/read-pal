@@ -60,6 +60,11 @@ async def _sse_stream(
             companion_mode=companion_mode, lang=lang,
         ):
             yield chunk.encode('utf-8')
+    except GeneratorExit:
+        # Client disconnected mid-stream; the service layer already
+        # persisted any partial assistant message.
+        logger.info('SSE stream closed early by client for book %s', book_id)
+        raise
     except ValueError as exc:
         error_msg = f'data: {{"error": "{exc}"}}\n\n'
         yield error_msg.encode('utf-8')
@@ -77,7 +82,7 @@ async def chat(
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Reading companion chat endpoint."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     try:
         result = await companion_service.chat(
             db=db,
@@ -115,7 +120,7 @@ async def stream(
         body.context.get('companionMode', 'casual')
         if body.context else 'casual'
     )
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     return StreamingResponse(
         _sse_stream(
             db, current_user['id'], body.book_id, body.message,
@@ -134,7 +139,7 @@ async def summarize(
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Summarize a book or specific chapters."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     try:
         result = await companion_service.summarize(
             db=db,
@@ -159,7 +164,7 @@ async def explain(
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Explain a passage from a book."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     try:
         result = await companion_service.explain(
             db=db,
@@ -216,7 +221,7 @@ async def discussion_questions(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Generate discussion questions for a book."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     try:
         result = await companion_service.chat(
             db=db,
@@ -247,7 +252,7 @@ async def mood_scene(
 
     from app.services.llm import safe_llm_call
 
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     mood = body.mood
 
     messages = [
@@ -346,7 +351,7 @@ async def create_reading_plan(
     """Generate an AI reading plan for a book."""
     from app.services.reading_plan_service import generate_plan
 
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
 
     try:
         result = await generate_plan(
@@ -399,7 +404,7 @@ async def advance_reading_plan(
     """Advance reading plan to the next day."""
     from app.services.reading_plan_service import advance_plan
 
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
 
     result = await advance_plan(
         db=db,

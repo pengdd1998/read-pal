@@ -79,7 +79,9 @@ export function middleware(request: NextRequest) {
     ) || routing.defaultLocale;
     const authUrl = new URL(`/${locale}/auth`, request.url);
     authUrl.searchParams.set('mode', 'login');
-    authUrl.searchParams.set('next', pathname);
+    // Only allow relative paths starting with '/' to prevent open redirect
+    const safeNext = pathname.startsWith('/') ? pathname : '/';
+    authUrl.searchParams.set('next', safeNext);
     return NextResponse.redirect(authUrl);
   }
 

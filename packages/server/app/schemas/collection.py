@@ -23,7 +23,6 @@ class CollectionUpdate(BaseModel):
     description: str | None = Field(None, max_length=500)
     icon: str | None = None
     color: str | None = None
-    book_ids: list[UUID] | None = None
 
 
 class CollectionResponse(BaseModel):

@@ -3,8 +3,6 @@
 import asyncio
 import json
 import logging
-import time
-import uuid
 from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
@@ -16,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
-from app.services.llm import circuit, get_llm, safe_llm_call
+from app.services.llm import safe_llm_call, stream_with_circuit
 from app.utils.i18n import t
 from app.utils.sanitizer import sanitize_chat_message, sanitize_annotations, sanitize_user_input
 from app.utils.token_budget import TokenBudget
@@ -260,6 +258,30 @@ async def chat(
     return {'role': 'assistant', 'content': assistant_content}
 
 
+async def _save_partial_message(
+    user_id: UUID,
+    book_id: UUID,
+    role: str,
+    content: str,
+) -> None:
+    """Persist a message using an independent DB session.
+
+    Used in ``finally`` blocks so the save succeeds even when the
+    request-scoped session has been invalidated by a client disconnect.
+    """
+    from app.db import async_session
+
+    async with async_session() as session:
+        try:
+            await _save_message(session, user_id, book_id, role, content)
+            await session.commit()
+        except Exception as exc:
+            logger.error(
+                'Failed to save %s message for book %s: %s', role, book_id, exc,
+            )
+            await session.rollback()
+
+
 async def stream_chat(
     db: AsyncSession,
     user_id: UUID,
@@ -269,9 +291,7 @@ async def stream_chat(
     companion_mode: str = 'casual',
     lang: str = 'en',
 ) -> AsyncGenerator[str, None]:
-    """Stream companion chat as SSE chunks with circuit breaker + observability."""
-    from app.config import get_settings
-
+    """Stream companion chat as SSE chunks using the shared LLM streaming infrastructure."""
     _, history, system_text, budget = await _prepare_context(
         db, user_id, book_id, message, context, companion_mode, lang,
     )
@@ -280,97 +300,57 @@ async def stream_chat(
     if budget.truncations:
         logger.warning('Companion stream budget truncations: %s', ', '.join(budget.truncations))
 
-    collected_parts: list[str] = []
-    request_id = uuid.uuid4().hex[:12]
-    start_time = time.monotonic()
-    settings = get_settings()
-    model_used = settings.default_model
+    # Save the user message BEFORE streaming starts
+    await _save_message(db, user_id, book_id, 'user', message)
 
-    # Shared circuit breaker gate
-    if not await circuit.allow_request():
-        logger.warning('Companion stream %s blocked by circuit breaker', request_id)
-        fallback = t('companion.fallback_error', lang)
-        yield f'data: {json.dumps({"content": fallback})}\n\n'
-    else:
-        try:
-            llm = get_llm()
-            # Buffer for chunk-level filtering
-            chunk_buffer: list[str] = []
-            async for chunk in llm.astream(messages):
-                token = chunk.content
-                if token:
-                    collected_parts.append(token)
-                    chunk_buffer.append(token)
-                    if len(chunk_buffer) >= STREAM_FLUSH_SIZE:
-                        buffered_text = ''.join(chunk_buffer)
-                        safe_text = filter_stream_chunk(buffered_text, context='companion_stream')
-                        if safe_text:
-                            yield f'data: {json.dumps({"content": safe_text})}\n\n'
-                        chunk_buffer = []
-            # Flush remaining buffer
-            if chunk_buffer:
-                buffered_text = ''.join(chunk_buffer)
-                safe_text = filter_stream_chunk(buffered_text, context='companion_stream')
-                if safe_text:
-                    yield f'data: {json.dumps({"content": safe_text})}\n\n'
-            await circuit.record_success()
-            latency_ms = int((time.monotonic() - start_time) * 1000)
-            logger.info(
-                'LLM_STREAM req=%s model=%s label=Companion_stream latency=%dms '
-                'chunks=%d success=True',
-                request_id, model_used, latency_ms, len(collected_parts),
-            )
-        except Exception as exc:
-            latency_ms = int((time.monotonic() - start_time) * 1000)
-            logger.error(
-                'LLM_STREAM req=%s model=%s label=Companion_stream latency=%dms '
-                'success=False error=%s',
-                request_id, model_used, latency_ms, exc,
-            )
-            await circuit.record_failure()
-            # Try fallback model
-            try:
-                fallback_model = settings.fallback_model
-                logger.info('Companion stream %s retrying with fallback %s', request_id, fallback_model)
-                llm_fb = get_llm(model=fallback_model)
-                # Buffer for chunk-level filtering (fallback model)
-                fb_chunk_buffer: list[str] = []
-                async for chunk in llm_fb.astream(messages):
-                    token = chunk.content
-                    if token:
-                        collected_parts.append(token)
-                        fb_chunk_buffer.append(token)
-                        if len(fb_chunk_buffer) >= STREAM_FLUSH_SIZE:
-                            buffered_text = ''.join(fb_chunk_buffer)
-                            if _quick_safety_check(buffered_text):
-                                yield f'data: {json.dumps({"content": buffered_text})}\n\n'
-                            fb_chunk_buffer = []
-                # Flush remaining fallback buffer
-                if fb_chunk_buffer:
-                    buffered_text = ''.join(fb_chunk_buffer)
-                    if _quick_safety_check(buffered_text):
-                        yield f'data: {json.dumps({"content": buffered_text})}\n\n'
-                await circuit.record_success()
-                logger.info(
-                    'LLM_STREAM req=%s model=%s label=Companion_stream fallback=True success=True',
-                    request_id, fallback_model,
-                )
-            except Exception as fb_exc:
-                logger.error('Companion stream %s fallback also failed: %s', request_id, fb_exc)
-                await circuit.record_failure()
+    collected_parts: list[str] = []
+    stream_completed_normally = False
+
+    try:
+        async for event_type, content in stream_with_circuit(
+            messages,
+            log_label='Companion_stream',
+            flush_size=STREAM_FLUSH_SIZE,
+            filter_fn=filter_stream_chunk,
+        ):
+            if event_type == 'token':
+                collected_parts.append(content)
+                yield f'data: {json.dumps({"content": content})}\n\n'
+            elif event_type == 'error':
                 fallback = t('companion.fallback_error', lang)
                 yield f'data: {json.dumps({"content": fallback})}\n\n'
+            elif event_type == 'done':
+                yield 'data: [DONE]\n\n'
 
-    yield 'data: [DONE]\n\n'
+        stream_completed_normally = True
 
-    assistant_content = ''.join(collected_parts)
-    if assistant_content:
-        assistant_content = filter_output(assistant_content, context='companion_stream')
-    await _save_message(db, user_id, book_id, 'user', message)
-    if assistant_content:
-        await _save_message(db, user_id, book_id, 'assistant', assistant_content)
-    else:
-        logger.warning('Stream %s produced empty response for book %s — skipping save', request_id, book_id)
+        # Save the assistant message using the request-scoped session
+        assistant_content = ''.join(collected_parts)
+        if assistant_content:
+            assistant_content = filter_output(assistant_content, context='companion_stream')
+            await _save_message(db, user_id, book_id, 'assistant', assistant_content)
+        else:
+            logger.warning('Stream produced empty response for book %s — skipping save', book_id)
+
+    except GeneratorExit:
+        # Client disconnected mid-stream — save partial content with independent session
+        logger.warning(
+            'Stream interrupted (client disconnect) after %d chunks for book %s',
+            len(collected_parts), book_id,
+        )
+        partial_content = ''.join(collected_parts)
+        if partial_content:
+            partial_content = filter_output(partial_content, context='companion_stream')
+            await _save_partial_message(user_id, book_id, 'assistant', partial_content)
+        raise
+
+    finally:
+        # Safety net: save partial content if stream didn't complete normally
+        if not stream_completed_normally and collected_parts:
+            partial_content = ''.join(collected_parts)
+            if partial_content:
+                partial_content = filter_output(partial_content, context='companion_stream')
+                await _save_partial_message(user_id, book_id, 'assistant', partial_content)
 
 
 async def summarize(

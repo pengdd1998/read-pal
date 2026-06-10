@@ -33,7 +33,7 @@ async def upload_book(
     tags: str | None = None,
 ) -> dict:
     """Upload an EPUB or PDF file and create a book record."""
-    lang = await _get_user_lang(db, UUID(user['id']))
+    lang = user.get('lang') or await _get_user_lang(db, UUID(user['id']))
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -123,7 +123,7 @@ async def get_book_content(
     from app.models.book import Book
     from app.models.document import Document
 
-    lang = await _get_user_lang(db, UUID(user['id']))
+    lang = user.get('lang') or await _get_user_lang(db, UUID(user['id']))
 
     result = await db.execute(
         sa_select(Book).where(

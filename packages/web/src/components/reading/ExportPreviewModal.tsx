@@ -6,6 +6,7 @@ import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { FocusTrap } from '@/components/ui/FocusTrap';
 
 type ExportFormat = 'markdown' | 'json' | 'bookclub' | 'bibtex' | 'apa' | 'mla' | 'chicago' | 'research' | 'annotated_bib' | 'study_guide';
 
@@ -186,12 +187,13 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
   };
 
   return (
-    <div
-      ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
-    >
-      <div role="dialog" aria-modal="true" aria-label={t('export_title')} className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
+    <FocusTrap active={true}>
+      <div
+        ref={backdropRef}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
+      >
+        <div role="dialog" aria-modal="true" aria-label={t('export_title')} className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
@@ -385,6 +387,7 @@ export function ExportPreviewModal({ bookId, bookTitle, availableTags = [], onCl
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </FocusTrap>
   );
 }

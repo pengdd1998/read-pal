@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -21,6 +21,10 @@ VALID_PERSONAS = ('sage', 'penny', 'alex', 'quinn', 'sam')
 class FriendConversation(Base):
     __tablename__ = 'friend_conversations'
     __table_args__ = (
+        CheckConstraint(
+            "persona IN ('sage', 'penny', 'alex', 'quinn', 'sam')",
+            name='ck_friend_conversations_persona',
+        ),
         Index('ix_friend_conv_user_created', 'user_id', 'created_at'),
         Index('ix_friend_conv_user_persona', 'user_id', 'persona'),
     )

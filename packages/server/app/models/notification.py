@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -28,6 +28,10 @@ VALID_NOTIFICATION_TYPES = (
 class Notification(Base):
     __tablename__ = 'notifications'
     __table_args__ = (
+        CheckConstraint(
+            "type IN ('streak_milestone', 'streak_at_risk', 'reading_reminder', 'goal_achieved', 'system')",
+            name='ck_notifications_type',
+        ),
         Index('ix_notifications_user_read', 'user_id', 'read'),
         Index('ix_notifications_user_type', 'user_id', 'type'),
         Index('ix_notifications_user_created', 'user_id', 'created_at'),

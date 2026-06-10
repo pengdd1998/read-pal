@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-26T00:00:00Z",
+  "title": "Design System: ReadPal",
+  "extensions": {
+    "colorMeta": {
+      "curious-gold": {
+        "role": "primary",
+        "displayName": "Curious Gold",
+        "canonical": "oklch(68% 0.16 65)",
+        "tonalRamp": ["#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d", "#fef3c7"]
+      },
+      "inkstone": {
+        "role": "neutral",
+        "displayName": "Inkstone",
+        "canonical": "oklch(22% 0.02 250)",
+        "tonalRamp": ["#0d1219", "#151d28", "#1e2a38", "#2d4060", "#3d5578", "#6b7f96", "#b1bbc9", "#f0f2f5"]
+      },
+      "cream": {
+        "role": "neutral",
+        "displayName": "Cream",
+        "canonical": "oklch(98% 0.006 80)",
+        "tonalRamp": ["#e8dfd4", "#f0e9e0", "#f5f0ea", "#f9f5f0", "#fdfbf7", "#fefdfb", "#fefefa", "#fffff5"]
+      },
+      "sage-green": {
+        "role": "secondary",
+        "displayName": "Sage Green",
+        "canonical": "oklch(62% 0.08 150)",
+        "tonalRamp": ["#2e4a34", "#3d6b47", "#4d8060", "#6b9e76", "#8bb896", "#a8ccb0", "#c5dfd0", "#e2f2ea"]
+      },
+      "terracotta": {
+        "role": "secondary",
+        "displayName": "Terracotta",
+        "canonical": "oklch(50% 0.10 20)",
+        "tonalRamp": ["#5c2a27", "#7a3a37", "#964a47", "#a65d57", "#c07a74", "#d49a95", "#e6bbb7", "#f5dddb"]
+      },
+      "forest": {
+        "role": "secondary",
+        "displayName": "Forest",
+        "canonical": "oklch(40% 0.08 165)",
+        "tonalRamp": ["#1a3530", "#2d5a4a", "#3d7a68", "#4d9a85", "#6db8a0", "#8fccbb", "#b3ddd5", "#d8eee9"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Screen titles, greeting header, streak numbers. Literary warmth."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings, card titles. Clear hierarchy anchor."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraph text, chat messages, descriptions. Comfortable reading."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Metadata, timestamps, helper text. Supplementary information."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Overlines, section headers, chip text. Structural markers."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "All button text. Confident and readable."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ambient",
+        "value": "0 2px 4px rgba(30,42,56,0.04)",
+        "purpose": "Default card elevation. Subtle presence on surface containers."
+      },
+      {
+        "name": "lifted",
+        "value": "0 4px 8px rgba(30,42,56,0.08)",
+        "purpose": "Hero cards, featured elements, active cards."
+      },
+      {
+        "name": "prominent",
+        "value": "0 8px 16px rgba(30,42,56,0.12)",
+        "purpose": "Floating menus, FABs, modal surfaces."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-standard",
+        "value": "cubic-bezier(0.0, 0, 0.2, 1)",
+        "purpose": "Default easing for state transitions and toggles. 150-250ms duration."
+      },
+      {
+        "name": "ease-spring",
+        "value": "tension: 200, friction: 3",
+        "purpose": "Persona card press, FAB bounce. Replaced with crossfade under reduced motion."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main CTA button for primary actions like Sign In, Start Review, Browse Library.",
+      "html": "<button class=\"ds-btn-primary\">Sign In</button>",
+      "css": ".ds-btn-primary { background: #d97706; color: #fdfbf7; font-family: 'DM Sans', system-ui, sans-serif; font-size: 16px; font-weight: 600; line-height: 22px; padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(30,42,56,0.04); transition: background 0.15s, opacity 0.15s; } .ds-btn-primary:hover { background: #f59e0b; } .ds-btn-primary:active { opacity: 0.7; } .ds-btn-primary:disabled { background: #e8dfd4; color: #b1bbc9; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action button. Transparent background, gold text.",
+      "html": "<button class=\"ds-btn-ghost\">Sign Up</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: #d97706; font-family: 'DM Sans', system-ui, sans-serif; font-size: 16px; font-weight: 600; line-height: 22px; padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; transition: opacity 0.15s; } .ds-btn-ghost:hover { opacity: 0.8; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip-filter",
+      "description": "Selectable filter chip for library view. Pill shape, warm neutral default, gold active state.",
+      "html": "<button class=\"ds-chip ds-chip-active\">Reading</button> <button class=\"ds-chip\">Completed</button>",
+      "css": ".ds-chip { background: #fdfbf7; color: #6b7f96; font-family: 'DM Sans', system-ui, sans-serif; font-size: 13px; font-weight: 500; line-height: 18px; padding: 12px 16px; border: none; border-radius: 9999px; cursor: pointer; transition: background 0.15s, color 0.15s; } .ds-chip:hover { background: #f0e9e0; } .ds-chip-active { background: #d97706; color: #fdfbf7; } .ds-chip-active:hover { background: #f59e0b; }"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Default container card. Warm cream background, ambient shadow, gently rounded corners.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-title\">Currently Reading</p><p class=\"ds-card-body\">The Great Gatsby</p></div>",
+      "css": ".ds-card { background: #fdfbf7; border-radius: 16px; padding: 24px; box-shadow: 0 2px 4px rgba(30,42,56,0.04); } .ds-card-title { font-family: 'DM Sans', system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; color: #d97706; margin: 0 0 4px; text-transform: uppercase; } .ds-card-body { font-family: 'DM Sans', system-ui, sans-serif; font-size: 18px; font-weight: 600; color: #1e2a38; margin: 0; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Standard text input field with icon prefix. Cream warm background, soft rounded corners.",
+      "html": "<div class=\"ds-input-wrap\"><svg class=\"ds-input-icon\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#6b7f96\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg><input class=\"ds-input\" type=\"text\" placeholder=\"Search books...\"></div>",
+      "css": ".ds-input-wrap { display: flex; align-items: center; background: #f9f5f0; border: 1px solid transparent; border-radius: 12px; padding: 0 12px; height: 50px; gap: 8px; } .ds-input-icon { flex-shrink: 0; } .ds-input { flex: 1; background: transparent; border: none; outline: none; font-family: 'DM Sans', system-ui, sans-serif; font-size: 15px; color: #1e2a38; } .ds-input::placeholder { color: #6b7f96; } .ds-input-wrap:focus-within { border-color: #d97706; }"
+    },
+    {
+      "name": "Tab Navigation",
+      "kind": "nav",
+      "refersTo": "tab-bar",
+      "description": "Bottom tab bar with 5 tabs. Cream background, gold active state, muted icons for inactive.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab ds-tab-active\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"#d97706\" stroke=\"none\"><path d=\"M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1\"/></svg><span>Home</span></button><button class=\"ds-tab\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#6b7f96\" stroke-width=\"2\"><path d=\"M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253\"/></svg><span>Library</span></button></nav>",
+      "css": ".ds-tabs { display: flex; background: #fdfbf7; border-top: 1px solid #f0e9e0; height: 60px; padding: 6px 0 8px; } .ds-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: none; border: none; cursor: pointer; font-family: 'DM Sans', system-ui, sans-serif; font-size: 11px; font-weight: 500; color: #6b7f96; transition: color 0.15s; } .ds-tab-active { color: #d97706; } .ds-tab span { margin-top: 2px; }"
+    },
+    {
+      "name": "AI FAB",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "Floating AI assistant button in the reader. Gold circle with sparkle icon, prominent shadow. Bounces once on text selection.",
+      "html": "<button class=\"ds-fab\" aria-label=\"AI assistant\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"#fdfbf7\" stroke=\"none\"><path d=\"M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z\"/></svg></button>",
+      "css": ".ds-fab { width: 52px; height: 52px; border-radius: 26px; background: #d97706; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(30,42,56,0.12); transition: background 0.15s, transform 0.2s cubic-bezier(0.0, 0, 0.2, 1); } .ds-fab:hover { background: #f59e0b; transform: scale(1.04); } .ds-fab:active { transform: scale(0.96); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Cozy Reading Nook",
+    "overview": "ReadPal's design system wraps every interaction in warmth. It feels like settling into a favorite armchair with a cup of tea and a book you've been looking forward to all day. The palette is built around warm creams and ambers, the typography pairs a serif display voice with a friendly sans body, and shadows lift cards just enough to feel real without breaking the cozy intimacy.\n\nThe system rejects three things categorically: the cold efficiency of SaaS dashboards, the noise of social media feeds, and the sterile file-management feel of Kindle clones. Every screen invites you to stay, not to check metrics. Every card feels like it belongs on a well-loved bookshelf, not in a data table.\n\nInteractive components are refined and restrained. Buttons have gentle curves and warm fills. Inputs sit in cream backgrounds with soft borders. Elevation is clear and structural: cards lift visibly off the surface to announce interactivity, but never shout.",
+    "keyCharacteristics": [
+      "Warm, cream-dominant surfaces that feel like paper, not pixels",
+      "Curious Gold accent used sparingly for CTAs, active states, and gamification highlights",
+      "Clear structural elevation: cards lift with visible shadows to signal interactivity",
+      "Serif display type for warmth, sans for clarity; scale contrast between them",
+      "Playful micro-copy and persona greetings that surprise without demanding attention",
+      "WCAG AAA contrast targets with dyslexia-friendly reading options"
+    ],
+    "rules": [
+      { "name": "The Curious Gold Rule", "body": "Curious Gold appears on primary actions, active states, and gamification elements only. It never decorates. If more than 10% of a screen's visible area is gold, pull back.", "section": "colors" },
+      { "name": "The Warm Neutral Rule", "body": "Every neutral is tinted warm. No cool grays, no blue-grays, no pure whites. The palette stays in the amber-warm hue family end to end.", "section": "colors" },
+      { "name": "The Two-Family Rule", "body": "Crimson Pro is for display text only (screen titles, large numbers). DM Sans handles everything else: body, labels, buttons, captions. Never use Crimson Pro for UI labels or button text.", "section": "typography" },
+      { "name": "The Scale Discipline Rule", "body": "The defined scale steps are display, title, body, caption, label, button. Avoid creating intermediate sizes. If a component needs a different size, extend the scale deliberately rather than overriding inline.", "section": "typography" },
+      { "name": "The Resting State Rule", "body": "Shadows are present even at rest. ReadPal is not a flat design system. Cards sit slightly above the cream background by default, creating a gentle stacked-paper feel.", "section": "elevation" },
+      { "name": "The No-Glow Rule", "body": "Shadows use Inkstone (the text color) as their source, never pure black and never the accent color. No colored glow shadows.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep Curious Gold to primary actions and active states.",
+      "Do use clear structural shadows on cards.",
+      "Do vary card elevation and background treatment for visual rhythm.",
+      "Do maintain 44px minimum touch targets on all interactive elements.",
+      "Do support reduced motion with opacity crossfades.",
+      "Do tint all neutrals warm.",
+      "Do use Crimson Pro only for display headings."
+    ],
+    "donts": [
+      "Don't use border-left or border-right greater than 1px as a colored stripe on cards or callouts.",
+      "Don't use the hero-metric template (big number + small label + gradient accent).",
+      "Don't create identical card grids with same-sized cards.",
+      "Don't use pure white (#ffffff) or pure black (#000000).",
+      "Don't use decorative continuous animations.",
+      "Don't use display fonts in UI labels, buttons, or data cells.",
+      "Don't mimic Kindle's sterile library or a social feed's engagement metrics.",
+      "Don't use cool grays or blue-gray neutrals."
+    ]
+  }
+}

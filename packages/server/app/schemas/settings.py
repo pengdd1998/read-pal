@@ -13,7 +13,7 @@ class SettingsUpdate(BaseModel):
 
     model_config = ConfigDict(extra='allow')
 
-    theme: str | None = Field(None, pattern=r'^(light|dark|system)$')
+    theme: str | None = Field(None, pattern=r'^(light|dark|sepia|system)$')
     fontSize: int | None = Field(None, ge=12, le=32)
     fontFamily: str | None = Field(None, max_length=50)
     readingGoal: int | None = Field(None, ge=1, le=50)

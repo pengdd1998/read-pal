@@ -29,13 +29,17 @@ export function getNodePosition(index: number, total: number) {
   };
 }
 
-/** Simple force-directed layout for better graph positioning. */
+/** Simple force-directed layout for better graph positioning.
+ *  Uses spatial grid hashing for O(n) repulsion on large graphs. */
 export function forceDirectedLayout(
   nodes: GraphNode[],
   edges: GraphEdge[],
-  iterations = 60,
+  iterations?: number,
 ): GraphNode[] {
   if (nodes.length < 2) return nodes;
+
+  // Reduce iterations for large graphs to keep UI responsive
+  const iters = iterations ?? (nodes.length > 80 ? 30 : 60);
 
   const positioned = nodes.map((n) => ({
     ...n,
@@ -45,24 +49,69 @@ export function forceDirectedLayout(
 
   const nodeMap = new Map(positioned.map((n) => [n.id, n]));
 
-  for (let iter = 0; iter < iterations; iter++) {
-    const temp = 0.1 * (1 - iter / iterations);
+  // For small graphs, use exact O(n²) repulsion (more accurate)
+  // For large graphs (>50 nodes), use grid-based spatial hashing (~O(n))
+  const useGrid = positioned.length > 50;
+  const gridSize = 15; // grid cell size in percentage units
 
-    // Repulsion between all nodes
-    for (let i = 0; i < positioned.length; i++) {
-      for (let j = i + 1; j < positioned.length; j++) {
+  for (let iter = 0; iter < iters; iter++) {
+    const temp = 0.1 * (1 - iter / iters);
+
+    if (useGrid) {
+      // Build spatial grid
+      const grid = new Map<string, number[]>();
+      for (let i = 0; i < positioned.length; i++) {
+        const cx = Math.floor(positioned[i].x / gridSize);
+        const cy = Math.floor(positioned[i].y / gridSize);
+        const key = `${cx},${cy}`;
+        let cell = grid.get(key);
+        if (!cell) { cell = []; grid.set(key, cell); }
+        cell.push(i);
+      }
+
+      // Repulsion: check only neighboring grid cells (9 cells = O(1) neighbors)
+      for (let i = 0; i < positioned.length; i++) {
         const a = positioned[i];
-        const b = positioned[j];
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
-        const force = 200 / (dist * dist);
-        const fx = (dx / dist) * force * temp;
-        const fy = (dy / dist) * force * temp;
-        a.x += fx;
-        a.y += fy;
-        b.x -= fx;
-        b.y -= fy;
+        const cx = Math.floor(a.x / gridSize);
+        const cy = Math.floor(a.y / gridSize);
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const cell = grid.get(`${cx + dx},${cy + dy}`);
+            if (!cell) continue;
+            for (const j of cell) {
+              if (j <= i) continue;
+              const b = positioned[j];
+              const ddx = a.x - b.x;
+              const ddy = a.y - b.y;
+              const dist = Math.sqrt(ddx * ddx + ddy * ddy) || 0.1;
+              const force = 200 / (dist * dist);
+              const fx = (ddx / dist) * force * temp;
+              const fy = (ddy / dist) * force * temp;
+              a.x += fx;
+              a.y += fy;
+              b.x -= fx;
+              b.y -= fy;
+            }
+          }
+        }
+      }
+    } else {
+      // Exact O(n²) repulsion for small graphs
+      for (let i = 0; i < positioned.length; i++) {
+        for (let j = i + 1; j < positioned.length; j++) {
+          const a = positioned[i];
+          const b = positioned[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
+          const force = 200 / (dist * dist);
+          const fx = (dx / dist) * force * temp;
+          const fy = (dy / dist) * force * temp;
+          a.x += fx;
+          a.y += fy;
+          b.x -= fx;
+          b.y -= fy;
+        }
       }
     }
 

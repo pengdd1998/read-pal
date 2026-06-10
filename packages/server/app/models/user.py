@@ -17,7 +17,8 @@ if TYPE_CHECKING:
     from app.models.annotation import Annotation
     from app.models.api_key import ApiKey
     from app.models.book import Book
-    from app.models.book_club import BookClub, BookClubMember
+    from app.models.book_club import BookClub, BookClubMember, ClubDiscussion
+    from app.models.document import Document
     from app.models.chat_message import ChatMessage
     from app.models.collection import Collection
     from app.models.conversation_summary import ConversationSummary
@@ -29,7 +30,7 @@ if TYPE_CHECKING:
     from app.models.reading_plan import ReadingPlan
     from app.models.reading_session import ReadingSession
     from app.models.shared_export import SharedExport
-    from app.models.webhook import Webhook
+    from app.models.webhook import Webhook, WebhookDeliveryLog
 
 
 class User(Base):
@@ -174,6 +175,21 @@ class User(Base):
     )
     reading_plans: Mapped[list['ReadingPlan']] = relationship(
         'ReadingPlan',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )
+    documents: Mapped[list['Document']] = relationship(
+        'Document',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )
+    webhook_delivery_logs: Mapped[list['WebhookDeliveryLog']] = relationship(
+        'WebhookDeliveryLog',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )
+    club_discussions: Mapped[list['ClubDiscussion']] = relationship(
+        'ClubDiscussion',
         back_populates='user',
         cascade='all, delete-orphan',
     )

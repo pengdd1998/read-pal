@@ -1,18 +1,13 @@
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ScrollView,
+  View, Text, TextInput, TouchableOpacity, ActivityIndicator,
+  KeyboardAvoidingView, Platform, Alert, ScrollView, StyleSheet,
 } from 'react-native';
 import { Link } from 'expo-router';
 import { useAuthStore } from '@/stores/auth-store';
 import { validateName, validateEmail, validatePassword, getPasswordStrength } from '@/lib/validation';
+import { MailIcon, LockIcon, PersonIcon, EyeIcon, EyeOffIcon, AISparkleIcon } from '@/components/shared/Icons';
+import { colors, typography, radius, shadows, spacing } from '@/lib/theme';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -21,22 +16,16 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [showPassword, setShowPassword] = useState(false);
   const register = useAuthStore((s) => s.register);
 
   const validateField = (field: string, value: string) => {
     let result;
     switch (field) {
-      case 'name':
-        result = validateName(value);
-        break;
-      case 'email':
-        result = validateEmail(value);
-        break;
-      case 'password':
-        result = validatePassword(value);
-        break;
-      default:
-        result = { isValid: true };
+      case 'name': result = validateName(value); break;
+      case 'email': result = validateEmail(value); break;
+      case 'password': result = validatePassword(value); break;
+      default: result = { isValid: true };
     }
     setErrors((prev) => ({ ...prev, [field]: result.error || '' }));
     return result.isValid;
@@ -44,25 +33,16 @@ export default function RegisterScreen() {
 
   const handleBlur = (field: string) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    let value = '';
-    if (field === 'name') value = name;
-    if (field === 'email') value = email;
-    if (field === 'password') value = password;
+    const value = field === 'name' ? name : field === 'email' ? email : password;
     validateField(field, value);
   };
 
   const handleRegister = async () => {
-    // Mark all fields as touched
     setTouched({ name: true, email: true, password: true });
-
-    // Validate all fields
-    const isNameValid = validateField('name', name);
-    const isEmailValid = validateField('email', email);
-    const isPasswordValid = validateField('password', password);
-
-    if (!isNameValid || !isEmailValid || !isPasswordValid) {
-      return;
-    }
+    const v1 = validateField('name', name);
+    const v2 = validateField('email', email);
+    const v3 = validateField('password', password);
+    if (!v1 || !v2 || !v3) return;
 
     setLoading(true);
     try {
@@ -74,122 +54,122 @@ export default function RegisterScreen() {
     }
   };
 
-  const passwordStrength = getPasswordStrength(password);
+  const strength = getPasswordStrength(password);
+  const strengthColor = strength.strength === 'weak' ? colors.russet : strength.strength === 'medium' ? colors.primary[500] : colors.sage;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-primary-50"
-    >
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
-        <View className="px-6">
-          {/* Logo / Brand */}
-          <View className="items-center mb-8">
-            <Text className="text-4xl font-serif text-primary-800">ReadPal</Text>
-            <Text className="text-sm text-navy-400 mt-2">Create your account</Text>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        {/* Brand */}
+        <View style={styles.brandSection}>
+          <View style={styles.logoCircle}>
+            <AISparkleIcon size={32} color="#d97706" />
+          </View>
+          <Text style={styles.brandName}>ReadPal</Text>
+          <Text style={styles.brandTagline}>Start reading smarter today</Text>
+        </View>
+
+        {/* Form Card */}
+        <View style={styles.formCard}>
+          <Text style={styles.formTitle}>Create your account</Text>
+
+          {/* Name */}
+          <View style={styles.inputGroup}>
+            <View style={[styles.inputWrapper, touched.name && errors.name ? styles.inputError : null]}>
+              <PersonIcon size={18} color="#8a99ae" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input} placeholder="Full name" placeholderTextColor="#8a99ae"
+                value={name} onChangeText={(t) => { setName(t); if (touched.name) validateField('name', t); }}
+                onBlur={() => handleBlur('name')} autoCapitalize="words"
+              />
+            </View>
+            {touched.name && errors.name && <Text style={styles.fieldError}>{errors.name}</Text>}
           </View>
 
-          {/* Form */}
-          <View className="bg-white rounded-2xl p-6 shadow-soft">
-            {/* Name Field */}
-            <View className="mb-4">
+          {/* Email */}
+          <View style={styles.inputGroup}>
+            <View style={[styles.inputWrapper, touched.email && errors.email ? styles.inputError : null]}>
+              <MailIcon size={18} color="#8a99ae" style={styles.inputIcon} />
               <TextInput
-                className={`bg-surface-1 rounded-xl px-4 py-3 text-base text-navy-800 ${touched.name && errors.name ? 'border-2 border-russet' : ''}`}
-                placeholder="Name"
-                placeholderTextColor="#8a99ae"
-                value={name}
-                onChangeText={(text) => {
-                  setName(text);
-                  if (touched.name) validateField('name', text);
-                }}
-                onBlur={() => handleBlur('name')}
-                autoCapitalize="words"
+                style={styles.input} placeholder="Email address" placeholderTextColor="#8a99ae"
+                value={email} onChangeText={(t) => { setEmail(t); if (touched.email) validateField('email', t); }}
+                onBlur={() => handleBlur('email')} keyboardType="email-address" autoCapitalize="none" autoCorrect={false}
               />
-              {touched.name && errors.name && (
-                <Text className="text-russet text-sm mt-1 ml-1">{errors.name}</Text>
-              )}
             </View>
-
-            {/* Email Field */}
-            <View className="mb-4">
-              <TextInput
-                className={`bg-surface-1 rounded-xl px-4 py-3 text-base text-navy-800 ${touched.email && errors.email ? 'border-2 border-russet' : ''}`}
-                placeholder="Email"
-                placeholderTextColor="#8a99ae"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (touched.email) validateField('email', text);
-                }}
-                onBlur={() => handleBlur('email')}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {touched.email && errors.email && (
-                <Text className="text-russet text-sm mt-1 ml-1">{errors.email}</Text>
-              )}
-            </View>
-
-            {/* Password Field */}
-            <View className="mb-6">
-              <TextInput
-                className={`bg-surface-1 rounded-xl px-4 py-3 text-base text-navy-800 ${touched.password && errors.password ? 'border-2 border-russet' : ''}`}
-                placeholder="Password (6+ characters)"
-                placeholderTextColor="#8a99ae"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (touched.password) validateField('password', text);
-                }}
-                onBlur={() => handleBlur('password')}
-                secureTextEntry
-              />
-              {touched.password && errors.password && (
-                <Text className="text-russet text-sm mt-1 ml-1">{errors.password}</Text>
-              )}
-
-              {/* Password Strength Indicator */}
-              {password.length > 0 && (
-                <View className="mt-2">
-                  <View className="flex-row gap-1 mb-1">
-                    <View className={`h-1 flex-1 rounded ${passwordStrength.score >= 1 ? 'bg-green-500' : 'bg-surface-2'}`} />
-                    <View className={`h-1 flex-1 rounded ${passwordStrength.score >= 2 ? 'bg-green-500' : 'bg-surface-2'}`} />
-                    <View className={`h-1 flex-1 rounded ${passwordStrength.score >= 3 ? 'bg-green-500' : 'bg-surface-2'}`} />
-                    <View className={`h-1 flex-1 rounded ${passwordStrength.score >= 4 ? 'bg-green-500' : 'bg-surface-2'}`} />
-                  </View>
-                  {passwordStrength.strength === 'weak' && passwordStrength.suggestions.length > 0 && (
-                    <Text className="text-xs text-navy-400 mt-1">Tip: {passwordStrength.suggestions[0]}</Text>
-                  )}
-                </View>
-              )}
-            </View>
-
-            <TouchableOpacity
-              className="bg-primary-500 rounded-xl py-4 items-center"
-              onPress={handleRegister}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text className="text-white font-semibold text-base">Create Account</Text>
-              )}
-            </TouchableOpacity>
+            {touched.email && errors.email && <Text style={styles.fieldError}>{errors.email}</Text>}
           </View>
 
-          {/* Register link */}
-          <View className="flex-row justify-center mt-6">
-            <Text className="text-navy-400">Already have an account? </Text>
-            <Link href="/(auth)/login" asChild>
-              <TouchableOpacity>
-                <Text className="text-primary-500 font-semibold">Sign In</Text>
+          {/* Password */}
+          <View style={styles.inputGroup}>
+            <View style={[styles.inputWrapper, touched.password && errors.password ? styles.inputError : null]}>
+              <LockIcon size={18} color="#8a99ae" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input} placeholder="Password (6+ characters)" placeholderTextColor="#8a99ae"
+                value={password} onChangeText={(t) => { setPassword(t); if (touched.password) validateField('password', t); }}
+                onBlur={() => handleBlur('password')} secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+                {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
               </TouchableOpacity>
-            </Link>
+            </View>
+            {touched.password && errors.password && <Text style={styles.fieldError}>{errors.password}</Text>}
+            {password.length > 0 && (
+              <View style={styles.strengthRow}>
+                <View style={styles.strengthBars}>
+                  {[1, 2, 3, 4].map((i) => (
+                    <View key={i} style={[styles.strengthBar, { backgroundColor: strength.score >= i ? strengthColor : colors.surface[2] }]} />
+                  ))}
+                </View>
+                <Text style={[styles.strengthLabel, { color: strengthColor }]}>
+                  {strength.strength.charAt(0).toUpperCase() + strength.strength.slice(1)}
+                </Text>
+              </View>
+            )}
           </View>
+
+          <TouchableOpacity
+            style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+            onPress={handleRegister} disabled={loading} activeOpacity={0.8}
+          >
+            {loading ? <ActivityIndicator color="white" /> : <Text style={styles.primaryButtonText}>Create Account</Text>}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.footerRow}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <Link href="/(auth)/login" asChild>
+            <TouchableOpacity><Text style={styles.footerLink}>Sign In</Text></TouchableOpacity>
+          </Link>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f9f5f0' },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xl },
+  brandSection: { alignItems: 'center', marginBottom: 28 },
+  logoCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(217, 119, 6, 0.12)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.md },
+  brandName: { ...typography.display, color: colors.navy[700], fontSize: 32 },
+  brandTagline: { ...typography.caption, color: colors.navy[300], marginTop: 4 },
+  formCard: { backgroundColor: colors.surface[0], borderRadius: radius.xl, padding: spacing.xxl, ...shadows.md },
+  formTitle: { ...typography.title, color: colors.navy[700], marginBottom: spacing.xxl },
+  inputGroup: { marginBottom: spacing.lg },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface[1], borderRadius: radius.md, borderWidth: 1, borderColor: 'transparent', paddingHorizontal: spacing.md, height: 50 },
+  inputError: { borderColor: colors.russet },
+  inputIcon: { marginRight: spacing.sm },
+  input: { flex: 1, ...typography.body, color: colors.navy[700], padding: 0 },
+  eyeBtn: { padding: spacing.xs },
+  fieldError: { ...typography.caption, color: colors.russet, marginTop: 4, marginLeft: 4 },
+  strengthRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 8 },
+  strengthBars: { flexDirection: 'row', gap: 4 },
+  strengthBar: { flex: 1, height: 3, borderRadius: 2 },
+  strengthLabel: { ...typography.overline, fontSize: 10 },
+  primaryButton: { backgroundColor: colors.primary[500], borderRadius: radius.md, height: 50, justifyContent: 'center', alignItems: 'center', marginTop: spacing.sm, ...shadows.sm },
+  primaryButtonDisabled: { opacity: 0.7 },
+  primaryButtonText: { ...typography.button, color: '#ffffff' },
+  footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.xxl },
+  footerText: { ...typography.body, color: colors.navy[300] },
+  footerLink: { ...typography.bodyMedium, color: colors.primary[500] },
+});

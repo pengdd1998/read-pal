@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, FlatList, Image, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, Alert, ScrollView, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as DocumentPicker from 'expo-document-picker';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
 
@@ -58,56 +57,52 @@ export default function BookDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={[]}
-        renderItem={() => null}
-        ListHeaderComponent={
-          <View style={styles.content}>
-            {/* Cover */}
-            <View style={styles.coverContainer}>
-              {book?.coverUrl ? (
-                <Image source={{ uri: book.coverUrl }} style={styles.cover} resizeMode="cover" />
-              ) : (
-                <View style={[styles.cover, styles.coverPlaceholder]}>
-                  <Text style={{ fontSize: 48 }}>📖</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Info */}
-            <Text style={styles.title}>{book?.title}</Text>
-            <Text style={styles.author}>{book?.author}</Text>
-
-            {/* Stats */}
-            <View style={styles.statsRow}>
-              <StatBox label="Pages" value={`${book?.totalPages || 0}`} />
-              <StatBox label="Progress" value={`${Math.round((book?.progress || 0) * 100)}%`} />
-              <StatBox label="Status" value={book?.status || 'unread'} />
-            </View>
-
-            {/* Actions */}
-            <TouchableOpacity
-              style={styles.readBtn}
-              onPress={() => router.push(`/reader/${bookId}`)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.readBtnText}>Start Reading</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.chatBtn}
-              onPress={() => router.push(`/chat/${bookId}`)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.chatBtnText}>Chat with AI</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-              <Text style={styles.deleteBtnText}>Delete Book</Text>
-            </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          {/* Cover */}
+          <View style={styles.coverContainer}>
+            {book?.coverUrl ? (
+              <Image source={{ uri: book.coverUrl }} style={styles.cover} resizeMode="cover" />
+            ) : (
+              <View style={[styles.cover, styles.coverPlaceholder]}>
+                <Text style={{ fontSize: 48 }}>📖</Text>
+              </View>
+            )}
           </View>
-        }
-      />
+
+          {/* Info */}
+          <Text style={styles.title}>{book?.title}</Text>
+          <Text style={styles.author}>{book?.author}</Text>
+
+          {/* Stats */}
+          <View style={styles.statsRow}>
+            <StatBox label="Pages" value={`${book?.totalPages || 0}`} />
+            <StatBox label="Progress" value={`${Math.round(book?.progress || 0)}%`} />
+            <StatBox label="Status" value={book?.status || 'unread'} />
+          </View>
+
+          {/* Actions */}
+          <TouchableOpacity
+            style={styles.readBtn}
+            onPress={() => router.push(`/reader/${bookId}`)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.readBtnText}>Start Reading</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.chatBtn}
+            onPress={() => router.push(`/chat/${bookId}`)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.chatBtnText}>Chat with AI</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+            <Text style={styles.deleteBtnText}>Delete Book</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -123,6 +118,7 @@ function StatBox({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9f5f0' },
+  scrollContent: { paddingBottom: 40 },
   nav: { paddingHorizontal: 16, paddingVertical: 8 },
   backBtn: { fontSize: 16, color: '#d97706', fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

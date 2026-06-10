@@ -3,10 +3,12 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.models.collection import Collection
 from app.schemas.collection import CollectionBooksBatchRequest, CollectionCreate, CollectionUpdate
 from app.schemas.common import GenericResponse
 from app.services import collection_service
@@ -24,7 +26,7 @@ def _serialize_collection(col: object) -> dict:
         'description': col.description,
         'icon': col.icon,
         'color': col.color,
-        'book_ids': [str(bid) for bid in (col.book_ids or [])],
+        'book_ids': [str(b.id) for b in (col.books or [])],
         'created_at': col.created_at.isoformat() if col.created_at else None,
         'updated_at': col.updated_at.isoformat() if col.updated_at else None,
     }
@@ -122,7 +124,7 @@ async def get_collection_books(
     return {
         'success': True,
         'data': {
-            'book_ids': [str(bid) for bid in (col.book_ids or [])],
+            'book_ids': [str(b.id) for b in (col.books or [])],
         },
     }
 
@@ -149,6 +151,13 @@ async def add_books_batch(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
+
+    # Re-fetch with eager loading to ensure books relationship is populated
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(Collection).options(selectinload(Collection.books)).where(Collection.id == collection_id)
+    )
+    col = result.scalar_one_or_none()
     return {'success': True, 'data': _serialize_collection(col)}
 
 
@@ -174,6 +183,13 @@ async def remove_books_batch(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
         )
+
+    # Re-fetch with eager loading to ensure books relationship is populated
+    from sqlalchemy.orm import selectinload as _sl
+    result = await db.execute(
+        select(Collection).options(_sl(Collection.books)).where(Collection.id == collection_id)
+    )
+    col = result.scalar_one_or_none()
     return {'success': True, 'data': _serialize_collection(col)}
 
 

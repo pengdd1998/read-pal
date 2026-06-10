@@ -1,5 +1,6 @@
 import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +17,46 @@ logger = logging.getLogger('read-pal')
 settings = get_settings()
 
 _is_production = os.getenv('APP_ENV', 'development') == 'production'
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan — startup and shutdown logic."""
+    # --- Startup ---
+    logging.basicConfig(
+        level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper(), logging.INFO),
+        format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
+    )
+    from app.utils.i18n import load_translations
+    load_translations()
+    logger.info(
+        'Read-Pal API starting — env=%s, model=%s',
+        settings.app_env,
+        settings.default_model,
+    )
+
+    # Production safety checks (may raise SystemExit on critical issues)
+    settings.validate_production()
+
+    if settings.is_dev:
+        try:
+            from app.db import init_db
+            await init_db()
+            logger.info('Database tables created (dev mode)')
+        except Exception as exc:
+            logger.warning('Could not auto-create tables: %s', exc)
+
+    from app.services.llm import _trace_writer
+    _trace_writer.start()
+    logger.info('LLM trace writer started')
+
+    yield  # Application is running
+
+    # --- Shutdown ---
+    from app.services.llm import shutdown_llm
+    from app.core.redis import close_redis
+    await shutdown_llm()
+    await close_redis()
 
 
 class ApiCompatMiddleware:
@@ -73,6 +114,7 @@ app = FastAPI(
     redoc_url=None if _is_production else '/api/v1/redoc',
     openapi_url=None if _is_production else '/api/v1/openapi.json',
     redirect_slashes=True,
+    lifespan=lifespan,
 )
 
 # Global exception handler — always return JSON, never plain text
@@ -90,13 +132,13 @@ _cors_origins = [o.strip() for o in settings.cors_origins.split(',') if o.strip(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allow_headers=['Authorization', 'Content-Type'],
 )
 
 
-# Security headers middleware
+# Security headers + rate-limit headers middleware
 @app.middleware('http')
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -104,53 +146,19 @@ async def add_security_headers(request: Request, call_next):
     response.headers['X-Frame-Options'] = 'DENY'
     if not settings.is_dev:
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
+    # Inject rate-limit headers into all responses (not just 429)
+    rate_limit_headers = getattr(request.state, 'rate_limit_headers', None)
+    if rate_limit_headers:
+        for header_key, header_value in rate_limit_headers.items():
+            response.headers[header_key] = header_value
+
     return response
 
 
 # Rewrite /api/ → /api/v1/ for frontend compatibility
 app.add_middleware(ApiCompatMiddleware)
 
-
-@app.on_event('startup')
-async def startup() -> None:
-    """Run on application startup."""
-    logging.basicConfig(
-        level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper(), logging.INFO),
-        format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
-    )
-    from app.utils.i18n import load_translations
-    load_translations()
-    logger.info(
-        'Read-Pal API starting — env=%s, model=%s',
-        settings.app_env,
-        settings.default_model,
-    )
-
-    # Production safety checks
-    prod_warnings = settings.validate_production()
-    for warning in prod_warnings:
-        logger.warning('PRODUCTION WARNING: %s', warning)
-
-    if settings.is_dev:
-        try:
-            from app.db import init_db
-            await init_db()
-            logger.info('Database tables created (dev mode)')
-        except Exception as exc:
-            logger.warning('Could not auto-create tables: %s', exc)
-
-    from app.services.llm import _trace_writer
-    _trace_writer.start()
-    logger.info('LLM trace writer started')
-
-
-@app.on_event('shutdown')
-async def shutdown() -> None:
-    """Clean up resources on application shutdown."""
-    from app.services.llm import shutdown_llm
-    from app.core.redis import close_redis
-    await shutdown_llm()
-    await close_redis()
 
 
 @app.get('/api/v1/health')

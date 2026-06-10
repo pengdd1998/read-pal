@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { api } from '@/lib/api';
-import type { Chapter, Annotation } from '@read-pal/shared';
+import type { Annotation } from '@read-pal/shared';
 
 interface UseAnnotationActionsOptions {
   bookId: string;
@@ -8,12 +8,15 @@ interface UseAnnotationActionsOptions {
 
 export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const annotationsRef = useRef<Annotation[]>([]);
+  annotationsRef.current = annotations;
 
   const loadAnnotations = useCallback(async () => {
     try {
       const result = await api.get<Annotation[]>('/api/annotations', { book_id: bookId });
       if (result.success && result.data) {
-        setAnnotations(Array.isArray(result.data) ? result.data : []);
+        const loaded = Array.isArray(result.data) ? result.data : [];
+        setAnnotations(loaded);
       }
     } catch (err) {
       console.error('Failed to load annotations:', err);
@@ -91,7 +94,8 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
   }, []);
 
   const toggleBookmark = useCallback(async (chapterId: string | undefined, chapterIndex: number, chapterTitle: string) => {
-    const existing = annotations.find(
+    const currentAnnotations = annotationsRef.current;
+    const existing = currentAnnotations.find(
       (a) => a.type === 'bookmark' && a.location?.pageIndex === chapterIndex,
     );
     if (existing) {
@@ -108,7 +112,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
         setAnnotations((prev) => [...prev, result.data!]);
       }
     }
-  }, [bookId, annotations]);
+  }, [bookId]);
 
   const chapterHighlights = useMemo(
     () => (chapterIndex: number) => annotations.filter(
@@ -118,10 +122,10 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
   );
 
   const isBookmarked = useCallback(
-    (chapterIndex: number) => annotations.some(
+    (chapterIndex: number) => annotationsRef.current.some(
       (a) => a.type === 'bookmark' && a.location?.pageIndex === chapterIndex,
     ),
-    [annotations],
+    [],
   );
 
   return {

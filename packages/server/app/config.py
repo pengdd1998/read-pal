@@ -1,7 +1,8 @@
+import logging
 import re
 from functools import lru_cache
 
-from pydantic import computed_field
+from pydantic import computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -32,6 +33,19 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    def model_post_init(self, __context: object) -> None:
+        """Set dev-only default for jwt_secret if not provided via env."""
+        # In development mode, allow a predictable default for convenience.
+        # Production MUST set JWT_SECRET via environment variable.
+        if self.jwt_secret is None:
+            if self.app_env == 'development':
+                object.__setattr__(self, 'jwt_secret', 'dev-secret-key-change-in-production-32ch')
+            else:
+                raise ValueError(
+                    'JWT_SECRET must be set via environment variable in production. '
+                    'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(48))"'
+                )
+
     # Database
     db_host: str = 'localhost'
     db_port: int = 5432
@@ -52,17 +66,29 @@ class Settings(BaseSettings):
     circuit_failure_threshold: int = 5
     circuit_reset_timeout_seconds: int = 30
 
-    # JWT
-    jwt_secret: str = 'dev-secret-key-change-in-production-32ch'
+    # JWT — default is None; dev convenience value set in model_validator below
+    jwt_secret: str | None = None
     jwt_expires_in: str = '7d'
     jwt_access_web: str = '30m'
     jwt_access_mobile: str = '2h'
     jwt_refresh_web: str = '7d'
     jwt_refresh_mobile: str = '30d'
 
+    @field_validator('jwt_expires_in', 'jwt_access_web', 'jwt_access_mobile',
+                     'jwt_refresh_web', 'jwt_refresh_mobile')
+    @classmethod
+    def _validate_jwt_duration(cls, v: str) -> str:
+        """Reject unreasonably long JWT durations (>365 days)."""
+        seconds = _parse_duration(v)
+        if seconds > 365 * 86400:
+            raise ValueError(
+                f'JWT duration {v!r} exceeds maximum of 365 days. '
+                f'Use a shorter duration for security.'
+            )
+        return v
+
     # Vector search: currently using in-process cosine similarity over Redis-cached embeddings.
     # For scaling beyond ~100 books, integrate a vector DB (Pinecone, Qdrant, or pgvector).
-    # pinecone_api_key: str | None = None  # Removed — not used. Re-enable when integrating vector DB.
 
     # App
     app_env: str = 'development'
@@ -118,18 +144,28 @@ class Settings(BaseSettings):
         return self.app_env == 'development'
 
     def validate_production(self) -> list[str]:
-        """Validate settings for production — returns list of warnings."""
-        warnings: list[str] = []
+        """Validate settings for production — returns list of warnings (empty = OK).
+
+        Raises ``SystemExit`` on critical issues that make the app unsafe to run.
+        """
         if not self.is_dev:
-            if 'change' in self.jwt_secret.lower() or len(self.jwt_secret) < 32:
-                warnings.append(
-                    'JWT_SECRET must be a strong secret (>= 32 chars) in production'
+            # --- CRITICAL: block startup on weak secrets ---
+            if 'change' in (self.jwt_secret or '').lower() or len(self.jwt_secret or '') < 32:
+                logger = logging.getLogger('read-pal')
+                logger.critical(
+                    'FATAL: JWT_SECRET is weak or missing in production. '
+                    'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(48))"'
                 )
+                raise SystemExit(1)
+
             if self.db_password in ('readpal_dev', 'changeme', 'password'):
-                warnings.append(
-                    'DB_PASSWORD must be changed from default in production'
+                logger = logging.getLogger('read-pal')
+                logger.critical(
+                    'FATAL: DB_PASSWORD is set to a known default in production.'
                 )
-        return warnings
+                raise SystemExit(1)
+
+        return []
 
 
 @lru_cache

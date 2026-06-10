@@ -52,27 +52,35 @@ export async function clearAuthTokens(): Promise<void> {
   }
 }
 
-/** Create headers with Content-Type and optional Bearer token (sync). */
+/** Create headers with Content-Type and optional Bearer token (sync).
+ *  For web (non-Capacitor), auth is cookie-based — no Bearer header needed. */
 function authHeaders(extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getAuthToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (isCapacitor()) {
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
   return { ...headers, ...extra };
 }
 
-/** Create headers with auth token (async, uses native storage in Capacitor). */
+/** Create headers with auth token (async, uses native storage in Capacitor).
+ *  For web, auth is cookie-based — no Bearer header needed. */
 async function authHeadersAsync(extra?: Record<string, string>): Promise<Record<string, string>> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = await getAuthTokenAsync();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (isCapacitor()) {
+    const token = await getAuthTokenAsync();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
   return { ...headers, ...extra };
 }
 
-/** Fetch wrapper that auto-injects auth headers (async for Capacitor support). */
+/** Fetch wrapper that auto-injects auth headers and sends cookies.
+ *  Web: cookies are sent automatically (credentials: 'include').
+ *  Mobile: Bearer token in header. */
 export async function authFetch(url: string, init?: RequestInit): Promise<Response> {
   const extraHeaders = (init?.headers instanceof Headers)
     ? Object.fromEntries(init.headers.entries())
     : (init?.headers as Record<string, string> | undefined) ?? {};
   const headers = await authHeadersAsync(extraHeaders);
-  return fetch(url, { ...init, headers });
+  return fetch(url, { ...init, headers, credentials: 'include' });
 }

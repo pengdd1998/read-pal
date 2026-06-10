@@ -119,7 +119,7 @@ async def get_annotation(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return a single annotation by ID."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     annotation = await annotation_service.get_annotation(
         db, UUID(current_user['id']), annotation_id,
     )
@@ -158,7 +158,7 @@ async def update_annotation(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Partially update an annotation."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     annotation = await annotation_service.update_annotation(
         db, UUID(current_user['id']), annotation_id, body,
     )
@@ -180,7 +180,7 @@ async def delete_annotation(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Delete an annotation."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     deleted = await annotation_service.delete_annotation(
         db, UUID(current_user['id']), annotation_id,
     )

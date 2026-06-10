@@ -7,6 +7,7 @@ Always returns success on forgot-password to prevent email enumeration.
 import json
 import logging
 import uuid
+from datetime import datetime, timezone
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, HTTPException, status
@@ -111,6 +112,11 @@ async def reset_password(body: ResetPasswordRequest) -> MessageResponse:
 
         user.password_hash = hash_password(body.password)
         await db.commit()
+
+    # Invalidate all existing JWTs for this user by storing a password-changed timestamp in Redis.
+    # The auth middleware will check this and reject tokens issued before the change.
+    now_ts = int(datetime.now(timezone.utc).timestamp())
+    await r.set(f'auth:password_changed:{user_id}', str(now_ts), ex=86400 * 90)  # 90 days
 
     # Consume the token so it cannot be reused
     await r.delete(f'password-reset:{body.token}')

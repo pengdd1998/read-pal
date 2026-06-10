@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import { api } from '@/lib/api';
 
 interface BookUploaderProps {
@@ -11,6 +10,7 @@ interface BookUploaderProps {
 export default function BookUploader({ onUploaded }: BookUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const handleUpload = async () => {
     try {
@@ -24,6 +24,7 @@ export default function BookUploader({ onUploaded }: BookUploaderProps) {
       const file = result.assets[0];
       setUploading(true);
       setProgress(0);
+      setError(null);
 
       const formData = new FormData();
       formData.append('file', {
@@ -35,7 +36,9 @@ export default function BookUploader({ onUploaded }: BookUploaderProps) {
       await api.upload('/api/upload', formData, (p) => setProgress(p));
       onUploaded();
     } catch (err) {
-      console.error('Upload failed:', err);
+      const message = err instanceof Error ? err.message : 'Upload failed. Please try again.';
+      setError(message);
+      Alert.alert('Upload Failed', message);
     } finally {
       setUploading(false);
       setProgress(0);
@@ -45,7 +48,7 @@ export default function BookUploader({ onUploaded }: BookUploaderProps) {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={styles.uploadBtn}
+        style={[styles.uploadBtn, error && styles.uploadBtnError]}
         onPress={handleUpload}
         disabled={uploading}
         activeOpacity={0.8}
@@ -62,6 +65,9 @@ export default function BookUploader({ onUploaded }: BookUploaderProps) {
           </>
         )}
       </TouchableOpacity>
+      {error && !uploading && (
+        <Text style={styles.errorText}>{error}</Text>
+      )}
     </View>
   );
 }
@@ -73,8 +79,10 @@ const styles = StyleSheet.create({
     alignItems: 'center', borderWidth: 2, borderColor: '#f0e9e0',
     borderStyle: 'dashed',
   },
+  uploadBtnError: { borderColor: '#a65d57' },
   icon: { fontSize: 28, color: '#d97706' },
   label: { fontSize: 14, color: '#8a99ae', marginTop: 4, fontWeight: '500' },
   uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   uploadingText: { fontSize: 14, color: '#d97706', fontWeight: '500' },
+  errorText: { fontSize: 13, color: '#a65d57', marginTop: 8, textAlign: 'center' },
 });

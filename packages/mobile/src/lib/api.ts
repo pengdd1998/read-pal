@@ -12,6 +12,7 @@ import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
 import { getToken, deleteToken, getRefreshToken, saveToken, saveRefreshToken, deleteRefreshToken } from './auth-storage';
 import { API_URL } from './env';
+// Lazy import to avoid circular dependency: auth-store → api → auth-store
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1_000;
@@ -134,6 +135,9 @@ class ApiClient {
   private async clearAuth(): Promise<void> {
     await deleteToken();
     await deleteRefreshToken();
+    // Lazy require breaks the circular dependency with auth-store
+    const { useAuthStore } = require('@/stores/auth-store');
+    useAuthStore.getState().forceClear();
   }
 
   private async requestWithRetry<T>(

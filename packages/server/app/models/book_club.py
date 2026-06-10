@@ -67,7 +67,7 @@ class BookClub(Base):
         back_populates='created_clubs',
         foreign_keys=[created_by],
     )
-    current_book: Mapped[Optional['Book']] = relationship('Book')
+    current_book: Mapped[Optional['Book']] = relationship('Book', back_populates='current_club')
     members: Mapped[list['BookClubMember']] = relationship(
         'BookClubMember',
         back_populates='club',
@@ -143,4 +143,4 @@ class ClubDiscussion(Base):
     )
 
     club: Mapped['BookClub'] = relationship('BookClub', back_populates='discussions')
-    user: Mapped['User'] = relationship('User')
+    user: Mapped['User'] = relationship('User', back_populates='club_discussions')

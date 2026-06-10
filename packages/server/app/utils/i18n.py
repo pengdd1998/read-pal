@@ -52,16 +52,55 @@ def get_supported_languages() -> list[str]:
     return SUPPORTED_LANGUAGES
 
 
-async def _get_user_lang(db: 'AsyncSession', user_id: 'UUID') -> str:
-    """Get user's language preference from settings."""
+async def _get_user_lang(
+    db: 'AsyncSession',
+    user_id: 'UUID',
+    *,
+    fallback_lang: str | None = None,
+) -> str:
+    """Get user's language preference.
+
+    When ``fallback_lang`` is provided (e.g. from a JWT claim), it is
+    returned immediately without any DB or Redis lookup.  Otherwise,
+    falls back to Redis cache (24h TTL) → DB query.
+    """
+    # Fast path: caller already knows the lang (e.g. from JWT claims)
+    if fallback_lang and fallback_lang in SUPPORTED_LANGUAGES:
+        return fallback_lang
+
     from sqlalchemy import select
     from app.models.user import User
 
+    cache_key = f'user:lang:{user_id}'
+
+    # Try Redis cache first
+    try:
+        from app.core.redis import get_redis
+        redis = get_redis()
+        cached = await redis.get(cache_key)
+        if cached:
+            lang = cached.decode() if isinstance(cached, bytes) else cached
+            return lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
+    except Exception:
+        pass  # Redis unavailable — fall through to DB
+
+    # DB query
     result = await db.execute(
         select(User.settings).where(User.id == user_id)
     )
     settings = result.scalar_one_or_none()
     if settings and isinstance(settings, dict):
         lang = settings.get('language', DEFAULT_LANGUAGE)
-        return lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
-    return DEFAULT_LANGUAGE
+        lang = lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
+    else:
+        lang = DEFAULT_LANGUAGE
+
+    # Store in Redis for 24h
+    try:
+        from app.core.redis import get_redis
+        redis = get_redis()
+        await redis.setex(cache_key, 86400, lang)
+    except Exception:
+        pass
+
+    return lang

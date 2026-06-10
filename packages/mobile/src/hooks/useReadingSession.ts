@@ -23,15 +23,19 @@ export function useReadingSession({
   const currentChapterRef = useRef(currentChapter);
   const isPausedRef = useRef(isPaused);
   const scrollProgressRef = useRef(scrollProgress);
+  const chaptersLengthRef = useRef(chaptersLength);
+  const startedRef = useRef(false);
 
   useEffect(() => { currentChapterRef.current = currentChapter; }, [currentChapter]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
   useEffect(() => { scrollProgressRef.current = scrollProgress; }, [scrollProgress]);
+  useEffect(() => { chaptersLengthRef.current = chaptersLength; }, [chaptersLength]);
 
   useEffect(() => {
-    if (!bookId || loading) return;
+    if (!bookId || loading || startedRef.current) return;
 
     let cancelled = false;
+    startedRef.current = true;
 
     const startSession = async () => {
       try {
@@ -65,13 +69,13 @@ export function useReadingSession({
         api.post(`/api/reading-sessions/${sid}/end`, {
           pagesRead: finalChapter + 1,
           currentPage: finalChapter,
-          totalPages: chaptersLength,
+          totalPages: chaptersLengthRef.current,
           scrollProgress: scrollProgressRef.current,
         }).catch(() => {});
         sessionIdRef.current = null;
       }
     };
-  }, [bookId, loading, chaptersLength]);
+  }, [bookId, loading]);
 
   return { sessionIdRef };
 }

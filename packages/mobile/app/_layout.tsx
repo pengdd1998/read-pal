@@ -1,4 +1,4 @@
-import '../global.css';
+// import '../global.css';
 import '@/i18n';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';

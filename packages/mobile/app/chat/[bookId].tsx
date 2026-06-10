@@ -5,7 +5,7 @@ import ChatPanel from '@/components/chat/ChatPanel';
 import type { Book } from '@read-pal/shared';
 
 export default function ChatScreen() {
-  const { bookId } = useLocalSearchParams<{ bookId: string }>();
+  const { bookId, initialQuestion } = useLocalSearchParams<{ bookId: string; initialQuestion?: string }>();
 
   const { data: book } = useQuery({
     queryKey: ['book', bookId],
@@ -18,7 +18,7 @@ export default function ChatScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ChatPanel bookId={bookId} bookTitle={book?.title} />
+      <ChatPanel bookId={bookId} bookTitle={book?.title} initialQuestion={initialQuestion} />
     </>
   );
 }

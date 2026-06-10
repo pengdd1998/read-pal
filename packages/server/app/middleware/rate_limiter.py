@@ -20,16 +20,33 @@ logger = logging.getLogger('read-pal.rate-limit')
 
 RATE_LIMIT_PREFIX = 'rl:'
 
-# --- In-memory fallback -------------------------------------------------------
+# --- In-memory fallback (singleton) -------------------------------------------
 
-_memory_store: dict[str, tuple[int, float]] = {}
+class MemoryRateLimitStore:
+    """Singleton holding the in-memory rate-limit store — avoids module-level globals."""
+
+    _instance: MemoryRateLimitStore | None = None
+
+    def __new__(cls) -> MemoryRateLimitStore:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.store: dict[str, tuple[int, float]] = {}
+        return cls._instance
+
+    def evict_expired(self, now: float) -> None:
+        """Remove expired entries to prevent unbounded memory growth."""
+        expired = [k for k, (_, reset) in self.store.items() if now > reset]
+        for k in expired:
+            self.store.pop(k, None)
+
+    def get(self, key: str) -> tuple[int, float] | None:
+        return self.store.get(key)
+
+    def set(self, key: str, value: tuple[int, float]) -> None:
+        self.store[key] = value
 
 
-def _evict_expired(now: float) -> None:
-    """Remove expired entries to prevent unbounded memory growth."""
-    expired = [k for k, (_, reset) in _memory_store.items() if now > reset]
-    for k in expired:
-        _memory_store.pop(k, None)
+_memory_rate_limit_store = MemoryRateLimitStore()
 
 
 # --- RateLimiter class --------------------------------------------------------
@@ -77,7 +94,7 @@ class RateLimiter:
 
         except Exception:
             logger.debug('Redis unavailable — using in-memory rate-limit fallback')
-            _evict_expired(now)
+            _memory_rate_limit_store.evict_expired(now)
             return self._memory_check(key, now, limit, window_seconds)
 
     # -- in-memory fallback ---
@@ -89,10 +106,11 @@ class RateLimiter:
         limit: int,
         window_seconds: int,
     ) -> tuple[bool, dict[str, str]]:
-        entry = _memory_store.get(key)
+        store = _memory_rate_limit_store
+        entry = store.get(key)
 
         if entry is None or now > entry[1]:
-            _memory_store[key] = (1, now + window_seconds)
+            store.set(key, (1, now + window_seconds))
             return True, {
                 'X-RateLimit-Limit': str(limit),
                 'X-RateLimit-Remaining': str(limit - 1),
@@ -101,7 +119,7 @@ class RateLimiter:
 
         count, reset_time = entry
         count += 1
-        _memory_store[key] = (count, reset_time)
+        store.set(key, (count, reset_time))
 
         remaining = max(0, limit - count)
         headers = {

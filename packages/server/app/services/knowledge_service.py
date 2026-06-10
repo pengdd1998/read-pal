@@ -36,6 +36,10 @@ from app.utils.token_budget import TokenBudget
 
 logger = logging.getLogger('read-pal.knowledge')
 
+# Public constants used by seed_service and other modules
+GRAPH_CACHE_PREFIX = 'kg:'
+GRAPH_CACHE_TTL = 86400 * 7  # 7 days
+
 # ---------------------------------------------------------------------------
 # Redis key layout
 # ---------------------------------------------------------------------------
@@ -85,6 +89,43 @@ async def _load_annotations(
         .limit(limit),
     )
     return list(result.scalars().all())
+
+
+async def _load_annotations_batch(
+    db: AsyncSession,
+    user_id: UUID,
+    book_ids: list[UUID],
+    limit_per_book: int = 50,
+) -> dict[UUID, list[Annotation]]:
+    """Load annotations for multiple books in a single query (avoids N+1).
+
+    Returns a dict mapping ``book_id -> list[Annotation]``.  Books with no
+    annotations are present as an empty list.
+    """
+    if not book_ids:
+        return {}
+
+    result = await db.execute(
+        select(Annotation)
+        .where(
+            Annotation.user_id == user_id,
+            Annotation.book_id.in_(book_ids),
+        )
+        .order_by(Annotation.created_at)
+    )
+    rows = list(result.scalars().all())
+
+    # Group by book_id
+    grouped: dict[UUID, list[Annotation]] = {bid: [] for bid in book_ids}
+    for ann in rows:
+        grouped[ann.book_id].append(ann)
+
+    # Cap each bucket to *limit_per_book*
+    for bid in book_ids:
+        if len(grouped[bid]) > limit_per_book:
+            grouped[bid] = grouped[bid][:limit_per_book]
+
+    return grouped
 
 
 # ---------------------------------------------------------------------------

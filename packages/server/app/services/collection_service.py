@@ -5,8 +5,10 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.models.collection import Collection
+from app.models.book import Book
+from app.models.collection import Collection, collection_books
 from app.schemas.collection import CollectionCreate, CollectionUpdate
 
 logger = logging.getLogger('read-pal.collections')
@@ -24,7 +26,6 @@ async def create_collection(
         description=data.description,
         icon=data.icon or 'folder',
         color=data.color or '#f59e0b',
-        book_ids=[],
     )
     db.add(collection)
     await db.flush()
@@ -117,7 +118,9 @@ async def add_book_to_collection(
 ) -> Collection:
     """Add a book to a collection."""
     result = await db.execute(
-        select(Collection).where(
+        select(Collection)
+        .options(selectinload(Collection.books))
+        .where(
             Collection.id == collection_id,
             Collection.user_id == user_id,
         ),
@@ -126,9 +129,14 @@ async def add_book_to_collection(
     if collection is None:
         raise ValueError('Collection not found')
 
-    existing_ids = set(collection.book_ids or [])
-    existing_ids.add(book_id)
-    collection.book_ids = list(existing_ids)
+    # Avoid duplicates
+    existing_ids = {b.id for b in collection.books}
+    if book_id not in existing_ids:
+        book = await db.get(Book, book_id)
+        if book is not None:
+            collection.books.append(book)
+        else:
+            raise ValueError(f'Book {book_id} not found')
 
     await db.flush()
     await db.refresh(collection)
@@ -144,7 +152,9 @@ async def remove_book_from_collection(
 ) -> Collection:
     """Remove a book from a collection."""
     result = await db.execute(
-        select(Collection).where(
+        select(Collection)
+        .options(selectinload(Collection.books))
+        .where(
             Collection.id == collection_id,
             Collection.user_id == user_id,
         ),
@@ -153,9 +163,7 @@ async def remove_book_from_collection(
     if collection is None:
         raise ValueError('Collection not found')
 
-    existing_ids = set(collection.book_ids or [])
-    existing_ids.discard(book_id)
-    collection.book_ids = list(existing_ids)
+    collection.books = [b for b in collection.books if b.id != book_id]
 
     await db.flush()
     await db.refresh(collection)

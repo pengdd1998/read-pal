@@ -12,6 +12,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  forceClear: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -91,6 +92,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     await deleteToken();
     await deleteRefreshToken();
     await deleteUser();
+    set({ token: null, user: null, isAuthenticated: false });
+  },
+
+  forceClear: () => {
     set({ token: null, user: null, isAuthenticated: false });
   },
 }));

@@ -1,128 +1,109 @@
 'use client';
 
-import { useRef, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useOnlineStatus } from './useOnlineStatus';
-
-interface QueuedAction {
-  id: string;
-  action: () => Promise<void>;
-  description: string;
-  queuedAt: number;
-}
-
-const STORAGE_KEY = 'read-pal-offline-queue';
-const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
-const MAX_QUEUE_SIZE = 50;
+import { getQueueCount, queueMutation as enqueue, replayQueue, clearQueue } from '@/lib/offline-queue';
 
 /**
- * Queue actions while offline and replay them when connectivity returns.
+ * Queue mutations while offline and replay them when connectivity returns.
+ *
+ * Unlike the previous implementation, this uses IndexedDB-backed action
+ * descriptors so queued work survives page refreshes.
  *
  * Usage:
- *   const { queueAction, pendingCount } = useOfflineQueue();
- *   queueAction(() => api.post('/api/annotations', data), 'Save annotation');
+ *   const { queueMutation, pendingCount, replayAll, clearAll } = useOfflineQueue();
+ *   queueMutation('/api/annotations', 'POST', data);
  */
 export function useOfflineQueue() {
   const { isOnline, justCameBackOnline } = useOnlineStatus();
-  const queueRef = useRef<QueuedAction[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
   const processingRef = useRef(false);
 
-  // Load persisted queue on mount
+  // Refresh count from IndexedDB
+  const refreshCount = useCallback(async () => {
+    const count = await getQueueCount();
+    setPendingCount(count);
+  }, []);
+
+  // Load initial count
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Array<{ id: string; description: string; queuedAt: number }>;
-        // Only keep metadata — actual functions can't be serialized
-        // so stale entries are pruned on reload
-        const now = Date.now();
-        const valid = parsed.filter((item) => now - item.queuedAt < MAX_AGE_MS);
-        queueRef.current = valid as QueuedAction[];
-      }
-    } catch {
-      // Ignore corrupt data
-    }
-  }, []);
+    refreshCount();
+  }, [refreshCount]);
 
-  // Persist queue metadata (not functions) for diagnostics
-  const persistMetadata = useCallback(() => {
-    try {
-      const metadata = queueRef.current.map(({ id, description, queuedAt }) => ({
-        id,
-        description,
-        queuedAt,
-      }));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(metadata));
-    } catch {
-      // Storage full or unavailable
-    }
-  }, []);
+  // Listen for mutation events
+  useEffect(() => {
+    const onQueued = () => refreshCount();
+    const onReplayed = () => refreshCount();
+    window.addEventListener('mutation-queued', onQueued);
+    window.addEventListener('mutation-replayed', onReplayed);
+    return () => {
+      window.removeEventListener('mutation-queued', onQueued);
+      window.removeEventListener('mutation-replayed', onReplayed);
+    };
+  }, [refreshCount]);
 
-  const processQueue = useCallback(async () => {
+  // Replay all queued mutations
+  const replayAll = useCallback(async () => {
     if (processingRef.current || !isOnline) return;
     processingRef.current = true;
-
-    const queue = queueRef.current;
-    queueRef.current = [];
-    persistMetadata();
-
-    for (const item of queue) {
-      try {
-        await item.action();
-      } catch {
-        // Re-queue failed items (with the same function reference)
-        queueRef.current.push(item);
-      }
+    try {
+      await replayQueue();
+    } finally {
+      processingRef.current = false;
+      await refreshCount();
     }
-
-    processingRef.current = false;
-    persistMetadata();
-  }, [isOnline, persistMetadata]);
+  }, [isOnline, refreshCount]);
 
   // Flush queue when coming back online
   useEffect(() => {
-    if (justCameBackOnline && queueRef.current.length > 0) {
-      processQueue();
+    if (justCameBackOnline && pendingCount > 0) {
+      replayAll();
     }
-  }, [justCameBackOnline, processQueue]);
+  }, [justCameBackOnline, pendingCount, replayAll]);
 
-  const queueAction = useCallback(
-    (action: () => Promise<void>, description: string) => {
+  /**
+   * Queue a mutation. If online, tries immediately first;
+   * falls back to IndexedDB queue on failure.
+   */
+  const queueMutation = useCallback(
+    async (
+      url: string,
+      method: string,
+      body?: unknown,
+      headers?: Record<string, string>,
+      description?: string,
+    ) => {
       if (isOnline) {
-        // If online, try immediately
-        action().catch(() => {
-          // On failure, queue for retry
-          const item: QueuedAction = {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            action,
-            description,
-            queuedAt: Date.now(),
-          };
-          queueRef.current.push(item);
-          if (queueRef.current.length > MAX_QUEUE_SIZE) {
-            queueRef.current = queueRef.current.slice(-MAX_QUEUE_SIZE);
-          }
-          persistMetadata();
-        });
-      } else {
-        const item: QueuedAction = {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          action,
-          description,
-          queuedAt: Date.now(),
-        };
-        queueRef.current.push(item);
-        if (queueRef.current.length > MAX_QUEUE_SIZE) {
-          queueRef.current = queueRef.current.slice(-MAX_QUEUE_SIZE);
+        // Try immediately when online
+        try {
+          const response = await fetch(url, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              ...headers,
+            },
+            body: body ? JSON.stringify(body) : undefined,
+            credentials: 'include',
+          });
+          if (response.ok) return;
+          // Auth errors: don't queue
+          if (response.status === 401 || response.status === 403) return;
+        } catch {
+          // Network error — fall through to queue
         }
-        persistMetadata();
       }
+
+      // Queue for later replay
+      await enqueue(url, method, body, headers, description);
+      await refreshCount();
     },
-    [isOnline, persistMetadata],
+    [isOnline, refreshCount],
   );
 
   return {
-    queueAction,
-    pendingCount: queueRef.current.length,
-    processQueue,
+    queueMutation,
+    pendingCount,
+    replayAll,
+    clearAll: clearQueue,
   };
 }

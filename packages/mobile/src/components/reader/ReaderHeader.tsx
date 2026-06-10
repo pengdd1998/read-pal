@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useReaderStore } from '@/stores/reader-store';
+import { BackIcon, MenuIcon, BookmarkIcon, BookmarkOutlineIcon, SettingsIcon } from '@/components/shared/Icons';
+import { colors, typography, spacing } from '@/lib/theme';
 
 interface ReaderHeaderProps {
   title: string;
@@ -12,7 +14,6 @@ interface ReaderHeaderProps {
   onBookmark: () => void;
   onToggleSettings: () => void;
   onToggleToc: () => void;
-  onTapCenter: () => void;
 }
 
 export default function ReaderHeader({
@@ -25,14 +26,14 @@ export default function ReaderHeader({
   onToggleToc,
 }: ReaderHeaderProps) {
   const theme = useReaderStore((s) => s.theme);
-  const bgColor = theme === 'dark' ? '#151d28' : '#f9f5f0';
-  const textColor = theme === 'dark' ? '#e0e0e0' : '#1e2a38';
+  const bgColor = theme === 'dark' ? 'rgba(26, 26, 46, 0.95)' : 'rgba(249, 245, 240, 0.95)';
+  const textColor = theme === 'dark' ? '#e8e0d4' : '#1e2a38';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]} edges={['top']}>
       <View style={styles.row}>
         <TouchableOpacity onPress={() => router.back()} style={styles.btn}>
-          <Text style={[styles.btnText, { color: textColor }]}>&#x2190;</Text>
+          <BackIcon size={22} color={textColor} />
         </TouchableOpacity>
 
         <View style={styles.center}>
@@ -41,13 +42,13 @@ export default function ReaderHeader({
         </View>
 
         <TouchableOpacity onPress={onToggleToc} style={styles.btn}>
-          <Text style={[styles.btnText, { color: textColor }]}>☰</Text>
+          <MenuIcon size={20} color={textColor} />
         </TouchableOpacity>
         <TouchableOpacity onPress={onBookmark} style={styles.btn}>
-          <Text style={styles.btnText}>{isBookmarked ? '🔖' : '📑'}</Text>
+          {isBookmarked ? <BookmarkIcon size={20} /> : <BookmarkOutlineIcon size={20} />}
         </TouchableOpacity>
         <TouchableOpacity onPress={onToggleSettings} style={styles.btn}>
-          <Text style={[styles.btnText, { color: textColor }]}>⚙</Text>
+          <SettingsIcon size={20} color={textColor} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -55,11 +56,10 @@ export default function ReaderHeader({
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 12, paddingBottom: 8 },
+  container: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center' },
-  btn: { padding: 8 },
-  btnText: { fontSize: 18 },
-  center: { flex: 1, marginHorizontal: 8 },
-  title: { fontSize: 14, fontWeight: '600' },
-  subtitle: { fontSize: 11, color: '#8a99ae', marginTop: 1 },
+  btn: { padding: spacing.sm, borderRadius: 20 },
+  center: { flex: 1, marginHorizontal: spacing.xs },
+  title: { ...typography.captionMedium, fontSize: 13 },
+  subtitle: { ...typography.overline, color: colors.navy[300], marginTop: 1, fontSize: 10 },
 });

@@ -47,8 +47,10 @@ class LoginLockout:
                 remaining_ms = locked_until - now
                 return True, max(1, (remaining_ms + 59_999) // 60_000)
 
-            # Lockout has expired — clean up
-            await self.redis.delete(f'{LOCKOUT_PREFIX}{email}')
+            # Lockout has expired or not yet triggered — only clean up expired entries
+            if locked_until and now >= locked_until:
+                await self.redis.delete(f'{LOCKOUT_PREFIX}{email}')
+
             return False, None
 
         except Exception:

@@ -4,9 +4,22 @@ import pytest
 
 from tests.conftest import auth_headers, register_user
 
-BOOK_ID = '00000000-0000-0000-0000-000000000001'
-BOOK_ID_2 = '00000000-0000-0000-0000-000000000002'
 FAKE_UUID = '99999999-9999-9999-9999-999999999999'
+
+
+async def _create_book(client, token, **overrides):
+    """Create a book via API and return its data."""
+    payload = {
+        'title': 'Test Book',
+        'author': 'Test Author',
+        'file_type': 'epub',
+        'file_size': 1024,
+        'total_pages': 100,
+        **overrides,
+    }
+    resp = await client.post('/api/v1/books', json=payload, headers=auth_headers(token))
+    assert resp.status_code == 201
+    return resp.json()['data']
 
 
 # ---------------------------------------------------------------------------
@@ -214,6 +227,12 @@ async def test_add_books_batch(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
 
+    # Create real books so FK constraints are satisfied
+    book1 = await _create_book(client, reg['token'], title='Book 1')
+    book2 = await _create_book(client, reg['token'], title='Book 2')
+    book_id_1 = book1['id']
+    book_id_2 = book2['id']
+
     create = await client.post(
         '/api/v1/collections/', headers=headers, json={'name': 'Batch'},
     )
@@ -222,23 +241,24 @@ async def test_add_books_batch(client):
     resp = await client.post(
         f'/api/v1/collections/{col_id}/books',
         headers=headers,
-        json={'bookIds': [BOOK_ID, BOOK_ID_2]},
+        json={'bookIds': [book_id_1, book_id_2]},
     )
     assert resp.status_code == 200
     book_ids = resp.json()['data']['book_ids']
-    assert BOOK_ID in book_ids
-    assert BOOK_ID_2 in book_ids
+    assert book_id_1 in book_ids
+    assert book_id_2 in book_ids
 
 
 @pytest.mark.asyncio
 async def test_add_books_batch_returns_404(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
 
     resp = await client.post(
         f'/api/v1/collections/{FAKE_UUID}/books',
         headers=headers,
-        json={'bookIds': [BOOK_ID]},
+        json={'bookIds': [book['id']]},
     )
     assert resp.status_code == 404
 
@@ -252,6 +272,7 @@ async def test_add_books_batch_returns_404(client):
 async def test_add_single_book(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
 
     create = await client.post(
         '/api/v1/collections/', headers=headers, json={'name': 'Single'},
@@ -259,20 +280,21 @@ async def test_add_single_book(client):
     col_id = create.json()['data']['id']
 
     resp = await client.post(
-        f'/api/v1/collections/{col_id}/books/{BOOK_ID}',
+        f'/api/v1/collections/{col_id}/books/{book["id"]}',
         headers=headers,
     )
     assert resp.status_code == 200
-    assert BOOK_ID in resp.json()['data']['book_ids']
+    assert book['id'] in resp.json()['data']['book_ids']
 
 
 @pytest.mark.asyncio
 async def test_add_single_book_returns_404(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
 
     resp = await client.post(
-        f'/api/v1/collections/{FAKE_UUID}/books/{BOOK_ID}',
+        f'/api/v1/collections/{FAKE_UUID}/books/{book["id"]}',
         headers=headers,
     )
     assert resp.status_code == 404
@@ -287,6 +309,7 @@ async def test_add_single_book_returns_404(client):
 async def test_remove_single_book(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
 
     create = await client.post(
         '/api/v1/collections/', headers=headers, json={'name': 'Remove'},
@@ -295,13 +318,13 @@ async def test_remove_single_book(client):
 
     # Add first
     await client.post(
-        f'/api/v1/collections/{col_id}/books/{BOOK_ID}',
+        f'/api/v1/collections/{col_id}/books/{book["id"]}',
         headers=headers,
     )
 
     # Remove
     resp = await client.delete(
-        f'/api/v1/collections/{col_id}/books/{BOOK_ID}',
+        f'/api/v1/collections/{col_id}/books/{book["id"]}',
         headers=headers,
     )
     assert resp.status_code == 204
@@ -311,9 +334,10 @@ async def test_remove_single_book(client):
 async def test_remove_single_book_returns_404(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
 
     resp = await client.delete(
-        f'/api/v1/collections/{FAKE_UUID}/books/{BOOK_ID}',
+        f'/api/v1/collections/{FAKE_UUID}/books/{book["id"]}',
         headers=headers,
     )
     assert resp.status_code == 404
@@ -328,6 +352,8 @@ async def test_remove_single_book_returns_404(client):
 async def test_remove_books_batch(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    book1 = await _create_book(client, reg['token'], title='Rm Book 1')
+    book2 = await _create_book(client, reg['token'], title='Rm Book 2')
 
     create = await client.post(
         '/api/v1/collections/', headers=headers, json={'name': 'BatchRm'},
@@ -338,29 +364,30 @@ async def test_remove_books_batch(client):
     await client.post(
         f'/api/v1/collections/{col_id}/books',
         headers=headers,
-        json={'bookIds': [BOOK_ID, BOOK_ID_2]},
+        json={'bookIds': [book1['id'], book2['id']]},
     )
 
     # Remove batch
     resp = await client.post(
         f'/api/v1/collections/{col_id}/books/remove',
         headers=headers,
-        json={'bookIds': [BOOK_ID]},
+        json={'bookIds': [book1['id']]},
     )
     assert resp.status_code == 200
-    assert BOOK_ID not in resp.json()['data']['book_ids']
-    assert BOOK_ID_2 in resp.json()['data']['book_ids']
+    assert book1['id'] not in resp.json()['data']['book_ids']
+    assert book2['id'] in resp.json()['data']['book_ids']
 
 
 @pytest.mark.asyncio
 async def test_remove_books_batch_returns_404(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
 
     resp = await client.post(
         f'/api/v1/collections/{FAKE_UUID}/books/remove',
         headers=headers,
-        json={'bookIds': [BOOK_ID]},
+        json={'bookIds': [book['id']]},
     )
     assert resp.status_code == 404
 

@@ -131,8 +131,30 @@ async def precompute_book_embeddings(
         logger.debug('Skipping embedding pre-computation: no API key')
         return
 
-    chunks_to_insert: list[BookChunk] = []
+    semaphore = asyncio.Semaphore(5)
 
+    async def _embed_chunk(ch_idx: int, ck_idx: int, chunk: str) -> BookChunk | None:
+        """Embed a single chunk with semaphore-gated concurrency."""
+        async with semaphore:
+            try:
+                embedding = await _get_embedding(chunk)
+            except Exception as exc:
+                logger.error(
+                    'Failed to embed chunk chapter=%d chunk=%d: %s',
+                    ch_idx, ck_idx, exc,
+                )
+                return None
+        return BookChunk(
+            book_id=book_id,
+            document_id=document_id,
+            chapter_index=ch_idx,
+            chunk_index=ck_idx,
+            content=chunk,
+            embedding=embedding,
+        )
+
+    # Build all embedding tasks up-front so gather can schedule them concurrently.
+    tasks: list[asyncio.Task] = []
     for ch_idx, chapter in enumerate(chapters):
         title = chapter.get('title', '')
         content = chapter.get('content', '')
@@ -140,24 +162,22 @@ async def precompute_book_embeddings(
         text_chunks = _chunk_text(full_text)
 
         for ck_idx, chunk in enumerate(text_chunks):
-            embedding = await _get_embedding(chunk)
-            chunks_to_insert.append(
-                BookChunk(
-                    book_id=book_id,
-                    document_id=document_id,
-                    chapter_index=ch_idx,
-                    chunk_index=ck_idx,
-                    content=chunk,
-                    embedding=embedding,
-                )
-            )
+            tasks.append(asyncio.create_task(_embed_chunk(ch_idx, ck_idx, chunk)))
 
-        if ch_idx < len(chapters) - 1:
-            await asyncio.sleep(0.2)
+    results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    async with async_session() as session:
-        async with session.begin():
-            session.add_all(chunks_to_insert)
+    chunks_to_insert: list[BookChunk] = []
+    for result in results:
+        if isinstance(result, Exception):
+            logger.error('Embedding task failed: %s', result)
+            continue
+        if result is not None:
+            chunks_to_insert.append(result)
+
+    if chunks_to_insert:
+        async with async_session() as session:
+            async with session.begin():
+                session.add_all(chunks_to_insert)
 
     logger.info(
         'Stored %d chunks for book %s (%d with embeddings)',

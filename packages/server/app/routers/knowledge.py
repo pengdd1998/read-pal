@@ -32,7 +32,11 @@ async def get_all_graphs(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Get all knowledge graphs for the user (cached only, no LLM calls)."""
-    from app.services.knowledge_service import _load_cached_graph, _content_hash, _load_annotations
+    from app.services.knowledge_service import (
+        _load_cached_graph,
+        _content_hash,
+        _load_annotations_batch,
+    )
 
     result = await db.execute(
         select(Book.id).where(Book.user_id == UUID(current_user['id'])),
@@ -41,10 +45,23 @@ async def get_all_graphs(
     all_nodes: list[dict] = []
     all_edges: list[dict] = []
 
+    if not book_ids:
+        return {
+            'success': True,
+            'data': {
+                'nodes': all_nodes,
+                'edges': all_edges,
+            },
+        }
+
     uid = UUID(current_user['id'])
+
+    # Single batch query instead of one query per book (fixes N+1)
+    annotations_by_book = await _load_annotations_batch(db, uid, book_ids)
+
     for bid in book_ids:
         try:
-            annotations = await _load_annotations(db, uid, bid)
+            annotations = annotations_by_book.get(bid, [])
             texts = [a.content for a in annotations if a.content.strip()]
             current_hash = _content_hash(texts)
             cached = await _load_cached_graph(uid, bid, current_hash)

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useReaderStore, type ReaderTheme } from '@/stores/reader-store';
@@ -23,6 +23,15 @@ const THEME_TEXT: Record<ReaderTheme, string> = {
   dark: '#e0e0e0',
   sepia: '#3d3020',
 };
+
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/\bon\w+\s*=\s*\{[^}]*\}/gi, '')
+    .replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"')
+    .replace(/src\s*=\s*["']javascript:[^"']*["']/gi, '');
+}
 
 function buildHtml(
   chapterHtml: string,
@@ -70,7 +79,38 @@ function buildHtml(
       }, 200);
     });
 
-    // Handle text selection
+    // Handle text selection via selectionchange (works on touch + mouse)
+    var selectionTimeout;
+    document.addEventListener('selectionchange', function() {
+      clearTimeout(selectionTimeout);
+      selectionTimeout = setTimeout(function() {
+        var sel = window.getSelection();
+        var text = sel ? sel.toString().trim() : '';
+        if (!text) return;
+        var range = sel.getRangeAt(0);
+        var rect = range.getBoundingClientRect();
+        var container = document.getElementById('chapter-content');
+        var offsets = { start: 0, end: text.length };
+        if (container) {
+          try {
+            var preRange = document.createRange();
+            preRange.selectNodeContents(container);
+            preRange.setEnd(range.startContainer, range.startOffset);
+            offsets.start = preRange.toString().length;
+            offsets.end = offsets.start + range.toString().length;
+          } catch(e) {}
+        }
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'selection',
+          text: text,
+          cfiRange: '',
+          rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+          offsets: offsets,
+        }));
+      }, 300);
+    });
+
+    // Fallback: mouseup for emulator/testing
     document.addEventListener('mouseup', function() {
       var sel = window.getSelection();
       var text = sel ? sel.toString().trim() : '';
@@ -96,6 +136,25 @@ function buildHtml(
         offsets: offsets,
       }));
     });
+
+    // Exposed function to update chapter content without remounting WebView
+    window.updateChapter = function(html) {
+      var container = document.getElementById('chapter-content');
+      if (container) {
+        container.innerHTML = html;
+        window.scrollTo(0, 0);
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'chapterReady' }));
+      }
+    };
+
+    // Exposed function to update theme/styles without remounting
+    window.updateStyles = function(bg, fg, fontSize, fontFamily, lineHeight) {
+      document.body.style.background = bg;
+      document.body.style.color = fg;
+      document.body.style.fontSize = fontSize + 'px';
+      document.body.style.fontFamily = "'" + fontFamily + "', serif";
+      document.body.style.lineHeight = lineHeight;
+    };
   </script>
 </body>
 </html>`;
@@ -111,9 +170,39 @@ export default function EpubReader({
   const webViewRef = useRef<WebView>(null);
   const { fontSize, fontFamily, lineHeight, theme } = useReaderStore();
   const [ready, setReady] = useState(false);
+  const prevChapterRef = useRef(currentChapter);
+  const prevSettingsRef = useRef({ fontSize, fontFamily, lineHeight, theme });
 
-  const chapterHtml = chapters[currentChapter]?.content || '<p>No content available.</p>';
-  const html = buildHtml(chapterHtml, theme, fontSize, fontFamily, lineHeight);
+  const initialChapterHtml = sanitizeHtml(chapters[0]?.content || '<p>No content available.</p>');
+  const html = buildHtml(initialChapterHtml, theme, fontSize, fontFamily, lineHeight);
+
+  // Update chapter content via injectJavaScript (no remount)
+  useEffect(() => {
+    if (!ready) return;
+    if (currentChapter === prevChapterRef.current) return;
+    prevChapterRef.current = currentChapter;
+
+    const chapterHtml = sanitizeHtml(chapters[currentChapter]?.content || '<p>No content available.</p>');
+    const escaped = chapterHtml.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+    webViewRef.current?.injectJavaScript(
+      `window.updateChapter(\`${escaped}\`); true;`
+    );
+  }, [currentChapter, chapters, ready]);
+
+  // Update styles via injectJavaScript (no remount)
+  useEffect(() => {
+    if (!ready) return;
+    const prev = prevSettingsRef.current;
+    if (prev.fontSize === fontSize && prev.fontFamily === fontFamily &&
+        prev.lineHeight === lineHeight && prev.theme === theme) return;
+    prevSettingsRef.current = { fontSize, fontFamily, lineHeight, theme };
+
+    const bg = THEME_BG[theme];
+    const fg = THEME_TEXT[theme];
+    webViewRef.current?.injectJavaScript(
+      `window.updateStyles('${bg}', '${fg}', ${fontSize}, '${fontFamily}', ${lineHeight}); true;`
+    );
+  }, [fontSize, fontFamily, lineHeight, theme, ready]);
 
   const handleMessage = useCallback(
     (event: WebViewMessageEvent) => {
@@ -121,6 +210,7 @@ export default function EpubReader({
         const data = JSON.parse(event.nativeEvent.data);
         switch (data.type) {
           case 'ready':
+          case 'chapterReady':
             setReady(true);
             break;
           case 'progress':
@@ -134,7 +224,7 @@ export default function EpubReader({
         /* ignore */
       }
     },
-    [onChapterChange, onSelection, onProgress],
+    [onSelection, onProgress],
   );
 
   return (
@@ -154,7 +244,6 @@ export default function EpubReader({
         scrollEnabled
         style={[styles.webview, { backgroundColor: THEME_BG[theme] }]}
         onMessage={handleMessage}
-        key={currentChapter}
         nestedScrollEnabled
       />
     </View>

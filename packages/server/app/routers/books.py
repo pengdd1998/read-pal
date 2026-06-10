@@ -66,7 +66,7 @@ async def get_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return a single book by ID."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     book = await book_service.get_book(db, UUID(current_user['id']), book_id)
     if book is None:
         raise HTTPException(
@@ -98,7 +98,7 @@ async def update_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Partially update a book."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     book = await book_service.update_book(db, UUID(current_user['id']), book_id, body)
     if book is None:
         raise HTTPException(
@@ -115,7 +115,7 @@ async def delete_book(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Delete a book and all associated data."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     deleted = await book_service.delete_book(db, UUID(current_user['id']), book_id)
     if not deleted:
         raise HTTPException(
@@ -132,7 +132,7 @@ async def update_tags(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Set tags for a book."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     tags = body.tags
     book = await book_service.update_tags(db, UUID(current_user['id']), book_id, tags)
     if book is None:

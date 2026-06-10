@@ -39,6 +39,23 @@ export function GraphView({
 }: GraphViewProps) {
   const displayNodes = layoutNodes.length > 0 ? layoutNodes : nodes;
 
+  // O(1) node lookup by ID — eliminates repeated .find() calls
+  const nodeMap = useMemo(() => {
+    const map = new Map<string, GraphNode>();
+    for (const n of displayNodes) map.set(n.id, n);
+    return map;
+  }, [displayNodes]);
+
+  // Pre-compute edge count per node — avoids per-node .filter() in render
+  const edgeCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of edges) {
+      map.set(e.source, (map.get(e.source) || 0) + 1);
+      map.set(e.target, (map.get(e.target) || 0) + 1);
+    }
+    return map;
+  }, [edges]);
+
   const connectedEdges = useMemo(() => {
     const active = hoverNode || selectedNode;
     if (!active) return edges;
@@ -82,6 +99,12 @@ export function GraphView({
 
   return (
     <>
+      {/* Performance warning for large graphs */}
+      {displayNodes.length > 80 && (
+        <div className="absolute top-4 right-20 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 rounded-lg px-3 py-2 text-xs z-10">
+          Large graph ({displayNodes.length} nodes) — performance may be affected
+        </div>
+      )}
       <svg
         ref={localRef}
         width="100%"
@@ -97,8 +120,8 @@ export function GraphView({
       >
         {/* Edges */}
         {edges.map((edge, i) => {
-          const src = displayNodes.find((n) => n.id === edge.source);
-          const tgt = displayNodes.find((n) => n.id === edge.target);
+          const src = nodeMap.get(edge.source);
+          const tgt = nodeMap.get(edge.target);
           if (!src || !tgt) return null;
           const isHighlighted = connectedNodeIds.has(edge.source) && connectedNodeIds.has(edge.target);
           return (
@@ -153,7 +176,7 @@ export function GraphView({
               >
                 {node.label.length > 20 ? node.label.slice(0, 18) + '...' : node.label}
               </text>
-              <NodeConnectionCount nodeId={node.id} edges={edges} size={size} node={node} />
+              <NodeConnectionCount nodeId={node.id} edgeCount={edgeCountMap.get(node.id) || 0} size={size} node={node} />
             </g>
           );
         })}
@@ -178,17 +201,16 @@ export function GraphView({
 }
 
 /** Small inline component showing the edge count badge on a node. */
-function NodeConnectionCount({ nodeId, edges, size, node }: {
+function NodeConnectionCount({ nodeId, edgeCount, size, node }: {
   nodeId: string;
-  edges: GraphEdge[];
+  edgeCount: number;
   size: number;
   node: GraphNode;
 }) {
-  const count = edges.filter((e) => e.source === nodeId || e.target === nodeId).length;
-  if (count === 0) return null;
+  if (edgeCount === 0) return null;
   return (
     <text x={`${node.x + size * 0.7}%`} y={`${node.y - size * 0.7}%`} className="text-[9px] font-bold fill-gray-400" textAnchor="middle">
-      {count}
+      {edgeCount}
     </text>
   );
 }

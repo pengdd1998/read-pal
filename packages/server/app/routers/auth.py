@@ -11,7 +11,7 @@ Related routers:
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +23,8 @@ from app.middleware.auth import (
     get_current_user,
     hash_password,
     revoke_token,
+    set_auth_cookies,
+    clear_auth_cookies,
     verify_password,
 )
 from app.middleware.login_lockout import get_login_lockout
@@ -43,7 +45,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.schemas.common import GenericResponse
-from app.utils.i18n import _get_user_lang, t
+from app.utils.i18n import DEFAULT_LANGUAGE, _get_user_lang, t
 
 logger = logging.getLogger('read-pal.auth')
 
@@ -72,8 +74,9 @@ async def google_oauth_status() -> dict:
 
 @router.post('/login', dependencies=[login_limiter])
 async def login(
-    body: LoginRequest,
     request: Request,
+    response: Response,
+    body: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ) -> AuthResponse:
     """Authenticate with email and password, return JWT."""
@@ -118,8 +121,11 @@ async def login(
         )
 
     # Success — generate token pair and clear lockout counter
-    access_token, refresh_token = create_token_pair(str(user.id), body.platform)
+    access_token, refresh_token = create_token_pair(str(user.id), body.platform, lang=lang)
     await lockout.clear_failed_logins(body.email)
+
+    # Set HttpOnly cookies for web platform
+    set_auth_cookies(response, access_token, refresh_token, body.platform)
 
     user_data = UserResponse(
         id=user.id,
@@ -146,6 +152,7 @@ async def login(
 @router.post('/register', status_code=status.HTTP_201_CREATED, dependencies=[register_limiter])
 async def register(
     body: RegisterRequest,
+    response: Response,
     db: AsyncSession = Depends(get_db),
 ) -> AuthResponse:
     """Create a new user account and return JWT."""
@@ -186,7 +193,12 @@ async def register(
     from app.services.seed_service import seed_sample_data
     await seed_sample_data(db, user.id)
 
-    access_token, refresh_token = create_token_pair(str(user.id), body.platform)
+    access_token, refresh_token = create_token_pair(
+        str(user.id), body.platform, lang=DEFAULT_LANGUAGE,
+    )
+
+    # Set HttpOnly cookies for web platform
+    set_auth_cookies(response, access_token, refresh_token, body.platform)
 
     user_data = UserResponse(
         id=user.id,
@@ -216,7 +228,7 @@ async def get_me(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return the authenticated user's profile."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
     result = await db.execute(
         select(User).where(User.id == current_user['id']),
     )
@@ -272,6 +284,17 @@ async def change_password(
     user.password_hash = hash_password(body.new_password)
     await db.flush()
 
+    # Invalidate existing JWTs issued before this password change
+    from datetime import datetime, timezone
+    from app.core.redis import get_redis
+    now_ts = int(datetime.now(timezone.utc).timestamp())
+    redis = get_redis()
+    await redis.set(
+        f'auth:password_changed:{current_user["id"]}',
+        str(now_ts),
+        ex=86400 * 90,  # 90 days
+    )
+
     return MessageResponse(data={'message': 'Password changed successfully'})
 
 
@@ -282,22 +305,26 @@ async def change_password(
 @router.post('/logout')
 async def logout(
     request: Request,
+    response: Response,
     body: LogoutRequest | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
     """Revoke the current JWT token and optional refresh token."""
-    lang = await _get_user_lang(db, UUID(current_user['id']))
+    lang = current_user.get('lang') or await _get_user_lang(db, UUID(current_user['id']))
+
+    # Clear HttpOnly cookies
+    clear_auth_cookies(response)
 
     # Revoke access token from Authorization header
     auth_header = request.headers.get('authorization', '')
     if auth_header.startswith('Bearer '):
         token = auth_header[7:]
         try:
-            from jose import jwt as jose_jwt
+            import jwt as _jwt
 
             settings = get_settings()
-            decoded = jose_jwt.decode(
+            decoded = _jwt.decode(
                 token,
                 settings.jwt_secret,
                 algorithms=['HS256'],
@@ -313,10 +340,10 @@ async def logout(
     # Revoke refresh token if provided
     if body and body.refresh_token:
         try:
-            from jose import jwt as jose_jwt
+            import jwt as _jwt
 
             settings = get_settings()
-            decoded = jose_jwt.decode(
+            decoded = _jwt.decode(
                 body.refresh_token,
                 settings.jwt_secret,
                 algorithms=['HS256'],
@@ -337,25 +364,45 @@ async def logout(
 
 @router.post('/refresh', response_model=GenericResponse, dependencies=[refresh_limiter])
 async def refresh(
-    body: RefreshTokenRequest,
+    request: Request,
+    response: Response,
+    body: RefreshTokenRequest | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Exchange a valid refresh token for a new access + refresh token pair.
 
     The old refresh token is revoked (rotation) to prevent reuse.
+    Supports refresh token from request body or HttpOnly cookie.
     """
-    from jose import JWTError, jwt as jose_jwt
-    from app.middleware.auth import is_token_revoked
+    import jwt as _jwt
+    from jwt import ExpiredSignatureError, InvalidTokenError
+    from app.middleware.auth import is_token_revoked, REFRESH_COOKIE_NAME
 
     settings = get_settings()
 
+    # Read refresh token from cookie or request body
+    refresh_token = None
+    if body and body.refresh_token:
+        refresh_token = body.refresh_token
+    else:
+        refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                'code': 'INVALID_TOKEN',
+                'message': 'Refresh token is required',
+            },
+        )
+
     try:
-        payload = jose_jwt.decode(
-            body.refresh_token,
+        payload = _jwt.decode(
+            refresh_token,
             settings.jwt_secret,
             algorithms=['HS256'],
         )
-    except JWTError as exc:
+    except (ExpiredSignatureError, InvalidTokenError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -406,6 +453,9 @@ async def refresh(
 
     # Issue new token pair
     access_token, new_refresh_token = create_token_pair(str(user.id))
+
+    # Set HttpOnly cookies (web platform)
+    set_auth_cookies(response, access_token, new_refresh_token, 'web')
 
     return {
         'success': True,

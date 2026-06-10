@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from app.models.chat_message import ChatMessage
     from app.models.conversation_summary import ConversationSummary
     from app.models.document import Document
+    from app.models.intervention_feedback import InterventionFeedback
+    from app.models.book_club import BookClub
     from app.models.flashcard import Flashcard
     from app.models.memory_book import MemoryBook
     from app.models.reading_plan import ReadingPlan
@@ -224,4 +226,13 @@ class Book(Base):
         'BookChunk',
         back_populates='book',
         cascade='all, delete-orphan',
+    )
+    intervention_feedback: Mapped[list['InterventionFeedback']] = relationship(
+        'InterventionFeedback',
+        back_populates='book',
+        cascade='all, delete-orphan',
+    )
+    current_club: Mapped[Optional['BookClub']] = relationship(
+        'BookClub',
+        back_populates='current_book',
     )

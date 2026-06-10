@@ -30,11 +30,6 @@ class Annotation(Base):
     __table_args__ = (
         Index('ix_annotations_tags_gin', 'tags', postgresql_using='gin'),
         Index(
-            'ix_annotations_user_id_book_id',
-            'user_id',
-            'book_id',
-        ),
-        Index(
             'ix_annotations_user_id_book_id_created_at',
             'user_id',
             'book_id',

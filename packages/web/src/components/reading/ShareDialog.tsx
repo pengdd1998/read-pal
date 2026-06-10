@@ -6,6 +6,7 @@ import type { Annotation } from '@read-pal/shared';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { useToast } from '@/components/Toast';
 import { api, API_BASE_URL } from '@/lib/api';
+import { FocusTrap } from '@/components/ui/FocusTrap';
 
 type ShareTab = 'quote' | 'discussion' | 'citation';
 
@@ -199,17 +200,18 @@ export function ShareDialog({
   }, [bookId, guideHtml, toast]);
 
   return (
-    <div
-      ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
-    >
+    <FocusTrap active={true}>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('share_title')}
-        className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+        ref={backdropRef}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
       >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('share_title')}
+          className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+        >
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -460,6 +462,7 @@ export function ShareDialog({
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </FocusTrap>
   );
 }

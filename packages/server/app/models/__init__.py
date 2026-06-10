@@ -9,7 +9,7 @@ from app.models.memory_book import MemoryBook
 from app.models.chat_message import ChatMessage
 from app.models.flashcard import Flashcard
 from app.models.friend import FriendConversation, FriendRelationship
-from app.models.collection import Collection
+from app.models.collection import Collection, collection_books
 from app.models.notification import Notification
 from app.models.shared_export import SharedExport
 from app.models.intervention_feedback import InterventionFeedback
@@ -34,6 +34,7 @@ __all__ = [
     'FriendConversation',
     'FriendRelationship',
     'Collection',
+    'collection_books',
     'Notification',
     'SharedExport',
     'InterventionFeedback',

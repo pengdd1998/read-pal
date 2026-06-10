@@ -47,17 +47,17 @@ export async function saveToken(token: string): Promise<void> {
 }
 
 export async function getToken(): Promise<string | null> {
-  // Try AsyncStorage first (fast, non-blocking)
-  const asyncValue = await AsyncStorage.getItem(TOKEN_KEY);
-  if (asyncValue) return asyncValue;
-
-  // Fallback to SecureStore (encrypted but slower)
+  // Try SecureStore first (encrypted, more secure)
   const secureValue = await secureGet(TOKEN_KEY);
-  if (secureValue) {
-    // Migrate to AsyncStorage for future reads
-    AsyncStorage.setItem(TOKEN_KEY, secureValue).catch(() => {});
+  if (secureValue) return secureValue;
+
+  // Fallback to AsyncStorage
+  const asyncValue = await AsyncStorage.getItem(TOKEN_KEY);
+  if (asyncValue) {
+    // Migrate to SecureStore for future reads
+    secureSet(TOKEN_KEY, asyncValue).catch(() => {});
   }
-  return secureValue;
+  return asyncValue;
 }
 
 export async function deleteToken(): Promise<void> {
@@ -71,17 +71,17 @@ export async function saveUser(user: string): Promise<void> {
 }
 
 export async function getUser(): Promise<string | null> {
-  // Try AsyncStorage first
-  const asyncValue = await AsyncStorage.getItem(USER_KEY);
-  if (asyncValue) return asyncValue;
-
-  // Fallback to SecureStore
+  // Try SecureStore first (encrypted, more secure)
   const secureValue = await secureGet(USER_KEY);
-  if (secureValue) {
-    // Migrate to AsyncStorage
-    AsyncStorage.setItem(USER_KEY, secureValue).catch(() => {});
+  if (secureValue) return secureValue;
+
+  // Fallback to AsyncStorage
+  const asyncValue = await AsyncStorage.getItem(USER_KEY);
+  if (asyncValue) {
+    // Migrate to SecureStore
+    secureSet(USER_KEY, asyncValue).catch(() => {});
   }
-  return secureValue;
+  return asyncValue;
 }
 
 export async function deleteUser(): Promise<void> {
@@ -95,14 +95,17 @@ export async function saveRefreshToken(token: string): Promise<void> {
 }
 
 export async function getRefreshToken(): Promise<string | null> {
-  const asyncValue = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
-  if (asyncValue) return asyncValue;
-
+  // Try SecureStore first (encrypted, more secure)
   const secureValue = await secureGet(REFRESH_TOKEN_KEY);
-  if (secureValue) {
-    AsyncStorage.setItem(REFRESH_TOKEN_KEY, secureValue).catch(() => {});
+  if (secureValue) return secureValue;
+
+  // Fallback to AsyncStorage
+  const asyncValue = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+  if (asyncValue) {
+    // Migrate to SecureStore
+    secureSet(REFRESH_TOKEN_KEY, asyncValue).catch(() => {});
   }
-  return secureValue;
+  return asyncValue;
 }
 
 export async function deleteRefreshToken(): Promise<void> {

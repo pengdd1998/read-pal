@@ -109,4 +109,4 @@ class WebhookDeliveryLog(Base):
         'Webhook',
         back_populates='delivery_logs',
     )
-    user: Mapped['User'] = relationship('User')
+    user: Mapped['User'] = relationship('User', back_populates='webhook_delivery_logs')

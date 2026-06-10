@@ -33,6 +33,8 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   currentChapterIndex: 0,
 };
 
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
 export const useReaderStore = create<ReaderState>((set, get) => {
   // Load settings asynchronously (non-blocking)
   AsyncStorage.getItem(SETTINGS_KEY)
@@ -45,11 +47,13 @@ export const useReaderStore = create<ReaderState>((set, get) => {
       // Use defaults on error
     });
 
-  // Persist settings helper
+  // Debounced persist — batches rapid settings changes
   const persistSettings = (settings: ReaderSettings) => {
-    AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)).catch(() => {
-      // Silently fail
-    });
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)).catch(() => {});
+      persistTimer = null;
+    }, 300);
   };
 
   return {

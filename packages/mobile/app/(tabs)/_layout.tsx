@@ -1,27 +1,18 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useAuthStore } from '@/stores/auth-store';
-import { ActivityIndicator, View, Text } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { useColorScheme } from 'react-native';
-
-function TabIcon({ name, focused }: { name: string; focused: boolean }) {
-  const icons: Record<string, string> = {
-    Library: '📚',
-    Settings: '⚙️',
-  };
-  return (
-    <Text style={{ fontSize: focused ? 24 : 20, opacity: focused ? 1 : 0.5 }}>
-      {icons[name] || '📖'}
-    </Text>
-  );
-}
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from '@/lib/theme';
 
 export default function TabsLayout() {
   const { isAuthenticated, loading } = useAuthStore();
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-primary-50">
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface[1] }}>
         <ActivityIndicator size="large" color="#d97706" />
       </View>
     );
@@ -35,35 +26,56 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#d97706',
-        tabBarInactiveTintColor: '#8a99ae',
+        tabBarActiveTintColor: colors.primary[500],
+        tabBarInactiveTintColor: isDark ? '#8a8090' : colors.navy[300],
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#151d28' : '#ffffff',
-          borderTopColor: colorScheme === 'dark' ? '#1e2a38' : '#f0e9e0',
-          height: 88,
-          paddingBottom: 28,
-          paddingTop: 8,
+          backgroundColor: isDark ? '#252538' : colors.surface[0],
+          borderTopColor: isDark ? '#3a3a50' : colors.surface[2],
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '500',
         },
       }}
     >
       <Tabs.Screen
-        name="library"
+        name="home/index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={focused ? colors.primary[500] : (isDark ? '#8a8090' : colors.navy[300])} />,
+        }}
+      />
+      <Tabs.Screen
+        name="library/index"
         options={{
           title: 'Library',
-          tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon name="Library" focused={focused} />,
+          tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
+            <Ionicons name={focused ? 'book' : 'book-outline'} size={size} color={focused ? colors.primary[500] : (isDark ? '#8a8090' : colors.navy[300])} />,
+        }}
+      />
+      <Tabs.Screen
+        name="study/index"
+        options={{
+          title: 'Study',
+          tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
+            <Ionicons name={focused ? 'school' : 'school-outline'} size={size} color={focused ? colors.primary[500] : (isDark ? '#8a8090' : colors.navy[300])} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon name="Settings" focused={focused} />,
+          tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) =>
+            <Ionicons name={focused ? 'settings' : 'settings-outline'} size={size} color={focused ? colors.primary[500] : (isDark ? '#8a8090' : colors.navy[300])} />,
         }}
       />
+      <Tabs.Screen name="library/[bookId]" options={{ href: null }} />
+      <Tabs.Screen name="study/session" options={{ href: null }} />
+      <Tabs.Screen name="study/knowledge" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -50,15 +50,29 @@ class ApiClient {
       },
     });
 
-    // Request interceptor - attach auth token (browser only)
+    // Request interceptor - attach auth token for mobile / non-cookie clients
     this.client.interceptors.request.use(
       async (config) => {
-        const token = isCapacitor()
-          ? await getAuthTokenAsync()
-          : getAuthToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        // For Capacitor (mobile), always use Bearer header — no cookie domain
+        if (isCapacitor()) {
+          const token = await getAuthTokenAsync();
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+        } else {
+          // Web: HttpOnly cookies are sent automatically by the browser.
+          // Only attach Bearer header if no auth cookie is present (backward compat).
+          const hasCookie = typeof document !== 'undefined' &&
+            document.cookie.includes('access_token=');
+          if (!hasCookie) {
+            const token = getAuthToken();
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+            }
+          }
         }
+        // Ensure cookies are sent with cross-origin requests
+        config.withCredentials = true;
         return config;
       },
       (error: unknown) => Promise.reject(error),
@@ -132,22 +146,33 @@ class ApiClient {
   }
 
   private async _doRefresh(): Promise<boolean> {
-    const refreshToken = isCapacitor()
-      ? await getRefreshTokenAsync()
-      : getRefreshToken();
+    // Mobile: use stored refresh token in body
+    if (isCapacitor()) {
+      const refreshToken = await getRefreshTokenAsync();
+      if (!refreshToken) return false;
+      try {
+        const response = await this.client.post<ApiResponse<{ token: string; refreshToken: string }>>(
+          '/api/auth/refresh',
+          { refreshToken },
+        );
+        if (response.data.success && response.data.data) {
+          await setAuthTokens(response.data.data.token, response.data.data.refreshToken);
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    }
 
-    if (!refreshToken) return false;
-
+    // Web: refresh token is in HttpOnly cookie — just POST to refresh endpoint.
+    // The server reads the cookie and sets new cookies on the response.
     try {
       const response = await this.client.post<ApiResponse<{ token: string; refreshToken: string }>>(
         '/api/auth/refresh',
-        { refreshToken },
+        {},
       );
-      if (response.data.success && response.data.data) {
-        await setAuthTokens(response.data.data.token, response.data.data.refreshToken);
-        return true;
-      }
-      return false;
+      return response.data.success;
     } catch {
       return false;
     }
@@ -412,9 +437,12 @@ class ApiClient {
   /** Return a queued response that the caller can treat as success */
   private async queueOfflineResponse<T>(url: string, method: string, data?: unknown): Promise<ApiResponse<T>> {
     if (typeof window !== 'undefined') {
-      const token = getAuthToken();
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const headers: Record<string, string> = {};
+      // Only attach Bearer token for mobile (web uses HttpOnly cookies)
+      if (isCapacitor()) {
+        const token = getAuthToken();
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+      }
       await queueMutation(url, method, data, headers);
     }
     return {

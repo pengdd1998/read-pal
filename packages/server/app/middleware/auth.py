@@ -1,8 +1,11 @@
 """Authentication middleware — FastAPI security dependencies.
 
-Mirrors the Node.js auth system exactly:
-  - JWT (HS256) with jti-based Redis blacklist
-  - API key support (rpk_ prefix, SHA-256 hash lookup)
+Supports dual auth modes:
+  - Bearer token (Authorization header) — used by mobile and API key clients
+  - HttpOnly cookie — used by web frontend for XSS-resistant token storage
+
+Also supports:
+  - API key (rpk_ prefix, SHA-256 hash lookup)
   - bcrypt password hashing (12 rounds)
   - Fail-closed token revocation when Redis is unavailable
 """
@@ -13,9 +16,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import redis.asyncio as aioredis
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt as pyjwt
+from jwt import ExpiredSignatureError, InvalidTokenError
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,11 +40,26 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto', bcrypt__rounds
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
-# --- Redis client for blacklist -----------------------------------------------
+# --- Token blacklist state (singleton) ----------------------------------------
 
-_in_memory_blacklist: set[str] = set()
-_redis_ever_connected: bool = False
-_MAX_IN_MEMORY_BLACKLIST = 10_000
+class BlacklistState:
+    """Singleton holding mutable blacklist state — avoids module-level globals."""
+
+    _instance: BlacklistState | None = None
+
+    def __new__(cls) -> BlacklistState:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.in_memory_blacklist: set[str] = set()
+            cls._instance.redis_ever_connected: bool = False
+        return cls._instance
+
+    @property
+    def max_in_memory(self) -> int:
+        return 10_000
+
+
+_blacklist_state = BlacklistState()
 
 TOKEN_BLACKLIST_PREFIX = 'auth:blacklist:'
 
@@ -81,17 +100,20 @@ def create_access_token(
     to_encode['iat'] = int(now.timestamp())
     to_encode['exp'] = int(expire.timestamp())
 
-    return jwt.encode(to_encode, settings.jwt_secret, algorithm='HS256')
+    return pyjwt.encode(to_encode, settings.jwt_secret, algorithm='HS256')
 
 
 def create_token_pair(
     user_id: str,
     platform: str = 'web',
+    lang: str = 'en',
 ) -> tuple[str, str]:
     """Create an access + refresh token pair.
 
     Returns (access_token, refresh_token).
     Platform 'mobile' gets longer-lived tokens than 'web'.
+    ``lang`` is embedded in the access token so the middleware can
+    return it without a DB/Redis lookup on every request.
     """
     settings = get_settings()
 
@@ -103,7 +125,7 @@ def create_token_pair(
         refresh_ttl = timedelta(seconds=settings.jwt_refresh_web_seconds)
 
     access_token = create_access_token(
-        {'userId': user_id, 'type': 'access'},
+        {'userId': user_id, 'type': 'access', 'lang': lang},
         expires_delta=access_ttl,
     )
     refresh_token = create_access_token(
@@ -119,22 +141,22 @@ async def revoke_token(jti: str, exp: int) -> None:
     The key TTL is set to the remaining seconds until the token expires,
     so the entry cleans itself up automatically.
     """
-    global _redis_ever_connected
+    state = _blacklist_state
 
     # Always record in-memory so the fallback is up-to-date
-    _in_memory_blacklist.add(jti)
-    if len(_in_memory_blacklist) > _MAX_IN_MEMORY_BLACKLIST:
+    state.in_memory_blacklist.add(jti)
+    if len(state.in_memory_blacklist) > state.max_in_memory:
         # Evict oldest entries (simple set doesn't preserve order, but
         # this prevents unbounded growth)
-        to_remove = len(_in_memory_blacklist) - _MAX_IN_MEMORY_BLACKLIST
-        for key in list(_in_memory_blacklist)[:to_remove]:
-            _in_memory_blacklist.discard(key)
+        to_remove = len(state.in_memory_blacklist) - state.max_in_memory
+        for key in list(state.in_memory_blacklist)[:to_remove]:
+            state.in_memory_blacklist.discard(key)
 
     try:
         r = _get_redis()
         ttl = max(exp - int(datetime.now(timezone.utc).timestamp()), 1)
         await r.setex(f'{TOKEN_BLACKLIST_PREFIX}{jti}', ttl, '1')
-        _redis_ever_connected = True
+        state.redis_ever_connected = True
     except Exception:
         logger.warning('Redis unavailable — token revocation stored in-memory only')
 
@@ -147,22 +169,112 @@ async def is_token_revoked(jti: str) -> bool:
       2. If Redis is down, check in-memory fallback.
       3. If Redis was *never* connected, fail-closed (reject).
     """
-    global _redis_ever_connected
+    state = _blacklist_state
 
     try:
         r = _get_redis()
         exists = await r.exists(f'{TOKEN_BLACKLIST_PREFIX}{jti}')
-        _redis_ever_connected = True
+        state.redis_ever_connected = True
         if exists:
-            _in_memory_blacklist.add(jti)
+            state.in_memory_blacklist.add(jti)
             return True
         return False
     except Exception:
-        if jti in _in_memory_blacklist:
+        if jti in state.in_memory_blacklist:
             return True
-        if not _redis_ever_connected:
+        if not state.redis_ever_connected:
             return True  # fail-closed
         return False
+
+
+# ---------------------------------------------------------------------------
+# HttpOnly cookie helpers
+# ---------------------------------------------------------------------------
+
+ACCESS_COOKIE_NAME = 'access_token'
+REFRESH_COOKIE_NAME = 'refresh_token'
+
+# Cookie paths — restrict to API routes so Next.js static assets don't carry them
+_COOKIE_PATH = '/api'
+
+
+def _cookie_max_age(expires_delta: timedelta) -> int:
+    """Return max-age in seconds for a cookie."""
+    return int(expires_delta.total_seconds())
+
+
+def set_auth_cookies(
+    response: Response,
+    access_token: str,
+    refresh_token: str,
+    platform: str = 'web',
+) -> None:
+    """Set HttpOnly auth cookies on a response.
+
+    Only set for web platform — mobile continues using Bearer headers.
+    """
+    if platform != 'web':
+        return
+
+    settings = get_settings()
+    secure = not settings.is_dev
+    # In production, same-site Lax is sufficient (no cross-origin form posts)
+    same_site = 'lax'
+
+    access_max_age = _cookie_max_age(timedelta(seconds=settings.jwt_access_web_seconds))
+    refresh_max_age = _cookie_max_age(timedelta(seconds=settings.jwt_refresh_web_seconds))
+
+    response.set_cookie(
+        key=ACCESS_COOKIE_NAME,
+        value=access_token,
+        max_age=access_max_age,
+        path=_COOKIE_PATH,
+        httponly=True,
+        secure=secure,
+        samesite=same_site,
+    )
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        max_age=refresh_max_age,
+        path=_COOKIE_PATH,
+        httponly=True,
+        secure=secure,
+        samesite=same_site,
+    )
+
+
+def clear_auth_cookies(response: Response) -> None:
+    """Clear auth cookies by setting max-age=0."""
+    for name in (ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME):
+        response.set_cookie(
+            key=name,
+            value='',
+            max_age=0,
+            path=_COOKIE_PATH,
+            httponly=True,
+            secure=True,
+            samesite='lax',
+        )
+
+
+def _extract_token_from_request(request: Request) -> str | None:
+    """Extract auth token from cookie first, then Authorization header.
+
+    Cookie takes precedence when present — this supports the HttpOnly
+    migration while keeping backward compatibility with Bearer tokens.
+    """
+    # Try cookie first
+    cookie_token = request.cookies.get(ACCESS_COOKIE_NAME)
+    if cookie_token:
+        return cookie_token
+
+    # Fall back to Authorization header
+    auth_header = request.headers.get('authorization', '')
+    if auth_header.startswith('Bearer '):
+        return auth_header[7:]
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -170,20 +282,22 @@ async def is_token_revoked(jti: str) -> bool:
 # ---------------------------------------------------------------------------
 
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Validate Bearer token (JWT or API key) and return the user dict.
+    """Validate token (cookie or Bearer header) and return the user dict.
 
+    Supports dual auth: HttpOnly cookie (web) or Authorization header (mobile/API).
     Returns ``{id, email, name}`` on success; raises 401 on failure.
     """
-    if credentials is None:
+    token = _extract_token_from_request(request)
+
+    if token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'code': 'UNAUTHORIZED', 'message': 'Missing or invalid authorization header'},
+            detail={'code': 'UNAUTHORIZED', 'message': 'Missing or invalid authorization'},
         )
-
-    token = credentials.credentials
 
     # --- API key path ---
     if is_api_key_format(token):
@@ -223,14 +337,16 @@ async def get_current_user(
     # --- JWT path ---
     settings = get_settings()
     try:
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=['HS256'])
-    except JWTError as exc:
-        # Distinguish expired vs invalid for better client handling
-        error_msg = 'Token has expired' if 'expired' in str(exc).lower() else 'Invalid token'
-        error_code = 'TOKEN_EXPIRED' if 'expired' in str(exc).lower() else 'INVALID_TOKEN'
+        payload = pyjwt.decode(token, settings.jwt_secret, algorithms=['HS256'])
+    except ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={'code': error_code, 'message': error_msg},
+            detail={'code': 'TOKEN_EXPIRED', 'message': 'Token has expired'},
+        )
+    except InvalidTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={'code': 'INVALID_TOKEN', 'message': 'Invalid token'},
         ) from exc
 
     jti = payload.get('jti')
@@ -241,6 +357,25 @@ async def get_current_user(
         )
 
     user_id = payload.get('userId') or payload.get('sub') or ''
+
+    # Check if password was changed after this token was issued
+    iat = payload.get('iat')
+    if iat and user_id:
+        try:
+            r = _get_redis()
+            changed_ts = await r.get(f'auth:password_changed:{user_id}')
+            if changed_ts and int(iat) < int(changed_ts):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail={
+                        'code': 'TOKEN_REVOKED',
+                        'message': 'Password has been changed. Please sign in again.',
+                    },
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            pass  # Redis unavailable — don't block auth
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
@@ -254,19 +389,24 @@ async def get_current_user(
             },
         )
 
+    # Extract lang from JWT claims (avoids per-request DB/Redis lookup)
+    lang = payload.get('lang', 'en')
+
     return {
         'id': str(user.id),
         'email': user.email,
         'name': user.name,
+        'lang': lang,
     }
 
 
 async def get_optional_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any] | None:
     """Same as get_current_user but returns None on failure instead of 401."""
     try:
-        return await get_current_user(credentials, db)
+        return await get_current_user(request, credentials, db)
     except HTTPException:
         return None

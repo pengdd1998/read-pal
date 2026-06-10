@@ -14,6 +14,8 @@ import json
 import logging
 import time
 import uuid
+from collections import OrderedDict
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from langchain_core.messages import BaseMessage, HumanMessage
@@ -21,7 +23,22 @@ from langchain_openai import ChatOpenAI
 
 from app.config import get_settings
 
+# Try to import openai's RateLimitError for precise detection
+try:
+    from openai import RateLimitError as _OpenAIRateLimitError
+except ImportError:
+    _OpenAIRateLimitError = None  # type: ignore[assignment,misc]
+
 logger = logging.getLogger('read-pal.llm')
+
+
+# ---------------------------------------------------------------------------
+# Custom exception types
+# ---------------------------------------------------------------------------
+
+class RateLimitError(Exception):
+    """Raised when an LLM provider returns a 429 rate limit response."""
+
 
 # ---------------------------------------------------------------------------
 # Observability — structured call logging
@@ -120,6 +137,7 @@ def _log_call(
 # ---------------------------------------------------------------------------
 
 _pool: dict[tuple[str, float], ChatOpenAI] = {}
+_MAX_POOL_SIZE = 20  # Prevent unbounded growth from temperature permutations
 
 
 def get_llm(
@@ -130,12 +148,17 @@ def get_llm(
     """Return a pooled ChatOpenAI instance configured for GLM.
 
     Instances are cached per ``(model, temperature)`` so HTTP connections
-    are reused across requests.
+    are reused across requests.  Pool is capped at ``_MAX_POOL_SIZE``
+    entries — oldest entry is evicted when the limit is reached.
     """
     settings = get_settings()
     model = model or settings.default_model
     key = (model, temperature)
     if key not in _pool:
+        if len(_pool) >= _MAX_POOL_SIZE:
+            oldest_key = next(iter(_pool))
+            del _pool[oldest_key]
+            logger.debug('Evicted LLM pool entry %s (pool size cap)', oldest_key)
         _pool[key] = ChatOpenAI(
             model=model,
             api_key=settings.glm_api_key,
@@ -145,7 +168,7 @@ def get_llm(
             max_retries=settings.llm_max_retries,
             request_timeout=settings.llm_timeout_seconds,
         )
-        logger.debug('Created new LLM pool entry for %s @ temp=%.2f', model, temperature)
+        logger.debug('Created new LLM pool entry for %s @ temp=%.02f', model, temperature)
     return _pool[key]
 
 
@@ -296,7 +319,8 @@ circuit = CircuitBreaker()
 _CACHE_PREFIX = 'llm:cache:'
 _CACHE_TTL = 1800  # 30 minutes — reduces redundant GLM calls on free tier
 
-_in_memory_cache: dict[str, tuple[float, str]] = {}
+# OrderedDict gives O(1) eviction by insertion order (LRU semantics)
+_in_memory_cache: OrderedDict[str, tuple[float, str]] = OrderedDict()
 _MAX_IN_MEMORY_CACHE = 500
 
 
@@ -315,6 +339,8 @@ async def _cache_get(key: str) -> str | None:
     if key in _in_memory_cache:
         ts, val = _in_memory_cache[key]
         if time.monotonic() - ts < _CACHE_TTL:
+            # Move to end (most recently used)
+            _in_memory_cache.move_to_end(key)
             return val
         del _in_memory_cache[key]
 
@@ -327,13 +353,17 @@ async def _cache_get(key: str) -> str | None:
 
 
 async def _cache_set(key: str, value: str) -> None:
-    """Store LLM response in Redis (fallback: in-memory)."""
+    """Store LLM response in Redis (fallback: in-memory).
+
+    Uses OrderedDict for O(1) eviction — oldest (first) entries are
+    removed first, and accessed entries are moved to the end.
+    """
     _in_memory_cache[key] = (time.monotonic(), value)
-    if len(_in_memory_cache) > _MAX_IN_MEMORY_CACHE:
-        # Evict oldest entries
-        oldest = sorted(_in_memory_cache.items(), key=lambda x: x[1][0])
-        for k, _ in oldest[:len(_in_memory_cache) // 2]:
-            del _in_memory_cache[k]
+    _in_memory_cache.move_to_end(key)
+
+    # Evict oldest entries until under the cap
+    while len(_in_memory_cache) > _MAX_IN_MEMORY_CACHE:
+        _in_memory_cache.popitem(last=False)
 
     try:
         from app.core.redis import get_redis as _get_redis
@@ -395,10 +425,15 @@ async def check_llm_health() -> dict[str, Any]:
 _RATE_LIMIT_BACKOFFS = [2, 4, 8]  # seconds to wait between 429 retries
 
 
-def _is_rate_limited(exc: Exception) -> bool:
-    """Check if an exception indicates a 429 rate limit response."""
-    msg = str(exc).lower()
-    return '429' in msg or 'rate' in msg
+def _is_rate_limit_error(exc: Exception) -> bool:
+    """Check if an exception indicates a 429 rate limit response from the provider."""
+    # Check against openai's RateLimitError if available
+    if _OpenAIRateLimitError is not None and isinstance(exc, _OpenAIRateLimitError):
+        return True
+    # Check for status_code == 429 attribute (langchain wraps openai errors)
+    if getattr(exc, 'status_code', None) == 429:
+        return True
+    return False
 
 
 async def _invoke_with_retry(
@@ -413,7 +448,7 @@ async def _invoke_with_retry(
             return await llm.ainvoke(messages)
         except Exception as exc:
             last_exc = exc
-            if _is_rate_limited(exc) and attempt < len(_RATE_LIMIT_BACKOFFS):
+            if _is_rate_limit_error(exc) and attempt < len(_RATE_LIMIT_BACKOFFS):
                 logger.warning(
                     '%s rate limited (attempt %d/%d), retrying in %ds',
                     log_label, attempt + 1, len(_RATE_LIMIT_BACKOFFS), backoff,
@@ -628,3 +663,125 @@ async def safe_llm_call(
     content = filter_output(content, context=log_label)
 
     return content
+
+
+# ---------------------------------------------------------------------------
+# Streaming with circuit breaker + fallback
+# ---------------------------------------------------------------------------
+
+async def stream_with_circuit(
+    messages: list[BaseMessage],
+    *,
+    log_label: str = 'LLM_stream',
+    flush_size: int = 5,
+    filter_fn: Any | None = None,
+) -> AsyncGenerator[tuple[str, str], None]:
+    """Stream LLM response with circuit breaker, fallback model, and observability.
+
+    Yields ``(chunk_type, content)`` tuples:
+      - ``('token', text)`` — a safe chunk to emit to the client
+      - ``('error', message)`` — fallback error text when all attempts fail
+      - ``('done', '')`` — stream complete (always yielded last)
+
+    The caller is responsible for formatting these as SSE events.
+
+    ``filter_fn`` is an optional callable ``str -> str | None`` applied to
+    each flushed buffer of tokens.  If it returns ``None`` the chunk is
+    suppressed.  When not provided, ``filter_stream_chunk`` from
+    ``output_filter`` is used.
+    """
+    from collections.abc import AsyncGenerator as _AG
+
+    if filter_fn is None:
+        from app.utils.output_filter import filter_stream_chunk
+        filter_fn = filter_stream_chunk
+
+    settings = get_settings()
+    request_id = uuid.uuid4().hex[:12]
+    start_time = time.monotonic()
+    model_used = settings.default_model
+    collected: list[str] = []
+    chunk_buffer: list[str] = []
+
+    async def _drain(llm_instance: ChatOpenAI) -> bool:
+        """Stream from *llm_instance*, buffering and filtering. Return True on success."""
+        nonlocal chunk_buffer
+        async for chunk in llm_instance.astream(messages):
+            token = chunk.content
+            if token:
+                collected.append(token)
+                chunk_buffer.append(token)
+                if len(chunk_buffer) >= flush_size:
+                    buffered_text = ''.join(chunk_buffer)
+                    safe_text = filter_fn(buffered_text, context=log_label)
+                    if safe_text:
+                        yield ('token', safe_text)
+                    chunk_buffer = []
+        # Flush remaining buffer
+        if chunk_buffer:
+            buffered_text = ''.join(chunk_buffer)
+            safe_text = filter_fn(buffered_text, context=log_label)
+            if safe_text:
+                yield ('token', safe_text)
+            chunk_buffer = []
+        return
+
+    # Circuit breaker gate
+    if not await circuit.allow_request():
+        logger.warning('%s blocked by circuit breaker', log_label)
+        yield ('error', '')
+        yield ('done', '')
+        return
+
+    # Primary model attempt
+    try:
+        llm = get_llm()
+        async for event in _drain(llm):
+            yield event
+            if event[0] == 'token':
+                continue
+        await circuit.record_success()
+        latency_ms = int((time.monotonic() - start_time) * 1000)
+        _log_call(
+            request_id=request_id, model=model_used, label=log_label,
+            latency_ms=latency_ms, usage={'completion_tokens': len(collected)},
+            success=True,
+        )
+        yield ('done', '')
+        return
+    except Exception as exc:
+        latency_ms = int((time.monotonic() - start_time) * 1000)
+        logger.error('%s primary (%s) failed: %s', log_label, model_used, exc)
+        await circuit.record_failure()
+        _log_call(
+            request_id=request_id, model=model_used, label=log_label,
+            latency_ms=latency_ms, usage={}, success=False, error_message=str(exc),
+        )
+
+    # Fallback model attempt
+    fb_model = settings.fallback_model
+    try:
+        logger.info('%s retrying with fallback %s', log_label, fb_model)
+        fb_start = time.monotonic()
+        llm_fb = get_llm(model=fb_model)
+        async for event in _drain(llm_fb):
+            yield event
+        await circuit.record_success()
+        fb_latency_ms = int((time.monotonic() - fb_start) * 1000)
+        _log_call(
+            request_id=request_id, model=fb_model, label=log_label,
+            latency_ms=fb_latency_ms, usage={'completion_tokens': len(collected)},
+            success=True, fallback_used=True,
+        )
+        yield ('done', '')
+        return
+    except Exception as fb_exc:
+        logger.error('%s fallback (%s) also failed: %s', log_label, fb_model, fb_exc)
+        await circuit.record_failure()
+        _log_call(
+            request_id=request_id, model=fb_model, label=log_label,
+            latency_ms=int((time.monotonic() - start_time) * 1000),
+            usage={}, success=False, fallback_used=True, error_message=str(fb_exc),
+        )
+        yield ('error', '')
+        yield ('done', '')

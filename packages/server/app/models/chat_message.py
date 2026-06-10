@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, Text, text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -20,10 +20,9 @@ if TYPE_CHECKING:
 class ChatMessage(Base):
     __tablename__ = 'chat_messages'
     __table_args__ = (
-        Index(
-            'ix_chat_messages_user_id_book_id',
-            'user_id',
-            'book_id',
+        CheckConstraint(
+            "role IN ('user', 'assistant', 'system')",
+            name='ck_chat_messages_role',
         ),
         Index(
             'ix_chat_messages_user_id_created_at',
