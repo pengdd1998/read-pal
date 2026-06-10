@@ -75,7 +75,7 @@ export default function BookClubsPage() {
    </div>
    <Link
    href="/dashboard"
-   className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center px-2"
+   className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center px-2"
    >
    {t('backToDashboard')}
    </Link>
@@ -129,7 +129,7 @@ export default function BookClubsPage() {
     {tab === 'my' ? t('noJoinedClubs') : t('noPublicClubs')}
    </p>
    {tab === 'my' && (
-    <p className="text-sm text-gray-400">
+    <p className="text-sm text-gray-400 dark:text-gray-500">
     {t('discoverHint')}
     </p>
    )}
@@ -151,7 +151,7 @@ export default function BookClubsPage() {
       {club.name}
       </h3>
       {club.isPrivate && (
-      <svg aria-label={t('private_club')} className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg aria-label={t('private_club')} className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
       </svg>
       )}
@@ -163,7 +163,7 @@ export default function BookClubsPage() {
      )}
      </div>
     </div>
-    <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+    <div className="flex items-center gap-4 mt-3 text-xs text-gray-400 dark:text-gray-500">
      <span>{club.memberCount != null ? t(club.memberCount === 1 ? 'memberCount' : 'memberCountPlural', { count: club.memberCount }) : `— ${t('members')}`}</span>
      {club.maxMembers != null && <span>{t('max', { count: club.maxMembers })}</span>}
     </div>

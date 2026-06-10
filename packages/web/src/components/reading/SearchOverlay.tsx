@@ -79,7 +79,7 @@ export const SearchOverlay = React.memo(function SearchOverlay({
     className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30"
     autoFocus
    />
-   <span className="text-xs text-gray-400">
+   <span className="text-xs text-gray-400 dark:text-gray-500">
     {searchResults.length > 0 ? t('search_chapters', { count: searchResults.length }) : ''}
    </span>
    <button

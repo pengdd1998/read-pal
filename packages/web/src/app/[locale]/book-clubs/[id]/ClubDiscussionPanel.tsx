@@ -67,7 +67,7 @@ export function ClubDiscussionPanel({
   {/* Messages */}
   <div className="space-y-3 max-h-80 overflow-y-auto mb-4 pr-1">
   {messages.length === 0 && (
-   <p className="text-sm text-gray-400 text-center py-6">
+   <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">
    {t('noMessages')}
    </p>
   )}
