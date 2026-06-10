@@ -45,7 +45,7 @@ const MessageItem = React.memo(function MessageItem({
  );
 });
 
-export function ClubDiscussionPanel({
+export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
  messages,
  newMessage,
  onNewMessageChange,
@@ -116,4 +116,4 @@ export function ClubDiscussionPanel({
   )}
  </div>
  );
-}
+});

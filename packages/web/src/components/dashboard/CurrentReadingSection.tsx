@@ -220,7 +220,7 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
 });
 
 // Reading Streak sub-component
-function ReadingStreakCard({ streak, loading }: { streak: number; loading: boolean }) {
+const ReadingStreakCard = React.memo(function ReadingStreakCard({ streak, loading }: { streak: number; loading: boolean }) {
   const t = useTranslations('dashboard');
 
   return (
@@ -257,7 +257,7 @@ function ReadingStreakCard({ streak, loading }: { streak: number; loading: boole
       )}
     </div>
   );
-}
+});
 
 // Quick Actions sub-component
 function QuickActions() {
@@ -286,7 +286,7 @@ function QuickActions() {
 }
 
 // Insight Card sub-component
-function InsightCard({ insightKey }: { insightKey: InsightKey | null }) {
+const InsightCard = React.memo(function InsightCard({ insightKey }: { insightKey: InsightKey | null }) {
   const t = useTranslations('dashboard');
 
   return (
@@ -304,4 +304,4 @@ function InsightCard({ insightKey }: { insightKey: InsightKey | null }) {
       </div>
     </div>
   );
-}
+});

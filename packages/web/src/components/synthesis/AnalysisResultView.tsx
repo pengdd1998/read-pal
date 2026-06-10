@@ -244,7 +244,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
 // Concept Map Sub-view
 // ============================================================================
 
-function ConceptMapView({ result }: { result: AnalysisResult }) {
+const ConceptMapView = React.memo(function ConceptMapView({ result }: { result: AnalysisResult }) {
   const t = useTranslations('synthesis');
   return (
     <div>
@@ -265,4 +265,4 @@ function ConceptMapView({ result }: { result: AnalysisResult }) {
       )}
     </div>
   );
-}
+});

@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
@@ -152,7 +154,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  );
 });
 
-function StatCard({ label, value, unit }: { label: string; value: string; unit?: string }) {
+const StatCard = React.memo(function StatCard({ label, value, unit }: { label: string; value: string; unit?: string }) {
  return (
  <div className="text-center p-2 rounded-lg bg-surface-1">
   <div>
@@ -162,4 +164,4 @@ function StatCard({ label, value, unit }: { label: string; value: string; unit?:
   <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
  </div>
  );
-}
+});

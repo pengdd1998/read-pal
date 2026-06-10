@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 /**
  * CSS-only page entrance animation.
@@ -8,10 +8,10 @@ import { ReactNode } from 'react';
  * to re-trigger the animation on route change.
  * Avoids React re-render loops from useEffect + setState patterns.
  */
-export function PageTransition({ children }: { children: ReactNode }) {
+export const PageTransition = React.memo(function PageTransition({ children }: { children: ReactNode }) {
  return (
  <div className="animate-fade-in">
   {children}
  </div>
  );
-}
+});
