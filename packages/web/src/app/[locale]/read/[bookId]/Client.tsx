@@ -87,18 +87,18 @@ export default function ReadPage() {
  // --- Render ---
  if (loading) {
  return (
-  <div className="flex items-center justify-center h-dvh bg-surface-1">
+  <main id="main-content" aria-label={t('readingPage', { defaultValue: 'Reading' })} className="flex items-center justify-center h-dvh bg-surface-1">
   <div className="text-center">
-   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4" />
+   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4" role="status" />
    <p className="text-gray-600 dark:text-gray-400">{t('loading')}</p>
   </div>
-  </div>
+  </main>
  );
  }
  if (error || !book || chapters.length === 0) {
   const isNetworkError = error === t('failed_connect');
   return (
-  <div className="flex items-center justify-center h-dvh bg-surface-1">
+  <main id="main-content" aria-label={t('readingPage', { defaultValue: 'Reading' })} className="flex items-center justify-center h-dvh bg-surface-1">
   <div className="text-center max-w-md px-4">
    <div className="text-4xl mb-4">{isNetworkError ? '🔌' : '📖'}</div>
    <p className="text-xl font-semibold mb-2">{error || t('unable_to_load')}</p>
@@ -110,7 +110,7 @@ export default function ReadPage() {
     <Link href="/library" className="btn btn-primary">{t('back_to_library')}</Link>
    </div>
   </div>
-  </div>
+  </main>
  );
  }
  return (
