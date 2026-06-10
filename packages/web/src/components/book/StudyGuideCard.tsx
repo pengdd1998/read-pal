@@ -25,7 +25,7 @@ export const StudyGuideCard = React.memo(function StudyGuideCard({
 }: StudyGuideCardProps) {
  const [generating, setGenerating] = useState(false);
  const mountedRef = useRef(true);
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  if (flashcardCount === 0 && totalAnnotations <= 5) return null;
 

@@ -53,7 +53,7 @@ export default function FlashcardsPage() {
  const mountedRef = useRef(true);
 
  useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const fetchDecks = useCallback(async () => {
  try {

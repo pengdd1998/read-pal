@@ -28,7 +28,7 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
   const mountedRef = useRef(true);
   const deletingRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   const fetchBooks = useCallback(() => {
     let stale = false;

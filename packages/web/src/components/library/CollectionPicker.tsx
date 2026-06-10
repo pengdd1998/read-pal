@@ -53,7 +53,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  const ref = useRef<HTMLDivElement>(null);
  const mountedRef = useRef(true);
 
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  useEffect(() => {
  let stale = false;

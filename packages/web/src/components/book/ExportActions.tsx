@@ -26,7 +26,7 @@ export const ExportActions = React.memo(function ExportActions({
  const [zoteroExporting, setZoteroExporting] = useState(false);
  const [exporting, setExporting] = useState<string | null>(null);
  const mountedRef = useRef(true);
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  if (totalAnnotations === 0) return null;
 

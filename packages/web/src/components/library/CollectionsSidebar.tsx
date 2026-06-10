@@ -29,7 +29,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  const [error, setError] = useState(false);
  const mountedRef = useRef(true);
 
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const ICONS: { value: string; label: string }[] = useMemo(() => [
  { value: 'folder', label: t('icon_folder') },

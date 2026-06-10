@@ -29,7 +29,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
  const [importing, setImporting] = useState<string | null>(null);
  const mountedRef = useRef(true);
 
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const fetchSuggestions = useCallback(() => {
   setLoading(true);

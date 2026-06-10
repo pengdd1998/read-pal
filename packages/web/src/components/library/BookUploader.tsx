@@ -22,7 +22,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  const abortControllerRef = useRef<AbortController | null>(null);
 	 const mountedRef = useRef(true);
 
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
 	 const cancelUpload = () => {
   abortControllerRef.current?.abort();

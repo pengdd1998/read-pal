@@ -56,7 +56,7 @@ export default function MemoryBooksPage() {
  const [error, setError] = useState<string | null>(null);
  const router = useRouter();
  const mountedRef = useRef(true);
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const fetchData = useCallback(() => {
   setLoading(true);

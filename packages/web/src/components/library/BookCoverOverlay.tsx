@@ -39,7 +39,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  const [showCollectionPicker, setShowCollectionPicker] = useState(false);
  const mountedRef = useRef(true);
 
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const STATUS_CONFIG = useMemo(() => ({
  unread: { label: t('card_unread'), dot: 'bg-surface-3', ring: 'bg-surface-1 text-gray-600 dark:text-gray-400' },

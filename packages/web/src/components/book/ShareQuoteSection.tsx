@@ -20,7 +20,7 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
  const [sharingIdx, setSharingIdx] = useState<number | null>(null);
  const { toast } = useToast();
  const mountedRef = useRef(true);
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleShareQuote = async (text: string, idx: number) => {
  setSharingIdx(idx);

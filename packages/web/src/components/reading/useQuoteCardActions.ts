@@ -30,7 +30,7 @@ export function useQuoteCardActions({
   const { toast } = useToast();
   const byLabel = tr('quote_card_by');
   const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   const handleDownload = useCallback(() => {
     const canvas = canvasRef.current ?? document.createElement('canvas');

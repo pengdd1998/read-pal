@@ -27,7 +27,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
  const [sharing, setSharing] = useState(false);
  const [confirmDelete, setConfirmDelete] = useState(false);
  const mountedRef = useRef(true);
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const canShareAsImage = annotation.type === 'highlight' || annotation.type === 'note';
  const quoteText = annotation.content || '';

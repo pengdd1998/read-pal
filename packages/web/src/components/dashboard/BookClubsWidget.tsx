@@ -78,7 +78,7 @@ function BookClubsWidgetInner() {
  const [creating, setCreating] = useState(false);
  const [joining, setJoining] = useState(false);
  const mountedRef = useRef(true);
- useEffect(() => () => { mountedRef.current = false; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  useEffect(() => {
  let cancelled = false;

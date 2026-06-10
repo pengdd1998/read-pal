@@ -26,7 +26,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
  const [summaryLoading, setSummaryLoading] = useState(false);
  const [summaryError, setSummaryError] = useState(false);
  const mountedRef = useRef(true);
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleBackdropKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Escape') onKeepReading(); }, [onKeepReading]);
  const handlePanelClick = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);

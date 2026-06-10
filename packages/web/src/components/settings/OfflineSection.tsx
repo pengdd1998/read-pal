@@ -65,7 +65,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
   const [loadError, setLoadError] = useState(false);
   const mountedRef = useRef(true);
 
-  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   useEffect(() => {
     let stale = false;

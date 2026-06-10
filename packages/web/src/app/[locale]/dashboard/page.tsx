@@ -48,7 +48,7 @@ export default function DashboardPage() {
   const [seeding, setSeeding] = useState(false);
   const { toast } = useToast();
   const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   const [greetingKey, setGreetingKey] = useState('greeting_morning');
   const [insightOfDayKey, setInsightOfDayKey] = useState<InsightKey | null>(null);

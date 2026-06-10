@@ -18,7 +18,7 @@ export function useExportShareLink({ bookId, format, selectedTypes, selectedTag 
  const [shareLink, setShareLink] = useState<string | null>(null);
  const [sharing, setSharing] = useState(false);
  const mountedRef = useRef(true);
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleShareLink = async () => {
   setSharing(true);

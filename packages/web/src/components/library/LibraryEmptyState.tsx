@@ -16,7 +16,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
  const [error, setError] = useState('');
  const mountedRef = useRef(true);
 
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleSeedSample = async () => {
  setError('');

@@ -22,7 +22,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
  const [generating, setGenerating] = useState(false);
  const mountedRef = useRef(true);
  const router = useRouter();
- useEffect(() => { return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  if (totalAnnotations === 0) return null;
 

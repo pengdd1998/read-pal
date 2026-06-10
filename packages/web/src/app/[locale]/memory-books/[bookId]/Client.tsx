@@ -52,7 +52,7 @@ export default function ReadingMirrorPage() {
  const [error, setError] = useState<string | null>(null);
  const genTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
  const mountedRef = useRef(true);
- useEffect(() => () => { mountedRef.current = false; if (genTimerRef.current) clearInterval(genTimerRef.current); }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; if (genTimerRef.current) clearInterval(genTimerRef.current); }; }, []);
 
  // Fetch existing mirror + book metadata
  const fetchData = useCallback(() => {
