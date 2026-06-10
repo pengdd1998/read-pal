@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import EncounterSection from './EncounterSection';
 import HighlightClusterSection from './HighlightClusterSection';
@@ -44,7 +45,7 @@ export function getSectionTitle(type: string, t?: (key: string) => string): stri
  return SECTION_KEY_MAP[type] ? type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : type;
 }
 
-export default function SectionRenderer({
+export default React.memo(function SectionRenderer({
  section,
  bookId,
  bookTitle,
@@ -114,4 +115,4 @@ export default function SectionRenderer({
   />
   );
  }
-}
+});

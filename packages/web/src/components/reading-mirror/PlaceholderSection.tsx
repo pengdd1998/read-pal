@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 interface PlaceholderSectionProps {
@@ -18,7 +19,7 @@ const SECTION_ICONS: Record<string, string> = {
  reader_became: '🪞',
 };
 
-export default function PlaceholderSection({ sectionType, title, message }: PlaceholderSectionProps) {
+export default React.memo(function PlaceholderSection({ sectionType, title, message }: PlaceholderSectionProps) {
  const t = useTranslations('reader');
  const icon = SECTION_ICONS[sectionType] || '✨';
 
@@ -60,4 +61,4 @@ export default function PlaceholderSection({ sectionType, title, message }: Plac
   `}</style>
  </div>
  );
-}
+});

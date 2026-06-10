@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { isDisplayableAuthor } from '@/lib/book-cover';
 
@@ -15,7 +16,7 @@ interface Recommendation {
  urgency?: string;
 }
 
-export default function RecommendationSection({ data }: RecommendationSectionProps) {
+export default React.memo(function RecommendationSection({ data }: RecommendationSectionProps) {
  const t = useTranslations('readingMirror');
  const recs = (data.recommendations as Recommendation[]) || [];
 
@@ -106,4 +107,4 @@ export default function RecommendationSection({ data }: RecommendationSectionPro
   `}</style>
  </div>
  );
-}
+});

@@ -89,7 +89,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
    <button
    key={c}
    onClick={() => setEditColor(c)}
-   aria-label={`Color ${c}`}
+   aria-label={t('card_color_aria', { color: c })}
    className={`w-6 h-6 rounded-full border-2 transition-transform ${
     editColor === c ? 'scale-125 border-gray-800 dark:border-white' : 'border-transparent hover:scale-110'
    }`}

@@ -205,7 +205,7 @@ export const FeatureTour = React.memo(function FeatureTour() {
      <div
      key={s.targetId}
      aria-hidden="true"
-     aria-label={`Step ${i + 1}`}
+     aria-label={t('tour_step_label', { step: i + 1 })}
      className={`w-1.5 h-1.5 rounded-full transition-colors ${
       i === step ? 'bg-amber-500' : 'bg-gray-300'
      }`}
