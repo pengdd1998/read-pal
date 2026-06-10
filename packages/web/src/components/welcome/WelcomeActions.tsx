@@ -39,7 +39,7 @@ export const WelcomeActions = React.memo(function WelcomeActions({
             try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('WelcomeActions: localStorage write failed', err); }
             router.push('/dashboard');
           }}
-          className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center"
+          className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center"
         >
           {t('go_dashboard')}
         </button>

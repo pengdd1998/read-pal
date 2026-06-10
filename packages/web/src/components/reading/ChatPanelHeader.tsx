@@ -66,7 +66,7 @@ export const ChatPanelHeader = React.memo(function ChatPanelHeader({
   </button>
   <button
   onClick={onClose}
-  className="p-2.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+  className="p-2.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
   aria-label={t('companion_aria_close')}
   >
   <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

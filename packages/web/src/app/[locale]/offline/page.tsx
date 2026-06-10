@@ -164,7 +164,7 @@ export default function OfflinePage() {
                 {/* Cached content access */}
                 {cachedBooks.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-500 mb-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                       {t('available_offline')}
                     </p>
                     <div className="space-y-2">
@@ -183,7 +183,7 @@ export default function OfflinePage() {
                             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                               {book.title}
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
                               {t('chapters_cached', { cached: book.chaptersCached, total: book.totalChapters })}
                             </p>
                           </div>

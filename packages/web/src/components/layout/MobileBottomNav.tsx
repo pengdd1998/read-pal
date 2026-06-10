@@ -27,7 +27,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav() {
     className={`flex flex-col items-center justify-center gap-0.5 flex-1 min-h-[48px] py-1.5 transition-colors ${
     active
      ? 'text-amber-600 dark:text-amber-400'
-     : 'text-gray-400'
+     : 'text-gray-400 dark:text-gray-500'
     }`}
    >
     <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
