@@ -22,6 +22,7 @@ export const MobileBottomNav = React.memo(function MobileBottomNav() {
    <Link
     key={item.href}
     href={item.href}
+    prefetch={false}
     onClick={() => { if (!active) hapticLight(); }}
     aria-current={active ? 'page' : undefined}
     className={`flex flex-col items-center justify-center gap-0.5 flex-1 min-h-[48px] py-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${

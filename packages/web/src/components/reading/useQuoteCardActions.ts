@@ -30,7 +30,14 @@ export function useQuoteCardActions({
   const { toast } = useToast();
   const byLabel = tr('quote_card_by');
   const mountedRef = useRef(true);
-  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      timersRef.current.forEach(clearTimeout);
+    };
+  }, []);
 
   const handleDownload = useCallback(() => {
     const canvas = canvasRef.current ?? document.createElement('canvas');
@@ -48,7 +55,8 @@ export function useQuoteCardActions({
       console.warn('useQuoteCardActions: failed to download quote card', err);
       toast(tr('quote_card_download_failed'), 'error');
     } finally {
-      setTimeout(() => { if (mountedRef.current) setDownloading(false); }, 600);
+      const t1 = setTimeout(() => { if (mountedRef.current) setDownloading(false); }, 600);
+      timersRef.current.push(t1);
     }
   }, [text, bookTitle, author, theme, canvasRef, setDownloading]);
 
@@ -66,13 +74,15 @@ export function useQuoteCardActions({
         new ClipboardItem({ 'image/png': blob }),
       ]);
       setCopied(true);
-      setTimeout(() => { if (mountedRef.current) setCopied(false); }, 2000);
+      const t2 = setTimeout(() => { if (mountedRef.current) setCopied(false); }, 2000);
+      timersRef.current.push(t2);
     } catch (err) {
       console.warn('useQuoteCardActions: clipboard image copy failed, falling back to text', err);
       const formatted = `”${text}”\n— ${author}, ${bookTitle}`;
       await copyToClipboard(formatted);
       setCopied(true);
-      setTimeout(() => { if (mountedRef.current) setCopied(false); }, 2000);
+      const t3 = setTimeout(() => { if (mountedRef.current) setCopied(false); }, 2000);
+      timersRef.current.push(t3);
     }
   }, [text, bookTitle, author, theme, canvasRef, setCopied]);
 

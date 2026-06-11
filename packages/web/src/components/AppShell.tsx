@@ -94,7 +94,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
      {NAV_ITEMS.map((item) => {
      const active = isActive(item.href);
      return (
-      <Link key={item.href} href={item.href} title={t(item.labelKey)} aria-current={active ? 'page' : undefined}
+      <Link key={item.href} href={item.href} prefetch={false} title={t(item.labelKey)} aria-current={active ? 'page' : undefined}
       className={`nav-link relative px-2 py-2 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out shrink-0 ${
        active
        ? 'nav-link-active text-primary-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'
@@ -156,7 +156,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     {NAV_ITEMS.map((item) => {
     const active = isActive(item.href);
     return (
-     <Link key={item.href} href={item.href} onClick={handleMobileNav} aria-current={active ? 'page' : undefined}
+     <Link key={item.href} href={item.href} prefetch={false} onClick={handleMobileNav} aria-current={active ? 'page' : undefined}
      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out ${
       active
       ? 'text-primary-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-l-2 border-amber-500'

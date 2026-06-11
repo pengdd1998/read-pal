@@ -85,6 +85,7 @@
     "must_be_member_post": "Must be a member to post discussions",
     "llm_log_not_found": "LLM log not found",
     "validation_failed": "Request validation failed",
+    "parse_failed": "Failed to parse {filename}. The file may be corrupted or in an unsupported format.",
     "api_key_limit_reached": "Maximum number of API keys reached (5)"
   },
   "companion": {

@@ -149,7 +149,7 @@ async def upload_book(
         logger.warning('upload.parse_failed user=%s file=%s error=%s', user['id'], file.filename, exc)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={'code': 'PARSE_ERROR', 'message': f'Failed to parse {file.filename}. The file may be corrupted or in an unsupported format.'},
+            detail={'code': 'PARSE_ERROR', 'message': t('errors.parse_failed', lang, filename=file.filename)},
         ) from exc
     finally:
         if tmp_path:
