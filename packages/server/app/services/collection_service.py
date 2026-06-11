@@ -51,6 +51,7 @@ async def get_collection(
             )
             return result.scalar_one_or_none()
     except DBAPIError:
+        logger.warning('collection_service.get_collection failed', exc_info=True)
         return None
 
 
@@ -68,6 +69,7 @@ async def list_collections(
             )
             return list(result.scalars().all())
     except DBAPIError:
+        logger.warning('collection_service.list_collections failed', exc_info=True)
         return []
 
 
@@ -87,8 +89,9 @@ async def update_collection(
                 ),
             )
             collection = result.scalar_one_or_none()
-    except DBAPIError:
-        raise ValueError('Failed to query collection') from None
+    except DBAPIError as exc:
+        logger.warning('collection query failed', exc_info=True)
+        raise ValueError('Failed to query collection') from exc
 
     if collection is None:
         raise ValueError('Collection not found')
@@ -118,8 +121,9 @@ async def delete_collection(
                 ),
             )
             collection = result.scalar_one_or_none()
-    except DBAPIError:
-        raise ValueError('Failed to query collection') from None
+    except DBAPIError as exc:
+        logger.warning('collection query failed', exc_info=True)
+        raise ValueError('Failed to query collection') from exc
 
     if collection is None:
         raise ValueError('Collection not found')
@@ -144,8 +148,9 @@ async def _get_owned_collection(
                 ),
             )
             collection = result.scalar_one_or_none()
-    except DBAPIError:
-        raise ValueError('Failed to query collection') from None
+    except DBAPIError as exc:
+        logger.warning('collection query failed', exc_info=True)
+        raise ValueError('Failed to query collection') from exc
     if collection is None:
         raise ValueError('Collection not found')
     return collection

@@ -50,6 +50,7 @@ async def _fetch_book_meta(
                 'completed_at': book.completed_at.isoformat() if book.completed_at else None,
             }
     except DBAPIError:
+        logger.warning('collectors._fetch_book_meta failed book_id=%s', book_id, exc_info=True)
         return None
 
 
@@ -96,6 +97,7 @@ async def _fetch_annotations(
             ]
             return highlights, notes
     except DBAPIError:
+        logger.warning('collectors._fetch_annotations failed book_id=%s', book_id, exc_info=True)
         return [], []
 
 
@@ -122,6 +124,7 @@ async def _fetch_conversations(
                 for m in messages
             ]
     except DBAPIError:
+        logger.warning('collectors._fetch_conversations failed book_id=%s', book_id, exc_info=True)
         return []
 
 
@@ -155,6 +158,7 @@ async def _fetch_reading_sessions(
             ]
             return serialized, sessions
     except DBAPIError:
+        logger.warning('collectors._fetch_reading_sessions failed book_id=%s', book_id, exc_info=True)
         return [], []
 
 
@@ -184,6 +188,7 @@ async def _fetch_flashcards(
                 for fc in flashcards
             ]
     except DBAPIError:
+        logger.warning('collectors._fetch_flashcards failed book_id=%s', book_id, exc_info=True)
         return []
 
 

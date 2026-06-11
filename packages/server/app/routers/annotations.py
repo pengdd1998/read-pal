@@ -136,9 +136,9 @@ async def create_annotation(
         annotation = await annotation_service.create_annotation(
             db, UUID(current_user['id']), body,
         )
-    except ValueError as exc:
+    except ValueError:
         logger.debug('validation error in annotations')
-        raise not_found_error(str(exc)) from exc
+        raise not_found_error('Annotation not found') from None
     return {
         'success': True,
         'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json', by_alias=True),

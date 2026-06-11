@@ -58,6 +58,7 @@ async def list_webhooks(
             )
             return list(result.scalars().all())
     except DBAPIError:
+        logger.warning('webhook_service.get_webhooks_for_book failed user_id=%s', user_id, exc_info=True)
         return []
 
 
@@ -76,8 +77,9 @@ async def get_webhook(
                 ),
             )
             webhook = result.scalar_one_or_none()
-    except DBAPIError:
-        raise ValueError('Failed to query webhook') from None
+    except DBAPIError as exc:
+        logger.warning('webhook query failed', exc_info=True)
+        raise ValueError('Failed to query webhook') from exc
     if webhook is None:
         raise ValueError('Webhook not found')
     return webhook
@@ -99,8 +101,9 @@ async def update_webhook(
                 ),
             )
             webhook = result.scalar_one_or_none()
-    except DBAPIError:
-        raise ValueError('Failed to query webhook') from None
+    except DBAPIError as exc:
+        logger.warning('webhook query failed', exc_info=True)
+        raise ValueError('Failed to query webhook') from exc
     if webhook is None:
         raise ValueError('Webhook not found')
 
@@ -132,8 +135,9 @@ async def delete_webhook(
                 ),
             )
             webhook = result.scalar_one_or_none()
-    except DBAPIError:
-        raise ValueError('Failed to query webhook') from None
+    except DBAPIError as exc:
+        logger.warning('webhook query failed', exc_info=True)
+        raise ValueError('Failed to query webhook') from exc
     if webhook is None:
         raise ValueError('Webhook not found')
 
@@ -179,6 +183,7 @@ async def get_delivery_logs(
             )
             return list(result.scalars().all()), total
     except DBAPIError:
+        logger.warning('webhook_service.list_webhooks_paginated failed', exc_info=True)
         return [], 0
 
 
