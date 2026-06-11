@@ -9,6 +9,7 @@ from uuid import UUID
 
 from fastapi import UploadFile
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookFileType
@@ -118,30 +119,34 @@ async def _persist_book_and_document(
     meta: dict,
 ) -> tuple[Book, UUID]:
     """Create Book and Document records; return (book, document_id)."""
-    book = Book(
-        user_id=user_id,
-        title=book_title,
-        author=book_author,
-        file_type=BookFileType(file_type),
-        file_size=file_size,
-        total_pages=result.get('total_pages', 0),
-        cover_url=cover_url,
-        tags=tags or [],
-        status='unread',
-        metadata_=meta if meta else None,
-    )
-    db.add(book)
-    await db.flush()
+    try:
+        book = Book(
+            user_id=user_id,
+            title=book_title,
+            author=book_author,
+            file_type=BookFileType(file_type),
+            file_size=file_size,
+            total_pages=result.get('total_pages', 0),
+            cover_url=cover_url,
+            tags=tags or [],
+            status='unread',
+            metadata_=meta if meta else None,
+        )
+        db.add(book)
+        await db.flush()
 
-    document = Document(
-        book_id=book.id,
-        user_id=user_id,
-        content=result.get('content', ''),
-        chapters=result.get('chapters', []),
-    )
-    db.add(document)
-    await db.flush()
-    await db.refresh(book)
+        document = Document(
+            book_id=book.id,
+            user_id=user_id,
+            content=result.get('content', ''),
+            chapters=result.get('chapters', []),
+        )
+        db.add(document)
+        await db.flush()
+        await db.refresh(book)
+    except DBAPIError as exc:
+        logger.error('upload_service._persist_book_and_document DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return book, document.id
 
 
@@ -157,16 +162,20 @@ async def create_book_with_content(
     tags: list[str] | None = None,
 ) -> Book:
     """Create a book record and process its content."""
-    result = await _parse_file_content(file_type, file_path)
-    meta = result.get('metadata', {})
-    book_title, book_author = _resolve_metadata(
-        result, file_path, title, author,
-    )
+    try:
+        result = await _parse_file_content(file_type, file_path)
+        meta = result.get('metadata', {})
+        book_title, book_author = _resolve_metadata(
+            result, file_path, title, author,
+        )
 
-    book, document_id = await _persist_book_and_document(
-        db, user_id, book_title, book_author,
-        file_type, file_size, cover_url, tags, result, meta,
-    )
+        book, document_id = await _persist_book_and_document(
+            db, user_id, book_title, book_author,
+            file_type, file_size, cover_url, tags, result, meta,
+        )
+    except DBAPIError as exc:
+        logger.error('upload_service.create_book_with_content DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     logger.info(
         'Book created: %s (%s, %d pages, %d chapters, %d images)',
@@ -188,17 +197,21 @@ async def get_book_content(
     lang: str = DEFAULT_LANGUAGE,
 ) -> dict | None:
     """Fetch book content and chapters. Returns None if book not found."""
-    result = await db.execute(
-        select(Book).where(Book.id == book_id, Book.user_id == user_id),
-    )
-    book = result.scalar_one_or_none()
-    if book is None:
-        return None
+    try:
+        result = await db.execute(
+            select(Book).where(Book.id == book_id, Book.user_id == user_id),
+        )
+        book = result.scalar_one_or_none()
+        if book is None:
+            return None
 
-    doc_result = await db.execute(
-        select(Document).where(Document.book_id == book_id),
-    )
-    doc = doc_result.scalar_one_or_none()
+        doc_result = await db.execute(
+            select(Document).where(Document.book_id == book_id),
+        )
+        doc = doc_result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('upload_service.get_book_content DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     content = _extract_content(doc)
     chapters = _build_chapters(doc, lang)

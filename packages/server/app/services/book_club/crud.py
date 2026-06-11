@@ -5,6 +5,7 @@ import secrets
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClub, BookClubMember
@@ -19,27 +20,31 @@ async def create_club(
     data: BookClubCreate,
 ) -> BookClub:
     """Create a new book club and add the creator as admin member."""
-    invite_code = secrets.token_urlsafe(4)[:6].upper()
-    club = BookClub(
-        name=data.name,
-        description=data.description,
-        cover_image=data.cover_image,
-        created_by=user_id,
-        is_private=data.is_private,
-        max_members=data.max_members,
-        invite_code=invite_code,
-    )
-    db.add(club)
-    await db.flush()
+    try:
+        invite_code = secrets.token_urlsafe(4)[:6].upper()
+        club = BookClub(
+            name=data.name,
+            description=data.description,
+            cover_image=data.cover_image,
+            created_by=user_id,
+            is_private=data.is_private,
+            max_members=data.max_members,
+            invite_code=invite_code,
+        )
+        db.add(club)
+        await db.flush()
 
-    member = BookClubMember(
-        club_id=club.id,
-        user_id=user_id,
-        role='admin',
-    )
-    db.add(member)
-    await db.flush()
-    await db.refresh(club)
+        member = BookClubMember(
+            club_id=club.id,
+            user_id=user_id,
+            role='admin',
+        )
+        db.add(member)
+        await db.flush()
+        await db.refresh(club)
+    except DBAPIError as exc:
+        logger.error('crud.create_club DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     logger.info('Club created: %s (%s)', club.name, club.id)
     return club
@@ -47,19 +52,23 @@ async def create_club(
 
 async def get_club(db: AsyncSession, club_id: UUID) -> dict | None:
     """Get club details with computed member count."""
-    result = await db.execute(
-        select(BookClub).where(BookClub.id == club_id),
-    )
-    club = result.scalar_one_or_none()
-    if club is None:
-        return None
+    try:
+        result = await db.execute(
+            select(BookClub).where(BookClub.id == club_id),
+        )
+        club = result.scalar_one_or_none()
+        if club is None:
+            return None
 
-    count_result = await db.execute(
-        select(func.count())
-        .select_from(BookClubMember)
-        .where(BookClubMember.club_id == club_id),
-    )
-    member_count = count_result.scalar() or 0
+        count_result = await db.execute(
+            select(func.count())
+            .select_from(BookClubMember)
+            .where(BookClubMember.club_id == club_id),
+        )
+        member_count = count_result.scalar() or 0
+    except DBAPIError as exc:
+        logger.error('crud.get_club DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     return {
         'id': str(club.id),
@@ -84,29 +93,33 @@ async def list_clubs(
     per_page: int = 20,
 ) -> tuple[list[dict], int]:
     """List clubs the user belongs to, with member counts."""
-    count_q = (
-        select(func.count())
-        .select_from(BookClubMember)
-        .where(BookClubMember.user_id == user_id)
-    )
-    total = (await db.execute(count_q)).scalar() or 0
+    try:
+        count_q = (
+            select(func.count())
+            .select_from(BookClubMember)
+            .where(BookClubMember.user_id == user_id)
+        )
+        total = (await db.execute(count_q)).scalar() or 0
 
-    offset = (page - 1) * per_page
-    member_count_sq = (
-        select(BookClubMember.club_id, func.count().label('mc'))
-        .group_by(BookClubMember.club_id)
-        .subquery()
-    )
-    result = await db.execute(
-        select(BookClub, func.coalesce(member_count_sq.c.mc, 0))
-        .join(BookClubMember, BookClubMember.club_id == BookClub.id)
-        .outerjoin(member_count_sq, member_count_sq.c.club_id == BookClub.id)
-        .where(BookClubMember.user_id == user_id)
-        .order_by(BookClub.created_at.desc())
-        .offset(offset)
-        .limit(per_page),
-    )
-    rows = result.all()
+        offset = (page - 1) * per_page
+        member_count_sq = (
+            select(BookClubMember.club_id, func.count().label('mc'))
+            .group_by(BookClubMember.club_id)
+            .subquery()
+        )
+        result = await db.execute(
+            select(BookClub, func.coalesce(member_count_sq.c.mc, 0))
+            .join(BookClubMember, BookClubMember.club_id == BookClub.id)
+            .outerjoin(member_count_sq, member_count_sq.c.club_id == BookClub.id)
+            .where(BookClubMember.user_id == user_id)
+            .order_by(BookClub.created_at.desc())
+            .offset(offset)
+            .limit(per_page),
+        )
+        rows = result.all()
+    except DBAPIError as exc:
+        logger.error('crud.list_clubs DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     items = []
     for club, mc in rows:
@@ -135,29 +148,33 @@ async def update_club(
     data: BookClubUpdate,
 ) -> BookClub:
     """Update club details. Only admin or moderator can update."""
-    result = await db.execute(
-        select(BookClub).where(BookClub.id == club_id),
-    )
-    club = result.scalar_one_or_none()
-    if club is None:
-        raise ValueError('Club not found')
+    try:
+        result = await db.execute(
+            select(BookClub).where(BookClub.id == club_id),
+        )
+        club = result.scalar_one_or_none()
+        if club is None:
+            raise ValueError('Club not found')
 
-    member_result = await db.execute(
-        select(BookClubMember).where(
-            BookClubMember.club_id == club_id,
-            BookClubMember.user_id == user_id,
-        ),
-    )
-    member = member_result.scalar_one_or_none()
-    if member is None or member.role not in ('admin', 'moderator'):
-        raise ValueError('Only admin or moderator can update the club')
+        member_result = await db.execute(
+            select(BookClubMember).where(
+                BookClubMember.club_id == club_id,
+                BookClubMember.user_id == user_id,
+            ),
+        )
+        member = member_result.scalar_one_or_none()
+        if member is None or member.role not in ('admin', 'moderator'):
+            raise ValueError('Only admin or moderator can update the club')
 
-    update_data = data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(club, field, value)
+        update_data = data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(club, field, value)
 
-    await db.flush()
-    await db.refresh(club)
+        await db.flush()
+        await db.refresh(club)
+    except DBAPIError as exc:
+        logger.error('crud.update_club DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     logger.info('Club updated: id=%s user=%s fields=%s', club_id, user_id, list(update_data.keys()))
     return club
 
@@ -168,24 +185,28 @@ async def delete_club(
     club_id: UUID,
 ) -> None:
     """Delete a club. Only admin can delete."""
-    result = await db.execute(
-        select(BookClub).where(BookClub.id == club_id),
-    )
-    club = result.scalar_one_or_none()
-    if club is None:
-        raise ValueError('Club not found')
+    try:
+        result = await db.execute(
+            select(BookClub).where(BookClub.id == club_id),
+        )
+        club = result.scalar_one_or_none()
+        if club is None:
+            raise ValueError('Club not found')
 
-    member_result = await db.execute(
-        select(BookClubMember).where(
-            BookClubMember.club_id == club_id,
-            BookClubMember.user_id == user_id,
-            BookClubMember.role == 'admin',
-        ),
-    )
-    if member_result.scalar_one_or_none() is None:
-        raise ValueError('Only admin can delete the club')
+        member_result = await db.execute(
+            select(BookClubMember).where(
+                BookClubMember.club_id == club_id,
+                BookClubMember.user_id == user_id,
+                BookClubMember.role == 'admin',
+            ),
+        )
+        if member_result.scalar_one_or_none() is None:
+            raise ValueError('Only admin can delete the club')
 
-    await db.delete(club)
-    await db.flush()
+        await db.delete(club)
+        await db.flush()
+    except DBAPIError as exc:
+        logger.error('crud.delete_club DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     logger.info('Club deleted: %s (%s)', club.name, club.id)

@@ -4,6 +4,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClubMember, ClubDiscussion
@@ -18,23 +19,27 @@ async def add_discussion(
     content: str,
 ) -> ClubDiscussion:
     """Add a discussion post. User must be a member."""
-    member_result = await db.execute(
-        select(BookClubMember).where(
-            BookClubMember.club_id == club_id,
-            BookClubMember.user_id == user_id,
-        ),
-    )
-    if member_result.scalar_one_or_none() is None:
-        raise ValueError('Must be a member to post discussions')
+    try:
+        member_result = await db.execute(
+            select(BookClubMember).where(
+                BookClubMember.club_id == club_id,
+                BookClubMember.user_id == user_id,
+            ),
+        )
+        if member_result.scalar_one_or_none() is None:
+            raise ValueError('Must be a member to post discussions')
 
-    discussion = ClubDiscussion(
-        club_id=club_id,
-        user_id=user_id,
-        content=content,
-    )
-    db.add(discussion)
-    await db.flush()
-    await db.refresh(discussion)
+        discussion = ClubDiscussion(
+            club_id=club_id,
+            user_id=user_id,
+            content=content,
+        )
+        db.add(discussion)
+        await db.flush()
+        await db.refresh(discussion)
+    except DBAPIError as exc:
+        logger.error('discussions.add_discussion DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     logger.info('Discussion added: id=%s club=%s user=%s', discussion.id, club_id, user_id)
     return discussion
 
@@ -46,20 +51,24 @@ async def get_discussions(
     per_page: int = 20,
 ) -> tuple[list[ClubDiscussion], int]:
     """List discussions for a club, newest first."""
-    count_result = await db.execute(
-        select(func.count())
-        .select_from(ClubDiscussion)
-        .where(ClubDiscussion.club_id == club_id),
-    )
-    total = count_result.scalar() or 0
+    try:
+        count_result = await db.execute(
+            select(func.count())
+            .select_from(ClubDiscussion)
+            .where(ClubDiscussion.club_id == club_id),
+        )
+        total = count_result.scalar() or 0
 
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        select(ClubDiscussion)
-        .where(ClubDiscussion.club_id == club_id)
-        .order_by(ClubDiscussion.created_at.desc())
-        .offset(offset)
-        .limit(per_page),
-    )
-    discussions = result.scalars().all()
+        offset = (page - 1) * per_page
+        result = await db.execute(
+            select(ClubDiscussion)
+            .where(ClubDiscussion.club_id == club_id)
+            .order_by(ClubDiscussion.created_at.desc())
+            .offset(offset)
+            .limit(per_page),
+        )
+        discussions = result.scalars().all()
+    except DBAPIError as exc:
+        logger.error('discussions.get_discussions DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return list(discussions), total

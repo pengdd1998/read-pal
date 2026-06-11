@@ -6,6 +6,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import case, func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services._session_book_progress import cap_progress
@@ -26,23 +27,27 @@ async def get_user_books(
     per_page: int = 20,
 ) -> tuple[list[Book], int]:
     """Return paginated list of user's books, ordered by last_read_at desc."""
-    base = select(Book).where(Book.user_id == user_id)
-    count_base = select(func.count()).select_from(Book).where(Book.user_id == user_id)
+    try:
+        base = select(Book).where(Book.user_id == user_id)
+        count_base = select(func.count()).select_from(Book).where(Book.user_id == user_id)
 
-    if status:
-        base = base.where(Book.status == status)
-        count_base = count_base.where(Book.status == status)
+        if status:
+            base = base.where(Book.status == status)
+            count_base = count_base.where(Book.status == status)
 
-    total_result = await db.execute(count_base)
-    total = total_result.scalar() or 0
+        total_result = await db.execute(count_base)
+        total = total_result.scalar() or 0
 
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        base.order_by(Book.last_read_at.desc().nulls_last(), Book.added_at.desc())
-        .offset(offset)
-        .limit(per_page),
-    )
-    books = list(result.scalars().all())
+        offset = (page - 1) * per_page
+        result = await db.execute(
+            base.order_by(Book.last_read_at.desc().nulls_last(), Book.added_at.desc())
+            .offset(offset)
+            .limit(per_page),
+        )
+        books = list(result.scalars().all())
+    except DBAPIError as exc:
+        logger.error('book_service.get_user_books DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     return books, total
 
@@ -61,22 +66,26 @@ async def create_book(
     data: BookCreate,
 ) -> Book:
     """Create a new book with status='unread'."""
-    book = Book(
-        id=uuid.uuid4(),
-        user_id=user_id,
-        title=data.title,
-        author=data.author,
-        cover_url=data.cover_url,
-        file_type=data.file_type,
-        file_size=data.file_size,
-        total_pages=data.total_pages,
-        tags=data.tags,
-        status=BookStatus.unread,
-        progress=Decimal('0'),
-    )
-    db.add(book)
-    await db.flush()
-    await db.refresh(book)
+    try:
+        book = Book(
+            id=uuid.uuid4(),
+            user_id=user_id,
+            title=data.title,
+            author=data.author,
+            cover_url=data.cover_url,
+            file_type=data.file_type,
+            file_size=data.file_size,
+            total_pages=data.total_pages,
+            tags=data.tags,
+            status=BookStatus.unread,
+            progress=Decimal('0'),
+        )
+        db.add(book)
+        await db.flush()
+        await db.refresh(book)
+    except DBAPIError as exc:
+        logger.error('book_service.create_book DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     logger.info('Book created: %s (%s) for user %s', book.title, book.id, user_id)
     return book
@@ -89,47 +98,55 @@ async def update_book(
     data: BookUpdate,
 ) -> Book | None:
     """Partially update a book. Set started_at/completed_at on status change."""
-    book = await get_book(db, user_id, book_id)
-    if book is None:
-        return None
+    try:
+        book = await get_book(db, user_id, book_id)
+        if book is None:
+            return None
 
-    now = utcnow()
-    update_data = data.model_dump(exclude_unset=True)
+        now = utcnow()
+        update_data = data.model_dump(exclude_unset=True)
 
-    for field, value in update_data.items():
-        setattr(book, field, value)
+        for field, value in update_data.items():
+            setattr(book, field, value)
 
-    # Handle status transitions
-    if data.status == 'reading' and book.started_at is None:
-        book.started_at = now
-    if data.status == 'completed' and book.completed_at is None:
-        book.completed_at = now
-        if book.progress < Decimal('100'):
-            book.progress = Decimal('100')
-
-    # Recalculate progress when currentPage is updated
-    if data.current_page is not None and book.total_pages > 0:
-        book.current_page = min(max(book.current_page, 0), book.total_pages)
-        book.progress = cap_progress(
-            Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
-        )
-        if book.progress >= Decimal('100') and book.status != BookStatus.completed:
-            book.status = BookStatus.completed
+        # Handle status transitions
+        if data.status == 'reading' and book.started_at is None:
+            book.started_at = now
+        if data.status == 'completed' and book.completed_at is None:
             book.completed_at = now
+            if book.progress < Decimal('100'):
+                book.progress = Decimal('100')
 
-    await db.flush()
+        # Recalculate progress when currentPage is updated
+        if data.current_page is not None and book.total_pages > 0:
+            book.current_page = min(max(book.current_page, 0), book.total_pages)
+            book.progress = cap_progress(
+                Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
+            )
+            if book.progress >= Decimal('100') and book.status != BookStatus.completed:
+                book.status = BookStatus.completed
+                book.completed_at = now
+
+        await db.flush()
+    except DBAPIError as exc:
+        logger.error('book_service.update_book DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return book
 
 
 async def delete_book(db: AsyncSession, user_id: str, book_id: UUID) -> bool:
     """Delete a book and all cascading data."""
-    book = await get_book(db, user_id, book_id)
-    if book is None:
-        return False
+    try:
+        book = await get_book(db, user_id, book_id)
+        if book is None:
+            return False
 
-    await db.delete(book)
-    await _cleanup_collection_orphans(db, book_id)
-    await db.flush()
+        await db.delete(book)
+        await _cleanup_collection_orphans(db, book_id)
+        await db.flush()
+    except DBAPIError as exc:
+        logger.error('book_service.delete_book DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     logger.info('Book deleted: %s for user %s', book_id, user_id)
     return True
@@ -142,21 +159,25 @@ async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
     cache_key = f'stats:books:{user_id}'
 
     async def _compute() -> dict:
-        row = (await db.execute(
-            select(
-                func.count().label('total'),
-                func.coalesce(func.sum(
-                    case((Book.status == 'reading', 1), else_=0),
-                ), 0).label('reading'),
-                func.coalesce(func.sum(
-                    case((Book.status == 'completed', 1), else_=0),
-                ), 0).label('completed'),
-                func.coalesce(func.sum(
-                    case((Book.status == 'unread', 1), else_=0),
-                ), 0).label('unread'),
-                func.coalesce(func.sum(Book.current_page), 0).label('pages'),
-            ).where(Book.user_id == user_id)
-        )).one()
+        try:
+            row = (await db.execute(
+                select(
+                    func.count().label('total'),
+                    func.coalesce(func.sum(
+                        case((Book.status == 'reading', 1), else_=0),
+                    ), 0).label('reading'),
+                    func.coalesce(func.sum(
+                        case((Book.status == 'completed', 1), else_=0),
+                    ), 0).label('completed'),
+                    func.coalesce(func.sum(
+                        case((Book.status == 'unread', 1), else_=0),
+                    ), 0).label('unread'),
+                    func.coalesce(func.sum(Book.current_page), 0).label('pages'),
+                ).where(Book.user_id == user_id)
+            )).one()
+        except DBAPIError as exc:
+            logger.error('book_service.get_book_stats DB error: %s', exc, exc_info=True)
+            raise RuntimeError('Database error') from exc
         return {
             'total': row.total,
             'reading': int(row.reading),
@@ -175,12 +196,16 @@ async def update_tags(
     tags: list[str],
 ) -> Book | None:
     """Set the tags for a book."""
-    book = await get_book(db, user_id, book_id)
-    if book is None:
-        return None
+    try:
+        book = await get_book(db, user_id, book_id)
+        if book is None:
+            return None
 
-    book.tags = tags
-    await db.flush()
+        book.tags = tags
+        await db.flush()
+    except DBAPIError as exc:
+        logger.error('book_service.update_tags DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     logger.info('Tags updated for book %s', book_id)
     return book

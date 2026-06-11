@@ -4,6 +4,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
@@ -50,32 +51,36 @@ async def discover_clubs(
     per_page: int = 20,
 ) -> tuple[list[dict], int]:
     """Discover public clubs ordered by member count (most popular first)."""
-    total = await _count_public_clubs(db)
+    try:
+        total = await _count_public_clubs(db)
 
-    member_count_sq = (
-        select(BookClubMember.club_id, func.count().label('mc'))
-        .group_by(BookClubMember.club_id)
-        .subquery()
-    )
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        select(BookClub, func.coalesce(member_count_sq.c.mc, 0))
-        .outerjoin(member_count_sq, member_count_sq.c.club_id == BookClub.id)
-        .where(BookClub.is_private == False)  # noqa: E712
-        .order_by(BookClub.created_at.desc())
-        .offset(offset)
-        .limit(per_page),
-    )
-    rows = result.all()
-
-    # Collect book titles in one batch
-    book_ids = [club.current_book_id for club, _ in rows if club.current_book_id]
-    book_titles: dict = {}
-    if book_ids:
-        book_result = await db.execute(
-            select(Book.id, Book.title).where(Book.id.in_(book_ids)),
+        member_count_sq = (
+            select(BookClubMember.club_id, func.count().label('mc'))
+            .group_by(BookClubMember.club_id)
+            .subquery()
         )
-        book_titles = dict(book_result.all())
+        offset = (page - 1) * per_page
+        result = await db.execute(
+            select(BookClub, func.coalesce(member_count_sq.c.mc, 0))
+            .outerjoin(member_count_sq, member_count_sq.c.club_id == BookClub.id)
+            .where(BookClub.is_private == False)  # noqa: E712
+            .order_by(BookClub.created_at.desc())
+            .offset(offset)
+            .limit(per_page),
+        )
+        rows = result.all()
+
+        # Collect book titles in one batch
+        book_ids = [club.current_book_id for club, _ in rows if club.current_book_id]
+        book_titles: dict = {}
+        if book_ids:
+            book_result = await db.execute(
+                select(Book.id, Book.title).where(Book.id.in_(book_ids)),
+            )
+            book_titles = dict(book_result.all())
+    except DBAPIError as exc:
+        logger.error('progress.discover_clubs DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     return _format_club_items(rows, book_titles), total
 
@@ -118,32 +123,36 @@ async def get_club_progress(
 
     Returns dict with 'members_progress' list and 'average_progress' int.
     """
-    club = (
-        await db.execute(select(BookClub).where(BookClub.id == club_id))
-    ).scalar_one_or_none()
-    if club is None:
-        return {'membersProgress': [], 'averageProgress': 0}
+    try:
+        club = (
+            await db.execute(select(BookClub).where(BookClub.id == club_id))
+        ).scalar_one_or_none()
+        if club is None:
+            return {'membersProgress': [], 'averageProgress': 0}
 
-    # Get all members
-    member_rows = (
-        await db.execute(
-            select(BookClubMember, User.name)
-            .join(User, User.id == BookClubMember.user_id)
-            .where(BookClubMember.club_id == club_id),
-        )
-    ).all()
+        # Get all members
+        member_rows = (
+            await db.execute(
+                select(BookClubMember, User.name)
+                .join(User, User.id == BookClubMember.user_id)
+                .where(BookClubMember.club_id == club_id),
+            )
+        ).all()
 
-    # Batch-fetch books for all members in a single query (avoids N+1)
-    book_by_user: dict = {}
-    if club.current_book_id and member_rows:
-        user_ids = [member.user_id for member, _ in member_rows]
-        book_result = await db.execute(
-            select(Book).where(
-                Book.id == club.current_book_id,
-                Book.user_id.in_(user_ids),
-            ),
-        )
-        book_by_user = {b.user_id: b for b in book_result.scalars().all()}
+        # Batch-fetch books for all members in a single query (avoids N+1)
+        book_by_user: dict = {}
+        if club.current_book_id and member_rows:
+            user_ids = [member.user_id for member, _ in member_rows]
+            book_result = await db.execute(
+                select(Book).where(
+                    Book.id == club.current_book_id,
+                    Book.user_id.in_(user_ids),
+                ),
+            )
+            book_by_user = {b.user_id: b for b in book_result.scalars().all()}
+    except DBAPIError as exc:
+        logger.error('progress.get_club_progress DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     progress_list = _compute_member_progress(member_rows, book_by_user)
     avg = _compute_average_progress(progress_list)

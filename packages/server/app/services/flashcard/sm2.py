@@ -5,6 +5,7 @@ from uuid import UUID
 
 import structlog
 from sqlalchemy import case, func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
@@ -56,20 +57,24 @@ async def create_flashcard(
     data: FlashcardCreate,
 ) -> Flashcard:
     """Create a flashcard with SM-2 defaults."""
-    card = Flashcard(
-        user_id=user_id,
-        book_id=data.book_id,
-        annotation_id=data.annotation_id,
-        question=data.question,
-        answer=data.answer,
-        ease_factor=DEFAULT_EASE_FACTOR,
-        interval=0,
-        repetition_count=0,
-        next_review_at=utcnow(),
-    )
-    db.add(card)
-    await db.flush()
-    await db.refresh(card)
+    try:
+        card = Flashcard(
+            user_id=user_id,
+            book_id=data.book_id,
+            annotation_id=data.annotation_id,
+            question=data.question,
+            answer=data.answer,
+            ease_factor=DEFAULT_EASE_FACTOR,
+            interval=0,
+            repetition_count=0,
+            next_review_at=utcnow(),
+        )
+        db.add(card)
+        await db.flush()
+        await db.refresh(card)
+    except DBAPIError as exc:
+        logger.error('sm2.create_flashcard DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     logger.info('Flashcard created: id=%s user=%s book=%s', card.id, user_id, data.book_id)
     return card
 
@@ -81,28 +86,32 @@ async def review_flashcard(
     rating: int,
 ) -> Flashcard:
     """Apply SM-2 algorithm to update flashcard scheduling."""
-    result = await db.execute(
-        select(Flashcard).where(
-            Flashcard.id == flashcard_id,
-            Flashcard.user_id == user_id,
-        ),
-    )
-    card = result.scalar_one_or_none()
-    if card is None:
-        raise ValueError('Flashcard not found')
+    try:
+        result = await db.execute(
+            select(Flashcard).where(
+                Flashcard.id == flashcard_id,
+                Flashcard.user_id == user_id,
+            ),
+        )
+        card = result.scalar_one_or_none()
+        if card is None:
+            raise ValueError('Flashcard not found')
 
-    new_interval, new_repetition, new_ef = sm2_schedule(card, rating)
+        new_interval, new_repetition, new_ef = sm2_schedule(card, rating)
 
-    now = utcnow()
-    card.ease_factor = new_ef
-    card.interval = new_interval
-    card.repetition_count = new_repetition
-    card.next_review_at = now + timedelta(days=new_interval)
-    card.last_review_at = now
-    card.last_rating = rating
+        now = utcnow()
+        card.ease_factor = new_ef
+        card.interval = new_interval
+        card.repetition_count = new_repetition
+        card.next_review_at = now + timedelta(days=new_interval)
+        card.last_review_at = now
+        card.last_rating = rating
 
-    await db.flush()
-    await db.refresh(card)
+        await db.flush()
+        await db.refresh(card)
+    except DBAPIError as exc:
+        logger.error('sm2.review_flashcard DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     logger.info('Flashcard reviewed: id=%s user=%s rating=%d interval=%d ef=%.2f', flashcard_id, user_id, rating, new_interval, new_ef)
     return card
 
@@ -114,20 +123,24 @@ async def get_due_cards(
     limit: int = 200,
 ) -> list[Flashcard]:
     """Get flashcards due for review (capped at `limit`)."""
-    now = utcnow()
-    query = (
-        select(Flashcard)
-        .where(
-            Flashcard.user_id == user_id,
-            Flashcard.next_review_at <= now,
+    try:
+        now = utcnow()
+        query = (
+            select(Flashcard)
+            .where(
+                Flashcard.user_id == user_id,
+                Flashcard.next_review_at <= now,
+            )
+            .order_by(Flashcard.next_review_at.asc())
+            .limit(limit)
         )
-        .order_by(Flashcard.next_review_at.asc())
-        .limit(limit)
-    )
-    if book_id is not None:
-        query = query.where(Flashcard.book_id == book_id)
+        if book_id is not None:
+            query = query.where(Flashcard.book_id == book_id)
 
-    result = await db.execute(query)
+        result = await db.execute(query)
+    except DBAPIError as exc:
+        logger.error('sm2.get_due_cards DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return list(result.scalars().all())
 
 
@@ -139,25 +152,29 @@ async def list_flashcards(
     per_page: int = 20,
 ) -> tuple[list[Flashcard], int]:
     """List flashcards with pagination."""
-    base_filter = [Flashcard.user_id == user_id]
-    if book_id is not None:
-        base_filter.append(Flashcard.book_id == book_id)
+    try:
+        base_filter = [Flashcard.user_id == user_id]
+        if book_id is not None:
+            base_filter.append(Flashcard.book_id == book_id)
 
-    count_result = await db.execute(
-        select(func.count())
-        .select_from(Flashcard)
-        .where(*base_filter),
-    )
-    total = count_result.scalar() or 0
+        count_result = await db.execute(
+            select(func.count())
+            .select_from(Flashcard)
+            .where(*base_filter),
+        )
+        total = count_result.scalar() or 0
 
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        select(Flashcard)
-        .where(*base_filter)
-        .order_by(Flashcard.created_at.desc())
-        .offset(offset)
-        .limit(per_page),
-    )
+        offset = (page - 1) * per_page
+        result = await db.execute(
+            select(Flashcard)
+            .where(*base_filter)
+            .order_by(Flashcard.created_at.desc())
+            .offset(offset)
+            .limit(per_page),
+        )
+    except DBAPIError as exc:
+        logger.error('sm2.list_flashcards DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return list(result.scalars().all()), total
 
 
@@ -173,20 +190,24 @@ async def count_total(db: AsyncSession, user_id: UUID) -> int:
 
 async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
     """List flashcard decks grouped by book."""
-    now = utcnow()
-    result = await db.execute(
-        select(
-            Flashcard.book_id,
-            Book.title.label('book_title'),
-            Book.author,
-            Book.cover_url,
-            func.count(Flashcard.id).label('card_count'),
-            func.sum(case((Flashcard.next_review_at <= now, 1), else_=0)).label('due_count'),
+    try:
+        now = utcnow()
+        result = await db.execute(
+            select(
+                Flashcard.book_id,
+                Book.title.label('book_title'),
+                Book.author,
+                Book.cover_url,
+                func.count(Flashcard.id).label('card_count'),
+                func.sum(case((Flashcard.next_review_at <= now, 1), else_=0)).label('due_count'),
+            )
+            .join(Book, Book.id == Flashcard.book_id)
+            .where(Flashcard.user_id == user_id)
+            .group_by(Flashcard.book_id, Book.title, Book.author, Book.cover_url),
         )
-        .join(Book, Book.id == Flashcard.book_id)
-        .where(Flashcard.user_id == user_id)
-        .group_by(Flashcard.book_id, Book.title, Book.author, Book.cover_url),
-    )
+    except DBAPIError as exc:
+        logger.error('sm2.list_decks DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     decks = [
         {
             'bookId': str(row.book_id),

@@ -1,12 +1,16 @@
 """Business logic for user settings: get, update, reading goals."""
 
+import logging
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
+
+logger = logging.getLogger('read-pal.settings')
 
 
 async def get_user_settings(db: AsyncSession, user_id: UUID) -> dict:
@@ -23,9 +27,13 @@ async def update_user_settings(
     updates: dict,
 ) -> dict:
     """Shallow-merge *updates* into the user's existing settings."""
-    user = await _get_user(db, user_id)
-    user.settings = {**(user.settings or {}), **updates}
-    await db.flush()
+    try:
+        user = await _get_user(db, user_id)
+        user.settings = {**(user.settings or {}), **updates}
+        await db.flush()
+    except DBAPIError as exc:
+        logger.error('settings_service.update_user_settings DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return user.settings
 
 
@@ -36,15 +44,19 @@ async def _get_today_reading_minutes(
     """Return total minutes the user has read today."""
     from app.models.reading_session import ReadingSession
 
-    today_start = datetime.combine(date.today(), datetime.min.time())
-    today_seconds = await db.scalar(
-        select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
-            and_(
-                ReadingSession.user_id == user_id,
-                ReadingSession.started_at >= today_start,
+    try:
+        today_start = datetime.combine(date.today(), datetime.min.time())
+        today_seconds = await db.scalar(
+            select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
+                and_(
+                    ReadingSession.user_id == user_id,
+                    ReadingSession.started_at >= today_start,
+                )
             )
         )
-    )
+    except DBAPIError as exc:
+        logger.error('settings_service._get_today_reading_minutes DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return int(today_seconds or 0) // 60
 
 
@@ -55,19 +67,23 @@ async def _get_weekly_completed_books(
     """Return number of books the user completed this week."""
     from app.models.book import Book, BookStatus
 
-    week_start = datetime.combine(
-        date.today() - timedelta(days=date.today().weekday()),
-        datetime.min.time(),
-    )
-    completed_this_week = await db.scalar(
-        select(func.count(Book.id)).where(
-            and_(
-                Book.user_id == user_id,
-                Book.status == BookStatus.completed.value,
-                Book.completed_at >= week_start,
+    try:
+        week_start = datetime.combine(
+            date.today() - timedelta(days=date.today().weekday()),
+            datetime.min.time(),
+        )
+        completed_this_week = await db.scalar(
+            select(func.count(Book.id)).where(
+                and_(
+                    Book.user_id == user_id,
+                    Book.status == BookStatus.completed.value,
+                    Book.completed_at >= week_start,
+                )
             )
         )
-    )
+    except DBAPIError as exc:
+        logger.error('settings_service._get_weekly_completed_books DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return completed_this_week or 0
 
 
@@ -99,8 +115,12 @@ async def get_reading_goals(db: AsyncSession, user_id: UUID) -> dict:
 
 async def _get_user(db: AsyncSession, user_id: UUID) -> User:
     """Fetch user or raise ValueError."""
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
+    try:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('settings_service._get_user DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     if user is None:
         raise ValueError('user_not_found')
     return user
