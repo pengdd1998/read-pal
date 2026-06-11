@@ -16,7 +16,7 @@ from app.schemas.llm_log import (
     LLMUsageSummaryResponse,
 )
 from app.services import llm_log_service
-from app.utils.i18n import _get_user_lang, t
+from app.utils.i18n import _get_user_lang, not_found_error, t
 
 router = APIRouter(
     prefix='/api/v1/logs',
@@ -80,10 +80,7 @@ async def get_llm_log_detail(
     )
     lang = await _get_user_lang(db, UUID(current_user['id']))
     if log is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.llm_log_not_found', lang)},
-        )
+        raise not_found_error(t('errors.llm_log_not_found', lang))
     return {
         'success': True,
         'data': LLMLogResponse.model_validate(log).model_dump(mode='json', by_alias=True),

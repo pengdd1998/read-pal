@@ -19,7 +19,7 @@ from app.schemas.webhook import (
     WebhookUpdate,
 )
 from app.services import webhook_service
-from app.utils.i18n import translate_error
+from app.utils.i18n import not_found_error, translate_error
 from app.middleware.rate_limiter import api_limiter
 
 router = APIRouter(prefix='/api/v1/webhooks', tags=['webhooks'], dependencies=[api_limiter])
@@ -58,10 +58,7 @@ async def test_webhook(
     try:
         wh = await webhook_service.get_webhook(db, UUID(user['id']), webhook_id)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
-        ) from exc
+        raise not_found_error(translate_error(exc)) from exc
     # Actually deliver the test webhook
     test_result = await webhook_service.deliver_webhook(
         webhook=wh,
@@ -115,10 +112,7 @@ async def update_webhook(
             db, UUID(user['id']), webhook_id, body,
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
-        ) from exc
+        raise not_found_error(translate_error(exc)) from exc
     data = WebhookResponse.model_validate(webhook).model_dump(by_alias=True, mode='json')
     return {'success': True, 'data': data}
 
@@ -133,10 +127,7 @@ async def delete_webhook(
     try:
         await webhook_service.delete_webhook(db, UUID(user['id']), webhook_id)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
-        ) from exc
+        raise not_found_error(translate_error(exc)) from exc
 
 
 @router.get('/{webhook_id}/deliveries', response_model=GenericResponse)
@@ -153,10 +144,7 @@ async def get_delivery_logs(
             db, UUID(user['id']), webhook_id, page, per_page,
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
-        ) from exc
+        raise not_found_error(translate_error(exc)) from exc
     items = [
         DeliveryLogResponse.model_validate(log).model_dump(by_alias=True, mode='json')
         for log in logs

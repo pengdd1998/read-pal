@@ -16,7 +16,7 @@ from app.middleware.rate_limiter import api_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.settings import SettingsUpdate
 from app.services import settings_service
-from app.utils.i18n import t
+from app.utils.i18n import not_found_error, t
 import logging
 
 logger = logging.getLogger('read-pal')
@@ -53,10 +53,7 @@ async def get_settings(
     try:
         settings = await settings_service.get_user_settings(db, UUID(current_user['id']))
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
-        )
+        raise not_found_error(t('errors.user_not_found'))
     return {'success': True, 'data': settings}
 
 
@@ -74,10 +71,7 @@ async def update_settings(
             body.model_dump(exclude_unset=True),
         )
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
-        )
+        raise not_found_error(t('errors.user_not_found'))
     return {'success': True, 'data': settings}
 
 
@@ -90,10 +84,7 @@ async def get_reading_goals(
     try:
         goals = await settings_service.get_reading_goals(db, UUID(current_user['id']))
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
-        )
+        raise not_found_error(t('errors.user_not_found'))
     return {'success': True, 'data': goals}
 
 

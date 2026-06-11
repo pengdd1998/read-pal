@@ -17,7 +17,7 @@ from app.schemas.book_club import (
 )
 from app.schemas.common import GenericResponse
 from app.services import book_club_service
-from app.utils.i18n import _get_user_lang, t, translate_error
+from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.middleware.rate_limiter import api_limiter
 
 router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'], dependencies=[api_limiter])
@@ -92,16 +92,10 @@ async def get_club(
     """Get club details. Only visible to members."""
     uid = UUID(user['id'])
     if not await book_club_service.is_member(db, uid, club_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
-        )
+        raise not_found_error(t('errors.club_not_found'))
     club = await book_club_service.get_club(db, club_id)
     if club is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
-        )
+        raise not_found_error(t('errors.club_not_found'))
     return {'success': True, 'data': club}
 
 
@@ -206,10 +200,7 @@ async def get_members(
     """List club members. Only visible to members."""
     uid = UUID(user['id'])
     if not await book_club_service.is_member(db, uid, club_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
-        )
+        raise not_found_error(t('errors.club_not_found'))
     members = await book_club_service.get_members(db, club_id)
     return {'success': True, 'data': members}
 
@@ -223,16 +214,10 @@ async def get_club_progress(
     """Get club reading progress. Only visible to members."""
     uid = UUID(user['id'])
     if not await book_club_service.is_member(db, uid, club_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
-        )
+        raise not_found_error(t('errors.club_not_found'))
     club = await book_club_service.get_club(db, club_id)
     if club is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
-        )
+        raise not_found_error(t('errors.club_not_found'))
 
     progress = await book_club_service.get_club_progress(db, club_id)
 
@@ -257,10 +242,7 @@ async def get_discussions(
     """List discussions for a club. Only visible to members."""
     uid = UUID(user['id'])
     if not await book_club_service.is_member(db, uid, club_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.club_not_found')},
-        )
+        raise not_found_error(t('errors.club_not_found'))
     discussions, total = await book_club_service.get_discussions(
         db, club_id, page, per_page,
     )

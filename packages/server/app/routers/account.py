@@ -11,7 +11,7 @@ from app.middleware.rate_limiter import account_limiter
 from app.schemas.auth import DeleteAccountRequest, UpdateProfileRequest
 from app.schemas.common import GenericResponse
 from app.services import account_service
-from app.utils.i18n import t
+from app.utils.i18n import not_found_error, t
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.account')
@@ -39,10 +39,7 @@ async def update_me(
             settings=body.settings,
         )
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.user_not_found')},
-        )
+        raise not_found_error(t('errors.user_not_found'))
     return {'success': True, 'data': profile}
 
 

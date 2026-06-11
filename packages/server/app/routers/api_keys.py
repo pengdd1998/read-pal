@@ -11,7 +11,7 @@ from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.api_key import ApiKeyCreateRequest
 from app.schemas.common import GenericResponse
 from app.services import api_key_service
-from app.utils.i18n import t
+from app.utils.i18n import not_found_error, t
 
 router = APIRouter(
     prefix='/api/v1/api-keys',
@@ -60,7 +60,4 @@ async def delete_api_key(
     """Delete an API key."""
     deleted = await api_key_service.delete_key(db, UUID(user['id']), key_id)
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.api_key_not_found')},
-        )
+        raise not_found_error(t('errors.api_key_not_found'))

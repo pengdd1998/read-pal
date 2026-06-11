@@ -77,6 +77,13 @@ def translate_error(exc: ValueError, lang: str = DEFAULT_LANGUAGE) -> str:
     return t('errors.validation_failed', lang)
 
 
+def not_found_error(message: str) -> 'HTTPException':
+    """Return a 404 HTTPException with standard NOT_FOUND detail format."""
+    from fastapi import HTTPException
+
+    return HTTPException(status_code=404, detail={'code': 'NOT_FOUND', 'message': message})
+
+
 async def _get_user_lang(db: 'AsyncSession', user_id: 'UUID') -> str:
     """Get user's language preference from settings."""
     from sqlalchemy import select

@@ -11,7 +11,7 @@ from app.middleware.rate_limiter import api_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.notification import NotificationResponse, NotificationUpdate
 from app.services import notification_service
-from app.utils.i18n import t
+from app.utils.i18n import not_found_error, t
 
 router = APIRouter(
     prefix='/api/v1/notifications',
@@ -62,10 +62,7 @@ async def mark_notification_read(
         db, UUID(user['id']), notification_id,
     )
     if notification is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.notification_not_found')},
-        )
+        raise not_found_error(t('errors.notification_not_found'))
     return {'success': True, 'data': _dump(notification)}
 
 
@@ -80,10 +77,7 @@ async def mark_read_alias(
         db, UUID(user['id']), notification_id,
     )
     if notification is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.notification_not_found')},
-        )
+        raise not_found_error(t('errors.notification_not_found'))
     return {'success': True, 'data': _dump(notification)}
 
 

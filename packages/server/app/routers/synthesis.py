@@ -19,7 +19,7 @@ from app.services.cross_book_synthesis_service import (
     get_user_book_ids,
 )
 from app.services.synthesis_service import synthesize
-from app.utils.i18n import t
+from app.utils.i18n import not_found_error, t
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.synthesis')
@@ -49,10 +49,7 @@ async def run_synthesis(
     )
 
     if not response.success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
-        )
+        raise not_found_error(t('errors.book_not_found'))
 
     return {
         'success': True,
@@ -108,10 +105,7 @@ async def run_book_comparison(
     )
 
     if not response.success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
-        )
+        raise not_found_error(t('errors.book_not_found'))
 
     return {
         'success': True,

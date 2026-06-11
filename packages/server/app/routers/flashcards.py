@@ -11,7 +11,7 @@ from app.middleware.rate_limiter import ai_heavy_limiter
 from app.schemas.flashcard import FlashcardCreate, FlashcardGenerateRequest, FlashcardResponse, FlashcardReview
 from app.schemas.common import GenericResponse
 from app.services import flashcard_service
-from app.utils.i18n import _get_user_lang, t, translate_error
+from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.middleware.rate_limiter import api_limiter
 
 router = APIRouter(prefix='/api/v1/flashcards', tags=['flashcards'], dependencies=[api_limiter])
@@ -92,10 +92,7 @@ async def review_flashcard(
             db, UUID(user['id']), flashcard_id, body.rating,
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
-        ) from exc
+        raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _serialize_card(card)}
 
 
@@ -155,10 +152,7 @@ async def generate_flashcards(
             db, UUID(user['id']), UUID(book_id),
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
-        ) from exc
+        raise not_found_error(translate_error(exc, lang)) from exc
     return {
         'success': True,
         'data': {

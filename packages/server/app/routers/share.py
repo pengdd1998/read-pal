@@ -11,7 +11,7 @@ from app.middleware.rate_limiter import api_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.share import ShareCreate, ShareResponse
 from app.services import share_service
-from app.utils.i18n import _get_user_lang, t, translate_error
+from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 
 router = APIRouter(prefix='/api/v1/share', tags=['share'])
 
@@ -59,10 +59,7 @@ async def get_shared_content(
     """Get shared content by token. No auth required."""
     share = await share_service.get_share(db, token)
     if share is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.share_not_found')},
-        )
+        raise not_found_error(t('errors.share_not_found'))
     return {
         'success': True,
         'data': {
@@ -86,10 +83,7 @@ async def delete_share(
     try:
         await share_service.delete_share(db, UUID(user['id']), share_id)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
-        ) from exc
+        raise not_found_error(translate_error(exc, lang)) from exc
 
 
 @router.post('/export', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)

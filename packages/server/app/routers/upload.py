@@ -21,7 +21,7 @@ from app.services.upload_service import (
     stream_upload_to_tempfile,
     validate_file,
 )
-from app.utils.i18n import _get_user_lang, t
+from app.utils.i18n import _get_user_lang, not_found_error, t
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.upload')
@@ -169,8 +169,5 @@ async def get_book_content(
     lang = await _get_user_lang(db, UUID(user['id']))
     data = await svc_get_book_content(db, UUID(user['id']), book_id, lang)
     if data is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found', lang)},
-        )
+        raise not_found_error(t('errors.book_not_found', lang))
     return {'success': True, 'data': data}

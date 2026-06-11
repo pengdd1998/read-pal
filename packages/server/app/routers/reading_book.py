@@ -15,7 +15,7 @@ from app.schemas.common import GenericResponse
 from app.schemas.memory_book import MemoryBookGenerateRequest
 from app.services import reading_book_service
 from app.services.memory_book_service import generate
-from app.utils.i18n import translate_error, t
+from app.utils.i18n import not_found_error, translate_error, t
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.reading_book')
@@ -50,10 +50,7 @@ async def generate_memory_book_query(
             'data': result.model_dump(mode='json', by_alias=True),
         }
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
-        ) from exc
+        raise not_found_error(translate_error(exc)) from exc
 
 
 @router.post('/{book_id}/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
@@ -77,10 +74,7 @@ async def generate_memory_book_path(
             'data': result.model_dump(mode='json', by_alias=True),
         }
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc)},
-        ) from exc
+        raise not_found_error(translate_error(exc)) from exc
 
 
 @router.get('/{book_id}', response_model=GenericResponse)

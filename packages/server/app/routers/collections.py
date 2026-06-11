@@ -16,7 +16,7 @@ from app.schemas.collection import (
 )
 from app.schemas.common import GenericResponse
 from app.services import collection_service
-from app.utils.i18n import _get_user_lang, t, translate_error
+from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 
 router = APIRouter(
     prefix='/api/v1/collections',
@@ -65,10 +65,7 @@ async def get_collection(
     """Get a collection by ID."""
     col = await collection_service.get_collection(db, UUID(user['id']), collection_id)
     if col is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
-        )
+        raise not_found_error(t('errors.collection_not_found'))
     return {'success': True, 'data': _dump(col)}
 
 
@@ -86,10 +83,7 @@ async def update_collection(
             db, UUID(user['id']), collection_id, body,
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
-        ) from exc
+        raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _dump(col)}
 
 
@@ -104,10 +98,7 @@ async def delete_collection(
     try:
         await collection_service.delete_collection(db, UUID(user['id']), collection_id)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
-        ) from exc
+        raise not_found_error(translate_error(exc, lang)) from exc
 
 
 @router.get('/{collection_id}/books', response_model=GenericResponse)
@@ -119,10 +110,7 @@ async def get_collection_books(
     """List books in a collection."""
     col = await collection_service.get_collection(db, UUID(user['id']), collection_id)
     if col is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
-        )
+        raise not_found_error(t('errors.collection_not_found'))
     return {
         'success': True,
         'data': {
@@ -145,10 +133,7 @@ async def add_books_batch(
             db, UUID(user['id']), collection_id, parsed_ids,
         )
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
-        )
+        raise not_found_error(t('errors.collection_not_found'))
     return {'success': True, 'data': _dump(col)}
 
 
@@ -166,10 +151,7 @@ async def remove_books_batch(
             db, UUID(user['id']), collection_id, parsed_ids,
         )
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.collection_not_found')},
-        )
+        raise not_found_error(t('errors.collection_not_found'))
     return {'success': True, 'data': _dump(col)}
 
 
@@ -187,10 +169,7 @@ async def add_book(
             db, UUID(user['id']), collection_id, book_id,
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
-        ) from exc
+        raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _dump(col)}
 
 
@@ -208,7 +187,4 @@ async def remove_book(
             db, UUID(user['id']), collection_id, book_id,
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
-        ) from exc
+        raise not_found_error(translate_error(exc, lang)) from exc

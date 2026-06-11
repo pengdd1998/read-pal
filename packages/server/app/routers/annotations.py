@@ -20,7 +20,7 @@ from app.schemas.annotation import (
 )
 from app.schemas.common import GenericResponse
 from app.services import annotation_service
-from app.utils.i18n import _get_user_lang, t
+from app.utils.i18n import _get_user_lang, not_found_error, t
 from app.middleware.rate_limiter import api_limiter
 
 router = APIRouter(prefix='/api/v1/annotations', tags=['annotations'], dependencies=[api_limiter])
@@ -115,10 +115,7 @@ async def get_annotation(
         db, UUID(current_user['id']), annotation_id,
     )
     if annotation is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found', lang)},
-        )
+        raise not_found_error(t('errors.annotation_not_found', lang))
     return {
         'success': True,
         'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json', by_alias=True),
@@ -137,10 +134,7 @@ async def create_annotation(
             db, UUID(current_user['id']), body,
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': str(exc)},
-        ) from exc
+        raise not_found_error(str(exc)) from exc
     return {
         'success': True,
         'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json', by_alias=True),
@@ -160,10 +154,7 @@ async def update_annotation(
         db, UUID(current_user['id']), annotation_id, body,
     )
     if annotation is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found', lang)},
-        )
+        raise not_found_error(t('errors.annotation_not_found', lang))
     return {
         'success': True,
         'data': AnnotationResponse.model_validate(annotation).model_dump(mode='json', by_alias=True),
@@ -182,7 +173,4 @@ async def delete_annotation(
         db, UUID(current_user['id']), annotation_id,
     )
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.annotation_not_found', lang)},
-        )
+        raise not_found_error(t('errors.annotation_not_found', lang))

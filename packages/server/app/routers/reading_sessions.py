@@ -22,7 +22,7 @@ from app.schemas.reading_session import (
 )
 from app.schemas.common import GenericResponse
 from app.services import reading_session_service
-from app.utils.i18n import t
+from app.utils.i18n import not_found_error, t
 from app.middleware.rate_limiter import api_limiter
 
 router = APIRouter(prefix='/api/v1/sessions', tags=['sessions'], dependencies=[api_limiter])
@@ -113,10 +113,7 @@ async def get_session(
         db, UUID(current_user['id']), session_id,
     )
     if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
-        )
+        raise not_found_error(t('errors.session_not_found'))
     return {
         'success': True,
         'data': SessionResponse.model_validate(session).model_dump(mode='json', by_alias=True),
@@ -151,10 +148,7 @@ async def end_session(
         db, UUID(current_user['id']), session_id, data=body,
     )
     if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
-        )
+        raise not_found_error(t('errors.session_not_found'))
     return {
         'success': True,
         'data': SessionResponse.model_validate(session).model_dump(mode='json', by_alias=True),
@@ -190,10 +184,7 @@ async def heartbeat_session(
         db, UUID(current_user['id']), session_id, body,
     )
     if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
-        )
+        raise not_found_error(t('errors.session_not_found'))
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 
 
@@ -208,9 +199,6 @@ async def summarize_session(
         db, UUID(current_user['id']), session_id,
     )
     if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.session_not_found')},
-        )
+        raise not_found_error(t('errors.session_not_found'))
     summary = reading_session_service.build_session_summary(session)
     return {'success': True, 'data': {'summary': summary}}

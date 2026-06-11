@@ -13,7 +13,7 @@ from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import api_limiter
 from app.services.export_service import CITATION_FORMATS, SUPPORTED_FORMATS, export
-from app.utils.i18n import t
+from app.utils.i18n import not_found_error, t
 
 logger = logging.getLogger('read-pal.export')
 
@@ -55,10 +55,7 @@ async def _do_export(db: AsyncSession, user_id: UUID, book_id: UUID, fmt: str) -
     result = await export(db, user_id, book_id, fmt)
 
     if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found')},
-        )
+        raise not_found_error(t('errors.book_not_found'))
 
     content, content_type = result
     filename = _FILENAME_MAP[fmt].format(book_id=book_id)
