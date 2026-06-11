@@ -27,7 +27,9 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Rec
  }
 
  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
- console.error('ErrorBoundary caught:', error, errorInfo);
+ if (process.env.NODE_ENV === 'development') {
+  console.error('ErrorBoundary caught:', error, errorInfo);
+ }
  this.setState({ errorInfo });
  }
 
