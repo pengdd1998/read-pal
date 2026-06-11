@@ -122,7 +122,14 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
                   : m,
               ),
             );
-            await new Promise((r) => setTimeout(r, delay));
+            await new Promise<void>((resolve, reject) => {
+              const timer = setTimeout(resolve, delay);
+              fetchController.signal.addEventListener('abort', () => {
+                clearTimeout(timer);
+                reject(new DOMException('Aborted', 'AbortError'));
+              }, { once: true });
+            }).catch(() => { /* aborted */ });
+            if (fetchController.signal.aborted) return;
             return attemptStream(attempt + 1);
           }
           const errorMsg = t('companion_server_error', { status: response.status });
@@ -209,7 +216,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
         );
       } catch (err) {
         warn('useStreamingChat: connection error (attempt %d)', attempt, err);
-        if (attempt < MAX_RETRIES) {
+        if (attempt < MAX_RETRIES && !fetchController.signal.aborted) {
           const delay = Math.pow(2, attempt) * 1000;
           onMessagesUpdate((prev) =>
             prev.map((m) =>
@@ -218,7 +225,14 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
                 : m,
             ),
           );
-          await new Promise((r) => setTimeout(r, delay));
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(resolve, delay);
+            fetchController.signal.addEventListener('abort', () => {
+              clearTimeout(timer);
+              reject(new DOMException('Aborted', 'AbortError'));
+            }, { once: true });
+          }).catch(() => { /* aborted */ });
+          if (fetchController.signal.aborted) return;
           return attemptStream(attempt + 1);
         }
         onMessagesUpdate((prev) =>

@@ -131,12 +131,13 @@ export function useReaderUI(): ReaderUIState {
     dispatchPanel({ panel: 'chat', open: next });
   }, [panels.chat]);
 
-  // Session timer — update ref, only setState for reads
+  // Session timer — update ref, only setState when value changes
   useEffect(() => {
     const timer = setInterval(() => {
       if (!isPaused) {
         const pausedMs = totalPausedMsRef.current + (pausedAtRef.current ? Date.now() - pausedAtRef.current : 0);
-        setSessionElapsed(Math.floor((Date.now() - sessionStartRef.current - pausedMs) / 1000));
+        const elapsed = Math.floor((Date.now() - sessionStartRef.current - pausedMs) / 1000);
+        setSessionElapsed((prev) => prev === elapsed ? prev : elapsed);
       }
     }, 1000);
     return () => clearInterval(timer);
@@ -191,9 +192,20 @@ export function useReaderUI(): ReaderUIState {
   }, [resetAutoHideTimer]);
 
   useEffect(() => {
-    const handleScroll = () => { if (showControls) resetAutoHideTimer(); };
+    let rafId = 0;
+    const handleScroll = () => {
+      if (!showControls) return;
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        resetAutoHideTimer();
+      });
+    };
     window.addEventListener('scroll', handleScroll, true);
-    return () => window.removeEventListener('scroll', handleScroll, true);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [showControls, resetAutoHideTimer]);
 
   const handleToggleControls = useCallback(() => {

@@ -40,7 +40,7 @@ export const HowItWorksSection = memo(function HowItWorksSection({
  return (
  <>
   {/* Trust bar */}
-  <section aria-label="Trust indicators" className="bg-surface-1 pt-8 pb-4">
+  <section aria-label={how_title} className="bg-surface-1 pt-8 pb-4">
   <div className="px-4 sm:px-6 lg:px-8">
    <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-gray-600 py-6">
    {trust_items.map((item) => (

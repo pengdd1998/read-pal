@@ -21,7 +21,7 @@ export const CTASection = React.memo(function CTASection({
  return (
  <>
   {/* GitHub Star CTA */}
-  <section aria-label="GitHub repository" className="px-4 sm:px-6 lg:px-8 py-12 text-center">
+  <section aria-label={love_text} className="px-4 sm:px-6 lg:px-8 py-12 text-center">
   <div className="inline-flex items-center gap-4 px-6 py-4 rounded-2xl border border-surface-3 bg-surface-0 shadow-sm">
    <span className="text-gray-700 font-medium">{love_text}</span>
    <a

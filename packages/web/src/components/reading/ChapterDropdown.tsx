@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { ChevronDown, CheckCircle } from '@/components/icons';
 import type { ReaderTheme } from '@/lib/reader-theme';
 
+const OVERSCROLL_STYLE: React.CSSProperties = { overscrollBehavior: 'contain' };
+
 interface ChapterItem {
  title: string;
 }
@@ -170,7 +172,7 @@ export const ChapterDropdown = React.memo(function ChapterDropdown({
      ? 'bg-amber-50 border-amber-300/60'
      : 'bg-surface-0 border-amber-200/60'
    }`}
-   style={{ overscrollBehavior: 'contain' } as React.CSSProperties}
+   style={OVERSCROLL_STYLE}
    tabIndex={-1}
    onKeyDown={(e) => { if (e.key === 'Escape') closeChapterMenu(); }}
    >

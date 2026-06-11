@@ -183,16 +183,27 @@ export function useReaderViewLogic({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const scrollRafRef = useRef<number>(0);
   const updateScrollProgress = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const { scrollTop, scrollHeight, clientHeight } = el;
-    const maxScroll = scrollHeight - clientHeight;
-    const raw = maxScroll > 0 ? scrollTop / maxScroll : 1;
-    const progress = Math.min(1, Math.max(0, raw));
-    setScrollProgress(progress);
-    onScrollProgress?.(progress);
+    if (scrollRafRef.current) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = 0;
+      const el = containerRef.current;
+      if (!el) return;
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const maxScroll = scrollHeight - clientHeight;
+      const raw = maxScroll > 0 ? scrollTop / maxScroll : 1;
+      const progress = Math.min(1, Math.max(0, raw));
+      setScrollProgress(progress);
+      onScrollProgress?.(progress);
+    });
   }, [onScrollProgress]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+    };
+  }, []);
 
   const handleProgressRestore = useCallback((fraction: number, _scrollTop: number) => {
     setScrollProgress(fraction);

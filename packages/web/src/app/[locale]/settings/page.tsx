@@ -32,11 +32,18 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail] = useState('');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingUpdatesRef = useRef<{ updates: Partial<UserSettings>; previous?: UserSettings } | null>(null);
 
-  // Clear debounce timer on unmount
+  // Flush pending saves and clear timers on unmount
   useEffect(() => {
     return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        const pending = pendingUpdatesRef.current;
+        if (pending) {
+          api.patch<UserSettings>('/api/settings', pending.updates as Record<string, unknown>).catch(() => { /* best-effort flush */ });
+        }
+      }
       if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
     };
   }, []);
@@ -100,7 +107,11 @@ export default function SettingsPage() {
 
   const debouncedSave = useCallback((updates: Partial<UserSettings>, previousSettings?: UserSettings) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => saveSettings(updates, previousSettings), 400);
+    pendingUpdatesRef.current = { updates, previous: previousSettings };
+    saveTimerRef.current = setTimeout(() => {
+      pendingUpdatesRef.current = null;
+      saveSettings(updates, previousSettings);
+    }, 400);
   }, [saveSettings]);
 
   function handleSettingsUpdate(updates: Partial<UserSettings>) {

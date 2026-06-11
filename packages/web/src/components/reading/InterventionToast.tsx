@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
 import { warn } from '@/lib/logger';
 
 interface InterventionToastProps {
@@ -43,7 +42,6 @@ export const InterventionToast = React.memo(function InterventionToast({
  highlightCount,
 }: InterventionToastProps) {
  const t = useTranslations('common');
- const { toast } = useToast();
  const [intervention, setIntervention] = useState<Intervention | null>(null);
  const [visible, setVisible] = useState(false);
  const [submitting, setSubmitting] = useState(false);
@@ -105,7 +103,6 @@ export const InterventionToast = React.memo(function InterventionToast({
   } catch (err) {
   if (stale) return;
   warn('InterventionToast: intervention check failed', err);
-  toast(t('intervention_check_failed'), 'error');
   }
  }, CHECK_INTERVAL);
 
