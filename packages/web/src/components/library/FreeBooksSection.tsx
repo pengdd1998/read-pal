@@ -172,12 +172,13 @@ const FreeBookCard = React.memo(function FreeBookCard({
  book,
  t,
 }: FreeBookCardProps) {
+ const [bgClass, textClass] = getBookCoverColors(book.title);
  return (
  <div className="group">
   <Link
   href={`/search?q=${encodeURIComponent(book.title)}`}
   aria-label={`${book.title} ${t('book_by_author', { author: book.author })}`}
-  className={`w-full aspect-[2/3] rounded-xl bg-gradient-to-br ${getBookCoverColors(book.title)[0]} ${getBookCoverColors(book.title)[1]} flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-all border border-white/10 block`}
+  className={`w-full aspect-[2/3] rounded-xl bg-gradient-to-br ${bgClass} ${textClass} flex flex-col items-center justify-center p-3 group-hover:shadow-md transition-all border border-white/10 block`}
   >
   <span className="text-2xl font-bold tracking-wide opacity-90">{getBookInitials(book.title)}</span>
   <p className="text-[10px] mt-2 font-medium text-center leading-tight px-1 line-clamp-2">{book.title}</p>

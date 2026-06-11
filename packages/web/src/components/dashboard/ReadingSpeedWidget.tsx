@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
@@ -66,13 +66,15 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
 
  if (books.length === 0) return null;
 
- const activeBooks = books.filter((b) => b.wpm > 0);
+ const { activeBooks, maxWpm, avgWpm } = useMemo(() => {
+   const filtered = books.filter((b) => b.wpm > 0);
+   const max = Math.max(...filtered.map((b) => b.wpm), 1);
+   const avg = filtered.length > 0
+     ? Math.round(filtered.reduce((sum, b) => sum + b.wpm, 0) / filtered.length)
+     : 0;
+   return { activeBooks: filtered, maxWpm: max, avgWpm: avg };
+ }, [books]);
  if (activeBooks.length === 0) return null;
-
- const maxWpm = Math.max(...activeBooks.map((b) => b.wpm), 1);
- const avgWpm = activeBooks.length > 0
- ? Math.round(activeBooks.reduce((sum, b) => sum + b.wpm, 0) / activeBooks.length)
- : 0;
 
  return (
  <div className="card">

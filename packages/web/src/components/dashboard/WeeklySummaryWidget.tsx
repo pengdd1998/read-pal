@@ -85,7 +85,10 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  if (!data) return null;
 
  const isEmpty = data.minutesRead === 0 && data.pagesRead === 0;
- const maxMinutes = Math.max(...data.dailyBreakdown.map((d) => d.minutes), 1);
+ const maxMinutes = useMemo(
+   () => Math.max(...data.dailyBreakdown.map((d) => d.minutes), 1),
+   [data.dailyBreakdown],
+ );
 
  return (
  <div className="card">
