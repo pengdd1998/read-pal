@@ -1,6 +1,7 @@
 'use client';
 
 import { isCapacitor } from './capacitor';
+import { safeGetItem, safeSetItem, safeRemoveItem } from './safe-storage';
 
 let Preferences: typeof import('@capacitor/preferences').Preferences | null = null;
 
@@ -20,7 +21,7 @@ export async function getItem(key: string): Promise<string | null> {
       return value;
     }
   }
-  return typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+  return typeof window !== 'undefined' ? safeGetItem(key) : null;
 }
 
 export async function setItem(key: string, value: string): Promise<void> {
@@ -32,7 +33,7 @@ export async function setItem(key: string, value: string): Promise<void> {
     }
   }
   if (typeof window !== 'undefined') {
-    localStorage.setItem(key, value);
+    safeSetItem(key, value);
   }
 }
 
@@ -45,6 +46,6 @@ export async function removeItem(key: string): Promise<void> {
     }
   }
   if (typeof window !== 'undefined') {
-    localStorage.removeItem(key);
+    safeRemoveItem(key);
   }
 }

@@ -7,6 +7,7 @@ import { isCapacitor } from './capacitor';
 import { getItem, setItem, removeItem } from './native-storage';
 import { clearQueue } from './offline-queue';
 import { getAuthTokenAsync, setAuthTokens, clearAuthTokens } from './auth-fetch';
+import { safeGetItem, safeSetItem, safeRemoveItem } from './safe-storage';
 
 /** Set a simple cookie so Next.js middleware can detect auth state */
 function setAuthCookie(token: string) {
@@ -47,12 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  // Eager initialization from localStorage — survives HMR remount without auth gap
  const [token, setToken] = useState<string | null>(() => {
  if (typeof window === 'undefined' || isCapacitor()) return null;
- return localStorage.getItem('auth_token');
+ return safeGetItem('auth_token');
  });
  const [user, setUser] = useState<User | null>(() => {
  if (typeof window === 'undefined' || isCapacitor()) return null;
  try {
-  const saved = localStorage.getItem('user');
+  const saved = safeGetItem('user');
   return saved ? JSON.parse(saved) : null;
  } catch (err) { console.warn("auth: failed to parse stored user", err); return null; }
  });
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return;
  }
  // Web: restore cookie so Next.js middleware sees auth state immediately
- const savedToken = localStorage.getItem('auth_token');
+ const savedToken = safeGetItem('auth_token');
  if (savedToken) setAuthCookie(savedToken);
  }, []);
 
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   await setAuthTokens(newToken, newRefreshToken);
  } else {
   await setItem('auth_token', newToken);
-  if (typeof window !== 'undefined') localStorage.setItem('auth_token', newToken);
+  if (typeof window !== 'undefined') safeSetItem('auth_token', newToken);
  }
  setAuthCookie(newToken);
  setToken(newToken);
@@ -119,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  }, [persistAuth]);
 
  const logout = useCallback(async () => {
- const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+ const refreshToken = typeof window !== 'undefined' ? safeGetItem('refresh_token') : null;
  try {
   await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
  } catch (e) {
@@ -128,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  await clearAuthTokens();
  await removeItem('user');
  if (typeof window !== 'undefined') {
-  localStorage.removeItem('user');
+  safeRemoveItem('user');
  }
  clearAuthCookie();
  setToken(null);
