@@ -128,7 +128,7 @@ export default function MemoryBooksPage() {
  <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in" id="main-content" aria-label={t('pageTitle')}>
   {/* Back */}
   <div className="mb-6">
-  <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+  <Link href="/dashboard" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
    </svg>
@@ -189,7 +189,7 @@ export default function MemoryBooksPage() {
     <Link
      key={mb.id}
      href={`/memory-books/${mb.bookId}`}
-     className="block bg-surface-0 rounded-xl border border-surface-3 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200"
+     className="block bg-surface-0 rounded-xl border border-surface-3 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      <div className="flex items-center gap-4">
      <div className={`w-12 h-16 rounded-lg flex items-center justify-center flex-shrink-0 ${

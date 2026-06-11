@@ -32,7 +32,7 @@ export const KnowledgeNotConfigured = React.memo(function KnowledgeNotConfigured
         </div>
         <button
           onClick={() => router.push('/library')}
-          className="mt-6 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors"
+          className="mt-6 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         >
           {backToLibraryLabel}
         </button>

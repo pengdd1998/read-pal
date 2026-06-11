@@ -42,7 +42,7 @@ const NotificationItem = React.memo(function NotificationItem({ notif, onMarkAsR
   return (
     <button
       onClick={() => !notif.read && onMarkAsRead(notif.id)}
-      className={`w-full text-left px-4 py-3 border-b border-surface-2 hover:bg-surface-1 transition-colors ${
+      className={`w-full text-left px-4 py-3 border-b border-surface-2 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
         !notif.read ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''
       }`}
     >
@@ -178,7 +178,7 @@ export const NotificationBell = memo(function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadNotifications(); }}
-        className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         aria-label={t('notifications')}
       >
         <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -199,7 +199,7 @@ export const NotificationBell = memo(function NotificationBell() {
               <button
                 onClick={markAllRead}
                 disabled={markingAll}
-                className="text-xs text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-xs text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
               >
                 {t('notifications_mark_all_read')}
               </button>

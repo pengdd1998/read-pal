@@ -27,7 +27,7 @@ export const KnowledgeErrorState = React.memo(function KnowledgeErrorState({
         <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
         <button
           onClick={onRetry}
-          className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors text-sm min-h-[44px]"
+          className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors text-sm min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         >
           {tryAgainLabel}
         </button>
