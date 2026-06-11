@@ -8,6 +8,21 @@ import { isDisplayableAuthor } from '@/lib/book-cover';
 import { SkeletonPulse } from './SkeletonPulse';
 import type { RecommendationItem } from './types';
 
+const RecommendationCard = memo(function RecommendationCard({ r, genreLabel }: { r: RecommendationItem; genreLabel: string }) {
+  return (
+    <div className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-1 transition-colors">
+      <div className="w-8 h-10 rounded bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center flex-shrink-0">
+        <span className="text-xs">{'📖'}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{r.title}</p>
+        {isDisplayableAuthor(r.author) && <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{r.author}</p>}
+      </div>
+      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-1 text-gray-500 dark:text-gray-400 whitespace-nowrap">{genreLabel}</span>
+    </div>
+  );
+});
+
 export const DashboardRecommendations = memo(function DashboardRecommendations() {
  const t = useTranslations('dashboard');
  const [recs, setRecs] = useState<RecommendationItem[]>([]);
@@ -62,16 +77,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
   </div>
   <div className="space-y-2">
   {topRecs.map((r) => (
-   <div key={r.title + '-' + r.author} className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-1 transition-colors">
-   <div className="w-8 h-10 rounded bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center flex-shrink-0">
-    <span className="text-xs">{'\uD83D\uDCD6'}</span>
-   </div>
-   <div className="min-w-0 flex-1">
-    <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{r.title}</p>
-    {isDisplayableAuthor(r.author) && <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{r.author}</p>}
-   </div>
-   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-1 text-gray-500 dark:text-gray-400 whitespace-nowrap">{r.genre ? t(`genre_${r.genre.toLowerCase().replace('-', '_')}`) || r.genre : ''}</span>
-   </div>
+   <RecommendationCard key={r.title + '-' + r.author} r={r} genreLabel={r.genre ? t(`genre_${r.genre.toLowerCase().replace('-', '_')}`) || r.genre : ''} />
   ))}
   </div>
  </div>
