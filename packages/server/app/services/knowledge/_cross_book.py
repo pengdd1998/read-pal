@@ -8,11 +8,11 @@ from uuid import UUID
 
 import structlog
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.services.knowledge._cache import _content_hash, _load_cached_graph
+from app.utils.db import db_error_guard
 
 logger = structlog.get_logger('read-pal.knowledge')
 
@@ -29,7 +29,7 @@ async def _batch_load_annotations(
     """
     if not book_ids:
         return {}
-    try:
+    async with db_error_guard('_cross_book._batch_load_annotations', user_id=str(user_id)):
         result = await db.execute(
             select(Annotation)
             .where(
@@ -43,9 +43,6 @@ async def _batch_load_annotations(
             grouped[ann.book_id].append(ann)
         # Cap per-book to avoid token overflow (same as _load_annotations)
         return {bid: anns[:limit_per_book] for bid, anns in grouped.items()}
-    except DBAPIError as exc:
-        logger.error('_cross_book._batch_load_annotations DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 async def _collect_book_concepts(
@@ -140,14 +137,11 @@ async def get_cross_book_themes(
     """
     from app.models.book import Book as BookModel
 
-    try:
+    async with db_error_guard('get_cross_book_themes', user_id=str(user_id)):
         result = await db.execute(
             select(BookModel.id, BookModel.title).where(BookModel.user_id == user_id),
         )
         book_rows = result.all()
-    except DBAPIError as exc:
-        logger.error('_cross_book.get_cross_book_themes DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     if not book_rows:
         return {'themes': [], 'connections': []}
 

@@ -4,12 +4,12 @@ import logging
 
 from jose import JWTError, jwt as jose_jwt
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.middleware.auth import create_token_pair, revoke_token
 from app.models.user import User
+from app.utils.db import db_error_guard
 from app.utils.i18n import t
 
 logger = logging.getLogger('read-pal.auth')
@@ -98,12 +98,9 @@ async def _validate_refresh_payload(db: AsyncSession, payload: dict) -> User:
         )
 
     user_id = payload.get('userId') or payload.get('sub') or ''
-    try:
+    async with db_error_guard('_token._validate_refresh_payload'):
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
-    except DBAPIError as exc:
-        logger.error('_token._validate_refresh_payload DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     if user is None:
         raise HTTPException(

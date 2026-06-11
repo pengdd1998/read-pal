@@ -6,10 +6,10 @@ from uuid import UUID
 from app.utils import utcnow
 
 from sqlalchemy import func, select, update
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import Notification
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.notifications')
 
@@ -27,24 +27,24 @@ async def list_notifications(
         filters.append(Notification.read == False)  # noqa: E712
 
     try:
-        count_result = await db.execute(
-            select(func.count())
-            .select_from(Notification)
-            .where(*filters),
-        )
-        total = count_result.scalar() or 0
+        async with db_error_guard('list_notifications', user_id=str(user_id)):
+            count_result = await db.execute(
+                select(func.count())
+                .select_from(Notification)
+                .where(*filters),
+            )
+            total = count_result.scalar() or 0
 
-        offset = (page - 1) * per_page
-        result = await db.execute(
-            select(Notification)
-            .where(*filters)
-            .order_by(Notification.created_at.desc())
-            .offset(offset)
-            .limit(per_page),
-        )
-        return list(result.scalars().all()), total
-    except DBAPIError:
-        logger.error('Failed to list notifications', exc_info=True, user_id=str(user_id))
+            offset = (page - 1) * per_page
+            result = await db.execute(
+                select(Notification)
+                .where(*filters)
+                .order_by(Notification.created_at.desc())
+                .offset(offset)
+                .limit(per_page),
+            )
+            return list(result.scalars().all()), total
+    except Exception:
         return [], 0
 
 
@@ -54,17 +54,17 @@ async def unread_count(
 ) -> int:
     """Get unread notification count."""
     try:
-        result = await db.execute(
-            select(func.count())
-            .select_from(Notification)
-            .where(
-                Notification.user_id == user_id,
-                Notification.read == False,  # noqa: E712
-            ),
-        )
-        return result.scalar() or 0
-    except DBAPIError:
-        logger.error('Failed to get unread count', exc_info=True, user_id=str(user_id))
+        async with db_error_guard('unread_count', user_id=str(user_id)):
+            result = await db.execute(
+                select(func.count())
+                .select_from(Notification)
+                .where(
+                    Notification.user_id == user_id,
+                    Notification.read == False,  # noqa: E712
+                ),
+            )
+            return result.scalar() or 0
+    except Exception:
         return 0
 
 
@@ -75,15 +75,15 @@ async def mark_read(
 ) -> Notification | None:
     """Mark a single notification as read."""
     try:
-        result = await db.execute(
-            select(Notification).where(
-                Notification.id == notification_id,
-                Notification.user_id == user_id,
-            ),
-        )
-        notification = result.scalar_one_or_none()
-    except DBAPIError:
-        logger.error('Failed to query notification for mark_read', exc_info=True, user_id=str(user_id), notification_id=str(notification_id))
+        async with db_error_guard('mark_read.query', user_id=str(user_id), notification_id=str(notification_id)):
+            result = await db.execute(
+                select(Notification).where(
+                    Notification.id == notification_id,
+                    Notification.user_id == user_id,
+                ),
+            )
+            notification = result.scalar_one_or_none()
+    except Exception:
         return None
     if notification is None:
         return None
@@ -101,21 +101,19 @@ async def mark_all_read(
 ) -> int:
     """Mark all unread notifications as read. Returns count updated."""
     try:
-        result = await db.execute(
-            update(Notification)
-            .where(
-                Notification.user_id == user_id,
-                Notification.read == False,  # noqa: E712
+        async with db_error_guard('mark_all_read', user_id=str(user_id)):
+            result = await db.execute(
+                update(Notification)
+                .where(
+                    Notification.user_id == user_id,
+                    Notification.read == False,  # noqa: E712
+                )
+                .values(read=True, updated_at=utcnow())
+                .returning(Notification.id),
             )
-            .values(read=True, updated_at=utcnow())
-            .returning(Notification.id),
-        )
-        rows = result.fetchall()
-        await db.flush()
-        logger.info('All notifications marked read: user=%s count=%d', user_id, len(rows))
-        return len(rows)
-    except DBAPIError:
-        logger.error('Failed to mark all notifications read', exc_info=True, user_id=str(user_id))
+            rows = result.fetchall()
+            await db.flush()
+            logger.info('All notifications marked read: user=%s count=%d', user_id, len(rows))
+            return len(rows)
+    except Exception:
         return 0
-
-

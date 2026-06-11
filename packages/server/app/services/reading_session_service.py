@@ -12,11 +12,11 @@ from uuid import UUID
 from app.utils import utcnow
 
 from sqlalchemy import func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import SessionCreate, SessionUpdate
+from app.utils.db import db_error_guard
 
 # Re-export from extracted sub-modules
 from app.services._session_book_progress import (  # noqa: F401
@@ -99,7 +99,10 @@ async def create_session(
     """Create a new reading session, close stale ones, update book status."""
     from app.models.book import Book, BookStatus
 
-    try:
+    async with db_error_guard(
+        'create_session',
+        user_id=user_id, book_id=str(data.book_id),
+    ):
         # Close any existing active sessions for this user+book
         now = utcnow()
         stale = await db.execute(
@@ -135,9 +138,6 @@ async def create_session(
 
         await db.flush()
         await db.refresh(session)
-    except DBAPIError:
-        logger.error('Failed to create session', exc_info=True, user_id=user_id, book_id=str(data.book_id))
-        raise RuntimeError('Failed to create reading session due to a database error')
 
     logger.info('Session created: %s for book %s', session.id, data.book_id)
     return session
@@ -150,7 +150,10 @@ async def end_session(
     data: SessionUpdate | None = None,
 ) -> ReadingSession | None:
     """End an active session and update book progress."""
-    try:
+    async with db_error_guard(
+        'end_session',
+        user_id=user_id, session_id=str(session_id),
+    ):
         result = await db.execute(
             select(ReadingSession).where(
                 ReadingSession.id == session_id,
@@ -183,9 +186,6 @@ async def end_session(
             )
 
         await db.flush()
-    except DBAPIError:
-        logger.error('Failed to end session', exc_info=True, user_id=user_id, session_id=str(session_id))
-        raise RuntimeError('Failed to end reading session due to a database error')
     return session
 
 
@@ -263,7 +263,10 @@ async def heartbeat_session(
     body: 'HeartbeatRequest | None' = None,
 ) -> ReadingSession | None:
     """Update session activity timestamp and book progress on heartbeat."""
-    try:
+    async with db_error_guard(
+        'heartbeat_session',
+        user_id=str(user_id), session_id=str(session_id),
+    ):
         result = await db.execute(
             select(ReadingSession).where(
                 ReadingSession.id == session_id,
@@ -286,9 +289,6 @@ async def heartbeat_session(
                     scroll_progress, current_segment,
                 )
         await db.flush()
-    except DBAPIError:
-        logger.error('Failed to update heartbeat', exc_info=True, user_id=str(user_id), session_id=str(session_id))
-        raise RuntimeError('Failed to update reading session heartbeat due to a database error')
     return session
 
 

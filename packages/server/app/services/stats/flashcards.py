@@ -4,17 +4,17 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.flashcard import Flashcard
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.stats.flashcards')
 
 
 async def get_flashcard_stats(db: AsyncSession, uid: UUID) -> dict:
     """Return flashcard retention metrics for a user (single composite query)."""
-    try:
+    async with db_error_guard('flashcards.get_flashcard_stats'):
         row = (
             await db.execute(
                 select(
@@ -29,9 +29,6 @@ async def get_flashcard_stats(db: AsyncSession, uid: UUID) -> dict:
                 ).where(Flashcard.user_id == uid)
             )
         ).one()
-    except DBAPIError as exc:
-        logger.error('flashcards.get_flashcard_stats DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     total = row.total or 0
     reviewed = row.reviewed or 0

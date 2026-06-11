@@ -149,6 +149,7 @@ const ActiveBookCard = React.memo(function ActiveBookCard({ book, isFirst, isMul
   return (
     <Link
       href={`/read/${book.id}`}
+      prefetch={false}
       className={`block card group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 ${isFirst && isMultiple ? 'ring-1 ring-primary-200 dark:ring-primary-800' : ''}`}
     >
       <div className="flex items-center gap-4">
@@ -391,6 +392,7 @@ function QuickActions() {
         <Link
           key={action.label}
           href={action.href}
+          prefetch={false}
           className={`card flex flex-col items-center gap-2 py-4 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200 bg-gradient-to-br ${action.color}`}
         >
           <DashboardActionIcon type={action.icon} />

@@ -8,12 +8,12 @@ from uuid import UUID
 from app.utils import utcnow
 
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.shared_export import SharedExport
 from app.schemas.share import ShareCreate
 from app.services.export_service import export
+from app.utils.db import db_error_guard
 from app.utils.limits import SHARE_QUERY_LIMIT
 
 logger = logging.getLogger('read-pal.share')
@@ -83,13 +83,10 @@ async def get_share(
         if exp < now:
             return None
 
-    try:
+    async with db_error_guard('share_service.get_share', token=token):
         share.view_count = (share.view_count or 0) + 1
         await db.flush()
         await db.refresh(share)
-    except DBAPIError:
-        logger.error('Failed to update share view count', exc_info=True, token=token)
-        raise RuntimeError('Failed to retrieve shared export due to a database error')
 
     logger.info('Share accessed: id=%s views=%d', share.id, share.view_count)
     return share

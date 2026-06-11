@@ -8,13 +8,13 @@ import structlog
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat_message import ChatMessage
 from app.prompts import CONVERSATION_SUMMARY_HUMAN, CONVERSATION_SUMMARY_SYSTEM
 from app.schemas.llm_outputs import ConversationSummaryData
 from app.services.llm import safe_llm_invoke
+from app.utils.db import db_error_guard
 from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
 from app.utils.limits import CONVERSATION_MEMORY_LIMIT
@@ -33,7 +33,7 @@ async def _count_messages(
     book_id: UUID,
 ) -> int:
     """Count total chat messages for a user-book pair."""
-    try:
+    async with db_error_guard('_count_messages', user_id=str(user_id), book_id=str(book_id)):
         count_result = await db.execute(
             select(func.count(ChatMessage.id)).where(
                 ChatMessage.user_id == user_id,
@@ -41,9 +41,6 @@ async def _count_messages(
             )
         )
         return count_result.scalar() or 0
-    except DBAPIError as exc:
-        logger.error('conversation_memory._count_messages DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 async def _load_existing_summary(
@@ -53,7 +50,7 @@ async def _load_existing_summary(
 ) -> 'ConversationSummary | None':
     """Load the most recent conversation summary from the database."""
     from app.models.conversation_summary import ConversationSummary
-    try:
+    async with db_error_guard('_load_existing_summary', user_id=str(user_id), book_id=str(book_id)):
         result = await db.execute(
             select(ConversationSummary)
             .where(
@@ -64,9 +61,6 @@ async def _load_existing_summary(
             .limit(1)
         )
         return result.scalar_one_or_none()
-    except DBAPIError as exc:
-        logger.error('conversation_memory._load_existing_summary DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 def _log_summary_result(
@@ -140,7 +134,7 @@ async def _load_older_messages(
     book_id: UUID,
 ) -> list[ChatMessage]:
     """Load all messages for a conversation, capped at 200."""
-    try:
+    async with db_error_guard('_load_older_messages', user_id=str(user_id), book_id=str(book_id)):
         result = await db.execute(
             select(ChatMessage)
             .where(
@@ -151,9 +145,6 @@ async def _load_older_messages(
             .limit(CONVERSATION_MEMORY_LIMIT)
         )
         return list(result.scalars().all())
-    except DBAPIError as exc:
-        logger.error('conversation_memory._load_older_messages DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 def _build_summary_prompt(
@@ -192,7 +183,7 @@ async def _save_summary(
 ) -> None:
     """Persist the generated summary to the database."""
     from app.models.conversation_summary import ConversationSummary
-    try:
+    async with db_error_guard('_save_summary', user_id=str(user_id), book_id=str(book_id)):
         if existing:
             existing.summary = summary_text
             existing.message_count = message_count
@@ -206,9 +197,6 @@ async def _save_summary(
             )
             db.add(new_summary)
             await db.flush()
-    except DBAPIError as exc:
-        logger.error('conversation_memory._save_summary DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 async def _generate_summary(

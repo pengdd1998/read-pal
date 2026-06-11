@@ -4,12 +4,12 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import String, cast, func, or_, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.schemas.annotation import AnnotationCreate, AnnotationUpdate
+from app.utils.db import db_error_guard
 from app.utils.limits import ANNOTATION_FETCH_LIMIT
 
 logger = logging.getLogger('read-pal.annotations')
@@ -39,7 +39,7 @@ async def get_annotations(
         base = base.where(Annotation.type == type)
         count_base = count_base.where(Annotation.type == type)
 
-    try:
+    async with db_error_guard('get_annotations', user_id=user_id):
         total_result = await db.execute(count_base)
         total = total_result.scalar() or 0
 
@@ -50,9 +50,6 @@ async def get_annotations(
             .limit(per_page),
         )
         annotations = list(result.scalars().all())
-    except DBAPIError:
-        logger.error('get_annotations failed', exc_info=True, user_id=user_id)
-        raise
 
     return annotations, total
 
@@ -63,7 +60,7 @@ async def get_annotation(
     annotation_id: UUID,
 ) -> Annotation | None:
     """Return a single annotation, verifying ownership."""
-    try:
+    async with db_error_guard('get_annotation', annotation_id=str(annotation_id)):
         result = await db.execute(
             select(Annotation).where(
                 Annotation.id == annotation_id,
@@ -71,9 +68,6 @@ async def get_annotation(
             ),
         )
         return result.scalar_one_or_none()
-    except DBAPIError:
-        logger.error('get_annotation failed', exc_info=True, annotation_id=str(annotation_id))
-        raise
 
 
 async def create_annotation(
@@ -82,29 +76,26 @@ async def create_annotation(
     data: AnnotationCreate,
 ) -> Annotation:
     """Create a new annotation after verifying book ownership."""
-    try:
-        book = await db.scalar(
-            select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
-        )
-        if book is None:
-            raise ValueError('Book not found')
+    book = await db.scalar(
+        select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
+    )
+    if book is None:
+        raise ValueError('Book not found')
 
-        annotation = Annotation(
-            user_id=user_id,
-            book_id=data.book_id,
-            type=data.type,
-            location=data.location,
-            content=data.content,
-            color=data.color,
-            note=data.note,
-            tags=data.tags if data.tags else [],
-        )
+    annotation = Annotation(
+        user_id=user_id,
+        book_id=data.book_id,
+        type=data.type,
+        location=data.location,
+        content=data.content,
+        color=data.color,
+        note=data.note,
+        tags=data.tags if data.tags else [],
+    )
+    async with db_error_guard('create_annotation', book_id=str(data.book_id)):
         db.add(annotation)
         await db.flush()
         await db.refresh(annotation)
-    except DBAPIError:
-        logger.error('create_annotation failed', exc_info=True, book_id=str(data.book_id))
-        raise
 
     logger.info(
         'Annotation created: %s (%s) for user %s',
@@ -126,15 +117,12 @@ async def update_annotation(
     if annotation is None:
         return None
 
-    try:
-        update_data = data.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(annotation, field, value)
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(annotation, field, value)
 
+    async with db_error_guard('update_annotation', annotation_id=str(annotation_id)):
         await db.flush()
-    except DBAPIError:
-        logger.error('update_annotation failed', exc_info=True, annotation_id=str(annotation_id))
-        raise
 
     logger.info('Annotation updated: %s for user %s', annotation_id, user_id)
     return annotation
@@ -150,12 +138,9 @@ async def delete_annotation(
     if annotation is None:
         return False
 
-    try:
+    async with db_error_guard('delete_annotation', annotation_id=str(annotation_id)):
         await db.delete(annotation)
         await db.flush()
-    except DBAPIError:
-        logger.error('delete_annotation failed', exc_info=True, annotation_id=str(annotation_id))
-        raise
 
     logger.info('Annotation deleted: %s for user %s', annotation_id, user_id)
     return True
@@ -179,12 +164,9 @@ async def get_tags(
     )
     if book_id:
         q = q.where(Annotation.book_id == book_id)
-    try:
+    async with db_error_guard('get_tags', user_id=user_id):
         result = await db.execute(q)
         rows = result.all()
-    except DBAPIError:
-        logger.error('get_tags failed', exc_info=True, user_id=user_id)
-        raise
     tags = []
     for row in rows:
         name = row[0]
@@ -213,14 +195,11 @@ async def search_annotations(
     if book_id:
         base = base.where(Annotation.book_id == book_id)
 
-    try:
+    async with db_error_guard('search_annotations', user_id=user_id):
         result = await db.execute(
             base.order_by(Annotation.created_at.desc()).limit(ANNOTATION_FETCH_LIMIT),
         )
         return list(result.scalars().all())
-    except DBAPIError:
-        logger.error('search_annotations failed', exc_info=True, user_id=user_id)
-        raise
 
 
 async def get_chapter_stats(
@@ -232,7 +211,7 @@ async def get_chapter_stats(
     chapter_col = func.coalesce(
         cast(Annotation.location['chapter'], String), 'Unknown',
     ).label('chapter')
-    try:
+    async with db_error_guard('get_chapter_stats', book_id=str(book_id)):
         result = await db.execute(
             select(
                 chapter_col,
@@ -246,9 +225,6 @@ async def get_chapter_stats(
                 Annotation.type,
             ),
         )
-    except DBAPIError:
-        logger.error('get_chapter_stats failed', exc_info=True, book_id=str(book_id))
-        raise
 
     chapters: dict[str, dict] = {}
     for row in result.all():

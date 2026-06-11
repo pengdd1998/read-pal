@@ -7,10 +7,10 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
+from app.utils.db import db_error_guard
 
 logger = structlog.get_logger('read-pal.memory_book')
 
@@ -111,24 +111,25 @@ async def fetch_other_books(
     """Query user's other completed books for recommendations and threads."""
     result: dict[str, Any] = {'existing_books': [], 'other_books': []}
     try:
-        rows = await db.execute(
-            select(Book.id, Book.title, Book.author)
-            .where(
-                Book.user_id == user_id,
-                Book.id != book_id,
-                Book.status == 'completed',
+        async with db_error_guard(
+            'enrichment.fetch_other_books',
+            user_id=str(user_id),
+        ):
+            rows = await db.execute(
+                select(Book.id, Book.title, Book.author)
+                .where(
+                    Book.user_id == user_id,
+                    Book.id != book_id,
+                    Book.status == 'completed',
+                )
+                .limit(20),
             )
-            .limit(20),
-        )
-        other_books = rows.all()
-        result['existing_books'] = [r[1] for r in other_books]
-        result['other_books'] = [
-            {'id': str(r[0]), 'title': r[1], 'author': r[2] or 'Unknown'}
-            for r in other_books
-        ]
-    except DBAPIError as exc:
-        logger.warning(
-            'Failed to query existing books for user %s', user_id,
-            exc_info=True,
-        )
+            other_books = rows.all()
+            result['existing_books'] = [r[1] for r in other_books]
+            result['other_books'] = [
+                {'id': str(r[0]), 'title': r[1], 'author': r[2] or 'Unknown'}
+                for r in other_books
+            ]
+    except Exception:
+        pass
     return result

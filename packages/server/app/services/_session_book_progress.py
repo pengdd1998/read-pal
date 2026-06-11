@@ -12,11 +12,11 @@ from uuid import UUID
 logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookStatus
 from app.utils import utcnow
+from app.utils.db import db_error_guard
 
 
 def cap_progress(progress: Decimal) -> Decimal:
@@ -42,7 +42,10 @@ async def update_book_with_page(
     current_segment: str | None,
 ) -> None:
     """Update book progress when client sends an explicit current_page."""
-    try:
+    async with db_error_guard(
+        'update_book_with_page',
+        book_id=str(book_id),
+    ):
         result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id),
         )
@@ -59,9 +62,6 @@ async def update_book_with_page(
             Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
         )
         update_book_completion(book, now)
-    except DBAPIError:
-        logger.error('update_book_with_page failed', exc_info=True, book_id=str(book_id))
-        raise
 
 
 async def update_book_scroll_only(
@@ -73,7 +73,10 @@ async def update_book_scroll_only(
     current_segment: str | None,
 ) -> None:
     """Update book scroll/segment progress without changing current_page."""
-    try:
+    async with db_error_guard(
+        'update_book_scroll_only',
+        book_id=str(book_id),
+    ):
         result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id),
         )
@@ -85,9 +88,6 @@ async def update_book_scroll_only(
             book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
         if current_segment is not None:
             book.current_segment = current_segment
-    except DBAPIError:
-        logger.error('update_book_scroll_only failed', exc_info=True, book_id=str(book_id))
-        raise
 
 
 async def update_book_heartbeat(
@@ -100,7 +100,10 @@ async def update_book_heartbeat(
     current_segment: str | None,
 ) -> None:
     """Update book progress fields during a session heartbeat."""
-    try:
+    async with db_error_guard(
+        'update_book_heartbeat',
+        book_id=str(book_id),
+    ):
         book_result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id),
         )
@@ -120,6 +123,3 @@ async def update_book_heartbeat(
             Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
         )
         update_book_completion(book, utcnow())
-    except DBAPIError:
-        logger.error('update_book_heartbeat failed', exc_info=True, book_id=str(book_id))
-        raise

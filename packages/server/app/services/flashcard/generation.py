@@ -6,7 +6,6 @@ from uuid import UUID
 import structlog
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -15,6 +14,7 @@ from app.models.flashcard import Flashcard
 from app.prompts import FLASHCARD_GENERATION_HUMAN, FLASHCARD_GENERATION_SYSTEM
 from app.services.llm import safe_llm_call
 from app.utils import utcnow
+from app.utils.db import db_error_guard
 
 from .sm2 import DEFAULT_EASE_FACTOR
 
@@ -27,7 +27,9 @@ async def _fetch_book_and_annotations(
     book_id: UUID,
 ) -> tuple[Book, list[Annotation]]:
     """Fetch book and its annotations for flashcard generation."""
-    try:
+    async with db_error_guard(
+        'generation._fetch_book_and_annotations',
+    ):
         book_result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id),
         )
@@ -50,9 +52,6 @@ async def _fetch_book_and_annotations(
             raise ValueError('No highlights or notes found for this book')
 
         return book, annotations
-    except DBAPIError as exc:
-        logger.error('generation._fetch_book_and_annotations DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 def _format_annotation_text(annotations: list[Annotation]) -> str:
@@ -135,7 +134,9 @@ async def generate_flashcards(
     count = max(1, min(count, 10))
 
     # Skip if cards already exist for this book (dedup guard)
-    try:
+    async with db_error_guard(
+        'generation.generate_flashcards.dedup',
+    ):
         existing = await db.execute(
             select(Flashcard).where(
                 Flashcard.user_id == user_id,
@@ -145,9 +146,6 @@ async def generate_flashcards(
         if existing.scalar_one_or_none():
             logger.info('flashcard.generate.skipped_existing', book_id=str(book_id))
             return []
-    except DBAPIError as exc:
-        logger.error('generation.generate_flashcards.dedup DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     book, annotations = await _fetch_book_and_annotations(db, user_id, book_id)
     annotation_text = _format_annotation_text(annotations)
@@ -158,11 +156,10 @@ async def generate_flashcards(
 
     cards = _parse_and_create_cards(db, user_id, book_id, llm_result, count)
     if cards:
-        try:
+        async with db_error_guard(
+            'generation.generate_flashcards.flush',
+        ):
             await db.flush()
-        except DBAPIError as exc:
-            logger.error('generation.generate_flashcards.flush DB error: %s', exc, exc_info=True)
-            raise RuntimeError('Database error') from exc
 
     logger.info(
         'flashcard.generate.completed',

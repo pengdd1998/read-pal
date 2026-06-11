@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.collection import Collection
 from app.schemas.collection import CollectionCreate, CollectionUpdate
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.collections')
 
@@ -41,15 +42,15 @@ async def get_collection(
 ) -> Collection | None:
     """Get a collection by ID. Verifies ownership."""
     try:
-        result = await db.execute(
-            select(Collection).where(
-                Collection.id == collection_id,
-                Collection.user_id == user_id,
-            ),
-        )
-        return result.scalar_one_or_none()
+        async with db_error_guard('get_collection', user_id=str(user_id), collection_id=str(collection_id)):
+            result = await db.execute(
+                select(Collection).where(
+                    Collection.id == collection_id,
+                    Collection.user_id == user_id,
+                ),
+            )
+            return result.scalar_one_or_none()
     except DBAPIError:
-        logger.error('Failed to get collection', exc_info=True, user_id=str(user_id), collection_id=str(collection_id))
         return None
 
 
@@ -59,14 +60,14 @@ async def list_collections(
 ) -> list[Collection]:
     """List all collections for a user."""
     try:
-        result = await db.execute(
-            select(Collection)
-            .where(Collection.user_id == user_id)
-            .order_by(Collection.created_at.desc()),
-        )
-        return list(result.scalars().all())
+        async with db_error_guard('list_collections', user_id=str(user_id)):
+            result = await db.execute(
+                select(Collection)
+                .where(Collection.user_id == user_id)
+                .order_by(Collection.created_at.desc()),
+            )
+            return list(result.scalars().all())
     except DBAPIError:
-        logger.error('Failed to list collections', exc_info=True, user_id=str(user_id))
         return []
 
 
@@ -78,16 +79,17 @@ async def update_collection(
 ) -> Collection:
     """Update a collection. Verifies ownership."""
     try:
-        result = await db.execute(
-            select(Collection).where(
-                Collection.id == collection_id,
-                Collection.user_id == user_id,
-            ),
-        )
-        collection = result.scalar_one_or_none()
+        async with db_error_guard('update_collection', user_id=str(user_id), collection_id=str(collection_id)):
+            result = await db.execute(
+                select(Collection).where(
+                    Collection.id == collection_id,
+                    Collection.user_id == user_id,
+                ),
+            )
+            collection = result.scalar_one_or_none()
     except DBAPIError:
-        logger.error('Failed to query collection for update', exc_info=True, user_id=str(user_id), collection_id=str(collection_id))
         raise ValueError('Failed to query collection') from None
+
     if collection is None:
         raise ValueError('Collection not found')
 
@@ -108,16 +110,17 @@ async def delete_collection(
 ) -> None:
     """Delete a collection. Verifies ownership."""
     try:
-        result = await db.execute(
-            select(Collection).where(
-                Collection.id == collection_id,
-                Collection.user_id == user_id,
-            ),
-        )
-        collection = result.scalar_one_or_none()
+        async with db_error_guard('delete_collection', user_id=str(user_id), collection_id=str(collection_id)):
+            result = await db.execute(
+                select(Collection).where(
+                    Collection.id == collection_id,
+                    Collection.user_id == user_id,
+                ),
+            )
+            collection = result.scalar_one_or_none()
     except DBAPIError:
-        logger.error('Failed to query collection for delete', exc_info=True, user_id=str(user_id), collection_id=str(collection_id))
         raise ValueError('Failed to query collection') from None
+
     if collection is None:
         raise ValueError('Collection not found')
 
@@ -133,15 +136,15 @@ async def _get_owned_collection(
 ) -> Collection:
     """Fetch a collection verifying ownership. Raises ValueError if missing."""
     try:
-        result = await db.execute(
-            select(Collection).where(
-                Collection.id == collection_id,
-                Collection.user_id == user_id,
-            ),
-        )
-        collection = result.scalar_one_or_none()
+        async with db_error_guard('_get_owned_collection', user_id=str(user_id), collection_id=str(collection_id)):
+            result = await db.execute(
+                select(Collection).where(
+                    Collection.id == collection_id,
+                    Collection.user_id == user_id,
+                ),
+            )
+            collection = result.scalar_one_or_none()
     except DBAPIError:
-        logger.error('Failed to query owned collection', exc_info=True, user_id=str(user_id), collection_id=str(collection_id))
         raise ValueError('Failed to query collection') from None
     if collection is None:
         raise ValueError('Collection not found')

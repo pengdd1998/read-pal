@@ -3,10 +3,10 @@
 import logging
 from uuid import UUID
 
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ai_feedback import AIFeedback
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.feedback')
 
@@ -28,11 +28,8 @@ async def submit_feedback(
         comment=comment,
     )
     db.add(feedback)
-    try:
+    async with db_error_guard('feedback_service.submit_feedback'):
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('feedback_service.submit_feedback DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return {
         'id': str(feedback.id),
         'rating': rating,

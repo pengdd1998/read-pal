@@ -4,10 +4,10 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import delete as sa_delete, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.api_key import ApiKey, generate_api_key
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.api_keys')
 
@@ -28,20 +28,17 @@ def serialize_key(key: ApiKey, *, include_secret: bool = False) -> dict:
 
 async def list_keys(db: AsyncSession, user_id: UUID) -> list[dict]:
     """Return all API keys for a user (prefixes only)."""
-    try:
+    async with db_error_guard('api_key_service.list_keys'):
         result = await db.execute(
             select(ApiKey).where(ApiKey.user_id == user_id),
         )
         keys = list(result.scalars().all())
-    except DBAPIError as exc:
-        logger.error('api_key_service.list_keys DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return [serialize_key(k) for k in keys]
 
 
 async def create_key(db: AsyncSession, user_id: UUID, name: str) -> dict:
     """Generate and persist a new API key. Returns dict with the plain key (shown once)."""
-    try:
+    async with db_error_guard('api_key_service.create_key'):
         plain_key, key_hash, key_prefix = generate_api_key()
 
         api_key = ApiKey(
@@ -52,9 +49,6 @@ async def create_key(db: AsyncSession, user_id: UUID, name: str) -> dict:
         )
         db.add(api_key)
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('api_key_service.create_key DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     data = serialize_key(api_key)
     data['key'] = plain_key
@@ -63,7 +57,7 @@ async def create_key(db: AsyncSession, user_id: UUID, name: str) -> dict:
 
 async def delete_key(db: AsyncSession, user_id: UUID, key_id: UUID) -> bool:
     """Delete an API key. Returns False if not found."""
-    try:
+    async with db_error_guard('api_key_service.delete_key'):
         result = await db.execute(
             select(ApiKey).where(
                 ApiKey.id == key_id,
@@ -74,7 +68,4 @@ async def delete_key(db: AsyncSession, user_id: UUID, key_id: UUID) -> bool:
         if key is None:
             return False
         await db.execute(sa_delete(ApiKey).where(ApiKey.id == key_id))
-    except DBAPIError as exc:
-        logger.error('api_key_service.delete_key DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return True

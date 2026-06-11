@@ -9,12 +9,12 @@ from uuid import UUID
 import networkx as nx
 import structlog
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.schemas.knowledge import KnowledgeGap
 from app.services.knowledge._cache import _content_hash, _load_cached_graph
+from app.utils.db import db_error_guard
 
 logger = structlog.get_logger('read-pal.knowledge')
 
@@ -31,7 +31,7 @@ async def _batch_load_annotations(
     """
     if not book_ids:
         return {}
-    try:
+    async with db_error_guard('_batch_load_annotations', user_id=str(user_id)):
         result = await db.execute(
             select(Annotation)
             .where(
@@ -44,9 +44,6 @@ async def _batch_load_annotations(
         for ann in result.scalars().all():
             grouped[ann.book_id].append(ann)
         return {bid: anns[:limit_per_book] for bid, anns in grouped.items()}
-    except DBAPIError as exc:
-        logger.error('_gaps._batch_load_annotations DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 def _determine_suggested_action(
@@ -247,14 +244,11 @@ async def detect_gaps(
     """
     from app.models.book import Book as BookModel
 
-    try:
+    async with db_error_guard('detect_gaps', user_id=str(user_id)):
         result = await db.execute(
             select(BookModel.id).where(BookModel.user_id == user_id),
         )
         book_ids = [row[0] for row in result.all()]
-    except DBAPIError as exc:
-        logger.error('_gaps.detect_gaps DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     if not book_ids:
         return []
 

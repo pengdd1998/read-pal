@@ -9,11 +9,11 @@ from collections import Counter
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.models.book import Book
+from app.utils.db import db_error_guard
 from app.utils.limits import RECOMMENDATION_FETCH_LIMIT
 
 logger = logging.getLogger('read-pal.recommendations')
@@ -113,15 +113,12 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
 
 
 async def _compute_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
-    try:
+    async with db_error_guard('_compute_recommendations', user_id=str(user_id)):
         book_rows = (await db.execute(
             select(Book.title, Book.author, Book.tags)
             .where(Book.user_id == user_id)
             .limit(RECOMMENDATION_FETCH_LIMIT)
         )).all()
-    except DBAPIError as exc:
-        logger.error('recommendation._compute_recommendations DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     user_authors: Counter[str] = Counter()
     user_genres: Counter[str] = Counter()

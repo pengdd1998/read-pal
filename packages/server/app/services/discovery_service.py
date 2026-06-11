@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.book import Book
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.discovery')
 
@@ -59,7 +60,7 @@ async def search_books(
 
     Returns (serialized_book_list, total_count).
     """
-    try:
+    async with db_error_guard('search_books', user_id=str(user_id), q=q):
         if not q.strip():
             total_q = select(func.count()).select_from(Book).where(Book.user_id == user_id)
             data_q = (
@@ -96,9 +97,6 @@ async def search_books(
             books = books_result.scalars().all()
 
         return [_book_to_dict(b) for b in books], total
-    except DBAPIError:
-        logger.error('Failed to search books', exc_info=True, user_id=str(user_id), q=q)
-        raise RuntimeError('Search temporarily unavailable') from None
 
 
 def _build_semantic_filter(user_id: UUID, pattern: str) -> tuple:
@@ -129,7 +127,7 @@ async def _fetch_books_page(
     base_filter: tuple | None = None,
 ) -> tuple[list[Book], int]:
     """Fetch a page of books with optional filter; return (books, total)."""
-    try:
+    async with db_error_guard('_fetch_books_page', user_id=str(user_id)):
         if base_filter:
             where = base_filter
         else:
@@ -147,9 +145,6 @@ async def _fetch_books_page(
         )
         books = (await db.execute(data_q)).scalars().all()
         return books, total
-    except DBAPIError:
-        logger.error('Failed to fetch books page', exc_info=True, user_id=str(user_id))
-        raise RuntimeError('Search temporarily unavailable') from None
 
 
 async def semantic_search_books(

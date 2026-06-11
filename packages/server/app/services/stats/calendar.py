@@ -5,7 +5,6 @@ from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -14,6 +13,7 @@ import logging
 
 from app.services.stats.streaks import compute_streaks
 from app.services.stats import STATS_LOOKBACK_DELTA
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.stats.calendar')
 
@@ -60,7 +60,7 @@ async def _aggregate_sessions(
 ) -> dict[str, dict]:
     """Aggregate reading sessions by day within a date range."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    try:
+    async with db_error_guard('calendar._aggregate_sessions'):
         rows = await db.execute(
             select(
                 day_col,
@@ -75,9 +75,6 @@ async def _aggregate_sessions(
             .group_by(day_col),
         )
         return _parse_day_rows(rows.all())
-    except DBAPIError as exc:
-        logger.error('calendar._aggregate_sessions DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 async def _count_annotations(
@@ -87,7 +84,7 @@ async def _count_annotations(
     dt_end: datetime,
 ) -> tuple[int, int]:
     """Count highlights and notes created within a date range."""
-    try:
+    async with db_error_guard('calendar._count_annotations'):
         row = (
             await db.execute(
                 select(
@@ -101,9 +98,6 @@ async def _count_annotations(
             )
         ).one()
         return row.highlights or 0, row.notes or 0
-    except DBAPIError as exc:
-        logger.error('calendar._count_annotations DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 async def _get_streak_data(
@@ -113,7 +107,7 @@ async def _get_streak_data(
 ) -> tuple[int, int]:
     """Compute current and longest streaks from a cutoff date."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    try:
+    async with db_error_guard('calendar._get_streak_data'):
         rows = await db.execute(
             select(day_col).where(
                 ReadingSession.user_id == uid,
@@ -125,9 +119,6 @@ async def _get_streak_data(
             for r in rows.all()
         }
         return compute_streaks(active_dates)
-    except DBAPIError as exc:
-        logger.error('calendar._get_streak_data DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 async def _query_calendar_days(
@@ -138,7 +129,7 @@ async def _query_calendar_days(
 ) -> dict[str, dict]:
     """Aggregate reading sessions by day, returning {date_str: {minutes, pagesRead, sessions}}."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    try:
+    async with db_error_guard('calendar._query_calendar_days'):
         rows = await db.execute(
             select(
                 day_col,
@@ -165,9 +156,6 @@ async def _query_calendar_days(
                 'sessions': int(row[3]),
             }
         return days
-    except DBAPIError as exc:
-        logger.error('calendar._query_calendar_days DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 def _build_calendar_response(

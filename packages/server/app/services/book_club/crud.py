@@ -5,11 +5,11 @@ import secrets
 from uuid import UUID
 
 from sqlalchemy import func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClub, BookClubMember
 from app.schemas.book_club import BookClubCreate, BookClubUpdate
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.book_clubs')
 
@@ -20,7 +20,7 @@ async def create_club(
     data: BookClubCreate,
 ) -> BookClub:
     """Create a new book club and add the creator as admin member."""
-    try:
+    async with db_error_guard('create_club', user_id=str(user_id)):
         invite_code = secrets.token_urlsafe(4)[:6].upper()
         club = BookClub(
             name=data.name,
@@ -42,9 +42,6 @@ async def create_club(
         db.add(member)
         await db.flush()
         await db.refresh(club)
-    except DBAPIError as exc:
-        logger.error('crud.create_club DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     logger.info('Club created: %s (%s)', club.name, club.id)
     return club
@@ -52,7 +49,7 @@ async def create_club(
 
 async def get_club(db: AsyncSession, club_id: UUID) -> dict | None:
     """Get club details with computed member count."""
-    try:
+    async with db_error_guard('get_club', club_id=str(club_id)):
         result = await db.execute(
             select(BookClub).where(BookClub.id == club_id),
         )
@@ -66,9 +63,6 @@ async def get_club(db: AsyncSession, club_id: UUID) -> dict | None:
             .where(BookClubMember.club_id == club_id),
         )
         member_count = count_result.scalar() or 0
-    except DBAPIError as exc:
-        logger.error('crud.get_club DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     return {
         'id': str(club.id),
@@ -93,7 +87,7 @@ async def list_clubs(
     per_page: int = 20,
 ) -> tuple[list[dict], int]:
     """List clubs the user belongs to, with member counts."""
-    try:
+    async with db_error_guard('list_clubs', user_id=str(user_id)):
         count_q = (
             select(func.count())
             .select_from(BookClubMember)
@@ -117,9 +111,6 @@ async def list_clubs(
             .limit(per_page),
         )
         rows = result.all()
-    except DBAPIError as exc:
-        logger.error('crud.list_clubs DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     items = []
     for club, mc in rows:
@@ -148,7 +139,7 @@ async def update_club(
     data: BookClubUpdate,
 ) -> BookClub:
     """Update club details. Only admin or moderator can update."""
-    try:
+    async with db_error_guard('update_club', club_id=str(club_id)):
         result = await db.execute(
             select(BookClub).where(BookClub.id == club_id),
         )
@@ -172,9 +163,7 @@ async def update_club(
 
         await db.flush()
         await db.refresh(club)
-    except DBAPIError as exc:
-        logger.error('crud.update_club DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
+
     logger.info('Club updated: id=%s user=%s fields=%s', club_id, user_id, list(update_data.keys()))
     return club
 
@@ -185,7 +174,7 @@ async def delete_club(
     club_id: UUID,
 ) -> None:
     """Delete a club. Only admin can delete."""
-    try:
+    async with db_error_guard('delete_club', club_id=str(club_id)):
         result = await db.execute(
             select(BookClub).where(BookClub.id == club_id),
         )
@@ -205,8 +194,5 @@ async def delete_club(
 
         await db.delete(club)
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('crud.delete_club DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     logger.info('Club deleted: %s (%s)', club.name, club.id)

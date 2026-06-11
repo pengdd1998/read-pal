@@ -8,7 +8,6 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.companion.constants import STREAM_FLUSH_SIZE
@@ -25,6 +24,7 @@ from app.services.companion.stream_cache import (
 from app.services.companion.stream_fallback import stream_fallback
 from app.services.llm import get_llm
 from app.services.llm.registry import get_registry
+from app.utils.db import db_error_guard
 from app.utils.i18n import DEFAULT_LANGUAGE, t
 from app.utils.output_filter import filter_stream_chunk
 
@@ -196,18 +196,18 @@ async def _stream_via_provider(
         yield 'data: [DONE]\n\n'
     finally:
         try:
-            await persist_stream_result(
-                db, user_id, book_id, message, messages,
-                collected_parts, request_id,
-            )
-        except DBAPIError as exc:
-            logger.error(
-                'companion.stream.persist_failed',
+            async with db_error_guard(
+                'companion.stream.persist_result',
                 request_id=request_id,
                 user_id=str(user_id),
                 book_id=str(book_id),
-                error=str(exc)[:500],
-            )
+            ):
+                await persist_stream_result(
+                    db, user_id, book_id, message, messages,
+                    collected_parts, request_id,
+                )
+        except Exception:
+            pass
 
 
 async def stream_chat(

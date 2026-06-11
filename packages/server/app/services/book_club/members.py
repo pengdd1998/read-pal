@@ -4,11 +4,12 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import func, select
-from sqlalchemy.exc import DBAPIError, IntegrityError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClubMember
 from app.models.user import User
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.book_clubs')
 
@@ -21,7 +22,7 @@ async def join_club(
     """Join a club by invite code. Validates capacity and membership."""
     from app.models.book_club import BookClub
 
-    try:
+    async with db_error_guard('members.join_club'):
         result = await db.execute(
             select(BookClub).where(BookClub.invite_code == invite_code),
         )
@@ -58,9 +59,6 @@ async def join_club(
             await db.rollback()
             logger.debug('join_club IntegrityError: %s', exc)
             raise ValueError('Already a member of this club') from None
-    except DBAPIError as exc:
-        logger.error('members.join_club DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     logger.info('User %s joined club %s', user_id, club.id)
     return club
@@ -72,7 +70,7 @@ async def leave_club(
     club_id: UUID,
 ) -> None:
     """Leave a club. Admin cannot leave if they are the last admin."""
-    try:
+    async with db_error_guard('members.leave_club'):
         result = await db.execute(
             select(BookClubMember).where(
                 BookClubMember.club_id == club_id,
@@ -99,9 +97,6 @@ async def leave_club(
 
         await db.delete(member)
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('members.leave_club DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     logger.info('User left club: user=%s club=%s', user_id, club_id)
 
 
@@ -125,7 +120,7 @@ async def get_members(
     club_id: UUID,
 ) -> list[dict]:
     """List club members with user names."""
-    try:
+    async with db_error_guard('members.get_members'):
         result = await db.execute(
             select(BookClubMember, User.name)
             .join(User, User.id == BookClubMember.user_id)
@@ -133,9 +128,6 @@ async def get_members(
             .order_by(BookClubMember.joined_at.asc()),
         )
         rows = result.all()
-    except DBAPIError as exc:
-        logger.error('members.get_members DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return [
         {
             'id': str(member.id),

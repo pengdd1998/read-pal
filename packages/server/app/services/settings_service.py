@@ -5,10 +5,10 @@ from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.settings')
 
@@ -27,13 +27,10 @@ async def update_user_settings(
     updates: dict,
 ) -> dict:
     """Shallow-merge *updates* into the user's existing settings."""
-    try:
+    async with db_error_guard('update_user_settings', user_id=str(user_id)):
         user = await _get_user(db, user_id)
         user.settings = {**(user.settings or {}), **updates}
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('settings_service.update_user_settings DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return user.settings
 
 
@@ -44,7 +41,7 @@ async def _get_today_reading_minutes(
     """Return total minutes the user has read today."""
     from app.models.reading_session import ReadingSession
 
-    try:
+    async with db_error_guard('_get_today_reading_minutes', user_id=str(user_id)):
         today_start = datetime.combine(date.today(), datetime.min.time())
         today_seconds = await db.scalar(
             select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
@@ -54,9 +51,6 @@ async def _get_today_reading_minutes(
                 )
             )
         )
-    except DBAPIError as exc:
-        logger.error('settings_service._get_today_reading_minutes DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return int(today_seconds or 0) // 60
 
 
@@ -67,7 +61,7 @@ async def _get_weekly_completed_books(
     """Return number of books the user completed this week."""
     from app.models.book import Book, BookStatus
 
-    try:
+    async with db_error_guard('_get_weekly_completed_books', user_id=str(user_id)):
         week_start = datetime.combine(
             date.today() - timedelta(days=date.today().weekday()),
             datetime.min.time(),
@@ -81,9 +75,6 @@ async def _get_weekly_completed_books(
                 )
             )
         )
-    except DBAPIError as exc:
-        logger.error('settings_service._get_weekly_completed_books DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return completed_this_week or 0
 
 
@@ -115,12 +106,9 @@ async def get_reading_goals(db: AsyncSession, user_id: UUID) -> dict:
 
 async def _get_user(db: AsyncSession, user_id: UUID) -> User:
     """Fetch user or raise ValueError."""
-    try:
+    async with db_error_guard('_get_user', user_id=str(user_id)):
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
-    except DBAPIError as exc:
-        logger.error('settings_service._get_user DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     if user is None:
         raise ValueError('user_not_found')
     return user

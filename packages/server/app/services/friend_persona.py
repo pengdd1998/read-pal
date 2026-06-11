@@ -6,13 +6,13 @@ from uuid import UUID
 
 import structlog
 from sqlalchemy import func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.reading_session import ReadingSession
+from app.utils.db import db_error_guard
 
 logger = structlog.get_logger('read-pal.friend')
 
@@ -46,42 +46,45 @@ async def _gather_reading_stats(
 ) -> dict[str, int]:
     """Query aggregate reading stats for a user."""
     try:
-        sessions_q = await db.execute(
-            select(func.count()).select_from(ReadingSession).where(
-                ReadingSession.user_id == user_id,
-            ),
-        )
-        total_sessions = sessions_q.scalar() or 0
+        async with db_error_guard(
+            'friend_persona._gather_reading_stats',
+            user_id=str(user_id),
+        ):
+            sessions_q = await db.execute(
+                select(func.count()).select_from(ReadingSession).where(
+                    ReadingSession.user_id == user_id,
+                ),
+            )
+            total_sessions = sessions_q.scalar() or 0
 
-        annotations_q = await db.execute(
-            select(func.count()).select_from(Annotation).where(
-                Annotation.user_id == user_id,
-            ),
-        )
-        total_annotations = annotations_q.scalar() or 0
+            annotations_q = await db.execute(
+                select(func.count()).select_from(Annotation).where(
+                    Annotation.user_id == user_id,
+                ),
+            )
+            total_annotations = annotations_q.scalar() or 0
 
-        chats_q = await db.execute(
-            select(func.count()).select_from(ChatMessage).where(
-                ChatMessage.user_id == user_id,
-            ),
-        )
-        total_chats = chats_q.scalar() or 0
+            chats_q = await db.execute(
+                select(func.count()).select_from(ChatMessage).where(
+                    ChatMessage.user_id == user_id,
+                ),
+            )
+            total_chats = chats_q.scalar() or 0
 
-        books_q = await db.execute(
-            select(func.count(Book.id.distinct())).where(
-                Book.user_id == user_id,
-            ),
-        )
-        distinct_books = books_q.scalar() or 0
+            books_q = await db.execute(
+                select(func.count(Book.id.distinct())).where(
+                    Book.user_id == user_id,
+                ),
+            )
+            distinct_books = books_q.scalar() or 0
 
-        return {
-            'total_sessions': total_sessions,
-            'total_annotations': total_annotations,
-            'total_chats': total_chats,
-            'distinct_books': distinct_books,
-        }
-    except DBAPIError:
-        logger.error('Failed to gather reading stats for user %s', user_id, exc_info=True)
+            return {
+                'total_sessions': total_sessions,
+                'total_annotations': total_annotations,
+                'total_chats': total_chats,
+                'distinct_books': distinct_books,
+            }
+    except Exception:
         return _EMPTY_STATS
 
 

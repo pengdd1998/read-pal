@@ -2,12 +2,11 @@
 
 from uuid import UUID
 
-from sqlalchemy.exc import DBAPIError
-
 from app.config import get_settings
 from app.services.rag._constants import logger
 from app.services.rag.chunking import _chunk_text
 from app.services.rag.embedding import _get_embedding
+from app.utils.db import db_error_guard
 
 
 async def precompute_book_embeddings(
@@ -42,11 +41,11 @@ async def precompute_book_embeddings(
         return
 
     try:
-        async with async_session() as session:
-            async with session.begin():
-                session.add_all(_chunks_to_insert)
-    except DBAPIError as exc:
-        logger.error('precompute.db_write_failed book_id=%s: %s', str(book_id), str(exc))
+        async with db_error_guard('rag.precompute_book_embeddings', book_id=str(book_id)):
+            async with async_session() as session:
+                async with session.begin():
+                    session.add_all(_chunks_to_insert)
+    except Exception:
         return
 
     embedded = sum(1 for c in _chunks_to_insert if c.embedding is not None)

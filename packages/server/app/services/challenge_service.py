@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -19,6 +18,7 @@ from app.models.reading_session import ReadingSession
 
 logger = logging.getLogger('read-pal.challenges')
 from app.utils import utcnow
+from app.utils.db import db_error_guard
 from app.utils.limits import CHALLENGE_MIN_DUE
 
 
@@ -68,7 +68,7 @@ async def get_daily_reading(
     db: AsyncSession, user_id: UUID,
 ) -> dict:
     today = _utc_now().date()
-    try:
+    async with db_error_guard('get_daily_reading', user_id=str(user_id)):
         result = await db.execute(
             select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
                 and_(
@@ -78,9 +78,6 @@ async def get_daily_reading(
             ),
         )
         minutes = int(result.scalar() or 0)
-    except DBAPIError:
-        logger.error('Failed to query daily reading', exc_info=True, user_id=str(user_id))
-        minutes = 0
     return _build_challenge(
         id='daily-reading',
         title='Daily Reading',
@@ -97,7 +94,7 @@ async def get_weekly_pages(
     db: AsyncSession, user_id: UUID,
 ) -> dict:
     week_start = _start_of_week()
-    try:
+    async with db_error_guard('get_weekly_pages', user_id=str(user_id)):
         result = await db.execute(
             select(func.coalesce(func.sum(ReadingSession.pages_read), 0)).where(
                 and_(
@@ -107,9 +104,6 @@ async def get_weekly_pages(
             ),
         )
         pages = int(result.scalar() or 0)
-    except DBAPIError:
-        logger.error('Failed to query weekly pages', exc_info=True, user_id=str(user_id))
-        pages = 0
     return _build_challenge(
         id='weekly-pages',
         title='Weekly Pages',
@@ -133,7 +127,7 @@ async def get_highlight_streak(
     today = _utc_now().date()
     week_ago = today - timedelta(days=6)
     # Single query: all highlights in the 7-day date range
-    try:
+    async with db_error_guard('get_highlight_streak', user_id=str(user_id)):
         result = await db.execute(
             select(
                 func.date(Annotation.created_at).label('date'),
@@ -149,9 +143,6 @@ async def get_highlight_streak(
         )
         # Build a set of dates that have at least one highlight
         active_dates = {row.date for row in result.all() if (row.count or 0) > 0}
-    except DBAPIError:
-        logger.error('Failed to query highlight streak', exc_info=True, user_id=str(user_id))
-        active_dates = set()
     # Walk backwards from today to count consecutive active days
     streak = 0
     for day_offset in range(7):
@@ -176,7 +167,7 @@ async def get_book_completion(
     db: AsyncSession, user_id: UUID,
 ) -> dict:
     """Find the book closest to completion and track its progress."""
-    try:
+    async with db_error_guard('get_book_completion', user_id=str(user_id)):
         result = await db.execute(
             select(Book).where(
                 and_(
@@ -187,9 +178,6 @@ async def get_book_completion(
             ).order_by(Book.progress.desc()).limit(1),
         )
         book = result.scalar_one_or_none()
-    except DBAPIError:
-        logger.error('Failed to query book completion', exc_info=True, user_id=str(user_id))
-        book = None
     if book is None:
         return _build_challenge(
             id='book-completion',
@@ -218,7 +206,7 @@ async def get_flashcard_review(
     db: AsyncSession, user_id: UUID,
 ) -> dict:
     now = _utc_now()
-    try:
+    async with db_error_guard('get_flashcard_review', user_id=str(user_id)):
         result = await db.execute(
             select(func.count()).select_from(Flashcard).where(
                 and_(
@@ -228,9 +216,6 @@ async def get_flashcard_review(
             ),
         )
         due_count = int(result.scalar() or 0)
-    except DBAPIError:
-        logger.error('Failed to query flashcard review', exc_info=True, user_id=str(user_id))
-        due_count = 0
     target = max(due_count, CHALLENGE_MIN_DUE)
     if due_count == 0:
         return _build_challenge(
@@ -259,7 +244,7 @@ async def get_monthly_books(
     db: AsyncSession, user_id: UUID,
 ) -> dict:
     month_start = _start_of_month()
-    try:
+    async with db_error_guard('get_monthly_books', user_id=str(user_id)):
         result = await db.execute(
             select(func.count()).select_from(Book).where(
                 and_(
@@ -269,9 +254,6 @@ async def get_monthly_books(
             ),
         )
         started = int(result.scalar() or 0)
-    except DBAPIError:
-        logger.error('Failed to query monthly books', exc_info=True, user_id=str(user_id))
-        started = 0
     return _build_challenge(
         id='monthly-books',
         title='Monthly Explorer',

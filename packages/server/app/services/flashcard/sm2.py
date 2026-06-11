@@ -5,13 +5,13 @@ from uuid import UUID
 
 import structlog
 from sqlalchemy import case, func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
 from app.models.flashcard import Flashcard
 from app.schemas.flashcard import FlashcardCreate
 from app.utils import utcnow
+from app.utils.db import db_error_guard
 
 logger = structlog.get_logger('read-pal.flashcards')
 
@@ -57,7 +57,7 @@ async def create_flashcard(
     data: FlashcardCreate,
 ) -> Flashcard:
     """Create a flashcard with SM-2 defaults."""
-    try:
+    async with db_error_guard('create_flashcard', user_id=str(user_id), book_id=str(data.book_id)):
         card = Flashcard(
             user_id=user_id,
             book_id=data.book_id,
@@ -72,9 +72,6 @@ async def create_flashcard(
         db.add(card)
         await db.flush()
         await db.refresh(card)
-    except DBAPIError as exc:
-        logger.error('sm2.create_flashcard DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     logger.info('Flashcard created: id=%s user=%s book=%s', card.id, user_id, data.book_id)
     return card
 
@@ -86,7 +83,7 @@ async def review_flashcard(
     rating: int,
 ) -> Flashcard:
     """Apply SM-2 algorithm to update flashcard scheduling."""
-    try:
+    async with db_error_guard('review_flashcard', user_id=str(user_id), flashcard_id=str(flashcard_id)):
         result = await db.execute(
             select(Flashcard).where(
                 Flashcard.id == flashcard_id,
@@ -109,9 +106,6 @@ async def review_flashcard(
 
         await db.flush()
         await db.refresh(card)
-    except DBAPIError as exc:
-        logger.error('sm2.review_flashcard DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     logger.info('Flashcard reviewed: id=%s user=%s rating=%d interval=%d ef=%.2f', flashcard_id, user_id, rating, new_interval, new_ef)
     return card
 
@@ -123,7 +117,7 @@ async def get_due_cards(
     limit: int = 200,
 ) -> list[Flashcard]:
     """Get flashcards due for review (capped at `limit`)."""
-    try:
+    async with db_error_guard('get_due_cards', user_id=str(user_id)):
         now = utcnow()
         query = (
             select(Flashcard)
@@ -138,9 +132,6 @@ async def get_due_cards(
             query = query.where(Flashcard.book_id == book_id)
 
         result = await db.execute(query)
-    except DBAPIError as exc:
-        logger.error('sm2.get_due_cards DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return list(result.scalars().all())
 
 
@@ -152,7 +143,7 @@ async def list_flashcards(
     per_page: int = 20,
 ) -> tuple[list[Flashcard], int]:
     """List flashcards with pagination."""
-    try:
+    async with db_error_guard('list_flashcards', user_id=str(user_id)):
         base_filter = [Flashcard.user_id == user_id]
         if book_id is not None:
             base_filter.append(Flashcard.book_id == book_id)
@@ -172,9 +163,6 @@ async def list_flashcards(
             .offset(offset)
             .limit(per_page),
         )
-    except DBAPIError as exc:
-        logger.error('sm2.list_flashcards DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return list(result.scalars().all()), total
 
 
@@ -190,7 +178,7 @@ async def count_total(db: AsyncSession, user_id: UUID) -> int:
 
 async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
     """List flashcard decks grouped by book."""
-    try:
+    async with db_error_guard('list_decks', user_id=str(user_id)):
         now = utcnow()
         result = await db.execute(
             select(
@@ -205,9 +193,6 @@ async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
             .where(Flashcard.user_id == user_id)
             .group_by(Flashcard.book_id, Book.title, Book.author, Book.cover_url),
         )
-    except DBAPIError as exc:
-        logger.error('sm2.list_decks DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     decks = [
         {
             'bookId': str(row.book_id),

@@ -6,7 +6,6 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -21,6 +20,7 @@ from app.services.exporters import (
     export_markdown,
     export_zotero_rdf,
 )
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.export')
 
@@ -34,7 +34,7 @@ async def _load_book_and_annotations(
     book_id: UUID,
 ) -> tuple[Book | None, list[Annotation]]:
     """Load book metadata and its annotations."""
-    try:
+    async with db_error_guard('export_service._load_book_and_annotations'):
         result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id),
         )
@@ -49,9 +49,6 @@ async def _load_book_and_annotations(
         )
         annotations = list(result.scalars().all())
         return book, annotations
-    except DBAPIError as exc:
-        logger.error('export_service._load_book_and_annotations DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 async def export(

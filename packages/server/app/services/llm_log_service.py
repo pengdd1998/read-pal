@@ -9,12 +9,12 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_, delete, func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.db import async_session
 from app.models.llm_log import LLMLog
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.llm_log')
 
@@ -43,29 +43,30 @@ def fire_and_forget_log(
         import asyncio
 
         async def _write() -> None:
-            async with async_session() as session:
-                log = LLMLog(
-                    user_id=UUID(str(user_id)) if user_id else None,
-                    book_id=UUID(str(book_id)) if book_id else None,
-                    request_id=request_id,
-                    model=model,
-                    label=label,
-                    latency_ms=latency_ms,
-                    prompt_tokens=prompt_tokens,
-                    completion_tokens=completion_tokens,
-                    total_tokens=total_tokens,
-                    estimated_cost=Decimal(str(estimated_cost)) if estimated_cost else None,
-                    success=success,
-                    error_message=error_message,
-                    is_fallback=is_fallback,
-                    extra=extra,
-                )
-                session.add(log)
-                await session.commit()
+            async with db_error_guard('llm_log.fire_and_forget_log'):
+                async with async_session() as session:
+                    log = LLMLog(
+                        user_id=UUID(str(user_id)) if user_id else None,
+                        book_id=UUID(str(book_id)) if book_id else None,
+                        request_id=request_id,
+                        model=model,
+                        label=label,
+                        latency_ms=latency_ms,
+                        prompt_tokens=prompt_tokens,
+                        completion_tokens=completion_tokens,
+                        total_tokens=total_tokens,
+                        estimated_cost=Decimal(str(estimated_cost)) if estimated_cost else None,
+                        success=success,
+                        error_message=error_message,
+                        is_fallback=is_fallback,
+                        extra=extra,
+                    )
+                    session.add(log)
+                    await session.commit()
 
         loop = asyncio.get_running_loop()
         loop.create_task(_write())
-    except DBAPIError as exc:
+    except Exception:
         logger.warning('fire_and_forget_log failed (non-critical)', exc_info=True)
 
 

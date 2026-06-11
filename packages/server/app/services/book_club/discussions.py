@@ -4,10 +4,10 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClubMember, ClubDiscussion
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.book_clubs')
 
@@ -19,7 +19,7 @@ async def add_discussion(
     content: str,
 ) -> ClubDiscussion:
     """Add a discussion post. User must be a member."""
-    try:
+    async with db_error_guard('add_discussion', user_id=str(user_id), club_id=str(club_id)):
         member_result = await db.execute(
             select(BookClubMember).where(
                 BookClubMember.club_id == club_id,
@@ -37,9 +37,6 @@ async def add_discussion(
         db.add(discussion)
         await db.flush()
         await db.refresh(discussion)
-    except DBAPIError as exc:
-        logger.error('discussions.add_discussion DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     logger.info('Discussion added: id=%s club=%s user=%s', discussion.id, club_id, user_id)
     return discussion
 
@@ -51,7 +48,7 @@ async def get_discussions(
     per_page: int = 20,
 ) -> tuple[list[ClubDiscussion], int]:
     """List discussions for a club, newest first."""
-    try:
+    async with db_error_guard('get_discussions', club_id=str(club_id)):
         count_result = await db.execute(
             select(func.count())
             .select_from(ClubDiscussion)
@@ -68,7 +65,4 @@ async def get_discussions(
             .limit(per_page),
         )
         discussions = result.scalars().all()
-    except DBAPIError as exc:
-        logger.error('discussions.get_discussions DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return list(discussions), total

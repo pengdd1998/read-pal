@@ -4,12 +4,12 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.middleware.auth import verify_password
 from app.models.user import User
 from app.services.auth._token import revoke_access_token, revoke_refresh_token
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.account')
 
@@ -22,7 +22,7 @@ async def update_profile(
     settings: dict | None,
 ) -> dict:
     """Update the user's profile fields and return the updated profile."""
-    try:
+    async with db_error_guard('account_service.update_profile'):
         user = await _get_user(db, user_id)
 
         if name is not None:
@@ -33,9 +33,6 @@ async def update_profile(
             user.settings = {**(user.settings or {}), **settings}
 
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('account_service.update_profile DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     return {
         'id': str(user.id),
@@ -54,15 +51,13 @@ async def delete_account(
     refresh_token: str | None = None,
 ) -> None:
     """Delete the user account and all cascading data. Requires password verification."""
-    try:
+    async with db_error_guard('account_service.delete_account'):
         user = await _get_user(db, user_id)
         if not verify_password(password, user.password_hash):
             raise ValueError('wrong_password')
         await db.delete(user)
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('account_service.delete_account DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
+
     # Revoke outstanding tokens so they can't be used after deletion
     if access_token:
         await revoke_access_token(access_token)
@@ -73,12 +68,9 @@ async def delete_account(
 
 async def _get_user(db: AsyncSession, user_id: UUID) -> User:
     """Fetch user or raise ValueError."""
-    try:
+    async with db_error_guard('account_service._get_user'):
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
-    except DBAPIError as exc:
-        logger.error('account_service._get_user DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     if user is None:
         raise ValueError('user_not_found')
     return user

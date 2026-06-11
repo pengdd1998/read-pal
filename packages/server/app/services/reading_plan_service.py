@@ -7,13 +7,13 @@ from uuid import UUID
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
 from app.models.reading_plan import ReadingPlan
 from app.prompts import READING_PLAN_HUMAN, READING_PLAN_SYSTEM
 from app.services.llm import safe_llm_call
+from app.utils.db import db_error_guard
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.reading_plan')
@@ -25,14 +25,11 @@ async def _deactivate_existing_plan(
     book_id: UUID,
 ) -> None:
     """Deactivate any existing active plan for this user/book."""
-    try:
+    async with db_error_guard('_deactivate_existing_plan', book_id=str(book_id), user_id=str(user_id)):
         existing = await _get_active_plan(db, user_id, book_id)
         if existing:
             existing.is_active = False
             await db.flush()
-    except DBAPIError:
-        logger.error('Failed to deactivate existing plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
-        raise RuntimeError('Failed to deactivate existing reading plan due to a database error')
 
 
 async def _save_new_plan(
@@ -44,17 +41,17 @@ async def _save_new_plan(
 ) -> ReadingPlan | None:
     """Persist a new reading plan and return it."""
     try:
-        plan = ReadingPlan(
-            user_id=user_id,
-            book_id=book_id,
-            plan_text=plan_text,
-            total_days=total_days,
-        )
-        db.add(plan)
-        await db.flush()
-        return plan
-    except DBAPIError:
-        logger.error('Failed to save new plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
+        async with db_error_guard('_save_new_plan', book_id=str(book_id), user_id=str(user_id)):
+            plan = ReadingPlan(
+                user_id=user_id,
+                book_id=book_id,
+                plan_text=plan_text,
+                total_days=total_days,
+            )
+            db.add(plan)
+            await db.flush()
+            return plan
+    except Exception:
         return None
 
 
@@ -192,13 +189,10 @@ async def advance_plan(
 
 
 async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book | None:
-    try:
+    async with db_error_guard('_load_book', book_id=str(book_id), user_id=str(user_id)):
         result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id)
         )
-    except DBAPIError:
-        logger.error('Failed to load book', exc_info=True, book_id=str(book_id), user_id=str(user_id))
-        raise RuntimeError(f'Failed to load book {book_id} due to a database error')
     book = result.scalar_one_or_none()
     if book is None:
         raise ValueError(f'Book {book_id} not found for user {user_id}')
@@ -211,19 +205,19 @@ async def _get_active_plan(
     book_id: UUID,
 ) -> ReadingPlan | None:
     try:
-        result = await db.execute(
-            select(ReadingPlan)
-            .where(
-                ReadingPlan.user_id == user_id,
-                ReadingPlan.book_id == book_id,
-                ReadingPlan.is_active == True,  # noqa: E712
+        async with db_error_guard('_get_active_plan', book_id=str(book_id), user_id=str(user_id)):
+            result = await db.execute(
+                select(ReadingPlan)
+                .where(
+                    ReadingPlan.user_id == user_id,
+                    ReadingPlan.book_id == book_id,
+                    ReadingPlan.is_active == True,  # noqa: E712
+                )
+                .order_by(ReadingPlan.created_at.desc())
+                .limit(1)
             )
-            .order_by(ReadingPlan.created_at.desc())
-            .limit(1)
-        )
-        return result.scalar_one_or_none()
-    except DBAPIError:
-        logger.error('Failed to get active plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
+            return result.scalar_one_or_none()
+    except Exception:
         return None
 
 

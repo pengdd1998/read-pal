@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from sqlalchemy.exc import DBAPIError
 
 from app.config import get_settings
+from app.utils.db import db_error_guard
 
 logger = structlog.get_logger('read-pal.llm')
 
@@ -182,12 +182,13 @@ class _TraceWriter:
             from app.db import async_session
             from app.models.llm_trace import LLMCallTrace
 
-            async with async_session() as session:
-                session.add_all([LLMCallTrace(**t) for t in batch])
-                await session.commit()
+            async with db_error_guard('observability.trace_flush', batch_size=len(batch)):
+                async with async_session() as session:
+                    session.add_all([LLMCallTrace(**t) for t in batch])
+                    await session.commit()
             logger.debug('Trace flush: %d records written', len(batch))
             return len(batch)
-        except DBAPIError as exc:
+        except Exception:
             logger.warning(
                 'Trace flush failed (%d records dropped)',
                 len(batch),

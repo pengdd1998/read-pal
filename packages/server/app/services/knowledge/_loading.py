@@ -6,10 +6,10 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.knowledge')
 
@@ -21,7 +21,11 @@ async def _load_annotations(
     limit: int = 50,
 ) -> list[Annotation]:
     """Load annotations for a given user + book (capped to avoid token overflow)."""
-    try:
+    async with db_error_guard(
+        '_loading._load_annotations',
+        user_id=str(user_id),
+        book_id=str(book_id),
+    ):
         result = await db.execute(
             select(Annotation)
             .where(
@@ -32,6 +36,3 @@ async def _load_annotations(
             .limit(limit),
         )
         return list(result.scalars().all())
-    except DBAPIError as exc:
-        logger.error('_loading._load_annotations DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc

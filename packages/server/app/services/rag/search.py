@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.rag._constants import logger, _tokenize_with_bigrams
 from app.services.rag.embedding import _get_embedding
 from app.models.book_chunk import BookChunk
+from app.utils.db import db_error_guard
 
 
 def _build_embedding_literal(query_emb: list[float]) -> str:

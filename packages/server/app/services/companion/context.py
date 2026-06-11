@@ -6,7 +6,6 @@ from uuid import UUID
 import structlog
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -15,6 +14,7 @@ from app.models.chat_message import ChatMessage
 from app.prompts.templates import FRIEND_PERSONAS
 from app.services.companion.constants import ANNOTATION_LIMIT, HISTORY_LIMIT
 from app.services.companion.query_classifier import classify_query, refine_rag_query
+from app.utils.db import db_error_guard
 from app.utils.i18n import DEFAULT_LANGUAGE, t
 from app.utils.annotation_format import format_annotation_entry
 from app.utils.sanitizer import (
@@ -64,7 +64,7 @@ _GENRE_MODIFIERS: dict[str, str] = {
 
 async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book:
     """Fetch book or raise a ValueError."""
-    try:
+    async with db_error_guard('_load_book', book_id=str(book_id), user_id=str(user_id)):
         result = await db.execute(
             select(Book).where(
                 Book.id == book_id,
@@ -72,9 +72,6 @@ async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book:
             ),
         )
         book = result.scalar_one_or_none()
-    except DBAPIError as exc:
-        logger.error('context._load_book DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     if book is None:
         raise ValueError(t('errors.book_not_found'))
     return book
@@ -86,7 +83,7 @@ async def _load_history(
     book_id: UUID,
 ) -> list[HumanMessage | AIMessage]:
     """Load recent chat history as langchain messages."""
-    try:
+    async with db_error_guard('_load_history', book_id=str(book_id), user_id=str(user_id)):
         result = await db.execute(
             select(ChatMessage)
             .where(
@@ -97,9 +94,6 @@ async def _load_history(
             .limit(HISTORY_LIMIT)
         )
         rows = list(reversed(result.scalars().all()))
-    except DBAPIError as exc:
-        logger.error('context._load_history DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     messages: list[HumanMessage | AIMessage] = []
     for row in rows:
         if row.role == 'user':
@@ -115,7 +109,7 @@ async def _load_annotations_context(
     book_id: UUID,
 ) -> str:
     """Load recent highlights/notes to enrich the system prompt."""
-    try:
+    async with db_error_guard('_load_annotations_context', book_id=str(book_id), user_id=str(user_id)):
         result = await db.execute(
             select(Annotation)
             .where(
@@ -126,9 +120,6 @@ async def _load_annotations_context(
             .limit(ANNOTATION_LIMIT)
         )
         annotations = result.scalars().all()
-    except DBAPIError as exc:
-        logger.error('context._load_annotations_context DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     if not annotations:
         return ''
 
@@ -231,11 +222,8 @@ async def _save_message(
         content=content,
     )
     db.add(msg)
-    try:
+    async with db_error_guard('_save_message', book_id=str(book_id), user_id=str(user_id)):
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('context._save_message DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
 
 def _build_messages(

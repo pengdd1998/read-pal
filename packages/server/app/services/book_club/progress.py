@@ -4,12 +4,12 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
 from app.models.book_club import BookClub, BookClubMember
 from app.models.user import User
+from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.book_clubs')
 
@@ -51,7 +51,7 @@ async def discover_clubs(
     per_page: int = 20,
 ) -> tuple[list[dict], int]:
     """Discover public clubs ordered by member count (most popular first)."""
-    try:
+    async with db_error_guard('discover_clubs', page=page, per_page=per_page):
         total = await _count_public_clubs(db)
 
         member_count_sq = (
@@ -78,9 +78,6 @@ async def discover_clubs(
                 select(Book.id, Book.title).where(Book.id.in_(book_ids)),
             )
             book_titles = dict(book_result.all())
-    except DBAPIError as exc:
-        logger.error('progress.discover_clubs DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     return _format_club_items(rows, book_titles), total
 
@@ -123,7 +120,7 @@ async def get_club_progress(
 
     Returns dict with 'members_progress' list and 'average_progress' int.
     """
-    try:
+    async with db_error_guard('get_club_progress', club_id=str(club_id)):
         club = (
             await db.execute(select(BookClub).where(BookClub.id == club_id))
         ).scalar_one_or_none()
@@ -150,9 +147,6 @@ async def get_club_progress(
                 ),
             )
             book_by_user = {b.user_id: b for b in book_result.scalars().all()}
-    except DBAPIError as exc:
-        logger.error('progress.get_club_progress DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     progress_list = _compute_member_progress(member_rows, book_by_user)
     avg = _compute_average_progress(progress_list)

@@ -8,7 +8,6 @@ from uuid import UUID
 
 import redis.exceptions
 from sqlalchemy import and_, case, func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -145,7 +144,7 @@ async def _get_distinct_tag_count(db: AsyncSession, uid: UUID) -> int:
             {'uid': str(uid)},
         )
         return result.scalar() or 0
-    except DBAPIError as exc:
+    except Exception as exc:
         logger.debug('Tag count query failed (expected on SQLite): %s', exc)
         return 0
 

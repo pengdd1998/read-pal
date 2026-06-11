@@ -6,7 +6,6 @@ from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import case, func, select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services._session_book_progress import cap_progress
@@ -14,6 +13,7 @@ from app.services._session_book_progress import cap_progress
 from app.models.book import Book, BookFileType, BookStatus
 from app.models.collection import Collection
 from app.utils import utcnow
+from app.utils.db import db_error_guard
 from app.schemas.book import BookCreate, BookUpdate
 
 logger = logging.getLogger('read-pal.books')
@@ -27,7 +27,7 @@ async def get_user_books(
     per_page: int = 20,
 ) -> tuple[list[Book], int]:
     """Return paginated list of user's books, ordered by last_read_at desc."""
-    try:
+    async with db_error_guard('get_user_books', user_id=user_id):
         base = select(Book).where(Book.user_id == user_id)
         count_base = select(func.count()).select_from(Book).where(Book.user_id == user_id)
 
@@ -45,9 +45,6 @@ async def get_user_books(
             .limit(per_page),
         )
         books = list(result.scalars().all())
-    except DBAPIError as exc:
-        logger.error('book_service.get_user_books DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     return books, total
 
@@ -66,7 +63,7 @@ async def create_book(
     data: BookCreate,
 ) -> Book:
     """Create a new book with status='unread'."""
-    try:
+    async with db_error_guard('create_book', user_id=user_id):
         book = Book(
             id=uuid.uuid4(),
             user_id=user_id,
@@ -83,9 +80,6 @@ async def create_book(
         db.add(book)
         await db.flush()
         await db.refresh(book)
-    except DBAPIError as exc:
-        logger.error('book_service.create_book DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     logger.info('Book created: %s (%s) for user %s', book.title, book.id, user_id)
     return book
@@ -98,7 +92,7 @@ async def update_book(
     data: BookUpdate,
 ) -> Book | None:
     """Partially update a book. Set started_at/completed_at on status change."""
-    try:
+    async with db_error_guard('update_book', user_id=user_id, book_id=str(book_id)):
         book = await get_book(db, user_id, book_id)
         if book is None:
             return None
@@ -128,15 +122,12 @@ async def update_book(
                 book.completed_at = now
 
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('book_service.update_book DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     return book
 
 
 async def delete_book(db: AsyncSession, user_id: str, book_id: UUID) -> bool:
     """Delete a book and all cascading data."""
-    try:
+    async with db_error_guard('delete_book', user_id=user_id, book_id=str(book_id)):
         book = await get_book(db, user_id, book_id)
         if book is None:
             return False
@@ -144,9 +135,6 @@ async def delete_book(db: AsyncSession, user_id: str, book_id: UUID) -> bool:
         await db.delete(book)
         await _cleanup_collection_orphans(db, book_id)
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('book_service.delete_book DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     logger.info('Book deleted: %s for user %s', book_id, user_id)
     return True
@@ -159,7 +147,7 @@ async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
     cache_key = f'stats:books:{user_id}'
 
     async def _compute() -> dict:
-        try:
+        async with db_error_guard('get_book_stats', user_id=user_id):
             row = (await db.execute(
                 select(
                     func.count().label('total'),
@@ -175,9 +163,6 @@ async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
                     func.coalesce(func.sum(Book.current_page), 0).label('pages'),
                 ).where(Book.user_id == user_id)
             )).one()
-        except DBAPIError as exc:
-            logger.error('book_service.get_book_stats DB error: %s', exc, exc_info=True)
-            raise RuntimeError('Database error') from exc
         return {
             'total': row.total,
             'reading': int(row.reading),
@@ -196,16 +181,13 @@ async def update_tags(
     tags: list[str],
 ) -> Book | None:
     """Set the tags for a book."""
-    try:
+    async with db_error_guard('update_tags', user_id=user_id, book_id=str(book_id)):
         book = await get_book(db, user_id, book_id)
         if book is None:
             return None
 
         book.tags = tags
         await db.flush()
-    except DBAPIError as exc:
-        logger.error('book_service.update_tags DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     logger.info('Tags updated for book %s', book_id)
     return book

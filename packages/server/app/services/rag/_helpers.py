@@ -5,11 +5,11 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.document import Document
+from app.utils.db import db_error_guard
 
 from app.services.rag._constants import _tokenize_query
 
@@ -22,14 +22,11 @@ async def _get_chapters(
     max_chapter_index: int | None = None,
 ) -> list[dict[str, Any]]:
     """Fetch chapters from the Document table, optionally filtered by position."""
-    try:
+    async with db_error_guard('_get_chapters', book_id=str(book_id)):
         result = await db.execute(
             select(Document.chapters).where(Document.book_id == book_id)
         )
         chapters = result.scalar_one_or_none()
-    except DBAPIError as exc:
-        logger.error('_helpers._get_chapters DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
     if isinstance(chapters, list):
         if max_chapter_index is not None:
             return chapters[:max_chapter_index + 1]
@@ -45,7 +42,7 @@ async def _load_related_annotations(
     limit: int = 5,
 ) -> list[Annotation]:
     """Load annotations with keyword overlap to the query."""
-    try:
+    async with db_error_guard('_load_related_annotations', user_id=str(user_id), book_id=str(book_id)):
         result = await db.execute(
             select(Annotation)
             .where(
@@ -56,9 +53,6 @@ async def _load_related_annotations(
             .limit(50)
         )
         all_annotations = list(result.scalars().all())
-    except DBAPIError as exc:
-        logger.error('_helpers._load_related_annotations DB error: %s', exc, exc_info=True)
-        raise RuntimeError('Database error') from exc
 
     tokens = _tokenize_query(query)
 
