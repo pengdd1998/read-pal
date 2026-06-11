@@ -117,6 +117,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
 
  const handleAdvance = async () => {
  if (!bookId) return;
+ setError(null);
  try {
   const res = await api.post<{ message: string }>('/api/agent/reading-plan/advance', { bookId });
   if (!mountedRef.current) return;

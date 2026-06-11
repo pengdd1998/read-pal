@@ -44,12 +44,12 @@ export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: 
         <div>
           <label className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 block">{t('font_size_label')}</label>
           <div className="flex items-center gap-2">
-            <button onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_decrease_font')}>A-</button>
+            <button onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('settings_decrease_font')}>A-</button>
             <div className="flex-1 h-1 bg-surface-2 rounded-full relative" role="slider" aria-valuenow={fontSize} aria-valuemin={12} aria-valuemax={32} aria-label={t('font_size_label')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'ArrowRight' || e.key === 'ArrowUp') onFontSizeChange(Math.min(32, fontSize + 2)); if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') onFontSizeChange(Math.max(12, fontSize - 2)); }}>
               <div className="absolute left-0 top-0 h-full bg-amber-400 rounded-full" style={{ width: `${((fontSize - 12) / 20) * 100}%` }} />
             </div>
             <span className="text-xs font-mono text-amber-600 dark:text-amber-400 w-6 text-center">{fontSize}</span>
-            <button onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_increase_font')}>A+</button>
+            <button onClick={() => onFontSizeChange(Math.min(32, fontSize + 2))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('settings_increase_font')}>A+</button>
           </div>
         </div>
 
@@ -57,12 +57,12 @@ export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: 
         <div>
           <label className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 block">{t('line_height_label')}</label>
           <div className="flex items-center gap-2">
-            <button onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_decrease_line_height')}>-</button>
+            <button onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('settings_decrease_line_height')}>-</button>
             <div className="flex-1 h-1 bg-surface-2 rounded-full relative" role="slider" aria-valuenow={Math.round(lineHeight * 100)} aria-valuemin={120} aria-valuemax={220} aria-label={t('line_height_label')} tabIndex={0} onKeyDown={(e) => { if (e.key === 'ArrowRight' || e.key === 'ArrowUp') onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2))); if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2))); }}>
               <div className="absolute left-0 top-0 h-full bg-amber-400 rounded-full" style={{ width: `${((lineHeight - 1.2) / 1.0) * 100}%` }} />
             </div>
             <span className="text-xs font-mono text-amber-600 dark:text-amber-400 w-8 text-center">{lineHeight.toFixed(2)}</span>
-            <button onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center" aria-label={t('settings_increase_line_height')}>+</button>
+            <button onClick={() => onLineHeightChange(Math.min(2.2, +(lineHeight + 0.15).toFixed(2)))} className="w-11 h-11 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('settings_increase_line_height')}>+</button>
           </div>
         </div>
 
@@ -75,7 +75,7 @@ export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: 
                 key={f.label}
                 onClick={() => onFontFamilyChange(f.value)}
                 aria-label={f.label}
-                className={`py-2.5 rounded-lg text-[10px] font-medium transition-all ${
+                className={`py-2.5 rounded-lg text-[10px] font-medium transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
                   fontFamily === f.value
                     ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 ring-1 ring-amber-300 dark:ring-amber-700'
                     : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
@@ -96,7 +96,7 @@ export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: 
                 key={themeVal}
                 onClick={() => onThemeChange(themeVal)}
                 aria-label={themeVal === 'light' ? t('settings_light') : themeVal === 'sepia' ? t('settings_sepia') : t('settings_dark')}
-                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
                   theme === themeVal
                     ? themeVal === 'light' ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300' : themeVal === 'dark' ? 'bg-amber-900/50 text-amber-200 ring-1 ring-amber-700' : 'bg-amber-200 text-amber-900 ring-1 ring-amber-400'
                     : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
@@ -114,7 +114,7 @@ export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: 
             onClick={() => onQuietModeChange(!quietMode)}
             aria-label={t('quiet_mode')}
             aria-pressed={quietMode}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
               quietMode ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
@@ -128,7 +128,7 @@ export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: 
             onClick={() => onBgEnabledChange(!bgEnabled)}
             aria-label={t('bg_toggle')}
             aria-pressed={bgEnabled}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
               bgEnabled ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
@@ -142,7 +142,7 @@ export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: 
         <button
           onClick={() => { onClose(); onShowShortcuts(); }}
           aria-label={t('keyboard_shortcuts')}
-          className="w-full py-2 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          className="w-full py-2 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 hover:bg-black/5 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         >
           {t('keyboard_shortcuts')} (?)
         </button>

@@ -29,6 +29,7 @@ export default function SynthesisPage() {
  useEffect(() => {
  let cancelled = false;
  (async () => {
+  setBooksError(null);
   try {
   const res = await api.get<BookOption[]>('/api/books');
   if (!cancelled && res.success && res.data) {

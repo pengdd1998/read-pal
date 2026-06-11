@@ -126,6 +126,7 @@ export function useStudyMode(bookId: string) {
   }, [bookId]);
 
   const loadMastery = useCallback(async () => {
+    setError(null);
     try {
       const res = await api.get<MasteryReport>(`/api/study-mode/mastery/${bookId}`);
       if (!mountedRef.current) return;

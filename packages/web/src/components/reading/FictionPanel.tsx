@@ -93,7 +93,7 @@ export const FictionPanel = React.memo(function FictionPanel({
     </div>
     <button
     onClick={() => setIsOpen(false)}
-    className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+    className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     aria-label={tc('close_character_tracker')}
     >
     <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
