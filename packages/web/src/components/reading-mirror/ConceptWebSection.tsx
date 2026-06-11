@@ -41,7 +41,7 @@ const ConnectionCard = React.memo(function ConnectionCard({ connection }: Connec
         <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-xs font-medium text-amber-800 dark:text-amber-200">
           {connection.from}
         </span>
-        <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <svg aria-hidden="true" className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
         </svg>
         <span className="px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/40 text-xs font-medium text-teal-800 dark:text-teal-200">
