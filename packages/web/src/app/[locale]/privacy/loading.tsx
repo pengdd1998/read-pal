@@ -1,6 +1,6 @@
 export default function PrivacyLoading() {
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-3xl mx-auto animate-fade-in">
+ <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-3xl mx-auto animate-fade-in">
   <div className="h-8 bg-surface-2 rounded-lg w-48 mb-4 animate-pulse" />
   <div className="space-y-4">
   {Array.from({ length: 8 }).map((_, i) => (
@@ -11,6 +11,6 @@ export default function PrivacyLoading() {
    </div>
   ))}
   </div>
- </div>
+ </main>
  );
 }
