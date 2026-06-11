@@ -52,12 +52,13 @@ const ToastItem = React.memo(function ToastItem({ toast, onDismiss }: { toast: T
  const [visible, setVisible] = useState(false);
 
  useEffect(() => {
- requestAnimationFrame(() => setVisible(true));
+ let dismissTimer: ReturnType<typeof setTimeout> | undefined;
+ const raf = requestAnimationFrame(() => setVisible(true));
  const timer = setTimeout(() => {
   setVisible(false);
-  setTimeout(() => onDismiss(toast.id), 300);
+  dismissTimer = setTimeout(() => onDismiss(toast.id), 300);
  }, toast.duration || 3000);
- return () => clearTimeout(timer);
+ return () => { cancelAnimationFrame(raf); clearTimeout(timer); if (dismissTimer) clearTimeout(dismissTimer); };
  }, [toast, onDismiss]);
 
  const bgClass = toast.type === 'success'
