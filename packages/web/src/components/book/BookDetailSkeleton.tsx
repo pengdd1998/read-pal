@@ -69,7 +69,7 @@ export const BookDetailError = memo(function BookDetailError({
    >
    {t('retry')}
    </button>
-   <Link href="/library" className="btn btn-primary focus-visible:ring-2 focus-visible:ring-amber-400">
+   <Link href="/library" prefetch={false} className="btn btn-primary focus-visible:ring-2 focus-visible:ring-amber-400">
    {t('backToLibrary')}
    </Link>
   </div>

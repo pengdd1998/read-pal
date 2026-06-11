@@ -1,6 +1,5 @@
 import { render, type RenderOptions } from '@testing-library/react';
 import React, { type ReactNode } from 'react';
-import { vi } from 'vitest';
 
 // --- Mock Auth Context ---
 

@@ -39,7 +39,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
    ))}
    </div>
    <Link
-   href="/library"
+   href="/library" prefetch={false}
    className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200"
    >
    {t('go_to_library')}
@@ -60,7 +60,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
    {t('review_complete_desc', { count: reviewedCount })}
    </p>
    <div className="flex gap-3 justify-center">
-   <Link href="/dashboard" className="btn btn-primary">{t('dashboard')}</Link>
+   <Link href="/dashboard" prefetch={false} className="btn btn-primary">{t('dashboard')}</Link>
    <button type="button"
     onClick={onBackToDecks}
     className="btn bg-surface-0 border border-surface-2 focus-visible:ring-2 focus-visible:ring-amber-400"
@@ -90,7 +90,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
    >
    {t('back_to_decks')}
    </button>
-   <Link href="/dashboard" className="btn btn-primary">{t('dashboard')}</Link>
+   <Link href="/dashboard" prefetch={false} className="btn btn-primary">{t('dashboard')}</Link>
   </div>
   </div>
  </main>

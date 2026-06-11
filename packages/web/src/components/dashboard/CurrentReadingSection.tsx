@@ -301,7 +301,7 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
         ) : (
           <div className="card text-center py-10">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('no_active_reading')}</p>
-            <Link href="/library" className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
+            <Link href="/library" prefetch={false} className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
               {t('pick_book')}
             </Link>
           </div>

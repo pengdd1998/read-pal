@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 
 interface SelectionLike {
   isCollapsed: boolean;

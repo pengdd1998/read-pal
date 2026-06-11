@@ -77,7 +77,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
 
   {showPersonalBookCTA && (totalHighlights > 0 || totalNotes > 0) && (
    <>
-   <button
+   <button type="button"
     onClick={handleGeneratePersonalBook}
     disabled={generating}
     className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all shadow-md disabled:opacity-60 mb-3 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
@@ -100,7 +100,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
    </>
   )}
 
-  <button
+  <button type="button"
    onClick={onClose}
    className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >

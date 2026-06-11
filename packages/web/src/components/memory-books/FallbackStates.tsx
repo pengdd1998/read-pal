@@ -23,7 +23,7 @@ export const ErrorState = React.memo(function ErrorState({ error, onRetry }: Err
   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{error}</p>
   <div className="flex gap-3 justify-center">
   <button type="button" onClick={onRetry} className="btn btn-primary">{t('tryAgain')}</button>
-  <Link href="/memory-books" className="btn bg-surface-1 text-gray-700 dark:text-gray-300">
+  <Link href="/memory-books" prefetch={false} className="btn bg-surface-1 text-gray-700 dark:text-gray-300">
    {t('backToMemoryBooks')}
   </Link>
   </div>
@@ -48,7 +48,7 @@ export const EmptyCta = React.memo(function EmptyCta({ onGenerate }: EmptyCtaPro
   {t('createButton')}
   </button>
   <div className="mt-6">
-  <Link href="/memory-books" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+  <Link href="/memory-books" prefetch={false} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
    {t('backToMemoryBooks')}
   </Link>
   </div>

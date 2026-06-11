@@ -14,7 +14,7 @@ export default function TermsPage() {
       {/* Header */}
       <header className="bg-amber-800 dark:bg-amber-900 text-white">
         <div className="max-w-3xl mx-auto px-6 py-8">
-          <Link href="/dashboard" className="text-amber-200 hover:text-white text-sm mb-2 min-h-[44px] inline-flex items-center">
+          <Link href="/dashboard" prefetch={false} className="text-amber-200 hover:text-white text-sm mb-2 min-h-[44px] inline-flex items-center">
             &larr; {t('back_to_dashboard')}
           </Link>
           <h1 className="text-3xl font-bold font-serif">{t('page_title')}</h1>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 
 const DRAG_THRESHOLD = 6; // px movement to distinguish drag from click
 const SNAP_TRANSITION = 'left 0.25s cubic-bezier(0.16,1,0.3,1), top 0.25s cubic-bezier(0.16,1,0.3,1)';

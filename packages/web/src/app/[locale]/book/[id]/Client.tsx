@@ -249,7 +249,7 @@ export default function BookDetailPage() {
     <p className="text-xs text-gray-500 dark:text-gray-400">{t('knowledgeGraphDesc')}</p>
    </div>
    </div>
-   <Link href="/knowledge" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-500 hover:bg-violet-600 text-white transition-colors">
+   <Link href="/knowledge" prefetch={false} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-500 hover:bg-violet-600 text-white transition-colors">
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
    </svg>
@@ -305,7 +305,7 @@ export default function BookDetailPage() {
    {book.status === 'unread' ? t('startReading') : book.status === 'completed' ? t('readAgain') : t('continueReading')}
   </Link>
   <Link
-   href="/library"
+   href="/library" prefetch={false}
    className="btn bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
   >
    {t('library')}

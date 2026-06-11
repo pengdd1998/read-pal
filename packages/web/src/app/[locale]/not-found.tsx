@@ -21,10 +21,10 @@ export default async function NotFound() {
    >
    {t('back_to_home')}
    </Link>
-   <Link href="/library" className={secondaryLinkClass}>
+   <Link href="/library" prefetch={false} className={secondaryLinkClass}>
    {t('go_to_library')}
    </Link>
-   <Link href="/dashboard" className={secondaryLinkClass}>
+   <Link href="/dashboard" prefetch={false} className={secondaryLinkClass}>
    {t('go_to_dashboard')}
    </Link>
   </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { Book } from '@read-pal/shared';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 interface UseReaderMilestonesOptions {
   loading: boolean;

@@ -20,7 +20,7 @@ export const EmptyLibrary = React.memo(function EmptyLibrary() {
   <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto leading-relaxed">
   {t('search_across_desc')}
   </p>
-  <Link href="/library" className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
+  <Link href="/library" prefetch={false} className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
   {t('add_books_started')}
   </Link>
  </div>

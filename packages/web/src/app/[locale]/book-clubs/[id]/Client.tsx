@@ -52,7 +52,7 @@ export default function BookClubDetailPage() {
   <main className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
   <div className="px-4 sm:px-6 lg:px-8 py-8 text-center">
    <p className="text-gray-500 dark:text-gray-400">{error || t('clubNotFound')}</p>
-   <Link href="/book-clubs" className="text-sm text-primary-600 hover:underline mt-2 inline-block">
+   <Link href="/book-clubs" prefetch={false} className="text-sm text-primary-600 hover:underline mt-2 inline-block">
    {t('backToBookClubs')}
    </Link>
   </div>
@@ -68,9 +68,9 @@ export default function BookClubDetailPage() {
   <div className="px-4 sm:px-6 lg:px-8 py-8">
   {/* Breadcrumb */}
   <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-   <Link href="/dashboard" className="hover:text-gray-600 dark:hover:text-gray-300">{t('dashboard')}</Link>
+   <Link href="/dashboard" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-300">{t('dashboard')}</Link>
    <span>/</span>
-   <Link href="/book-clubs" className="hover:text-gray-600 dark:hover:text-gray-300">{t('pageTitle')}</Link>
+   <Link href="/book-clubs" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-300">{t('pageTitle')}</Link>
    <span>/</span>
    <span className="text-gray-700 dark:text-gray-300">{club.name}</span>
   </div>
@@ -93,7 +93,7 @@ export default function BookClubDetailPage() {
   {/* Actions */}
   <div className="flex items-center justify-between">
    <Link
-   href="/book-clubs"
+   href="/book-clubs" prefetch={false}
    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
    >
    &larr; {t('backToClubs')}

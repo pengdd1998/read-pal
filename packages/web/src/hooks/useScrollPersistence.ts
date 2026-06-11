@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 
 interface UseScrollPersistenceOptions {
   containerRef: React.RefObject<HTMLDivElement | null>;

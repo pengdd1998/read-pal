@@ -155,7 +155,7 @@ export const InterventionToast = React.memo(function InterventionToast({
    <div className="flex-1 min-w-0">
    <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">{intervention.message}</p>
    <div className="flex items-center gap-2 mt-2">
-    <button
+    <button type="button"
     onClick={handleHelpful}
     disabled={submitting}
     className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
@@ -170,7 +170,7 @@ export const InterventionToast = React.memo(function InterventionToast({
      </span>
     ) : t('thanks')}
     </button>
-    <button
+    <button type="button"
     onClick={handleDismiss}
     disabled={submitting}
     className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
@@ -179,7 +179,7 @@ export const InterventionToast = React.memo(function InterventionToast({
     </button>
    </div>
    </div>
-   <button
+   <button type="button"
    onClick={handleDismiss}
    className="text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 flex-shrink-0 p-2 -m-2 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
    aria-label={t('dismiss')}

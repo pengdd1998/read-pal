@@ -53,7 +53,7 @@ export default function DevelopersPage() {
   {/* Header */}
   <header className="bg-amber-800 dark:bg-amber-900 text-white">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
-   <Link href="/dashboard" className="text-amber-200 hover:text-white text-sm mb-2 inline-block min-h-[44px] leading-[44px]">
+   <Link href="/dashboard" prefetch={false} className="text-amber-200 hover:text-white text-sm mb-2 inline-block min-h-[44px] leading-[44px]">
    {t('back_dashboard')}
    </Link>
    <h1 className="text-3xl font-bold font-serif">{t('header_title')}</h1>

@@ -129,7 +129,7 @@ export default function ReadPage() {
    </p>
    <div className="flex gap-3 justify-center">
     <button type="button" onClick={() => window.location.reload()} className="btn btn-secondary">{t('retry')}</button>
-    <Link href="/library" className="btn btn-primary">{t('back_to_library')}</Link>
+    <Link href="/library" prefetch={false} className="btn btn-primary">{t('back_to_library')}</Link>
    </div>
   </div>
   </main>
