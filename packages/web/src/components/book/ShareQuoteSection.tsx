@@ -4,98 +4,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { AnnotationItem } from '@/types/book';
 import { useToast } from '@/components/Toast';
 
-interface ShareQuoteSectionProps {
- highlights: AnnotationItem[];
- bookTitle: string;
- bookAuthor: string;
- t: (key: string) => string;
+interface QuoteRowProps {
+  h: AnnotationItem;
+  index: number;
+  isSharing: boolean;
+  onShare: (text: string, idx: number) => void;
+  shareLabel: string;
 }
 
-export const ShareQuoteSection = React.memo(function ShareQuoteSection({
- highlights,
- bookTitle,
- bookAuthor,
- t,
-}: ShareQuoteSectionProps) {
- const [sharingIdx, setSharingIdx] = useState<number | null>(null);
- const { toast } = useToast();
- const mountedRef = useRef(true);
- useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
-
- const handleShareQuote = async (text: string, idx: number) => {
- setSharingIdx(idx);
- try {
-  const canvas = document.createElement('canvas');
-  const { renderCardToCanvas } = await import(
-  '@/components/reading/QuoteCard'
-  );
-  if (!mountedRef.current) return;
-  renderCardToCanvas(canvas, text, bookTitle, bookAuthor, 'warm');
-  canvas.toBlob(async (blob) => {
-  if (!blob) {
-   if (mountedRef.current) setSharingIdx(null);
-   return;
-  }
-  const file = new File([blob], 'read-pal-quote.png', {
-   type: 'image/png',
-  });
-  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-   try {
-   await navigator.share({
-    files: [file],
-    title: `${bookTitle} — read-pal`,
-    text: `"${text}" — ${bookAuthor || ''}`,
-   });
-   } catch (err) {
-   if ((err as DOMException).name !== 'AbortError') {
-    console.warn('ShareQuote: share failed', err);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'read-pal-quote.png';
-    a.click();
-    URL.revokeObjectURL(url);
-   }
-   }
-  } else {
-   try {
-   await navigator.clipboard.write([
-    new ClipboardItem({ 'image/png': blob }),
-   ]);
-   } catch (err) {
-   console.warn("ShareQuoteSection: clipboard write failed", err);
-   const url = URL.createObjectURL(blob);
-   const a = document.createElement('a');
-   a.href = url;
-   a.download = 'read-pal-quote.png';
-   a.click();
-   URL.revokeObjectURL(url);
-   }
-  }
-  if (mountedRef.current) setSharingIdx(null);
-  }, 'image/png');
- } catch (err) {
-  console.warn("ShareQuoteSection: share failed", err);
-  toast(t('share_failed'), 'error');
-  if (mountedRef.current) setSharingIdx(null);
- }
- };
-
- return (
- <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-2xl border border-amber-200/50 dark:border-amber-800/30 p-5 mb-6 animate-slide-up stagger-4">
-  <div className="flex items-center gap-3 mb-3">
-  <span className="text-2xl">{'✨'}</span>
-  <div>
-   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-   {t('shareAQuote')}
-   </h3>
-   <p className="text-xs text-gray-500 dark:text-gray-400">
-   {t('shareAQuoteDesc')}
-   </p>
-  </div>
-  </div>
-  <div className="space-y-2">
-  {highlights.map((h, i) => (
+const QuoteRow = React.memo(function QuoteRow({ h, index, isSharing, onShare, shareLabel }: QuoteRowProps) {
+  return (
    <div
    key={h.id}
    className="flex items-start gap-3 group p-2.5 rounded-xl hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors"
@@ -104,11 +22,11 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
     &ldquo;{h.content}&rdquo;
    </p>
    <button
-    onClick={() => handleShareQuote(h.content, i)}
-    disabled={sharingIdx === i}
+    onClick={() => onShare(h.content, index)}
+    disabled={isSharing}
     className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-surface-0 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
    >
-    {sharingIdx === i ? (
+    {isSharing ? (
     <svg aria-hidden="true"
      className="w-3.5 h-3.5 animate-spin"
      fill="none"
@@ -143,11 +61,114 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
      />
     </svg>
     )}
-    {t('share')}
+    {shareLabel}
    </button>
    </div>
-  ))}
+  );
+});
+
+interface ShareQuoteSectionProps {
+  highlights: AnnotationItem[];
+  bookTitle: string;
+  bookAuthor: string;
+  t: (key: string) => string;
+}
+
+export const ShareQuoteSection = React.memo(function ShareQuoteSection({
+  highlights,
+  bookTitle,
+  bookAuthor,
+  t,
+}: ShareQuoteSectionProps) {
+  const [sharingIdx, setSharingIdx] = useState<number | null>(null);
+  const { toast } = useToast();
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+
+  const handleShareQuote = async (text: string, idx: number) => {
+  setSharingIdx(idx);
+  try {
+   const canvas = document.createElement('canvas');
+   const { renderCardToCanvas } = await import(
+   '@/components/reading/QuoteCard'
+   );
+   if (!mountedRef.current) return;
+   renderCardToCanvas(canvas, text, bookTitle, bookAuthor, 'warm');
+   canvas.toBlob(async (blob) => {
+   if (!blob) {
+    if (mountedRef.current) setSharingIdx(null);
+    return;
+   }
+   const file = new File([blob], 'read-pal-quote.png', {
+    type: 'image/png',
+   });
+   if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    try {
+    await navigator.share({
+     files: [file],
+     title: `${bookTitle} — read-pal`,
+     text: `"${text}" — ${bookAuthor || ''}`,
+    });
+    } catch (err) {
+    if ((err as DOMException).name !== 'AbortError') {
+     console.warn('ShareQuote: share failed', err);
+     const url = URL.createObjectURL(blob);
+     const a = document.createElement('a');
+     a.href = url;
+     a.download = 'read-pal-quote.png';
+     a.click();
+     URL.revokeObjectURL(url);
+    }
+    }
+   } else {
+    try {
+    await navigator.clipboard.write([
+     new ClipboardItem({ 'image/png': blob }),
+    ]);
+    } catch (err) {
+    console.warn("ShareQuoteSection: clipboard write failed", err);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'read-pal-quote.png';
+    a.click();
+    URL.revokeObjectURL(url);
+    }
+   }
+   if (mountedRef.current) setSharingIdx(null);
+   }, 'image/png');
+  } catch (err) {
+   console.warn("ShareQuoteSection: share failed", err);
+   toast(t('share_failed'), 'error');
+   if (mountedRef.current) setSharingIdx(null);
+  }
+  };
+
+  return (
+  <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-2xl border border-amber-200/50 dark:border-amber-800/30 p-5 mb-6 animate-slide-up stagger-4">
+   <div className="flex items-center gap-3 mb-3">
+   <span className="text-2xl">{'✨'}</span>
+   <div>
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+    {t('shareAQuote')}
+    </h3>
+    <p className="text-xs text-gray-500 dark:text-gray-400">
+    {t('shareAQuoteDesc')}
+    </p>
+   </div>
+   </div>
+   <div className="space-y-2">
+   {highlights.map((h, i) => (
+    <QuoteRow
+    key={h.id}
+    h={h}
+    index={i}
+    isSharing={sharingIdx === i}
+    onShare={handleShareQuote}
+    shareLabel={t('share')}
+    />
+   ))}
+   </div>
   </div>
- </div>
- );
+  );
 });

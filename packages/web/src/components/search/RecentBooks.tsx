@@ -6,20 +6,12 @@ import { getBookCoverColors, getBookInitials, isDisplayableAuthor } from '@/lib/
 import { Link } from '@/i18n/navigation';
 import type { Book } from './types';
 
-interface RecentBooksProps {
- books: Book[];
+interface RecentBookCardProps {
+  book: Book;
 }
 
-export const RecentBooks = React.memo(function RecentBooks({ books }: RecentBooksProps) {
- const t = useTranslations('search');
-
- return (
- <div>
-  <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">
-  {t('your_library')}
-  </h2>
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-  {books.map((book) => (
+const RecentBookCard = React.memo(function RecentBookCard({ book }: RecentBookCardProps) {
+  return (
    <Link
    key={book.id}
    href={`/read/${book.id}`}
@@ -38,8 +30,26 @@ export const RecentBooks = React.memo(function RecentBooks({ books }: RecentBook
     )}
    </div>
    </Link>
-  ))}
+  );
+});
+
+interface RecentBooksProps {
+  books: Book[];
+}
+
+export const RecentBooks = React.memo(function RecentBooks({ books }: RecentBooksProps) {
+  const t = useTranslations('search');
+
+  return (
+  <div>
+   <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">
+   {t('your_library')}
+   </h2>
+   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   {books.map((book) => (
+    <RecentBookCard key={book.id} book={book} />
+   ))}
+   </div>
   </div>
- </div>
- );
+  );
 });
