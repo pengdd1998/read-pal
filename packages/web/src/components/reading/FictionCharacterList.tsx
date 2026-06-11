@@ -66,7 +66,7 @@ const CharacterItem = React.memo(function CharacterItem({
   <button
   onClick={() => onCharacterClick(char.name)}
   aria-label={isSelected ? t('fiction_collapse', { name: char.name }) : t('fiction_expand', { name: char.name })}
-  className={`w-full text-left px-3 py-2.5 rounded-xl transition-all ${
+  className={`w-full text-left px-3 py-2.5 rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    isSelected
    ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700'
    : 'bg-gray-50/50 dark:bg-gray-800/50 border border-transparent hover:bg-surface-1'
@@ -92,7 +92,7 @@ const CharacterItem = React.memo(function CharacterItem({
     onAskCompanion(char.name);
     }}
     aria-label={t('fiction_ask_about', { name: char.name.split(' ')[0] })}
-    className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline min-h-[44px] inline-flex items-center"
+    className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {t('fiction_ask_about', { name: char.name.split(' ')[0] })}
    </button>

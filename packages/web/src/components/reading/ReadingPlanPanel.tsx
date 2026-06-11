@@ -156,7 +156,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
    </h3>
    <button
    onClick={onClose}
-   className="p-1 rounded-lg hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+   className="p-1 rounded-lg hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    aria-label={t('close_label')}
    >
    <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -218,7 +218,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
    /* Generate form */
    <div className="space-y-4">
     {error && (
-    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{error}</span><button onClick={handleGenerate} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap">{t("retry", { defaultValue: "Retry" })}</button></div>
+    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{error}</span><button onClick={handleGenerate} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t("retry", { defaultValue: "Retry" })}</button></div>
     )}
     <p className="text-sm text-gray-600 dark:text-gray-400">
     {t('reading_plan_no_plan')}
@@ -235,7 +235,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
      onChange={(e) => setTotalDays(Math.max(1, Math.min(90, parseInt(e.target.value) || 1)))}
      min={1}
      max={90}
-     className="w-full mt-1 px-3 py-2 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200"
+     className="w-full mt-1 px-3 py-2 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
     />
     </div>
 
@@ -250,7 +250,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
      onChange={(e) => setDailyMinutes(Math.max(10, Math.min(240, parseInt(e.target.value) || 30)))}
      min={10}
      max={240}
-     className="w-full mt-1 px-3 py-2 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200"
+     className="w-full mt-1 px-3 py-2 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
     />
     </div>
 

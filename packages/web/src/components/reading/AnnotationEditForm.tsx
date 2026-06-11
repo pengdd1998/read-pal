@@ -90,7 +90,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
    key={c}
    onClick={() => setEditColor(c)}
    aria-label={t('card_color_aria', { color: c })}
-   className={`w-6 h-6 rounded-full border-2 transition-transform ${
+   className={`w-6 h-6 rounded-full border-2 transition-transform focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     editColor === c ? 'scale-125 border-gray-800 dark:border-white' : 'border-transparent hover:scale-110'
    }`}
    style={{ backgroundColor: c, minWidth: 24, minHeight: 24 }}
@@ -125,7 +125,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
     #{tag}
     <button
     onClick={() => removeTag(tag)}
-    className="min-w-[44px] min-h-[44px] flex items-center justify-center -m-2 p-2 hover:text-red-500 transition-colors"
+    className="min-w-[44px] min-h-[44px] flex items-center justify-center -m-2 p-2 hover:text-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     aria-label={t('remove_tag_aria', { tag })}
     >
     <svg aria-hidden="true" className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -167,7 +167,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
     key={preset}
     onClick={() => addTag(preset)}
     aria-label={t('add_tag_aria', { tag: preset })}
-    className="px-1.5 py-0.5 rounded text-[10px] text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-surface-3"
+    className="px-1.5 py-0.5 rounded text-[10px] text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-surface-3 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
     +{preset}
     </button>
@@ -187,7 +187,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   </button>
   <button
    onClick={onCancel}
-   className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors"
+   className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {tc('cancel')}
   </button>

@@ -27,7 +27,7 @@ const CitationFormatButton = React.memo(function CitationFormatButton({ isActive
  return (
   <button
    onClick={onClick}
-   className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
+   className={`text-left px-3 py-2.5 rounded-xl border transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    isActive
    ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-400/30'
    : 'border-surface-3 hover:border-surface-3'
@@ -119,7 +119,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
    </pre>
    <button
    onClick={handleCopyCitation}
-   className="min-h-[44px] inline-flex items-center px-2 text-xs text-amber-600 dark:text-amber-400 hover:underline"
+   className="min-h-[44px] inline-flex items-center px-2 text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    {t('share_copy_citation')}
    </button>
