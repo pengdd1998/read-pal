@@ -148,7 +148,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   ) : loadError ? (
   <div className="px-3 py-4 text-center">
    <p className="text-xs text-red-500 dark:text-red-400 mb-2">{t('collection_picker_load_failed')}</p>
-   <button onClick={fetchCollections} className="text-xs text-primary-600 dark:text-primary-400 hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('collection_picker_retry', { defaultValue: 'Retry' })}</button>
+   <button type="button" onClick={fetchCollections} className="text-xs text-primary-600 dark:text-primary-400 hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('collection_picker_retry')}</button>
   </div>
   ) : (
   <div className="max-h-48 overflow-y-auto p-1.5">
@@ -182,7 +182,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
     className="flex-1 px-2 py-1 text-xs bg-surface-1 border border-surface-3 rounded outline-none focus:ring-1 focus:ring-primary-400/50"
     autoFocus
    />
-   <button onClick={handleCreate} disabled={creating} className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:opacity-50">{creating ? '...' : t('collection_picker_add')}</button>
+   <button type="button" onClick={handleCreate} disabled={creating} className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:opacity-50">{creating ? '...' : t('collection_picker_add')}</button>
    </div>
   ) : (
    <button

@@ -18,7 +18,7 @@ export const AccountSection = React.memo(function AccountSection() {
  const router = useRouter();
  async function handleDeleteAccount() {
   if (!confirmPassword.trim()) {
-   setDeleteError(t('account_delete_password_required', { defaultValue: 'Please enter your password' }));
+   setDeleteError(t('account_delete_password_required'));
    return;
   }
   setDeleting(true);
@@ -109,15 +109,15 @@ export const AccountSection = React.memo(function AccountSection() {
     onClick={(e) => e.stopPropagation()}
    >
     <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">{t('account_delete_heading')}</h3>
-    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('account_delete_confirm_password', { defaultValue: 'Enter your password to confirm account deletion. This action cannot be undone.' })}</p>
+    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('account_delete_confirm_password')}</p>
     <input
      type="password"
      value={confirmPassword}
      onChange={(e) => setConfirmPassword(e.target.value)}
      className="w-full px-3 py-2 border border-surface-3 rounded-lg text-sm bg-surface-0 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none mb-3"
-     placeholder={t('account_delete_password_placeholder', { defaultValue: 'Your password' })}
+     placeholder={t('account_delete_password_placeholder')}
      autoFocus
-     aria-label={t('account_delete_password_placeholder', { defaultValue: 'Your password' })}
+     aria-label={t('account_delete_password_placeholder')}
     />
     {deleteError && <p className="text-xs text-red-600 dark:text-red-400 mb-3">{deleteError}</p>}
     <div className="flex gap-2 justify-end">
@@ -126,7 +126,7 @@ export const AccountSection = React.memo(function AccountSection() {
       disabled={deleting}
       className="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 bg-surface-1 hover:bg-surface-2 transition-colors disabled:opacity-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      >
-      {t('account_delete_cancel', { defaultValue: 'Cancel' })}
+      {t('account_delete_cancel')}
      </button>
      <button
       onClick={handleDeleteAccount}

@@ -113,7 +113,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
     objectives.map((obj) => (
     <button
      key={obj.id}
-     aria-label={`${obj.completed ? t('completed', { defaultValue: 'Completed' }) : t('incomplete', { defaultValue: 'Incomplete' })}: ${obj.text}`}
+     aria-label={`${obj.completed ? t('completed') : t('incomplete')}: ${obj.text}`}
      onClick={() => onToggleObjective(obj.id)}
      className={`w-full text-left flex items-start gap-3 p-3 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      obj.completed
@@ -169,7 +169,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
      </div>
      {!isRevealed ? (
       <button
-      aria-label={t('reveal_answer_for', { defaultValue: 'Reveal answer for: {question}', question: check.question })}
+      aria-label={t('reveal_answer_for', { question: check.question })}
       onClick={() => onRevealAnswer(check.id)}
       className="w-full px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30 border-t border-surface-3 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
       >
@@ -193,9 +193,9 @@ export const StudyModePanel = React.memo(function StudyModePanel({
     disabled={saveStatus === 'saving'}
     className="w-full mt-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
-    {saveStatus === 'saving' ? t('saving', { defaultValue: 'Saving...' })
-     : saveStatus === 'saved' ? t('saved', { defaultValue: 'Saved!' })
-     : saveStatus === 'failed' ? t('save_failed', { defaultValue: 'Save failed — tap to retry' })
+    {saveStatus === 'saving' ? t('saving')
+     : saveStatus === 'saved' ? t('saved')
+     : saveStatus === 'failed' ? t('save_failed')
      : t('add_to_flashcard')}
     </button>
    )}

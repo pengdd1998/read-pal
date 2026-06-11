@@ -467,7 +467,8 @@
     "book_by_author": "by {author}",
     "meta_title": "My Library | read-pal",
     "meta_description": "Browse and manage your personal reading collection on read-pal.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "collection_picker_retry": "Retry"
   },
   "reader": {
     "companion_title": "Reading Companion",
@@ -995,7 +996,8 @@
     "feedback_submit_error": "Failed to submit feedback. Please try again.",
     "explain_passage_prompt": "Can you explain this passage: '{text}'",
     "tell_about_character_prompt": "Tell me about {name} — their role, motivations, and how they've developed so far.",
-    "readingPage": "Reading"
+    "readingPage": "Reading",
+    "outline_item_aria": "{type} annotation"
   },
   "stats": {
     "title": "Reading Stats",
@@ -1137,7 +1139,12 @@
     "persona_penny_desc": "Enthusiastic and curious",
     "persona_alex_desc": "Challenging and direct",
     "persona_quinn_desc": "Calm and minimalist",
-    "persona_sam_desc": "Practical and focused"
+    "persona_sam_desc": "Practical and focused",
+    "offline_retry": "Retry",
+    "account_delete_password_required": "Please enter your password",
+    "account_delete_confirm_password": "Enter your password to confirm account deletion. This action cannot be undone.",
+    "account_delete_password_placeholder": "Your password",
+    "account_delete_cancel": "Cancel"
   },
   "nav": {
     "library": "Library",
@@ -2224,7 +2231,11 @@
     "type_highlight": "Highlight",
     "type_note": "Note",
     "retry": "Retry",
-    "synthesis_retry": "Retry"
+    "synthesis_retry": "Retry",
+    "ref_highlight": "highlight",
+    "ref_note": "note",
+    "ref_bookmark": "bookmark",
+    "node_entity": "entity"
   },
   "seo": {
     "knowledge_title": "Knowledge Graph | read-pal",
@@ -2355,5 +2366,16 @@
   "bookDetail": {
     "progressAriaLabel": "Reading progress: {pct}%",
     "dismiss": "Dismiss"
+  },
+  "studyMode": {
+    "completed": "Completed",
+    "incomplete": "Incomplete",
+    "reveal_answer_for": "Reveal answer for: {question}",
+    "saving": "Saving...",
+    "saved": "Saved!",
+    "save_failed": "Save failed — tap to retry"
+  },
+  "readingPlan": {
+    "retry": "Retry"
   }
 }

@@ -467,7 +467,8 @@
     "book_by_author": "作者：{author}",
     "meta_title": "我的书库 | read-pal",
     "meta_description": "浏览和管理你的个人阅读收藏。",
-    "retry": "重试"
+    "retry": "重试",
+    "collection_picker_retry": "重试"
   },
   "reader": {
     "companion_title": "阅读伴侣",
@@ -995,7 +996,8 @@
     "feedback_submit_error": "反馈提交失败，请重试。",
     "explain_passage_prompt": "请解释这段文字：'{text}'",
     "tell_about_character_prompt": "介绍一下{name}——他们的角色、动机以及到目前为止的发展。",
-    "readingPage": "阅读"
+    "readingPage": "阅读",
+    "outline_item_aria": "{type} 批注"
   },
   "stats": {
     "title": "阅读统计",
@@ -1137,7 +1139,12 @@
     "persona_penny_desc": "热情且充满好奇",
     "persona_alex_desc": "直接且有挑战性",
     "persona_quinn_desc": "平静且简约",
-    "persona_sam_desc": "务实且专注"
+    "persona_sam_desc": "务实且专注",
+    "offline_retry": "重试",
+    "account_delete_password_required": "请输入密码",
+    "account_delete_confirm_password": "输入密码以确认删除账号。此操作无法撤销。",
+    "account_delete_password_placeholder": "您的密码",
+    "account_delete_cancel": "取消"
   },
   "nav": {
     "library": "书架",
@@ -2224,7 +2231,11 @@
     "type_highlight": "高亮",
     "type_note": "笔记",
     "retry": "重试",
-    "synthesis_retry": "重试"
+    "synthesis_retry": "重试",
+    "ref_highlight": "高亮",
+    "ref_note": "笔记",
+    "ref_bookmark": "书签",
+    "node_entity": "实体"
   },
   "seo": {
     "knowledge_title": "知识图谱 | read-pal",
@@ -2355,5 +2366,16 @@
   "bookDetail": {
     "progressAriaLabel": "阅读进度：{pct}%",
     "dismiss": "关闭"
+  },
+  "studyMode": {
+    "completed": "已完成",
+    "incomplete": "未完成",
+    "reveal_answer_for": "揭示答案：{question}",
+    "saving": "保存中...",
+    "saved": "已保存！",
+    "save_failed": "保存失败 — 点击重试"
+  },
+  "readingPlan": {
+    "retry": "重试"
   }
 }
