@@ -42,6 +42,7 @@ export function ServiceWorkerRegistrar() {
    if (!mounted) return;
    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
     setUpdateAvailable(true);
+    newWorker.removeEventListener('statechange', onStateChange);
    }
    };
 
