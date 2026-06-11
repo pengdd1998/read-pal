@@ -83,7 +83,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    <select
     value={selectedBookId}
     onChange={(e) => setSelectedBookId(e.target.value)}
-    className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200"
+    className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
    >
     <option value="">{t('choose_book')}</option>
     {books.map((book) => (
@@ -132,7 +132,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    onChange={(e) => setQuery(e.target.value)}
    placeholder={t('query_placeholder')}
    rows={3}
-   className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 resize-none"
+   className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
    />
   </div>
 

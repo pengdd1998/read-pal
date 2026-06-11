@@ -29,7 +29,7 @@ const STEPS: Step[] = ['welcome', 'companion', 'ready'];
  * completed the welcome page flow, this is skipped entirely.
  */
 
-export function PersonaIcon({ type, className }: { type: string; className?: string }) {
+export const PersonaIcon = React.memo(function PersonaIcon({ type, className }: { type: string; className?: string }) {
   const size = className ?? 'w-6 h-6';
   switch (type) {
     case 'star':
@@ -54,7 +54,7 @@ export function PersonaIcon({ type, className }: { type: string; className?: str
     default:
       return <span className="text-2xl">{type}</span>;
   }
-}
+});
 
 export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough() {
   const router = useRouter();

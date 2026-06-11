@@ -40,7 +40,7 @@ export const NotePopover = React.memo(function NotePopover({ selectedText, onSav
    onChange={(e) => setNote(e.target.value)}
    placeholder={t('note_placeholder')}
    aria-label={t('note_placeholder')}
-   className="input mb-3 text-sm"
+   className="input mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
    rows={3}
   />
   <div className="flex justify-end gap-2">

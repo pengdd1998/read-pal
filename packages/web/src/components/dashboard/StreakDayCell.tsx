@@ -81,7 +81,7 @@ export const DayCell = memo(function DayCell({
  );
 });
 
-export function SkeletonHeatmap() {
+export const SkeletonHeatmap = memo(function SkeletonHeatmap() {
  return (
  <div className="space-y-[3px]">
   {Array.from({ length: 7 }).map((_, row) => (
@@ -93,4 +93,4 @@ export function SkeletonHeatmap() {
   ))}
  </div>
  );
-}
+});

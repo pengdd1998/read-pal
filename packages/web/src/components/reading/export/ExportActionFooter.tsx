@@ -69,7 +69,7 @@ export const ExportActionFooter = React.memo(function ExportActionFooter({
                 readOnly
                 value={shareLink}
                 aria-label={t('export_share_via_link')}
-                className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300"
+                className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
               <button

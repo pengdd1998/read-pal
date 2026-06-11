@@ -100,7 +100,7 @@ export const ExportFilterPanel = React.memo(function ExportFilterPanel({
     value={selectedTag}
     onChange={(e) => onSetSelectedTag(e.target.value)}
     aria-label={t('export_filter_by_tag')}
-    className="w-full px-3 py-1.5 text-xs bg-surface-0 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300 focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
+    className="w-full px-3 py-1.5 text-xs bg-surface-0 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-400"
     >
     <option value="">{t('export_all_tags')}</option>
     {availableTags.map((tag) => (
