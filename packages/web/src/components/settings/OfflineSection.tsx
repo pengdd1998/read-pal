@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { isDisplayableAuthor } from '@/lib/book-cover';
@@ -67,11 +67,11 @@ export const OfflineSection = React.memo(function OfflineSection() {
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
-  useEffect(() => {
+  const loadOfflineData = useCallback(() => {
     let stale = false;
-    async function load() {
-      setLoading(true);
-      setLoadError(false);
+    setLoading(true);
+    setLoadError(false);
+    (async () => {
       try {
         const count = await getQueueCount();
         if (stale) return;
@@ -103,10 +103,11 @@ export const OfflineSection = React.memo(function OfflineSection() {
       } finally {
         if (!stale) setLoading(false);
       }
-    }
-    load();
+    })();
     return () => { stale = true; };
-  }, []);
+  }, [t, toast]);
+
+  useEffect(() => { return loadOfflineData(); }, [loadOfflineData]);
 
   async function handleCacheSelected() {
     if (selectedBooks.size === 0) return;
@@ -243,7 +244,8 @@ export const OfflineSection = React.memo(function OfflineSection() {
           </div>
         ) : loadError ? (
           <div className="pt-4 border-t border-surface-2">
-            <p className="text-xs text-red-600 dark:text-red-400">{t('offline_load_failed')}</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mb-2">{t('offline_load_failed')}</p>
+            <button onClick={loadOfflineData} className="min-h-[44px] px-3 py-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('offline_retry', { defaultValue: 'Retry' })}</button>
           </div>
         ) : books.length > 0 && (
           <div className="pt-4 border-t border-surface-2">

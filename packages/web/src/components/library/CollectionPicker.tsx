@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -46,6 +46,19 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  const [collections, setCollections] = useState<Collection[]>([]);
  const [loading, setLoading] = useState(true);
  const [loadError, setLoadError] = useState(false);
+ const fetchCollections = useCallback(() => {
+   let stale = false;
+   setLoading(true);
+   setLoadError(false);
+   api.get<{ items: Collection[] }>('/api/collections').then((res) => {
+     if (stale) return;
+     if (res.success && res.data) {
+       const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
+       setCollections(items);
+     }
+   }).catch((err) => { console.warn("CollectionPicker: failed to load collections", err); if (!stale) setLoadError(true); }).finally(() => { if (!stale) setLoading(false); });
+   return () => { stale = true; };
+ }, []);
  const [showCreate, setShowCreate] = useState(false);
  const [newName, setNewName] = useState('');
  const [creating, setCreating] = useState(false);
@@ -55,17 +68,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
 
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
- useEffect(() => {
- let stale = false;
- api.get<{ items: Collection[] }>('/api/collections').then((res) => {
-    if (stale) return;
-  if (res.success && res.data) {
-  const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
-  setCollections(items);
-  }
- }).catch((err) => { console.warn("CollectionPicker: failed to load collections", err); setLoadError(true); }).finally(() => setLoading(false));
-  return () => { stale = true; };
- }, []);
+ useEffect(() => { fetchCollections(); }, [fetchCollections]);
 
  // Close on outside click
  useEffect(() => {
@@ -143,7 +146,10 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
    {[1, 2].map((i) => <div key={i} className="h-6 bg-surface-1 rounded animate-pulse" />)}
   </div>
   ) : loadError ? (
-  <p className="text-xs text-red-500 dark:text-red-400 px-3 py-4 text-center">{t('collection_picker_load_failed')}</p>
+  <div className="px-3 py-4 text-center">
+   <p className="text-xs text-red-500 dark:text-red-400 mb-2">{t('collection_picker_load_failed')}</p>
+   <button onClick={fetchCollections} className="text-xs text-primary-600 dark:text-primary-400 hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('collection_picker_retry', { defaultValue: 'Retry' })}</button>
+  </div>
   ) : (
   <div className="max-h-48 overflow-y-auto p-1.5">
    {collections.map((col) => (

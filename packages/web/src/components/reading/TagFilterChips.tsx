@@ -54,7 +54,7 @@ export const TagFilterChips = React.memo(function TagFilterChips({
    <button
    onClick={onClearTags}
    aria-label={t('sidebar_clear_all_tags')}
-   className="px-1.5 py-1 rounded-full text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="min-h-[44px] inline-flex items-center px-1.5 py-1 rounded-full text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    {t('sidebar_clear')}
    </button>

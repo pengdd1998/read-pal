@@ -101,7 +101,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
    </pre>
    <button
    onClick={handleCopyCitation}
-   className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+   className="min-h-[44px] inline-flex items-center px-2 text-xs text-amber-600 dark:text-amber-400 hover:underline"
    >
    {t('share_copy_citation')}
    </button>

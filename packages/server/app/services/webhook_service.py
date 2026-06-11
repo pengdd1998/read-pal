@@ -192,7 +192,7 @@ async def _is_safe_webhook_url(url: str) -> bool:
         if parsed.scheme not in ('http', 'https'):
             return False
         # Resolve asynchronously to avoid blocking the event loop
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         resolved = await loop.getaddrinfo(hostname, None, family=socket.AF_UNSPEC, type=socket.SOCK_STREAM)
         for _, _, _, _, addr in resolved:
             ip = ipaddress.ip_address(addr[0])

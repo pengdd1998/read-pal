@@ -5,6 +5,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import String, cast, func, select, distinct
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql.elements import BooleanClauseList
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -58,42 +59,46 @@ async def search_books(
 
     Returns (serialized_book_list, total_count).
     """
-    if not q.strip():
-        total_q = select(func.count()).select_from(Book).where(Book.user_id == user_id)
-        data_q = (
-            select(Book)
-            .where(Book.user_id == user_id)
-            .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
-            .offset((page - 1) * limit)
-            .limit(limit)
-        )
-        total_result, books_result = await asyncio.gather(
-            db.execute(total_q), db.execute(data_q),
-        )
-        total = total_result.scalar_one()
-        books = books_result.scalars().all()
-    else:
-        pattern = f'%{_escape_like(q.strip())}%'
-        base_filter = (
-            Book.user_id == user_id,
-            Book.title.ilike(pattern) | Book.author.ilike(pattern) | _tags_search(pattern),
-        )
+    try:
+        if not q.strip():
+            total_q = select(func.count()).select_from(Book).where(Book.user_id == user_id)
+            data_q = (
+                select(Book)
+                .where(Book.user_id == user_id)
+                .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
+                .offset((page - 1) * limit)
+                .limit(limit)
+            )
+            total_result, books_result = await asyncio.gather(
+                db.execute(total_q), db.execute(data_q),
+            )
+            total = total_result.scalar_one()
+            books = books_result.scalars().all()
+        else:
+            pattern = f'%{_escape_like(q.strip())}%'
+            base_filter = (
+                Book.user_id == user_id,
+                Book.title.ilike(pattern) | Book.author.ilike(pattern) | _tags_search(pattern),
+            )
 
-        total_q = select(func.count()).select_from(Book).where(*base_filter)
-        data_q = (
-            select(Book)
-            .where(*base_filter)
-            .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
-            .offset((page - 1) * limit)
-            .limit(limit)
-        )
-        total_result, books_result = await asyncio.gather(
-            db.execute(total_q), db.execute(data_q),
-        )
-        total = total_result.scalar_one()
-        books = books_result.scalars().all()
+            total_q = select(func.count()).select_from(Book).where(*base_filter)
+            data_q = (
+                select(Book)
+                .where(*base_filter)
+                .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
+                .offset((page - 1) * limit)
+                .limit(limit)
+            )
+            total_result, books_result = await asyncio.gather(
+                db.execute(total_q), db.execute(data_q),
+            )
+            total = total_result.scalar_one()
+            books = books_result.scalars().all()
 
-    return [_book_to_dict(b) for b in books], total
+        return [_book_to_dict(b) for b in books], total
+    except DBAPIError:
+        logger.error('Failed to search books', exc_info=True, user_id=str(user_id), q=q)
+        raise RuntimeError('Search temporarily unavailable') from None
 
 
 def _build_semantic_filter(user_id: UUID, pattern: str) -> tuple:
@@ -124,23 +129,27 @@ async def _fetch_books_page(
     base_filter: tuple | None = None,
 ) -> tuple[list[Book], int]:
     """Fetch a page of books with optional filter; return (books, total)."""
-    if base_filter:
-        where = base_filter
-    else:
-        where = (Book.user_id == user_id,)
+    try:
+        if base_filter:
+            where = base_filter
+        else:
+            where = (Book.user_id == user_id,)
 
-    total_q = select(func.count()).select_from(Book).where(*where)
-    total = (await db.execute(total_q)).scalar_one()
+        total_q = select(func.count()).select_from(Book).where(*where)
+        total = (await db.execute(total_q)).scalar_one()
 
-    data_q = (
-        select(Book)
-        .where(*where)
-        .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
-        .offset((page - 1) * limit)
-        .limit(limit)
-    )
-    books = (await db.execute(data_q)).scalars().all()
-    return books, total
+        data_q = (
+            select(Book)
+            .where(*where)
+            .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
+            .offset((page - 1) * limit)
+            .limit(limit)
+        )
+        books = (await db.execute(data_q)).scalars().all()
+        return books, total
+    except DBAPIError:
+        logger.error('Failed to fetch books page', exc_info=True, user_id=str(user_id))
+        raise RuntimeError('Search temporarily unavailable') from None
 
 
 async def semantic_search_books(

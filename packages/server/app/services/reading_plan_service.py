@@ -32,6 +32,7 @@ async def _deactivate_existing_plan(
             await db.flush()
     except DBAPIError:
         logger.error('Failed to deactivate existing plan', exc_info=True, book_id=str(book_id), user_id=str(user_id))
+        raise RuntimeError('Failed to deactivate existing reading plan due to a database error')
 
 
 async def _save_new_plan(
@@ -197,7 +198,7 @@ async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book | N
         )
     except DBAPIError:
         logger.error('Failed to load book', exc_info=True, book_id=str(book_id), user_id=str(user_id))
-        return None
+        raise RuntimeError(f'Failed to load book {book_id} due to a database error')
     book = result.scalar_one_or_none()
     if book is None:
         raise ValueError(f'Book {book_id} not found for user {user_id}')

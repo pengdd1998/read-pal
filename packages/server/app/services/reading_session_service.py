@@ -12,6 +12,7 @@ from uuid import UUID
 from app.utils import utcnow
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reading_session import ReadingSession
@@ -98,41 +99,45 @@ async def create_session(
     """Create a new reading session, close stale ones, update book status."""
     from app.models.book import Book, BookStatus
 
-    # Close any existing active sessions for this user+book
-    now = utcnow()
-    stale = await db.execute(
-        select(ReadingSession).where(
-            ReadingSession.user_id == user_id,
-            ReadingSession.book_id == data.book_id,
-            ReadingSession.is_active.is_(True),
-        ),
-    )
-    for old in stale.scalars().all():
-        old.is_active = False
-        old.ended_at = now
-        if not old.duration and old.started_at:
-            raw_dur = int((now - old.started_at).total_seconds())
-            old.duration = min(raw_dur, _MAX_SESSION_SECONDS)
-    session = ReadingSession(
-        user_id=user_id,
-        book_id=data.book_id,
-        started_at=data.started_at or now,
-        is_active=True,
-    )
-    db.add(session)
+    try:
+        # Close any existing active sessions for this user+book
+        now = utcnow()
+        stale = await db.execute(
+            select(ReadingSession).where(
+                ReadingSession.user_id == user_id,
+                ReadingSession.book_id == data.book_id,
+                ReadingSession.is_active.is_(True),
+            ),
+        )
+        for old in stale.scalars().all():
+            old.is_active = False
+            old.ended_at = now
+            if not old.duration and old.started_at:
+                raw_dur = int((now - old.started_at).total_seconds())
+                old.duration = min(raw_dur, _MAX_SESSION_SECONDS)
+        session = ReadingSession(
+            user_id=user_id,
+            book_id=data.book_id,
+            started_at=data.started_at or now,
+            is_active=True,
+        )
+        db.add(session)
 
-    # Update book status to 'reading'
-    result = await db.execute(
-        select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
-    )
-    book = result.scalar_one_or_none()
-    if book and book.status != BookStatus.reading:
-        book.status = BookStatus.reading
-        if book.started_at is None:
-            book.started_at = now
+        # Update book status to 'reading'
+        result = await db.execute(
+            select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
+        )
+        book = result.scalar_one_or_none()
+        if book and book.status != BookStatus.reading:
+            book.status = BookStatus.reading
+            if book.started_at is None:
+                book.started_at = now
 
-    await db.flush()
-    await db.refresh(session)
+        await db.flush()
+        await db.refresh(session)
+    except DBAPIError:
+        logger.error('Failed to create session', exc_info=True, user_id=user_id, book_id=str(data.book_id))
+        raise RuntimeError('Failed to create reading session due to a database error')
 
     logger.info('Session created: %s for book %s', session.id, data.book_id)
     return session
@@ -145,38 +150,42 @@ async def end_session(
     data: SessionUpdate | None = None,
 ) -> ReadingSession | None:
     """End an active session and update book progress."""
-    result = await db.execute(
-        select(ReadingSession).where(
-            ReadingSession.id == session_id,
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    session = result.scalar_one_or_none()
-    if session is None:
-        return None
-    if not session.is_active:
-        return session
-
-    now = utcnow()
-    session.ended_at = now
-    session.is_active = False
-    _finalize_session_duration(session, now)
-
-    update_data, current_page, scroll_progress, current_segment = _extract_client_fields(data)
-    _apply_update_fields(session, update_data)
-
-    if current_page is not None:
-        await _update_book_with_page(
-            db, session.book_id, user_id, now,
-            current_page, scroll_progress, current_segment,
+    try:
+        result = await db.execute(
+            select(ReadingSession).where(
+                ReadingSession.id == session_id,
+                ReadingSession.user_id == user_id,
+            ),
         )
-    elif scroll_progress is not None or current_segment is not None:
-        await _update_book_scroll_only(
-            db, session.book_id, user_id, now,
-            scroll_progress, current_segment,
-        )
+        session = result.scalar_one_or_none()
+        if session is None:
+            return None
+        if not session.is_active:
+            return session
 
-    await db.flush()
+        now = utcnow()
+        session.ended_at = now
+        session.is_active = False
+        _finalize_session_duration(session, now)
+
+        update_data, current_page, scroll_progress, current_segment = _extract_client_fields(data)
+        _apply_update_fields(session, update_data)
+
+        if current_page is not None:
+            await _update_book_with_page(
+                db, session.book_id, user_id, now,
+                current_page, scroll_progress, current_segment,
+            )
+        elif scroll_progress is not None or current_segment is not None:
+            await _update_book_scroll_only(
+                db, session.book_id, user_id, now,
+                scroll_progress, current_segment,
+            )
+
+        await db.flush()
+    except DBAPIError:
+        logger.error('Failed to end session', exc_info=True, user_id=user_id, session_id=str(session_id))
+        raise RuntimeError('Failed to end reading session due to a database error')
     return session
 
 
@@ -254,28 +263,32 @@ async def heartbeat_session(
     body: 'HeartbeatRequest | None' = None,
 ) -> ReadingSession | None:
     """Update session activity timestamp and book progress on heartbeat."""
-    result = await db.execute(
-        select(ReadingSession).where(
-            ReadingSession.id == session_id,
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    session = result.scalar_one_or_none()
-    if session is None:
-        return None
+    try:
+        result = await db.execute(
+            select(ReadingSession).where(
+                ReadingSession.id == session_id,
+                ReadingSession.user_id == user_id,
+            ),
+        )
+        session = result.scalar_one_or_none()
+        if session is None:
+            return None
 
-    session.updated_at = utcnow()
-    if body:
-        pages_read, scroll_progress, current_segment = _resolve_heartbeat_pages(body)
-        if pages_read is not None:
-            session.pages_read = int(pages_read)
-        if scroll_progress is not None or current_segment is not None:
-            await _update_book_heartbeat(
-                db, session.book_id, user_id,
-                pages_read, session.pages_read,
-                scroll_progress, current_segment,
-            )
-    await db.flush()
+        session.updated_at = utcnow()
+        if body:
+            pages_read, scroll_progress, current_segment = _resolve_heartbeat_pages(body)
+            if pages_read is not None:
+                session.pages_read = int(pages_read)
+            if scroll_progress is not None or current_segment is not None:
+                await _update_book_heartbeat(
+                    db, session.book_id, user_id,
+                    pages_read, session.pages_read,
+                    scroll_progress, current_segment,
+                )
+        await db.flush()
+    except DBAPIError:
+        logger.error('Failed to update heartbeat', exc_info=True, user_id=str(user_id), session_id=str(session_id))
+        raise RuntimeError('Failed to update reading session heartbeat due to a database error')
     return session
 
 

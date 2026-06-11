@@ -181,13 +181,13 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   <button
    onClick={handleSave}
    disabled={saving}
-   className="px-3 py-1 rounded-md bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+   className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {saving ? t('card_saving') : t('card_save')}
   </button>
   <button
    onClick={onCancel}
-   className="px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors"
+   className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors"
   >
    {tc('cancel')}
   </button>
