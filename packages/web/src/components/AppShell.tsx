@@ -170,7 +170,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     })}
     <div className="flex items-center justify-between pt-2 mt-2 border-t border-surface-2">
     <LanguageSwitcher />
-    <button type="button" onClick={() => { handleMobileNav(); logout(); }} className="px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:bg-surface-2/60 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500">
+    <button type="button" onClick={() => { handleMobileNav(); logout(); }} className="px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:bg-surface-2/60 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[44px]">
      {tc('logout')}
     </button>
     </div>

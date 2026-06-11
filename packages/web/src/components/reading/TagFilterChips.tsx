@@ -32,7 +32,7 @@ export const TagFilterChips = React.memo(function TagFilterChips({
    onClick={() => onToggleTag(tag)}
    aria-pressed={selectedTags.includes(tag)}
    aria-label={selectedTags.includes(tag) ? t('sidebar_unfilter_tag', { tag }) : t('sidebar_filter_tag', { tag })}
-   className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium transition-all duration-150 active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-400 ${
+   className={`inline-flex items-center px-2.5 py-1.5 rounded-full text-[10px] min-h-[32px] font-medium transition-all duration-150 active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-400 ${
     selectedTags.includes(tag)
     ? tag === 'discuss'
      ? 'bg-teal-500 text-white'
