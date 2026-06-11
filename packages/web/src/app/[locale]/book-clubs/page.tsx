@@ -103,7 +103,7 @@ export default function BookClubsPage() {
   const onFocus = () => { fetchData(); };
   window.addEventListener('focus', onFocus);
   return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
-  }, []);
+  }, [t]);
 
   const displayClubs = tab === 'my' ? myClubs : discoverClubs;
 
@@ -131,7 +131,7 @@ export default function BookClubsPage() {
    {/* Tabs */}
    <div className="flex gap-1 p-1 bg-surface-2 rounded-xl mb-6" role="tablist" aria-label={t('clubs_tabs_label')}>
     {(['my', 'discover'] as const).map((tabKey) => (
-    <button
+    <button type="button"
      key={tabKey}
      id={`club-tab-${tabKey}`}
      role="tab"

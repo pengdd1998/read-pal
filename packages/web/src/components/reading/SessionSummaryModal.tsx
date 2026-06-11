@@ -120,13 +120,13 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
    )}
 
    <div className="flex gap-3">
-   <button
+   <button type="button"
     onClick={onKeepReading}
     className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-surface-1 text-gray-700 dark:text-gray-300 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {t('session_keep_reading')}
    </button>
-   <button
+   <button type="button"
     onClick={onBackToLibrary}
     className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >

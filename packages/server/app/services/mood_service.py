@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.llm import safe_llm_call
+from app.utils.i18n import DEFAULT_LANGUAGE
 
 logger = logging.getLogger('read-pal.mood')
 
@@ -48,7 +49,7 @@ async def generate_mood_scene(
     user_id: str,  # noqa: ARG001 — kept for interface consistency
     mood: str,
     text: str | None = None,
-    lang: str = 'en',
+    lang: str = DEFAULT_LANGUAGE,
 ) -> dict:
     """Generate a mood-based scene description using the LLM."""
     if not mood or mood == 'neutral':

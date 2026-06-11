@@ -1,8 +1,9 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
-export function ApiRateLimits() {
+export const ApiRateLimits = React.memo(function ApiRateLimits() {
  const t = useTranslations('developers');
 
  return (
@@ -34,4 +35,4 @@ export function ApiRateLimits() {
   </div>
  </section>
  );
-}
+});

@@ -1,9 +1,10 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
-export function EmptyLibrary() {
+export const EmptyLibrary = React.memo(function EmptyLibrary() {
  const t = useTranslations('search');
 
  return (
@@ -24,4 +25,4 @@ export function EmptyLibrary() {
   </Link>
  </div>
  );
-}
+});

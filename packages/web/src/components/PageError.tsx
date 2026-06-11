@@ -142,7 +142,7 @@ export const PageError = memo(function PageError({
    {t('try_again')}
    </button>
    {isChunkError ? (
-   <button
+   <button type="button"
     onClick={() => window.location.reload()}
     className="btn btn-secondary"
    >

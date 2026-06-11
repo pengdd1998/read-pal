@@ -1,8 +1,9 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
-export function ApiAuthSection() {
+export const ApiAuthSection = React.memo(function ApiAuthSection() {
  const t = useTranslations('developers');
 
  return (
@@ -21,4 +22,4 @@ export function ApiAuthSection() {
   </div>
  </section>
  );
-}
+});

@@ -25,7 +25,7 @@ from app.services.companion.stream_cache import (
 from app.services.companion.stream_fallback import stream_fallback
 from app.services.llm import get_llm
 from app.services.llm.registry import get_registry
-from app.utils.i18n import t
+from app.utils.i18n import DEFAULT_LANGUAGE, t
 from app.utils.output_filter import filter_stream_chunk
 
 logger = structlog.get_logger('read-pal.companion')
@@ -219,7 +219,7 @@ async def stream_chat(
     companion_mode: str = 'casual',
     persona: str | None = None,
     genre: str | None = None,
-    lang: str = 'en',
+    lang: str = DEFAULT_LANGUAGE,
 ) -> AsyncGenerator[str, None]:
     """Stream companion chat as SSE chunks with per-provider circuit breaker."""
     _, history, system_text, budget = await _prepare_context(

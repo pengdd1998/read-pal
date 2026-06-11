@@ -114,7 +114,7 @@ export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
    maxLength={2000}
    disabled={sending}
    />
-   <button
+   <button type="button"
    onClick={onSend}
    disabled={sending || !newMessage.trim()}
    className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-700 disabled:opacity-50 transition-colors shrink-0 min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"

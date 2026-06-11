@@ -15,7 +15,7 @@ from app.models.chat_message import ChatMessage
 from app.prompts.templates import FRIEND_PERSONAS
 from app.services.companion.constants import ANNOTATION_LIMIT, HISTORY_LIMIT
 from app.services.companion.query_classifier import classify_query, refine_rag_query
-from app.utils.i18n import t
+from app.utils.i18n import DEFAULT_LANGUAGE, t
 from app.utils.annotation_format import format_annotation_entry
 from app.utils.sanitizer import (
     sanitize_annotations,
@@ -173,7 +173,7 @@ def _build_system_prompt(
     context: dict | None = None,
     persona: str | None = None,
     genre: str | None = None,
-    lang: str = 'en',
+    lang: str = DEFAULT_LANGUAGE,
     budget: TokenBudget | None = None,
 ) -> str:
     """Build the system prompt from all available context with token budgeting."""
@@ -310,7 +310,7 @@ async def _prepare_context(
     companion_mode: str = 'casual',
     persona: str | None = None,
     genre: str | None = None,
-    lang: str = 'en',
+    lang: str = DEFAULT_LANGUAGE,
 ) -> tuple[Book, list[HumanMessage | AIMessage], str, TokenBudget]:
     """Load all chat context in parallel, returning (book, history, system_text, budget)."""
     book, annotations_ctx, history = await asyncio.gather(

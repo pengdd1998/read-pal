@@ -1,8 +1,9 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
-export function ApiExportFormats() {
+export const ApiExportFormats = React.memo(function ApiExportFormats() {
  const t = useTranslations('developers');
 
  return (
@@ -33,4 +34,4 @@ export function ApiExportFormats() {
   </div>
  </section>
  );
-}
+});

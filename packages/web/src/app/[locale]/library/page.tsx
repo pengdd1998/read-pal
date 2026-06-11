@@ -81,7 +81,7 @@ export default function LibraryPage() {
 
    {/* View Toggle */}
    <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-surface-3 animate-slide-up stagger-2">
-   <button
+   <button type="button"
     onClick={() => setViewMode('grid')}
     className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-lg transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     viewMode === 'grid'
@@ -97,7 +97,7 @@ export default function LibraryPage() {
      <rect x="9" y="9" width="6" height="6" rx="1" />
     </svg>
    </button>
-   <button
+   <button type="button"
     onClick={() => setViewMode('list')}
     className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-lg transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     viewMode === 'list'

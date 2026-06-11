@@ -110,7 +110,7 @@ export default function BookDetailPage() {
   )}
   {/* Back */}
   <div className="mb-8 animate-slide-up">
-  <button
+  <button type="button"
    onClick={() => router.back()}
    className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
   >

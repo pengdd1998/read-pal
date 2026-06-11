@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { API_BASE_URL } from '@/lib/api';
 
-export function ApiWebhooksSection() {
+export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
  const t = useTranslations('developers');
  const [apiBase, setApiBase] = useState('');
 
@@ -104,4 +104,4 @@ export function ApiWebhooksSection() {
   </div>
  </section>
  );
-}
+});

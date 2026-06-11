@@ -97,7 +97,7 @@ export function ServiceWorkerRegistrar() {
   <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
   {t('update_available')}
   </p>
-  <button
+  <button type="button"
   onClick={handleUpdate}
   className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >

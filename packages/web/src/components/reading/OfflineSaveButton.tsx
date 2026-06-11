@@ -94,7 +94,7 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
    : 'text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20';
 
  return (
- <button
+ <button type="button"
   onClick={handleSave}
   disabled={state === 'saving'}
   className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 relative ${buttonClass}`}

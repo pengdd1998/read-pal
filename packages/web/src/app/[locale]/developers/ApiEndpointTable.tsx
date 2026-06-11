@@ -27,7 +27,7 @@ const EndpointRow = React.memo(function EndpointRow({ method, path, description,
  );
 });
 
-export function ApiEndpointTable() {
+export const ApiEndpointTable = React.memo(function ApiEndpointTable() {
  const t = useTranslations('developers');
  const [filter, setFilter] = useState('');
 
@@ -72,4 +72,4 @@ export function ApiEndpointTable() {
   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('endpoints_count', { count: filtered.length })}</p>
  </section>
  );
-}
+});

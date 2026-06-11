@@ -1,8 +1,9 @@
 'use client';
 
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
-export function ApiCodeExamples() {
+export const ApiCodeExamples = React.memo(function ApiCodeExamples() {
  const t = useTranslations('developers');
 
  return (
@@ -43,4 +44,4 @@ export function ApiCodeExamples() {
   </div>
  </section>
  );
-}
+});

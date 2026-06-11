@@ -55,7 +55,7 @@ export const ClubHeaderCard = React.memo(function ClubHeaderCard({ club, memberC
   {/* Invite code */}
   <div className="mt-4 flex items-center gap-3">
   <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('inviteCode')}</span>
-  <button
+  <button type="button"
    onClick={copyInviteCode}
    aria-label={t('copy_invite_code')}
    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 hover:border-primary-400 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"

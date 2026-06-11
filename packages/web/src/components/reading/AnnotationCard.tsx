@@ -85,7 +85,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
   </span>
   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
    {canShareAsImage && (
-   <button
+   <button type="button"
     onClick={handleShareClick}
     disabled={sharing}
     className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
@@ -97,7 +97,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
     </svg>
    </button>
    )}
-   <button
+   <button type="button"
    onClick={startEdit}
    className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={tc('edit')}
@@ -106,7 +106,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
     <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
    </svg>
    </button>
-   <button
+   <button type="button"
    onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
    className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={tc('delete')}
@@ -163,13 +163,13 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
   {confirmDelete && (
   <div className="flex items-center gap-2 mt-2 pt-2 border-t border-red-200 dark:border-red-800" onClick={(e) => e.stopPropagation()}>
    <span className="text-xs text-red-600 dark:text-red-400 flex-1">{tc('confirm_delete')}</span>
-   <button
+   <button type="button"
     onClick={(e) => { e.stopPropagation(); onDelete(annotation.id); }}
     className="px-2 py-1 text-xs font-medium rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
    >
     {tc('yes')}
    </button>
-   <button
+   <button type="button"
     onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
     className="px-2 py-1 text-xs font-medium rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-gray-400"
    >

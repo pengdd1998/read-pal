@@ -86,7 +86,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   {/* Color picker */}
   <div className="flex items-center gap-1 mb-2 min-h-[44px]">
   {ANNOTATION_COLORS.map((c) => (
-   <button
+   <button type="button"
    key={c}
    onClick={() => setEditColor(c)}
    aria-label={t('card_color_aria', { color: c })}
@@ -123,7 +123,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
    >
     #{tag}
-    <button
+    <button type="button"
     onClick={() => removeTag(tag)}
     className="min-w-[44px] min-h-[44px] flex items-center justify-center -m-2 p-2 hover:text-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     aria-label={t('remove_tag_aria', { tag })}
@@ -148,7 +148,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
    {tagInput && filteredPresets.length > 0 && (
    <div className="absolute top-full left-0 right-0 mt-1 bg-surface-0 border border-surface-3 rounded-md shadow-sm z-10 max-h-24 overflow-y-auto">
     {filteredPresets.map((preset) => (
-    <button
+    <button type="button"
      key={preset}
      onMouseDown={(e) => { e.preventDefault(); addTag(preset); }}
      aria-label={t('add_tag_aria', { tag: preset })}
@@ -163,7 +163,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   {editTags.length === 0 && !tagInput && (
    <div className="flex flex-wrap gap-1 mt-1.5">
    {PRESET_TAGS.slice(0, 4).map((preset) => (
-    <button
+    <button type="button"
     key={preset}
     onClick={() => addTag(preset)}
     aria-label={t('add_tag_aria', { tag: preset })}
@@ -178,14 +178,14 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
 
   {/* Save / Cancel */}
   <div className="flex items-center gap-2 mt-2">
-  <button
+  <button type="button"
    onClick={handleSave}
    disabled={saving}
    className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {saving ? t('card_saving') : t('card_save')}
   </button>
-  <button
+  <button type="button"
    onClick={onCancel}
    className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >

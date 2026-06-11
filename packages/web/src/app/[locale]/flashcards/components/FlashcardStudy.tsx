@@ -79,7 +79,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   <h1 className="sr-only">{t('page_title')}</h1>
   {/* Header */}
   <div className="flex items-center justify-between mb-6">
-  <button
+  <button type="button"
    onClick={onBackToDecks}
    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400"
   >
@@ -159,7 +159,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-3">{t('how_well')} <span className="hidden sm:inline text-gray-500 dark:text-gray-400">{t('keys_hint')}</span></p>
    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
    {RATINGS.map(({ value, labelKey, hint, color, focusRing }) => (
-    <button
+    <button type="button"
     key={value}
     onClick={() => onRate(value)}
     disabled={reviewing}

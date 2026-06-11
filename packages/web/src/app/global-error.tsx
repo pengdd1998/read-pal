@@ -71,7 +71,7 @@ export default function GlobalError({
     </p>
    )}
    <div style={{ display: 'flex', gap: 12 }}>
-    <button
+    <button type="button"
      onClick={reset}
      style={{
       padding: '10px 20px',

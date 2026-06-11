@@ -152,7 +152,7 @@ export default function OfflinePage() {
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400 flex items-center justify-between" role="alert">
               <span>{error}</span>
-              <button
+              <button type="button"
                 onClick={() => { const staleRef = { current: false }; loadCachedBooks(staleRef); }}
                 className="ml-3 px-3 py-1 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-400"
               >
@@ -196,7 +196,7 @@ export default function OfflinePage() {
               </Link>
             ) : (
               <>
-                <button
+                <button type="button"
                   onClick={() => window.location.reload()}
                   className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors min-h-[44px]"
                 >

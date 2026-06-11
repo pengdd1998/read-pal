@@ -15,7 +15,7 @@ from app.services.companion.context import (
     _save_message,
 )
 from app.services.llm import safe_llm_call
-from app.utils.i18n import t
+from app.utils.i18n import DEFAULT_LANGUAGE, t
 from app.utils.sanitizer import sanitize_user_input
 from app.utils.token_budget import TokenBudget
 
@@ -31,7 +31,7 @@ async def chat(
     companion_mode: str = 'casual',
     persona: str | None = None,
     genre: str | None = None,
-    lang: str = 'en',
+    lang: str = DEFAULT_LANGUAGE,
 ) -> dict[str, Any]:
     """Run a single-turn companion chat and return the assistant response."""
     t0 = time.monotonic()
@@ -105,7 +105,7 @@ async def summarize(
     user_id: UUID,
     book_id: UUID,
     chapter_ids: list[str] | None = None,
-    lang: str = 'en',
+    lang: str = DEFAULT_LANGUAGE,
 ) -> dict[str, Any]:
     """Summarize a book or specific chapters."""
     t0 = time.monotonic()
@@ -170,7 +170,7 @@ async def explain(
     book_id: UUID,
     text: str,
     context: str | None = None,
-    lang: str = 'en',
+    lang: str = DEFAULT_LANGUAGE,
 ) -> dict[str, Any]:
     """Explain a passage from a book."""
     t0 = time.monotonic()

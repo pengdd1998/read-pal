@@ -19,7 +19,7 @@ export const TagPicker = React.memo(function TagPicker({ variant, onTagSelect }:
   <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
   <div className="flex flex-wrap gap-2">
    {QUICK_TAGS.map((qt) => (
-   <button
+   <button type="button"
     key={qt.id}
     onClick={() => onTagSelect(ANNOTATION_COLORS[0], qt.id)}
     aria-label={t(qt.labelKey)}
@@ -39,7 +39,7 @@ export const TagPicker = React.memo(function TagPicker({ variant, onTagSelect }:
   <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 font-medium uppercase tracking-wider">{t('toolbar_quick_tag')}</p>
   <div className="flex flex-wrap gap-1.5">
   {QUICK_TAGS.map((qt) => (
-   <button
+   <button type="button"
    key={qt.id}
    onClick={() => onTagSelect(ANNOTATION_COLORS[0], qt.id)}
    aria-label={t(qt.labelKey)}

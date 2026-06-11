@@ -150,7 +150,7 @@ export default function MemoryBooksPage() {
   {error && (
   <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm flex items-center justify-between" role="alert">
    <span>{error}</span>
-   <button
+   <button type="button"
     onClick={fetchData}
     className="ml-4 px-3 py-1 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 min-h-[44px]"
    >
@@ -245,7 +245,7 @@ export default function MemoryBooksPage() {
      <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{book.title}</h3>
      <p className="text-xs text-gray-500 dark:text-gray-400">{isDisplayableAuthor(book.author) ? `${book.author} · ` : ''}{t('complete', { percent: Math.round(book.progress) })}</p>
     </div>
-    <button
+    <button type="button"
      onClick={() => handleGenerate(book.id)}
      disabled={generating === book.id}
      className="px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"

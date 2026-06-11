@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { getAuthToken } from '@/lib/auth-fetch';
 import {
@@ -17,7 +17,7 @@ import {
  QueueBanner,
 } from './NetworkStatusBanner';
 
-export function NetworkStatus() {
+export const NetworkStatus = React.memo(function NetworkStatus() {
  const t = useTranslations('offline');
  const [offline, setOffline] = useState(false);
  const [showBanner, setShowBanner] = useState(false);
@@ -157,4 +157,4 @@ export function NetworkStatus() {
  }
 
  return null;
-}
+});

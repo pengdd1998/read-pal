@@ -61,7 +61,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
    </p>
    <div className="flex gap-3 justify-center">
    <Link href="/dashboard" className="btn btn-primary">{t('dashboard')}</Link>
-   <button
+   <button type="button"
     onClick={onBackToDecks}
     className="btn bg-surface-0 border border-surface-2 focus-visible:ring-2 focus-visible:ring-amber-400"
    >
@@ -84,7 +84,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
    {t('all_caught_up_desc')}
   </p>
   <div className="flex gap-3 justify-center">
-   <button
+   <button type="button"
    onClick={onBackToDecks}
    className="btn bg-surface-0 border border-surface-2 focus-visible:ring-2 focus-visible:ring-amber-400"
    >

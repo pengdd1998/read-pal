@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
@@ -9,7 +10,7 @@ const languages = [
  { code: 'zh', label: '\u4E2D\u6587', flag: '\u{1F1E8}\u{1F1F3}' },
 ] as const;
 
-export function LanguageSwitcher() {
+export const LanguageSwitcher = React.memo(function LanguageSwitcher() {
  const locale = useLocale();
  const router = useRouter();
  const pathname = usePathname();
@@ -38,4 +39,4 @@ export function LanguageSwitcher() {
   ))}
  </div>
  );
-}
+});
