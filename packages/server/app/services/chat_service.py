@@ -8,6 +8,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat_message import ChatMessage
+from app.utils.limits import CHAT_HISTORY_DEFAULT_LIMIT
 
 logger = logging.getLogger('read-pal.chat')
 
@@ -16,7 +17,7 @@ async def get_chat_history(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID | None = None,
-    limit: int = 50,
+    limit: int = CHAT_HISTORY_DEFAULT_LIMIT,
 ) -> list[dict]:
     """Return chat messages for a user, optionally filtered by book."""
     q = select(ChatMessage).where(ChatMessage.user_id == user_id)

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.memory_book import MemoryBook
 from app.schemas.memory_book import MemoryBookResponse
+from app.utils.limits import READING_BOOK_FETCH_LIMIT
 
 logger = logging.getLogger('read-pal.reading_book')
 
@@ -50,7 +51,7 @@ async def list_memory_books(
             select(MemoryBook)
             .where(MemoryBook.user_id == user_id)
             .order_by(MemoryBook.generated_at.desc())
-            .limit(50),
+            .limit(READING_BOOK_FETCH_LIMIT),
         )
         books = list(result.scalars().all())
     except DBAPIError as exc:

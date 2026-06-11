@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.schemas.annotation import AnnotationCreate, AnnotationUpdate
+from app.utils.limits import ANNOTATION_FETCH_LIMIT
 
 logger = logging.getLogger('read-pal.annotations')
 
@@ -214,7 +215,7 @@ async def search_annotations(
 
     try:
         result = await db.execute(
-            base.order_by(Annotation.created_at.desc()).limit(50),
+            base.order_by(Annotation.created_at.desc()).limit(ANNOTATION_FETCH_LIMIT),
         )
         return list(result.scalars().all())
     except DBAPIError:

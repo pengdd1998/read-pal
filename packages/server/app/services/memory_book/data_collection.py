@@ -24,6 +24,12 @@ from app.services.memory_book.enrichment import (
     fetch_other_books,
 )
 from app.utils.annotations import match_annotation_type
+from app.utils.limits import (
+    DATA_COLLECTION_ANNOTATION_LIMIT,
+    DATA_COLLECTION_CHAT_LIMIT,
+    DATA_COLLECTION_FLASHCARD_LIMIT,
+    DATA_COLLECTION_SESSION_LIMIT,
+)
 from app.utils.sanitizer import sanitize_user_input
 
 logger = structlog.get_logger('read-pal.memory_book')
@@ -73,7 +79,7 @@ async def _fetch_annotations(
             select(Annotation)
             .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
             .order_by(Annotation.created_at)
-            .limit(500),
+            .limit(DATA_COLLECTION_ANNOTATION_LIMIT),
         )
         annotations = list(result.scalars().all())
 
@@ -116,7 +122,7 @@ async def _fetch_conversations(
             select(ChatMessage)
             .where(ChatMessage.user_id == user_id, ChatMessage.book_id == book_id)
             .order_by(ChatMessage.created_at)
-            .limit(200),
+            .limit(DATA_COLLECTION_CHAT_LIMIT),
         )
         messages = list(result.scalars().all())
         return [
@@ -145,7 +151,7 @@ async def _fetch_reading_sessions(
             select(ReadingSession)
             .where(ReadingSession.user_id == user_id, ReadingSession.book_id == book_id)
             .order_by(ReadingSession.started_at)
-            .limit(100),
+            .limit(DATA_COLLECTION_SESSION_LIMIT),
         )
         sessions = list(result.scalars().all())
         serialized = [
@@ -175,7 +181,7 @@ async def _fetch_flashcards(
             select(Flashcard)
             .where(Flashcard.user_id == user_id, Flashcard.book_id == book_id)
             .order_by(Flashcard.created_at.desc())
-            .limit(30),
+            .limit(DATA_COLLECTION_FLASHCARD_LIMIT),
         )
         flashcards = list(result.scalars().all())
         return [

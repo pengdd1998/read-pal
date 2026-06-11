@@ -17,6 +17,7 @@ from app.schemas.llm_outputs import ConversationSummaryData
 from app.services.llm import safe_llm_invoke
 from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
+from app.utils.limits import CONVERSATION_MEMORY_LIMIT
 
 logger = structlog.get_logger('read-pal.memory')
 
@@ -147,7 +148,7 @@ async def _load_older_messages(
                 ChatMessage.book_id == book_id,
             )
             .order_by(ChatMessage.created_at)
-            .limit(200)
+            .limit(CONVERSATION_MEMORY_LIMIT)
         )
         return list(result.scalars().all())
     except DBAPIError as exc:

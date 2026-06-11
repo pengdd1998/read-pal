@@ -10,6 +10,7 @@ import smtplib
 from email.mime.text import MIMEText
 
 from app.config import get_settings
+from app.utils.limits import SMTP_TIMEOUT_SECONDS
 
 logger = logging.getLogger('read-pal.email')
 
@@ -55,7 +56,7 @@ def _send_via_smtp(
     msg['To'] = to_addr
 
     smtp_cls = smtplib.SMTP_SSL if settings.smtp_port == 465 else smtplib.SMTP
-    with smtp_cls(settings.smtp_host, settings.smtp_port, timeout=10) as server:
+    with smtp_cls(settings.smtp_host, settings.smtp_port, timeout=SMTP_TIMEOUT_SECONDS) as server:
         if settings.smtp_port != 465:
             server.ehlo()
             server.starttls()

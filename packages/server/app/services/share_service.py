@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.shared_export import SharedExport
 from app.schemas.share import ShareCreate
 from app.services.export_service import export
+from app.utils.limits import SHARE_QUERY_LIMIT
 
 logger = logging.getLogger('read-pal.share')
 
@@ -108,7 +109,7 @@ async def list_shares(
     if book_id is not None:
         query = query.where(SharedExport.book_id == book_id)
 
-    result = await db.execute(query.limit(100))
+    result = await db.execute(query.limit(SHARE_QUERY_LIMIT))
     return list(result.scalars().all())
 
 

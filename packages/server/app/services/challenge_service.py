@@ -19,6 +19,7 @@ from app.models.reading_session import ReadingSession
 
 logger = logging.getLogger('read-pal.challenges')
 from app.utils import utcnow
+from app.utils.limits import CHALLENGE_MIN_DUE
 
 
 def _utc_now() -> datetime:
@@ -230,7 +231,7 @@ async def get_flashcard_review(
     except DBAPIError:
         logger.error('Failed to query flashcard review', exc_info=True, user_id=str(user_id))
         due_count = 0
-    target = max(due_count, 10)
+    target = max(due_count, CHALLENGE_MIN_DUE)
     if due_count == 0:
         return _build_challenge(
             id='flashcard-review',
