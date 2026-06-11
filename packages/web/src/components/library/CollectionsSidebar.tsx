@@ -62,7 +62,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  let stale = false;
  loadCollections().then(() => {
   if (stale) return;
- });
+ }).catch((err) => { console.warn('CollectionsSidebar: failed to load collections', err); });
  return () => { stale = true; };
  }, [loadCollections]);
 

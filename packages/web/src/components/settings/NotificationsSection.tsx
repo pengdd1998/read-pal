@@ -60,7 +60,7 @@ export const NotificationsSection = React.memo(function NotificationsSection({ s
  useEffect(() => {
  if (!nativeApp) return;
  let stale = false;
- isPushEnabled().then((enabled) => { if (!stale) setPushState(enabled); });
+ isPushEnabled().then((enabled) => { if (!stale) setPushState(enabled); }).catch((err) => { console.warn('NotificationsSection: push status check failed', err); });
  return () => { stale = true; };
  }, [nativeApp]);
 

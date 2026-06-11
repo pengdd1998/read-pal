@@ -60,7 +60,10 @@ function withStore<T>(
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
       }),
-  );
+  ).catch((err) => {
+    console.warn('mobile-cache: IndexedDB operation failed', err);
+    throw err;
+  });
 }
 
 /**

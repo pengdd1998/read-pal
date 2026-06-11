@@ -57,12 +57,17 @@ export function preloadDOMPurify(onReady?: () => void): void {
     _loadPromise = import('dompurify').then((m) => {
       _domPurify = m.default;
       onReady?.();
+    }).catch((err) => {
+      console.warn('dompurify: failed to load DOMPurify', err);
+      _loadPromise = null;
     });
   } else if (_domPurify && onReady) {
     // Already loaded — call immediately
     onReady();
   } else if (_loadPromise && onReady) {
     // Loading in progress — chain callback
-    _loadPromise.then(onReady);
+    _loadPromise.then(onReady).catch((err) => {
+      console.warn('dompurify: onReady callback failed', err);
+    });
   }
 }

@@ -82,6 +82,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
  if (!citationText) return;
  navigator.clipboard.writeText(citationText).then(
   () => toast(t('share_citation_copied'), 'success'),
+ ).catch(
   () => toast(t('share_copy_failed'), 'error'),
  );
  }, [citationText, toast]);

@@ -22,17 +22,21 @@ export function useStatusBar(
     let cancelled = false;
 
     (async () => {
-      const { StatusBar, Style } = await import('@capacitor/status-bar');
-      if (cancelled) return;
+      try {
+        const { StatusBar, Style } = await import('@capacitor/status-bar');
+        if (cancelled) return;
 
-      await StatusBar.setStyle({
-        style: style === 'LIGHT' ? Style.Light : Style.Dark,
-      });
+        await StatusBar.setStyle({
+          style: style === 'LIGHT' ? Style.Light : Style.Dark,
+        });
 
-      await StatusBar.setBackgroundColor({ color: backgroundColor });
+        await StatusBar.setBackgroundColor({ color: backgroundColor });
 
-      // Make the status bar visible (overlay content) so safe-area padding works
-      await StatusBar.setOverlaysWebView({ overlay: true });
+        // Make the status bar visible (overlay content) so safe-area padding works
+        await StatusBar.setOverlaysWebView({ overlay: true });
+      } catch (err) {
+        console.warn('useStatusBar: failed to set status bar style', err);
+      }
     })();
 
     return () => { cancelled = true; };

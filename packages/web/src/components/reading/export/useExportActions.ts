@@ -147,6 +147,7 @@ export function useExportActions(bookId: string): ExportActionsReturn {
     if (!preview) return;
     navigator.clipboard.writeText(preview).then(
       () => toast(t('export_copied_clipboard'), 'success'),
+    ).catch(
       () => toast(t('export_copy_failed'), 'error'),
     );
   };

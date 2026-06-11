@@ -53,7 +53,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  let stale = false;
  checkOfflineCache(bookId).then((result) => {
   if (!stale) setCachedOffline(result);
- });
+ }).catch((err) => { console.warn('BookCoverOverlay: offline cache check failed', err); });
  return () => { stale = true; };
  }, [bookId]);
 
