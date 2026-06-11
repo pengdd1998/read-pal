@@ -3,6 +3,7 @@
 import logging
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.middleware.auth import create_token_pair, verify_password
@@ -34,8 +35,12 @@ async def _find_user_by_email(db: AsyncSession, email: str) -> User:
     """Look up a user by email. Raises 401 if not found or no password."""
     from fastapi import HTTPException, status
 
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    try:
+        result = await db.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('_login._find_user_by_email DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     if user is None or user.password_hash is None:
         logger.warning('Login failed: unknown email %s', email)

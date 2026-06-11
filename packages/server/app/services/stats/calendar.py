@@ -5,12 +5,17 @@ from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.reading_session import ReadingSession
+import logging
+
 from app.services.stats.streaks import compute_streaks
 from app.services.stats import STATS_LOOKBACK_DELTA
+
+logger = logging.getLogger('read-pal.stats.calendar')
 
 
 def _build_date_range(
@@ -55,20 +60,24 @@ async def _aggregate_sessions(
 ) -> dict[str, dict]:
     """Aggregate reading sessions by day within a date range."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    rows = await db.execute(
-        select(
-            day_col,
-            func.coalesce(func.sum(ReadingSession.duration), 0).label('seconds'),
-            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
+    try:
+        rows = await db.execute(
+            select(
+                day_col,
+                func.coalesce(func.sum(ReadingSession.duration), 0).label('seconds'),
+                func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
+            )
+            .where(and_(
+                ReadingSession.user_id == uid,
+                ReadingSession.started_at >= dt_start,
+                ReadingSession.started_at < dt_end,
+            ))
+            .group_by(day_col),
         )
-        .where(and_(
-            ReadingSession.user_id == uid,
-            ReadingSession.started_at >= dt_start,
-            ReadingSession.started_at < dt_end,
-        ))
-        .group_by(day_col),
-    )
-    return _parse_day_rows(rows.all())
+        return _parse_day_rows(rows.all())
+    except DBAPIError as exc:
+        logger.error('calendar._aggregate_sessions DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 async def _count_annotations(
@@ -78,19 +87,23 @@ async def _count_annotations(
     dt_end: datetime,
 ) -> tuple[int, int]:
     """Count highlights and notes created within a date range."""
-    row = (
-        await db.execute(
-            select(
-                func.count(case((Annotation.type == 'highlight', Annotation.id))).label('highlights'),
-                func.count(case((Annotation.type == 'note', Annotation.id))).label('notes'),
-            ).where(and_(
-                Annotation.user_id == uid,
-                Annotation.created_at >= dt_start,
-                Annotation.created_at < dt_end,
-            ))
-        )
-    ).one()
-    return row.highlights or 0, row.notes or 0
+    try:
+        row = (
+            await db.execute(
+                select(
+                    func.count(case((Annotation.type == 'highlight', Annotation.id))).label('highlights'),
+                    func.count(case((Annotation.type == 'note', Annotation.id))).label('notes'),
+                ).where(and_(
+                    Annotation.user_id == uid,
+                    Annotation.created_at >= dt_start,
+                    Annotation.created_at < dt_end,
+                ))
+            )
+        ).one()
+        return row.highlights or 0, row.notes or 0
+    except DBAPIError as exc:
+        logger.error('calendar._count_annotations DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 async def _get_streak_data(
@@ -100,17 +113,21 @@ async def _get_streak_data(
 ) -> tuple[int, int]:
     """Compute current and longest streaks from a cutoff date."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    rows = await db.execute(
-        select(day_col).where(
-            ReadingSession.user_id == uid,
-            ReadingSession.started_at >= datetime.combine(cutoff, datetime.min.time()),
-        ).group_by(day_col),
-    )
-    active_dates = {
-        r[0] if isinstance(r[0], date) else date.fromisoformat(r[0])
-        for r in rows.all()
-    }
-    return compute_streaks(active_dates)
+    try:
+        rows = await db.execute(
+            select(day_col).where(
+                ReadingSession.user_id == uid,
+                ReadingSession.started_at >= datetime.combine(cutoff, datetime.min.time()),
+            ).group_by(day_col),
+        )
+        active_dates = {
+            r[0] if isinstance(r[0], date) else date.fromisoformat(r[0])
+            for r in rows.all()
+        }
+        return compute_streaks(active_dates)
+    except DBAPIError as exc:
+        logger.error('calendar._get_streak_data DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 async def _query_calendar_days(
@@ -121,32 +138,36 @@ async def _query_calendar_days(
 ) -> dict[str, dict]:
     """Aggregate reading sessions by day, returning {date_str: {minutes, pagesRead, sessions}}."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    rows = await db.execute(
-        select(
-            day_col,
-            func.coalesce(func.sum(ReadingSession.duration), 0).label('seconds'),
-            func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
-            func.count(ReadingSession.id).label('sessions'),
+    try:
+        rows = await db.execute(
+            select(
+                day_col,
+                func.coalesce(func.sum(ReadingSession.duration), 0).label('seconds'),
+                func.coalesce(func.sum(ReadingSession.pages_read), 0).label('pages'),
+                func.count(ReadingSession.id).label('sessions'),
+            )
+            .where(and_(
+                ReadingSession.user_id == uid,
+                ReadingSession.started_at >= dt_start,
+                ReadingSession.started_at < dt_end,
+            ))
+            .group_by(day_col)
+            .order_by(day_col),
         )
-        .where(and_(
-            ReadingSession.user_id == uid,
-            ReadingSession.started_at >= dt_start,
-            ReadingSession.started_at < dt_end,
-        ))
-        .group_by(day_col)
-        .order_by(day_col),
-    )
 
-    days: dict[str, dict] = {}
-    for row in rows.all():
-        day_val = row[0]
-        key = day_val.isoformat() if isinstance(day_val, date) else str(day_val)
-        days[key] = {
-            'minutes': int(row[1]) // 60,
-            'pagesRead': int(row[2]),
-            'sessions': int(row[3]),
-        }
-    return days
+        days: dict[str, dict] = {}
+        for row in rows.all():
+            day_val = row[0]
+            key = day_val.isoformat() if isinstance(day_val, date) else str(day_val)
+            days[key] = {
+                'minutes': int(row[1]) // 60,
+                'pagesRead': int(row[2]),
+                'sessions': int(row[3]),
+            }
+        return days
+    except DBAPIError as exc:
+        logger.error('calendar._query_calendar_days DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 def _build_calendar_response(
@@ -227,6 +248,9 @@ async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
             _get_streak_data(db, uid, today - STATS_LOOKBACK_DELTA),
         ),
     )
+
+    # Wrap the raw db.scalar result — errors from the parallel gather
+    # are already caught inside each helper.
 
     daily_breakdown, total_minutes, total_pages, streak_days = _build_daily_breakdown(
         week_start, daily_map,

@@ -187,7 +187,7 @@ class TestSeedSampleData:
         with patch('app.services.seed_service._seed_graph_cache', new_callable=AsyncMock):
             await seed_sample_data(db, user_id)
 
-        db.flush.assert_awaited_once()
+        db.flush.assert_awaited()
         db.refresh.assert_awaited_once()
 
     @pytest.mark.asyncio

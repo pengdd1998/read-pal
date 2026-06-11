@@ -7,6 +7,7 @@ import uuid
 
 import redis.exceptions
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import get_redis
@@ -25,8 +26,12 @@ async def create_reset_token(db: AsyncSession, email: str) -> str | None:
     Returns the token if user exists, None otherwise.
     Token is stored in Redis with a 1-hour TTL.
     """
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    try:
+        result = await db.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('password_reset.create_reset_token DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     if user is None:
         return None
 
@@ -99,13 +104,21 @@ async def _update_user_password(
 
     Raises ValueError if user is not found.
     """
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
+    try:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('password_reset._update_user_password DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     if user is None:
         raise ValueError('User not found')
 
     user.password_hash = hash_password(new_password)
-    await db.commit()
+    try:
+        await db.commit()
+    except DBAPIError as exc:
+        logger.error('password_reset._update_user_password.commit DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return user
 
 
@@ -141,7 +154,11 @@ async def validate_and_reset(
     payload = await _validate_reset_token(token)
     user_id = payload['userId']
 
-    user = await _update_user_password(db, user_id, new_password)
+    try:
+        user = await _update_user_password(db, user_id, new_password)
+    except DBAPIError as exc:
+        logger.error('password_reset.validate_and_reset DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     await _invalidate_sessions(token, user_id)
 
     logger.info('Password reset successful for user %s', user_id)

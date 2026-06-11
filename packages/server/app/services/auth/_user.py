@@ -4,6 +4,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -60,8 +61,12 @@ async def _create_user_with_seed(
         settings=dict(DEFAULT_USER_SETTINGS),
     )
     db.add(user)
-    await db.flush()
-    await db.refresh(user)
+    try:
+        await db.flush()
+        await db.refresh(user)
+    except DBAPIError as exc:
+        logger.error('_user._create_user_with_seed DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     from app.services.seed_service import seed_sample_data
     await seed_sample_data(db, user.id)
@@ -94,9 +99,13 @@ async def register_user(
     Returns auth response dict on success.
     Raises HTTPException if email already exists.
     """
-    result = await db.execute(select(User).where(User.email == email))
-    if result.scalar_one_or_none() is not None:
-        _raise_user_exists(email)
+    try:
+        result = await db.execute(select(User).where(User.email == email))
+        if result.scalar_one_or_none() is not None:
+            _raise_user_exists(email)
+    except DBAPIError as exc:
+        logger.error('_user.register_user DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     user = await _create_user_with_seed(db, email, name, password)
 
@@ -118,8 +127,12 @@ async def get_user_profile(db: AsyncSession, user_id: str) -> dict:
     from fastapi import HTTPException, status
 
     lang = await _get_user_lang(db, UUID(user_id))
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
+    try:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('_user.get_user_profile DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     if user is None:
         raise HTTPException(
@@ -150,8 +163,12 @@ async def change_user_password(
     """
     from fastapi import HTTPException, status
 
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
+    try:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('_user.change_user_password DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     lang = await _get_user_lang(db, UUID(user_id))
 
@@ -168,6 +185,10 @@ async def change_user_password(
         )
 
     user.password_hash = hash_password(new_password)
-    await db.flush()
+    try:
+        await db.flush()
+    except DBAPIError as exc:
+        logger.error('_user.change_user_password.flush DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     return t('errors.password_changed', lang)

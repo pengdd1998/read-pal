@@ -6,6 +6,7 @@ from uuid import UUID
 import structlog
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -26,28 +27,32 @@ async def _fetch_book_and_annotations(
     book_id: UUID,
 ) -> tuple[Book, list[Annotation]]:
     """Fetch book and its annotations for flashcard generation."""
-    book_result = await db.execute(
-        select(Book).where(Book.id == book_id, Book.user_id == user_id),
-    )
-    book = book_result.scalar_one_or_none()
-    if not book:
-        raise ValueError(f'Book {book_id} not found for user {user_id}')
-
-    ann_result = await db.execute(
-        select(Annotation)
-        .where(
-            Annotation.book_id == book_id,
-            Annotation.user_id == user_id,
-            Annotation.type.in_(['highlight', 'note']),
+    try:
+        book_result = await db.execute(
+            select(Book).where(Book.id == book_id, Book.user_id == user_id),
         )
-        .order_by(Annotation.created_at.desc())
-        .limit(20),
-    )
-    annotations = list(ann_result.scalars().all())
-    if not annotations:
-        raise ValueError('No highlights or notes found for this book')
+        book = book_result.scalar_one_or_none()
+        if not book:
+            raise ValueError(f'Book {book_id} not found for user {user_id}')
 
-    return book, annotations
+        ann_result = await db.execute(
+            select(Annotation)
+            .where(
+                Annotation.book_id == book_id,
+                Annotation.user_id == user_id,
+                Annotation.type.in_(['highlight', 'note']),
+            )
+            .order_by(Annotation.created_at.desc())
+            .limit(20),
+        )
+        annotations = list(ann_result.scalars().all())
+        if not annotations:
+            raise ValueError('No highlights or notes found for this book')
+
+        return book, annotations
+    except DBAPIError as exc:
+        logger.error('generation._fetch_book_and_annotations DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 def _format_annotation_text(annotations: list[Annotation]) -> str:
@@ -130,15 +135,19 @@ async def generate_flashcards(
     count = max(1, min(count, 10))
 
     # Skip if cards already exist for this book (dedup guard)
-    existing = await db.execute(
-        select(Flashcard).where(
-            Flashcard.user_id == user_id,
-            Flashcard.book_id == book_id,
-        ).limit(1),
-    )
-    if existing.scalar_one_or_none():
-        logger.info('flashcard.generate.skipped_existing', book_id=str(book_id))
-        return []
+    try:
+        existing = await db.execute(
+            select(Flashcard).where(
+                Flashcard.user_id == user_id,
+                Flashcard.book_id == book_id,
+            ).limit(1),
+        )
+        if existing.scalar_one_or_none():
+            logger.info('flashcard.generate.skipped_existing', book_id=str(book_id))
+            return []
+    except DBAPIError as exc:
+        logger.error('generation.generate_flashcards.dedup DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     book, annotations = await _fetch_book_and_annotations(db, user_id, book_id)
     annotation_text = _format_annotation_text(annotations)
@@ -149,7 +158,11 @@ async def generate_flashcards(
 
     cards = _parse_and_create_cards(db, user_id, book_id, llm_result, count)
     if cards:
-        await db.flush()
+        try:
+            await db.flush()
+        except DBAPIError as exc:
+            logger.error('generation.generate_flashcards.flush DB error: %s', exc, exc_info=True)
+            raise RuntimeError('Database error') from exc
 
     logger.info(
         'flashcard.generate.completed',

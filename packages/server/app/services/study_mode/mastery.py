@@ -10,6 +10,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -63,26 +64,30 @@ async def save_checks_as_flashcards(
     if not book_id or not checks:
         return 0
 
-    book_result = await db.execute(
-        select(Book.id).where(
-            and_(Book.id == UUID(str(book_id)), Book.user_id == user_id),
-        ),
-    )
-    if not book_result.scalar_one_or_none():
-        return 0
+    try:
+        book_result = await db.execute(
+            select(Book.id).where(
+                and_(Book.id == UUID(str(book_id)), Book.user_id == user_id),
+            ),
+        )
+        if not book_result.scalar_one_or_none():
+            return 0
 
-    now = utcnow()
-    parsed_book_id = UUID(str(book_id))
-    saved_count = 0
-    for check in checks:
-        question = check.get('question', '')
-        answer = check.get('answer', '')
-        if not question or not answer:
-            continue
-        db.add(_build_flashcard(user_id, parsed_book_id, question, answer, now))
-        saved_count += 1
+        now = utcnow()
+        parsed_book_id = UUID(str(book_id))
+        saved_count = 0
+        for check in checks:
+            question = check.get('question', '')
+            answer = check.get('answer', '')
+            if not question or not answer:
+                continue
+            db.add(_build_flashcard(user_id, parsed_book_id, question, answer, now))
+            saved_count += 1
 
-    await db.flush()
+        await db.flush()
+    except DBAPIError as exc:
+        logger.error('mastery.save_checks_as_flashcards DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     logger.info(
         'study_mode.save_flashcards.completed',
         book_id=str(book_id),
@@ -219,8 +224,12 @@ async def _fetch_flashcard_rows(
             ),
         )
     )
-    fc_result = await db.execute(fc_query)
-    return fc_result.all()
+    try:
+        fc_result = await db.execute(fc_query)
+        return fc_result.all()
+    except DBAPIError as exc:
+        logger.error('mastery._fetch_flashcard_rows DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 async def _count_cards_due(
@@ -230,15 +239,19 @@ async def _count_cards_due(
 ) -> int:
     """Count flashcards due for review."""
     now = utcnow()
-    return await db.scalar(
-        select(func.count(Flashcard.id)).where(
-            and_(
-                Flashcard.book_id == book_id,
-                Flashcard.user_id == user_id,
-                Flashcard.next_review_at <= now,
-            ),
-        )
-    ) or 0
+    try:
+        return await db.scalar(
+            select(func.count(Flashcard.id)).where(
+                and_(
+                    Flashcard.book_id == book_id,
+                    Flashcard.user_id == user_id,
+                    Flashcard.next_review_at <= now,
+                ),
+            )
+        ) or 0
+    except DBAPIError as exc:
+        logger.error('mastery._count_cards_due DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 def _compute_overall_mastery(
@@ -260,10 +273,14 @@ async def get_mastery(
     """Return mastery data for a book based on progress and flashcard reviews."""
     logger.info('study_mode.get_mastery.started', book_id=str(book_id), user_id=str(user_id))
 
-    book_result = await db.execute(
-        select(Book).where(and_(Book.id == book_id, Book.user_id == user_id)),
-    )
-    book = book_result.scalar_one_or_none()
+    try:
+        book_result = await db.execute(
+            select(Book).where(and_(Book.id == book_id, Book.user_id == user_id)),
+        )
+        book = book_result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('mastery.get_mastery DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     if not book:
         return {'bookId': str(book_id), 'chaptersCompleted': 0, 'totalChapters': 0,
                 'overallMastery': 0.0, 'weakAreas': [], 'strongAreas': [], 'cardsDue': 0}
@@ -271,10 +288,14 @@ async def get_mastery(
     total_pages = max(book.total_pages or 1, 1)
     book_progress = min((book.current_page or 0) / total_pages, 1.0)
 
-    doc_result = await db.execute(
-        select(Document.chapters).where(and_(Document.book_id == book_id, Document.user_id == user_id)),
-    )
-    chapter_names = _resolve_chapter_names(doc_result.scalar_one_or_none() or [])
+    try:
+        doc_result = await db.execute(
+            select(Document.chapters).where(and_(Document.book_id == book_id, Document.user_id == user_id)),
+        )
+        chapter_names = _resolve_chapter_names(doc_result.scalar_one_or_none() or [])
+    except DBAPIError as exc:
+        logger.error('mastery.get_mastery.doc DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     estimated_total = max(len(chapter_names) if chapter_names else round(total_pages / 25), 1)
 
     flashcard_rows, cards_due = await asyncio.gather(

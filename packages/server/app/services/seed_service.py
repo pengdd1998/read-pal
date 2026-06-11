@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone as _tz
 from uuid import UUID
 
 import redis.exceptions
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation, AnnotationType
@@ -69,8 +70,12 @@ async def _create_sample_book(db: AsyncSession, user_id: UUID) -> Book:
         },
     )
     db.add(sample)
-    await db.flush()
-    await db.refresh(sample)
+    try:
+        await db.flush()
+        await db.refresh(sample)
+    except DBAPIError as exc:
+        logger.error('seed_service._create_sample_book DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     full_content = '\n'.join(ch['content'] for ch in GATSBY_CHAPTERS)
     doc = Document(
@@ -131,6 +136,11 @@ async def seed_sample_data(db: AsyncSession, user_id: UUID) -> Book:
     sample = await _create_sample_book(db, user_id)
     db.add_all(_create_sample_annotations(user_id, sample.id))
     db.add(_create_sample_session(user_id, sample.id))
+    try:
+        await db.flush()
+    except DBAPIError as exc:
+        logger.error('seed_service.seed_sample_data DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     await _seed_graph_cache(user_id, sample.id)
     return sample
 

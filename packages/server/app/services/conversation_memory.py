@@ -8,6 +8,7 @@ import structlog
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat_message import ChatMessage
@@ -31,13 +32,17 @@ async def _count_messages(
     book_id: UUID,
 ) -> int:
     """Count total chat messages for a user-book pair."""
-    count_result = await db.execute(
-        select(func.count(ChatMessage.id)).where(
-            ChatMessage.user_id == user_id,
-            ChatMessage.book_id == book_id,
+    try:
+        count_result = await db.execute(
+            select(func.count(ChatMessage.id)).where(
+                ChatMessage.user_id == user_id,
+                ChatMessage.book_id == book_id,
+            )
         )
-    )
-    return count_result.scalar() or 0
+        return count_result.scalar() or 0
+    except DBAPIError as exc:
+        logger.error('conversation_memory._count_messages DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 async def _load_existing_summary(
@@ -47,16 +52,20 @@ async def _load_existing_summary(
 ) -> 'ConversationSummary | None':
     """Load the most recent conversation summary from the database."""
     from app.models.conversation_summary import ConversationSummary
-    result = await db.execute(
-        select(ConversationSummary)
-        .where(
-            ConversationSummary.user_id == user_id,
-            ConversationSummary.book_id == book_id,
+    try:
+        result = await db.execute(
+            select(ConversationSummary)
+            .where(
+                ConversationSummary.user_id == user_id,
+                ConversationSummary.book_id == book_id,
+            )
+            .order_by(ConversationSummary.updated_at.desc())
+            .limit(1)
         )
-        .order_by(ConversationSummary.updated_at.desc())
-        .limit(1)
-    )
-    return result.scalar_one_or_none()
+        return result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('conversation_memory._load_existing_summary DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 def _log_summary_result(
@@ -130,16 +139,20 @@ async def _load_older_messages(
     book_id: UUID,
 ) -> list[ChatMessage]:
     """Load all messages for a conversation, capped at 200."""
-    result = await db.execute(
-        select(ChatMessage)
-        .where(
-            ChatMessage.user_id == user_id,
-            ChatMessage.book_id == book_id,
+    try:
+        result = await db.execute(
+            select(ChatMessage)
+            .where(
+                ChatMessage.user_id == user_id,
+                ChatMessage.book_id == book_id,
+            )
+            .order_by(ChatMessage.created_at)
+            .limit(200)
         )
-        .order_by(ChatMessage.created_at)
-        .limit(200)
-    )
-    return list(result.scalars().all())
+        return list(result.scalars().all())
+    except DBAPIError as exc:
+        logger.error('conversation_memory._load_older_messages DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 def _build_summary_prompt(
@@ -178,19 +191,23 @@ async def _save_summary(
 ) -> None:
     """Persist the generated summary to the database."""
     from app.models.conversation_summary import ConversationSummary
-    if existing:
-        existing.summary = summary_text
-        existing.message_count = message_count
-        await db.flush()
-    else:
-        new_summary = ConversationSummary(
-            user_id=user_id,
-            book_id=book_id,
-            summary=summary_text,
-            message_count=message_count,
-        )
-        db.add(new_summary)
-        await db.flush()
+    try:
+        if existing:
+            existing.summary = summary_text
+            existing.message_count = message_count
+            await db.flush()
+        else:
+            new_summary = ConversationSummary(
+                user_id=user_id,
+                book_id=book_id,
+                summary=summary_text,
+                message_count=message_count,
+            )
+            db.add(new_summary)
+            await db.flush()
+    except DBAPIError as exc:
+        logger.error('conversation_memory._save_summary DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 async def _generate_summary(

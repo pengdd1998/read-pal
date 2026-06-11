@@ -1,29 +1,37 @@
 """Flashcard retention metrics."""
 
+import logging
 from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.flashcard import Flashcard
 
+logger = logging.getLogger('read-pal.stats.flashcards')
+
 
 async def get_flashcard_stats(db: AsyncSession, uid: UUID) -> dict:
     """Return flashcard retention metrics for a user (single composite query)."""
-    row = (
-        await db.execute(
-            select(
-                func.count(Flashcard.id).label('total'),
-                func.count(case((Flashcard.repetition_count > 0, Flashcard.id))).label('reviewed'),
-                func.avg(Flashcard.ease_factor).label('avg_ease'),
-                func.count(case((Flashcard.next_review_at <= func.now(), Flashcard.id))).label('due_today'),
-                func.count(case(
-                    (and_(Flashcard.repetition_count > 0, Flashcard.last_rating >= 3), Flashcard.id),
-                )).label('accurate'),
-                func.count(case((Flashcard.ease_factor >= 2.0, Flashcard.id))).label('well_learned'),
-            ).where(Flashcard.user_id == uid)
-        )
-    ).one()
+    try:
+        row = (
+            await db.execute(
+                select(
+                    func.count(Flashcard.id).label('total'),
+                    func.count(case((Flashcard.repetition_count > 0, Flashcard.id))).label('reviewed'),
+                    func.avg(Flashcard.ease_factor).label('avg_ease'),
+                    func.count(case((Flashcard.next_review_at <= func.now(), Flashcard.id))).label('due_today'),
+                    func.count(case(
+                        (and_(Flashcard.repetition_count > 0, Flashcard.last_rating >= 3), Flashcard.id),
+                    )).label('accurate'),
+                    func.count(case((Flashcard.ease_factor >= 2.0, Flashcard.id))).label('well_learned'),
+                ).where(Flashcard.user_id == uid)
+            )
+        ).one()
+    except DBAPIError as exc:
+        logger.error('flashcards.get_flashcard_stats DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     total = row.total or 0
     reviewed = row.reviewed or 0

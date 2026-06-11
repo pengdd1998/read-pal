@@ -6,6 +6,7 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -33,20 +34,24 @@ async def _load_book_and_annotations(
     book_id: UUID,
 ) -> tuple[Book | None, list[Annotation]]:
     """Load book metadata and its annotations."""
-    result = await db.execute(
-        select(Book).where(Book.id == book_id, Book.user_id == user_id),
-    )
-    book = result.scalar_one_or_none()
-    if book is None:
-        return None, []
+    try:
+        result = await db.execute(
+            select(Book).where(Book.id == book_id, Book.user_id == user_id),
+        )
+        book = result.scalar_one_or_none()
+        if book is None:
+            return None, []
 
-    result = await db.execute(
-        select(Annotation)
-        .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
-        .order_by(Annotation.created_at),
-    )
-    annotations = list(result.scalars().all())
-    return book, annotations
+        result = await db.execute(
+            select(Annotation)
+            .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
+            .order_by(Annotation.created_at),
+        )
+        annotations = list(result.scalars().all())
+        return book, annotations
+    except DBAPIError as exc:
+        logger.error('export_service._load_book_and_annotations DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
 
 async def export(

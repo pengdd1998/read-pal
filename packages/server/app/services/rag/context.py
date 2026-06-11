@@ -4,6 +4,7 @@ from uuid import UUID
 
 import redis.exceptions
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
@@ -35,10 +36,14 @@ async def _fetch_book_and_spoiler_limit(
     Returns (book, max_chapter_index). Completed books have no filter.
     Returns (None, None) when the book is not found.
     """
-    result = await db.execute(
-        select(Book).where(Book.id == book_id, Book.user_id == user_id)
-    )
-    book = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(Book).where(Book.id == book_id, Book.user_id == user_id)
+        )
+        book = result.scalar_one_or_none()
+    except DBAPIError as exc:
+        logger.error('context._fetch_book_and_spoiler_limit DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     if not book:
         return None, None
 

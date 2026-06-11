@@ -9,6 +9,7 @@ from collections import Counter
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -111,11 +112,15 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
 
 
 async def _compute_recommendations(db: AsyncSession, user_id: UUID) -> list[dict]:
-    book_rows = (await db.execute(
-        select(Book.title, Book.author, Book.tags)
-        .where(Book.user_id == user_id)
-        .limit(200)
-    )).all()
+    try:
+        book_rows = (await db.execute(
+            select(Book.title, Book.author, Book.tags)
+            .where(Book.user_id == user_id)
+            .limit(200)
+        )).all()
+    except DBAPIError as exc:
+        logger.error('recommendation._compute_recommendations DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
 
     user_authors: Counter[str] = Counter()
     user_genres: Counter[str] = Counter()

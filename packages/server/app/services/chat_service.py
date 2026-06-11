@@ -1,11 +1,15 @@
 """Chat history service — query and serialize chat messages."""
 
+import logging
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat_message import ChatMessage
+
+logger = logging.getLogger('read-pal.chat')
 
 
 async def get_chat_history(
@@ -19,8 +23,12 @@ async def get_chat_history(
     if book_id:
         q = q.where(ChatMessage.book_id == book_id)
     q = q.order_by(ChatMessage.created_at.desc()).limit(limit)
-    result = await db.execute(q)
-    messages = list(result.scalars().all())
+    try:
+        result = await db.execute(q)
+        messages = list(result.scalars().all())
+    except DBAPIError as exc:
+        logger.error('chat_service.get_chat_history DB error: %s', exc, exc_info=True)
+        raise RuntimeError('Database error') from exc
     return [
         {
             'id': str(m.id),
