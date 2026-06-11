@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
     <button
      type="button"
      onClick={() => { setSubmitted(false); setEmail(''); }}
-     className="text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 font-medium"
+     className="text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 font-medium focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      {t('forgot_resend_link')}
     </button>
@@ -94,7 +94,7 @@ export default function ForgotPasswordPage() {
     <button
     type="submit"
     disabled={loading}
-    className="btn btn-primary w-full py-3 rounded-xl min-h-[44px]"
+    className="btn btn-primary w-full py-3 rounded-xl min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
     {loading ? (
      <span className="flex items-center gap-2">

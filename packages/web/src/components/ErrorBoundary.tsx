@@ -80,14 +80,14 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Rec
     {isChunkError ? (
     <button
      onClick={() => window.location.reload()}
-     className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-surface-1 text-gray-700 dark:text-gray-300 hover:bg-surface-2 active:scale-[0.98] transition-all"
+     className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-surface-1 text-gray-700 dark:text-gray-300 hover:bg-surface-2 active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      {t('reload_page')}
     </button>
     ) : (
     <button
      onClick={this.handleGoHome}
-     className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-surface-1 text-gray-700 dark:text-gray-300 hover:bg-surface-2 active:scale-[0.98] transition-all"
+     className="px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] bg-surface-1 text-gray-700 dark:text-gray-300 hover:bg-surface-2 active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      {t('go_home')}
     </button>

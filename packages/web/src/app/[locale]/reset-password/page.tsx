@@ -152,7 +152,7 @@ function ResetPasswordForm() {
     <button
     type="submit"
     disabled={loading || password !== confirmPassword}
-    className="btn btn-primary w-full py-2.5 rounded-xl disabled:opacity-50"
+    className="btn btn-primary w-full py-2.5 rounded-xl disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >
     {loading ? (
      <span className="flex items-center gap-2">

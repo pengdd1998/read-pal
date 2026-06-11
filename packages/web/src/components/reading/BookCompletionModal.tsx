@@ -102,7 +102,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
 
   <button
    onClick={onClose}
-   className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors"
+   className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {t('completion_keep_exploring')}
   </button>

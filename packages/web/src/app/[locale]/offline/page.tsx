@@ -187,7 +187,7 @@ export default function OfflinePage() {
             {isOnline ? (
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors min-h-[44px]"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
               >
                 <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" />

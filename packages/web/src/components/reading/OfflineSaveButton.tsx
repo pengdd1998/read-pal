@@ -97,7 +97,7 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
  <button
   onClick={handleSave}
   disabled={state === 'saving'}
-  className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors relative ${buttonClass}`}
+  className={`w-11 h-11 flex items-center justify-center rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 relative ${buttonClass}`}
   aria-label={
   state === 'cached'
    ? t('offline_remove_aria')

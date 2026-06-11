@@ -29,7 +29,7 @@ export const SelectionHint = React.memo(function SelectionHint({ onDismiss }: Se
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
   </svg>
   <span>{isReturningUser ? t('selection_hint_tip') : t('selection_hint_new')}</span>
-  <button onClick={onDismiss} className="ml-1 opacity-60 hover:opacity-100 transition-opacity min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label={t('dismiss_label')}>
+  <button onClick={onDismiss} className="ml-1 opacity-60 hover:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label={t('dismiss_label')}>
    <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>

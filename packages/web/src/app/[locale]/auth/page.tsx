@@ -128,7 +128,7 @@ function AuthPageContent() {
    role="tab"
    aria-selected={mode === 'register'}
    onClick={() => switchMode('register')}
-   className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] ${
+   className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     mode === 'register'
     ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-xs'
     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -141,7 +141,7 @@ function AuthPageContent() {
    role="tab"
    aria-selected={mode === 'login'}
    onClick={() => switchMode('login')}
-   className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] ${
+   className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     mode === 'login'
     ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-xs'
     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'

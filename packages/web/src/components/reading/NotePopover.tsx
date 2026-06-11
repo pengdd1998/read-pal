@@ -47,14 +47,14 @@ export const NotePopover = React.memo(function NotePopover({ selectedText, onSav
    <button
    type="button"
    onClick={onCancel}
-   className="btn btn-ghost text-sm"
+   className="btn btn-ghost text-sm focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    {tc('cancel')}
    </button>
    <button
    type="submit"
    disabled={!note.trim()}
-   className="btn btn-primary text-sm disabled:opacity-50"
+   className="btn btn-primary text-sm disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
    {t('note_save')}
    </button>

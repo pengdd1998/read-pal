@@ -22,7 +22,7 @@ export const ShortcutsHelp = React.memo(function ShortcutsHelp({ onClose }: Shor
   <div className="bg-surface-0 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm p-5 animate-scale-in" onClick={(e) => e.stopPropagation()}>
   <div className="flex items-center justify-between mb-4">
    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">{t('keyboard_shortcuts_title')}</h3>
-   <button onClick={onClose} className="p-2 -m-1 rounded-lg hover:bg-surface-1 text-gray-400 dark:text-gray-500 transition-colors" aria-label={t('close_label')}>
+   <button onClick={onClose} className="p-2 -m-1 rounded-lg hover:bg-surface-1 text-gray-400 dark:text-gray-500 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('close_label')}>
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>
