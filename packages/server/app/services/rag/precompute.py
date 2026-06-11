@@ -45,7 +45,7 @@ async def precompute_book_embeddings(
             async with async_session() as session:
                 async with session.begin():
                     session.add_all(_chunks_to_insert)
-    except Exception:
+    except (DBAPIError, OSError):
         logger.debug('rag precompute failed', exc_info=True)
         return
 

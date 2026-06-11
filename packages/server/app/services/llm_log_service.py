@@ -9,6 +9,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_, delete, func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -66,7 +67,7 @@ def fire_and_forget_log(
 
         loop = asyncio.get_running_loop()
         loop.create_task(_write())
-    except Exception:
+    except (DBAPIError, OSError):
         logger.warning('fire_and_forget_log failed (non-critical)', exc_info=True)
 
 

@@ -7,6 +7,7 @@ from uuid import UUID
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
@@ -52,7 +53,7 @@ async def _save_new_plan(
             db.add(plan)
             await db.flush()
             return plan
-    except Exception:
+    except (DBAPIError, OSError):
         logger.debug('reading plan query failed', exc_info=True)
         return None
 
@@ -219,7 +220,7 @@ async def _get_active_plan(
                 .limit(1)
             )
             return result.scalar_one_or_none()
-    except Exception:
+    except (DBAPIError, OSError):
         logger.debug('reading plan query failed', exc_info=True)
         return None
 

@@ -6,6 +6,7 @@ from uuid import UUID
 
 import structlog
 from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -84,7 +85,7 @@ async def _gather_reading_stats(
                 'total_chats': total_chats,
                 'distinct_books': distinct_books,
             }
-    except Exception:
+    except (DBAPIError, OSError):
         logger.debug('friend persona stats failed', exc_info=True)
         return _EMPTY_STATS
 

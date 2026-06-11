@@ -7,6 +7,7 @@ from uuid import UUID
 import structlog
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -103,7 +104,7 @@ async def _build_system_message(
                 ),
             )
             book = result.scalar_one_or_none()
-        except Exception:
+        except (DBAPIError, OSError):
             logger.error(
                 'Failed to query book for friend context',
                 exc_info=True,

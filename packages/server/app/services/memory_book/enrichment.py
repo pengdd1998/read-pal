@@ -7,6 +7,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
@@ -130,6 +131,6 @@ async def fetch_other_books(
                 {'id': str(r[0]), 'title': r[1], 'author': r[2] or 'Unknown'}
                 for r in other_books
             ]
-    except Exception:
+    except (DBAPIError, OSError):
         logger.debug('enrichment step failed', exc_info=True)
     return result
