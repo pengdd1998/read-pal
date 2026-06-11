@@ -377,7 +377,7 @@ const ReadingStreakCard = React.memo(function ReadingStreakCard({ streak, loadin
 });
 
 // Quick Actions sub-component
-function QuickActions() {
+const QuickActions = React.memo(function QuickActions() {
   const t = useTranslations('dashboard');
 
   return (
@@ -401,7 +401,7 @@ function QuickActions() {
       ))}
     </div>
   );
-}
+});
 
 // Insight Card sub-component
 const InsightCard = React.memo(function InsightCard({ insightKey }: { insightKey: InsightKey | null }) {

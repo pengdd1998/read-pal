@@ -29,7 +29,7 @@ class InterventionFeedbackRequest(BaseModel):
     book_id: UUID | None = Field(
         None, validation_alias=AliasChoices('book_id', 'bookId'),
     )
-    context: Any = None
+    context: dict[str, Any] | None = None
 
 
 class InterventionPreferencesRequest(BaseModel):

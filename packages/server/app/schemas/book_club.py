@@ -48,7 +48,7 @@ class BookClubResponse(BaseModel):
 class ClubJoinRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    invite_code: str = Field(max_length=20)
+    invite_code: str = Field(min_length=1, max_length=20)
 
 
 class DiscussionCreate(BaseModel):

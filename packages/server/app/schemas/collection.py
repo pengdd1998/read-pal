@@ -12,8 +12,8 @@ class CollectionCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
-    icon: str | None = None
-    color: str | None = None
+    icon: str | None = Field(None, max_length=50)
+    color: str | None = Field(None, max_length=20)
 
 
 class CollectionUpdate(BaseModel):
@@ -21,8 +21,8 @@ class CollectionUpdate(BaseModel):
 
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
-    icon: str | None = None
-    color: str | None = None
+    icon: str | None = Field(None, max_length=50)
+    color: str | None = Field(None, max_length=20)
     book_ids: list[UUID] | None = None
 
 

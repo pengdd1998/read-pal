@@ -3,6 +3,10 @@
 import React from 'react';
 import { ChatMessageBubble } from './ChatMessageBubble';
 
+const BOUNCE_DOT_1 = { animationDuration: '0.6s' } as const;
+const BOUNCE_DOT_2 = { animationDelay: '120ms', animationDuration: '0.6s' } as const;
+const BOUNCE_DOT_3 = { animationDelay: '240ms', animationDuration: '0.6s' } as const;
+
 interface SuggestedPromptButtonProps {
  prompt: string;
  onPromptClick: (prompt: string) => void;
@@ -93,9 +97,9 @@ export const ChatMessageList = React.memo(function ChatMessageList({
   <div className="flex justify-start">
    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 rounded-2xl rounded-bl-md px-4 py-3">
    <div className="flex gap-1.5 items-center">
-    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDuration: '0.6s' }} />
-    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '120ms', animationDuration: '0.6s' }} />
-    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={{ animationDelay: '240ms', animationDuration: '0.6s' }} />
+    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={BOUNCE_DOT_1} />
+    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={BOUNCE_DOT_2} />
+    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={BOUNCE_DOT_3} />
     <span className="text-[10px] text-amber-500/80 ml-1">{connecting ? t('companion_connecting') : t('companion_thinking')}</span>
    </div>
    </div>
