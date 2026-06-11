@@ -60,7 +60,7 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
  requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }));
  }, []);
 
- useEffect(() => { scrollToBottom(); }, [sanitizedMessages, loading, connecting, scrollToBottom]);
+ useEffect(() => { return scrollToBottom(); }, [sanitizedMessages, loading, connecting, scrollToBottom]);
 
  return (
  <>

@@ -78,15 +78,17 @@ export const ReaderView = React.memo(function ReaderView({
  const selectingRef = useRef(false);
 
  useEffect(() => {
+ let selTimer: ReturnType<typeof setTimeout> | undefined;
  const onSelectionChange = () => {
   const sel = window.getSelection();
   if (sel && !sel.isCollapsed && sel.toString().trim()) {
   selectingRef.current = true;
-  setTimeout(() => { selectingRef.current = false; }, 600);
+  if (selTimer) clearTimeout(selTimer);
+  selTimer = setTimeout(() => { selectingRef.current = false; }, 600);
   }
  };
  document.addEventListener('selectionchange', onSelectionChange);
- return () => document.removeEventListener('selectionchange', onSelectionChange);
+ return () => { document.removeEventListener('selectionchange', onSelectionChange); if (selTimer) clearTimeout(selTimer); };
  }, []);
 
  const [purifyReady, setPurifyReady] = useState(false);
