@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import type {
   DashboardData,
   SessionData,
@@ -77,7 +78,7 @@ export function useStatsData(): StatsDataResult & { refetch: () => void } {
           setError(t('error_load'));
         }
       })
-      .catch((err) => { console.warn('useStatsData: fetch failed', err); if (!stale) setError(t('error_load')); })
+      .catch((err) => { warn('useStatsData: fetch failed', err); if (!stale) setError(t('error_load')); })
       .finally(() => { if (!stale) setLoading(false); });
     return () => { stale = true; };
   }, [t, retryCount]);

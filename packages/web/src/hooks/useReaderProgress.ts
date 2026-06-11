@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { API_BASE_URL, api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { safeSetItem } from '@/lib/safe-storage';
 
 interface UseReaderProgressOptions {
@@ -48,7 +49,7 @@ export function useReaderProgress({
           current_segment: segment,
           saved_at: Date.now(),
         }));
-      } catch (e) { console.warn('useReaderProgress: localStorage save failed:', e); }
+      } catch (e) { warn('useReaderProgress: localStorage save failed:', e); }
       try {
         fetch(`${API_BASE_URL}/api/books/${bookId}`, {
           method: 'PATCH',
@@ -59,10 +60,10 @@ export function useReaderProgress({
           body: JSON.stringify({ current_page: chapter, scroll_progress: scroll, current_segment: segment }),
           keepalive: true,
         }).catch((err) => {
-          console.warn('Reader: keepalive progress save failed', err);
+          warn('Reader: keepalive progress save failed', err);
         });
       } catch (err) {
-        console.warn('Reader: keepalive progress save failed', err);
+        warn('Reader: keepalive progress save failed', err);
       }
     };
   }, [bookId, loading]);
@@ -81,7 +82,7 @@ export function useReaderProgress({
           setReadingWpm(res.data.currentWpm);
         }
       })
-      .catch((err) => { if (!cancelled) console.warn('Reader: reading speed fetch failed', err); });
+      .catch((err) => { if (!cancelled) warn('Reader: reading speed fetch failed', err); });
     return () => { cancelled = true; wpmFetchedRef.current = false; };
   }, [loading]);
 

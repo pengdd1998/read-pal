@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { useBackgroundApi } from '@/hooks/useApi';
 import type {
   BookData,
@@ -73,7 +74,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
           setAllAnnotations(annotations);
         }
       } catch (err) {
-        console.warn('useBookDetail: fetch failed', err);
+        warn('useBookDetail: fetch failed', err);
         if (!cancelled) setError(t('failedToLoad'));
       }
       if (!cancelled) setLoading(false);

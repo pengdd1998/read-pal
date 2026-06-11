@@ -8,6 +8,7 @@ import { getItem, setItem, removeItem } from './native-storage';
 import { clearQueue } from './offline-queue';
 import { getAuthTokenAsync, setAuthTokens, clearAuthTokens } from './auth-fetch';
 import { safeGetItem, safeSetItem, safeRemoveItem } from './safe-storage';
+import { warn } from './logger';
 
 /** Set a simple cookie so Next.js middleware can detect auth state */
 function setAuthCookie(token: string) {
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  try {
   const saved = safeGetItem('user');
   return saved ? JSON.parse(saved) : null;
- } catch (err) { console.warn("auth: failed to parse stored user", err); return null; }
+ } catch (err) { warn("auth: failed to parse stored user", err); return null; }
  });
  const [loading, setLoading] = useState(() => {
  // Already hydrated from localStorage on web; Capacitor needs async load
@@ -124,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  try {
   await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
  } catch (e) {
-  console.warn('Logout request failed (idempotent):', e);
+  warn('Logout request failed (idempotent):', e);
  }
  await clearAuthTokens();
  await removeItem('user');
@@ -135,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  setToken(null);
  setUser(null);
  // Clear offline mutation queue — prevents stale mutations from previous sessions
- clearQueue().catch((err) => { console.warn('Failed to clear offline queue on logout:', err); });
+ clearQueue().catch((err) => { warn('Failed to clear offline queue on logout:', err); });
  router.push('/auth?mode=login');
  }, [router]);
 

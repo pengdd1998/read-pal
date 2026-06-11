@@ -7,6 +7,7 @@
 
 import { getAuthToken } from './auth-fetch';
 import { clearQueue } from './offline-queue';
+import { warn } from './logger';
 
 export interface SyncResult {
   succeeded: number;
@@ -48,7 +49,7 @@ export async function countQueuedMutations(): Promise<number> {
       req.onerror = () => resolve(0);
     });
   } catch (err) {
-    console.warn('OfflineSync: failed to count queued mutations', err);
+    warn('OfflineSync: failed to count queued mutations', err);
     return 0;
   }
 }
@@ -74,7 +75,7 @@ export async function purgeStaleQueue(): Promise<number> {
     }
     return purged;
   } catch (err) {
-    console.warn('OfflineSync: failed to purge stale queue items', err);
+    warn('OfflineSync: failed to purge stale queue items', err);
     return 0;
   }
 }
@@ -127,7 +128,7 @@ export async function syncQueuedMutations(): Promise<SyncResult | null> {
         failed++;
       }
     } catch (err) {
-      console.warn('OfflineSync: failed to sync mutation', err);
+      warn('OfflineSync: failed to sync mutation', err);
       failed++;
     }
   }

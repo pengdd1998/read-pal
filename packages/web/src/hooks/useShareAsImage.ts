@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { renderCardToCanvas } from '@/components/reading/QuoteCard';
+import { warn } from '@/lib/logger';
 
 export function useShareAsImage(
   quoteText: string,
@@ -40,7 +41,7 @@ export function useShareAsImage(
               });
             } catch (err) {
               if ((err as DOMException).name !== 'AbortError') {
-                console.warn('ShareAsImage: share failed', err);
+                warn('ShareAsImage: share failed', err);
                 downloadBlob(blob);
               }
             }
@@ -51,7 +52,7 @@ export function useShareAsImage(
                 new ClipboardItem({ 'image/png': blob }),
               ]);
             } catch (err) {
-              console.warn("useShareAsImage: clipboard write failed, falling back to download", err);
+              warn("useShareAsImage: clipboard write failed, falling back to download", err);
               downloadBlob(blob);
             }
           }
@@ -59,7 +60,7 @@ export function useShareAsImage(
         }, 'image/png');
       });
     } catch (err) {
-      console.warn('useShareAsImage: share failed', err);
+      warn('useShareAsImage: share failed', err);
     }
   }, [quoteText, bookTitle, author, fallbackBookTitle, fallbackAuthor]);
 }

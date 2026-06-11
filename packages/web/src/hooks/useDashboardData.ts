@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { useToast } from '@/components/Toast';
 import type { DashboardData } from '@/components/dashboard/types';
 const STREAK_MILESTONES: Record<number, string> = {
@@ -41,7 +42,7 @@ export function useDashboardData() {
           }
         })
         .catch((err) => {
-          console.warn('Dashboard: failed to load data', err);
+          warn('Dashboard: failed to load data', err);
           if (!cancelled) setError(t('failed_load'));
         })
         .finally(() => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { runForceSimulation } from '@/lib/force-simulation';
 import type {
   VisualizationNode,
@@ -55,7 +56,7 @@ export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn
         const [graphRes, themesRes, gapsRes] = await Promise.all([
           api.get<{ neo4jAvailable?: boolean; nodes: VisualizationNode[]; edges: VisualizationEdge[] }>('/api/v1/knowledge/graph'),
           api.get<{ neo4jAvailable?: boolean; themes: CrossBookTheme[] }>('/api/v1/knowledge/themes'),
-          api.get<{ gaps?: KnowledgeGap[] }>('/api/v1/knowledge/gaps').catch((err) => { console.warn('useKnowledgeGraph: gaps fetch failed', err); return { data: { gaps: [] } }; }),
+          api.get<{ gaps?: KnowledgeGap[] }>('/api/v1/knowledge/gaps').catch((err) => { warn('useKnowledgeGraph: gaps fetch failed', err); return { data: { gaps: [] } }; }),
         ]);
 
         if (stale) return;
@@ -72,7 +73,7 @@ export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn
           dataLoadedRef.current = true;
         }
       } catch (err) {
-        console.warn('useKnowledgeGraph: fetch failed', err);
+        warn('useKnowledgeGraph: fetch failed', err);
         if (!stale) setError(errorMessage);
       } finally {
         if (!stale) setLoading(false);

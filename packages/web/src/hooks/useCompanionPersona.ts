@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { FRIEND_PERSONAS, DEFAULT_PERSONA } from '@/lib/companion-personas';
 
 interface UseCompanionPersonaReturn {
@@ -41,7 +42,7 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
           }
         }
       } catch (err) {
-        console.warn('useCompanionPersona: load failed', err);
+        warn('useCompanionPersona: load failed', err);
         const message = err instanceof Error ? err.message : 'Failed to load companion persona';
         if (!cancelled) setError(message);
       }

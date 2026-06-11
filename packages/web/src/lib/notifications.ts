@@ -3,6 +3,7 @@
 import { isCapacitor } from './capacitor';
 import { getItem, setItem } from './native-storage';
 import { api } from './api';
+import { warn } from './logger';
 
 const PUSH_ENABLED_KEY = 'push_notifications_enabled';
 const PUSH_TOKEN_KEY = 'push_token';
@@ -40,7 +41,7 @@ async function loadPushPlugin(): Promise<PushNotificationsShape | null> {
     pushPlugin = mod.PushNotifications;
     return pushPlugin;
   } catch (err) {
-    console.warn('Notifications: failed to load push notifications plugin', err);
+    warn('Notifications: failed to load push notifications plugin', err);
     return null;
   }
 }
@@ -75,7 +76,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
       });
     });
   } catch (err) {
-    console.warn('Notifications: failed to request notification permission', err);
+    warn('Notifications: failed to request notification permission', err);
     return null;
   }
 }
@@ -95,7 +96,7 @@ export async function registerPushToken(token: string): Promise<boolean> {
     }
     return res.success;
   } catch (err) {
-    console.warn('Notifications: failed to register push token with backend', err);
+    warn('Notifications: failed to register push token with backend', err);
     return false;
   }
 }

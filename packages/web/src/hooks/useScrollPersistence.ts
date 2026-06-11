@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
+import { warn } from '@/lib/logger';
 
 interface UseScrollPersistenceOptions {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -37,7 +38,7 @@ export function useScrollPersistence({
     const maxScroll = scrollHeight - clientHeight;
     if (maxScroll > 0) {
       const fraction = Math.min(1, Math.max(0, scrollTop / maxScroll));
-      try { safeSetItem(scrollKey, String(fraction)); } catch (err) { console.warn('Storage error: failed to save scroll position', err); }
+      try { safeSetItem(scrollKey, String(fraction)); } catch (err) { warn('Storage error: failed to save scroll position', err); }
     }
   }, [containerRef, scrollKey]);
 
@@ -76,7 +77,7 @@ export function useScrollPersistence({
               return;
             }
           }
-        } catch (err) { console.warn('Storage error: failed to restore scroll position', err); }
+        } catch (err) { warn('Storage error: failed to restore scroll position', err); }
         containerRef.current.scrollTop = 0;
         onProgressUpdate(0, 0);
       }

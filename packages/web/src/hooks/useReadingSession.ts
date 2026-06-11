@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { API_BASE_URL, api } from '@/lib/api';
 import { getAuthToken } from '@/lib/auth-fetch';
+import { warn } from '@/lib/logger';
 
 interface UseReadingSessionOptions {
   bookId: string;
@@ -85,14 +86,14 @@ export function useReadingSession({
               );
             } catch (err) {
               if ((err as Error)?.name !== 'AbortError' && !controller.signal.aborted) {
-                console.warn('ReadingSession: heartbeat failed', err);
+                warn('ReadingSession: heartbeat failed', err);
               }
             }
           }, 30_000);
         }
       } catch (err) {
         if ((err as Error)?.name !== 'AbortError' && !controller.signal.aborted) {
-          console.warn('ReadingSession: failed to start session', err);
+          warn('ReadingSession: failed to start session', err);
         }
       }
     };
@@ -129,12 +130,12 @@ export function useReadingSession({
             body: JSON.stringify({ pagesRead: currentChapterRef.current + 1, currentPage: currentChapterRef.current + 1, duration: activeSecondsRef.current }),
             keepalive: true,
           }).catch((err) => {
-            console.warn('ReadingSession: keepalive end failed', err);
+            warn('ReadingSession: keepalive end failed', err);
           }).finally(() => {
             endingRef.current = false;
           });
         } catch (err) {
-          console.warn('ReadingSession: keepalive end failed', err);
+          warn('ReadingSession: keepalive end failed', err);
           endingRef.current = false;
         }
       }

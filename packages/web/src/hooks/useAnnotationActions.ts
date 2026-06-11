@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { warn } from '@/lib/logger';
 import type { Chapter, Annotation } from '@read-pal/shared';
 
 interface AnnotationActionsOptions {
@@ -37,7 +38,7 @@ function computeOffsets(range: Range, container: HTMLElement): { start: number; 
     const end = start + range.toString().length;
     return { start, end };
   } catch (err) {
-    console.warn('computeOffsets: range computation failed, using fallback', err);
+    warn('computeOffsets: range computation failed, using fallback', err);
     return { start: 0, end: range.toString().length };
   }
 }
@@ -60,7 +61,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         if (mountedRef.current) setAnnotations(Array.isArray(data) ? data : []);
       }
     } catch (e) {
-      console.warn('AnnotationActions: failed to load annotations', e);
+      warn('AnnotationActions: failed to load annotations', e);
       if (mountedRef.current) toastError(toast.failed_load_annotations);
     }
   }, [bookId, setAnnotations, toastError, toast.failed_load_annotations]);
@@ -105,7 +106,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         analytics.track('annotation_created', { type: 'highlight' });
       }
     } catch (e) {
-      console.warn('AnnotationActions: failed to save highlight', e);
+      warn('AnnotationActions: failed to save highlight', e);
       toastError(toast.failed_save_highlight);
     }
     dismissSelection();
@@ -145,7 +146,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         analytics.track('annotation_created', { type: 'note' });
       }
     } catch (e) {
-      console.warn('AnnotationActions: failed to save note', e);
+      warn('AnnotationActions: failed to save note', e);
       toastError(toast.failed_save_note);
     }
     dismissSelection();
@@ -166,7 +167,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         try {
           await api.delete(`/api/annotations/${removedId}`);
         } catch (e) {
-          console.warn('AnnotationActions: failed to remove bookmark', e);
+          warn('AnnotationActions: failed to remove bookmark', e);
           setAnnotations((p) => [...p, annotations.find((a) => a.id === removedId)!].filter(Boolean));
           toastError(toast.failed_remove_bookmark);
         }
@@ -196,7 +197,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
           analytics.track('annotation_created', { type: 'bookmark' });
         }
       } catch (e) {
-        console.warn('AnnotationActions: failed to add bookmark', e);
+        warn('AnnotationActions: failed to add bookmark', e);
         toastError(toast.failed_add_bookmark);
       }
     }
@@ -209,7 +210,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     try {
       await api.delete(`/api/annotations/${id}`);
     } catch (e) {
-      console.warn('AnnotationActions: failed to delete annotation', e);
+      warn('AnnotationActions: failed to delete annotation', e);
       if (!mountedRef.current) return;
       if (removed) setAnnotations((p) => [...p, removed]);
       toastError(toast.failed_delete_annotation);
@@ -242,7 +243,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     try {
       await api.patch(`/api/annotations/${updated.id}`, updated as unknown as Record<string, unknown>);
     } catch (e) {
-      console.warn('AnnotationActions: failed to update annotation', e);
+      warn('AnnotationActions: failed to update annotation', e);
       if (!mountedRef.current) return;
       setAnnotations(prev);
       toastError(toast.failed_update_annotation);

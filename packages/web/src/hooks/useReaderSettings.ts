@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
+import { warn } from '@/lib/logger';
 
 const SETTINGS_KEY_PREFIX = 'reader-settings';
 
@@ -34,7 +35,7 @@ function loadSettings(bookId: string): ReaderSettings | null {
     const raw = safeGetItem(`${SETTINGS_KEY_PREFIX}-${bookId}`);
     return raw ? JSON.parse(raw) : null;
   } catch (err) {
-    console.warn("useReaderSettings: failed to load settings", err);
+    warn("useReaderSettings: failed to load settings", err);
     return null;
   }
 }
@@ -44,7 +45,7 @@ function saveSettings(bookId: string, settings: ReaderSettings) {
   try {
     safeSetItem(`${SETTINGS_KEY_PREFIX}-${bookId}`, JSON.stringify(settings));
   } catch (err) {
-    console.warn("useReaderSettings: failed to save settings", err);
+    warn("useReaderSettings: failed to save settings", err);
   }
 }
 

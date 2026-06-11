@@ -6,6 +6,8 @@
  * temporary textarea element.
  */
 
+import { warn } from './logger';
+
 /**
  * Copy text to the clipboard. Uses the Clipboard API when available,
  * falling back to a temporary textarea for older browsers or non-HTTPS.
@@ -17,7 +19,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
       await navigator.clipboard.writeText(text);
       return true;
     } catch (err) {
-      console.warn('Clipboard API failed, falling back to execCommand:', err);
+      warn('Clipboard API failed, falling back to execCommand:', err);
     }
   }
 
@@ -33,7 +35,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     document.body.removeChild(textarea);
     return ok;
   } catch (err) {
-    console.warn('Clipboard copy failed (both APIs):', err);
+    warn('Clipboard copy failed (both APIs):', err);
     return false;
   }
 }

@@ -10,6 +10,7 @@
 
 import { isCapacitor } from './capacitor';
 import { api } from './api';
+import { warn } from './logger';
 
 const DB_NAME = 'readpal-offline';
 const DB_VERSION = 2;
@@ -61,7 +62,7 @@ function withStore<T>(
         req.onerror = () => reject(req.error);
       }),
   ).catch((err) => {
-    console.warn('mobile-cache: IndexedDB operation failed', err);
+    warn('mobile-cache: IndexedDB operation failed', err);
     throw err;
   });
 }
@@ -110,7 +111,7 @@ export async function cacheBook(
     await withStore('readwrite', (store) => store.put(entry));
     return { cached: cachedChapters.length, total: chapters.length };
   } catch (err) {
-    console.warn('cacheBook: failed to cache book for offline', err);
+    warn('cacheBook: failed to cache book for offline', err);
     return { cached: -1, total: 0 };
   }
 }
@@ -134,7 +135,7 @@ export async function getCachedContent(
     }
     return null;
   } catch (err) {
-    console.warn('getCachedContent: failed to retrieve cached content', err);
+    warn('getCachedContent: failed to retrieve cached content', err);
     return null;
   }
 }
@@ -152,7 +153,7 @@ export async function isCached(bookId: string): Promise<boolean> {
     );
     return !!result && result.chaptersCached > 0;
   } catch (err) {
-    console.warn('isCached: failed to check cache status', err);
+    warn('isCached: failed to check cache status', err);
     return false;
   }
 }
@@ -167,7 +168,7 @@ export async function removeCachedBook(bookId: string): Promise<boolean> {
     await withStore('readwrite', (store) => store.delete(bookId));
     return true;
   } catch (err) {
-    console.warn('removeCachedBook: failed to remove cached book', err);
+    warn('removeCachedBook: failed to remove cached book', err);
     return false;
   }
 }
@@ -188,7 +189,7 @@ export async function getCachedBookIds(): Promise<string[]> {
       req.onerror = () => resolve([]);
     });
   } catch (err) {
-    console.warn('getCachedBookIds: failed to list cached books', err);
+    warn('getCachedBookIds: failed to list cached books', err);
     return [];
   }
 }

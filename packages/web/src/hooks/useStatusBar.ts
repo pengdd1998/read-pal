@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { isCapacitor } from '@/lib/capacitor';
+import { warn } from '@/lib/logger';
 
 type StatusBarStyle = 'LIGHT' | 'DARK';
 
@@ -35,7 +36,7 @@ export function useStatusBar(
         // Make the status bar visible (overlay content) so safe-area padding works
         await StatusBar.setOverlaysWebView({ overlay: true });
       } catch (err) {
-        console.warn('useStatusBar: failed to set status bar style', err);
+        warn('useStatusBar: failed to set status bar style', err);
       }
     })();
 

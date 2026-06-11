@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { generateId } from '@read-pal/shared';
 import type { Message } from '@/hooks/useStreamingChat';
 import type { BookGenre, TranslateFn } from '@/lib/companion-prompts';
@@ -64,7 +65,7 @@ export function useChatHistory({
             }
           }
         }
-      } catch (err) { console.warn('useChatHistory: load failed', err); toast(t('companion_history_load_error'), 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
+      } catch (err) { warn('useChatHistory: load failed', err); toast(t('companion_history_load_error'), 'error'); } finally { if (!cancelled) setHistoryLoaded(true); }
     };
     load();
     return () => {

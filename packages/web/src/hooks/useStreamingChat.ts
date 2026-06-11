@@ -6,6 +6,7 @@ import { consumeSSEStream } from '@/lib/sse';
 import { purifySync } from '@/lib/dompurify';
 import { generateId } from '@read-pal/shared';
 import { authFetchWithRefresh } from '@/lib/auth-fetch';
+import { warn } from '@/lib/logger';
 
 export interface Message {
   id: string;
@@ -207,7 +208,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
           fetchController.signal,
         );
       } catch (err) {
-        console.warn('useStreamingChat: connection error (attempt %d)', attempt, err);
+        warn('useStreamingChat: connection error (attempt %d)', attempt, err);
         if (attempt < MAX_RETRIES) {
           const delay = Math.pow(2, attempt) * 1000;
           onMessagesUpdate((prev) =>

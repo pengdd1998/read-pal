@@ -15,6 +15,8 @@ interface QueuedMutation {
   description?: string;
 }
 
+import { warn } from './logger';
+
 const DB_NAME = 'readpal-offline';
 const DB_VERSION = 2;
 const STORE_NAME = 'mutations';
@@ -74,7 +76,7 @@ export async function queueMutation(
 
     return true;
   } catch (err) {
-    console.warn('OfflineQueue: failed to enqueue mutation', err);
+    warn('OfflineQueue: failed to enqueue mutation', err);
     return false;
   }
 }
@@ -93,7 +95,7 @@ export async function getQueueCount(): Promise<number> {
       req.onerror = () => resolve(0);
     });
   } catch (err) {
-    console.warn('OfflineQueue: failed to get queue count', err);
+    warn('OfflineQueue: failed to get queue count', err);
     return 0;
   }
 }
@@ -107,7 +109,7 @@ export async function clearQueue(): Promise<void> {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     tx.objectStore(STORE_NAME).clear();
   } catch (err) {
-    console.warn('OfflineQueue: failed to clear queue', err);
+    warn('OfflineQueue: failed to clear queue', err);
   }
 }
 

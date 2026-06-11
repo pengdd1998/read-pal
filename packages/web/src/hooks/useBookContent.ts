@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { warn } from '@/lib/logger';
 import { splitChapterIntoPages, DEFAULT_MAX_CHARS_PER_PAGE, type PageSegment } from '@/lib/chapter-paginator';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
 
@@ -54,7 +55,7 @@ export function useBookContent(
         const [bookResult, annotationsResult] = await Promise.all([
           api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/upload/books/${bookId}/content`, { _t: Date.now() }),
           api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch((err) => {
-            console.warn('useBookContent: annotations fetch failed', err);
+            warn('useBookContent: annotations fetch failed', err);
             setAnnotationsError(true);
             return null;
           }),
@@ -81,7 +82,7 @@ export function useBookContent(
           setAnnotations(Array.isArray(annData) ? annData : []);
         }
       } catch (err) {
-        console.warn('useBookContent: fetch failed', err);
+        warn('useBookContent: fetch failed', err);
         if (!cancelled) setError(connectFailedMessage);
       } finally {
         if (!cancelled) setLoading(false);
