@@ -183,6 +183,8 @@ export const NotificationBell = memo(function NotificationBell() {
         onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadNotifications(); }}
         className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-surface-1 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         aria-label={t('notifications')}
+        aria-expanded={isOpen}
+        aria-controls="notification-dropdown"
       >
         <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -195,7 +197,7 @@ export const NotificationBell = memo(function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-surface-0 rounded-xl border border-surface-3 shadow-lg z-50 overflow-hidden animate-slide-down">
+        <div id="notification-dropdown" className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-surface-0 rounded-xl border border-surface-3 shadow-lg z-50 overflow-hidden animate-slide-down">
           <div className="flex items-center justify-between px-4 py-3 border-b border-surface-2">
             <h3 className="text-sm font-semibold text-gray-900">{t('notifications')}</h3>
             {unreadCount > 0 && (
@@ -209,7 +211,7 @@ export const NotificationBell = memo(function NotificationBell() {
             )}
           </div>
 
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto" role="list" aria-label={t('notifications')}>
             {notifications.length === 0 ? (
               <div className="p-6 text-center text-sm text-gray-500">
                 {loadingNotifs ? t('loading') : t('notifications_no_notifications')}

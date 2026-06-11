@@ -17,6 +17,7 @@ logger = structlog.get_logger('read-pal.llm')
 # ---------------------------------------------------------------------------
 
 _RATE_LIMIT_BACKOFFS = [2, 4, 8]  # seconds to wait between 429 retries
+_NETWORK_RETRY_DELAY = 2  # seconds to wait before retrying network errors
 
 
 def _is_rate_limited(exc: Exception) -> bool:
@@ -41,7 +42,7 @@ async def _invoke_with_retry(
             last_exc = exc
             if attempt < 1:
                 logger.warning('llm_network_error', label=log_label, error=str(exc)[:200])
-                await asyncio.sleep(2)
+                await asyncio.sleep(_NETWORK_RETRY_DELAY)
                 continue
             raise
         except OutputParserException:

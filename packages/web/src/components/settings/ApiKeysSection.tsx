@@ -163,6 +163,12 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
 
   {loading ? (
   <div className="space-y-2">
+   {[1, 2].map((i) => (
+    <div key={i} className="h-16 rounded-xl bg-surface-1 animate-pulse" />
+   ))}
+  </div>
+  ) : keys.length > 0 ? (
+  <div className="space-y-2">
 	   {keys.map((k) => (
 	   <ApiKeyRow
 	    key={k.id}
@@ -182,7 +188,6 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
    {t('api_key_empty')}
   </p>
   )}
-
   {showCreate ? (
   <div className="flex items-center gap-2">
    <input

@@ -1566,6 +1566,7 @@
     "click_hint": "Click a node to explore connections",
     "from_label": "From: {title}",
     "connections_label": "Connections:",
+    "no_connections": "No connections yet — this concept stands alone for now.",
     "deselect": "Deselect",
     "close_details": "Close selected concept details",
     "cross_book_themes": "Cross-Book Themes",

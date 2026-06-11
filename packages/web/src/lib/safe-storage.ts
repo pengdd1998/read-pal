@@ -9,6 +9,7 @@ export function safeGetItem(key: string): string | null {
   try {
     return localStorage.getItem(key);
   } catch {
+    // Private browsing or storage disabled — return null
     return null;
   }
 }

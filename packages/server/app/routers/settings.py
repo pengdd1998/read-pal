@@ -21,6 +21,9 @@ import logging
 
 logger = logging.getLogger('read-pal.settings')
 
+ZOTERO_API_BASE = 'https://api.zotero.org'
+ZOTERO_TIMEOUT = 10.0
+
 router = APIRouter(
     prefix='/api/v1/settings',
     tags=['settings'],
@@ -97,10 +100,9 @@ async def validate_zotero_key(
     current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Validate a Zotero API key by fetching the user profile."""
-    ZOTERO_API_BASE = 'https://api.zotero.org'
     url = f'{ZOTERO_API_BASE}/users/{body.userId}/keys/{body.apiKey}'
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=ZOTERO_TIMEOUT) as client:
             resp = await client.get(
                 url,
                 headers={'Zotero-API-Key': body.apiKey},

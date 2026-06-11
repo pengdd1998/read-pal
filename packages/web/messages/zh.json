@@ -1566,6 +1566,7 @@
     "click_hint": "点击节点探索连接",
     "from_label": "来自：{title}",
     "connections_label": "连接数：",
+    "no_connections": "暂无连接 — 这个概念目前是独立的。",
     "deselect": "取消选择",
     "close_details": "关闭所选概念详情",
     "cross_book_themes": "跨书主题",

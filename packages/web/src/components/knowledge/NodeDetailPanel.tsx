@@ -83,7 +83,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
    </div>
   </div>
   )}
-  {connectedEdges.length > 0 && (
+  {connectedEdges.length > 0 ? (
   <div className="mt-3 space-y-1.5">
    {connectedEdges.map((e) => {
    const otherId = e.source === node.id ? e.target : e.source;
@@ -97,6 +97,8 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
    );
    })}
   </div>
+  ) : (
+  <p className="mt-3 text-sm text-gray-400 italic">{t('no_connections')}</p>
   )}
   <button type="button"
   onClick={onDeselect}

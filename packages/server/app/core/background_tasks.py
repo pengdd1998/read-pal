@@ -14,6 +14,10 @@ from app.utils import utcnow
 logger = structlog.get_logger('read-pal')
 settings = get_settings()
 
+_LOG_CLEANUP_INTERVAL = 86400  # 24 hours
+_STALE_SESSION_CHECK_INTERVAL = 7200  # 2 hours
+_MAX_SESSION_SECONDS = 43200  # 12 hours
+
 
 async def log_cleanup_loop() -> None:
     """Periodically clean up old LLM logs."""
@@ -23,7 +27,7 @@ async def log_cleanup_loop() -> None:
         logger.info('log_cleanup_skipped_no_module')
         return
     while True:
-        await asyncio.sleep(86400)
+        await asyncio.sleep(_LOG_CLEANUP_INTERVAL)
         try:
             async with async_session() as db:
                 deleted = await cleanup_old_logs(db, settings.llm_log_retention_days)
@@ -36,7 +40,7 @@ async def log_cleanup_loop() -> None:
 async def stale_session_cleanup_loop() -> None:
     """Finalize orphaned reading sessions."""
     while True:
-        await asyncio.sleep(7200)
+        await asyncio.sleep(_STALE_SESSION_CHECK_INTERVAL)
         try:
             from app.models.reading_session import ReadingSession
             cutoff = utcnow() - timedelta(hours=2)
@@ -54,7 +58,7 @@ async def stale_session_cleanup_loop() -> None:
                     session.ended_at = now
                     if not session.duration and session.started_at:
                         raw_dur = int((now - session.started_at).total_seconds())
-                        session.duration = min(raw_dur, 43200)
+                        session.duration = min(raw_dur, _MAX_SESSION_SECONDS)
                     closed += 1
                 if closed:
                     await db.commit()
@@ -65,7 +69,7 @@ async def stale_session_cleanup_loop() -> None:
 
 async def fix_absurd_session_durations() -> None:
     """One-time startup fix: cap sessions with durations > 12h."""
-    MAX_SESSION_SECONDS = 43200
+    MAX_SESSION_SECONDS = _MAX_SESSION_SECONDS
     try:
         from app.models.reading_session import ReadingSession
         async with async_session() as db:
