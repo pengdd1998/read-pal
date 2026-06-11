@@ -39,6 +39,7 @@ async def update_me(
             settings=body.settings,
         )
     except ValueError:
+        logger.debug('validation error in account')
         raise not_found_error(t('errors.user_not_found'))
     return {'success': True, 'data': profile}
 
@@ -63,6 +64,7 @@ async def delete_account(
             refresh_token=body.refresh_token,
         )
     except ValueError as e:
+        logger.debug('validation error in account')
         msg = str(e)
         code = 'WRONG_PASSWORD' if msg == 'wrong_password' else 'UNAUTHORIZED'
         status_code = status.HTTP_403_FORBIDDEN if code == 'WRONG_PASSWORD' else status.HTTP_401_UNAUTHORIZED

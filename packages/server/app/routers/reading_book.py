@@ -50,6 +50,7 @@ async def generate_memory_book_query(
             'data': result.model_dump(mode='json', by_alias=True),
         }
     except ValueError as exc:
+        logger.debug('validation error in reading_book')
         raise not_found_error(translate_error(exc)) from exc
 
 
@@ -74,6 +75,7 @@ async def generate_memory_book_path(
             'data': result.model_dump(mode='json', by_alias=True),
         }
     except ValueError as exc:
+        logger.debug('validation error in reading_book')
         raise not_found_error(translate_error(exc)) from exc
 
 

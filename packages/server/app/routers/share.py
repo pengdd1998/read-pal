@@ -1,5 +1,8 @@
 """Shared export routes — create, retrieve, list, delete."""
 
+
+
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -12,6 +15,9 @@ from app.schemas.common import GenericResponse
 from app.schemas.share import ShareCreate, ShareResponse
 from app.services import share_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
+
+logger = logging.getLogger('read-pal.share')
+
 
 router = APIRouter(prefix='/api/v1/share', tags=['share'])
 
@@ -83,6 +89,7 @@ async def delete_share(
     try:
         await share_service.delete_share(db, UUID(user['id']), share_id)
     except ValueError as exc:
+        logger.debug('validation error in share')
         raise not_found_error(translate_error(exc, lang)) from exc
 
 

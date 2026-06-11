@@ -3,6 +3,7 @@
 All responses follow the shape: ``{"success": true, "data": {...}}``
 """
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -22,6 +23,8 @@ from app.schemas.common import GenericResponse
 from app.services import annotation_service
 from app.utils.i18n import _get_user_lang, not_found_error, t
 from app.middleware.rate_limiter import api_limiter
+
+logger = logging.getLogger('read-pal.annotations')
 
 router = APIRouter(prefix='/api/v1/annotations', tags=['annotations'], dependencies=[api_limiter])
 
@@ -134,6 +137,7 @@ async def create_annotation(
             db, UUID(current_user['id']), body,
         )
     except ValueError as exc:
+        logger.debug('validation error in annotations')
         raise not_found_error(str(exc)) from exc
     return {
         'success': True,

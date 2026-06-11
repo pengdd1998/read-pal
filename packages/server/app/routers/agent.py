@@ -70,6 +70,7 @@ async def chat(
             persona=body.persona, genre=body.genre, lang=lang,
         )
     except ValueError as exc:
+        logger.debug('validation error in agent')
         raise_not_found(exc, lang)
     return ChatResponse(data=result)
 
@@ -113,6 +114,7 @@ async def summarize(
             chapter_ids=body.chapter_ids, lang=lang,
         )
     except ValueError as exc:
+        logger.debug('validation error in agent')
         raise_not_found(exc, lang)
     return ChatResponse(data=result)
 
@@ -132,6 +134,7 @@ async def explain(
             text=body.text, context=body.context, lang=lang,
         )
     except ValueError as exc:
+        logger.debug('validation error in agent')
         raise_not_found(exc, lang)
     return ChatResponse(data=result)
 
@@ -166,6 +169,7 @@ async def discussion_questions(
             context=body.context, persona=body.persona, lang=lang,
         )
     except ValueError as exc:
+        logger.debug('validation error in agent')
         raise_not_found(exc, lang)
     except (ConnectionError, TimeoutError) as exc:
         logger.error('Discussion questions failed: %s', exc)
@@ -228,6 +232,7 @@ async def create_reading_plan(
             total_days=body.total_days, daily_minutes=body.daily_minutes,
         )
     except ValueError as exc:
+        logger.debug('validation error in agent')
         raise_not_found(exc, lang)
     except (ConnectionError, TimeoutError) as exc:
         logger.error('Reading plan generation failed: %s', exc)

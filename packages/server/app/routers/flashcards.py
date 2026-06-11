@@ -1,5 +1,8 @@
 """Flashcard routes — CRUD and SM-2 spaced repetition review."""
 
+
+
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -13,6 +16,9 @@ from app.schemas.common import GenericResponse
 from app.services import flashcard_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.middleware.rate_limiter import api_limiter
+
+logger = logging.getLogger('read-pal.flashcards')
+
 
 router = APIRouter(prefix='/api/v1/flashcards', tags=['flashcards'], dependencies=[api_limiter])
 
@@ -92,6 +98,7 @@ async def review_flashcard(
             db, UUID(user['id']), flashcard_id, body.rating,
         )
     except ValueError as exc:
+        logger.debug('validation error in flashcards')
         raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _serialize_card(card)}
 
@@ -152,6 +159,7 @@ async def generate_flashcards(
             db, UUID(user['id']), UUID(book_id),
         )
     except ValueError as exc:
+        logger.debug('validation error in flashcards')
         raise not_found_error(translate_error(exc, lang)) from exc
     return {
         'success': True,

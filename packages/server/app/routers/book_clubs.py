@@ -1,5 +1,8 @@
 """Book club routes — CRUD, membership, discussions."""
 
+
+
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -19,6 +22,8 @@ from app.schemas.common import GenericResponse
 from app.services import book_club_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.middleware.rate_limiter import api_limiter
+
+logger = logging.getLogger('read-pal.book_clubs')
 
 router = APIRouter(prefix='/api/v1/book-clubs', tags=['book-clubs'], dependencies=[api_limiter])
 
@@ -113,6 +118,7 @@ async def update_club(
             db, UUID(user['id']), club_id, body,
         )
     except ValueError as exc:
+        logger.debug('validation error in book_clubs')
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},
@@ -140,6 +146,7 @@ async def delete_club(
     try:
         await book_club_service.delete_club(db, UUID(user['id']), club_id)
     except ValueError as exc:
+        logger.debug('validation error in book_clubs')
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},
@@ -160,6 +167,7 @@ async def join_club(
             db, UUID(user['id']), body.invite_code,
         )
     except ValueError as exc:
+        logger.debug('validation error in book_clubs')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={'code': 'BAD_REQUEST', 'message': translate_error(exc, lang)},
@@ -184,6 +192,7 @@ async def leave_club(
     try:
         await book_club_service.leave_club(db, UUID(user['id']), club_id)
     except ValueError as exc:
+        logger.debug('validation error in book_clubs')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={'code': 'BAD_REQUEST', 'message': translate_error(exc, lang)},
@@ -275,6 +284,7 @@ async def add_discussion(
             db, UUID(user['id']), club_id, body.content,
         )
     except ValueError as exc:
+        logger.debug('validation error in book_clubs')
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},

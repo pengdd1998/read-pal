@@ -1,5 +1,8 @@
 """Collection routes — CRUD and book management."""
 
+
+
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -17,6 +20,8 @@ from app.schemas.collection import (
 from app.schemas.common import GenericResponse
 from app.services import collection_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
+
+logger = logging.getLogger('read-pal.collections')
 
 router = APIRouter(
     prefix='/api/v1/collections',
@@ -83,6 +88,7 @@ async def update_collection(
             db, UUID(user['id']), collection_id, body,
         )
     except ValueError as exc:
+        logger.debug('validation error in collections')
         raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _dump(col)}
 
@@ -98,6 +104,7 @@ async def delete_collection(
     try:
         await collection_service.delete_collection(db, UUID(user['id']), collection_id)
     except ValueError as exc:
+        logger.debug('validation error in collections')
         raise not_found_error(translate_error(exc, lang)) from exc
 
 
@@ -133,6 +140,7 @@ async def add_books_batch(
             db, UUID(user['id']), collection_id, parsed_ids,
         )
     except ValueError:
+        logger.debug('validation error in collections')
         raise not_found_error(t('errors.collection_not_found'))
     return {'success': True, 'data': _dump(col)}
 
@@ -151,6 +159,7 @@ async def remove_books_batch(
             db, UUID(user['id']), collection_id, parsed_ids,
         )
     except ValueError:
+        logger.debug('validation error in collections')
         raise not_found_error(t('errors.collection_not_found'))
     return {'success': True, 'data': _dump(col)}
 
@@ -169,6 +178,7 @@ async def add_book(
             db, UUID(user['id']), collection_id, book_id,
         )
     except ValueError as exc:
+        logger.debug('validation error in collections')
         raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _dump(col)}
 
@@ -187,4 +197,5 @@ async def remove_book(
             db, UUID(user['id']), collection_id, book_id,
         )
     except ValueError as exc:
+        logger.debug('validation error in collections')
         raise not_found_error(translate_error(exc, lang)) from exc

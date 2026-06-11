@@ -19,7 +19,7 @@ from app.services import settings_service
 from app.utils.i18n import not_found_error, t
 import logging
 
-logger = logging.getLogger('read-pal')
+logger = logging.getLogger('read-pal.settings')
 
 router = APIRouter(
     prefix='/api/v1/settings',
@@ -53,6 +53,7 @@ async def get_settings(
     try:
         settings = await settings_service.get_user_settings(db, UUID(current_user['id']))
     except ValueError:
+        logger.debug('validation error in settings')
         raise not_found_error(t('errors.user_not_found'))
     return {'success': True, 'data': settings}
 
@@ -71,6 +72,7 @@ async def update_settings(
             body.model_dump(exclude_unset=True),
         )
     except ValueError:
+        logger.debug('validation error in settings')
         raise not_found_error(t('errors.user_not_found'))
     return {'success': True, 'data': settings}
 
@@ -84,6 +86,7 @@ async def get_reading_goals(
     try:
         goals = await settings_service.get_reading_goals(db, UUID(current_user['id']))
     except ValueError:
+        logger.debug('validation error in settings')
         raise not_found_error(t('errors.user_not_found'))
     return {'success': True, 'data': goals}
 

@@ -69,6 +69,7 @@ async def _stream_and_validate(
     try:
         tmp_path, file_size = await stream_upload_to_tempfile(file)
     except ValueError:
+        logger.debug('validation error in upload')
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail={

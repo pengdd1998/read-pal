@@ -69,6 +69,7 @@ async def reset_password(
     try:
         await validate_and_reset(db, body.token, body.password)
     except ValueError as exc:
+        logger.debug('validation error in password_reset')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
