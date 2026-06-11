@@ -46,6 +46,7 @@ export default function GlobalError({
    backgroundColor: 'var(--surface-0, #fefdfb)',
    color: 'var(--gray-900, #1e1812)',
   }}>
+    <style>{`button:focus-visible, a:focus-visible { outline: 2px solid #d97706; outline-offset: 2px; }`}</style>
    <div style={{
     width: 56,
     height: 56,

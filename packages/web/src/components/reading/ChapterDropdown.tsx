@@ -139,7 +139,7 @@ export const ChapterDropdown = React.memo(function ChapterDropdown({
     ? 'text-gray-400 hover:bg-white/5'
     : theme === 'sepia'
     ? 'text-amber-800/60 hover:bg-black/5'
-    : 'text-gray-500 hover:bg-black/5'
+    : 'text-gray-500 hover:bg-black/5 focus-visible:ring-2 focus-visible:ring-amber-400'
   }`}
   aria-label={t('reader_open_chapter_list')}
   aria-expanded={showChapterMenu}

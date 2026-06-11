@@ -116,7 +116,7 @@ export const ExportFilterPanel = React.memo(function ExportFilterPanel({
    <button type="button"
     onClick={onClearFilters}
     aria-label={t('export_clear_filters_btn')}
-    className="text-xs text-gray-500 hover:text-gray-600"
+    className="text-xs text-gray-500 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
    >
     {t('export_clear_filters_btn')}
    </button>

@@ -97,7 +97,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
    <button type="button"
     onClick={handleSeedSample}
     disabled={seeding}
-    className="mt-2 min-h-[44px] px-4 py-2 text-xs font-medium bg-red-100 dark:bg-red-900 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
+    className="mt-2 min-h-[44px] px-4 py-2 text-xs font-medium bg-red-100 dark:bg-red-900 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-red-400"
    >
     {seeding ? t('loading_sample') : t('try_gatsby')}
    </button>

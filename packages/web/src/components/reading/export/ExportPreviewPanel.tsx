@@ -21,7 +21,7 @@ export const ExportPreviewPanel = React.memo(function ExportPreviewPanel({
         <button type="button"
           onClick={onCopy}
           aria-label={t('export_copy')}
-          className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+          className="text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
         >
           {t('export_copy')}
         </button>
