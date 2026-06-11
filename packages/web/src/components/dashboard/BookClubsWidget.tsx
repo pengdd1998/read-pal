@@ -95,7 +95,7 @@ function BookClubsWidgetInner() {
   if (!cancelled) setLoading(false);
   });
  return () => { cancelled = true; };
- }, []);
+ }, [t]);
 
  const handleCreate = useCallback(async () => {
  if (!newName.trim()) return;

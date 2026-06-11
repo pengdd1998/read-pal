@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { getAuthToken } from '@/lib/auth-fetch';
@@ -88,32 +88,7 @@ export const NotificationBell = memo(function NotificationBell() {
   const staleRef = useRef(false);
   const loadingRef = useRef(false);
 
-  useEffect(() => {
-    staleRef.current = false;
-    // Delay initial load slightly to avoid racing with auth token setup
-    // after registration or page navigation
-    const timer = setTimeout(() => {
-      loadNotifications();
-    }, 500);
-    const interval = setInterval(loadNotifications, 60000); // Poll every minute
-    return () => {
-      staleRef.current = true;
-      clearTimeout(timer);
-      clearInterval(interval);
-    };
-  }, []);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  async function loadNotifications() {
+  const loadNotifications = useCallback(async () => {
     if (loadingRef.current) return;
     // Skip if auth token not yet available (race on page load)
     if (!getAuthToken()) return;
@@ -139,7 +114,34 @@ export const NotificationBell = memo(function NotificationBell() {
       loadingRef.current = false;
       setLoadingNotifs(false);
     }
-  }
+  }, [t, toast]);
+
+  useEffect(() => {
+    staleRef.current = false;
+    // Delay initial load slightly to avoid racing with auth token setup
+    // after registration or page navigation
+    const timer = setTimeout(() => {
+      loadNotifications();
+    }, 500);
+    const interval = setInterval(loadNotifications, 60000); // Poll every minute
+    return () => {
+      staleRef.current = true;
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [loadNotifications]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+
 
   async function markAsRead(id: string) {
     const prev = notifications;
