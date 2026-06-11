@@ -16,6 +16,8 @@ export function useBookClubDetail(clubId: string) {
     let cancelled = false;
 
     async function fetch() {
+      setLoading(true);
+      setError(null);
       try {
         const res = await api.get<ClubDetail>(`/api/book-clubs/${clubId}`);
         if (!cancelled && res.success && res.data) {

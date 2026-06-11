@@ -154,10 +154,7 @@ async def update_club(
 
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
-        if field == 'current_book_id' and value is not None:
-            setattr(club, field, value)
-        else:
-            setattr(club, field, value)
+        setattr(club, field, value)
 
     await db.flush()
     await db.refresh(club)

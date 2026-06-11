@@ -52,7 +52,7 @@ async def list_annotations(
 
 @router.get('/search', response_model=GenericResponse)
 async def search_annotations(
-    q: str = Query(..., min_length=1),
+    q: str = Query(..., min_length=1, max_length=200),
     book_id: UUID | None = Query(None),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

@@ -29,6 +29,7 @@ export default function BookClubsPage() {
  let cancelled = false;
 
  async function fetchData() {
+  setError(null);
   try {
   const [myRes, discRes] = await Promise.all([
    api.get<ClubListItem[]>('/api/book-clubs'),

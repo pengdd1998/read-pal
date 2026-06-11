@@ -69,9 +69,17 @@ async def _start_llm_producer(
             error_payload = json.dumps({'error': error_msg})
             await queue.put(f'data: {error_payload}\n\n'.encode('utf-8'))
             await queue.put(b'data: [DONE]\n\n')
-        except Exception as exc:
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError) as exc:
             logger.warning(
                 'Streaming error in agent chat for user=%s book=%s',
+                user_id, book_id, exc_info=True,
+            )
+            error_payload = json.dumps({'error': t('errors.internal_error')})
+            await queue.put(f'data: {error_payload}\n\n'.encode('utf-8'))
+            await queue.put(b'data: [DONE]\n\n')
+        except Exception as exc:
+            logger.error(
+                'Unexpected streaming error in agent chat for user=%s book=%s',
                 user_id, book_id, exc_info=True,
             )
             error_payload = json.dumps({'error': t('errors.internal_error')})
