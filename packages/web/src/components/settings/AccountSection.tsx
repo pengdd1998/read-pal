@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
 
 export const AccountSection = React.memo(function AccountSection() {
@@ -24,15 +25,15 @@ export const AccountSection = React.memo(function AccountSection() {
   setDeleting(true);
   setDeleteError('');
   try {
-   const refreshToken = localStorage.getItem('refresh_token') || undefined;
+   const refreshToken = safeGetItem('refresh_token') || undefined;
    const res = await authFetch(`${API_BASE_URL}/api/auth/account`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: confirmPassword, refresh_token: refreshToken }),
    });
    if (res.ok) {
-   localStorage.removeItem('auth_token');
-   localStorage.removeItem('refresh_token');
+   safeRemoveItem('auth_token');
+   safeRemoveItem('refresh_token');
    router.push('/');
    } else {
     const data = await res.json().catch(() => ({}));
@@ -47,8 +48,8 @@ export const AccountSection = React.memo(function AccountSection() {
  }
 
  function handleSignOut() {
- localStorage.removeItem('auth_token');
- localStorage.removeItem('refresh_token');
+ safeRemoveItem('auth_token');
+ safeRemoveItem('refresh_token');
  router.push('/auth?mode=login');
  }
 

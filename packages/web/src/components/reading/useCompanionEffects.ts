@@ -11,6 +11,7 @@ import {
 } from '@/lib/companion-prompts';
 import type { Message } from '@/hooks/useStreamingChat';
 import type { CompanionChatHandle } from './CompanionChat';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 interface UseCompanionEffectsParams {
   ref: React.Ref<CompanionChatHandle>;
@@ -67,12 +68,12 @@ export function useCompanionEffects({
   // Auto-open chat for first-time readers after a brief delay
   useEffect(() => {
     if (!isFirstChat || !bookId) return;
-    if (localStorage.getItem('read-pal-tour-complete') !== 'true') return;
+    if (safeGetItem('read-pal-tour-complete') !== 'true') return;
     if (!shouldAutoOpen(genre)) return;
 
     const timer = setTimeout(() => {
       setIsOpen(true);
-      localStorage.setItem('read-pal-chat-opened', 'true');
+      safeSetItem('read-pal-chat-opened', 'true');
       const greeting = genreTemplate.greeting(tp, friendName, bookTitle);
       setMessages([{
         id: generateId(),

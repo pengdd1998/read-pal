@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname } from '@/i18n/navigation';
 import { analytics } from '@/lib/analytics';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 /**
  * Minimal analytics initializer.
@@ -22,7 +23,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
  // Identify user if already logged in
  useEffect(() => {
  try {
-  const raw = localStorage.getItem('user');
+  const raw = safeGetItem('user');
   if (raw) {
   const user = JSON.parse(raw) as { id: string; email?: string; name?: string };
   if (user?.id) {

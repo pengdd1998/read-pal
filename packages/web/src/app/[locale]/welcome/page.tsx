@@ -8,6 +8,7 @@ import { authFetch } from '@/lib/auth-fetch';
 import type { Book } from '@read-pal/shared';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAuth } from '@/lib/auth';
+import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
 import { WelcomeIntro } from '@/components/welcome/WelcomeIntro';
 import { WhatWeDoSection } from '@/components/welcome/WhatWeDoSection';
@@ -40,7 +41,7 @@ export default function WelcomePage() {
 
   // Auto-redirect returning users who already completed onboarding
   useEffect(() => {
-    const alreadyOnboarded = localStorage.getItem(ONBOARDING_KEY) === 'true';
+    const alreadyOnboarded = safeGetItem(ONBOARDING_KEY) === 'true';
     if (isAuthenticated && alreadyOnboarded) {
       router.replace('/library');
     }
@@ -69,7 +70,7 @@ export default function WelcomePage() {
   }, [t]);
 
   useEffect(() => {
-    const alreadyOnboarded = localStorage.getItem(ONBOARDING_KEY) === 'true';
+    const alreadyOnboarded = safeGetItem(ONBOARDING_KEY) === 'true';
     if (isAuthenticated && alreadyOnboarded) return;
 
     const signal = { stale: false };
@@ -98,7 +99,7 @@ export default function WelcomePage() {
       console.warn('Welcome: failed to save persona preference', err);
       toast(t('persona_save_error'), 'error');
     }
-    try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('WelcomePage: localStorage write failed', err); }
+    safeSetItem(ONBOARDING_KEY, 'true');
 
     if (book) {
       router.push(`/read/${book.id}`);

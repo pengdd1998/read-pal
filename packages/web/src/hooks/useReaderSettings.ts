@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 const SETTINGS_KEY_PREFIX = 'reader-settings';
 
@@ -30,7 +31,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
 function loadSettings(bookId: string): ReaderSettings | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(`${SETTINGS_KEY_PREFIX}-${bookId}`);
+    const raw = safeGetItem(`${SETTINGS_KEY_PREFIX}-${bookId}`);
     return raw ? JSON.parse(raw) : null;
   } catch (err) {
     console.warn("useReaderSettings: failed to load settings", err);
@@ -41,7 +42,7 @@ function loadSettings(bookId: string): ReaderSettings | null {
 function saveSettings(bookId: string, settings: ReaderSettings) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(`${SETTINGS_KEY_PREFIX}-${bookId}`, JSON.stringify(settings));
+    safeSetItem(`${SETTINGS_KEY_PREFIX}-${bookId}`, JSON.stringify(settings));
   } catch (err) {
     console.warn("useReaderSettings: failed to save settings", err);
   }

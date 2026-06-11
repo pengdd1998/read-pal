@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { Book } from '@read-pal/shared';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 interface UseReaderMilestonesOptions {
   loading: boolean;
@@ -28,8 +29,8 @@ export function useReaderMilestones({
   useEffect(() => {
     if (!loading && chaptersLength > 1 && currentChapter === chaptersLength - 1 && (book?.progress ?? 0) >= 0.95) {
       try {
-        localStorage.setItem('read-pal-tour-complete', 'true');
-        localStorage.removeItem('read-pal-tour-step');
+        safeSetItem('read-pal-tour-complete', 'true');
+        safeRemoveItem('read-pal-tour-step');
       } catch (err) { console.warn('useReaderMilestones: localStorage write failed', err); }
       const timer = setTimeout(() => setShowCompletion(true), 3000);
       return () => clearTimeout(timer);

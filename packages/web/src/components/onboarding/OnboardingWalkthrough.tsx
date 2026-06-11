@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { authFetch } from '@/lib/auth-fetch';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
 import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
 import { CompanionStep } from '@/components/onboarding/CompanionStep';
@@ -74,7 +75,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
 
   useEffect(() => {
     try {
-      const completed = localStorage.getItem(STORAGE_KEY);
+      const completed = safeGetItem(STORAGE_KEY);
       if (completed !== 'true') {
         setMounted(true);
         requestAnimationFrame(() => {
@@ -88,7 +89,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
 
   const complete = useCallback(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, 'true');
+      safeSetItem(STORAGE_KEY, 'true');
     } catch (err) {
       console.warn('OnboardingWalkthrough: save state failed', err);
     }

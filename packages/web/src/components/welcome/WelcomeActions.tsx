@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { safeSetItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
 
 const ONBOARDING_KEY = 'read-pal-onboarding-complete';
@@ -36,7 +37,7 @@ export const WelcomeActions = React.memo(function WelcomeActions({
       <div className="mt-4">
         <button
           onClick={() => {
-            try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('WelcomeActions: localStorage write failed', err); }
+            safeSetItem(ONBOARDING_KEY, 'true');
             router.push('/dashboard');
           }}
           className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center"
@@ -64,7 +65,7 @@ function SeedButton() {
     try {
       const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
       if (res.success && res.data) {
-        try { localStorage.setItem(ONBOARDING_KEY, 'true'); } catch (err) { console.warn('WelcomeActions: localStorage write failed', err); }
+        safeSetItem(ONBOARDING_KEY, 'true');
         router.push(`/read/${res.data.book.id}`);
       }
     } catch (err) {

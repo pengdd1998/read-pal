@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { API_BASE_URL, api } from '@/lib/api';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 interface UseReaderProgressOptions {
   bookId: string;
@@ -41,7 +42,7 @@ export function useReaderProgress({
       const segment = currentSegmentRef.current;
       // Persist to localStorage as fallback in case keepalive fetch is dropped
       try {
-        localStorage.setItem(`readpal-progress-${bookId}`, JSON.stringify({
+        safeSetItem(`readpal-progress-${bookId}`, JSON.stringify({
           current_page: chapter,
           scroll_progress: scroll,
           current_segment: segment,

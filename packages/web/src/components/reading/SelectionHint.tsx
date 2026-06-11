@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 interface SelectionHintProps {
  onDismiss: () => void;
@@ -12,7 +13,7 @@ export const SelectionHint = React.memo(function SelectionHint({ onDismiss }: Se
  const [isReturningUser, setIsReturningUser] = useState(false);
 
  useEffect(() => {
- const returning = localStorage.getItem('read-pal-selection-used') === 'true';
+ const returning = safeGetItem('read-pal-selection-used') === 'true';
  setIsReturningUser(returning);
  if (returning) {
   const timer = setTimeout(onDismiss, 3000);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 interface UseScrollPersistenceOptions {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -36,7 +37,7 @@ export function useScrollPersistence({
     const maxScroll = scrollHeight - clientHeight;
     if (maxScroll > 0) {
       const fraction = Math.min(1, Math.max(0, scrollTop / maxScroll));
-      try { localStorage.setItem(scrollKey, String(fraction)); } catch (err) { console.warn('Storage error: failed to save scroll position', err); }
+      try { safeSetItem(scrollKey, String(fraction)); } catch (err) { console.warn('Storage error: failed to save scroll position', err); }
     }
   }, [containerRef, scrollKey]);
 
@@ -61,7 +62,7 @@ export function useScrollPersistence({
     outerRaf = requestAnimationFrame(() => {
       if (containerRef.current) {
         try {
-          const saved = localStorage.getItem(scrollKey);
+          const saved = safeGetItem(scrollKey);
           if (saved) {
             const fraction = parseFloat(saved);
             if (fraction > 0 && containerRef.current) {

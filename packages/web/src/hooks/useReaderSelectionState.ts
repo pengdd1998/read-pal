@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 interface SelectionLike {
   isCollapsed: boolean;
@@ -26,7 +27,7 @@ export function useReaderSelectionState({
 }: UseReaderSelectionStateOptions) {
   const [hasMadeSelection, setHasMadeSelection] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('read-pal-selection-used') === 'true';
+    return safeGetItem('read-pal-selection-used') === 'true';
   });
   const [highlightMode, setHighlightMode] = useState(false);
   const [bgEnabled, setBgEnabled] = useState(true);
@@ -34,7 +35,7 @@ export function useReaderSelectionState({
   useEffect(() => {
     if (!selection.isCollapsed && !hasMadeSelection) {
       setHasMadeSelection(true);
-      try { localStorage.setItem('read-pal-selection-used', 'true'); } catch (err) { console.warn('useReaderSelectionState: localStorage write failed', err); }
+      try { safeSetItem('read-pal-selection-used', 'true'); } catch (err) { console.warn('useReaderSelectionState: localStorage write failed', err); }
     }
   }, [selection.isCollapsed, hasMadeSelection]);
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, forwardRef, useMemo, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { preloadDOMPurify } from '@/lib/dompurify';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
 import { generateId } from '@read-pal/shared';
 import {
@@ -65,7 +66,7 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
  const [input, setInput] = useState('');
  const [isFirstChat] = useState(() => {
  if (typeof window === 'undefined') return false;
- return !localStorage.getItem('read-pal-chat-opened');
+ return !safeGetItem('read-pal-chat-opened');
  });
 
  const {
@@ -168,7 +169,7 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
 
  // Mark chat as opened when user manually opens it
  const handleOpenChat = useCallback(() => {
- localStorage.setItem('read-pal-chat-opened', 'true');
+ safeSetItem('read-pal-chat-opened', 'true');
  setIsOpen(true);
  }, []);
 

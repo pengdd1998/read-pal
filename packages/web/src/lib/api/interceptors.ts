@@ -14,6 +14,7 @@ import {
   clearAuthTokens,
 } from '@/lib/auth-fetch';
 import { isCapacitor } from '@/lib/capacitor';
+import { safeRemoveItem } from '@/lib/safe-storage';
 
 const NON_CRITICAL_PREFIXES = [
   '/api/notifications',
@@ -98,7 +99,7 @@ function handleExpiredSession(
     !nonCriticalPrefixes.some((p) => error.config?.url?.startsWith(p))
   ) {
     clearAuthTokens();
-    localStorage.removeItem('user');
+    safeRemoveItem('user');
     if (typeof document !== 'undefined') {
       document.cookie = 'auth_token=; path=/; max-age=0';
     }

@@ -2,15 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 export const CompanionNudge = React.memo(function CompanionNudge() {
  const t = useTranslations('reader');
  const [visible, setVisible] = useState(false);
 
  useEffect(() => {
- const tourDone = localStorage.getItem('read-pal-tour-complete') === 'true';
- const chatOpened = localStorage.getItem('read-pal-chat-opened') === 'true';
- const nudgeDismissed = localStorage.getItem('read-pal-companion-nudge') === 'true';
+ const tourDone = safeGetItem('read-pal-tour-complete') === 'true';
+ const chatOpened = safeGetItem('read-pal-chat-opened') === 'true';
+ const nudgeDismissed = safeGetItem('read-pal-companion-nudge') === 'true';
  if (tourDone && !chatOpened && !nudgeDismissed) {
   const timer = setTimeout(() => setVisible(true), 4000);
   return () => clearTimeout(timer);
@@ -19,7 +20,7 @@ export const CompanionNudge = React.memo(function CompanionNudge() {
 
  const handleDismiss = () => {
  setVisible(false);
- try { localStorage.setItem('read-pal-companion-nudge', 'true'); } catch (err) { console.warn('CompanionNudge: localStorage write failed', err); }
+ try { safeSetItem('read-pal-companion-nudge', 'true'); } catch (err) { console.warn('CompanionNudge: localStorage write failed', err); }
  };
 
  if (!visible) return null;

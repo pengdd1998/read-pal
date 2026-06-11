@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 
 const TOUR_KEY = 'read-pal-tour-complete';
 const TOUR_STEP_KEY = 'read-pal-tour-step';
@@ -24,14 +25,14 @@ export const FeatureTour = React.memo(function FeatureTour() {
  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
  useEffect(() => {
- const completed = localStorage.getItem(TOUR_KEY);
+ const completed = safeGetItem(TOUR_KEY);
  if (completed === 'true') return;
 
  // Restore saved step or start at 0
- const savedStep = localStorage.getItem(TOUR_STEP_KEY);
+ const savedStep = safeGetItem(TOUR_STEP_KEY);
  const startStep = savedStep ? parseInt(savedStep, 10) : 0;
  if (startStep >= STEP_KEYS.length) {
-  localStorage.setItem(TOUR_KEY, 'true');
+  safeSetItem(TOUR_KEY, 'true');
   return;
  }
 
@@ -65,18 +66,18 @@ export const FeatureTour = React.memo(function FeatureTour() {
  const handleNext = useCallback(() => {
  const next = step !== null ? step + 1 : 0;
  if (next >= STEP_KEYS.length) {
-  localStorage.setItem(TOUR_KEY, 'true');
-  localStorage.removeItem(TOUR_STEP_KEY);
+  safeSetItem(TOUR_KEY, 'true');
+  safeRemoveItem(TOUR_STEP_KEY);
   setStep(null);
  } else {
-  localStorage.setItem(TOUR_STEP_KEY, String(next));
+  safeSetItem(TOUR_STEP_KEY, String(next));
   setStep(next);
  }
  }, [step]);
 
  const handleSkip = useCallback(() => {
- localStorage.setItem(TOUR_KEY, 'true');
- localStorage.removeItem(TOUR_STEP_KEY);
+ safeSetItem(TOUR_KEY, 'true');
+ safeRemoveItem(TOUR_STEP_KEY);
  setStep(null);
  }, []);
 
