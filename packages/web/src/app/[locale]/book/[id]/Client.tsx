@@ -38,7 +38,15 @@ export default function BookDetailPage() {
  flashcardCount,
  tags,
  zoteroConnected,
+ refetch: refetchBook,
  } = useBookDetail(bookId, t);
+
+ // Refetch on tab focus
+ useEffect(() => {
+  const onFocus = () => refetchBook();
+  window.addEventListener('focus', onFocus);
+  return () => window.removeEventListener('focus', onFocus);
+ }, [refetchBook]);
 
  const [exportSuccess, setExportSuccess] = useState('');
  const exportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStatsData } from '@/hooks/useStatsData';
+import { useEffect } from 'react';
 import { StatsLoadingSkeleton } from '@/components/stats/StatsLoadingSkeleton';
 import { EmptyState } from '@/components/stats/EmptyState';
 import { OverviewCards } from '@/components/stats/OverviewCards';
@@ -22,6 +23,13 @@ export default function StatsPage() {
  usePageTitle(t('page_title'));
 
  const { data, sessions, flashcardStats, speedData, bookSpeeds, loading, error, refetch } = useStatsData();
+
+ // Refetch on tab focus
+ useEffect(() => {
+  const onFocus = () => refetch();
+  window.addEventListener('focus', onFocus);
+  return () => window.removeEventListener('focus', onFocus);
+ }, [refetch]);
 
  const stats = data?.stats;
  const weekly = data?.weeklyActivity || [];

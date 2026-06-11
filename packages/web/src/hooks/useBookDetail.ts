@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useBackgroundApi } from '@/hooks/useApi';
 import type {
@@ -26,6 +26,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
   const [flashcardCount, setFlashcardCount] = useState<number>(0);
   const [tags, setTags] = useState<Array<{ name: string; count: number }>>([]);
   const [zoteroConnected, setZoteroConnected] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const { fetch: bgFetch } = useBackgroundApi();
   const currentBookIdRef = useRef(bookId);
@@ -118,7 +119,9 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
     return () => {
       cancelled = true;
     };
-  }, [bookId, bgFetch, t]);
+  }, [bookId, bgFetch, t, retryCount]);
+
+  const refetch = useCallback(() => setRetryCount((c) => c + 1), []);
 
   return {
     book,
@@ -134,5 +137,6 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
     tags,
     zoteroConnected,
     setZoteroConnected,
+    refetch,
   };
 }
