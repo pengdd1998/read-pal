@@ -91,7 +91,7 @@ export default function OfflinePage() {
     } catch (err) {
       console.warn('OfflinePage: IndexedDB not available', err);
       if (!staleRef.current) {
-        setError(t('load_error', { defaultValue: 'Failed to load cached books' }));
+        setError(t('load_error'));
         setLoading(false);
       }
     }
@@ -156,7 +156,7 @@ export default function OfflinePage() {
                 onClick={() => { const staleRef = { current: false }; loadCachedBooks(staleRef); }}
                 className="ml-3 px-3 py-1 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-400"
               >
-                {t('tryAgain', { defaultValue: 'Retry' })}
+                {t('tryAgain')}
               </button>
             </div>
           )}

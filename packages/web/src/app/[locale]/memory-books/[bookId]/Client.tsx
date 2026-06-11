@@ -146,7 +146,7 @@ export default function ReadingMirrorPage() {
  if (!mirror?.htmlContent) return;
  const printWindow = window.open('', '_blank');
  if (!printWindow) {
-  toast(t('popupBlocked', { defaultValue: 'Pop-up blocked. Please allow pop-ups for this site.' }), 'error');
+  toast(t('popupBlocked'), 'error');
   return;
  }
  printWindow.document.write(mirror.htmlContent);

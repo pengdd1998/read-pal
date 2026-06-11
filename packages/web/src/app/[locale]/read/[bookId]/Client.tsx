@@ -87,7 +87,7 @@ export default function ReadPage() {
  // --- Render ---
  if (loading) {
  return (
-  <main id="main-content" aria-label={t('readingPage', { defaultValue: 'Reading' })} className="h-dvh bg-surface-1">
+  <main id="main-content" aria-label={t('readingPage')} className="h-dvh bg-surface-1">
   {/* Reader skeleton loader */}
   <div className="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center px-4 gap-3">
    <div className="w-8 h-8 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse" />
@@ -120,7 +120,7 @@ export default function ReadPage() {
  if (error || !book || chapters.length === 0) {
   const isNetworkError = error === t('failed_connect');
   return (
-  <main id="main-content" aria-label={t('readingPage', { defaultValue: 'Reading' })} className="flex items-center justify-center h-dvh bg-surface-1">
+  <main id="main-content" aria-label={t('readingPage')} className="flex items-center justify-center h-dvh bg-surface-1">
   <div className="text-center max-w-md px-4">
    <div className="text-4xl mb-4">{isNetworkError ? '🔌' : '📖'}</div>
    <p className="text-xl font-semibold mb-2">{error || t('unable_to_load')}</p>

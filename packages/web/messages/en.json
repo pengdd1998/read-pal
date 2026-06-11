@@ -1532,7 +1532,8 @@
     "how_well": "How well did you remember?",
     "keys_hint": "(keys 1-4)",
     "cover_alt": "Cover of {title}",
-    "progress_label": "Study progress"
+    "progress_label": "Study progress",
+    "review_deck_aria": "Review {title}, {count} due"
   },
   "knowledge": {
     "page_title": "Knowledge Graph",
@@ -1602,7 +1603,9 @@
     "back_online": "Back online",
     "loading": "Loading offline content...",
     "sync_failed": "Sync failed. Will retry later.",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "load_error": "Failed to load cached books",
+    "tryAgain": "Retry"
   },
   "welcome": {
     "page_title": "Welcome",
@@ -1891,7 +1894,8 @@
     "progress_failed_load": "Failed to load reading progress",
     "discussions_failed_load": "Failed to load discussions",
     "cancel": "Cancel",
-    "retry": "Retry"
+    "retry": "Retry",
+    "copy_invite_code": "Copy invite code"
   },
   "book": {
     "pageTitle": "Book Details",
@@ -2217,7 +2221,8 @@
     "single_book_title": "Single-Book Deep Analysis",
     "type_bookmark": "Bookmark",
     "type_highlight": "Highlight",
-    "type_note": "Note"
+    "type_note": "Note",
+    "retry": "Retry"
   },
   "seo": {
     "knowledge_title": "Knowledge Graph | read-pal",
@@ -2346,6 +2351,7 @@
     "network_error": "Network error. Please check your connection and try again."
   },
   "bookDetail": {
-    "progressAriaLabel": "Reading progress: {pct}%"
+    "progressAriaLabel": "Reading progress: {pct}%",
+    "dismiss": "Dismiss"
   }
 }

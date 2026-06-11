@@ -98,14 +98,14 @@ export default function BookDetailPage() {
   {error && (
   <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center justify-between animate-scale-in">
    <span>{error}</span>
-   <button onClick={() => setError('')} aria-label={t("dismiss", { defaultValue: "Dismiss" })} className="ml-2 text-red-400 hover:text-red-600 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400">&times;</button>
+   <button onClick={() => setError('')} aria-label={t("dismiss")} className="ml-2 text-red-400 hover:text-red-600 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400">&times;</button>
   </div>
   )}
   {/* Success banner */}
   {exportSuccess && (
   <div className="mb-6 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 flex items-center justify-between animate-scale-in">
    <span>{exportSuccess}</span>
-   <button onClick={() => setExportSuccess('')} aria-label={t("dismiss", { defaultValue: "Dismiss" })} className="ml-2 text-green-400 hover:text-green-600 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400">&times;</button>
+   <button onClick={() => setExportSuccess('')} aria-label={t("dismiss")} className="ml-2 text-green-400 hover:text-green-600 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400">&times;</button>
   </div>
   )}
   {/* Back */}

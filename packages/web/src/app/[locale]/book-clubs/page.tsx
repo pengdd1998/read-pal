@@ -93,7 +93,7 @@ export default function BookClubsPage() {
    }
    } catch (err) {
    console.warn('BookClubs: failed to load', err);
-   if (!cancelled) setError(t('clubs_failed_load', { defaultValue: 'Failed to load book clubs' }));
+   if (!cancelled) setError(t('clubs_failed_load'));
    } finally {
    if (!cancelled) setLoading(false);
    }

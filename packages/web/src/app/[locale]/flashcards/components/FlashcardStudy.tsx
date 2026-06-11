@@ -99,7 +99,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    aria-valuenow={currentIndex}
    aria-valuemin={0}
    aria-valuemax={cards.length}
-   aria-label={t('progress_label', { defaultValue: 'Study progress' })}
+   aria-label={t('progress_label')}
   >
   <div
    className="bg-gradient-to-r from-amber-400 to-teal-500 h-1.5 rounded-full transition-all duration-500"

@@ -1532,7 +1532,8 @@
     "how_well": "你记得怎么样？",
     "keys_hint": "（按键 1-4）",
     "cover_alt": "{title} 的封面",
-    "progress_label": "学习进度"
+    "progress_label": "学习进度",
+    "review_deck_aria": "复习 {title}，{count} 张待复习"
   },
   "knowledge": {
     "page_title": "知识图谱",
@@ -1602,7 +1603,9 @@
     "back_online": "已恢复在线",
     "loading": "正在加载离线内容...",
     "sync_failed": "同步失败，稍后将重试。",
-    "dismiss": "关闭"
+    "dismiss": "关闭",
+    "load_error": "加载缓存书籍失败",
+    "tryAgain": "重试"
   },
   "bookClubs": {
     "pageTitle": "读书会",
@@ -1665,7 +1668,8 @@
     "progress_failed_load": "加载阅读进度失败",
     "discussions_failed_load": "加载讨论失败",
     "cancel": "取消",
-    "retry": "重试"
+    "retry": "重试",
+    "copy_invite_code": "复制邀请码"
   },
   "book": {
     "pageTitle": "书籍详情",
@@ -2217,7 +2221,8 @@
     "single_book_title": "单本书深度分析",
     "type_bookmark": "书签",
     "type_highlight": "高亮",
-    "type_note": "笔记"
+    "type_note": "笔记",
+    "retry": "重试"
   },
   "seo": {
     "knowledge_title": "知识图谱 | read-pal",
@@ -2346,6 +2351,7 @@
     "network_error": "网络错误，请检查连接后重试。"
   },
   "bookDetail": {
-    "progressAriaLabel": "阅读进度：{pct}%"
+    "progressAriaLabel": "阅读进度：{pct}%",
+    "dismiss": "关闭"
   }
 }
