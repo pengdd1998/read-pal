@@ -117,10 +117,11 @@ export const QueueBanner = React.memo(function QueueBanner({ queuedCount, onSync
  const t = useTranslations('offline');
 
  return (
+ <div role="status">
  <button
   onClick={onSync}
+  aria-label={t('sync_queued', { count: queuedCount })}
   className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm font-medium min-h-[44px] shadow-lg bg-amber-500/90 text-white hover:bg-amber-600 transition-colors animate-fade-in focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
-  role="status"
  >
   <span className="flex items-center gap-1.5">
   <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -129,5 +130,6 @@ export const QueueBanner = React.memo(function QueueBanner({ queuedCount, onSync
   {t('sync_queued', { count: queuedCount })}
   </span>
  </button>
+ </div>
  );
 });
