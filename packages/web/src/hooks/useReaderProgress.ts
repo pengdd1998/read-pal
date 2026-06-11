@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { API_BASE_URL, api } from '@/lib/api';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeSetItem } from '@/lib/safe-storage';
 
 interface UseReaderProgressOptions {
   bookId: string;

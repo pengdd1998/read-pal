@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem } from '@/lib/safe-storage';
 
 interface SelectionHintProps {
  onDismiss: () => void;

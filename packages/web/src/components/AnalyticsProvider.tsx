@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname } from '@/i18n/navigation';
 import { analytics } from '@/lib/analytics';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem } from '@/lib/safe-storage';
 
 /**
  * Minimal analytics initializer.

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 
 export const CompanionNudge = React.memo(function CompanionNudge() {
  const t = useTranslations('reader');

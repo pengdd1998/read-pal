@@ -11,7 +11,7 @@ import {
 } from '@/lib/companion-prompts';
 import type { Message } from '@/hooks/useStreamingChat';
 import type { CompanionChatHandle } from './CompanionChat';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 
 interface UseCompanionEffectsParams {
   ref: React.Ref<CompanionChatHandle>;

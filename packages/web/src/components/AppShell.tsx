@@ -4,7 +4,7 @@ import { ReactNode, useState, useEffect, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { usePathname } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeSetItem } from '@/lib/safe-storage';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ToastProvider, useToast } from '@/components/Toast';
 import { PageTransition } from '@/components/PageTransition';

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { authFetch } from '@/lib/auth-fetch';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
 import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
 import { CompanionStep } from '@/components/onboarding/CompanionStep';

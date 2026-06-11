@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeRemoveItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
 
 export const AccountSection = React.memo(function AccountSection() {
