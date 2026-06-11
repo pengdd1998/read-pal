@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Chapter } from '@read-pal/shared';
 
@@ -53,6 +53,12 @@ export const SearchOverlay = React.memo(function SearchOverlay({
   .filter(Boolean) as SearchResult[];
  }, [searchQuery, chapters, t]);
 
+ const handleResultNavigate = useCallback((chapterIndex: number) => {
+  onNavigate(chapterIndex);
+  onClose();
+  onQueryChange('');
+ }, [onNavigate, onClose, onQueryChange]);
+
  return (
  <div
   className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-fade-in"
@@ -101,11 +107,7 @@ export const SearchOverlay = React.memo(function SearchOverlay({
      key={r.index}
      result={r}
      isCurrent={r.index === currentChapter}
-     onNavigate={() => {
-      onNavigate(r.index);
-      onClose();
-      onQueryChange('');
-     }}
+     onNavigate={handleResultNavigate}
      t={t}
     />
     ))
@@ -125,7 +127,7 @@ export const SearchOverlay = React.memo(function SearchOverlay({
 interface SearchResultItemProps {
  result: SearchResult;
  isCurrent: boolean;
- onNavigate: () => void;
+ onNavigate: (chapterIndex: number) => void;
  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
@@ -137,7 +139,7 @@ const SearchResultItem = React.memo(function SearchResultItem({
 }: SearchResultItemProps) {
  return (
  <button
-  onClick={onNavigate}
+  onClick={() => onNavigate(result.index)}
   className={`w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
   isCurrent ? 'bg-amber-50/50 dark:bg-amber-900/5' : ''
   }`}

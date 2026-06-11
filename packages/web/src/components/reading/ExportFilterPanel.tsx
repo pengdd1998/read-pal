@@ -9,13 +9,14 @@ interface TypeFilterButtonProps {
  isSelected: boolean;
  label: string;
  ariaLabel: string;
- onToggle: () => void;
+ value: string;
+ onToggleType: (type: string) => void;
 }
 
-const TypeFilterButton = React.memo(function TypeFilterButton({ opt, isSelected, label, ariaLabel, onToggle }: TypeFilterButtonProps) {
+const TypeFilterButton = React.memo(function TypeFilterButton({ opt, isSelected, label, ariaLabel, value, onToggleType }: TypeFilterButtonProps) {
  return (
   <button
-   onClick={onToggle}
+   onClick={() => onToggleType(value)}
    aria-pressed={isSelected}
    aria-label={ariaLabel}
    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
@@ -86,7 +87,8 @@ export const ExportFilterPanel = React.memo(function ExportFilterPanel({
 	     isSelected={selectedTypes.has(opt.value)}
 	     label={t(opt.labelKey)}
 	     ariaLabel={t(opt.labelKey)}
-	     onToggle={() => onToggleType(opt.value)}
+	     value={opt.value}
+	     onToggleType={onToggleType}
 	    />
 	    ))}
 	   </div>
