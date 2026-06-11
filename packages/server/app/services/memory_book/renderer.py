@@ -7,6 +7,7 @@ from typing import Any
 from app.services.memory_book.renderer_css import _build_stylesheet
 from app.services.memory_book.renderer_sections import _render_chapter_html
 from app.services.memory_book.renderer_utils import _esc
+from app.utils.i18n import DEFAULT_LANGUAGE
 
 
 def _assemble_document(
@@ -14,6 +15,7 @@ def _assemble_document(
     book_author: str,
     stats_html: str,
     chapters_html: str,
+    lang: str = DEFAULT_LANGUAGE,
 ) -> str:
     """Assemble the full HTML document from pre-rendered parts."""
     css = _build_stylesheet()
@@ -24,7 +26,7 @@ def _assemble_document(
         'if(el)el.scrollIntoView({behavior:"smooth",block:"start"})}});'
     )
     return (
-        '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+        f'<!DOCTYPE html><html lang="{lang}"><head><meta charset="utf-8">'
         + f'<title>{book_title} — Reading Mirror</title>'
         + f'<style>{css}</style></head><body>'
         + f'<div class="cover"><h1>{book_title}</h1>'

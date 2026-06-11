@@ -6,6 +6,7 @@ from typing import Any
 
 from app.models.annotation import Annotation, AnnotationType
 from app.utils.annotations import match_annotation_type
+from app.utils.i18n import DEFAULT_LANGUAGE
 
 
 def _group_by_type(annotations: list[Annotation]) -> tuple[list[Annotation], list[Annotation], list[Annotation]]:
@@ -162,6 +163,7 @@ _HTML_STYLES = (
 def export_html(
     annotations: list[Annotation],
     book_info: dict[str, Any],
+    lang: str = DEFAULT_LANGUAGE,
 ) -> str:
     """Convert annotations to styled HTML."""
     title = book_info.get('title', 'Unknown')
@@ -176,7 +178,7 @@ def export_html(
 
     return (
         '<!DOCTYPE html>'
-        '<html lang="en"><head>'
+        f'<html lang="{lang}"><head>'
         '<meta charset="utf-8">'
         f'<title>{safe_title} — Annotations</title>'
         f'<style>{_HTML_STYLES}</style></head><body>'

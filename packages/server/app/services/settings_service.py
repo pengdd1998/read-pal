@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.utils.db import db_error_guard
+from app.utils.i18n import DEFAULT_LANGUAGE
 
 logger = logging.getLogger('read-pal.settings')
 
@@ -17,7 +18,7 @@ async def get_user_settings(db: AsyncSession, user_id: UUID) -> dict:
     """Return the user's settings dict with a default language."""
     user = await _get_user(db, user_id)
     settings = user.settings or {}
-    settings.setdefault('language', 'en')
+    settings.setdefault('language', DEFAULT_LANGUAGE)
     return settings
 
 
