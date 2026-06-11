@@ -86,7 +86,22 @@
     "llm_log_not_found": "LLM log not found",
     "validation_failed": "Request validation failed",
     "parse_failed": "Failed to parse {filename}. The file may be corrupted or in an unsupported format.",
-    "api_key_limit_reached": "Maximum number of API keys reached (5)"
+    "api_key_limit_reached": "Maximum number of API keys reached (5)",
+    "book_not_found_id": "Book {book_id} not found",
+    "book_not_found_user": "Book {book_id} not found for user {user_id}"
+  },
+  "interventions": {
+    "speed_drop": "Your reading speed dropped significantly — is the material getting challenging? I can help explain difficult sections.",
+    "re_reading": "I noticed you're revisiting the same section. Want me to explain or summarize this part?",
+    "optimal_timing": "Your data shows you read best between {hour_range}. That might be your golden reading window!",
+    "marathon": "You've been reading for {session_count} sessions today ({total_minutes} min). Consider taking a break to let the material sink in.",
+    "long_session": "You have been reading for {minutes} minutes. A short break can improve retention and focus.",
+    "low_engagement": "Your highlights and notes have dropped recently. Try pausing to reflect on what you've read — active engagement helps retention.",
+    "welcome_back": "Welcome back! It's been {days} days since your last reading session. Pick up where you left off?"
+  },
+  "memory_book": {
+    "no_annotations_message": "Start highlighting and taking notes to see your annotations woven into a narrative here.",
+    "placeholder_message": "This section will be available in a future update."
   },
   "companion": {
     "fallback_error": "I'm having trouble connecting to my AI service right now. Please try again in a moment.",

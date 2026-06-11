@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.intervention_feedback import InterventionFeedback
+from app.utils.i18n import t
 
 
 async def store_feedback(
@@ -28,7 +29,7 @@ async def store_feedback(
     )
     db.add(feedback)
     await db.flush()
-    return {'message': 'Feedback recorded'}
+    return {'message': t('errors.feedback_recorded')}
 
 
 async def get_feedback_history(

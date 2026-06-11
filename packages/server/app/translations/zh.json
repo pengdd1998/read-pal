@@ -86,7 +86,22 @@
     "llm_log_not_found": "LLM日志未找到",
     "validation_failed": "请求参数验证失败",
     "parse_failed": "解析 {filename} 失败。文件可能已损坏或格式不受支持。",
-    "api_key_limit_reached": "API 密钥数量已达上限（5个）"
+    "api_key_limit_reached": "API 密钥数量已达上限（5个）",
+    "book_not_found_id": "书籍 {book_id} 未找到",
+    "book_not_found_user": "未找到用户 {user_id} 的书籍 {book_id}"
+  },
+  "interventions": {
+    "speed_drop": "你的阅读速度明显下降了——内容是否变得有挑战性？我可以帮你解释难点部分。",
+    "re_reading": "我注意到你在重复阅读同一段落。需要我解释或总结这部分内容吗？",
+    "optimal_timing": "数据显示你在 {hour_range} 期间阅读效果最佳。这可能是你的黄金阅读时间！",
+    "marathon": "你今天已经阅读了 {session_count} 次（共 {total_minutes} 分钟）。建议休息一下，让内容在脑海中沉淀。",
+    "long_session": "你已经连续阅读了 {minutes} 分钟。短暂休息可以提高记忆力和专注度。",
+    "low_engagement": "你最近的高亮和笔记有所减少。试着停下来思考一下已读内容——主动参与有助于记忆。",
+    "welcome_back": "欢迎回来！距离你上次阅读已经 {days} 天了。要继续上次的进度吗？"
+  },
+  "memory_book": {
+    "no_annotations_message": "开始高亮和记笔记，你的标注将被编织成一段叙事。",
+    "placeholder_message": "此部分将在未来的更新中提供。"
   },
   "companion": {
     "fallback_error": "AI 服务暂时无法连接，请稍后再试。",

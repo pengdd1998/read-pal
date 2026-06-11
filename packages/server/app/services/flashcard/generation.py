@@ -15,6 +15,7 @@ from app.prompts import FLASHCARD_GENERATION_HUMAN, FLASHCARD_GENERATION_SYSTEM
 from app.services.llm import safe_llm_call
 from app.utils import utcnow
 from app.utils.db import db_error_guard
+from app.utils.i18n import t
 
 from .sm2 import DEFAULT_EASE_FACTOR
 
@@ -35,7 +36,7 @@ async def _fetch_book_and_annotations(
         )
         book = book_result.scalar_one_or_none()
         if not book:
-            raise ValueError(f'Book {book_id} not found for user {user_id}')
+            raise ValueError(t('errors.book_not_found_user', book_id=str(book_id), user_id=str(user_id)))
 
         ann_result = await db.execute(
             select(Annotation)

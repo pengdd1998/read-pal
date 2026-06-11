@@ -24,6 +24,7 @@ from app.schemas.llm_outputs import (
 )
 from app.services.llm import safe_llm_invoke
 from app.services.memory_book.section_data_dispatch import prepare_section_data
+from app.utils.i18n import t
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.memory_book')
@@ -114,5 +115,5 @@ def _placeholder_section(section_type: str) -> dict[str, Any]:
         'type': section_type,
         'title': section_names.get(section_type, section_type),
         'placeholder': True,
-        'message': 'This section will be available in a future update.',
+        'message': t('memory_book.placeholder_message'),
     }

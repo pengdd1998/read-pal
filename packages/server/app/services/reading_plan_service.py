@@ -14,6 +14,7 @@ from app.models.reading_plan import ReadingPlan
 from app.prompts import READING_PLAN_HUMAN, READING_PLAN_SYSTEM
 from app.services.llm import safe_llm_call
 from app.utils.db import db_error_guard
+from app.utils.i18n import t
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.reading_plan')
@@ -94,7 +95,7 @@ async def generate_plan(
 
     book = await _load_book(db, user_id, book_id)
     if book is None:
-        raise ValueError(f'Book {book_id} not found')
+        raise ValueError(t('errors.book_not_found_id', book_id=str(book_id)))
     await _deactivate_existing_plan(db, user_id, book_id)
 
     # Generate plan via LLM
@@ -196,7 +197,7 @@ async def _load_book(db: AsyncSession, user_id: UUID, book_id: UUID) -> Book | N
         )
     book = result.scalar_one_or_none()
     if book is None:
-        raise ValueError(f'Book {book_id} not found for user {user_id}')
+        raise ValueError(t('errors.book_not_found_user', book_id=str(book_id), user_id=str(user_id)))
     return book
 
 

@@ -21,6 +21,7 @@ from app.services.memory_book.section_generation import (
     _generate_section,
     _placeholder_section,
 )
+from app.utils.i18n import t
 
 logger = structlog.get_logger('read-pal.memory_book')
 
@@ -74,7 +75,7 @@ async def _generate_all_sections(
                 return {
                     'type': section_type,
                     'title': 'No Annotations Yet',
-                    'message': 'Start highlighting and taking notes to see your annotations woven into a narrative here.',
+                    'message': t('memory_book.no_annotations_message'),
                 }
             if section_type in _LLM_SECTIONS:
                 return await _generate_section(

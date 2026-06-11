@@ -14,6 +14,7 @@ from app.models.book import Book, BookFileType, BookStatus
 from app.models.collection import Collection
 from app.utils import utcnow
 from app.utils.db import db_error_guard
+from app.utils.i18n import t
 from app.schemas.book import BookCreate, BookUpdate
 
 logger = logging.getLogger('read-pal.books')
@@ -234,7 +235,7 @@ async def get_book_chapter_ids(
     book = await get_book(db, user_id, book_id)
     if book is None:
         from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail={'code': 'NOT_FOUND', 'message': f'Book {book_id} not found'})
+        raise HTTPException(status_code=404, detail={'code': 'NOT_FOUND', 'message': t('errors.book_not_found_id', book_id=str(book_id))})
     data = await get_book_content(db, user_id, book_id, lang)
     chapters = data.get('chapters', []) if data else []
     return [{'id': c['id']} for c in chapters]

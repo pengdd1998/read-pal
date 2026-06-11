@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from app.models.reading_session import ReadingSession
 from app.utils import utcnow
+from app.utils.i18n import t
 
 # ---------------------------------------------------------------------------
 # Thresholds
@@ -87,10 +88,7 @@ def check_speed_drop(sessions: list[ReadingSession]) -> dict | None:
             'interventionNeeded': True,
             'type': 'speed_drop',
             'priority': 'medium',
-            'message': (
-                'Your reading speed dropped significantly — is the material '
-                'getting challenging? I can help explain difficult sections.'
-            ),
+            'message': t('interventions.speed_drop'),
         }
     return None
 
@@ -124,10 +122,7 @@ def check_re_reading(sessions: list[ReadingSession]) -> dict | None:
             'interventionNeeded': True,
             'type': 're_reading',
             'priority': 'low',
-            'message': (
-                'I noticed you\'re revisiting the same section. '
-                'Want me to explain or summarize this part?'
-            ),
+            'message': t('interventions.re_reading'),
         }
     return None
 
@@ -156,10 +151,7 @@ def check_optimal_timing(sessions: list[ReadingSession]) -> dict | None:
             'interventionNeeded': True,
             'type': 'optimal_timing',
             'priority': 'low',
-            'message': (
-                f'Your data shows you read best between {hour_range}. '
-                'That might be your golden reading window!'
-            ),
+            'message': t('interventions.optimal_timing', hour_range=hour_range),
         }
     return None
 
@@ -178,10 +170,10 @@ def check_marathon(today_sessions: list) -> dict | None:
         'interventionNeeded': True,
         'type': 'marathon',
         'priority': 'medium',
-        'message': (
-            f"You've been reading for {len(today_sessions)} sessions "
-            f'today ({total_minutes} min). Consider taking a break to '
-            'let the material sink in.'
+        'message': t(
+            'interventions.marathon',
+            session_count=len(today_sessions),
+            total_minutes=total_minutes,
         ),
     }
 
@@ -199,10 +191,7 @@ def check_long_session(today_sessions: list) -> dict | None:
         'interventionNeeded': True,
         'type': 'long_session',
         'priority': 'high',
-        'message': (
-            f'You have been reading for {minutes} minutes. '
-            'A short break can improve retention and focus.'
-        ),
+        'message': t('interventions.long_session', minutes=minutes),
     }
 
 
@@ -227,11 +216,7 @@ def check_low_engagement(sessions: list) -> dict | None:
         'interventionNeeded': True,
         'type': 'low_engagement',
         'priority': 'low',
-        'message': (
-            'Your highlights and notes have dropped recently. '
-            'Try pausing to reflect on what you\'ve read — active '
-            'engagement helps retention.'
-        ),
+        'message': t('interventions.low_engagement'),
     }
 
 
@@ -248,8 +233,5 @@ def check_welcome_back(sessions: list, today_sessions: list) -> dict | None:
         'interventionNeeded': True,
         'type': 'welcome_back',
         'priority': 'medium',
-        'message': (
-            f'Welcome back! It\'s been {gap.days} days since your '
-            'last reading session. Pick up where you left off?'
-        ),
+        'message': t('interventions.welcome_back', days=gap.days),
     }
