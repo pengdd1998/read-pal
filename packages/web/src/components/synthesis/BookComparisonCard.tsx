@@ -71,7 +71,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
    id="compare-book-1"
    value={compareBook1}
    onChange={(e) => setCompareBook1(e.target.value)}
-   className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
+   className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg bg-surface-0 text-gray-800 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
    >
    <option value="">{t('compare_select')}</option>
    {books.map((book) => (
@@ -89,7 +89,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
    id="compare-book-2"
    value={compareBook2}
    onChange={(e) => setCompareBook2(e.target.value)}
-   className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
+   className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg bg-surface-0 text-gray-800 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
    >
    <option value="">{t('compare_select')}</option>
    {books.map((book) => (
@@ -105,7 +105,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">{t('same_book_error')}</p>
   )}
 
-  <button
+  <button type="button"
   onClick={handleCompare}
   disabled={compareLoading || !compareBook1 || !compareBook2 || compareBook1 === compareBook2}
   className="w-full px-4 py-2 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"

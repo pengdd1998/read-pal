@@ -118,7 +118,7 @@ export const QueueBanner = React.memo(function QueueBanner({ queuedCount, onSync
 
  return (
  <div role="status">
- <button
+ <button type="button"
   onClick={onSync}
   aria-label={t('sync_queued', { count: queuedCount })}
   className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm font-medium min-h-[44px] shadow-lg bg-amber-500/90 text-white hover:bg-amber-600 transition-colors animate-fade-in focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"

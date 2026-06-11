@@ -16,14 +16,14 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
  if (variant === 'no-decks') {
  return (
   <main className="max-w-lg mx-auto px-4 py-8 sm:py-12 animate-fade-in">
-  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+  <h1 className="text-2xl font-bold text-gray-900 mb-6">
    {t('page_title')}
   </h1>
 
   <div className="card text-center py-12 sm:py-16">
    <span className="text-5xl block mb-4">{'\uD83D\uDCC7'}</span>
-   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('empty_title')}</h2>
-   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">
+   <h2 className="text-xl font-bold text-gray-900 mb-2">{t('empty_title')}</h2>
+   <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
    {t('empty_desc')}
    </p>
    <div className="flex flex-col gap-3 max-w-xs mx-auto mb-8 text-left">
@@ -32,7 +32,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
     <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
      {step}
     </span>
-    <p className="text-sm text-gray-600 dark:text-gray-400">
+    <p className="text-sm text-gray-600">
      {t(`empty_step${step}` as 'empty_step1' | 'empty_step2' | 'empty_step3')}
     </p>
     </div>
@@ -55,8 +55,8 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
   <h1 className="sr-only">{t('page_title')}</h1>
   <div className="card text-center py-16">
    <span className="text-5xl block mb-4">{'\uD83C\uDF89'}</span>
-   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('review_complete_title')}</h2>
-   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+   <h2 className="text-xl font-bold text-gray-900 mb-2">{t('review_complete_title')}</h2>
+   <p className="text-sm text-gray-500 mb-6">
    {t('review_complete_desc', { count: reviewedCount })}
    </p>
    <div className="flex gap-3 justify-center">
@@ -79,8 +79,8 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
   <h1 className="sr-only">{t('page_title')}</h1>
   <div className="card text-center py-16">
   <span className="text-5xl block mb-4">{'\u2705'}</span>
-  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('all_caught_up')}</h2>
-  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+  <h2 className="text-xl font-bold text-gray-900 mb-2">{t('all_caught_up')}</h2>
+  <p className="text-sm text-gray-500 mb-6">
    {t('all_caught_up_desc')}
   </p>
   <div className="flex gap-3 justify-center">

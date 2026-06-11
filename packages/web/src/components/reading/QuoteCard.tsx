@@ -118,10 +118,10 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
    {/* Theme selector */}
    <div className="flex items-center gap-2">
-   <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
+   <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
     {tr('theme_label')}
    </span>
-   <button
+   <button type="button"
     onClick={() => setTheme('warm')}
     className={`w-7 h-7 rounded-full bg-gradient-to-br from-amber-100 via-orange-100 to-amber-200 border-2 transition-all duration-200 ${
     theme === 'warm'
@@ -130,12 +130,12 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
     }`}
     aria-label={tc('warm_theme')}
    />
-   <button
+   <button type="button"
     onClick={() => setTheme('dark')}
     className={`w-7 h-7 rounded-full bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 border-2 transition-all duration-200 ${
     theme === 'dark'
      ? 'border-amber-500 scale-110 shadow-glow-amber'
-     : 'border-transparent hover:border-gray-500 dark:hover:border-gray-400 hover:scale-105'
+     : 'border-transparent hover:border-gray-500 hover:scale-105'
     }`}
     aria-label={tc('dark_theme')}
    />
@@ -144,7 +144,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
    {/* Action buttons */}
    <div className="flex items-center gap-2">
    {/* Copy Image */}
-   <button
+   <button type="button"
     onClick={handleCopyImage}
     className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 hover:bg-white/20 border border-white/10 hover:border-white/20"
     title={tc('copy_image_to_clipboard')}
@@ -168,7 +168,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
    </button>
 
    {/* Native Share / Download */}
-   <button
+   <button type="button"
     onClick={handleNativeShare}
     className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md hover:shadow-lg focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     title={typeof navigator.share === 'function' ? tc('share_via_apps') : tc('download_image')}
@@ -181,7 +181,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
    </button>
 
    {/* Download Image */}
-   <button
+   <button type="button"
     onClick={handleDownload}
     disabled={downloading}
     className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 hover:bg-white/20 border border-white/10 hover:border-white/20 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -205,7 +205,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
    </button>
 
    {/* Close */}
-   <button
+   <button type="button"
     onClick={onClose}
     className="flex items-center justify-center w-11 h-11 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 border border-white/5 transition-all duration-200 active:scale-95"
     aria-label={tr('share_close_quote')}

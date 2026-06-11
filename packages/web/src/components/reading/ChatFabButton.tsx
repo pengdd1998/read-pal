@@ -46,7 +46,7 @@ export const ChatFabButton = React.memo(function ChatFabButton({
  }), [btnPos.x, btnPos.y, isDragging, isSnapping, snapTransition]);
 
  return (
- <button
+ <button type="button"
   ref={btnRef}
   id="tour-ai-companion"
   onClick={(e) => {

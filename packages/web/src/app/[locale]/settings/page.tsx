@@ -129,7 +129,7 @@ export default function SettingsPage() {
             </svg>
           </div>
           <p className="text-lg font-semibold mb-4">{t('failed_load')}</p>
-          {error && <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{error}</p>}
+          {error && <p className="text-sm text-gray-500 mb-4">{error}</p>}
           <button type="button" onClick={loadSettings} className="btn btn-primary min-h-[44px]">{t('retry')}</button>
         </div>
       </div>
@@ -141,7 +141,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="mb-6 sm:mb-8 animate-slide-up">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('page_title')}</h1>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">{t('customize_experience')}</p>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">{t('customize_experience')}</p>
       </div>
 
       <SavingIndicator

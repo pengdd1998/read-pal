@@ -126,11 +126,11 @@ export const KnowledgeGraph = React.memo(React.forwardRef<SVGSVGElement, Knowled
  return (
   <div className="lg:col-span-2 bg-surface-0 rounded-xl border border-surface-3 overflow-hidden">
   <div className="p-3 border-b border-surface-2 flex items-center justify-between">
-   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{conceptMapLabel}</span>
-   <span className="text-xs text-gray-500 dark:text-gray-400">{clickHintLabel}</span>
+   <span className="text-sm font-medium text-gray-700">{conceptMapLabel}</span>
+   <span className="text-xs text-gray-500">{clickHintLabel}</span>
   </div>
   {loading ? (
-   <div className="relative bg-gray-50/50 dark:bg-gray-800/50" style={{ height: dimensions.height || 420 }}>
+   <div className="relative bg-gray-50/50" style={{ height: dimensions.height || 420 }}>
    <svg className="w-full h-full" viewBox="0 0 600 420" aria-hidden="true">
     {/* Skeleton connection lines */}
     <line x1="120" y1="100" x2="300" y2="180" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />

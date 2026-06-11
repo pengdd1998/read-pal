@@ -23,13 +23,13 @@ export const LanguageSwitcher = React.memo(function LanguageSwitcher() {
  return (
  <div className="flex items-center gap-1 rounded-lg border border-surface-3 p-0.5">
   {languages.map((lang) => (
-  <button
+  <button type="button"
    key={lang.code}
    onClick={() => switchLocale(lang.code)}
    className={`px-2.5 py-1 text-sm rounded-md transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    locale === lang.code
     ? 'bg-amber-600 text-white'
-    : 'text-gray-600 dark:text-gray-300 hover:bg-surface-1'
+    : 'text-gray-600 hover:bg-surface-1'
    }`}
    aria-label={tc('switch_to_language', { language: lang.label })}
   >

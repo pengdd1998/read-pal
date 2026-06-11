@@ -28,7 +28,7 @@ const AppearanceCard = React.memo(function AppearanceCard({ settings, saving, on
   <legend className="block text-sm font-medium mb-2">{t('theme_label')}</legend>
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
    {(['system', 'light', 'dark'] as const).map((v) => (
-   <button
+   <button type="button"
     key={v}
     onClick={() => onSave({ theme: v })}
     disabled={saving}
@@ -64,7 +64,7 @@ const AppearanceCard = React.memo(function AppearanceCard({ settings, saving, on
    disabled={saving}
    aria-label={t('font_size_label')}
   />
-  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+  <div className="flex justify-between text-xs text-gray-500 mt-1">
    <span>A</span>
    <span className="text-lg">A</span>
   </div>
@@ -75,7 +75,7 @@ const AppearanceCard = React.memo(function AppearanceCard({ settings, saving, on
   <legend className="block text-sm font-medium mb-2">{t('font_family_label')}</legend>
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
    {(['Inter', 'Georgia', 'Merriweather', 'system-ui'] as const).map((f) => (
-   <button
+   <button type="button"
     key={f}
     onClick={() => onSave({ fontFamily: f })}
     disabled={saving}
@@ -101,7 +101,7 @@ const ReadingGoalsCard = React.memo(function ReadingGoalsCard({ settings, saving
   <div className="flex items-center gap-3">
    <div className="flex gap-1.5">
    {[1, 2, 3, 5, 7].map((n) => (
-    <button
+    <button type="button"
     key={n}
     onClick={() => onSave({ readingGoal: n })}
     disabled={saving}
@@ -139,7 +139,7 @@ const ReadingGoalsCard = React.memo(function ReadingGoalsCard({ settings, saving
    disabled={saving}
    aria-label={t('daily_reading_time')}
   />
-  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+  <div className="flex justify-between text-xs text-gray-500 mt-1">
    <span>5{t('min_suffix')}</span>
    <span>1{t('hr_suffix')}</span>
    <span>2{t('hr_suffix')}</span>
@@ -158,7 +158,7 @@ const ReadingFriendCard = React.memo(function ReadingFriendCard({ settings, savi
   <legend className="block text-sm font-medium mb-3">{t('choose_companion')}</legend>
   <div className="grid grid-cols-1 gap-2">
    {PERSONAS.map((p) => (
-   <button
+   <button type="button"
     key={p.id}
     onClick={() => onSave({ friendPersona: p.id })}
     disabled={saving}
@@ -174,7 +174,7 @@ const ReadingFriendCard = React.memo(function ReadingFriendCard({ settings, savi
     </div>
     <div className="text-left">
     <div className="font-medium text-sm">{p.name}</div>
-    <div className="text-xs text-gray-500 dark:text-gray-400">{t(`persona_${p.id}_desc`)}</div>
+    <div className="text-xs text-gray-500">{t(`persona_${p.id}_desc`)}</div>
     </div>
     {settings.friendPersona === p.id && (
     <svg aria-hidden="true" className="w-5 h-5 text-amber-500 ml-auto flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -195,7 +195,7 @@ const ReadingFriendCard = React.memo(function ReadingFriendCard({ settings, savi
    ['normal', 'freq_normal'],
    ['frequent', 'freq_frequent'],
    ] as const).map(([value, labelKey]) => (
-   <button
+   <button type="button"
     key={value}
     onClick={() => onSave({ friendFrequency: value })}
     disabled={saving}
@@ -209,7 +209,7 @@ const ReadingFriendCard = React.memo(function ReadingFriendCard({ settings, savi
     <div className="text-sm font-medium">
     {t(labelKey)}
     </div>
-    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t(`${labelKey}_desc`)}</div>
+    <div className="text-xs text-gray-500 mt-0.5">{t(`${labelKey}_desc`)}</div>
    </button>
    ))}
   </div>

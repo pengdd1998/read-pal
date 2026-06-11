@@ -37,14 +37,14 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
  const isRead = stat && stat.lastActivity;
 
  return (
- <button
+ <button type="button"
   onClick={() => onSelect(chapterIndex)}
   className={`w-full text-left p-3 rounded-xl transition-all duration-150 focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:outline-none ${
   isCurrent
    ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
    : isRead
-   ? 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-surface-1 border border-transparent'
-   : 'border border-transparent hover:bg-gray-50/30 dark:hover:bg-gray-800/30'
+   ? 'bg-gray-50/50 hover:bg-surface-1 border border-transparent'
+   : 'border border-transparent hover:bg-gray-50/30'
   }`}
  >
   <div className="flex items-center gap-2 mb-1">
@@ -54,12 +54,12 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
    ? 'bg-amber-500'
    : isRead
    ? 'bg-teal-400'
-   : 'bg-gray-300 dark:bg-gray-600'
+   : 'bg-gray-300'
   }`} />
   <span className={`text-xs font-medium truncate ${
    isCurrent
    ? 'text-amber-700 dark:text-amber-300'
-   : 'text-gray-700 dark:text-gray-300'
+   : 'text-gray-700'
   }`}>
    {title}
   </span>
@@ -79,7 +79,7 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
     style={{ width: `${barWidth}%` }}
    />
    </div>
-   <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">
+   <div className="flex items-center gap-1.5 text-[10px] text-gray-500 flex-shrink-0">
    {stat.highlights > 0 && <span>{stat.highlights}{t('highlight_abbr')}</span>}
    {stat.notes > 0 && <span>{stat.notes}{t('note_abbr')}</span>}
    {stat.bookmarks > 0 && <span>{stat.bookmarks}{t('bookmark_abbr')}</span>}
@@ -150,22 +150,22 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   >
   <div className="sticky top-0 bg-surface-0 border-b border-surface-3 p-4 flex items-center justify-between z-10">
    <div>
-   <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('timeline_title')}</h2>
-   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('timeline_subtitle')}</p>
+   <h2 className="font-semibold text-gray-900">{t('timeline_title')}</h2>
+   <p className="text-xs text-gray-500 mt-0.5">{t('timeline_subtitle')}</p>
    </div>
-   <button
+   <button type="button"
    onClick={onClose}
    className="p-1.5 rounded-lg hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={t('timeline_close')}
    >
-   <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>
    </button>
   </div>
 
   {/* Legend */}
-  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400">
+  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-[10px] text-gray-500">
    <span className="flex items-center gap-1">
    <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" /> {t('timeline_highlights')}
    </span>
@@ -187,7 +187,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
    </div>
    ) : error ? (
    <div className="flex flex-col items-center gap-3 py-8 text-center">
-    <p className="text-sm text-gray-500 dark:text-gray-400">{t('timeline_load_failed')}</p>
+    <p className="text-sm text-gray-500">{t('timeline_load_failed')}</p>
     <button type="button" onClick={loadStats} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
      {t('timeline_retry')}
     </button>

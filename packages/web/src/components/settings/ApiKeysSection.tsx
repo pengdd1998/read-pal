@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -22,13 +22,13 @@ const ApiKeyRow = React.memo(function ApiKeyRow({ k, isRevoking, revokeLabel, re
   <div className="flex items-center justify-between p-3 rounded-xl bg-surface-1 border border-surface-3">
    <div className="min-w-0 flex-1">
     <div className="text-sm font-medium truncate">{k.name}</div>
-    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
+    <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
      <code className="font-mono">{k.keyPrefix}...</code>
      <span>{createdLabel} {new Date(k.createdAt).toLocaleDateString(locale)}</span>
      {k.lastUsedAt && <span>{lastUsedLabel} {new Date(k.lastUsedAt).toLocaleDateString(locale)}</span>}
     </div>
    </div>
-   <button
+   <button type="button"
     onClick={() => onRevoke(k.id)}
     disabled={isRevoking}
     aria-label={`${revokeLabel} ${k.name}`}
@@ -67,18 +67,20 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
  const [newKey, setNewKey] = useState<string | null>(null);
  const [showCreate, setShowCreate] = useState(false);
  const [revokingId, setRevokingId] = useState<string | null>(null);
+ const mountedRef = useRef(true);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const loadKeys = useCallback(async () => {
  try {
   const res = await api.get<ApiKeyData[]>('/api/api-keys');
-  if (res.success && res.data) {
+  if (res.success && res.data && mountedRef.current) {
   setKeys(res.data);
   }
  } catch (err) {
   warn('ApiKeysSection: load failed', err);
-  toast(t('api_key_load_failed'), 'error');
+  if (mountedRef.current) toast(t('api_key_load_failed'), 'error');
  }
- setLoading(false);
+ if (mountedRef.current) setLoading(false);
  }, [t, toast]);
 
  useEffect(() => {
@@ -92,7 +94,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   const res = await api.post<{ id: string; name: string; key: string; keyPrefix: string }>('/api/api-keys', {
   name: newKeyName.trim(),
   });
-  if (res.success && res.data) {
+  if (res.success && res.data && mountedRef.current) {
   setNewKey(res.data.key);
   setNewKeyName('');
   setShowCreate(false);
@@ -101,24 +103,24 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   }
  } catch (err) {
   warn('ApiKeysSection: create failed', err);
-  toast(t('api_key_create_failed'), 'error');
+  if (mountedRef.current) toast(t('api_key_create_failed'), 'error');
  }
- setCreating(false);
+ if (mountedRef.current) setCreating(false);
  }
 
  async function handleRevoke(id: string) {
  setRevokingId(id);
  try {
   const res = await api.delete(`/api/api-keys/${id}`);
-  if (res.success) {
+  if (res.success && mountedRef.current) {
   setKeys((prev) => prev.filter((k) => k.id !== id));
   toast(t('api_key_revoked_toast'), 'success');
   }
  } catch (err) {
   warn('ApiKeysSection: revoke failed', err);
-  toast(t('api_key_revoke_failed'), 'error');
+  if (mountedRef.current) toast(t('api_key_revoke_failed'), 'error');
  }
- setRevokingId(null);
+ if (mountedRef.current) setRevokingId(null);
  }
 
  async function copyKey(key: string) {
@@ -142,7 +144,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
    <code className="flex-1 text-xs bg-surface-0 px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 break-all font-mono">
     {newKey}
    </code>
-   <button
+   <button type="button"
     onClick={() => copyKey(newKey)}
     aria-label={t('api_key_copy')}
     className="min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
@@ -150,9 +152,9 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
     {t('api_key_copy')}
    </button>
    </div>
-   <button
+   <button type="button"
    onClick={() => setNewKey(null)}
-   className="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 min-h-[44px] px-2 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="mt-2 text-xs text-gray-500 hover:text-gray-700 min-h-[44px] px-2 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    {t('api_key_dismiss')}
    </button>
@@ -176,7 +178,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
 	   ))}
 	  </div>
   ) : (
-  <p className="text-sm text-gray-500 dark:text-gray-400">
+  <p className="text-sm text-gray-500">
    {t('api_key_empty')}
   </p>
   )}
@@ -189,26 +191,26 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
    onChange={(e) => setNewKeyName(e.target.value)}
    placeholder={t('api_key_name_placeholder')}
    aria-label={t('api_key_name_placeholder')}
-   className="flex-1 px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="flex-1 px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
    autoFocus
    />
-   <button
+   <button type="button"
    onClick={handleCreate}
    disabled={creating || !newKeyName.trim()}
    className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
    {creating ? t('api_key_creating') : t('api_key_create')}
    </button>
-   <button
+   <button type="button"
    onClick={() => { setShowCreate(false); setNewKeyName(''); }}
-   className="min-h-[44px] px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="min-h-[44px] px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    {t('api_key_cancel')}
    </button>
   </div>
   ) : (
-  <button
+  <button type="button"
    onClick={() => setShowCreate(true)}
    disabled={keys.length >= 5}
    className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-surface-1 hover:bg-surface-2 border border-surface-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
@@ -219,8 +221,8 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
 
   {/* Usage example */}
   <div className="mt-3 p-3 rounded-xl bg-surface-1 border border-surface-3">
-  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{t('api_key_usage_example')}</p>
-  <code className="text-xs text-gray-700 dark:text-gray-300 font-mono block whitespace-pre-wrap">
+  <p className="text-xs font-medium text-gray-600 mb-1.5">{t('api_key_usage_example')}</p>
+  <code className="text-xs text-gray-700 font-mono block whitespace-pre-wrap">
 {`curl -H "Authorization: Bearer rpk_..." \\
  ${typeof window !== 'undefined' ? window.location.origin : ''}/api/books`}
   </code>

@@ -105,10 +105,10 @@ export const ExportActions = React.memo(function ExportActions({
 
  return (
  <div className="flex flex-wrap gap-2 mb-6 animate-slide-up stagger-4">
-  <button
+  <button type="button"
   onClick={handleExportMarkdown}
   disabled={exporting === 'markdown'}
-  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
+  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
   >
   <svg aria-hidden="true"
    className="w-4 h-4"
@@ -125,10 +125,10 @@ export const ExportActions = React.memo(function ExportActions({
   </svg>
   {t('exportMarkdown')}
   </button>
-  <button
+  <button type="button"
   onClick={handleExportJSON}
   disabled={exporting === 'json'}
-  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
+  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-surface-0 border border-surface-3 text-gray-700 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
   >
   <svg aria-hidden="true"
    className="w-4 h-4"
@@ -146,7 +146,7 @@ export const ExportActions = React.memo(function ExportActions({
   {t('exportJSON')}
   </button>
   {zoteroConnected && (
-  <button
+  <button type="button"
    onClick={handleExportZotero}
    disabled={zoteroExporting}
    className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"

@@ -46,7 +46,7 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
  if (error) {
  return (
   <div className="card text-center py-4">
-  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('failed_load_flashcards')}</p>
+  <p className="text-xs text-gray-500 mb-2">{t('failed_load_flashcards')}</p>
   <button type="button" onClick={fetchStats} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
   </div>
  );
@@ -64,17 +64,17 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
    <span className="text-2xl">{'\uD83D\uDCC7'}</span>
   </div>
   <div className="flex-1">
-   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+   <h3 className="text-sm font-semibold text-gray-900 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
    {t('flashcard_review_title')}
    </h3>
    <div className="flex items-center gap-3 mt-1">
    {stats.due > 0 ? (
     <>
     <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{t('due_now', { count: stats.due })}</span>
-    <span className="text-xs text-gray-500 dark:text-gray-400">{t('reviewed', { count: stats.reviewed })}</span>
+    <span className="text-xs text-gray-500">{t('reviewed', { count: stats.reviewed })}</span>
     </>
    ) : (
-    <span className="text-xs text-gray-500 dark:text-gray-400">{t('all_caught_up')}</span>
+    <span className="text-xs text-gray-500">{t('all_caught_up')}</span>
    )}
    </div>
   </div>

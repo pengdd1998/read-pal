@@ -17,8 +17,8 @@ export const EmptyResults = React.memo(function EmptyResults({ query }: EmptyRes
    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
   </svg>
   </div>
-  <p className="text-gray-500 dark:text-gray-400 mb-1">{t('no_results', { query })}</p>
-  <p className="text-sm text-gray-500 dark:text-gray-400">{t('try_different')}</p>
+  <p className="text-gray-500 mb-1">{t('no_results', { query })}</p>
+  <p className="text-sm text-gray-500">{t('try_different')}</p>
  </div>
  );
 });

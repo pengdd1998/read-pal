@@ -43,7 +43,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const STATUS_CONFIG = useMemo(() => ({
- unread: { label: t('card_unread'), dot: 'bg-surface-3', ring: 'bg-surface-1 text-gray-600 dark:text-gray-400' },
+ unread: { label: t('card_unread'), dot: 'bg-surface-3', ring: 'bg-surface-1 text-gray-600' },
  reading: { label: t('card_reading'), dot: 'bg-primary-400', ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
  completed: { label: t('card_completed'), dot: 'bg-emerald-400', ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
  } as const), [t]);
@@ -105,7 +105,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
   {/* Bottom action bar */}
   <div className="absolute bottom-0 left-0 right-0 flex items-center justify-around bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-200 py-1 z-10">
   {/* Info */}
-  <button
+  <button type="button"
    onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/book/${bookId}`); }}
    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
 
@@ -117,7 +117,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
   </button>
 
   {/* Offline cache */}
-  <button
+  <button type="button"
    onClick={handleCacheOffline}
    aria-label={cachedOffline ? t('card_available_offline') : t('card_save_offline')}
    className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
@@ -141,7 +141,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
 
   {/* Collection picker */}
   <div className="relative">
-   <button
+   <button type="button"
    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowCollectionPicker((v) => !v); }}
    aria-label={t('card_add_to_collection')}
    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
@@ -157,7 +157,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
 
   {/* Delete */}
   <div className="relative">
-   <button
+   <button type="button"
    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onShowDeleteConfirm(); }}
    disabled={deleting}
    aria-label={t('card_delete_book')}
@@ -185,13 +185,13 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
    >
     <p className="text-[10px] text-gray-300 text-center mb-2">{t('card_confirm_delete')}</p>
     <div className="flex gap-1.5">
-    <button
+    <button type="button"
      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteCancel(); }}
      className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      {t('card_cancel')}
     </button>
-    <button
+    <button type="button"
      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteConfirm(); }}
      className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-red-600 text-white hover:bg-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >

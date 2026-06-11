@@ -74,10 +74,10 @@ function ResetPasswordForm() {
    <div className="inline-flex w-12 h-12 rounded-xl bg-primary-600 items-center justify-center text-white text-xl font-bold mb-4 shadow-soft" aria-hidden="true">
    r
    </div>
-   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+   <h1 className="text-2xl font-bold text-gray-900">
    {success ? t('reset_title_success') : t('reset_title_default')}
    </h1>
-   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+   <p className="text-sm text-gray-600 mt-1">
    {success
     ? t('reset_desc_success')
     : t('reset_desc_default')}
@@ -92,7 +92,7 @@ function ResetPasswordForm() {
      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
     </svg>
     </div>
-    <p className="text-sm text-gray-600 dark:text-gray-400">
+    <p className="text-sm text-gray-600">
     {t('reset_success_text')}{' '}
     <Link href="/auth?mode=login" className="text-amber-700 hover:text-amber-800 dark:text-amber-400 font-medium">
      {t('reset_sign_in_link')}
@@ -112,7 +112,7 @@ function ResetPasswordForm() {
    ) : (
    <form onSubmit={handleSubmit} className="space-y-5" aria-label={t('reset_form_label')}>
     <div>
-    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
      {t('reset_new_password_label')}
     </label>
     <input
@@ -129,7 +129,7 @@ function ResetPasswordForm() {
     </div>
 
     <div>
-    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
      {t('confirm_password_label')}
     </label>
     <input
@@ -168,7 +168,7 @@ function ResetPasswordForm() {
    )}
   </div>
 
-  <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+  <p className="mt-6 text-center text-sm text-gray-600">
    <Link href="/auth?mode=login" className="text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 font-medium">
    {t('back_to_login')}
    </Link>
@@ -183,7 +183,7 @@ export default function ResetPasswordPage() {
  return (
  <Suspense fallback={
   <main className="min-h-[80vh] flex items-center justify-center">
-  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+  <div className="flex items-center gap-2 text-gray-500">
    <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
    {t('loading')}
   </div>

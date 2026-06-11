@@ -31,14 +31,14 @@ export const WelcomeIntro = React.memo(function WelcomeIntro({
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-center gap-2 text-gray-500">
           <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
           {t('preparing')}
         </div>
       ) : error ? (
         <div className="space-y-4">
           <p className="text-red-600 dark:text-red-400 text-lg">{error}</p>
-          <button
+          <button type="button"
             onClick={onRetry}
             className="btn btn-primary py-2 px-6 rounded-xl"
           >
@@ -48,7 +48,7 @@ export const WelcomeIntro = React.memo(function WelcomeIntro({
       ) : (
         <>
           <h1 className="text-3xl font-bold mb-2">{t('greeting', { name: personaName })}</h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
+          <p className="text-gray-600 text-lg leading-relaxed">
             {t('intro')}
           </p>
         </>

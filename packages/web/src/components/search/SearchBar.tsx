@@ -25,7 +25,7 @@ export const SearchBar = React.memo(function SearchBar({ query, searching, onQue
   onChange={(e) => onQueryChange(e.target.value)}
   placeholder={t('placeholder')}
   aria-label={t('placeholder')}
-  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl border border-surface-3 bg-surface-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 text-base sm:text-lg shadow-sm transition-all duration-200"
+  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl border border-surface-3 bg-surface-0 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 text-base sm:text-lg shadow-sm transition-all duration-200"
   autoFocus
   />
   {searching && (

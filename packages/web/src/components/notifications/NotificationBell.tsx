@@ -41,7 +41,7 @@ const NotificationItem = React.memo(function NotificationItem({ notif, onMarkAsR
   fmtTime: (d: string) => string;
 }) {
   return (
-    <button
+    <button type="button"
       onClick={() => !notif.read && onMarkAsRead(notif.id)}
       className={`w-full text-left px-4 py-3 border-b border-surface-2 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
         !notif.read ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''
@@ -51,17 +51,17 @@ const NotificationItem = React.memo(function NotificationItem({ notif, onMarkAsR
         <span className="text-lg flex-shrink-0 mt-0.5">{getNotificationIcon(notif.type)}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <span className="text-sm font-medium text-gray-900 truncate">
               {notif.title}
             </span>
             {!notif.read && (
               <span className="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0" />
             )}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
             {notif.message}
           </p>
-          <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 block">
+          <span className="text-[10px] text-gray-500 mt-1 block">
             {fmtTime(notif.createdAt)}
           </span>
         </div>
@@ -179,9 +179,9 @@ export const NotificationBell = memo(function NotificationBell() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
+      <button type="button"
         onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadNotifications(); }}
-        className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+        className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-surface-1 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         aria-label={t('notifications')}
       >
         <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -197,9 +197,9 @@ export const NotificationBell = memo(function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-surface-0 rounded-xl border border-surface-3 shadow-lg z-50 overflow-hidden animate-slide-down">
           <div className="flex items-center justify-between px-4 py-3 border-b border-surface-2">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('notifications')}</h3>
+            <h3 className="text-sm font-semibold text-gray-900">{t('notifications')}</h3>
             {unreadCount > 0 && (
-              <button
+              <button type="button"
                 onClick={markAllRead}
                 disabled={markingAll}
                 className="text-xs text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
@@ -211,7 +211,7 @@ export const NotificationBell = memo(function NotificationBell() {
 
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="p-6 text-center text-sm text-gray-500">
                 {loadingNotifs ? t('loading') : t('notifications_no_notifications')}
               </div>
             ) : (

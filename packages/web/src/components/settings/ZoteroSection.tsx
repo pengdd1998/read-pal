@@ -85,12 +85,12 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <polyline points="20 6 9 17 4 12" />
    </svg>
-   {t('zotero_connected_label')} {userId && <span className="text-gray-500 dark:text-gray-400">{t('zotero_user_label', { userId })}</span>}
+   {t('zotero_connected_label')} {userId && <span className="text-gray-500">{t('zotero_user_label', { userId })}</span>}
   </div>
-  <p className="text-xs text-gray-500 dark:text-gray-400">
+  <p className="text-xs text-gray-500">
    {t('zotero_export_desc')}
   </p>
-  <button
+  <button type="button"
    onClick={handleDisconnect}
    disabled={saving}
    className="min-h-[44px] px-4 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
@@ -105,7 +105,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
  <div className="space-y-3">
   <div className="space-y-2">
   <div>
-   <label htmlFor="zotero-api-key" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_api_key_label')}</label>
+   <label htmlFor="zotero-api-key" className="block text-xs font-medium text-gray-600 mb-1">{t('zotero_api_key_label')}</label>
    <input
    id="zotero-api-key"
    type="password"
@@ -114,11 +114,11 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    placeholder={t('zotero_api_key_placeholder')}
    aria-invalid={validationError ? true : undefined}
    aria-describedby={validationError ? 'zotero-error' : undefined}
-   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    />
   </div>
   <div>
-   <label htmlFor="zotero-user-id" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_user_id')}</label>
+   <label htmlFor="zotero-user-id" className="block text-xs font-medium text-gray-600 mb-1">{t('zotero_user_id')}</label>
    <input
    id="zotero-user-id"
    type="text"
@@ -127,7 +127,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    placeholder={t('zotero_user_id_placeholder')}
    aria-invalid={validationError ? true : undefined}
    aria-describedby={validationError ? 'zotero-error' : undefined}
-   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    />
   </div>
   </div>
@@ -136,10 +136,10 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    {validationError}
   </p>
   )}
-  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+  <p className="text-[10px] text-gray-500">
   {t('zotero_get_key')} <span className="text-blue-500">zotero.org/settings/keys</span>
   </p>
-  <button
+  <button type="button"
   onClick={handleConnect}
   disabled={validating || !apiKey.trim() || !userId.trim()}
   className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"

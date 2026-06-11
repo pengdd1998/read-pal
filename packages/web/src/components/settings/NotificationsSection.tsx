@@ -34,7 +34,7 @@ function ToggleSwitch({
  const translateX = isLarge ? 'translate-x-5' : 'translate-x-5';
 
  return (
- <button
+ <button type="button"
   onClick={onChange}
   disabled={disabled}
   role="switch"
@@ -96,7 +96,7 @@ export const NotificationsSection = React.memo(function NotificationsSection({ s
    <div className="flex items-center justify-between">
    <div>
     <label className="text-sm font-medium">{t('push_notifications_label')}</label>
-    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('push_notifications_desc')}</p>
+    <p className="text-xs text-gray-500 mt-0.5">{t('push_notifications_desc')}</p>
    </div>
    <ToggleSwitch
     checked={pushEnabled}
@@ -112,7 +112,7 @@ export const NotificationsSection = React.memo(function NotificationsSection({ s
    <div className="flex items-center justify-between">
    <div>
     <label className="text-sm font-medium">{t('reading_reminders_label')}</label>
-    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('reading_reminders_desc')}</p>
+    <p className="text-xs text-gray-500 mt-0.5">{t('reading_reminders_desc')}</p>
    </div>
    <ToggleSwitch
     checked={settings.notificationsEnabled}
@@ -128,7 +128,7 @@ export const NotificationsSection = React.memo(function NotificationsSection({ s
    <div className="flex items-center justify-between">
    <div>
     <label className="text-sm font-medium">{t('streak_milestones_label')}</label>
-    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('streak_milestones_desc')}</p>
+    <p className="text-xs text-gray-500 mt-0.5">{t('streak_milestones_desc')}</p>
    </div>
    <ToggleSwitch
     checked={settings.streakAlerts !== false}
@@ -145,7 +145,7 @@ export const NotificationsSection = React.memo(function NotificationsSection({ s
    <div className="flex items-center justify-between">
    <div>
     <label className="text-sm font-medium">{t('friend_messages_label')}</label>
-    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('friend_messages_desc')}</p>
+    <p className="text-xs text-gray-500 mt-0.5">{t('friend_messages_desc')}</p>
    </div>
    <ToggleSwitch
     checked={settings.friendMessages !== false}

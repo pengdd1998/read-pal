@@ -16,10 +16,10 @@ const RecommendationCard = memo(function RecommendationCard({ r, genreLabel }: {
         <span className="text-xs">{'📖'}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{r.title}</p>
-        {isDisplayableAuthor(r.author) && <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{r.author}</p>}
+        <p className="text-xs font-medium text-gray-900 truncate">{r.title}</p>
+        {isDisplayableAuthor(r.author) && <p className="text-[10px] text-gray-500 truncate">{r.author}</p>}
       </div>
-      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-1 text-gray-500 dark:text-gray-400 whitespace-nowrap">{genreLabel}</span>
+      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-1 text-gray-500 whitespace-nowrap">{genreLabel}</span>
     </div>
   );
 });
@@ -62,7 +62,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
  if (error) {
  return (
   <div className="card text-center py-4">
-  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('failed_load_recommendations')}</p>
+  <p className="text-xs text-gray-500 mb-2">{t('failed_load_recommendations')}</p>
   <button type="button" onClick={fetchRecs} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
   </div>
  );
@@ -73,7 +73,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
  return (
  <div className="card">
   <div className="flex items-center justify-between mb-3">
-  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('recommended_title')}</h3>
+  <h3 className="text-sm font-semibold text-gray-900">{t('recommended_title')}</h3>
   <Link href="/search" prefetch={false} className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline">{t('see_all')}</Link>
   </div>
   <div className="space-y-2">

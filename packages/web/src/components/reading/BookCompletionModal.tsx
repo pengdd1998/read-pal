@@ -58,21 +58,21 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
   onClick={(e) => e.stopPropagation()}
   >
   <div className="text-6xl mb-4">{'\uD83C\uDF89'}</div>
-  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">{t('completion_title')}</h3>
-  <p className="text-gray-500 dark:text-gray-400 mb-5">{t('completion_subtitle')} <strong>{bookTitle}</strong></p>
+  <h3 className="text-2xl font-bold text-gray-900 mb-1">{t('completion_title')}</h3>
+  <p className="text-gray-500 mb-5">{t('completion_subtitle')} <strong>{bookTitle}</strong></p>
 
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
    <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalHighlights}</div>
-   <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('completion_highlights')}</div>
+   <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_highlights')}</div>
    </div>
    <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
    <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{totalNotes}</div>
-   <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('completion_notes')}</div>
+   <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_notes')}</div>
    </div>
    <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3">
    <div className="text-xl font-bold text-violet-600 dark:text-violet-400">{totalChapters}</div>
-   <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('completion_chapters')}</div>
+   <div className="text-[10px] text-gray-500 mt-0.5">{t('completion_chapters')}</div>
    </div>
   </div>
 
@@ -103,7 +103,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
 
   <button type="button"
    onClick={onClose}
-   className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {t('completion_keep_exploring')}
   </button>

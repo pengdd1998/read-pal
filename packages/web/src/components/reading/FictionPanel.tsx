@@ -57,7 +57,7 @@ export const FictionPanel = React.memo(function FictionPanel({
  <>
   {/* Floating button — positioned near the companion chat button */}
   {!isOpen && (
-  <button
+  <button type="button"
    onClick={() => setIsOpen(true)}
    className="fixed bottom-6 left-6 z-40 flex items-center gap-2 px-3 py-2.5 rounded-full shadow-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 hover:scale-105 active:scale-95 transition-all min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    aria-label={tc('character_tracker')}
@@ -91,9 +91,9 @@ export const FictionPanel = React.memo(function FictionPanel({
      {t('fiction_story_tracker')}
     </h3>
     </div>
-    <button
+    <button type="button"
     onClick={() => setIsOpen(false)}
-    className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-600 hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     aria-label={tc('close_character_tracker')}
     >
     <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

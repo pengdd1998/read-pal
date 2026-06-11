@@ -8,8 +8,8 @@ export const ApiAuthSection = React.memo(function ApiAuthSection() {
 
  return (
  <section>
-  <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-4">{t('authentication')}</h2>
-  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+  <h2 className="text-xl font-bold font-serif text-gray-900 mb-4">{t('authentication')}</h2>
+  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 space-y-3 text-sm text-gray-700">
   <p>{t('auth_intro', { code: 'Authorization' })}</p>
   <p><strong>{t('auth_methods')}</strong></p>
   <ul className="list-disc list-inside space-y-1 ml-2">

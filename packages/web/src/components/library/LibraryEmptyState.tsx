@@ -53,15 +53,15 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
    </svg>
    </div>
   </div>
-  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-xl mb-2">
+  <h3 className="font-bold text-gray-900 text-xl mb-2">
    {t('start_reading_journey')}
   </h3>
-  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6 leading-relaxed">
+  <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6 leading-relaxed">
    {t('empty_state_desc')}
   </p>
 
   <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-   <button
+   <button type="button"
    onClick={handleSeedSample}
    disabled={seeding}
    aria-label={seeding ? t('loading_sample') : t('try_gatsby')}
@@ -72,10 +72,10 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
    </svg>
    {seeding ? t('loading_sample') : t('try_gatsby')}
    </button>
-   <button
+   <button type="button"
    onClick={() => uploaderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
    aria-label={t('upload_own_book')}
-   className="btn bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-600 hover:text-amber-700 dark:hover:text-amber-300 transition-all flex items-center gap-2"
+   className="btn bg-surface-0 border border-surface-3 text-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:text-amber-700 dark:hover:text-amber-300 transition-all flex items-center gap-2"
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -84,7 +84,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
    </button>
   </div>
 
-  <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1.5">
+  <p className="text-xs text-gray-500 flex items-center justify-center gap-1.5">
    <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
    </svg>
@@ -94,7 +94,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
   {error && (
   <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs text-center">
    <p>{error}</p>
-   <button
+   <button type="button"
     onClick={handleSeedSample}
     disabled={seeding}
     className="mt-2 min-h-[44px] px-4 py-2 text-xs font-medium bg-red-100 dark:bg-red-900 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50"

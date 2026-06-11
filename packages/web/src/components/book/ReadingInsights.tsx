@@ -10,9 +10,8 @@ interface ReadingInsightsProps {
 }
 
 export const ReadingInsights = React.memo(function ReadingInsights({ readingLog, t, locale }: ReadingInsightsProps) {
- if (readingLog.length === 0) return null;
-
  const { totalPagesRead, avgSessionMins, totalMins, bestSession, avgWpm } = useMemo(() => {
+ if (readingLog.length === 0) return { totalPagesRead: 0, avgSessionMins: 0, totalMins: 0, bestSession: null as ReadingLogEntry | null, avgWpm: 0 };
  const totalDuration = readingLog.reduce((sum, e) => sum + e.duration, 0);
  const totalPagesRead = readingLog.reduce((sum, e) => sum + e.pagesRead, 0);
  const avgSessionMins = Math.round(totalDuration / readingLog.length / 60);
@@ -27,6 +26,8 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
   : 0;
  return { totalDuration, totalPagesRead, avgSessionMins, totalMins, bestSession, avgWpm };
  }, [readingLog]);
+
+ if (readingLog.length === 0) return null;
 
  return (
  <div className="bg-surface-0 rounded-2xl border border-surface-3 mb-6 animate-slide-up stagger-4 overflow-hidden">
@@ -72,22 +73,22 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
    },
    {
    label: t('best'),
-   value: bestSession.pagesRead,
+   value: bestSession?.pagesRead ?? 0,
    sub: t('pagesInOneSession'),
    },
   ].map((item) => (
    <div key={item.label} className="bg-surface-0 p-3 text-center">
-   <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+   <div className="text-lg font-bold text-gray-900">
     {item.value}
    </div>
-   <div className="text-[10px] text-gray-500 dark:text-gray-400">{item.label}</div>
-   <div className="text-[9px] text-gray-500 dark:text-gray-400 mt-0.5">{item.sub}</div>
+   <div className="text-[10px] text-gray-500">{item.label}</div>
+   <div className="text-[9px] text-gray-500 mt-0.5">{item.sub}</div>
    </div>
   ))}
   </div>
 
   {/* Session list */}
-  <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-64 overflow-y-auto">
+  <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
   {readingLog.map((entry) => (
    <SessionEntryItem key={entry.id} entry={entry} t={t} locale={locale} />
   ))}
@@ -120,15 +121,15 @@ const SessionEntryItem = React.memo(function SessionEntryItem({
 
  return (
  <div
-  className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
+  className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/50 transition-colors"
  >
- <div className="text-xs text-gray-500 dark:text-gray-400 min-w-[52px] pt-0.5">
+ <div className="text-xs text-gray-500 min-w-[52px] pt-0.5">
   <div>{dateStr}</div>
   <div className="text-[10px]">{timeStr}</div>
  </div>
  <div className="flex-1 min-w-0">
-  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-  <span className="font-medium text-gray-700 dark:text-gray-300">
+  <div className="flex items-center gap-2 text-xs text-gray-500">
+  <span className="font-medium text-gray-700">
    {t('timeM', { mins })}
   </span>
   {entry.pagesRead > 0 && <span>{entry.pagesRead} {t('unit_pg')}</span>}
@@ -140,7 +141,7 @@ const SessionEntryItem = React.memo(function SessionEntryItem({
   )}
   </div>
   {entry.summary && (
-  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed line-clamp-2">
+  <p className="text-xs text-gray-600 mt-1 leading-relaxed line-clamp-2">
   {entry.summary}
   </p>
   )}

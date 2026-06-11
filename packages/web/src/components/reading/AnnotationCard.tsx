@@ -73,14 +73,14 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
  <div
   role="article"
   tabIndex={0}
-  className="group p-3 rounded-lg bg-gray-50/50 dark:bg-gray-800/50 border-l-4 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/10 hover:shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+  className="group p-3 rounded-lg bg-gray-50/50 border-l-4 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/10 hover:shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
   style={{ borderLeftColor: borderColor }}
   onClick={() => onClick(annotation)}
   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(annotation); } }}
  >
   {/* Header */}
   <div className="flex items-center justify-between mb-1.5">
-  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
    {icon} {label}
   </span>
   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -88,7 +88,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    <button type="button"
     onClick={handleShareClick}
     disabled={sharing}
-    className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 hover:text-teal-500 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
     aria-label={tc('share_as_image')}
     title={tc('share_as_quote')}
    >
@@ -99,7 +99,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    )}
    <button type="button"
    onClick={startEdit}
-   className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={tc('edit')}
    >
    <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -108,7 +108,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    </button>
    <button type="button"
    onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-   className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={tc('delete')}
    >
    <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -119,13 +119,13 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
   </div>
 
   {/* Content */}
-  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed">
+  <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
   {annotation.content}
   </p>
 
   {/* Note */}
   {annotation.note && (
-  <div className="mt-2 px-2.5 py-1.5 rounded-md bg-white/50 dark:bg-gray-800/50 text-xs text-gray-600 dark:text-gray-400 border border-surface-3">
+  <div className="mt-2 px-2.5 py-1.5 rounded-md bg-white/50 text-xs text-gray-600 border border-surface-3">
    {annotation.note}
   </div>
   )}
@@ -143,7 +143,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
      : tag === 'question'
      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-     : 'bg-surface-2 text-gray-600 dark:text-gray-300'
+     : 'bg-surface-2 text-gray-600'
     }`}
    >
     #{tag}
@@ -154,7 +154,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
 
   {/* Page location */}
   {annotation.location?.pageIndex != null && (
-  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2">
+  <p className="text-[10px] text-gray-500 mt-2">
    {t('card_page', { number: annotation.location.pageIndex + 1 })}
   </p>
   )}
@@ -171,7 +171,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    </button>
    <button type="button"
     onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
-    className="px-2 py-1 text-xs font-medium rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-gray-400"
+    className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600 hover:bg-gray-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-gray-400"
    >
     {tc('cancel')}
    </button>

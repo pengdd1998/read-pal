@@ -82,7 +82,7 @@ export default React.memo(function HighlightClusterSection({ data, bookId, local
  if (!clusters.length) {
  return (
   <div className="highlights-section">
-  <p className="italic text-gray-500 dark:text-gray-400">{t('no_highlights')}</p>
+  <p className="italic text-gray-500">{t('no_highlights')}</p>
   </div>
  );
  }

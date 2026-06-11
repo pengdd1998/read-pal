@@ -1,379 +1,300 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useReaderPage } from '@/hooks/useReaderPage';
-import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
 import { pageThemeClasses, type ReaderTheme } from '@/lib/reader-theme';
 import { SelectionHint } from '@/components/reading/SelectionHint';
 import { CompanionNudge } from '@/components/reading/CompanionNudge';
 import { ShortcutsHelp } from '@/components/reading/ShortcutsHelp';
 import { ReaderHeader } from '@/components/reading/ReaderHeader';
 import { ReaderSettingsMenu } from '@/components/reading/ReaderSettingsMenu';
-import { Link } from '@/i18n/navigation';
 import {
- ReaderView, CompanionChatDynamic, SelectionToolbar, AnnotationsSidebar,
- ReadingBackground, InterventionToast, SessionSummaryModal, BookCompletionModal,
- MobileSettingsSheet, SearchOverlay, SynthesisPanel, ReadingPlanPanel,
- StudyModePanel, FictionPanel, ChapterTimeline, FeatureTour,
+  ReaderView, CompanionChatDynamic, SelectionToolbar, AnnotationsSidebar,
+  ReadingBackground, InterventionToast, SearchOverlay, SynthesisPanel,
+  ReadingPlanPanel, StudyModePanel, FictionPanel, ChapterTimeline, FeatureTour,
 } from '@/components/reading/ReaderDynamicImports';
+import {
+  ReaderLoadingSkeleton, ReaderErrorState, StudyModeOverlay,
+  ReaderStatusIndicators, ShortcutsHelpButton, ReaderModals,
+} from './ReaderSubComponents';
+import { useReaderCallbacks } from './useReaderCallbacks';
 
 export default function ReadPage() {
- const {
- bookId, t,
- book, chapters, currentChapter, annotations, loading, error,
- chapterContent, chapterFade,
- currentSegment, totalSegments, pageContent,
- contentRef, chatHandleRef,
- fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode,
- fontFamily, setFontFamily, lineHeight, setLineHeight,
- bgEnabled, setBgEnabled, highlightMode,
- readingWpm, hasMadeSelection, setHasMadeSelection,
- sessionSummary, setSessionSummary, sessionIdRef,
- setChapterScrollProgress, isFiction, chapterTitles, genreMetadata, bookDescription,
- ui, handleChapterChange, handleBack, handleShowSettings,
- handleToggleStudyMode, handleBackToLibrary,
- setCurrentSegment,
- annotationActions, selection, studyMode,
- } = useReaderPage();
+  const {
+    bookId, t,
+    book, chapters, currentChapter, annotations, loading, error,
+    chapterContent, chapterFade,
+    currentSegment, totalSegments, pageContent,
+    contentRef, chatHandleRef,
+    fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode,
+    fontFamily, setFontFamily, lineHeight, setLineHeight,
+    bgEnabled, setBgEnabled, highlightMode,
+    readingWpm, hasMadeSelection, setHasMadeSelection,
+    sessionSummary, setSessionSummary, sessionIdRef,
+    setChapterScrollProgress, isFiction, chapterTitles, genreMetadata, bookDescription,
+    ui, handleChapterChange, handleBack, handleShowSettings,
+    handleToggleStudyMode, handleBackToLibrary,
+    setCurrentSegment,
+    annotationActions, selection, studyMode,
+  } = useReaderPage();
 
- // --- Stable callbacks to prevent child re-renders on scroll progress updates ---
- const handleToggleSearch = useCallback(() => ui.setSearchOpen((v) => !v), [ui.setSearchOpen]);
- const handleToggleSidebar = useCallback(() => ui.setSidebarOpen((v) => !v), [ui.setSidebarOpen]);
- const handleToggleSynthesis = useCallback(() => ui.setSynthesisOpen((v) => !v), [ui.setSynthesisOpen]);
- const handleToggleReadingPlan = useCallback(() => ui.setReadingPlanOpen((v) => !v), [ui.setReadingPlanOpen]);
- const handleShowTimelineCb = useCallback(() => ui.setShowTimeline(true), [ui.setShowTimeline]);
- const handleCloseSettingsMenu = useCallback(() => ui.setShowSettingsMenu(false), [ui.setShowSettingsMenu]);
- const handleOpenShortcutsHelp = useCallback(() => ui.setShowShortcutsHelp(true), [ui.setShowShortcutsHelp]);
- const handleCloseSearch = useCallback(() => ui.setSearchOpen(false), [ui.setSearchOpen]);
- const handleCloseSidebar = useCallback(() => ui.setSidebarOpen(false), [ui.setSidebarOpen]);
- const handleCloseSynthesis = useCallback(() => ui.setSynthesisOpen(false), [ui.setSynthesisOpen]);
- const handleCloseReadingPlan = useCallback(() => ui.setReadingPlanOpen(false), [ui.setReadingPlanOpen]);
- const handleCloseCompletion = useCallback(() => ui.setShowCompletion(false), [ui.setShowCompletion]);
- const handleCloseMobileSettings = useCallback(() => ui.setShowMobileSettings(false), [ui.setShowMobileSettings]);
- const handleCloseShortcutsHelp = useCallback(() => ui.setShowShortcutsHelp(false), [ui.setShowShortcutsHelp]);
- const handleCloseTimeline = useCallback(() => ui.setShowTimeline(false), [ui.setShowTimeline]);
- const handleDismissSelectionHint = useCallback(() => setHasMadeSelection(true), [setHasMadeSelection]);
- const handleDismissSessionSummary = useCallback(() => setSessionSummary(null), [setSessionSummary]);
+  const {
+    handleToggleSearch, handleToggleSidebar, handleToggleSynthesis,
+    handleToggleReadingPlan, handleShowTimelineCb, handleCloseSettingsMenu,
+    handleOpenShortcutsHelp, handleCloseSearch, handleCloseSidebar,
+    handleCloseSynthesis, handleCloseReadingPlan, handleCloseCompletion,
+    handleCloseMobileSettings, handleCloseShortcutsHelp, handleCloseTimeline,
+    handleDismissSelectionHint, handleDismissSessionSummary,
+    handleAskAISelection, handleCompanionReady, handleAskAboutCharacter,
+    handleTimelineChapterSelect,
+  } = useReaderCallbacks({
+    setHasMadeSelection, setSessionSummary, chatHandleRef,
+    t: t as (key: string, params?: Record<string, unknown>) => string,
+    handleChapterChange, setShowTimeline: ui.setShowTimeline,
+    setSearchOpen: ui.setSearchOpen, setSidebarOpen: ui.setSidebarOpen,
+    setSynthesisOpen: ui.setSynthesisOpen, setReadingPlanOpen: ui.setReadingPlanOpen,
+    setShowSettingsMenu: ui.setShowSettingsMenu, setShowShortcutsHelp: ui.setShowShortcutsHelp,
+    setShowCompletion: ui.setShowCompletion, setShowMobileSettings: ui.setShowMobileSettings,
+    setShowTimelineDirect: ui.setShowTimeline,
+  });
 
- const handleAskAISelection = useCallback((text: string) => {
-  const truncated = text.length > 200 ? text.slice(0, 200) + '...' : text;
-  chatHandleRef.current?.openWithMessage(t('explain_passage_prompt', { text: truncated }));
- }, [chatHandleRef, t]);
-
- const handleCompanionReady = useCallback((handle: CompanionChatHandle) => {
-  chatHandleRef.current = handle;
- }, [chatHandleRef]);
-
- const handleAskAboutCharacter = useCallback((name: string) => {
-  chatHandleRef.current?.openWithMessage(t('tell_about_character_prompt', { name }));
- }, [chatHandleRef, t]);
-
- const handleTimelineChapterSelect = useCallback((i: number) => {
-  handleChapterChange(i);
-  ui.setShowTimeline(false);
- }, [handleChapterChange, ui.setShowTimeline]);
-
- // Warn before leaving if reading session is active
- useEffect(() => {
-  const handler = (e: BeforeUnloadEvent) => {
-   if (sessionIdRef.current) {
-    e.preventDefault();
-   }
-  };
-  window.addEventListener('beforeunload', handler);
-  return () => window.removeEventListener('beforeunload', handler);
- }, [sessionIdRef]);
-
- // --- Render ---
- if (loading) {
- return (
-  <main id="main-content" aria-label={t('readingPage')} className="h-dvh bg-surface-1">
-  {/* Reader skeleton loader */}
-  <div className="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center px-4 gap-3">
-   <div className="w-8 h-8 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse" />
-   <div className="flex-1">
-   <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-1" />
-   <div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-   </div>
-   <div className="flex gap-2">
-   {[...Array(4)].map((_, i) => (
-    <div key={i} className="w-8 h-8 rounded-md bg-gray-200 dark:bg-gray-700 animate-pulse" />
-   ))}
-   </div>
-  </div>
-  <div className="max-w-3xl mx-auto px-6 py-8">
-   <div className="h-8 w-64 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-6" />
-   {[...Array(6)].map((_, i) => (
-   <div key={i} className="mb-4">
-   <div className="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-2" style={{ width: `${70 + Math.random() * 30}%` }} />
-   <div className="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" style={{ width: `${50 + Math.random() * 40}%` }} />
-   </div>
-   ))}
-   <div className="flex justify-between mt-8">
-   <div className="h-10 w-24 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
-   <div className="h-10 w-24 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
-   </div>
-  </div>
-  </main>
- );
- }
- if (error || !book || chapters.length === 0) {
-  const isNetworkError = error === t('failed_connect');
-  return (
-  <main id="main-content" aria-label={t('readingPage')} className="flex items-center justify-center h-dvh bg-surface-1">
-  <div className="text-center max-w-md px-4">
-   <div className="text-4xl mb-4">{isNetworkError ? '🔌' : '📖'}</div>
-   <p className="text-xl font-semibold mb-2">{error || t('unable_to_load')}</p>
-   <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
-    {isNetworkError ? t('network_error_hint') : t('book_not_found_hint')}
-   </p>
-   <div className="flex gap-3 justify-center">
-    <button type="button" onClick={() => window.location.reload()} className="btn btn-secondary">{t('retry')}</button>
-    <Link href="/library" prefetch={false} className="btn btn-primary">{t('back_to_library')}</Link>
-   </div>
-  </div>
-  </main>
- );
- }
- return (
- <div className="h-dvh flex flex-col relative overflow-x-hidden">
-  <ReadingBackground content={chapterContent} enabled={bgEnabled} />
-
-  <ReaderHeader
-  bookId={bookId}
-  bookTitle={book.title}
-  author={book.author}
-  currentChapter={currentChapter}
-  totalChapters={chapters.length}
-  readingWpm={readingWpm}
-  isPaused={ui.isPaused}
-  isBookmarked={annotationActions.isBookmarked}
-  annotationsCount={annotations.length}
-  theme={theme}
-  searchOpen={ui.searchOpen}
-  sidebarOpen={ui.sidebarOpen}
-  synthesisOpen={ui.synthesisOpen}
-  readingPlanOpen={ui.readingPlanOpen}
-  studyModeEnabled={studyMode.enabled}
-  settingsMenuOpen={ui.showSettingsMenu}
-  timelineOpen={ui.showTimeline}
-  onBack={handleBack}
-  onToggleBookmark={annotationActions.handleToggleBookmark}
-  onToggleSearch={handleToggleSearch}
-  onToggleSidebar={handleToggleSidebar}
-  onToggleSynthesis={handleToggleSynthesis}
-  onToggleReadingPlan={handleToggleReadingPlan}
-  onToggleStudyMode={handleToggleStudyMode}
-  onShowTimeline={handleShowTimelineCb}
-  onShowSettings={handleShowSettings}
-  settingsMenu={
-   <ReaderSettingsMenu
-   show={ui.showSettingsMenu}
-   theme={theme}
-   fontSize={fontSize}
-   lineHeight={lineHeight}
-   fontFamily={fontFamily}
-   quietMode={quietMode}
-   bgEnabled={bgEnabled}
-   onClose={handleCloseSettingsMenu}
-   onFontSizeChange={setFontSize}
-   onLineHeightChange={setLineHeight}
-   onFontFamilyChange={setFontFamily}
-   onThemeChange={setTheme}
-   onQuietModeChange={setQuietMode}
-   onBgEnabledChange={setBgEnabled}
-   onShowShortcuts={handleOpenShortcutsHelp}
-   />
+  // Warn before leaving if reading session is active
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (sessionIdRef.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [sessionIdRef]);
+  // --- Render ---
+  if (loading) {
+    return <ReaderLoadingSkeleton ariaLabel={t('readingPage')} />;
   }
-  />
-  {ui.searchOpen && (
-  <SearchOverlay
-   searchQuery={ui.searchQuery}
-   onQueryChange={ui.setSearchQuery}
-   currentChapter={currentChapter}
-   chapters={chapters}
-   onNavigate={handleChapterChange}
-   onClose={handleCloseSearch}
-  />
-  )}
-  <div className="flex-1 overflow-hidden">
-  <div className={`h-full ${pageThemeClasses[theme as ReaderTheme]} ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
-   <ReaderView
-   bookId={bookId}
-   chapterContent={pageContent || chapterContent}
-   chapterTitle={chapters[currentChapter]?.title || book.title}
-   currentPage={currentChapter}
-   totalPages={chapters.length || 1}
-   chapters={chapterTitles}
-   onPageChange={handleChapterChange}
-   contentRef={contentRef}
-   fontSize={fontSize}
-   theme={theme}
-   fontFamily={fontFamily}
-   lineHeight={lineHeight}
-   showControls={ui.showControls}
-   onToggleControls={ui.handleToggleControls}
-   highlightMode={highlightMode}
-   highlightCount={annotationActions.highlightCount}
-   bookmarkCount={annotationActions.bookmarkCount}
-   externalTocOpen={ui.tocOpen}
-   onTocClose={ui.closeToc}
-   onScrollProgress={setChapterScrollProgress}
-   onPauseAutoHide={ui.pauseAutoHide}
-   onResumeAutoHide={ui.resumeAutoHide}
-   currentSegment={currentSegment}
-   totalSegments={totalSegments}
-   onSegmentChange={setCurrentSegment}
-   />
-  </div>
-  </div>
-  {!hasMadeSelection && <SelectionHint onDismiss={handleDismissSelectionHint} />}
-  <CompanionNudge />
-  <FeatureTour />
-  {!selection.isCollapsed && selection.rect && (
-  <SelectionToolbar
-   text={selection.text}
-   rect={selection.rect}
-   range={selection.range}
-   bookTitle={book?.title}
-   author={book?.author}
-   onHighlight={annotationActions.handleAddHighlight}
-   onNote={annotationActions.handleAddNote}
-   onDismiss={annotationActions.dismissSelection}
-   onAskAI={handleAskAISelection}
-  />
-  )}
-  <AnnotationsSidebar
-  annotations={annotations}
-  bookId={bookId}
-  bookTitle={book?.title}
-  author={book?.author}
-  totalPages={book?.totalPages}
-  currentPage={book?.currentPage}
-  progress={book?.progress}
-  isOpen={ui.sidebarOpen}
-  onClose={handleCloseSidebar}
-  onDeleteAnnotation={annotationActions.handleDeleteAnnotation}
-  onUpdateAnnotation={annotationActions.handleUpdateAnnotation}
-  onScrollToAnnotation={annotationActions.handleScrollToAnnotation}
-  />
-  <SynthesisPanel bookId={bookId} bookTitle={book?.title} author={book?.author} isOpen={ui.synthesisOpen} onClose={handleCloseSynthesis} />
-  <ReadingPlanPanel bookId={bookId} bookTitle={book?.title || ''} isOpen={ui.readingPlanOpen} onClose={handleCloseReadingPlan} />
-  {studyMode.enabled && (
-  <div className="fixed inset-0 z-20 bg-black/40 md:bg-black/20" onClick={studyMode.toggleStudyMode} onKeyDown={(e) => { if (e.key === 'Escape') studyMode.toggleStudyMode(); }} tabIndex={-1} role="button" aria-label={t('close_study_mode')} />
-  )}
-  <div className={`fixed right-0 top-[61px] bottom-0 z-20 w-full md:w-80 transition-transform duration-300 ease-out ${studyMode.enabled ? 'translate-x-0' : 'translate-x-full'}`}>
-  <div className="h-full overflow-y-auto px-3 pb-4 bg-surface-0">
-   <StudyModePanel
-   enabled={studyMode.enabled}
-   loading={studyMode.loading}
-   error={studyMode.error}
-   saveStatus={studyMode.saveStatus}
-   objectives={studyMode.objectives}
-   checks={studyMode.checks}
-   revealedAnswers={studyMode.revealedAnswers}
-   mastery={studyMode.mastery}
-   onLoadMastery={studyMode.loadMastery}
-   onToggleObjective={studyMode.toggleObjective}
-   onRevealAnswer={studyMode.revealAnswer}
-   onSaveChecks={studyMode.saveChecks}
-   />
-  </div>
-  </div>
-  <CompanionChatDynamic
-  onReady={handleCompanionReady}
-  bookId={bookId}
-  currentPage={currentChapter}
-  totalPages={chapters.length}
-  bookTitle={book?.title || ''}
-  author={book?.author || ''}
-  chapterContent={pageContent || chapterContent}
-  genreMetadata={genreMetadata}
-  bookDescription={bookDescription}
-  externalIsOpen={ui.chatOpen}
-  onOpenChange={ui.setChatOpen}
-  />
-  {!loading && isFiction && pageContent && (
-  <FictionPanel
-   chapterContent={pageContent}
-   chapterIndex={currentChapter}
-   onAskAboutCharacter={handleAskAboutCharacter}
-  />
-  )}
-  {!loading && book && !quietMode && (
-  <InterventionToast
-   bookId={bookId}
-   currentPage={currentChapter}
-   totalPages={chapters.length}
-   sessionDuration={ui.sessionElapsed}
-   highlightCount={annotationActions.totalHighlights}
-  />
-  )}
-  {ui.showCompletion && book && (
-  <BookCompletionModal
-   bookId={book.id}
-   bookTitle={book.title}
-   totalHighlights={annotationActions.totalHighlights}
-   totalNotes={annotationActions.totalNotes}
-   totalChapters={chapters.length}
-   onClose={handleCloseCompletion}
-  />
-  )}
-  {sessionSummary && (
-  <SessionSummaryModal
-   duration={sessionSummary.duration}
-   chaptersRead={sessionSummary.chaptersRead}
-   totalChapters={chapters.length}
-   sessionId={sessionSummary.sessionId}
-   onKeepReading={handleDismissSessionSummary}
-   onBackToLibrary={handleBackToLibrary}
-  />
-  )}
-  {highlightMode && (
-  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-amber-500/90 text-white text-xs font-medium shadow-md animate-fade-in backdrop-blur-sm" role="status" aria-live="polite">
-   {t('tap_to_highlight')}
-  </div>
-  )}
-  {ui.milestone && (
-  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 animate-fade-in" role="status" aria-live="polite">
-   <div className="px-4 py-1.5 rounded-full bg-surface-0/90 backdrop-blur-sm text-amber-700 dark:text-amber-300 text-xs font-medium shadow-md border border-amber-200/50 dark:border-amber-800/50">
-   {ui.milestone} {t('milestone_complete')}
-   </div>
-  </div>
-  )}
-  {ui.showMobileSettings && (
-  <MobileSettingsSheet
-   fontSize={fontSize}
-   theme={theme}
-   quietMode={quietMode}
-   fontFamily={fontFamily}
-   lineHeight={lineHeight}
-   onFontSizeChange={setFontSize}
-   onThemeChange={setTheme}
-   onQuietModeChange={setQuietMode}
-   onFontFamilyChange={setFontFamily}
-   onLineHeightChange={setLineHeight}
-   onClose={handleCloseMobileSettings}
-  />
-  )}
-  <button
-  onClick={handleOpenShortcutsHelp}
-  className="hidden sm:flex fixed bottom-5 right-20 z-10 w-11 h-11 rounded-full bg-surface-0/60 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 text-gray-500 dark:text-gray-300 hover:text-amber-500 hover:border-amber-300/50 transition-all items-center justify-center"
-  aria-label={t('keyboard_shortcuts_help')}
-  >
-  <span className="text-xs font-bold">?</span>
-  </button>
-  {ui.showShortcutsHelp && <ShortcutsHelp onClose={handleCloseShortcutsHelp} />}
-  {ui.showTimeline && book && (
-  <ChapterTimeline
-   bookId={book.id}
-   totalChapters={chapters.length}
-   currentChapter={currentChapter}
-   chapterTitles={chapterTitles}
-   onChapterSelect={handleTimelineChapterSelect}
-   onClose={handleCloseTimeline}
-  />
-  )}
- </div>
- );
+
+  if (error || !book || chapters.length === 0) {
+    return (
+      <ReaderErrorState
+        error={error}
+        ariaLabel={t('readingPage')}
+        retryLabel={t('retry')}
+        backToLibraryLabel={t('back_to_library')}
+        unableToLoadLabel={t('unable_to_load')}
+        networkErrorHint={t('network_error_hint')}
+        bookNotFoundHint={t('book_not_found_hint')}
+        failedConnectLabel={t('failed_connect')}
+      />
+    );
+  }
+
+  return (
+    <div className="h-dvh flex flex-col relative overflow-x-hidden">
+      <ReadingBackground content={chapterContent} enabled={bgEnabled} />
+
+      <ReaderHeader
+        bookId={bookId}
+        bookTitle={book.title}
+        author={book.author}
+        currentChapter={currentChapter}
+        totalChapters={chapters.length}
+        readingWpm={readingWpm}
+        isPaused={ui.isPaused}
+        isBookmarked={annotationActions.isBookmarked}
+        annotationsCount={annotations.length}
+        theme={theme}
+        searchOpen={ui.searchOpen}
+        sidebarOpen={ui.sidebarOpen}
+        synthesisOpen={ui.synthesisOpen}
+        readingPlanOpen={ui.readingPlanOpen}
+        studyModeEnabled={studyMode.enabled}
+        settingsMenuOpen={ui.showSettingsMenu}
+        timelineOpen={ui.showTimeline}
+        onBack={handleBack}
+        onToggleBookmark={annotationActions.handleToggleBookmark}
+        onToggleSearch={handleToggleSearch}
+        onToggleSidebar={handleToggleSidebar}
+        onToggleSynthesis={handleToggleSynthesis}
+        onToggleReadingPlan={handleToggleReadingPlan}
+        onToggleStudyMode={handleToggleStudyMode}
+        onShowTimeline={handleShowTimelineCb}
+        onShowSettings={handleShowSettings}
+        settingsMenu={
+          <ReaderSettingsMenu
+            show={ui.showSettingsMenu}
+            theme={theme}
+            fontSize={fontSize}
+            lineHeight={lineHeight}
+            fontFamily={fontFamily}
+            quietMode={quietMode}
+            bgEnabled={bgEnabled}
+            onClose={handleCloseSettingsMenu}
+            onFontSizeChange={setFontSize}
+            onLineHeightChange={setLineHeight}
+            onFontFamilyChange={setFontFamily}
+            onThemeChange={setTheme}
+            onQuietModeChange={setQuietMode}
+            onBgEnabledChange={setBgEnabled}
+            onShowShortcuts={handleOpenShortcutsHelp}
+          />
+        }
+      />
+      {ui.searchOpen && (
+        <SearchOverlay
+          searchQuery={ui.searchQuery}
+          onQueryChange={ui.setSearchQuery}
+          currentChapter={currentChapter}
+          chapters={chapters}
+          onNavigate={handleChapterChange}
+          onClose={handleCloseSearch}
+        />
+      )}
+      <div className="flex-1 overflow-hidden">
+        <div className={`h-full ${pageThemeClasses[theme as ReaderTheme]} ${chapterFade === 'out' ? 'opacity-0' : 'opacity-100'} transition-opacity duration-150`}>
+          <ReaderView
+            bookId={bookId}
+            chapterContent={pageContent || chapterContent}
+            chapterTitle={chapters[currentChapter]?.title || book.title}
+            currentPage={currentChapter}
+            totalPages={chapters.length || 1}
+            chapters={chapterTitles}
+            onPageChange={handleChapterChange}
+            contentRef={contentRef}
+            fontSize={fontSize}
+            theme={theme}
+            fontFamily={fontFamily}
+            lineHeight={lineHeight}
+            showControls={ui.showControls}
+            onToggleControls={ui.handleToggleControls}
+            highlightMode={highlightMode}
+            highlightCount={annotationActions.highlightCount}
+            bookmarkCount={annotationActions.bookmarkCount}
+            externalTocOpen={ui.tocOpen}
+            onTocClose={ui.closeToc}
+            onScrollProgress={setChapterScrollProgress}
+            onPauseAutoHide={ui.pauseAutoHide}
+            onResumeAutoHide={ui.resumeAutoHide}
+            currentSegment={currentSegment}
+            totalSegments={totalSegments}
+            onSegmentChange={setCurrentSegment}
+          />
+        </div>
+      </div>
+      {!hasMadeSelection && <SelectionHint onDismiss={handleDismissSelectionHint} />}
+      <CompanionNudge />
+      <FeatureTour />
+      {!selection.isCollapsed && selection.rect && (
+        <SelectionToolbar
+          text={selection.text}
+          rect={selection.rect}
+          range={selection.range}
+          bookTitle={book?.title}
+          author={book?.author}
+          onHighlight={annotationActions.handleAddHighlight}
+          onNote={annotationActions.handleAddNote}
+          onDismiss={annotationActions.dismissSelection}
+          onAskAI={handleAskAISelection}
+        />
+      )}
+      <AnnotationsSidebar
+        annotations={annotations}
+        bookId={bookId}
+        bookTitle={book?.title}
+        author={book?.author}
+        totalPages={book?.totalPages}
+        currentPage={book?.currentPage}
+        progress={book?.progress}
+        isOpen={ui.sidebarOpen}
+        onClose={handleCloseSidebar}
+        onDeleteAnnotation={annotationActions.handleDeleteAnnotation}
+        onUpdateAnnotation={annotationActions.handleUpdateAnnotation}
+        onScrollToAnnotation={annotationActions.handleScrollToAnnotation}
+      />
+      <SynthesisPanel bookId={bookId} bookTitle={book?.title} author={book?.author} isOpen={ui.synthesisOpen} onClose={handleCloseSynthesis} />
+      <ReadingPlanPanel bookId={bookId} bookTitle={book?.title || ''} isOpen={ui.readingPlanOpen} onClose={handleCloseReadingPlan} />
+      <StudyModeOverlay enabled={studyMode.enabled} closeLabel={t('close_study_mode')} onToggleStudyMode={studyMode.toggleStudyMode}>
+        <StudyModePanel
+          enabled={studyMode.enabled}
+          loading={studyMode.loading}
+          error={studyMode.error}
+          saveStatus={studyMode.saveStatus}
+          objectives={studyMode.objectives}
+          checks={studyMode.checks}
+          revealedAnswers={studyMode.revealedAnswers}
+          mastery={studyMode.mastery}
+          onLoadMastery={studyMode.loadMastery}
+          onToggleObjective={studyMode.toggleObjective}
+          onRevealAnswer={studyMode.revealAnswer}
+          onSaveChecks={studyMode.saveChecks}
+        />
+      </StudyModeOverlay>
+      <CompanionChatDynamic
+        onReady={handleCompanionReady}
+        bookId={bookId}
+        currentPage={currentChapter}
+        totalPages={chapters.length}
+        bookTitle={book?.title || ''}
+        author={book?.author || ''}
+        chapterContent={pageContent || chapterContent}
+        genreMetadata={genreMetadata}
+        bookDescription={bookDescription}
+        externalIsOpen={ui.chatOpen}
+        onOpenChange={ui.setChatOpen}
+      />
+      {!loading && isFiction && pageContent && (
+        <FictionPanel chapterContent={pageContent} chapterIndex={currentChapter} onAskAboutCharacter={handleAskAboutCharacter} />
+      )}
+      {!loading && book && !quietMode && (
+        <InterventionToast
+          bookId={bookId}
+          currentPage={currentChapter}
+          totalPages={chapters.length}
+          sessionDuration={ui.sessionElapsed}
+          highlightCount={annotationActions.totalHighlights}
+        />
+      )}
+      <ReaderModals
+        showCompletion={!!(ui.showCompletion && book)}
+        showMobileSettings={!!ui.showMobileSettings}
+        sessionSummary={sessionSummary}
+        bookId={book?.id || ''}
+        bookTitle={book?.title || ''}
+        totalChapters={chapters.length}
+        totalHighlights={annotationActions.totalHighlights}
+        totalNotes={annotationActions.totalNotes}
+        fontSize={fontSize}
+        theme={theme}
+        quietMode={quietMode}
+        fontFamily={fontFamily}
+        lineHeight={lineHeight}
+        onCloseCompletion={handleCloseCompletion}
+        onCloseMobileSettings={handleCloseMobileSettings}
+        onDismissSessionSummary={handleDismissSessionSummary}
+        onBackToLibrary={handleBackToLibrary}
+        onFontSizeChange={setFontSize}
+        onThemeChange={setTheme}
+        onQuietModeChange={setQuietMode}
+        onFontFamilyChange={setFontFamily}
+        onLineHeightChange={setLineHeight}
+      />
+      <ReaderStatusIndicators
+        highlightMode={highlightMode}
+        highlightModeLabel={t('tap_to_highlight')}
+        milestone={ui.milestone}
+        milestoneLabel={t('milestone_complete')}
+      />
+      <ShortcutsHelpButton ariaLabel={t('keyboard_shortcuts_help')} onClick={handleOpenShortcutsHelp} />
+      {ui.showShortcutsHelp && <ShortcutsHelp onClose={handleCloseShortcutsHelp} />}
+      {ui.showTimeline && book && (
+        <ChapterTimeline
+          bookId={book.id}
+          totalChapters={chapters.length}
+          currentChapter={currentChapter}
+          chapterTitles={chapterTitles}
+          onChapterSelect={handleTimelineChapterSelect}
+          onClose={handleCloseTimeline}
+        />
+      )}
+    </div>
+  );
 }

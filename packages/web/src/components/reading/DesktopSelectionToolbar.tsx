@@ -65,11 +65,11 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-surface-3 bg-surface-0/95 backdrop-blur-sm shadow-lg max-w-[calc(100vw-16px)] overflow-x-auto">
   {/* Color dots */}
   {ANNOTATION_COLORS.map((color) => (
-   <button
+   <button type="button"
    key={color}
    onMouseDown={(e) => e.preventDefault()}
    onClick={() => onHighlight(color)}
-   className="min-w-[44px] min-h-[44px] rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="min-w-[44px] min-h-[44px] rounded-full border-2 border-transparent hover:border-gray-400 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    aria-label={t('toolbar_highlight_in', { color })}
    >
    <span className="w-7 h-7 rounded-full" style={{ backgroundColor: color }} />
@@ -79,9 +79,9 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
   <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Note */}
-  <button
+  <button type="button"
    onMouseDown={(e) => { e.preventDefault(); onToggleNote(); }}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    aria-label={t('toolbar_add_note')}
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -93,12 +93,12 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
   <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Tag */}
-  <button
+  <button type="button"
    onMouseDown={(e) => { e.preventDefault(); onToggleTagPicker(); }}
    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
    showTagPicker
     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-    : 'text-gray-700 dark:text-gray-300 hover:bg-surface-1 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1'
+    : 'text-gray-700 hover:bg-surface-1 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1'
    }`}
    aria-label={t('toolbar_tag_and_highlight')}
   >
@@ -111,10 +111,10 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
   <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Copy */}
-  <button
+  <button type="button"
    onMouseDown={(e) => e.preventDefault()}
    onClick={onCopy}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    aria-label={t('toolbar_copy_text')}
   >
    {copied ? (
@@ -134,9 +134,9 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
   <div className="w-px h-6 bg-surface-2 mx-1.5" />
 
   {/* Share */}
-  <button
+  <button type="button"
    onMouseDown={(e) => { e.preventDefault(); onShowQuoteCard(); }}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    aria-label={t('toolbar_share_as_quote')}
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -149,7 +149,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
 
   {/* Ask AI */}
   {onAskAI && (
-   <button
+   <button type="button"
    onClick={() => {
     onAskAI(text);
     onDismiss();

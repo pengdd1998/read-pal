@@ -38,7 +38,7 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
  <Link
   key={club.id}
   href={`/book-clubs/${club.id}`}
-  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors group focus-visible:ring-2 focus-visible:ring-amber-400"
+  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50/50 transition-colors group focus-visible:ring-2 focus-visible:ring-amber-400"
  >
   {/* Club avatar */}
   <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getBookCoverColors(club.name)[0]} flex items-center justify-center shrink-0`}>
@@ -47,11 +47,11 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
 
   <div className="flex-1 min-w-0">
   <div className="flex items-center gap-2">
-   <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+   <span className="text-sm font-semibold text-gray-900 truncate">
    {club.name}
    </span>
    {club.isPrivate && (
-   <svg aria-hidden="true" className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <svg aria-hidden="true" className="w-3.5 h-3.5 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
    </svg>
    )}
@@ -62,7 +62,7 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
    )}
   </div>
   <div className="flex items-center gap-3 mt-0.5">
-   <span className="text-xs text-gray-500 dark:text-gray-400">
+   <span className="text-xs text-gray-500">
    {(club.clubMembers || []).length} {(club.clubMembers || []).length !== 1 ? t('memberCountPlural', { count: (club.clubMembers || []).length }) : t('memberCount', { count: 1 })}
    </span>
    {club.currentBookId && (
@@ -75,7 +75,7 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
   </div>
 
   {/* Chevron */}
-  <svg aria-hidden="true" className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg aria-hidden="true" className="w-4 h-4 text-gray-300 group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
   </svg>
  </Link>

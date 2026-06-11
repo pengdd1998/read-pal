@@ -13,14 +13,8 @@ from typing import Any
 from uuid import UUID
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from sqlalchemy import select
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.annotation import Annotation, AnnotationType
-from app.models.book import Book
-from app.models.chat_message import ChatMessage
-from app.models.reading_session import ReadingSession
 from app.prompts import (
   SYNTHESIS_HUMAN,
   SYNTHESIS_SYSTEM,
@@ -28,192 +22,10 @@ from app.prompts import (
 from app.schemas.llm_outputs import SynthesisResult
 from app.schemas.synthesis import SynthesisResponse
 from app.services.llm import safe_llm_invoke
-from app.utils.annotations import match_annotation_type
-from app.utils.sanitizer import sanitize_annotations, sanitize_chat_message
+from app.services.synthesis.data_loaders import collect_reading_data
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.synthesis')
-
-# Hard caps on data volume passed to the LLM
-_MAX_ANNOTATIONS = 50
-_MAX_CHAT_MESSAGES = 20
-_MAX_READING_SESSIONS = 50
-
-
-# ---------------------------------------------------------------------------
-# Per-source data loaders
-# ---------------------------------------------------------------------------
-
-
-async def _load_book_info(
-  db: AsyncSession,
-  user_id: UUID,
-  book_id: UUID,
-) -> dict[str, Any] | None:
-  """Load book metadata; returns None if book not found."""
-  try:
-    result = await db.execute(
-      select(Book).where(Book.id == book_id, Book.user_id == user_id),
-    )
-    book = result.scalar_one_or_none()
-    if book is None:
-      return None
-    return {
-      'title': book.title,
-      'author': book.author,
-      'progress': float(book.progress),
-      'status': book.status,
-    }
-  except (DBAPIError, OSError):
-    logger.warning('synthesis _load_book_info failed: book=%s user=%s', book_id, user_id, exc_info=True)
-    return None
-
-
-def _split_annotations(
-  annotations: list[Annotation],
-  include_highlights: bool,
-  include_notes: bool,
-) -> dict[str, list[dict]]:
-  """Split annotation rows into highlights and notes lists."""
-  result: dict[str, list[dict]] = {}
-  if include_highlights:
-    result['highlights'] = [
-      {
-        'content': sanitize_annotations(a.content or ''),
-        'note': sanitize_annotations(a.note or ''),
-        'tags': a.tags,
-      }
-      for a in annotations
-      if match_annotation_type(a.type, AnnotationType.highlight)
-    ]
-  if include_notes:
-    result['notes'] = [
-      {
-        'content': sanitize_annotations(a.content or ''),
-        'note': sanitize_annotations(a.note or ''),
-        'tags': a.tags,
-      }
-      for a in annotations
-      if match_annotation_type(a.type, AnnotationType.note)
-    ]
-  return result
-
-
-async def _load_conversations(
-  db: AsyncSession,
-  user_id: UUID,
-  book_id: UUID,
-) -> list[dict]:
-  """Load chat conversations for synthesis (capped at _MAX_CHAT_MESSAGES)."""
-  try:
-    result = await db.execute(
-      select(ChatMessage)
-      .where(
-        ChatMessage.user_id == user_id,
-        ChatMessage.book_id == book_id,
-      )
-      .order_by(ChatMessage.created_at)
-      .limit(_MAX_CHAT_MESSAGES),
-    )
-    messages = list(result.scalars().all())
-    return [
-      {
-        'role': m.role,
-        'content': sanitize_chat_message(m.content or ''),
-      }
-      for m in messages
-    ]
-  except (DBAPIError, OSError):
-    logger.warning('synthesis _load_conversations failed: book=%s user=%s', book_id, user_id, exc_info=True)
-    return []
-
-
-async def _load_reading_sessions(
-  db: AsyncSession,
-  user_id: UUID,
-  book_id: UUID,
-) -> list[dict]:
-  """Load reading sessions for timeline (capped at _MAX_READING_SESSIONS)."""
-  try:
-    result = await db.execute(
-      select(ReadingSession)
-      .where(
-        ReadingSession.user_id == user_id,
-        ReadingSession.book_id == book_id,
-      )
-      .order_by(ReadingSession.started_at)
-      .limit(_MAX_READING_SESSIONS),
-    )
-    sessions = list(result.scalars().all())
-    return [
-      {
-        'started_at': s.started_at.isoformat() if s.started_at else None,
-        'duration': s.duration,
-        'pages_read': s.pages_read,
-        'highlights': s.highlights,
-        'notes': s.notes,
-      }
-      for s in sessions
-    ]
-  except (DBAPIError, OSError):
-    logger.warning('synthesis _load_reading_sessions failed: book=%s user=%s', book_id, user_id, exc_info=True)
-    return []
-
-
-async def _load_chat_and_sessions(
-  db: AsyncSession,
-  user_id: UUID,
-  book_id: UUID,
-  include_conversations: bool,
-) -> dict[str, Any]:
-  """Load chat messages and reading sessions."""
-  data: dict[str, Any] = {}
-  if include_conversations:
-    data['conversations'] = await _load_conversations(db, user_id, book_id)
-  data['reading_sessions'] = await _load_reading_sessions(db, user_id, book_id)
-  return data
-
-
-# ---------------------------------------------------------------------------
-# Core data collector
-# ---------------------------------------------------------------------------
-
-
-async def _collect_reading_data(
-  db: AsyncSession,
-  user_id: UUID,
-  book_id: UUID,
-  include_highlights: bool = True,
-  include_notes: bool = True,
-  include_conversations: bool = True,
-) -> dict[str, Any]:
-  """Collect all reading data for synthesis."""
-  try:
-    book_info = await _load_book_info(db, user_id, book_id)
-    if book_info is None:
-      return {}
-
-    data: dict[str, Any] = {'book': book_info}
-
-    # Load annotations (highlights + notes), capped at _MAX_ANNOTATIONS
-    result = await db.execute(
-      select(Annotation)
-      .where(Annotation.user_id == user_id, Annotation.book_id == book_id)
-      .order_by(Annotation.created_at)
-      .limit(_MAX_ANNOTATIONS),
-    )
-    annotations = list(result.scalars().all())
-    data.update(_split_annotations(annotations, include_highlights, include_notes))
-
-    # Chat conversations + reading sessions
-    data.update(await _load_chat_and_sessions(
-      db, user_id, book_id, include_conversations,
-    ))
-
-    return data
-  except (DBAPIError, OSError):
-    logger.warning('synthesis _collect_reading_data failed: book=%s user=%s', book_id, user_id, exc_info=True)
-    return {}
 
 
 def _build_synthesis_prompt(
@@ -281,7 +93,7 @@ async def synthesize(
     include_conversations=include_conversations,
   )
 
-  reading_data = await _collect_reading_data(
+  reading_data = await collect_reading_data(
     db, user_id, book_id,
     include_highlights, include_notes, include_conversations,
   )

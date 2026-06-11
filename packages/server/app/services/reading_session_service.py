@@ -4,14 +4,12 @@ Public API is re-exported from sub-modules so existing imports
 (`from app.services import reading_session_service`) continue to work.
 """
 
-import asyncio
 import logging
-from datetime import datetime
 from uuid import UUID
 
 from app.utils import utcnow
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reading_session import ReadingSession
@@ -26,6 +24,19 @@ from app.services._session_book_progress import (  # noqa: F401
     update_book_scroll_only as _update_book_scroll_only,
     update_book_with_page as _update_book_with_page,
 )
+from app.services._session_helpers import (
+    MAX_SESSION_SECONDS as _MAX_SESSION_SECONDS,
+    apply_update_fields as _apply_update_fields,
+    extract_client_fields as _extract_client_fields,
+    finalize_session_duration as _finalize_session_duration,
+    resolve_heartbeat_pages as _resolve_heartbeat_pages,
+)
+from app.services._session_queries import (  # noqa: F401
+    get_active_session,
+    get_book_session_log,
+    get_session,
+    get_sessions,
+)
 from app.services._session_stats import get_session_stats  # noqa: F401
 from app.services._session_summary import build_session_summary  # noqa: F401
 
@@ -33,61 +44,7 @@ logger = logging.getLogger('read-pal.sessions')
 
 
 # ---------------------------------------------------------------------------
-# Small internal helpers
-# ---------------------------------------------------------------------------
-
-
-def _extract_client_fields(
-    data: SessionUpdate | None,
-) -> tuple[dict, int | None, float | None, str | None]:
-    """Extract client-side fields and remaining update data from SessionUpdate."""
-    current_page: int | None = None
-    scroll_progress: float | None = None
-    current_segment: str | None = None
-    if not data:
-        return {}, current_page, scroll_progress, current_segment
-    update_data = data.model_dump(exclude_unset=True)
-    current_page = update_data.pop('current_page', None)
-    update_data.pop('total_pages', None)
-    scroll_progress = update_data.pop('scroll_progress', None)
-    current_segment = update_data.pop('current_segment', None)
-    return update_data, current_page, scroll_progress, current_segment
-
-
-def _apply_update_fields(session: ReadingSession, update_data: dict) -> None:
-    """Set updateable fields on a session from a dict, skipping is_active."""
-    for field, value in update_data.items():
-        if field != 'is_active':
-            setattr(session, field, value)
-
-
-# Maximum reasonable duration for a single reading session (2 hours).
-# Sessions exceeding this are likely idle tabs, not active reading.
-_MAX_SESSION_SECONDS = 7200
-
-
-def _finalize_session_duration(session: ReadingSession, now: datetime) -> None:
-    """Compute and set session duration if not already set.
-
-    Prefers client-reported duration (which excludes paused time) over
-    wall-clock computation from timestamps. Caps wall-clock fallback
-    to avoid inflated durations from idle tabs.
-    """
-    if not session.duration and session.started_at:
-        raw = int((now - session.started_at).total_seconds())
-        session.duration = min(raw, _MAX_SESSION_SECONDS)
-
-
-def _resolve_heartbeat_pages(body: SessionUpdate) -> tuple[int | None, float | None, str | None]:
-    """Extract page/scroll/segment fields from heartbeat body."""
-    pages_read = body.pages_read or body.pagesRead
-    scroll_progress = body.scroll_progress or body.scrollProgress
-    current_segment = body.current_segment
-    return pages_read, scroll_progress, current_segment
-
-
-# ---------------------------------------------------------------------------
-# Session CRUD
+# Session mutations (create / end / heartbeat)
 # ---------------------------------------------------------------------------
 
 
@@ -189,73 +146,6 @@ async def end_session(
     return session
 
 
-async def get_active_session(
-    db: AsyncSession,
-    user_id: str,
-    book_id: UUID | None = None,
-) -> ReadingSession | None:
-    """Find the active session for a given book, or any active session."""
-    conditions = [
-        ReadingSession.user_id == user_id,
-        ReadingSession.is_active == True,  # noqa: E712
-    ]
-    if book_id is not None:
-        conditions.append(ReadingSession.book_id == book_id)
-    result = await db.execute(
-        select(ReadingSession).where(*conditions),
-    )
-    return result.scalar_one_or_none()
-
-
-async def get_sessions(
-    db: AsyncSession,
-    user_id: str,
-    book_id: UUID | None = None,
-    page: int = 1,
-    per_page: int = 20,
-) -> tuple[list[ReadingSession], int]:
-    """Return paginated list of reading sessions."""
-    base = select(ReadingSession).where(ReadingSession.user_id == user_id)
-    count_base = (
-        select(func.count())
-        .select_from(ReadingSession)
-        .where(ReadingSession.user_id == user_id)
-    )
-
-    if book_id:
-        base = base.where(ReadingSession.book_id == book_id)
-        count_base = count_base.where(ReadingSession.book_id == book_id)
-
-    offset = (page - 1) * per_page
-    total_result, result = await asyncio.gather(
-        db.execute(count_base),
-        db.execute(
-            base.order_by(ReadingSession.started_at.desc())
-            .offset(offset)
-            .limit(per_page),
-        ),
-    )
-    total = total_result.scalar() or 0
-    sessions = list(result.scalars().all())
-
-    return sessions, total
-
-
-async def get_session(
-    db: AsyncSession,
-    user_id: str,
-    session_id: UUID,
-) -> ReadingSession | None:
-    """Return a single session, verifying ownership."""
-    result = await db.execute(
-        select(ReadingSession).where(
-            ReadingSession.id == session_id,
-            ReadingSession.user_id == user_id,
-        ),
-    )
-    return result.scalar_one_or_none()
-
-
 async def heartbeat_session(
     db: AsyncSession,
     user_id: UUID,
@@ -290,30 +180,3 @@ async def heartbeat_session(
                 )
         await db.flush()
     return session
-
-
-async def get_book_session_log(
-    db: AsyncSession,
-    user_id: UUID,
-    book_id: UUID,
-    page: int = 1,
-    per_page: int = 50,
-) -> tuple[list[ReadingSession], int]:
-    """Return paginated session log for a specific book."""
-    base_filter = (
-        ReadingSession.user_id == user_id,
-        ReadingSession.book_id == book_id,
-    )
-    total = await db.scalar(
-        select(func.count(ReadingSession.id)).where(*base_filter),
-    ) or 0
-
-    offset = (page - 1) * per_page
-    result = await db.execute(
-        select(ReadingSession)
-        .where(*base_filter)
-        .order_by(ReadingSession.started_at.desc())
-        .offset(offset)
-        .limit(per_page),
-    )
-    return list(result.scalars().all()), total

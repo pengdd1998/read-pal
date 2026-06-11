@@ -98,7 +98,7 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
  return (
  <div className="space-y-4">
   {!card ? (
-  <button
+  <button type="button"
    onClick={generateCard}
    disabled={loading}
    className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200 disabled:opacity-50"
@@ -112,8 +112,8 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
    <div className="flex items-center gap-2 mb-4">
     <span className="text-2xl">{'\uD83D\uDCDA'}</span>
     <div>
-    <div className="font-bold text-gray-900 dark:text-gray-100">{t('reading_journey', { name: card.user.name })}</div>
-    <div className="text-xs text-gray-500 dark:text-gray-400">{t('brand')}</div>
+    <div className="font-bold text-gray-900">{t('reading_journey', { name: card.user.name })}</div>
+    <div className="text-xs text-gray-500">{t('brand')}</div>
     </div>
    </div>
 
@@ -121,56 +121,56 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
     <div className="text-center p-2 bg-surface-0/60 rounded-xl">
     <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.booksCompleted}</div>
-    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('books')}</div>
+    <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('books')}</div>
     </div>
     <div className="text-center p-2 bg-surface-0/60 rounded-xl">
     <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.totalPages}</div>
-    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('pages')}</div>
+    <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('pages')}</div>
     </div>
     <div className="text-center p-2 bg-surface-0/60 rounded-xl">
     <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{stats.highlights}</div>
-    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('highlights_label')}</div>
+    <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('highlights_label')}</div>
     </div>
    </div>
 
    {/* Currently reading */}
    {card.currentlyReading && (
     <div className="bg-surface-0/70 rounded-xl p-3 mb-3">
-    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium mb-1">{t('currently_reading')}</div>
-    <div className="font-medium text-sm text-gray-900 dark:text-gray-100">{card.currentlyReading.title}</div>
-    {isDisplayableAuthor(card.currentlyReading.author) && <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{card.currentlyReading.author}</div>}
+    <div className="text-[10px] text-gray-500 uppercase tracking-wide font-medium mb-1">{t('currently_reading')}</div>
+    <div className="font-medium text-sm text-gray-900">{card.currentlyReading.title}</div>
+    {isDisplayableAuthor(card.currentlyReading.author) && <div className="text-xs text-gray-500 mb-2">{card.currentlyReading.author}</div>}
     <div className="w-full bg-surface-2 rounded-full h-2">
      <div
      className="bg-amber-500 rounded-full h-2 transition-all duration-500"
      style={{ width: `${Math.min(100, Math.max(0, card.currentlyReading.progress))}%` }}
      />
     </div>
-    <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{card.currentlyReading.progress}% {t('complete')}</div>
+    <div className="text-[10px] text-gray-500 mt-1">{card.currentlyReading.progress}% {t('complete')}</div>
     </div>
    )}
 
    {/* Recent books */}
    {card.recentBooks && card.recentBooks.length > 1 && (
-    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium mb-1">{t('recently_read')}</div>
+    <div className="text-[10px] text-gray-500 uppercase tracking-wide font-medium mb-1">{t('recently_read')}</div>
    )}
    {card.recentBooks && card.recentBooks.slice(card.currentlyReading ? 1 : 0, 3).map((book) => (
     <div key={book.title} className="flex items-center gap-2 py-1">
     <div className="w-1 h-1 rounded-full bg-amber-400" />
-    <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{book.title}</span>
-    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-auto">{book.progress}%</span>
+    <span className="text-xs text-gray-600 truncate">{book.title}</span>
+    <span className="text-[10px] text-gray-500 ml-auto">{book.progress}%</span>
     </div>
    ))}
    </div>
 
    {/* Share actions */}
    <div className="flex gap-2">
-   <button
+   <button type="button"
     onClick={handleNativeShare}
     className="btn btn-primary flex-1 text-sm focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {t('share')}
    </button>
-   <button
+   <button type="button"
     onClick={handleCopy}
     className="btn flex-1 text-sm bg-surface-0 border border-surface-3 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
@@ -178,9 +178,9 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
    </button>
    </div>
 
-   <button
+   <button type="button"
    onClick={() => setCard(null)}
-   className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+   className="text-xs text-gray-500 hover:text-gray-600"
    >
    {t('dismiss')}
    </button>

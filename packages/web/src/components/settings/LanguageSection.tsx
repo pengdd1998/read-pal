@@ -22,7 +22,7 @@ export const LanguageSection = React.memo(function LanguageSection({ onLanguageC
         </div>
         <div>
           <h2 className="text-lg font-semibold">{t('language_title')}</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('language_desc')}</p>
+          <p className="text-xs text-gray-500">{t('language_desc')}</p>
         </div>
       </div>
       <div className="bg-surface-0 rounded-2xl border border-surface-3 p-4">
@@ -51,13 +51,13 @@ interface LanguageButtonProps {
 
 const LanguageButton = React.memo(function LanguageButton({ label, isActive, onClick }: LanguageButtonProps) {
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       aria-pressed={isActive}
       className={`flex-1 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
         isActive
           ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-2 border-violet-300 dark:border-violet-700'
-          : 'bg-surface-2 text-gray-700 dark:text-gray-300 border-2 border-transparent hover:bg-surface-2'
+          : 'bg-surface-2 text-gray-700 border-2 border-transparent hover:bg-surface-2'
       }`}
     >
       {label}

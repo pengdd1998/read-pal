@@ -62,11 +62,11 @@ export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
   className="absolute bottom-0 left-0 right-0 bg-surface-0 rounded-t-2xl shadow-2xl animate-slide-up-mobile max-h-[70vh] overflow-y-auto safe-area-bottom"
   onClick={(e) => e.stopPropagation()}
   >
-  <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mt-3 mb-2" />
+  <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mt-3 mb-2" />
 
   {/* Text preview */}
   <div className="px-4 pb-2">
-   <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 italic leading-relaxed">
+   <p className="text-xs text-gray-500 line-clamp-2 italic leading-relaxed">
    &ldquo;{text.length > 120 ? text.slice(0, 120) + '...' : text}
    &rdquo;
    </p>
@@ -75,11 +75,11 @@ export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
   {/* Color dots */}
   <div className="flex items-center justify-center gap-3 px-4 py-3">
    {ANNOTATION_COLORS.map((color) => (
-   <button
+   <button type="button"
     key={color}
     onMouseDown={(e) => e.preventDefault()}
     onClick={() => onHighlight(color)}
-    className="min-w-[44px] min-h-[44px] rounded-full border-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="min-w-[44px] min-h-[44px] rounded-full border-2 border-transparent hover:border-gray-400 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     aria-label={t('toolbar_highlight_in', { color })}
    >
     <span className="w-9 h-9 rounded-full" style={{ backgroundColor: color }} />
@@ -91,9 +91,9 @@ export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
 
   {/* Actions */}
   <div className="flex items-center justify-around px-4 py-3">
-   <button
+   <button type="button"
    onMouseDown={(e) => { e.preventDefault(); onToggleNote(); }}
-   className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="flex flex-col items-center gap-1 text-gray-600 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    aria-label={t('toolbar_add_note')}
    >
    <div className="w-11 h-11 rounded-xl bg-surface-1 flex items-center justify-center">
@@ -104,10 +104,10 @@ export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
    <span className="text-[10px] font-medium">{t('toolbar_note')}</span>
    </button>
 
-   <button
+   <button type="button"
    onMouseDown={(e) => { e.preventDefault(); onToggleTagPicker(); }}
    className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
-    showTagPicker ? 'text-amber-600 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1'
+    showTagPicker ? 'text-amber-600 dark:text-amber-400' : 'text-gray-600 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1'
    }`}
    aria-label={t('toolbar_tag_and_highlight')}
    >
@@ -121,11 +121,11 @@ export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
    <span className="text-[10px] font-medium">{t('toolbar_tag')}</span>
    </button>
 
-   <button
+   <button type="button"
    onMouseDown={(e) => e.preventDefault()}
    onClick={onCopy}
    className={`flex flex-col items-center gap-1 active:scale-95 transition-transform ${
-    copied ? 'text-emerald-500' : 'text-gray-600 dark:text-gray-400 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1'
+    copied ? 'text-emerald-500' : 'text-gray-600 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1'
    }`}
    aria-label={t('toolbar_copy_text')}
    >
@@ -143,9 +143,9 @@ export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
    <span className="text-[10px] font-medium">{copied ? t('toolbar_copied') : t('toolbar_copy')}</span>
    </button>
 
-   <button
+   <button type="button"
    onMouseDown={(e) => { e.preventDefault(); onShowQuoteCard(); }}
-   className="flex flex-col items-center gap-1 text-gray-600 dark:text-gray-400 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="flex flex-col items-center gap-1 text-gray-600 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    aria-label={t('toolbar_share_as_quote')}
    >
    <div className="w-11 h-11 rounded-xl bg-surface-1 flex items-center justify-center">
@@ -157,7 +157,7 @@ export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
    </button>
 
    {onAskAI && (
-   <button
+   <button type="button"
     onClick={() => onAskAI(text)}
     className="flex flex-col items-center gap-1 active:scale-95 transition-transform focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     aria-label={t('toolbar_ask_ai_about')}

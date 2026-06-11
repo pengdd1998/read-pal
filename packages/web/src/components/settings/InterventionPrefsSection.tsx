@@ -42,7 +42,7 @@ function ToggleSwitch({
  label?: string;
 }) {
  return (
- <button
+ <button type="button"
   onClick={onChange}
   disabled={disabled}
   role="switch"
@@ -169,7 +169,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
   </div>
   <div>
    <h2 className="text-lg font-semibold">{t('intervention_prefs_title')}</h2>
-   <p className="text-xs text-gray-500 dark:text-gray-400">
+   <p className="text-xs text-gray-500">
    {t('intervention_prefs_desc')}
    </p>
   </div>
@@ -213,13 +213,13 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
    <label className="text-sm font-medium block mb-2">{t('quiet_hours')}</label>
    <div className="flex items-center gap-3">
    <div className="flex-1">
-    <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
+    <span className="text-xs text-gray-500 mr-2">
     {t('quiet_hours_start')}
     </span>
     <select
     value={prefs.quietHoursStart ?? ''}
     onChange={(e) => handleQuietHoursChange('quietHoursStart', e.target.value)}
-    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
     aria-label={t('quiet_hours_start')}
     >
     <option value="">--</option>
@@ -230,15 +230,15 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
     ))}
     </select>
    </div>
-   <span className="text-gray-500 dark:text-gray-400 text-sm">-</span>
+   <span className="text-gray-500 text-sm">-</span>
    <div className="flex-1">
-    <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
+    <span className="text-xs text-gray-500 mr-2">
     {t('quiet_hours_end')}
     </span>
     <select
     value={prefs.quietHoursEnd ?? ''}
     onChange={(e) => handleQuietHoursChange('quietHoursEnd', e.target.value)}
-    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
     aria-label={t('quiet_hours_end')}
     >
     <option value="">--</option>

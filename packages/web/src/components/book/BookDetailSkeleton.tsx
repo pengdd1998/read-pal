@@ -63,7 +63,7 @@ export const BookDetailError = memo(function BookDetailError({
    {error || t('errorBookNotFound')}
   </p>
   <div className="flex gap-3 justify-center mt-4">
-   <button
+   <button type="button"
    onClick={() => window.location.reload()}
    className="btn btn-secondary focus-visible:ring-2 focus-visible:ring-amber-400"
    >

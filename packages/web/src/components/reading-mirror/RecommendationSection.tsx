@@ -45,7 +45,7 @@ export default React.memo(function RecommendationSection({ data }: Recommendatio
  if (!recs.length) {
  return (
   <div className="rec-section">
-  <p className="italic text-gray-500 dark:text-gray-400">{t('no_recommendations')}</p>
+  <p className="italic text-gray-500">{t('no_recommendations')}</p>
   </div>
  );
  }

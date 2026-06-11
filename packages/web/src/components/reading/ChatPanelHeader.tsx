@@ -38,14 +38,14 @@ export const ChatPanelHeader = React.memo(function ChatPanelHeader({
    <p className="text-xs text-amber-600/70 dark:text-amber-400/60">{t('companion_your_reading_companion')}</p>
   </div>
   </div>
-  <button
+  <button type="button"
   onClick={onToggleMode}
   className={`min-w-[44px] min-h-[44px] rounded-lg text-xs font-medium transition-all flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    companionMode === 'socratic'
    ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
    : companionMode === 'scholar'
     ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-    : 'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1'
+    : 'text-gray-500 hover:text-gray-600 hover:bg-surface-1'
   }`}
   title={companionMode === 'socratic' ? t('companion_mode_socratic_title') : companionMode === 'scholar' ? t('companion_mode_scholar_title') : t('companion_mode_casual_title')}
   aria-label={t('companion_aria_switch_mode', { mode: companionMode })}
@@ -64,9 +64,9 @@ export const ChatPanelHeader = React.memo(function ChatPanelHeader({
    </svg>
   )}
   </button>
-  <button
+  <button type="button"
   onClick={onClose}
-  className="p-2.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+  className="p-2.5 rounded-lg text-gray-500 hover:text-gray-600 hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   aria-label={t('companion_aria_close')}
   >
   <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

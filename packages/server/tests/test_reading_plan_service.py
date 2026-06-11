@@ -65,7 +65,7 @@ def _make_reading_plan(
 
 class TestGeneratePlan:
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_generate_plan_happy_path(self, mock_llm: AsyncMock) -> None:
         user_id = uuid4()
         book_id = uuid4()
@@ -93,7 +93,7 @@ class TestGeneratePlan:
         db.flush.assert_called()
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_generate_plan_deactivates_existing(self, mock_llm: AsyncMock) -> None:
         user_id = uuid4()
         book_id = uuid4()
@@ -129,7 +129,7 @@ class TestGeneratePlan:
             await generate_plan(db, user_id, book_id)
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_generate_plan_clamps_total_days(self, mock_llm: AsyncMock) -> None:
         """total_days is clamped to [1, 90]."""
         user_id = uuid4()
@@ -150,7 +150,7 @@ class TestGeneratePlan:
         assert result['totalDays'] == 90
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_generate_plan_clamps_total_days_lower_bound(self, mock_llm: AsyncMock) -> None:
         """total_days is clamped to minimum 1."""
         user_id = uuid4()
@@ -170,7 +170,7 @@ class TestGeneratePlan:
         assert result['totalDays'] == 1
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_generate_plan_clamps_daily_minutes(self, mock_llm: AsyncMock) -> None:
         """daily_minutes is clamped to [10, 240]."""
         user_id = uuid4()
@@ -191,7 +191,7 @@ class TestGeneratePlan:
         # We just verify no error — clamping happens silently
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_generate_plan_default_params(self, mock_llm: AsyncMock) -> None:
         """Default total_days=7 and daily_minutes=30."""
         user_id = uuid4()
@@ -211,7 +211,7 @@ class TestGeneratePlan:
         assert result['totalDays'] == 7
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_generate_plan_returns_plan_id_as_string(self, mock_llm: AsyncMock) -> None:
         user_id = uuid4()
         book_id = uuid4()
@@ -396,7 +396,7 @@ class TestGeneratePlanText:
     """Tests for the fallback plan logic when LLM returns None."""
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_fallback_plan_when_llm_returns_none(self, mock_llm: AsyncMock) -> None:
         user_id = uuid4()
         book_id = uuid4()
@@ -417,7 +417,7 @@ class TestGeneratePlanText:
         assert 'Day 1' in result['planText']
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_fallback_plan_with_remaining_pages(self, mock_llm: AsyncMock) -> None:
         user_id = uuid4()
         book_id = uuid4()
@@ -438,7 +438,7 @@ class TestGeneratePlanText:
         assert 'Day 5' in plan_text
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_book_with_zero_pages(self, mock_llm: AsyncMock) -> None:
         """Book with 0 total_pages should still generate a plan (fallback)."""
         user_id = uuid4()
@@ -460,7 +460,7 @@ class TestGeneratePlanText:
         assert 'Test Book' in result['planText']
 
     @pytest.mark.asyncio
-    @patch('app.services.reading_plan_service.safe_llm_call', new_callable=AsyncMock)
+    @patch('app.services.reading_plan.plan_generation.safe_llm_call', new_callable=AsyncMock)
     async def test_book_with_none_pages(self, mock_llm: AsyncMock) -> None:
         """Book with None total_pages should use fallback (0 pages)."""
         user_id = uuid4()

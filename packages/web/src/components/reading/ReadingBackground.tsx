@@ -73,12 +73,12 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
  };
  }, [content, enabled, fetchScene]);
 
- if (!enabled) return null;
-
  const bgColor = sceneData?.color || '#4A90D9';
  const gradientStyle = useMemo(() => ({
   background: `linear-gradient(135deg, ${bgColor}22 0%, ${bgColor}44 40%, ${bgColor}11 100%)`,
  }), [bgColor]);
+
+ if (!enabled) return null;
 
  return (
  <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">

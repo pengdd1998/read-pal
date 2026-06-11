@@ -8,8 +8,8 @@ export const ApiRateLimits = React.memo(function ApiRateLimits() {
 
  return (
  <section>
-  <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-4">{t('rate_limits')}</h2>
-  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 text-sm text-gray-700 dark:text-gray-300 space-y-3 overflow-x-auto">
+  <h2 className="text-xl font-bold font-serif text-gray-900 mb-4">{t('rate_limits')}</h2>
+  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 text-sm text-gray-700 space-y-3 overflow-x-auto">
   <table className="w-full text-left">
    <thead>
    <tr className="border-b border-surface-3">
@@ -18,7 +18,7 @@ export const ApiRateLimits = React.memo(function ApiRateLimits() {
     <th className="pb-2 font-semibold">{t('rate_window')}</th>
    </tr>
    </thead>
-   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+   <tbody className="divide-y divide-gray-200">
    <tr><td className="py-2">{t('rate_ai_chat')}</td><td>10</td><td>{t('rate_minute')}</td></tr>
    <tr><td className="py-2">{t('rate_data_export')}</td><td>5</td><td>{t('rate_minute')}</td></tr>
    <tr><td className="py-2">{t('rate_zotero')}</td><td>5</td><td>{t('rate_minute')}</td></tr>

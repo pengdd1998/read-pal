@@ -43,7 +43,7 @@ export default React.memo(function EncounterSection({ data, bookTitle, bookAutho
    </div>
   )}
   <div>
-   <h1 className="font-serif text-4xl font-semibold text-gray-900 dark:text-gray-100 m-0 leading-tight">
+   <h1 className="font-serif text-4xl font-semibold text-gray-900 m-0 leading-tight">
    {bookTitle}
    </h1>
    <p className="text-lg text-amber-900/70 dark:text-amber-200/70 mt-1 mb-0">
@@ -54,7 +54,7 @@ export default React.memo(function EncounterSection({ data, bookTitle, bookAutho
 
   {/* Prologue text with drop cap */}
   {text && (
-  <div className="font-serif text-lg leading-[1.85] text-gray-800 dark:text-gray-200 max-w-[65ch] my-6">
+  <div className="font-serif text-lg leading-[1.85] text-gray-800 max-w-[65ch] my-6">
    <p className="m-0">
    <span
     className="float-left font-serif text-[3.5rem] leading-[0.8] pt-[0.1em] pr-[0.1em] text-amber-600 dark:text-amber-400 font-semibold"
@@ -84,34 +84,34 @@ export default React.memo(function EncounterSection({ data, bookTitle, bookAutho
   {stats && (
   <div className="flex flex-wrap gap-3 pt-4 border-t border-amber-100 dark:border-amber-900/40">
    <div className="bg-surface-0 border border-amber-100 dark:border-amber-900/40 rounded-lg px-3 py-2 text-center min-w-[100px]">
-   <span className="block text-lg font-semibold text-gray-900 dark:text-gray-100">
+   <span className="block text-lg font-semibold text-gray-900">
     {String(stats.total_reading_time || '0m')}
    </span>
-   <span className="block text-[0.7rem] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+   <span className="block text-[0.7rem] text-gray-500 uppercase tracking-wider">
     {t('reading_time')}
    </span>
    </div>
    <div className="bg-surface-0 border border-amber-100 dark:border-amber-900/40 rounded-lg px-3 py-2 text-center min-w-[100px]">
-   <span className="block text-lg font-semibold text-gray-900 dark:text-gray-100">
+   <span className="block text-lg font-semibold text-gray-900">
     {String(stats.session_count || 0)}
    </span>
-   <span className="block text-[0.7rem] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+   <span className="block text-[0.7rem] text-gray-500 uppercase tracking-wider">
     {t('sessions')}
    </span>
    </div>
    <div className="bg-surface-0 border border-amber-100 dark:border-amber-900/40 rounded-lg px-3 py-2 text-center min-w-[100px]">
-   <span className="block text-lg font-semibold text-gray-900 dark:text-gray-100">
+   <span className="block text-lg font-semibold text-gray-900">
     {String(stats.highlight_count || 0)}
    </span>
-   <span className="block text-[0.7rem] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+   <span className="block text-[0.7rem] text-gray-500 uppercase tracking-wider">
     {t('highlights')}
    </span>
    </div>
    <div className="bg-surface-0 border border-amber-100 dark:border-amber-900/40 rounded-lg px-3 py-2 text-center min-w-[100px]">
-   <span className="block text-lg font-semibold text-gray-900 dark:text-gray-100">
+   <span className="block text-lg font-semibold text-gray-900">
     {String(stats.longest_session || '0m')}
    </span>
-   <span className="block text-[0.7rem] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+   <span className="block text-[0.7rem] text-gray-500 uppercase tracking-wider">
     {t('longest_session')}
    </span>
    </div>

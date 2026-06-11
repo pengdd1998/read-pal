@@ -8,8 +8,8 @@ export const ApiExportFormats = React.memo(function ApiExportFormats() {
 
  return (
  <section>
-  <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-4">{t('export_formats')}</h2>
-  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 text-sm text-gray-700 dark:text-gray-300 overflow-x-auto">
+  <h2 className="text-xl font-bold font-serif text-gray-900 mb-4">{t('export_formats')}</h2>
+  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 text-sm text-gray-700 overflow-x-auto">
   <table className="w-full text-left">
    <thead>
    <tr className="border-b border-surface-3">
@@ -18,7 +18,7 @@ export const ApiExportFormats = React.memo(function ApiExportFormats() {
     <th className="pb-2 font-semibold">{t('export_use_case')}</th>
    </tr>
    </thead>
-   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+   <tbody className="divide-y divide-gray-200">
    <tr><td className="py-2 font-mono">csv</td><td>text/csv</td><td>{t('export_csv_use')}</td></tr>
    <tr><td className="py-2 font-mono">json</td><td>application/json</td><td>{t('export_json_use')}</td></tr>
    <tr><td className="py-2 font-mono">bibtex</td><td>application/x-bibtex</td><td>{t('export_bibtex_use')}</td></tr>

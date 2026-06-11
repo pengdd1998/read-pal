@@ -18,7 +18,7 @@ interface FormatButtonProps {
 
 const FormatButton = React.memo(function FormatButton({ f, isActive, label, description, onFormatChange }: FormatButtonProps) {
  return (
-  <button
+  <button type="button"
    onClick={() => onFormatChange(f.value)}
    aria-label={`${label} - ${description}`}
    className={`text-left px-3 py-2.5 rounded-xl border transition-all focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
@@ -27,8 +27,8 @@ const FormatButton = React.memo(function FormatButton({ f, isActive, label, desc
      : 'border-surface-3 hover:border-surface-3'
    }`}
   >
-   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</span>
-   <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</span>
+   <span className="text-sm font-medium text-gray-900">{label}</span>
+   <span className="block text-xs text-gray-500 mt-0.5">{description}</span>
   </button>
  );
 });
@@ -50,7 +50,7 @@ export const ExportFormatSelector = React.memo(function ExportFormatSelector({
         const items = FORMATS.filter((f) => f.category === cat.key);
         return (
           <div key={cat.key}>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
               {t(cat.labelKey)}
             </p>
             

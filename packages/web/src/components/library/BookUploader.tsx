@@ -173,7 +173,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
    <h3 className="text-lg font-semibold mb-1">
    {uploading ? t('uploading') : t('upload_drag_here')}
    </h3>
-   <p className="text-gray-500 dark:text-gray-400 text-sm">
+   <p className="text-gray-500 text-sm">
    {t('upload_format_hint')}
    </p>
 
@@ -186,10 +186,10 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
     />
     </div>
     <div className="flex items-center justify-between mt-2">
-    <p className="text-xs text-gray-500 dark:text-gray-400">
+    <p className="text-xs text-gray-500">
      {uploadProgress < 100 ? t('upload_progress', { progress: uploadProgress }) : t('upload_processing')}
     </p>
-    <button
+    <button type="button"
      onClick={(e) => { e.stopPropagation(); cancelUpload(); }}
      className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      aria-label={t('upload_cancel')}

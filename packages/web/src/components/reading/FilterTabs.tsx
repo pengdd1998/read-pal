@@ -26,7 +26,7 @@ export const FilterTabs = React.memo(function FilterTabs({ activeTab, counts, on
  return (
  <div role="tablist" aria-label={t('sidebar_annotations')} className="flex border-b border-surface-3 px-2">
   {TAB_KEYS.map((tab) => (
-  <button
+  <button type="button"
    key={tab}
    onClick={() => onTabChange(tab)}
    role="tab"
@@ -34,7 +34,7 @@ export const FilterTabs = React.memo(function FilterTabs({ activeTab, counts, on
    className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
    activeTab === tab
     ? 'text-primary-600 dark:text-primary-400'
-    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+    : 'text-gray-500 hover:text-gray-700'
    }`}
   >
    {t(TAB_LABEL_KEYS[tab])}
@@ -43,7 +43,7 @@ export const FilterTabs = React.memo(function FilterTabs({ activeTab, counts, on
    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] ${
     activeTab === tab
     ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
-    : 'bg-surface-1 text-gray-500 dark:text-gray-400'
+    : 'bg-surface-1 text-gray-500'
    }`}>
     {counts[tab]}
    </span>

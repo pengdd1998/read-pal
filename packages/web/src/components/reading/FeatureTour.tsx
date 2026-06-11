@@ -186,15 +186,15 @@ export const FeatureTour = React.memo(function FeatureTour() {
     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
     {step + 1}
     </span>
-    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(current.titleKey)}</h4>
+    <h4 className="text-sm font-semibold text-gray-900">{t(current.titleKey)}</h4>
    </div>
-   <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{t(current.descKey)}</p>
+   <p className="text-xs text-gray-500 leading-relaxed">{t(current.descKey)}</p>
    </div>
 
-   <div className="px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between border-t border-surface-2">
-   <button
+   <div className="px-4 py-2.5 bg-gray-50/50 flex items-center justify-between border-t border-surface-2">
+   <button type="button"
     onClick={handleSkip}
-    className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center"
+    className="text-[11px] text-gray-500 hover:text-gray-600 transition-colors min-h-[44px] inline-flex items-center"
    >
     {t('tour_skip')}
    </button>
@@ -208,13 +208,13 @@ export const FeatureTour = React.memo(function FeatureTour() {
      aria-hidden="true"
      aria-label={t('tour_step_label', { step: i + 1 })}
      className={`w-1.5 h-1.5 rounded-full transition-colors ${
-      i === step ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+      i === step ? 'bg-amber-500' : 'bg-gray-300'
      }`}
      />
     ))}
     </div>
 
-    <button
+    <button type="button"
     onClick={handleNext}
     className="px-3 py-1 rounded-lg text-[11px] font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
     >

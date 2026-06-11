@@ -131,7 +131,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   <div className="space-y-2 pr-4">
   <div className="h-5 w-24 bg-surface-1 rounded animate-pulse" />
   {[1, 2, 3].map((i) => (
-   <div key={i} className="h-8 bg-gray-50/50 dark:bg-gray-800/50 rounded-lg animate-pulse" />
+   <div key={i} className="h-8 bg-gray-50/50 rounded-lg animate-pulse" />
   ))}
   </div>
  );
@@ -141,7 +141,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  return (
   <div className="pr-2 sm:pr-4">
   <p className="text-xs text-red-500 mb-2">{t('collections_load_failed')}</p>
-  <button
+  <button type="button"
    onClick={loadCollections}
    className="min-h-[44px] inline-flex items-center px-2 text-xs text-primary-600 hover:text-primary-700 underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
@@ -155,18 +155,18 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  <div className="pr-2 sm:pr-4">
   {/* Header */}
   <div className="flex items-center justify-between mb-3">
-  <button
+  <button type="button"
    onClick={() => setCollapsed((v) => !v)}
-   className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    <svg aria-hidden="true" className={`w-3 h-3 transition-transform ${collapsed ? '' : 'rotate-90'}`} fill="currentColor" viewBox="0 0 20 20">
    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
    </svg>
    {t('collections_title')}
   </button>
-  <button
+  <button type="button"
    onClick={() => setShowCreate((v) => !v)}
-   className="p-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="p-1 rounded-md text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    title={t('collections_new')}
    aria-label={t('collections_new')}
   >
@@ -195,12 +195,12 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
    )}
 
    {/* All books button */}
-   <button
+   <button type="button"
    onClick={() => onSelectCollection(null)}
    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 mb-1 ${
     activeCollectionId === null
     ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium'
-    : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
+    : 'text-gray-600 hover:bg-surface-1'
    }`}
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -227,7 +227,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
    ))}
 
    {collections.length === 0 && !showCreate && (
-   <p className="text-xs text-gray-500 dark:text-gray-400 px-3 py-2">
+   <p className="text-xs text-gray-500 px-3 py-2">
     {t('collections_empty')}
    </p>
    )}

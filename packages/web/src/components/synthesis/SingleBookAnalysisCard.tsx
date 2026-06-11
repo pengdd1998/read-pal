@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
@@ -37,6 +37,8 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
  const [loading, setLoading] = useState(false);
  const [result, setResult] = useState<AnalysisResult | null>(null);
  const [error, setError] = useState<string | null>(null);
+ const mountedRef = useRef(true);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleAnalyze = useCallback(async () => {
  if (!selectedBookId || !query.trim()) return;
@@ -48,6 +50,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   query: query.trim(),
   mode,
   });
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setResult(res.data);
   } else {
@@ -55,9 +58,9 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   }
  } catch (error) {
   warn('SingleBookAnalysisCard: analyze failed', error);
-  setError(t('network_error'));
+  if (mountedRef.current) setError(t('network_error'));
  } finally {
-  setLoading(false);
+  if (mountedRef.current) setLoading(false);
  }
  }, [selectedBookId, query, mode, t]);
 
@@ -65,13 +68,13 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
  <>
   {/* Single-book analysis form */}
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-5 mb-6">
-  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
+  <h3 className="text-sm font-semibold text-gray-800 mb-4">
    {t('single_book_title')}
   </h3>
 
   {/* Book selector */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">
+   <label className="text-xs font-medium text-gray-500 mb-1 block">
    {t('select_book')}
    </label>
    {booksLoading ? (
@@ -84,7 +87,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    <select
     value={selectedBookId}
     onChange={(e) => setSelectedBookId(e.target.value)}
-    className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+    className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
    >
     <option value="">{t('choose_book')}</option>
     {books.map((book) => (
@@ -98,12 +101,12 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
 
   {/* Mode selector */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">
+   <label className="text-xs font-medium text-gray-500 mb-2 block">
    {t('analysis_mode')}
    </label>
    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('analysis_mode')}>
    {MODES.map((m) => (
-    <button
+    <button type="button"
     key={m.key}
     role="radio"
     aria-checked={mode === m.key}
@@ -111,7 +114,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      mode === m.key
      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700'
-     : 'bg-surface-1 text-gray-600 dark:text-gray-400 border border-surface-3 hover:bg-surface-1'
+     : 'bg-surface-1 text-gray-600 border border-surface-3 hover:bg-surface-1'
     }`}
     >
     <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -125,7 +128,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
 
   {/* Query input */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">
+   <label className="text-xs font-medium text-gray-500 mb-1 block">
    {t('query_label')}
    </label>
    <textarea
@@ -133,12 +136,12 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    onChange={(e) => setQuery(e.target.value)}
    placeholder={t('query_placeholder')}
    rows={3}
-   className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+   className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
    />
   </div>
 
   {/* Run button */}
-  <button
+  <button type="button"
    onClick={handleAnalyze}
    disabled={loading || !selectedBookId || !query.trim()}
    className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
@@ -171,7 +174,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   {/* Result */}
   {result && (
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-5">
-   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
+   <h3 className="text-sm font-semibold text-gray-800 mb-4">
    {t('results_title')}
    </h3>
    <AnalysisResultView result={result} />
@@ -180,7 +183,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
 
   {/* Empty state */}
   {!result && !error && !loading && (
-  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+  <div className="text-center py-12 text-gray-500">
    <svg aria-hidden="true" className="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
    </svg>

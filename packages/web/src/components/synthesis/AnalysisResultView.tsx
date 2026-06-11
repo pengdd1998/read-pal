@@ -23,7 +23,7 @@ const ThemeChip = React.memo(function ThemeChip({ name, strength }: { name: stri
 
 const InsightItem = React.memo(function InsightItem({ insight }: { insight: string }) {
   return (
-    <li className="text-xs text-gray-700 dark:text-gray-300 pl-3 border-l-2 border-teal-400">
+    <li className="text-xs text-gray-700 pl-3 border-l-2 border-teal-400">
       {insight}
     </li>
   );
@@ -43,15 +43,15 @@ const ReferenceItem = React.memo(function ReferenceItem({ ref: refData, t }: {
               ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               : refData.type === 'extending'
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-surface-1 text-gray-600 dark:text-gray-400'
+                : 'bg-surface-1 text-gray-600'
         }`}>
           {t(`ref_${refData.type}`, { defaultValue: refData.type })}
         </span>
-        <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
+        <span className="text-xs font-medium text-gray-800 truncate">
           {refData.book.title}
         </span>
       </div>
-      <p className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2">
+      <p className="text-[11px] text-gray-500 line-clamp-2">
         {refData.explanation}
       </p>
     </div>
@@ -79,18 +79,18 @@ const ContradictionItem = React.memo(function ContradictionItem({ c, t }: {
         }`}>
           {t(`severity_${c.severity}`, { defaultValue: c.severity })}
         </span>
-        <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
+        <span className="text-xs font-medium text-gray-800 truncate">
           {c.topic}
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-        <div className="p-2 rounded bg-surface-0 border border-gray-100 dark:border-gray-700">
-          <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position1.book.title}</p>
-          <p className="text-gray-500 dark:text-gray-400 line-clamp-3">{c.position1.claim}</p>
+        <div className="p-2 rounded bg-surface-0 border border-gray-100">
+          <p className="font-medium text-gray-700 mb-0.5">{c.position1.book.title}</p>
+          <p className="text-gray-500 line-clamp-3">{c.position1.claim}</p>
         </div>
-        <div className="p-2 rounded bg-surface-0 border border-gray-100 dark:border-gray-700">
-          <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position2.book.title}</p>
-          <p className="text-gray-500 dark:text-gray-400 line-clamp-3">{c.position2.claim}</p>
+        <div className="p-2 rounded bg-surface-0 border border-gray-100">
+          <p className="font-medium text-gray-700 mb-0.5">{c.position2.book.title}</p>
+          <p className="text-gray-500 line-clamp-3">{c.position2.claim}</p>
         </div>
       </div>
     </div>
@@ -123,7 +123,7 @@ const EdgeRow = React.memo(function EdgeRow({ edge }: {
   edge: { source: string; target: string; label: string };
 }) {
   return (
-    <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+    <div className="text-[11px] text-gray-500 flex items-center gap-1">
       <span className="truncate max-w-[80px]">{edge.source}</span>
       <svg aria-hidden="true" className="w-3 h-3 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -155,7 +155,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
       {/* Themes */}
       {result.themes && result.themes.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             {t('key_themes')}
           </h4>
           <div className="flex flex-wrap gap-1.5">
@@ -169,7 +169,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
       {/* Insights */}
       {result.insights && result.insights.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             {t('key_insights')}
           </h4>
           <ul className="space-y-1.5">
@@ -183,7 +183,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
       {/* Cross-references */}
       {result.references && result.references.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             {t('references_found')}
           </h4>
           <div className="space-y-2">
@@ -197,7 +197,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
       {/* Contradictions */}
       {result.contradictions && result.contradictions.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             {t('contradictions_count', { count: result.contradictions.length })}
           </h4>
           <div className="space-y-2">
@@ -215,7 +215,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
 
       {/* Report meta */}
       {result.booksCovered !== undefined && (
-        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-3 text-xs text-gray-500">
           <span className="flex items-center gap-1">
             <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -228,10 +228,10 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
       {/* Main analysis text */}
       {textContent && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             {t('analysis_label')}
           </h4>
-          <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-surface-1 rounded-lg p-3 border border-surface-3 max-h-[400px] overflow-y-auto">
+          <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 whitespace-pre-wrap leading-relaxed bg-surface-1 rounded-lg p-3 border border-surface-3 max-h-[400px] overflow-y-auto">
             {textContent}
           </div>
         </div>
@@ -248,7 +248,7 @@ const ConceptMapView = React.memo(function ConceptMapView({ result }: { result: 
   const t = useTranslations('synthesis');
   return (
     <div>
-      <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
         {t('concept_map_label', { nodes: result.nodes?.length || 0, edges: result.edges?.length || 0 })}
       </h4>
       <div className="flex flex-wrap gap-1.5 mb-3">

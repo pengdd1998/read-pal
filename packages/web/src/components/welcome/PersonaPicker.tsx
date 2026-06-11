@@ -27,14 +27,14 @@ export const PersonaPicker = React.memo(function PersonaPicker({
 
   return (
     <div className="mb-4">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+      <h3 className="text-sm font-semibold text-gray-700 mb-3">
         {t('pick_companion')}
       </h3>
       <div className="grid grid-cols-1 gap-1.5 text-left">
         {personas.map((p) => {
           const isSelected = selectedPersona === p.id;
           return (
-            <button
+            <button type="button"
               key={p.id}
               onClick={() => onSelect(p.id)}
               className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all duration-200 text-left min-h-[44px] ${
@@ -46,8 +46,8 @@ export const PersonaPicker = React.memo(function PersonaPicker({
               <span className="text-xl">{p.emoji}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{p.name}</span>
-                  <span className="text-[10px] text-gray-500 dark:text-gray-400">{t(p.personalityKey)}</span>
+                  <span className="font-semibold text-sm text-gray-900">{p.name}</span>
+                  <span className="text-[10px] text-gray-500">{t(p.personalityKey)}</span>
                 </div>
               </div>
               {isSelected && (

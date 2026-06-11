@@ -29,7 +29,7 @@ const ChapterItemRow = React.memo(function ChapterItemRow({
  chapterLabel,
 }: ChapterItemRowProps) {
  return (
-  <button
+  <button type="button"
    onClick={() => {
     onPageChange(index);
     onClose();
@@ -45,7 +45,7 @@ const ChapterItemRow = React.memo(function ChapterItemRow({
      ? 'text-gray-300 hover:bg-gray-700/60'
      : theme === 'sepia'
       ? 'text-amber-900/80 hover:bg-amber-100/40'
-      : 'text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800/50'
+      : 'text-gray-700 hover:bg-amber-50'
    }`}
   >
    <span className={`flex-shrink-0 w-6 text-xs font-mono text-right ${
@@ -124,7 +124,7 @@ export const ChapterDropdown = React.memo(function ChapterDropdown({
 
  return (
  <div className="flex-1 flex justify-center min-w-0 relative" ref={chapterMenuRef}>
-  <button
+  <button type="button"
   onClick={() => setShowChapterMenu((v) => !v)}
   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
    showChapterMenu
@@ -137,7 +137,7 @@ export const ChapterDropdown = React.memo(function ChapterDropdown({
     ? 'text-gray-400 hover:bg-white/5'
     : theme === 'sepia'
     ? 'text-amber-800/60 hover:bg-black/5'
-    : 'text-gray-500 dark:text-gray-400 hover:bg-black/5'
+    : 'text-gray-500 hover:bg-black/5'
   }`}
   aria-label={t('reader_open_chapter_list')}
   aria-expanded={showChapterMenu}

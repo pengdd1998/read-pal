@@ -29,7 +29,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
    </div>
    {!msg.streaming && (
     <div className="flex gap-1 mt-1.5">
-    <button
+    <button type="button"
      onClick={() => submitFeedback(msg.id, true)}
      className="p-2.5 rounded text-amber-400/50 hover:text-green-500 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      aria-label={t('companion_aria_helpful')}
@@ -38,7 +38,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
      <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
      </svg>
     </button>
-    <button
+    <button type="button"
      onClick={() => submitFeedback(msg.id, false)}
      className="p-2.5 rounded text-amber-400/50 hover:text-red-500 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      aria-label={t('companion_aria_unhelpful')}

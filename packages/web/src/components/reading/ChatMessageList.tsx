@@ -14,7 +14,7 @@ interface SuggestedPromptButtonProps {
 
 const SuggestedPromptButton = React.memo(function SuggestedPromptButton({ prompt, onPromptClick }: SuggestedPromptButtonProps) {
  return (
-  <button
+  <button type="button"
    onClick={() => onPromptClick(prompt)}
    className="block w-full text-left text-xs p-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-amber-200/50 dark:border-amber-800/30 transition-colors"
   >

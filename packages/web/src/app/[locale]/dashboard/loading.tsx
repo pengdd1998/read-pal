@@ -56,11 +56,11 @@ export default function DashboardLoading() {
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6">
    <div className="h-4 bg-surface-2 rounded w-24 mb-3 animate-pulse" />
    <div className="grid grid-cols-2 gap-3">
-   <div className="text-center p-2 rounded-lg bg-gray-50/50 dark:bg-gray-800/50">
+   <div className="text-center p-2 rounded-lg bg-gray-50/50">
     <div className="h-6 bg-surface-2 rounded w-12 mx-auto mb-1 animate-pulse" />
     <div className="h-3 bg-surface-2 rounded w-16 mx-auto animate-pulse" />
    </div>
-   <div className="text-center p-2 rounded-lg bg-gray-50/50 dark:bg-gray-800/50">
+   <div className="text-center p-2 rounded-lg bg-gray-50/50">
     <div className="h-6 bg-surface-2 rounded w-12 mx-auto mb-1 animate-pulse" />
     <div className="h-3 bg-surface-2 rounded w-16 mx-auto animate-pulse" />
    </div>

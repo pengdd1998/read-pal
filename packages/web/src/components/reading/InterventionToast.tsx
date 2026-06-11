@@ -154,7 +154,7 @@ export const InterventionToast = React.memo(function InterventionToast({
   <div className="flex items-start gap-3">
    <span className="text-xl flex-shrink-0">{INTERVENTION_ICONS[intervention.type] || '\uD83D\uDCA1'}</span>
    <div className="flex-1 min-w-0">
-   <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">{intervention.message}</p>
+   <p className="text-sm text-gray-900 leading-relaxed">{intervention.message}</p>
    <div className="flex items-center gap-2 mt-2">
     <button type="button"
     onClick={handleHelpful}
@@ -174,7 +174,7 @@ export const InterventionToast = React.memo(function InterventionToast({
     <button type="button"
     onClick={handleDismiss}
     disabled={submitting}
-    className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="text-xs text-gray-500 hover:text-gray-600 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
     {t('dismiss')}
     </button>
@@ -182,7 +182,7 @@ export const InterventionToast = React.memo(function InterventionToast({
    </div>
    <button type="button"
    onClick={handleDismiss}
-   className="text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 flex-shrink-0 p-2 -m-2 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+   className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 flex-shrink-0 p-2 -m-2 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
    aria-label={t('dismiss')}
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

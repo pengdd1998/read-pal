@@ -23,9 +23,9 @@ const HubConceptCard = React.memo(function HubConceptCard({ hub }: HubConceptCar
     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-1.5">
         <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-        <span className="font-serif font-semibold text-gray-900 dark:text-gray-100">{hub.name}</span>
+        <span className="font-serif font-semibold text-gray-900">{hub.name}</span>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400 m-0 leading-relaxed">{hub.why_central}</p>
+      <p className="text-sm text-gray-600 m-0 leading-relaxed">{hub.why_central}</p>
     </div>
   );
 });
@@ -48,7 +48,7 @@ const ConnectionCard = React.memo(function ConnectionCard({ connection }: Connec
           {connection.to}
         </span>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400 m-0 leading-relaxed">{connection.insight}</p>
+      <p className="text-sm text-gray-600 m-0 leading-relaxed">{connection.insight}</p>
     </div>
   );
 });
@@ -59,7 +59,7 @@ interface PeripheralChipProps {
 
 const PeripheralChip = React.memo(function PeripheralChip({ concept }: PeripheralChipProps) {
   return (
-    <span className="px-2.5 py-1 rounded-full bg-surface-1 border border-surface-3 text-xs text-gray-600 dark:text-gray-400">
+    <span className="px-2.5 py-1 rounded-full bg-surface-1 border border-surface-3 text-xs text-gray-600">
       {concept}
     </span>
   );
@@ -80,7 +80,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
     return (
       <div className="py-8 text-center">
         <span className="text-2xl">🕸️</span>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{t('no_concepts')}</p>
+        <p className="text-sm text-gray-500 mt-2 italic">{t('no_concepts')}</p>
       </div>
     );
   }
@@ -88,7 +88,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
   return (
     <div className="py-8 space-y-6">
       {narrative && (
-        <p className="text-gray-600 dark:text-gray-400 text-base italic leading-relaxed max-w-[65ch]">
+        <p className="text-gray-600 text-base italic leading-relaxed max-w-[65ch]">
           {narrative}
         </p>
       )}
@@ -96,7 +96,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
       {/* Hub concepts */}
       {hubs.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
             {t('hub_concepts')}
           </h4>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -110,7 +110,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
       {/* Surprising connections */}
       {connections.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
             {t('surprising_connections')}
           </h4>
           <div className="space-y-2">
@@ -124,7 +124,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
       {/* Peripheral concepts */}
       {peripheral.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
             {t('peripheral_concepts')}
           </h4>
           <div className="flex flex-wrap gap-2">

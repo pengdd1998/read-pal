@@ -165,7 +165,7 @@ export default async function DocsPage({
    <span>{t('breadcrumb_docs')}</span>
    </div>
    <h1 className="text-4xl font-bold font-display tracking-tight">{t('header_title')}</h1>
-   <p className="text-gray-600 dark:text-gray-300 mt-3 text-lg max-w-2xl">
+   <p className="text-gray-600 mt-3 text-lg max-w-2xl">
    {t('header_subtitle')}
    </p>
   </div>
@@ -179,7 +179,7 @@ export default async function DocsPage({
     <a
     key={s.id}
     href={`#${s.id}`}
-    className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-surface-0 hover:text-navy-700 dark:hover:text-navy-300 transition-colors"
+    className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-surface-0 hover:text-navy-700 dark:hover:text-navy-300 transition-colors"
     >
     <span className="text-base">{s.icon}</span>
     {s.title}
@@ -198,7 +198,7 @@ export default async function DocsPage({
    <div className="space-y-12">
    {SECTIONS.map((section) => (
     <section key={section.id} id={section.id}>
-    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-display flex items-center gap-3 mb-6">
+    <h2 className="text-2xl font-bold text-gray-900 font-display flex items-center gap-3 mb-6">
      <span className="text-3xl">{section.icon}</span>
      {section.title}
     </h2>
@@ -208,8 +208,8 @@ export default async function DocsPage({
       key={item.title}
       className="bg-surface-0 rounded-xl border border-surface-3 p-5"
      >
-      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{item.title}</h3>
-      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.content}</p>
+      <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
+      <p className="text-sm text-gray-600 leading-relaxed">{item.content}</p>
      </div>
      ))}
     </div>

@@ -96,7 +96,7 @@ export function ServiceWorkerRegistrar() {
 
  return (
  <div className="fixed bottom-4 right-4 z-50 bg-surface-0 rounded-xl shadow-lg border border-surface-3 p-4 max-w-xs animate-fade-in">
-  <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+  <p className="text-sm text-gray-700 mb-3">
   {t('update_available')}
   </p>
   <button type="button"

@@ -17,7 +17,7 @@ export const BookBreakdown = React.memo(function BookBreakdown({ books }: BookBr
 
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
-  <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('books_progress')}</h2>
+  <h2 className="font-semibold text-gray-900 mb-4">{t('books_progress')}</h2>
   <div className="space-y-3">
   {books.slice(0, 6).map((book) => (
   <BookProgressRow key={book.id} book={book} />
@@ -38,7 +38,7 @@ const BookProgressRow = React.memo(function BookProgressRow({ book }: BookProgre
   <span className={`text-xs font-bold ${getBookCoverColors(book.title)[1]}`}>{getBookInitials(book.title)}</span>
   </div>
   <div className="flex-1 min-w-0">
-  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+  <h3 className="text-sm font-medium text-gray-900 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
   {book.title}
   </h3>
   <div className="w-full bg-surface-1 rounded-full h-1.5 mt-1">
@@ -50,7 +50,7 @@ const BookProgressRow = React.memo(function BookProgressRow({ book }: BookProgre
    />
   </div>
   </div>
-  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 tabular-nums">{Math.round(book.progress)}%</span>
+  <span className="text-xs font-medium text-gray-500 tabular-nums">{Math.round(book.progress)}%</span>
  </Link>
  );
 });

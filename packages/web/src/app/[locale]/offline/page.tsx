@@ -24,7 +24,7 @@ const CachedBookRow = React.memo(function CachedBookRow({ book, chaptersCachedLa
    <Link
     key={book.bookId}
     href={`/read/${book.bookId}`}
-    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-surface-3 hover:border-amber-300 dark:hover:border-amber-700 transition-colors text-left"
+    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-surface-3 hover:border-amber-300 dark:hover:border-amber-700 transition-colors text-left"
    >
     <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
      <svg aria-hidden="true" className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -32,10 +32,10 @@ const CachedBookRow = React.memo(function CachedBookRow({ book, chaptersCachedLa
      </svg>
     </div>
     <div className="flex-1 min-w-0">
-     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+     <p className="text-sm font-medium text-gray-900 truncate">
      {book.title}
      </p>
-     <p className="text-xs text-gray-500 dark:text-gray-400">
+     <p className="text-xs text-gray-500">
      {chaptersCachedLabel}
      </p>
     </div>
@@ -145,7 +145,7 @@ export default function OfflinePage() {
       {loading ? (
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t('loading')}</p>
+          <p className="text-sm text-gray-500">{t('loading')}</p>
         </div>
       ) : (
       <>
@@ -176,10 +176,10 @@ export default function OfflinePage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {isOnline ? t('online_title') : t('offline_title')}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-gray-500 mb-6">
             {isOnline ? t('online_desc') : t('offline_desc')}
           </p>
 
@@ -210,7 +210,7 @@ export default function OfflinePage() {
                 {/* Cached content access */}
                 {cachedBooks.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    <p className="text-sm text-gray-500 mb-3">
                       {t('available_offline')}
                     </p>
                     <div className="space-y-2">

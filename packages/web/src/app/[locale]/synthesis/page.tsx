@@ -85,10 +85,10 @@ export default function SynthesisPage() {
  <main id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
   {/* Header */}
   <div className="mb-8">
-  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+  <h1 className="text-2xl font-bold text-gray-900">
    {t('page_title')}
   </h1>
-  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+  <p className="mt-1 text-sm text-gray-500">
    {t('page_subtitle')}
   </p>
   </div>
@@ -131,7 +131,7 @@ export default function SynthesisPage() {
 
   {result && (
   <div className="mb-6 bg-surface-0 rounded-xl border border-surface-3 p-5">
-   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
+   <h3 className="text-sm font-semibold text-gray-800 mb-4">
    {t('results_title')}
    </h3>
    <AnalysisResultView result={result} />

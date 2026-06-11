@@ -45,8 +45,8 @@ export const ReadingVelocityTrend = React.memo(function ReadingVelocityTrend({ s
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
   <div className="flex items-center justify-between mb-4">
-  <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('reading_velocity')}</h2>
-  <span className="text-xs text-gray-500 dark:text-gray-400">
+  <h2 className="font-semibold text-gray-900">{t('reading_velocity')}</h2>
+  <span className="text-xs text-gray-500">
    {t('avg_pages_session', { count: avgPages })}
   </span>
   </div>
@@ -73,11 +73,11 @@ export const ReadingVelocityTrend = React.memo(function ReadingVelocityTrend({ s
   <div className="flex items-center gap-4 mt-2 text-xs">
   <div className="flex items-center gap-1.5">
    <div className="w-3 h-0.5 bg-amber-500 rounded" />
-   <span className="text-gray-500 dark:text-gray-400">{t('legend_pages')}</span>
+   <span className="text-gray-500">{t('legend_pages')}</span>
   </div>
   <div className="flex items-center gap-1.5">
    <div className="w-3 h-0.5 border-t border-dashed border-teal-500" />
-   <span className="text-gray-500 dark:text-gray-400">{t('legend_duration')}</span>
+   <span className="text-gray-500">{t('legend_duration')}</span>
   </div>
   </div>
  </div>

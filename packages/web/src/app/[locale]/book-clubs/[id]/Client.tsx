@@ -36,7 +36,7 @@ export default function BookClubDetailPage() {
 
  if (loading) {
  return (
-  <main className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+  <main className="min-h-screen bg-gray-50/50">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
    <div className="animate-pulse space-y-4">
    <div className="h-8 w-48 bg-surface-1 rounded" />
@@ -50,9 +50,9 @@ export default function BookClubDetailPage() {
 
  if (error || !club) {
  return (
-  <main className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+  <main className="min-h-screen bg-gray-50/50">
   <div className="px-4 sm:px-6 lg:px-8 py-8 text-center">
-   <p className="text-gray-500 dark:text-gray-400">{error || t('clubNotFound')}</p>
+   <p className="text-gray-500">{error || t('clubNotFound')}</p>
    <Link href="/book-clubs" prefetch={false} className="text-sm text-primary-600 hover:underline mt-2 inline-block">
    {t('backToBookClubs')}
    </Link>
@@ -65,15 +65,15 @@ export default function BookClubDetailPage() {
  const memberCount = club.memberCount ?? (club.clubMembers || []).length;
 
  return (
- <main className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
+ <main className="min-h-screen bg-gray-50/50">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
   {/* Breadcrumb */}
-  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-   <Link href="/dashboard" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-300">{t('dashboard')}</Link>
+  <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+   <Link href="/dashboard" prefetch={false} className="hover:text-gray-600">{t('dashboard')}</Link>
    <span>/</span>
-   <Link href="/book-clubs" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-300">{t('pageTitle')}</Link>
+   <Link href="/book-clubs" prefetch={false} className="hover:text-gray-600">{t('pageTitle')}</Link>
    <span>/</span>
-   <span className="text-gray-700 dark:text-gray-300">{club.name}</span>
+   <span className="text-gray-700">{club.name}</span>
   </div>
 
   <ClubHeaderCard club={club} memberCount={memberCount} />
@@ -95,7 +95,7 @@ export default function BookClubDetailPage() {
   <div className="flex items-center justify-between">
    <Link
    href="/book-clubs" prefetch={false}
-   className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+   className="text-sm text-gray-500 hover:text-gray-600 transition-colors"
    >
    &larr; {t('backToClubs')}
    </Link>

@@ -14,14 +14,14 @@ export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
 
  return (
  <section>
-  <h2 className="text-xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-4">{t('webhooks_title')}</h2>
-  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+  <h2 className="text-xl font-bold font-serif text-gray-900 mb-4">{t('webhooks_title')}</h2>
+  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 space-y-4 text-sm text-gray-700">
   <p>
    {t('webhooks_intro', { code: 'POST' })}
   </p>
 
   <div>
-   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('webhooks_creating')}</h3>
+   <h3 className="font-semibold text-gray-800 mb-2">{t('webhooks_creating')}</h3>
    <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
    <div className="text-stone-400">{t('webhooks_create_comment')}</div>
    <div className="text-green-400">curl -X POST {apiBase}/api/webhooks \</div>
@@ -29,13 +29,13 @@ export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
    <div className="text-green-400 ml-6">-H &quot;Content-Type: application/json&quot; \</div>
    <div className="text-green-400 ml-6">-d &#123;&quot;url&quot;: &quot;https://example.com/hook&quot;, &quot;events&quot;: [&quot;book.completed&quot;, &quot;session.ended&quot;]&#125;</div>
    </div>
-   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+   <p className="text-xs text-gray-500 mt-2">
    {t('webhooks_secret_note', { code: 'secret' })}
    </p>
   </div>
 
   <div>
-   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('webhooks_events')}</h3>
+   <h3 className="font-semibold text-gray-800 mb-2">{t('webhooks_events')}</h3>
    <div className="overflow-x-auto">
    <table className="w-full text-left">
     <thead>
@@ -44,7 +44,7 @@ export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
      <th className="pb-2 font-semibold">{t('webhooks_trigger')}</th>
     </tr>
     </thead>
-    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+    <tbody className="divide-y divide-gray-200">
     <tr><td className="py-1.5 font-mono text-xs">book.started</td><td>{t('webhook_book_started')}</td></tr>
     <tr><td className="py-1.5 font-mono text-xs">book.completed</td><td>{t('webhook_book_completed')}</td></tr>
     <tr><td className="py-1.5 font-mono text-xs">book.updated</td><td>{t('webhook_book_updated')}</td></tr>
@@ -61,7 +61,7 @@ export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
   </div>
 
   <div>
-   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('webhooks_payload')}</h3>
+   <h3 className="font-semibold text-gray-800 mb-2">{t('webhooks_payload')}</h3>
    <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
    <div className="text-green-400">&#123;</div>
    <div className="text-green-400 ml-4">&quot;event&quot;: &quot;book.completed&quot;,</div>
@@ -77,7 +77,7 @@ export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
   </div>
 
   <div>
-   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('webhooks_verifying')}</h3>
+   <h3 className="font-semibold text-gray-800 mb-2">{t('webhooks_verifying')}</h3>
    <div className="bg-surface-2 rounded-lg p-3 text-xs space-y-2">
    <p>{t('webhooks_verify_intro')}</p>
    <div className="font-mono">
@@ -90,7 +90,7 @@ export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
   </div>
 
   <div>
-   <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{t('webhooks_testing')}</h3>
+   <h3 className="font-semibold text-gray-800 mb-2">{t('webhooks_testing')}</h3>
    <div className="bg-stone-900 rounded-lg p-4 font-mono text-xs overflow-x-auto">
    <div className="text-stone-400">{t('webhooks_test_comment')}</div>
    <div className="text-green-400">curl -X POST {apiBase}/api/webhooks/WEBHOOK_ID/test \</div>

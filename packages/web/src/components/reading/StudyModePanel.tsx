@@ -20,6 +20,74 @@ interface StudyModePanelProps {
  onSaveChecks: (checks: ConceptCheck[]) => void;
 }
 
+const ObjectiveItem = React.memo(function ObjectiveItem({ obj, completedLabel, incompleteLabel, onToggle }: {
+  obj: ChapterObjective;
+  completedLabel: string;
+  incompleteLabel: string;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <button type="button"
+      aria-label={`${obj.completed ? completedLabel : incompleteLabel}: ${obj.text}`}
+      onClick={() => onToggle(obj.id)}
+      className={`w-full text-left flex items-start gap-3 p-3 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+        obj.completed
+          ? 'bg-emerald-50 dark:bg-emerald-900/20'
+          : 'bg-surface-1 hover:bg-surface-2'
+      }`}
+    >
+      <span className={`flex-shrink-0 mt-0.5 ${obj.completed ? 'text-emerald-500' : 'text-gray-300'}`}>
+        {obj.completed ? (
+          <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        )}
+      </span>
+      <span className={`text-sm leading-relaxed ${
+        obj.completed ? 'text-emerald-700 dark:text-emerald-300 line-through' : 'text-gray-700'
+      }`}>
+        {obj.text}
+      </span>
+    </button>
+  );
+});
+
+const ConceptCheckItem = React.memo(function ConceptCheckItem({ check, isRevealed, revealLabel, hintPrefix, onReveal }: {
+  check: ConceptCheck;
+  isRevealed: boolean;
+  revealLabel: string;
+  hintPrefix: string;
+  onReveal: (id: string) => void;
+}) {
+  return (
+    <div className="border border-surface-3 rounded-lg overflow-hidden">
+      <div className="p-3">
+        <p className="text-sm font-medium text-gray-800">{check.question}</p>
+        {!isRevealed && check.hint && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 italic">{hintPrefix}</p>
+        )}
+      </div>
+      {!isRevealed ? (
+        <button type="button"
+          aria-label={revealLabel}
+          onClick={() => onReveal(check.id)}
+          className="w-full px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30 border-t border-surface-3 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+        >
+          {revealLabel}
+        </button>
+      ) : (
+        <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 border-t border-emerald-200 dark:border-emerald-800">
+          <p className="text-xs text-emerald-800 dark:text-emerald-300">{check.answer}</p>
+        </div>
+      )}
+    </div>
+  );
+});
+
 export const StudyModePanel = React.memo(function StudyModePanel({
  enabled,
  loading,
@@ -37,10 +105,9 @@ export const StudyModePanel = React.memo(function StudyModePanel({
  const t = useTranslations('study');
  const tr = useTranslations('reader');
  const [activeTab, setActiveTab] = useState<'objectives' | 'checks' | 'mastery'>('objectives');
+ const completedCount = useMemo(() => objectives.filter((o) => o.completed).length, [objectives]);
 
  if (!enabled) return null;
-
- const completedCount = useMemo(() => objectives.filter((o) => o.completed).length, [objectives]);
  const answeredCount = revealedAnswers.size;
 
  return (
@@ -64,7 +131,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {/* Tabs */}
   <div className="flex gap-1 mt-2">
    {(['objectives', 'checks', 'mastery'] as const).map((tab) => (
-   <button
+   <button type="button"
     key={tab}
     aria-label={
      tab === 'objectives' ? t('goals_tab', { done: completedCount, total: objectives.length })
@@ -99,46 +166,20 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {loading && (
    <div className="flex items-center justify-center py-8">
    <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
-   <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">{t('generating')}</span>
+   <span className="ml-2 text-sm text-gray-500">{t('generating')}</span>
    </div>
   )}
 
   {!loading && activeTab === 'objectives' && (
    <div className="space-y-2">
    {objectives.length === 0 ? (
-    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+    <p className="text-sm text-gray-500 text-center py-4">
     {t('highlight_for_objectives')}
     </p>
    ) : (
     objectives.map((obj) => (
-    <button
-     key={obj.id}
-     aria-label={`${obj.completed ? t('completed') : t('incomplete')}: ${obj.text}`}
-     onClick={() => onToggleObjective(obj.id)}
-     className={`w-full text-left flex items-start gap-3 p-3 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
-     obj.completed
-      ? 'bg-emerald-50 dark:bg-emerald-900/20'
-      : 'bg-surface-1 hover:bg-surface-2'
-     }`}
-    >
-     <span className={`flex-shrink-0 mt-0.5 ${obj.completed ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600'}`}>
-     {obj.completed ? (
-      <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-      </svg>
-     ) : (
-      <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <circle cx="12" cy="12" r="10" />
-      </svg>
-     )}
-     </span>
-     <span className={`text-sm leading-relaxed ${
-     obj.completed ? 'text-emerald-700 dark:text-emerald-300 line-through' : 'text-gray-700 dark:text-gray-300'
-     }`}>
-     {obj.text}
-     </span>
-    </button>
-    ))
+	    <ObjectiveItem key={obj.id} obj={obj} completedLabel={t('completed')} incompleteLabel={t('incomplete')} onToggle={onToggleObjective} />
+	    ))
    )}
    </div>
   )}
@@ -146,48 +187,23 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {!loading && activeTab === 'checks' && (
    <div className="space-y-3">
    {checks.length === 0 ? (
-    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+    <p className="text-sm text-gray-500 text-center py-4">
     {t('checks_appear')}
     </p>
    ) : (
-    checks.map((check) => {
-    const isRevealed = revealedAnswers.has(check.id);
-    return (
-     <div
-     key={check.id}
-     className="border border-surface-3 rounded-lg overflow-hidden"
-     >
-     <div className="p-3">
-      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-      {check.question}
-      </p>
-      {!isRevealed && check.hint && (
-      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 italic">
-       {t('hint_prefix', { hint: check.hint })}
-      </p>
-      )}
-     </div>
-     {!isRevealed ? (
-      <button
-      aria-label={t('reveal_answer_for', { question: check.question })}
-      onClick={() => onRevealAnswer(check.id)}
-      className="w-full px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30 border-t border-surface-3 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
-      >
-      {t('reveal_answer')}
-      </button>
-     ) : (
-      <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 border-t border-emerald-200 dark:border-emerald-800">
-      <p className="text-xs text-emerald-800 dark:text-emerald-300">
-       {check.answer}
-      </p>
-      </div>
-     )}
-     </div>
-    );
-    })
+    checks.map((check) => (
+	    <ConceptCheckItem
+	      key={check.id}
+	      check={check}
+	      isRevealed={revealedAnswers.has(check.id)}
+	      revealLabel={t('reveal_answer')}
+	      hintPrefix={check.hint ? t('hint_prefix', { hint: check.hint }) : ''}
+	      onReveal={onRevealAnswer}
+	    />
+	    ))
    )}
    {checks.length > 0 && answeredCount === checks.length && (
-    <button
+    <button type="button"
     aria-label={t('add_to_flashcard')}
     onClick={() => onSaveChecks(checks)}
     disabled={saveStatus === 'saving'}
@@ -205,7 +221,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {!loading && activeTab === 'mastery' && !mastery && (
    <div className="text-center py-8">
     <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin mx-auto mb-3" />
-    <p className="text-sm text-gray-500 dark:text-gray-400">{t('loading_mastery')}</p>
+    <p className="text-sm text-gray-500">{t('loading_mastery')}</p>
    </div>
   )}
   {!loading && activeTab === 'mastery' && mastery && (
@@ -213,7 +229,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
    {/* Mastery bar */}
    <div>
     <div className="flex justify-between text-xs mb-1">
-    <span className="text-gray-600 dark:text-gray-400">{t('overall_mastery')}</span>
+    <span className="text-gray-600">{t('overall_mastery')}</span>
     <span className="font-medium text-amber-700 dark:text-amber-400">
      {Math.round(mastery.overallMastery * 100)}%
     </span>
@@ -229,16 +245,16 @@ export const StudyModePanel = React.memo(function StudyModePanel({
    {/* Stats grid */}
    <div className="grid grid-cols-2 gap-3">
     <div className="bg-surface-1 rounded-lg p-3">
-    <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+    <div className="text-lg font-bold text-gray-900">
      {mastery.chaptersCompleted}/{mastery.totalChapters}
     </div>
-    <div className="text-xs text-gray-500 dark:text-gray-400">{t('chapters_read')}</div>
+    <div className="text-xs text-gray-500">{t('chapters_read')}</div>
     </div>
     <div className="bg-surface-1 rounded-lg p-3">
     <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
      {mastery.cardsDue}
     </div>
-    <div className="text-xs text-gray-500 dark:text-gray-400">{t('cards_due')}</div>
+    <div className="text-xs text-gray-500">{t('cards_due')}</div>
     </div>
    </div>
 
@@ -248,7 +264,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
     <h4 className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">{t('strong_areas')}</h4>
     <div className="space-y-1">
      {mastery.strongAreas.slice(0, 3).map((area) => (
-     <div key={area} className="text-xs text-gray-600 dark:text-gray-400 truncate">
+     <div key={area} className="text-xs text-gray-600 truncate">
       {area.slice(0, 80)}{area.length > 80 ? '...' : ''}
      </div>
      ))}
@@ -260,7 +276,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
     <h4 className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">{t('needs_review')}</h4>
     <div className="space-y-1">
      {mastery.weakAreas.slice(0, 3).map((area) => (
-     <div key={area} className="text-xs text-gray-600 dark:text-gray-400 truncate">
+     <div key={area} className="text-xs text-gray-600 truncate">
       {area.slice(0, 80)}{area.length > 80 ? '...' : ''}
      </div>
      ))}

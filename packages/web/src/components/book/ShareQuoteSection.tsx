@@ -19,10 +19,10 @@ const QuoteRow = React.memo(function QuoteRow({ h, index, isSharing, onShare, sh
    key={h.id}
    className="flex items-start gap-3 group p-2.5 rounded-xl hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors"
    >
-   <p className="flex-1 text-sm text-gray-700 dark:text-gray-300 italic line-clamp-2 leading-relaxed">
+   <p className="flex-1 text-sm text-gray-700 italic line-clamp-2 leading-relaxed">
     &ldquo;{h.content}&rdquo;
    </p>
-   <button
+   <button type="button"
     onClick={() => onShare(h.content, index)}
     disabled={isSharing}
     className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-surface-0 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
@@ -150,10 +150,10 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
    <div className="flex items-center gap-3 mb-3">
    <span className="text-2xl">{'✨'}</span>
    <div>
-    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+    <h3 className="text-sm font-semibold text-gray-900">
     {t('shareAQuote')}
     </h3>
-    <p className="text-xs text-gray-500 dark:text-gray-400">
+    <p className="text-xs text-gray-500">
     {t('shareAQuoteDesc')}
     </p>
    </div>

@@ -28,7 +28,7 @@ export const WelcomeActions = React.memo(function WelcomeActions({
 
   return (
     <div className="mt-6">
-      <button
+      <button type="button"
         onClick={onFinish}
         disabled={finishing}
         className="btn btn-primary py-3.5 px-8 rounded-2xl text-lg hover:scale-105 active:scale-95 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -36,12 +36,12 @@ export const WelcomeActions = React.memo(function WelcomeActions({
         {finishing ? '...' : t('start_reading', { name: personaName })}
       </button>
       <div className="mt-4">
-        <button
+        <button type="button"
           onClick={() => {
             safeSetItem(ONBOARDING_KEY, 'true');
             router.push('/dashboard');
           }}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center"
+          className="text-sm text-gray-500 hover:text-gray-600 transition-colors min-h-[44px] inline-flex items-center"
         >
           {t('go_dashboard')}
         </button>
@@ -80,7 +80,7 @@ function SeedButton() {
 
   return (
     <div>
-      <button
+      <button type="button"
         onClick={handleClick}
         disabled={seeding}
         className="text-sm text-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors ml-4 disabled:opacity-50"

@@ -19,8 +19,8 @@ interface PeakMomentRowProps {
 const PeakMomentRow = React.memo(function PeakMomentRow({ peak }: PeakMomentRowProps) {
   return (
     <div className="flex items-start gap-3 bg-surface-0 border border-surface-3 rounded-lg p-3">
-      <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 mt-0.5 font-mono">{peak.date}</span>
-      <p className="text-sm text-gray-700 dark:text-gray-300 m-0 leading-relaxed">{peak.description}</p>
+      <span className="text-xs text-gray-500 shrink-0 mt-0.5 font-mono">{peak.date}</span>
+      <p className="text-sm text-gray-700 m-0 leading-relaxed">{peak.description}</p>
     </div>
   );
 });
@@ -36,7 +36,7 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
     return (
       <div className="py-8 text-center">
         <span className="text-2xl">📊</span>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{t('no_attention_data')}</p>
+        <p className="text-sm text-gray-500 mt-2 italic">{t('no_attention_data')}</p>
       </div>
     );
   }
@@ -52,12 +52,12 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
         )}
         {engagementScore != null && (
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{t('engagement')}</span>
+            <span className="text-xs text-gray-500">{t('engagement')}</span>
             <div className="flex gap-0.5">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2 h-4 rounded-sm ${i < engagementScore ? 'bg-amber-500' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  className={`w-2 h-4 rounded-sm ${i < engagementScore ? 'bg-amber-500' : 'bg-gray-200'}`}
                 />
               ))}
             </div>
@@ -66,7 +66,7 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
       </div>
 
       {patternAnalysis && (
-        <p className="text-gray-600 dark:text-gray-400 text-base leading-relaxed max-w-[65ch] italic">
+        <p className="text-gray-600 text-base leading-relaxed max-w-[65ch] italic">
           {patternAnalysis}
         </p>
       )}
@@ -74,7 +74,7 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
       {/* Peak moments */}
       {peaks.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
             {t('peak_moments')}
           </h4>
           <div className="space-y-2">

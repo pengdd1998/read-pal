@@ -1,5 +1,4 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
 
 vi.mock('@/lib/capacitor', () => ({
  isCapacitor: vi.fn(() => false),

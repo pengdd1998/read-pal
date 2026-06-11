@@ -100,7 +100,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   </div>
 
   {/* Content (read-only) */}
-  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 leading-relaxed mb-2">
+  <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed mb-2">
   {annotation.content}
   </p>
 
@@ -110,7 +110,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   onChange={(e) => setEditNote(e.target.value)}
   placeholder={t('card_add_note')}
   aria-label={t('card_add_note')}
-  className="w-full px-2.5 py-1.5 rounded-md bg-white/50 dark:bg-gray-800/50 text-xs text-gray-700 dark:text-gray-300 border border-surface-3 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 resize-none"
+  className="w-full px-2.5 py-1.5 rounded-md bg-white/50 text-xs text-gray-700 border border-surface-3 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 resize-none"
   rows={2}
   autoFocus
   />
@@ -144,7 +144,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
    onKeyDown={handleTagKeyDown}
    placeholder={editTags.length === 0 ? t('card_add_tags') : t('card_add_tag')}
    aria-label={editTags.length === 0 ? t('card_add_tags') : t('card_add_tag')}
-   className="w-full px-2.5 py-1 rounded-md bg-white/50 dark:bg-gray-800/50 text-xs text-gray-700 dark:text-gray-300 border border-surface-3 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400 dark:placeholder-gray-500"
+   className="w-full px-2.5 py-1 rounded-md bg-white/50 text-xs text-gray-700 border border-surface-3 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 placeholder-gray-400"
    />
    {tagInput && filteredPresets.length > 0 && (
    <div className="absolute top-full left-0 right-0 mt-1 bg-surface-0 border border-surface-3 rounded-md shadow-sm z-10 max-h-24 overflow-y-auto">
@@ -153,7 +153,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
      key={preset}
      onMouseDown={(e) => { e.preventDefault(); addTag(preset); }}
      aria-label={t('add_tag_aria', { tag: preset })}
-     className="w-full px-2.5 py-1 text-left text-xs text-gray-600 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+     className="w-full px-2.5 py-1 text-left text-xs text-gray-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
     >
      #{preset}
     </button>
@@ -168,7 +168,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
     key={preset}
     onClick={() => addTag(preset)}
     aria-label={t('add_tag_aria', { tag: preset })}
-    className="px-1.5 py-0.5 rounded text-[10px] text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-surface-3 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="px-1.5 py-0.5 rounded text-[10px] text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-surface-3 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
     +{preset}
     </button>
@@ -188,7 +188,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   </button>
   <button type="button"
    onClick={onCancel}
-   className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {tc('cancel')}
   </button>

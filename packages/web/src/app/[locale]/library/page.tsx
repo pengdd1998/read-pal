@@ -21,8 +21,8 @@ function MemoryBooksLink() {
     </svg>
    </span>
    <div>
-    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{t('memory_books_link_title')}</p>
-    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('memory_books_link_desc')}</p>
+    <p className="text-sm font-medium text-gray-800">{t('memory_books_link_title')}</p>
+    <p className="text-xs text-gray-500 mt-0.5">{t('memory_books_link_desc')}</p>
    </div>
   </Link>
  );
@@ -51,7 +51,7 @@ export default function LibraryPage() {
   <div className="flex justify-between items-center mb-6 sm:mb-8">
   <div className="animate-slide-up">
    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('title')}</h1>
-   <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
+   <p className="text-sm sm:text-base text-gray-600 mt-1">
    {t('subtitle')}
    </p>
   </div>
@@ -59,7 +59,7 @@ export default function LibraryPage() {
   <div className="flex items-center gap-2">
    {/* Quick Search */}
    <div className="hidden sm:flex items-center bg-surface-0 rounded-xl border border-surface-3 px-3 py-2">
-   <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <svg aria-hidden="true" className="w-4 h-4 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
    </svg>
    <input
@@ -68,10 +68,10 @@ export default function LibraryPage() {
     onChange={(e) => setSearchQuery(e.target.value)}
     placeholder={t('search_library')}
     aria-label={t('search_library')}
-    className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 w-32 sm:w-44 lg:w-48"
+    className="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 w-32 sm:w-44 lg:w-48"
    />
    {searchQuery && (
-    <button type="button" onClick={() => setSearchQuery('')} aria-label={t('clear_search')} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">
+    <button type="button" onClick={() => setSearchQuery('')} aria-label={t('clear_search')} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">
     <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
     </svg>
@@ -86,7 +86,7 @@ export default function LibraryPage() {
     className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-lg transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     viewMode === 'grid'
      ? 'bg-surface-0 shadow-xs text-primary-600'
-     : 'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+     : 'text-gray-500 hover:text-gray-600'
     }`}
     aria-label={t('grid_view')}
    >
@@ -102,7 +102,7 @@ export default function LibraryPage() {
     className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-lg transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     viewMode === 'list'
      ? 'bg-surface-0 shadow-xs text-primary-600'
-     : 'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+     : 'text-gray-500 hover:text-gray-600'
     }`}
     aria-label={t('list_view')}
    >
@@ -119,7 +119,7 @@ export default function LibraryPage() {
   {/* Mobile search bar */}
   <div className="sm:hidden mb-6">
   <div className="flex items-center bg-surface-0 rounded-xl border border-surface-3 px-3 py-2.5">
-   <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <svg aria-hidden="true" className="w-4 h-4 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
    </svg>
    <input
@@ -128,7 +128,7 @@ export default function LibraryPage() {
     onChange={(e) => setSearchQuery(e.target.value)}
     placeholder={t('search_library')}
     aria-label={t('search_library')}
-    className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 flex-1"
+    className="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 flex-1"
    />
   </div>
   </div>

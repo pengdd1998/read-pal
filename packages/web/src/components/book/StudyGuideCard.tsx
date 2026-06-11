@@ -59,14 +59,14 @@ export const StudyGuideCard = React.memo(function StudyGuideCard({
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
     </svg>
   <div>
-   <h2 className="font-semibold text-gray-900 dark:text-gray-100">
+   <h2 className="font-semibold text-gray-900">
    {t('studyGuide')}
    </h2>
-   <p className="text-xs text-gray-500 dark:text-gray-400">{t('studyGuideDesc')}</p>
+   <p className="text-xs text-gray-500">{t('studyGuideDesc')}</p>
   </div>
   </div>
   <div className="flex items-center gap-3">
-  <button
+  <button type="button"
    onClick={handleExport}
    disabled={generating}
    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-indigo-500 hover:bg-indigo-600 text-white transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"

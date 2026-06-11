@@ -26,7 +26,7 @@ interface CitationFormatButtonProps {
 
 const CitationFormatButton = React.memo(function CitationFormatButton({ isActive, label, onClick }: CitationFormatButtonProps) {
  return (
-  <button
+  <button type="button"
    onClick={onClick}
    className={`text-left px-3 py-2.5 rounded-xl border transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    isActive
@@ -34,7 +34,7 @@ const CitationFormatButton = React.memo(function CitationFormatButton({ isActive
    : 'border-surface-3 hover:border-surface-3'
    }`}
   >
-   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</span>
+   <span className="text-sm font-medium text-gray-900">{label}</span>
   </button>
  );
 });
@@ -90,7 +90,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
 
  return (
  <div className="space-y-3">
-  <p className="text-xs text-gray-500 dark:text-gray-400">
+  <p className="text-xs text-gray-500">
   {t('share_citation_desc')}
   </p>
 
@@ -106,7 +106,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
 	  ))}
   </div>
 
-  <button
+  <button type="button"
   onClick={handleFetchCitation}
   disabled={generating}
   className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
@@ -116,10 +116,10 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
 
   {citationText && (
   <div className="space-y-2">
-   <pre className="bg-surface-1 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words border border-surface-3">
+   <pre className="bg-surface-1 rounded-lg p-3 text-xs text-gray-700 whitespace-pre-wrap break-words border border-surface-3">
    {citationText}
    </pre>
-   <button
+   <button type="button"
    onClick={handleCopyCitation}
    className="min-h-[44px] inline-flex items-center px-2 text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >

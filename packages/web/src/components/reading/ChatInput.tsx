@@ -30,20 +30,20 @@ export const ChatInput = React.memo(function ChatInput({
    onKeyDown={onKeyDown}
    placeholder={t('companion_placeholder')}
    aria-label={t('companion_aria_message')}
-   className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-surface-0 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
+   className="flex-1 resize-none rounded-xl border border-amber-200 dark:border-amber-800/40 bg-surface-0 px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
    rows={2}
    disabled={loading}
    maxLength={4000}
   />
   {loading ? (
-   <button
+   <button type="button"
    onClick={onStop}
    className="self-end shrink-0 px-3 py-2 rounded-lg bg-red-500/80 hover:bg-red-600 text-white text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
    {t('companion_stop')}
    </button>
   ) : (
-   <button
+   <button type="button"
    onClick={onSend}
    disabled={!input.trim()}
    aria-label={t('companion_aria_send')}
@@ -56,7 +56,7 @@ export const ChatInput = React.memo(function ChatInput({
   )}
   </div>
   {input.length > 3800 && (
-  <p className={`text-xs mt-1 text-right ${input.length >= 4000 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+  <p className={`text-xs mt-1 text-right ${input.length >= 4000 ? 'text-red-500' : 'text-gray-500'}`}>
    {input.length}/4000
   </p>
   )}

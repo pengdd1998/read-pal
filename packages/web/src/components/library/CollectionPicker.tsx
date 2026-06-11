@@ -21,10 +21,10 @@ const CollectionCheckItem = React.memo(function CollectionCheckItem({
  onToggle,
 }: CollectionCheckItemProps) {
  return (
-  <button
+  <button type="button"
   onClick={onToggle}
   disabled={isToggling}
-  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
    isChecked ? 'border-primary-500 bg-primary-500' : 'border-surface-3'
@@ -139,7 +139,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  return (
  <div ref={ref} className="absolute right-0 top-full mt-1 z-50 w-56 bg-surface-0 border border-surface-3 rounded-xl shadow-lg animate-slide-up overflow-hidden">
   <div className="px-3 py-2 border-b border-surface-2">
-  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('collection_picker_title')}</p>
+  <p className="text-xs font-semibold text-gray-500">{t('collection_picker_title')}</p>
   </div>
 
   {loading ? (
@@ -164,7 +164,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
    ))}
 
    {collections.length === 0 && !showCreate && (
-   <p className="text-xs text-gray-500 dark:text-gray-400 px-2.5 py-2">{t('collection_picker_empty')}</p>
+   <p className="text-xs text-gray-500 px-2.5 py-2">{t('collection_picker_empty')}</p>
    )}
   </div>
   )}
@@ -186,7 +186,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
    <button type="button" onClick={handleCreate} disabled={creating} className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:opacity-50">{creating ? '...' : t('collection_picker_add')}</button>
    </div>
   ) : (
-   <button
+   <button type="button"
    onClick={() => setShowCreate(true)}
    className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >

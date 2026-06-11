@@ -36,13 +36,13 @@ export const HeroSection = memo(function HeroSection({
    </span>
   </div>
 
-  <h1 id="landing-hero-title" className="mt-10 text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 leading-[0.95] animate-slide-up font-display">
+  <h1 id="landing-hero-title" className="mt-10 text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-gray-900 leading-[0.95] animate-slide-up font-display">
    {hero_title_before}
    <br />
    <span className="text-gradient">{hero_title_highlight}</span>
   </h1>
 
-  <p className="mt-8 text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed animate-slide-up-delayed">
+  <p className="mt-8 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed animate-slide-up-delayed">
    {hero_subtitle}
   </p>
 

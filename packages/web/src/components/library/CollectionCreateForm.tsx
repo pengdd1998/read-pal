@@ -51,11 +51,11 @@ export const CollectionCreateForm = React.memo(function CollectionCreateForm({
   {/* Icon picker */}
   <div className="flex flex-wrap gap-1">
   {icons.map((ic) => (
-   <button
+   <button type="button"
    key={ic.value}
    onClick={() => onIconChange(ic.value)}
    aria-label={t('select_icon', { label: ic.label })}
-   className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${newIcon === ic.value ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1'}`}
+   className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${newIcon === ic.value ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' : 'text-gray-500 hover:text-gray-600 hover:bg-surface-1'}`}
    title={ic.label}
    >
    <CollectionIcon icon={ic.value} color={newIcon === ic.value ? '#f59e0b' : 'currentColor'} />
@@ -65,7 +65,7 @@ export const CollectionCreateForm = React.memo(function CollectionCreateForm({
   {/* Color picker */}
   <div className="flex items-center gap-1.5">
   {DEFAULT_COLORS.map((c) => (
-   <button
+   <button type="button"
    key={c}
    onClick={() => onColorChange(c)}
    aria-label={t('select_color', { color: c })}
@@ -75,16 +75,16 @@ export const CollectionCreateForm = React.memo(function CollectionCreateForm({
   ))}
   </div>
   <div className="flex gap-2">
-  <button
+  <button type="button"
    onClick={onCreate}
    disabled={!newName.trim() || creating}
    className="flex-1 px-3 py-1.5 text-xs font-medium bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {t('collections_create')}
   </button>
-  <button
+  <button type="button"
    onClick={onCancel}
-   className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {t('collections_cancel')}
   </button>

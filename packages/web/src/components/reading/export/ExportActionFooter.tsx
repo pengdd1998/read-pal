@@ -32,14 +32,14 @@ export const ExportActionFooter = React.memo(function ExportActionFooter({
     <>
       {/* Action buttons */}
       <div className="px-5 py-4 border-t border-surface-3 flex gap-2">
-        <button
+        <button type="button"
           onClick={onPreview}
           disabled={loading}
-          className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-surface-1 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+          className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-surface-3 text-gray-700 hover:bg-surface-1 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         >
           {loading ? t('export_loading') : hasPreview ? t('export_refresh') : t('export_preview_button')}
         </button>
-        <button
+        <button type="button"
           onClick={onDownload}
           disabled={loading}
           className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
@@ -52,7 +52,7 @@ export const ExportActionFooter = React.memo(function ExportActionFooter({
       {canShare && (
         <div className="px-5 pb-4">
           {!shareLink ? (
-            <button
+            <button type="button"
               onClick={onShareLink}
               disabled={sharing}
               className="w-full px-4 py-2.5 text-sm font-medium rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
@@ -69,10 +69,10 @@ export const ExportActionFooter = React.memo(function ExportActionFooter({
                 readOnly
                 value={shareLink}
                 aria-label={t('export_share_via_link')}
-                className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
-              <button
+              <button type="button"
                 onClick={() => { navigator.clipboard.writeText(shareLink); toast(t('export_link_copied'), 'success'); }}
                 className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
               >

@@ -22,7 +22,7 @@ export default function KnowledgeLoading() {
     <div className="h-3 bg-surface-2 rounded w-20 animate-pulse" />
    </div>
    {/* SVG area placeholder with fake nodes */}
-   <div className="h-[420px] relative bg-gray-50/50 dark:bg-gray-800/50">
+   <div className="h-[420px] relative bg-gray-50/50">
     <svg aria-hidden="true" className="w-full h-full" viewBox="0 0 600 420">
     {/* Fake connection lines */}
     <line x1="120" y1="100" x2="300" y2="180" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.5" />

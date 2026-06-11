@@ -57,13 +57,13 @@ export const ShareDialog = React.memo(function ShareDialog({
   >
   {/* Header */}
   <div className="px-5 py-4 border-b border-surface-3 flex items-center justify-between">
-   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+   <h3 className="text-lg font-semibold text-gray-900">
    {t('share_title')}
    </h3>
-   <button
+   <button type="button"
    onClick={onClose}
    aria-label={t('share_close_dialog')}
-   className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1 focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="p-1.5 rounded-lg text-gray-500 hover:text-gray-600 hover:bg-surface-1 focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -74,7 +74,7 @@ export const ShareDialog = React.memo(function ShareDialog({
   {/* Tabs */}
   <div role="tablist" className="flex border-b border-surface-3 px-2">
    {TABS.map((tab) => (
-   <button
+   <button type="button"
     key={tab.key}
     role="tab"
     aria-selected={activeTab === tab.key}
@@ -82,7 +82,7 @@ export const ShareDialog = React.memo(function ShareDialog({
     className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
     activeTab === tab.key
      ? 'text-amber-600 dark:text-amber-400'
-     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+     : 'text-gray-500 hover:text-gray-700'
     }`}
    >
     {t(tab.labelKey)}
@@ -97,7 +97,7 @@ export const ShareDialog = React.memo(function ShareDialog({
   <div className="flex-1 overflow-y-auto p-5 space-y-4">
    {/* Book info */}
    {bookTitle && (
-   <p className="text-sm text-gray-500 dark:text-gray-400">
+   <p className="text-sm text-gray-500">
     {bookTitle}{author ? ` ${t('share_by_author', { author })}` : ''}
    </p>
    )}

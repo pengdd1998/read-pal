@@ -83,10 +83,9 @@ export const SelectionToolbar = React.memo(function SelectionToolbar({
  return () => document.removeEventListener('keydown', handleKeyDown);
  }, [showNote, onDismiss]);
 
- if (!rect || rect.width === 0) return null;
-
  // Desktop positioning — memoized since rect rarely changes
  const { top, left } = useMemo(() => {
+  if (!rect || rect.width === 0) return { top: 0, left: 0 };
   const showBelow = rect.top < window.innerHeight * 0.3;
   const top = showBelow
    ? rect.bottom + TOOLBAR_GAP
@@ -101,6 +100,8 @@ export const SelectionToolbar = React.memo(function SelectionToolbar({
   );
   return { top, left };
  }, [rect]);
+
+ if (!rect || rect.width === 0) return null;
 
  if (isMobile) {
  return (
