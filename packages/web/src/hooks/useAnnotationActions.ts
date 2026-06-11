@@ -87,6 +87,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         location,
       });
 
+      if (!mountedRef.current) return;
       if (result.success) {
         const annotation = result.data || {
           id: `offline-${Date.now()}`,
@@ -126,6 +127,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         location,
       });
 
+      if (!mountedRef.current) return;
       if (result.success) {
         const annotation = result.data || {
           id: `offline-${Date.now()}`,
@@ -178,6 +180,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
           content: `Bookmark: ${chapter.title}`,
           location,
         });
+      if (!mountedRef.current) return;
         if (result.success) {
           const annotation = result.data || {
             id: `offline-${Date.now()}`,
@@ -207,6 +210,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
       await api.delete(`/api/annotations/${id}`);
     } catch (e) {
       console.warn('AnnotationActions: failed to delete annotation', e);
+      if (!mountedRef.current) return;
       if (removed) setAnnotations((p) => [...p, removed]);
       toastError(toast.failed_delete_annotation);
     }
@@ -239,6 +243,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
       await api.patch(`/api/annotations/${updated.id}`, updated as unknown as Record<string, unknown>);
     } catch (e) {
       console.warn('AnnotationActions: failed to update annotation', e);
+      if (!mountedRef.current) return;
       setAnnotations(prev);
       toastError(toast.failed_update_annotation);
     }

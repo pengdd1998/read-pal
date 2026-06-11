@@ -58,6 +58,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   setUploadProgress(100);
   setSuccess(true);
   setTimeout(() => {
+   if (!mountedRef.current) return;
    onUploadComplete(book);
    setSuccess(false);
   }, 1500);

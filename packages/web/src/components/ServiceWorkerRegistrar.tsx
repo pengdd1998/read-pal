@@ -33,17 +33,21 @@ export function ServiceWorkerRegistrar() {
    return;
   }
 
-  reg.addEventListener('updatefound', () => {
+  const onUpdateFound = () => {
    const newWorker = reg.installing;
    if (!newWorker) return;
 
-   newWorker.addEventListener('statechange', () => {
+   const onStateChange = () => {
    if (!mounted) return;
    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
     setUpdateAvailable(true);
    }
-   });
-  });
+   };
+
+   newWorker.addEventListener('statechange', onStateChange);
+  };
+
+  reg.addEventListener('updatefound', onUpdateFound);
 
   // Check for updates when the tab gains focus
   const onFocus = () => {
@@ -53,6 +57,7 @@ export function ServiceWorkerRegistrar() {
 
   return () => {
    window.removeEventListener('focus', onFocus);
+   reg.removeEventListener('updatefound', onUpdateFound);
   };
   })
   .catch((err) => { console.warn('SW registration failed:', err); });
