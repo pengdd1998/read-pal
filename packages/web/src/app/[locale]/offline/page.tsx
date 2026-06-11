@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { warn } from '@/lib/logger';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
@@ -75,7 +76,7 @@ export default function OfflinePage() {
             if (data?.data?.title) title = data.data.title;
             if (data?.data?.author) author = data.data.author;
           }
-        } catch (err) { console.warn('OfflinePage: metadata not cached', err); }
+        } catch (err) { warn('OfflinePage: metadata not cached', err); }
         books.push({
           bookId: item.bookId,
           title,
@@ -89,7 +90,7 @@ export default function OfflinePage() {
         setLoading(false);
       }
     } catch (err) {
-      console.warn('OfflinePage: IndexedDB not available', err);
+      warn('OfflinePage: IndexedDB not available', err);
       if (!staleRef.current) {
         setError(t('load_error'));
         setLoading(false);

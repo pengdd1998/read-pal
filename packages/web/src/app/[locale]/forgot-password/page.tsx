@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { LoadingSpinner, ErrorAlert } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useTranslations } from 'next-intl';
@@ -24,7 +25,7 @@ export default function ForgotPasswordPage() {
   await api.post('/api/auth/forgot-password', { email });
   setSubmitted(true);
  } catch (err) {
-  console.warn('ForgotPassword: request failed', err);
+  warn('ForgotPassword: request failed', err);
   // Gracefully handle any error — still show success
   // to avoid leaking whether an email exists in our system
   setSubmitted(true);

@@ -8,6 +8,7 @@ import { isCapacitor } from '@/lib/capacitor';
 import { getBookCoverColors, getBookInitials } from '@/lib/book-cover';
 import { checkOfflineCache, cacheBookOffline } from '@/lib/offline-cache';
 import { CollectionPicker } from './CollectionPicker';
+import { warn } from '@/lib/logger';
 
 interface BookCoverOverlayProps {
  bookId: string;
@@ -53,7 +54,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  let stale = false;
  checkOfflineCache(bookId).then((result) => {
   if (!stale) setCachedOffline(result);
- }).catch((err) => { console.warn('BookCoverOverlay: offline cache check failed', err); });
+ }).catch((err) => { warn('BookCoverOverlay: offline cache check failed', err); });
  return () => { stale = true; };
  }, [bookId]);
 

@@ -5,6 +5,7 @@
  * NEXT_PUBLIC_POSTHOG_KEY is not set (dev / self-hosted without analytics).
  */
 
+import { warn } from './logger';
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
 
 interface AnalyticsClient {
@@ -47,7 +48,7 @@ function capture(payload: Record<string, unknown>): void {
     keepalive: true,
   }).catch(() => {
     // Swallow — analytics must never break the app.
-    console.warn('Analytics: event send failed');
+    warn('Analytics: event send failed');
   });
 }
 

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { isCapacitor } from '@/lib/capacitor';
+import { warn } from '@/lib/logger';
 
 export function ServiceWorkerRegistrar() {
  const t = useTranslations('common');
@@ -51,7 +52,7 @@ export function ServiceWorkerRegistrar() {
 
   // Check for updates when the tab gains focus
   const onFocus = () => {
-   reg.update().catch((err) => { console.warn('SW update check failed:', err); });
+   reg.update().catch((err) => { warn('SW update check failed:', err); });
   };
   window.addEventListener('focus', onFocus);
 
@@ -60,7 +61,7 @@ export function ServiceWorkerRegistrar() {
    reg.removeEventListener('updatefound', onUpdateFound);
   };
   })
-  .catch((err) => { console.warn('SW registration failed:', err); });
+  .catch((err) => { warn('SW registration failed:', err); });
 
  const onControllerChange = () => {
   window.location.reload();

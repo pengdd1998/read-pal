@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import type { ClubDetail, MemberProgress, DiscussionMessage } from './types';
 
 export function useBookClubDetail(clubId: string) {
@@ -24,7 +25,7 @@ export function useBookClubDetail(clubId: string) {
           setClub(res.data);
         }
       } catch (err) {
-        console.warn('useBookClubDetail: fetch failed', err);
+        warn('useBookClubDetail: fetch failed', err);
         if (!cancelled) setError(t('failedToLoad'));
       } finally {
         if (!cancelled) setLoading(false);
@@ -58,7 +59,7 @@ export function useBookClubProgress(clubId: string, currentBookId?: string) {
         }
       })
       .catch((err) => {
-        console.warn('useBookClubProgress: fetch failed', err);
+        warn('useBookClubProgress: fetch failed', err);
         if (!cancelled) setError(t('progress_failed_load'));
       })
       .finally(() => {
@@ -92,7 +93,7 @@ export function useBookClubDiscussion(clubId: string) {
         }
       })
       .catch((err) => {
-        console.warn('useBookClubDiscussion: fetch failed', err);
+        warn('useBookClubDiscussion: fetch failed', err);
         if (!cancelled) setError(t('discussions_failed_load'));
       });
 
@@ -114,7 +115,7 @@ export function useBookClubDiscussion(clubId: string) {
         setSendError(t('failedToSend'));
       }
     } catch (err) {
-      console.warn('useBookClubDiscussion: sendMessage failed', err);
+      warn('useBookClubDiscussion: sendMessage failed', err);
       setSendError(t('failedToSend'));
     } finally {
       setSending(false);

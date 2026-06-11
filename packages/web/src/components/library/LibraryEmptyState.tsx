@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
+import { warn } from '@/lib/logger';
 
 interface LibraryEmptyStateProps {
  onBookAdded: (book: Book) => void;
@@ -30,7 +31,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
   setError(t('failed_seed_sample'));
   }
  } catch (error) {
-  console.warn('LibraryEmptyState: seed failed', error);
+  warn('LibraryEmptyState: seed failed', error);
   if (!mountedRef.current) return;
   setError(t('failed_seed_sample'));
  } finally {

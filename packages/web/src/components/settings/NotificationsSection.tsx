@@ -6,6 +6,7 @@ import { useToast } from '@/components/Toast';
 import type { UserSettings } from '@/components/settings/types';
 import { isCapacitor } from '@/lib/capacitor';
 import { isPushEnabled, setPushEnabled } from '@/lib/notifications';
+import { warn } from '@/lib/logger';
 
 interface NotificationsSectionProps {
  settings: UserSettings;
@@ -60,7 +61,7 @@ export const NotificationsSection = React.memo(function NotificationsSection({ s
  useEffect(() => {
  if (!nativeApp) return;
  let stale = false;
- isPushEnabled().then((enabled) => { if (!stale) setPushState(enabled); }).catch((err) => { console.warn('NotificationsSection: push status check failed', err); });
+ isPushEnabled().then((enabled) => { if (!stale) setPushState(enabled); }).catch((err) => { warn('NotificationsSection: push status check failed', err); });
  return () => { stale = true; };
  }, [nativeApp]);
 
@@ -72,7 +73,7 @@ export const NotificationsSection = React.memo(function NotificationsSection({ s
   const ok = await setPushEnabled(next);
   setPushState(next && ok);
  } catch (err) {
-  console.warn("NotificationsSection: push toggle failed", err);
+  warn("NotificationsSection: push toggle failed", err);
   toast(t('push_toggle_failed'), 'error');
  } finally {
   setPushLoading(false);

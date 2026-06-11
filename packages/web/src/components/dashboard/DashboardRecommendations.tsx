@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { isDisplayableAuthor } from '@/lib/book-cover';
 import { SkeletonPulse } from './SkeletonPulse';
 import type { RecommendationItem } from './types';
+import { warn } from '@/lib/logger';
 
 const RecommendationCard = memo(function RecommendationCard({ r, genreLabel }: { r: RecommendationItem; genreLabel: string }) {
   return (
@@ -40,7 +41,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
    setRecs(res.data.recommendations ?? []);
   }
   })
-  .catch((err) => { console.warn('DashboardRecommendations: fetch failed', err); if (!cancelled) setError(true); })
+  .catch((err) => { warn('DashboardRecommendations: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });
  return () => { cancelled = true; };
  }, []);

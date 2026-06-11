@@ -7,6 +7,7 @@ import { API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
 import { safeGetItem, safeRemoveItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 export const AccountSection = React.memo(function AccountSection() {
  const { toast } = useToast();
@@ -40,7 +41,7 @@ export const AccountSection = React.memo(function AccountSection() {
     setDeleteError(data?.detail || t('account_delete_failed'));
    }
   } catch (err) {
-   console.warn('AccountSection: account deletion failed', err);
+   warn('AccountSection: account deletion failed', err);
    setDeleteError(t('account_delete_failed'));
   } finally {
    setDeleting(false);

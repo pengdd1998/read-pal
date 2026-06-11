@@ -14,6 +14,7 @@ import {
  AnalysisResultView,
 } from '@/components/synthesis';
 import type { SynthesisAction, AnalysisResult, SynthesisPanelProps } from '@/components/synthesis';
+import { warn } from '@/lib/logger';
 
 interface SynthesisTabProps {
  tab: { key: SynthesisAction; icon: React.ReactNode; label: string };
@@ -129,7 +130,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
   }
  } catch (err) {
   if ((err as Error).name === 'AbortError' || (err as Error).name === 'CanceledError') return;
-  console.warn('SynthesisPanel: analysis failed', err);
+  warn('SynthesisPanel: analysis failed', err);
   setError(t('synthesis_network_error'));
   toast(t('synthesis_analysis_failed'), 'error');
  } finally {

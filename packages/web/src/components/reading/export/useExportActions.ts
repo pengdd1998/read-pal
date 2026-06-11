@@ -6,6 +6,7 @@ import { useToast } from '@/components/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { analytics } from '@/lib/analytics';
 import { type ExportFormat, CITATION_FORMATS, SHAREABLE_FORMATS } from '../ExportPreviewModal.constants';
+import { warn } from '@/lib/logger';
 
 const DEFAULT_TYPES = new Set(['highlight', 'note', 'bookmark']);
 
@@ -105,7 +106,7 @@ export function useExportActions(bookId: string): ExportActionsReturn {
       if (!ctrl.signal.aborted) setPreview(text);
     } catch (err) {
       if (ctrl.signal.aborted) return;
-      console.warn('ExportPreviewModal: preview failed', err);
+      warn('ExportPreviewModal: preview failed', err);
       toast(t('export_failed_preview'), 'error');
     } finally {
       if (!ctrl.signal.aborted) setLoading(false);
@@ -138,7 +139,7 @@ export function useExportActions(bookId: string): ExportActionsReturn {
       toast(t('export_downloaded_file', { filename }), 'success');
       analytics.track('export_completed', { format });
     } catch (error) {
-      console.warn('useExportActions: download failed', error);
+      warn('useExportActions: download failed', error);
       toast(t('export_download_failed'), 'error');
     }
   };

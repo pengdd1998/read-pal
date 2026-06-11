@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
+import { warn } from '@/lib/logger';
 
 interface DailyEntry {
  date: string;
@@ -46,7 +47,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
   .then((res) => {
   if (!cancelled && res.data) setData(res.data);
   })
-  .catch((err) => { console.warn('WeeklySummaryWidget: fetch failed', err); if (!cancelled) setError(true); })
+  .catch((err) => { warn('WeeklySummaryWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });
  return () => { cancelled = true; };
  }, []);

@@ -8,6 +8,7 @@ import { authFetch } from '@/lib/auth-fetch';
 import { analytics } from '@/lib/analytics';
 import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/ui';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 type AuthMode = 'login' | 'register';
 
@@ -36,7 +37,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
  fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/google/status`, { signal: ctrl.signal })
   .then((r) => r.json())
   .then((d) => { if (!ctrl.signal.aborted) setGoogleConfigured(d?.data?.configured ?? false); })
-  .catch((err) => { if (!ctrl.signal.aborted) { console.warn('AuthForm: Google status check failed', err); setGoogleConfigured(false); } });
+  .catch((err) => { if (!ctrl.signal.aborted) { warn('AuthForm: Google status check failed', err); setGoogleConfigured(false); } });
  return () => { ctrl.abort(); };
  }, []);
 
@@ -63,13 +64,13 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
    method: 'POST',
    });
   } catch (err) {
-   console.warn("AuthForm: sample book seeding failed", err);
+   warn("AuthForm: sample book seeding failed", err);
    toast(tc('error'), 'error');
   }
   }
   onSuccess();
  } catch (err: unknown) {
-  console.warn('AuthForm: auth failed', err);
+  warn('AuthForm: auth failed', err);
   setError(getUserFriendlyError(err, (k: string) => tc(k)));
  } finally {
   setLoading(false);

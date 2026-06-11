@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 interface ReadingBackgroundProps {
  content: string;
@@ -45,7 +46,7 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
   setSceneData(result.data);
   }
  } catch (err) {
-  console.warn("ReadingBackground: mood scene fetch failed", err);
+  warn("ReadingBackground: mood scene fetch failed", err);
  } finally {
   clearTimeout(timeout);
   if (!ctrl.signal.aborted) {

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { useToast } from '@/components/Toast';
 import { API_BASE_URL } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 type CitationFormat = 'bibtex' | 'apa' | 'mla' | 'chicago' | 'annotated_bib';
 
@@ -71,7 +72,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
   if (!ctrl.signal.aborted) setCitationText(text);
  } catch (err) {
   if (ctrl.signal.aborted) return;
-  console.warn('ShareCitationTab: citation failed', err);
+  warn('ShareCitationTab: citation failed', err);
   toast(t('share_citation_failed'), 'error');
  } finally {
   if (!ctrl.signal.aborted) setGenerating(false);

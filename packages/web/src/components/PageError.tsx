@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
+import { warn } from '@/lib/logger';
 
 interface PageErrorProps {
  error: Error & { digest?: string };
@@ -72,7 +73,7 @@ function useSafeTranslations(namespace: string) {
  try {
  return useTranslations(namespace);
  } catch (err) {
- console.warn('PageError: i18n context unavailable, using fallbacks:', err);
+ warn('PageError: i18n context unavailable, using fallbacks:', err);
  return (key: string, params?: Record<string, string>) => {
   let text = fallbacks[key] || key;
   if (params) {

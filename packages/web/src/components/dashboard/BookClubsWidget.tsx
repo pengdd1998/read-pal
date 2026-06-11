@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { BookClubCard } from './BookClubCard';
 import { CreateClubForm } from './CreateClubForm';
 import { JoinClubForm } from './JoinClubForm';
+import { warn } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
 // Types (re-exported for sub-components)
@@ -90,7 +91,7 @@ function BookClubsWidgetInner() {
    setClubs(list);
   }
   })
-  .catch((err) => { console.warn('BookClubsWidget: fetch failed', err); if (!cancelled) setError(t('clubs_failed_load')); })
+  .catch((err) => { warn('BookClubsWidget: fetch failed', err); if (!cancelled) setError(t('clubs_failed_load')); })
   .finally(() => {
   if (!cancelled) setLoading(false);
   });
@@ -114,7 +115,7 @@ function BookClubsWidgetInner() {
   setNewDesc('');
   }
  } catch (err) {
-  console.warn('BookClubsWidget: create failed', err);
+  warn('BookClubsWidget: create failed', err);
   setError(t('failedToLoad'));
  } finally {
   setCreating(false);
@@ -140,7 +141,7 @@ function BookClubsWidgetInner() {
   setJoinCode('');
   }
  } catch (err) {
-  console.warn('BookClubsWidget: join failed', err);
+  warn('BookClubsWidget: join failed', err);
   setError(t('clubNotFound'));
  } finally {
   setJoining(false);

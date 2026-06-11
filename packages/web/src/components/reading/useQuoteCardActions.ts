@@ -6,6 +6,7 @@ import { copyToClipboard } from '@/lib/clipboard';
 import { useToast } from '@/components/Toast';
 import { renderCardToCanvas } from './QuoteCardCanvas';
 import type { CardTheme } from './QuoteCard';
+import { warn } from '@/lib/logger';
 
 interface UseQuoteCardActionsParams {
   text: string;
@@ -52,7 +53,7 @@ export function useQuoteCardActions({
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (err) {
-      console.warn('useQuoteCardActions: failed to download quote card', err);
+      warn('useQuoteCardActions: failed to download quote card', err);
       toast(tr('quote_card_download_failed'), 'error');
     } finally {
       const t1 = setTimeout(() => { if (mountedRef.current) setDownloading(false); }, 600);
@@ -77,7 +78,7 @@ export function useQuoteCardActions({
       const t2 = setTimeout(() => { if (mountedRef.current) setCopied(false); }, 2000);
       timersRef.current.push(t2);
     } catch (err) {
-      console.warn('useQuoteCardActions: clipboard image copy failed, falling back to text', err);
+      warn('useQuoteCardActions: clipboard image copy failed, falling back to text', err);
       const formatted = `”${text}”\n— ${author}, ${bookTitle}`;
       await copyToClipboard(formatted);
       setCopied(true);
@@ -107,7 +108,7 @@ export function useQuoteCardActions({
       } catch (err) {
         // User cancelled share sheet — not an error
         if ((err as DOMException).name !== 'AbortError') {
-          console.warn('QuoteCard: share failed', err);
+          warn('QuoteCard: share failed', err);
           // Fallback: download
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');

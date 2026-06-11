@@ -16,6 +16,7 @@ import {
  BackOnlineBanner,
  QueueBanner,
 } from './NetworkStatusBanner';
+import { warn } from '@/lib/logger';
 
 export const NetworkStatus = React.memo(function NetworkStatus() {
  const t = useTranslations('offline');
@@ -38,7 +39,7 @@ export const NetworkStatus = React.memo(function NetworkStatus() {
   setQueuedCount(remaining);
   }
  } catch (err) {
-  console.warn('NetworkStatus: failed to sync offline queue', err);
+  warn('NetworkStatus: failed to sync offline queue', err);
   setSyncError(true);
  }
  setSyncing(false);
@@ -69,7 +70,7 @@ export const NetworkStatus = React.memo(function NetworkStatus() {
    syncTimer = setTimeout(() => syncQueue(), 1000);
   }
   } catch (err) {
-  console.warn('NetworkStatus: failed to count queued mutations on reconnect', err);
+  warn('NetworkStatus: failed to count queued mutations on reconnect', err);
   if (mounted) setQueuedCount(0);
   }
   // Auto-hide "back online" after 4s
@@ -93,7 +94,7 @@ export const NetworkStatus = React.memo(function NetworkStatus() {
    syncTimer = setTimeout(() => syncQueue(), 1000);
   }
   } catch (err) {
-  console.warn('NetworkStatus: failed to initialize offline queue', err);
+  warn('NetworkStatus: failed to initialize offline queue', err);
   if (mounted) setQueuedCount(0);
   }
  })();
@@ -105,7 +106,7 @@ export const NetworkStatus = React.memo(function NetworkStatus() {
   if (!mounted) return;
   setQueuedCount(count);
   } catch (err) {
-  console.warn('NetworkStatus: failed to count queued mutations after queue event', err);
+  warn('NetworkStatus: failed to count queued mutations after queue event', err);
   if (mounted) setQueuedCount(0);
   }
  };

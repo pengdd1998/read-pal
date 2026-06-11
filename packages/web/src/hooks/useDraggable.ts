@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
+import { warn } from '@/lib/logger';
 
 const DRAG_THRESHOLD = 6; // px movement to distinguish drag from click
 const SNAP_TRANSITION = 'left 0.25s cubic-bezier(0.16,1,0.3,1), top 0.25s cubic-bezier(0.16,1,0.3,1)';
@@ -43,7 +44,7 @@ function loadSavedPosition(storageKey: string): DragPosition | null {
     if (!raw) return null;
     const pos = JSON.parse(raw) as DragPosition;
     if (typeof pos.x === 'number' && typeof pos.y === 'number') return pos;
-  } catch (err) { console.warn('Storage error: failed to load draggable position', err); }
+  } catch (err) { warn('Storage error: failed to load draggable position', err); }
   return null;
 }
 
@@ -133,7 +134,7 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableReturn {
 
   // Persist position on change
   useEffect(() => {
-    try { safeSetItem(storageKey, JSON.stringify(btnPos)); } catch (err) { console.warn('Storage error: failed to persist draggable position', err); }
+    try { safeSetItem(storageKey, JSON.stringify(btnPos)); } catch (err) { warn('Storage error: failed to persist draggable position', err); }
   }, [btnPos, storageKey]);
 
   // Reposition on viewport resize

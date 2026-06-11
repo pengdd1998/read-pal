@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { useToast } from '@/components/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { MirrorSection } from '@/components/reading-mirror/SectionRenderer';
@@ -73,7 +74,7 @@ export default function ReadingMirrorPage() {
   setCoverUrl(bookRes.data.coverUrl);
   }
  }).catch((err) => {
-  console.warn('MemoryBookDetail: failed to load', err);
+  warn('MemoryBookDetail: failed to load', err);
   if (mountedRef.current) setError(t('failedToLoad'));
   })
  .finally(() => { if (mountedRef.current) setLoading(false); });
@@ -119,7 +120,7 @@ export default function ReadingMirrorPage() {
   setGenStep('error');
   }
  } catch (err) {
-  console.warn('MemoryBookDetail: generate failed', err);
+  warn('MemoryBookDetail: generate failed', err);
   if (genTimerRef.current) { clearInterval(genTimerRef.current); genTimerRef.current = null; }
   if (!mountedRef.current) return;
   setError(t('generationFailedError'));

@@ -17,6 +17,7 @@ import {
   type BookMeta,
   type ReadingStats,
 } from '@/lib/discussion-guide-sections';
+import { warn } from './logger';
 
 export type { BookMeta, ReadingStats };
 
@@ -97,7 +98,7 @@ export async function copyDiscussionGuide(html: string): Promise<boolean> {
       ]);
       return true;
     } catch (err) {
-      console.warn('Clipboard write failed, falling back to writeText', err);
+      warn('Clipboard write failed, falling back to writeText', err);
     }
   }
   if (navigator.clipboard?.writeText) {
@@ -105,7 +106,7 @@ export async function copyDiscussionGuide(html: string): Promise<boolean> {
       await navigator.clipboard.writeText(html);
       return true;
     } catch (err) {
-      console.warn('Clipboard writeText also failed', err);
+      warn('Clipboard writeText also failed', err);
     }
   }
   return false;

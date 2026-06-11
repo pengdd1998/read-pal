@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { ProfileSection } from '@/components/settings/ProfileSection';
@@ -57,7 +58,7 @@ export default function SettingsPage() {
         if (d.email) setUserEmail(d.email);
       }
     } catch (err) {
-      console.warn('Settings: load failed', err);
+      warn('Settings: load failed', err);
       setError(t('failed_load_retry'));
     }
     setLoading(false);
@@ -90,7 +91,7 @@ export default function SettingsPage() {
         setError(t('failed_save'));
       }
     } catch (err) {
-      console.warn('Settings: save failed', err);
+      warn('Settings: save failed', err);
       if (previousSettings) setSettings(previousSettings);
       setError(t('failed_save_retry'));
     }

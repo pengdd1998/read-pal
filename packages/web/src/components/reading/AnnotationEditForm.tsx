@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { type Annotation, ANNOTATION_COLORS } from '@read-pal/shared';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 const PRESET_TAGS = ['discuss', 'important', 'question', 'key-idea', 'surprising', 'disagree', 'quote', 'follow-up'];
 
 interface AnnotationEditFormProps {
@@ -46,7 +47,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   }
   onCancel();
  } catch (error) {
-  console.warn('AnnotationEditForm: save failed', error);
+  warn('AnnotationEditForm: save failed', error);
   toast(t('card_failed_save'), 'error');
  }
  setSaving(false);

@@ -2,6 +2,7 @@ import { isCapacitor } from '@/lib/capacitor';
 import { cacheBook, isCached } from '@/lib/mobile-cache';
 import { cacheBookForOffline } from '@/lib/offline-queue';
 import { api } from '@/lib/api';
+import { warn } from './logger';
 
 function openOfflineDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -33,7 +34,7 @@ export async function checkOfflineCache(bookId: string): Promise<boolean> {
     });
     return !!(result && result.chaptersCached > 0);
   } catch (err) {
-    console.warn('checkOfflineCache: failed for book', bookId, err);
+    warn('checkOfflineCache: failed for book', bookId, err);
     return false;
   }
 }
@@ -51,7 +52,7 @@ export async function cacheBookOffline(bookId: string): Promise<boolean> {
     }
     return false;
   } catch (err) {
-    console.warn('cacheBookOffline: failed for book', bookId, err);
+    warn('cacheBookOffline: failed for book', bookId, err);
     return false;
   }
 }

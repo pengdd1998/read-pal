@@ -66,6 +66,7 @@ async def _load_book_info(
         'status': book.status,
       }
   except Exception:
+    logger.debug('synthesis query failed', exc_info=True)
     return None
 
 
@@ -125,6 +126,7 @@ async def _load_conversations(
         for m in messages
       ]
   except Exception:
+    logger.debug('synthesis query failed', exc_info=True)
     return []
 
 
@@ -157,6 +159,7 @@ async def _load_reading_sessions(
         for s in sessions
       ]
   except Exception:
+    logger.debug('synthesis query failed', exc_info=True)
     return []
 
 
@@ -213,6 +216,7 @@ async def _collect_reading_data(
 
       return data
   except Exception:
+    logger.debug('synthesis query failed', exc_info=True)
     return {}
 
 

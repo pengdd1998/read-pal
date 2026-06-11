@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 interface BookCompletionModalProps {
  bookId: string;
@@ -37,7 +38,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
   });
   router.push(`/memory-books/${bookId}`);
  } catch (error) {
-  console.warn('BookCompletionModal: generate failed', error);
+  warn('BookCompletionModal: generate failed', error);
   setGenerating(false);
   setGenError(t('completion_failed_generate'));
  }

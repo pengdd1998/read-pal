@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 export function useAiHealth(): boolean | null {
   const [aiHealthy, setAiHealthy] = useState<boolean | null>(null);
@@ -20,7 +21,7 @@ export function useAiHealth(): boolean | null {
           }
         }
       } catch (err) {
-        console.warn("useAiHealth: health check failed", err);
+        warn("useAiHealth: health check failed", err);
         if (!cancelled) setAiHealthy(false);
       }
     };

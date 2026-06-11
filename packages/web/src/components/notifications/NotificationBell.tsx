@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { formatRelativeTime } from '@/lib/date';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface Notification {
   id: string;
@@ -108,7 +109,7 @@ export const NotificationBell = memo(function NotificationBell() {
       }
     } catch (err) {
       if (staleRef.current) return;
-      console.warn('Notifications: failed to load notifications', err);
+      warn('Notifications: failed to load notifications', err);
       toast(t('notification_load_failed'), 'error');
     } finally {
       loadingRef.current = false;
@@ -153,7 +154,7 @@ export const NotificationBell = memo(function NotificationBell() {
     } catch (err) {
       setNotifications(prev);
       setUnreadCount(prevCount);
-      console.warn('Notifications: failed to mark notification as read', err);
+      warn('Notifications: failed to mark notification as read', err);
       toast(t('notification_mark_read_failed'), 'error');
     }
   }
@@ -169,7 +170,7 @@ export const NotificationBell = memo(function NotificationBell() {
     } catch (err) {
       setNotifications(prev);
       setUnreadCount(prevCount);
-      console.warn('Notifications: failed to mark all as read', err);
+      warn('Notifications: failed to mark all as read', err);
       toast(t('notification_mark_all_read_failed'), 'error');
     } finally {
       setMarkingAll(false);

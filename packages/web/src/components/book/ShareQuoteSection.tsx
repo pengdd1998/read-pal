@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { AnnotationItem } from '@/types/book';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface QuoteRowProps {
   h: AnnotationItem;
@@ -111,7 +112,7 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
     });
     } catch (err) {
     if ((err as DOMException).name !== 'AbortError') {
-     console.warn('ShareQuote: share failed', err);
+     warn('ShareQuote: share failed', err);
      const url = URL.createObjectURL(blob);
      const a = document.createElement('a');
      a.href = url;
@@ -126,7 +127,7 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
      new ClipboardItem({ 'image/png': blob }),
     ]);
     } catch (err) {
-    console.warn("ShareQuoteSection: clipboard write failed", err);
+    warn("ShareQuoteSection: clipboard write failed", err);
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -138,7 +139,7 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
    if (mountedRef.current) setSharingIdx(null);
    }, 'image/png');
   } catch (err) {
-   console.warn("ShareQuoteSection: share failed", err);
+   warn("ShareQuoteSection: share failed", err);
    toast(t('share_failed'), 'error');
    if (mountedRef.current) setSharingIdx(null);
   }

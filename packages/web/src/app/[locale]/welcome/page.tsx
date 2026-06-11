@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { authFetch } from '@/lib/auth-fetch';
 import type { Book } from '@read-pal/shared';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -63,7 +64,7 @@ export default function WelcomePage() {
       }
     } catch (err) {
       if (signal.stale) return;
-      console.warn('Welcome: failed to load sample book list', err);
+      warn('Welcome: failed to load sample book list', err);
       setError(t('book_load_error'));
     }
     setLoading(false);
@@ -96,7 +97,7 @@ export default function WelcomePage() {
         body: JSON.stringify({ friendPersona: selectedPersona }),
       });
     } catch (err) {
-      console.warn('Welcome: failed to save persona preference', err);
+      warn('Welcome: failed to save persona preference', err);
       toast(t('persona_save_error'), 'error');
     }
     safeSetItem(ONBOARDING_KEY, 'true');

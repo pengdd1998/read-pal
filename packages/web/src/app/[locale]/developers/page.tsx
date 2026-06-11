@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { useAuth } from '@/lib/auth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { ApiQuickStart } from './ApiQuickStart';
@@ -39,7 +40,7 @@ export default function DevelopersPage() {
   })
   .catch((err) => {
   if (stale) return;
-  console.warn('Developers: API key fetch failed', err);
+  warn('Developers: API key fetch failed', err);
   setApiKeyError(t('api_key_fetch_error'));
   })
   .finally(() => {

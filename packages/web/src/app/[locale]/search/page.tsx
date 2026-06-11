@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { SearchBar } from '@/components/search/SearchBar';
 import { FilterPills } from '@/components/search/FilterPills';
@@ -40,7 +41,7 @@ export default function SearchPage() {
   })
   .catch((err) => {
   if (stale) return;
-  console.warn('SearchPage: recent books load failed', err);
+  warn('SearchPage: recent books load failed', err);
   setRecentBooks([]);
   });
  }
@@ -77,7 +78,7 @@ export default function SearchPage() {
 
   const failedCount = settled.filter((r) => r.status === 'rejected').length;
   if (failedCount > 0) {
-   console.warn(`search: ${failedCount} of 3 search queries failed`);
+   warn(`search: ${failedCount} of 3 search queries failed`);
    setError(t('partial_failure'));
   }
 
@@ -98,7 +99,7 @@ export default function SearchPage() {
 
   setSearched(true);
   } catch (err) {
-  console.warn('Search: failed to search', err);
+  warn('Search: failed to search', err);
   if (stale) return;
   setError(t('failed_search'));
   setResults([]);

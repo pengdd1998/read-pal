@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { authFetch } from '@/lib/auth-fetch';
 import type { BookData } from '@/types/book';
+import { warn } from '@/lib/logger';
 
 interface StudyGuideCardProps {
  bookId: string;
@@ -44,7 +45,7 @@ export const StudyGuideCard = React.memo(function StudyGuideCard({
   URL.revokeObjectURL(url);
   onExportSuccess(t('studyGuideExported'));
  } catch (err) {
-  console.warn('StudyGuideCard: export failed', err);
+  warn('StudyGuideCard: export failed', err);
   onError(t('failedToExportStudyGuide'));
  } finally {
   if (mountedRef.current) setGenerating(false);

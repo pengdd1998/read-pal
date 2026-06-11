@@ -10,6 +10,7 @@ import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
 import { CompanionStep } from '@/components/onboarding/CompanionStep';
 import { ReadyStep } from '@/components/onboarding/ReadyStep';
 import { StepIndicator } from '@/components/onboarding/StepIndicator';
+import { warn } from '@/lib/logger';
 
 const STORAGE_KEY = 'read-pal-onboarding-complete';
 
@@ -83,7 +84,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
         });
       }
     } catch (err) {
-      console.warn('OnboardingWalkthrough: load state failed', err);
+      warn('OnboardingWalkthrough: load state failed', err);
     }
   }, []);
 
@@ -91,7 +92,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
     try {
       safeSetItem(STORAGE_KEY, 'true');
     } catch (err) {
-      console.warn('OnboardingWalkthrough: save state failed', err);
+      warn('OnboardingWalkthrough: save state failed', err);
     }
     setOverlayVisible(false);
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -119,7 +120,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
         body: JSON.stringify({ friendPersona: selectedPersona }),
       });
     } catch (err) {
-      console.warn('Onboarding: failed to save persona preference', err);
+      warn('Onboarding: failed to save persona preference', err);
       toast(t('persona_save_error'), 'error');
     }
     complete();

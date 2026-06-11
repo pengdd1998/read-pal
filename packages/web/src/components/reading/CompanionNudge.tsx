@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
+import { warn } from '@/lib/logger';
 
 export const CompanionNudge = React.memo(function CompanionNudge() {
  const t = useTranslations('reader');
@@ -20,7 +21,7 @@ export const CompanionNudge = React.memo(function CompanionNudge() {
 
  const handleDismiss = () => {
  setVisible(false);
- try { safeSetItem('read-pal-companion-nudge', 'true'); } catch (err) { console.warn('CompanionNudge: localStorage write failed', err); }
+ try { safeSetItem('read-pal-companion-nudge', 'true'); } catch (err) { warn('CompanionNudge: localStorage write failed', err); }
  };
 
  if (!visible) return null;

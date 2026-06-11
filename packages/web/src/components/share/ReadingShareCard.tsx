@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { copyToClipboard } from '@/lib/clipboard';
 import { isDisplayableAuthor } from '@/lib/book-cover';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface ReadingCardData {
  user: { name: string };
@@ -43,7 +44,7 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
   setCard(res.data);
   }
  } catch (error) {
-  console.warn('ReadingShareCard: generate failed', error);
+  warn('ReadingShareCard: generate failed', error);
   toast(t('failed_generate'), 'error');
  } finally {
   setLoading(false);
@@ -85,7 +86,7 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
   });
   } catch (err) {
   if (err instanceof Error && err.name !== 'AbortError') {
-   console.warn('ReadingShareCard: share failed', err);
+   warn('ReadingShareCard: share failed', err);
    toast(t('share_failed'), 'error');
   }
   }

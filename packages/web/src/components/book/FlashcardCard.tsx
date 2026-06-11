@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 interface FlashcardCardProps {
  bookId: string;
@@ -40,7 +41,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
   router.push('/flashcards');
   }
  } catch (error) {
-  console.warn('FlashcardCard: generate failed', error);
+  warn('FlashcardCard: generate failed', error);
   onError(t('failedToGenerateFlashcards'));
  } finally {
   if (mountedRef.current) setGenerating(false);

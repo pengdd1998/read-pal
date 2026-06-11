@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { safeSetItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 const ONBOARDING_KEY = 'read-pal-onboarding-complete';
 
@@ -69,7 +70,7 @@ function SeedButton() {
         router.push(`/read/${res.data.book.id}`);
       }
     } catch (err) {
-      console.warn('Welcome: failed to seed sample book', err);
+      warn('Welcome: failed to seed sample book', err);
       setSeedError(true);
       toast(t('seed_error'), 'error');
     } finally {

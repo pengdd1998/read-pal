@@ -35,6 +35,7 @@ import {
   installRequestInterceptor,
   installResponseInterceptor,
 } from './interceptors';
+import { warn } from '../logger';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -87,7 +88,7 @@ export class ApiClient {
           break;
         }
 
-        console.warn(`API client: retry ${attempt}/${attempts}`, status ?? 'network error');
+        warn(`API client: retry ${attempt}/${attempts}`, status ?? 'network error');
         const baseDelay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
         const jitter = Math.random() * baseDelay * 0.3;
         await sleep(baseDelay + jitter);
@@ -174,7 +175,7 @@ export class ApiClient {
         }
       })
       .catch(() => {
-        console.warn("api: background refresh failed");
+        warn("api: background refresh failed");
         // Background refresh failed — stale data remains usable
       });
   }
@@ -192,7 +193,7 @@ export class ApiClient {
       return result;
     } catch (err) {
       if (this.isOfflineError(err)) {
-        console.warn('API client: request failed (offline queue)', err);
+        warn('API client: request failed (offline queue)', err);
         return this.queueOfflineResponse<T>(url, method.toUpperCase(), data);
       }
       throw err;
@@ -264,7 +265,7 @@ export class ApiClient {
         if (signal?.aborted || (err as DOMException)?.name === 'AbortError') {
           throw err;
         }
-        console.warn('API client: retry failed', err);
+        warn('API client: retry failed', err);
         lastError = err;
         const status = (err as AxiosError).response?.status;
         if (!isRetryableStatus(status) && status) break;

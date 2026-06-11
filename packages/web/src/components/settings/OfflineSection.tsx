@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { isDisplayableAuthor } from '@/lib/book-cover';
 import { useToast } from '@/components/Toast';
 import { getQueueCount, clearQueue, cacheBookForOffline } from '@/lib/offline-queue';
+import { warn } from '@/lib/logger';
 
 interface CachedBook {
   bookId: string;
@@ -97,7 +98,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         if (res.data?.books) setBooks(res.data.books);
       } catch (err) {
         if (stale) return;
-        console.warn('OfflineSection: failed to load offline data', err);
+        warn('OfflineSection: failed to load offline data', err);
         setLoadError(true);
         toast(t('offline_load_failed'), 'error');
       } finally {
@@ -135,7 +136,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         }
       };
     } catch (e) {
-      console.warn('OfflineSection: failed to cache books for offline', e);
+      warn('OfflineSection: failed to cache books for offline', e);
       if (!mountedRef.current) return;
       toast(t('offline_cache_failed'), 'error');
     } finally {
@@ -158,7 +159,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         };
       };
     } catch (e) {
-      console.warn('OfflineSection: failed to remove cached book', e);
+      warn('OfflineSection: failed to remove cached book', e);
       if (!mountedRef.current) return;
       toast(t('offline_remove_failed'), 'error');
     }
@@ -171,7 +172,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
       setQueueCount(0);
       toast(t('offline_queue_cleared'), 'success');
     } catch (e) {
-      console.warn('OfflineSection: failed to clear offline queue', e);
+      warn('OfflineSection: failed to clear offline queue', e);
       if (!mountedRef.current) return;
       toast(t('offline_clear_failed'), 'error');
     }

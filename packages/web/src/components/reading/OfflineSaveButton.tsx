@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { isCapacitor } from '@/lib/capacitor';
 import { cacheBook, isCached, removeCachedBook } from '@/lib/mobile-cache';
 import { hapticSuccess, hapticMedium } from '@/lib/haptics';
+import { warn } from '@/lib/logger';
 
 interface OfflineSaveButtonProps {
  bookId: string;
@@ -31,7 +32,7 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
  let cancelled = false;
  isCached(bookId).then((cached) => {
   if (!cancelled && cached) setState('cached');
- }).catch((err) => { console.warn("OfflineSaveButton: cache check failed", err); });
+ }).catch((err) => { warn("OfflineSaveButton: cache check failed", err); });
  return () => { cancelled = true; };
  }, [bookId]);
 
@@ -73,7 +74,7 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
   resetTimerRef.current = setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);
   }
  } catch (error) {
-  console.warn('OfflineSaveButton: cache save failed', error);
+  warn('OfflineSaveButton: cache save failed', error);
   if (progressIntervalRef.current) { clearInterval(progressIntervalRef.current); progressIntervalRef.current = null; }
   setState('error');
   resetTimerRef.current = setTimeout(() => { if (mountedRef.current) setState('idle'); }, 2000);

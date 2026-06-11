@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -73,7 +74,7 @@ export default function DashboardPage() {
         toast(t('failed_seed_sample'), 'error');
       }
     } catch (err) {
-      console.warn('Dashboard: failed to seed sample', err);
+      warn('Dashboard: failed to seed sample', err);
       if (!mountedRef.current) return;
       toast(t('failed_seed_sample'), 'error');
     } finally {

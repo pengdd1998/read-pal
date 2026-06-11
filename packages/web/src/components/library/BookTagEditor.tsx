@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface BookTagEditorProps {
  bookId: string;
@@ -29,7 +30,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
   onTagsChange?.(bookId, newTags);
   setTagInput('');
  } catch (error) {
-  console.warn('BookTagEditor: add tag failed', error);
+  warn('BookTagEditor: add tag failed', error);
   toast(t('tag_update_failed'), 'error');
  } finally {
   setSaving(false);
@@ -43,7 +44,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
   await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
   onTagsChange?.(bookId, newTags);
  } catch (error) {
-  console.warn('BookTagEditor: remove tag failed', error);
+  warn('BookTagEditor: remove tag failed', error);
   toast(t('tag_update_failed'), 'error');
  } finally {
   setSaving(false);

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface ApiKeyRowProps {
  k: ApiKeyData;
@@ -74,7 +75,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   setKeys(res.data);
   }
  } catch (err) {
-  console.warn('ApiKeysSection: load failed', err);
+  warn('ApiKeysSection: load failed', err);
   toast(t('api_key_load_failed'), 'error');
  }
  setLoading(false);
@@ -99,7 +100,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   toast(t('api_key_created_toast'), 'success');
   }
  } catch (err) {
-  console.warn('ApiKeysSection: create failed', err);
+  warn('ApiKeysSection: create failed', err);
   toast(t('api_key_create_failed'), 'error');
  }
  setCreating(false);
@@ -114,7 +115,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   toast(t('api_key_revoked_toast'), 'success');
   }
  } catch (err) {
-  console.warn('ApiKeysSection: revoke failed', err);
+  warn('ApiKeysSection: revoke failed', err);
   toast(t('api_key_revoke_failed'), 'error');
  }
  setRevokingId(null);
@@ -125,7 +126,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
    await navigator.clipboard.writeText(key);
    toast(t('api_key_copied_toast'), 'success');
   } catch (err) {
-   console.warn('ApiKeysSection: copy failed', err);
+   warn('ApiKeysSection: copy failed', err);
    toast(t('api_key_copy_failed'), 'error');
   }
  }

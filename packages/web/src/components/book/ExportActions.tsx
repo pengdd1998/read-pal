@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { authFetch } from '@/lib/auth-fetch';
 import type { BookData } from '@/types/book';
+import { warn } from '@/lib/logger';
 
 interface ExportActionsProps {
  bookId: string;
@@ -56,7 +57,7 @@ export const ExportActions = React.memo(function ExportActions({
   );
   onExportSuccess(t('markdownExported'));
  } catch (error) {
-  console.warn('ExportActions: markdown export failed', error);
+  warn('ExportActions: markdown export failed', error);
   onExportError(t('failedToExport'));
  } finally {
   if (mountedRef.current) setExporting(null);
@@ -75,7 +76,7 @@ export const ExportActions = React.memo(function ExportActions({
   );
   onExportSuccess(t('jsonExported'));
  } catch (error) {
-  console.warn('ExportActions: JSON export failed', error);
+  warn('ExportActions: JSON export failed', error);
   onExportError(t('failedToExport'));
  } finally {
   if (mountedRef.current) setExporting(null);
@@ -95,7 +96,7 @@ export const ExportActions = React.memo(function ExportActions({
   );
   onExportSuccess(t('exportedToZotero'));
  } catch (error) {
-  console.warn('ExportActions: Zotero export failed', error);
+  warn('ExportActions: Zotero export failed', error);
   onExportError(t('failedToExportZotero'));
  } finally {
   if (mountedRef.current) setZoteroExporting(false);

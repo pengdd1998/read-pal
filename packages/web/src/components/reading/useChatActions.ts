@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { api } from '@/lib/api';
 import { analytics } from '@/lib/analytics';
+import { warn } from '@/lib/logger';
 
 type CompanionMode = 'casual' | 'scholar' | 'socratic';
 type TranslateFn = (key: string, params?: Record<string, unknown>) => string;
@@ -36,7 +37,7 @@ export function useChatActions({
     const newMode = modes[(idx + 1) % modes.length];
     setCompanionMode(newMode);
     api.patch('/api/settings', { companionMode: newMode }).catch((err) => {
-      console.warn('useChatActions: companion mode toggle failed', err);
+      warn('useChatActions: companion mode toggle failed', err);
       setCompanionMode(companionMode);
       toast(t('companion_mode_error'), 'error');
     });
@@ -62,7 +63,7 @@ export function useChatActions({
         rating,
       });
     } catch (err) {
-      console.warn('ChatActions: failed to submit feedback', err);
+      warn('ChatActions: failed to submit feedback', err);
       toast(t('feedback_submit_error'), 'error');
     }
   }, [bookId, toast, t]);

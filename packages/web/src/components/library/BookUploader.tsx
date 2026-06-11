@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
+import { warn } from '@/lib/logger';
 
 interface BookUploaderProps {
  onUploadComplete: (book: Book) => void;
@@ -70,7 +71,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   }
  } catch (err: unknown) {
   if ((err as DOMException)?.name === 'AbortError') return;
-  console.warn('BookUploader: upload failed', err);
+  warn('BookUploader: upload failed', err);
   const isNetwork = (err as { response?: unknown; code?: string })?.code === 'ERR_NETWORK'
    || (err as { response?: unknown })?.response === undefined;
   setError(isNetwork ? t('upload_network_error') : t('upload_failed'));

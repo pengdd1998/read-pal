@@ -52,6 +52,7 @@ async def _save_new_plan(
             await db.flush()
             return plan
     except Exception:
+        logger.debug('reading plan query failed', exc_info=True)
         return None
 
 
@@ -218,6 +219,7 @@ async def _get_active_plan(
             )
             return result.scalar_one_or_none()
     except Exception:
+        logger.debug('reading plan query failed', exc_info=True)
         return None
 
 

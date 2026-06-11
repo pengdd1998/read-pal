@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 import type { ApiResponse } from '@read-pal/shared';
+import { warn } from '@/lib/logger';
 
 /**
  * Centralized data-fetching hook.
@@ -72,7 +73,7 @@ export function useApi<T>(
       setError('Request failed');
       setStatus('error');
       if (logErrors) {
-        console.warn(`[useApi] ${url}: request failed`);
+        warn(`[useApi] ${url}: request failed`);
       }
       return undefined;
     } catch (err) {
@@ -81,7 +82,7 @@ export function useApi<T>(
       setError('Network error');
       setStatus('error');
       if (logErrors) {
-        console.warn(`[useApi] ${url}: network error`);
+        warn(`[useApi] ${url}: network error`);
       }
       return undefined;
     }
@@ -124,7 +125,7 @@ export function useBackgroundApi() {
           }
         })
         .catch((err) => {
-          console.warn('[useBackgroundApi]', url, err);
+          warn('[useBackgroundApi]', url, err);
         });
     },
     [],

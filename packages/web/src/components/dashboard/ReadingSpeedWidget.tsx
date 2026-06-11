@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
+import { warn } from '@/lib/logger';
 
 interface ReadingSpeedBook {
  bookId: string;
@@ -31,7 +32,7 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
    setError(true);
   }
   })
-  .catch((err) => { console.warn('ReadingSpeedWidget: fetch failed', err); if (!cancelled) setError(true); })
+  .catch((err) => { warn('ReadingSpeedWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });
  return () => { cancelled = true; };
  }, []);

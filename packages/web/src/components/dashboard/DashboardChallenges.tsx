@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
 import type { ChallengeItem } from './types';
+import { warn } from '@/lib/logger';
 
 const ChallengeItemRow = React.memo(function ChallengeItemRow({ c, title, progressLabel }: {
   c: ChallengeItem;
@@ -46,7 +47,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
           setChallenges(res.data.challenges ?? []);
         }
       })
-      .catch((err) => { console.warn('DashboardChallenges: fetch failed', err); if (!cancelled) setError(true); })
+      .catch((err) => { warn('DashboardChallenges: fetch failed', err); if (!cancelled) setError(true); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);

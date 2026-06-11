@@ -10,6 +10,7 @@ import { ClubCurrentReading } from './ClubCurrentReading';
 import { ClubMembersList } from './ClubMembersList';
 import { ClubDiscussionPanel } from './ClubDiscussionPanel';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 export default function BookClubDetailPage() {
  const t = useTranslations('bookClubs');
@@ -28,7 +29,7 @@ export default function BookClubDetailPage() {
   await api.post(`/api/book-clubs/${clubId}/leave`);
   router.push('/book-clubs');
  } catch (err) {
-  console.warn('BookClubDetail: leave failed', err);
+  warn('BookClubDetail: leave failed', err);
   setError(t('failedToLeave'));
  }
  }

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
+import { warn } from '@/lib/logger';
 
 interface BookOption {
  id: string;
@@ -40,7 +41,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   setCompareError(t('analysis_failed'));
   }
  } catch (error) {
-  console.warn('BookComparisonCard: compare failed', error);
+  warn('BookComparisonCard: compare failed', error);
   setCompareError(t('network_error'));
  } finally {
   setCompareLoading(false);

@@ -7,6 +7,7 @@ import type { Collection } from '@read-pal/shared';
 import { useToast } from '@/components/Toast';
 import { CollectionCreateForm } from './CollectionCreateForm';
 import { CollectionItem } from './CollectionItem';
+import { warn } from '@/lib/logger';
 
 interface CollectionsSidebarProps {
  activeCollectionId: string | null;
@@ -52,7 +53,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   }
  } catch (err) {
   setError(true);
-  console.warn('CollectionsSidebar: failed to load collections', err);
+  warn('CollectionsSidebar: failed to load collections', err);
  } finally {
   setLoading(false);
  }
@@ -62,7 +63,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  let stale = false;
  loadCollections().then(() => {
   if (stale) return;
- }).catch((err) => { console.warn('CollectionsSidebar: failed to load collections', err); });
+ }).catch((err) => { warn('CollectionsSidebar: failed to load collections', err); });
  return () => { stale = true; };
  }, [loadCollections]);
 
@@ -85,7 +86,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   toast(t('collections_created'), 'success');
   }
  } catch (err) {
-  console.warn('CollectionsSidebar: create failed', err);
+  warn('CollectionsSidebar: create failed', err);
   if (!mountedRef.current) return;
   toast(t('collections_create_failed'), 'error');
  } finally {
@@ -102,7 +103,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   if (!mountedRef.current) return;
   toast(t('collections_deleted'), 'success');
  } catch (err) {
-  console.warn('CollectionsSidebar: delete failed', err);
+  warn('CollectionsSidebar: delete failed', err);
   if (!mountedRef.current) return;
   setCollections(prev);
   toast(t('collections_delete_failed'), 'error');
@@ -118,7 +119,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   setCollections((prev) => prev.map((c) => (c.id === id ? (res.data as Collection) : c)));
   }
  } catch (err) {
-  console.warn('CollectionsSidebar: rename failed', err);
+  warn('CollectionsSidebar: rename failed', err);
   if (!mountedRef.current) return;
   toast(t('collections_rename_failed'), 'error');
  }

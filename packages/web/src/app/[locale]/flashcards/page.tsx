@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { FlashcardDeck } from './components/FlashcardDeck';
 import { FlashcardStudy } from './components/FlashcardStudy';
@@ -66,7 +67,7 @@ export default function FlashcardsPage() {
   }
  } catch (err) {
   if (!mountedRef.current) return;
-  console.warn('FlashcardsPage: fetchDecks failed', err);
+  warn('FlashcardsPage: fetchDecks failed', err);
   setToast(t('toast_load_decks'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
@@ -87,7 +88,7 @@ export default function FlashcardsPage() {
   }
  } catch (err) {
   if (!mountedRef.current) return;
-  console.warn('FlashcardsPage: fetchCards failed', err);
+  warn('FlashcardsPage: fetchCards failed', err);
   setToast(t('toast_load_cards'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
@@ -117,7 +118,7 @@ export default function FlashcardsPage() {
   }
  } catch (err) {
   if (!mountedRef.current) return;
-  console.warn('FlashcardsPage: handleRate failed', err);
+  warn('FlashcardsPage: handleRate failed', err);
   setToast(t('toast_save_review'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }

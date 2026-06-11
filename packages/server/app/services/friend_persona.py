@@ -85,6 +85,7 @@ async def _gather_reading_stats(
                 'distinct_books': distinct_books,
             }
     except Exception:
+        logger.debug('friend persona stats failed', exc_info=True)
         return _EMPTY_STATS
 
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
+import { warn } from '@/lib/logger';
 
 interface GoalsData {
  goal: number;
@@ -28,7 +29,7 @@ export const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
   .then((res) => {
   if (!cancelled && res.data) setGoals(res.data);
   })
-  .catch((err) => { console.warn('ReadingGoalsWidget: fetch failed', err); if (!cancelled) setError(true); })
+  .catch((err) => { warn('ReadingGoalsWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });
  return () => { cancelled = true; };
  }, []);

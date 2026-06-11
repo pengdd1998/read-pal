@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth';
+import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 function OAuthCallback() {
@@ -36,7 +37,7 @@ function OAuthCallback() {
   oauthLogin(token, user, refreshToken || undefined);
   router.push('/dashboard');
  } catch (err) {
-  console.warn('AuthCallback: failed', err);
+  warn('AuthCallback: failed', err);
   router.replace(`/auth?mode=login&error=${encodeURIComponent(t('parse_response_failed'))}`);
  }
  }, [searchParams, router, oauthLogin, t]);

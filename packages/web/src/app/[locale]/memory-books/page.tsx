@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { isDisplayableAuthor } from '@/lib/book-cover';
 import { analytics } from '@/lib/analytics';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -75,7 +76,7 @@ export default function MemoryBooksPage() {
      setBooks(list.filter((b) => b.progress > 10));
     }
    })
-   .catch((err) => { console.warn('MemoryBooks: failed to load', err); if (mountedRef.current) setError(t('failedToLoad')); })
+   .catch((err) => { warn('MemoryBooks: failed to load', err); if (mountedRef.current) setError(t('failedToLoad')); })
    .finally(() => { if (mountedRef.current) setLoading(false); });
  }, [t]);
 
@@ -104,7 +105,7 @@ export default function MemoryBooksPage() {
    setError(t('failedToGenerate'));
   }
  } catch (err) {
-  console.warn('MemoryBooks: generate failed', err);
+  warn('MemoryBooks: generate failed', err);
   if (!mountedRef.current) return;
   setError(t('failedToGenerate'));
  } finally {

@@ -10,6 +10,7 @@
  * chunk and `onDone` when the stream completes. Returns an AbortController
  * so the caller can cancel.
  */
+import { warn } from './logger';
 export function consumeSSEStream(
   response: Response,
   onToken: (token: string) => void,
@@ -70,7 +71,7 @@ export function consumeSSEStream(
           onToken(token);
         }
       } catch (err) {
-        console.warn('SSE: malformed JSON line:', payload, err);
+        warn('SSE: malformed JSON line:', payload, err);
       }
     }
   };
@@ -86,7 +87,7 @@ export function consumeSSEStream(
       safeDone();
     } catch (err) {
       if (!controller.signal.aborted) {
-        console.warn('SSE: stream read failed', err);
+        warn('SSE: stream read failed', err);
         safeError('Stream read failed');
       }
     } finally {

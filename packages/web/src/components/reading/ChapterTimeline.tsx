@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 interface ChapterStat {
  chapterIndex: number;
@@ -124,7 +125,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   if (res.success && res.data) setStats(res.data);
   })
   .catch((err) => {
-  console.warn('ChapterTimeline: failed to load stats', err);
+  warn('ChapterTimeline: failed to load stats', err);
   if (!stale) setError(true);
   })
   .finally(() => { if (!stale) setLoading(false); });

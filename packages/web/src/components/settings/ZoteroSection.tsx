@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 
 import { UserSettings } from './types';
+import { warn } from '@/lib/logger';
 
 interface ZoteroSectionProps {
  initialSettings?: UserSettings | null;
@@ -54,7 +55,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
   toast(t('zotero_connected') + (valRes.data.username ? ` (${valRes.data.username})` : ''), 'success');
   }
  } catch (err) {
-  console.warn('ZoteroSection: connect failed', err);
+  warn('ZoteroSection: connect failed', err);
   setValidationError(t('zotero_connect_failed'));
  } finally {
   setValidating(false);
@@ -70,7 +71,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
   setUserId('');
   toast(t('zotero_disconnected'), 'success');
  } catch (err) {
-  console.warn('ZoteroSection: disconnect failed', err);
+  warn('ZoteroSection: disconnect failed', err);
   toast(t('zotero_disconnect_failed'), 'error');
  } finally {
   setSaving(false);

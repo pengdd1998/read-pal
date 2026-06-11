@@ -2,6 +2,7 @@
 
 import type { RefObject } from 'react';
 import type { Annotation } from '@read-pal/shared';
+import { warn } from './logger';
 
 const MARK_CLASS = 'highlight-mark';
 const DATA_ATTR = 'data-annotation-id';
@@ -82,7 +83,7 @@ export function createMark(
     try {
       range.surroundContents(mark);
     } catch (err) {
-      console.warn('Annotation marks: surroundContents failed, using fallback', err);
+      warn('Annotation marks: surroundContents failed, using fallback', err);
       const fragment = range.extractContents();
       mark.appendChild(fragment);
       range.insertNode(mark);
@@ -91,7 +92,7 @@ export function createMark(
     marksMap.set(annotation.id, { element: mark, annotation });
     return mark;
   } catch (err) {
-    console.warn('createMark: failed for annotation', annotation.id, err);
+    warn('createMark: failed for annotation', annotation.id, err);
     return null;
   }
 }

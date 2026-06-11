@@ -46,6 +46,7 @@ async def precompute_book_embeddings(
                 async with session.begin():
                     session.add_all(_chunks_to_insert)
     except Exception:
+        logger.debug('rag precompute failed', exc_info=True)
         return
 
     embedded = sum(1 for c in _chunks_to_insert if c.embedding is not None)

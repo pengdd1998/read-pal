@@ -207,7 +207,7 @@ async def _stream_via_provider(
                     collected_parts, request_id,
                 )
         except Exception:
-            pass
+            logger.debug('stream cleanup failed', exc_info=True)
 
 
 async def stream_chat(

@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { getBookCoverColors, getBookInitials, isDisplayableAuthor } from '@/lib/book-cover';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface FreeBook {
  title: string;
@@ -43,7 +44,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
     }
    })
    .catch((err) => {
-    console.warn('FreeBooksSection: suggestions fetch failed', err);
+    warn('FreeBooksSection: suggestions fetch failed', err);
     setError(true);
     toast(t('toast_suggestions_fail'), 'error');
    })
@@ -64,7 +65,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
    })
    .catch((err) => {
     if (stale) return;
-    console.warn('FreeBooksSection: free books fetch failed', err);
+    warn('FreeBooksSection: free books fetch failed', err);
     setError(true);
     toast(t('toast_suggestions_fail'), 'error');
    })
@@ -87,7 +88,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
     toast(t('toast_add_book_fail'), 'error');
    }
   } catch (err) {
-   console.warn('FreeBooksSection: seed sample failed', err);
+   warn('FreeBooksSection: seed sample failed', err);
    if (!mountedRef.current) return;
    toast(t('toast_add_book_retry'), 'error');
   } finally {

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from '@/i18n/navigation';
 import { analytics } from '@/lib/analytics';
 import { safeGetItem } from '@/lib/safe-storage';
+import { warn } from '@/lib/logger';
 
 /**
  * Minimal analytics initializer.
@@ -31,7 +32,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   }
   }
  } catch (err) {
-  console.warn("AnalyticsProvider: failed to identify user", err);
+  warn("AnalyticsProvider: failed to identify user", err);
  }
  }, []);
 

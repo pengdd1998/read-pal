@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface ClubListItem {
@@ -92,7 +93,7 @@ export default function BookClubsPage() {
     }
    }
    } catch (err) {
-   console.warn('BookClubs: failed to load', err);
+   warn('BookClubs: failed to load', err);
    if (!cancelled) setError(t('clubs_failed_load'));
    } finally {
    if (!cancelled) setLoading(false);

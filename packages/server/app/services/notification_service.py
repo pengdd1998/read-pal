@@ -45,6 +45,7 @@ async def list_notifications(
             )
             return list(result.scalars().all()), total
     except Exception:
+        logger.debug('notification query failed', exc_info=True)
         return [], 0
 
 
@@ -65,6 +66,7 @@ async def unread_count(
             )
             return result.scalar() or 0
     except Exception:
+        logger.debug('notification query failed', exc_info=True)
         return 0
 
 
@@ -84,6 +86,7 @@ async def mark_read(
             )
             notification = result.scalar_one_or_none()
     except Exception:
+        logger.debug('notification query failed', exc_info=True)
         return None
     if notification is None:
         return None
@@ -116,4 +119,5 @@ async def mark_all_read(
             logger.info('All notifications marked read: user=%s count=%d', user_id, len(rows))
             return len(rows)
     except Exception:
+        logger.debug('notification query failed', exc_info=True)
         return 0

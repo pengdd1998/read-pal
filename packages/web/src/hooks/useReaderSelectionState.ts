@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
+import { warn } from '@/lib/logger';
 
 interface SelectionLike {
   isCollapsed: boolean;
@@ -35,7 +36,7 @@ export function useReaderSelectionState({
   useEffect(() => {
     if (!selection.isCollapsed && !hasMadeSelection) {
       setHasMadeSelection(true);
-      try { safeSetItem('read-pal-selection-used', 'true'); } catch (err) { console.warn('useReaderSelectionState: localStorage write failed', err); }
+      try { safeSetItem('read-pal-selection-used', 'true'); } catch (err) { warn('useReaderSelectionState: localStorage write failed', err); }
     }
   }, [selection.isCollapsed, hasMadeSelection]);
 

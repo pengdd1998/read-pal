@@ -24,6 +24,7 @@ import { useStatusBar } from '@/hooks/useStatusBar';
 import { api } from '@/lib/api';
 import { detectGenre, type BookGenre } from '@/lib/companion-prompts';
 import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
+import { warn } from '@/lib/logger';
 
 const STATUS_BAR_COLORS: Record<string, string> = {
   light: '#fefdfb',
@@ -114,7 +115,7 @@ export function useReaderPage() {
     try {
       await api.patch(`/api/books/${bookId}`, { current_page: chapterIndex, current_segment: 0 });
     } catch (err) {
-      console.warn('useReaderPage: progress save failed', err);
+      warn('useReaderPage: progress save failed', err);
       if (mountedRef.current) toast(t('failed_save_progress'), 'error');
     } finally {
       navigatingRef.current = false;

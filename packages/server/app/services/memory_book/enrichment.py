@@ -131,5 +131,5 @@ async def fetch_other_books(
                 for r in other_books
             ]
     except Exception:
-        pass
+        logger.debug('enrichment step failed', exc_info=True)
     return result

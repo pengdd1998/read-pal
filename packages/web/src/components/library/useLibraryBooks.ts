@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
+import { warn } from '@/lib/logger';
 
 interface UseLibraryBooksReturn {
   books: Book[];
@@ -45,7 +46,7 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
       })
       .catch((err) => {
         if (stale) return;
-        console.warn('LibraryGrid: failed to load library', err);
+        warn('LibraryGrid: failed to load library', err);
         setError(t('failed_connect_server'));
       })
       .finally(() => { if (!stale) setLoading(false); });
@@ -71,7 +72,7 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
     try {
       await api.delete(`/api/books/${id}`);
     } catch (err) {
-      console.warn('LibraryGrid: failed to delete book', err);
+      warn('LibraryGrid: failed to delete book', err);
       if (!mountedRef.current) return;
       setBooks(prev);
     } finally {
@@ -91,7 +92,7 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
         setError(t('failed_seed_sample'));
       }
     } catch (err) {
-      console.warn('LibraryGrid: failed to seed sample book', err);
+      warn('LibraryGrid: failed to seed sample book', err);
       if (!mountedRef.current) return;
       setError(t('failed_seed_sample'));
     } finally {

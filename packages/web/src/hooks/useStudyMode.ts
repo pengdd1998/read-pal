@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 export interface ChapterObjective {
   id: string;
@@ -92,7 +93,7 @@ export function useStudyMode(bookId: string) {
       // Mark chapter loaded only after both calls succeed
       currentChapterRef.current = chapterIndex;
     } catch (err) {
-      console.warn('useStudyMode: loadChapterStudy failed', err);
+      warn('useStudyMode: loadChapterStudy failed', err);
       if (mountedRef.current) setError('Failed to load study data');
     } finally {
       if (mountedRef.current) setLoading(false);
@@ -120,7 +121,7 @@ export function useStudyMode(bookId: string) {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (err) {
-      console.warn('useStudyMode: saveChecks failed', err);
+      warn('useStudyMode: saveChecks failed', err);
       setSaveStatus('failed');
     }
   }, [bookId]);
@@ -134,7 +135,7 @@ export function useStudyMode(bookId: string) {
         setMastery(res.data);
       }
     } catch (err) {
-      console.warn('useStudyMode: loadMastery failed', err);
+      warn('useStudyMode: loadMastery failed', err);
       setError('Failed to load mastery report');
     }
   }, [bookId]);

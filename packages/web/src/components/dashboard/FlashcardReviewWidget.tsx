@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
 import type { FlashcardStats } from './types';
+import { warn } from '@/lib/logger';
 
 export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
  const t = useTranslations('dashboard');
@@ -21,7 +22,7 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
   .then((res) => {
   if (!cancelled && res.data) setStats(res.data.stats);
   })
-  .catch((err) => { console.warn('FlashcardReviewWidget: fetch failed', err); if (!cancelled) setError(true); })
+  .catch((err) => { warn('FlashcardReviewWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });
  return () => { cancelled = true; };
  }, []);

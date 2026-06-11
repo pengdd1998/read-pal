@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { DayCell, SkeletonHeatmap } from './StreakDayCell';
+import { warn } from '@/lib/logger';
 
 interface CalendarDay {
  date: string;
@@ -49,7 +50,7 @@ function StreakCalendarInner() {
   if (!cancelled && res.success && res.data) setData(res.data);
   })
   .catch((err) => {
-  console.warn('StreakCalendar: failed to load calendar', err);
+  warn('StreakCalendar: failed to load calendar', err);
   if (!cancelled) setError(t('calendar_load_error'));
   })
   .finally(() => {

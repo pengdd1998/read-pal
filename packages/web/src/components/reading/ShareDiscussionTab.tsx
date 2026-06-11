@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 interface QuestionItemProps {
  question: string;
@@ -62,7 +63,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
   }
   return [];
  } catch (err) {
-  console.warn('ShareDiscussionTab: failed to generate discussion questions', err);
+  warn('ShareDiscussionTab: failed to generate discussion questions', err);
   setQuestionWarning(true);
   return [];
  }
@@ -100,7 +101,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
   setGuideHtml(html);
   toast(t('share_guide_generated'), 'success');
  } catch (err) {
-  console.warn('ShareDiscussionTab: generate failed', err);
+  warn('ShareDiscussionTab: generate failed', err);
   toast(t('share_failed_generate'), 'error');
  } finally {
   setGenerating(false);
@@ -147,7 +148,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
   toast(t('share_link_copied'), 'success');
   }
  } catch (err) {
-  console.warn('ShareDiscussionTab: share link failed', err);
+  warn('ShareDiscussionTab: share link failed', err);
   toast(t('share_failed_share_link'), 'error');
  } finally {
   setSharing(false);

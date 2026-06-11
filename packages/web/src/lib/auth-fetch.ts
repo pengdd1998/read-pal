@@ -10,6 +10,7 @@
 import { getItem, setItem, removeItem } from './native-storage';
 import { isCapacitor } from './capacitor';
 import { safeGetItem, safeSetItem, safeRemoveItem } from './safe-storage';
+import { warn } from './logger';
 
 /** Get the auth token from localStorage (SSR-safe, synchronous). */
 export function getAuthToken(): string | null {
@@ -134,7 +135,7 @@ async function doRefresh(): Promise<boolean> {
     }
     return false;
   } catch (err) {
-    console.warn('Token refresh failed:', err);
+    warn('Token refresh failed:', err);
     return false;
   }
 }

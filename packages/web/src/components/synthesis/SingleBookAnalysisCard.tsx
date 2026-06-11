@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
+import { warn } from '@/lib/logger';
 
 interface BookOption {
  id: string;
@@ -53,7 +54,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   setError(t('analysis_failed'));
   }
  } catch (error) {
-  console.warn('SingleBookAnalysisCard: analyze failed', error);
+  warn('SingleBookAnalysisCard: analyze failed', error);
   setError(t('network_error'));
  } finally {
   setLoading(false);

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface InterventionPrefs {
  marathonEnabled: boolean;
@@ -89,7 +90,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
   setPrefs({ ...DEFAULT_PREFS, ...res.data });
   }
  } catch (err) {
-  console.warn('InterventionPrefsSection: load failed', err);
+  warn('InterventionPrefsSection: load failed', err);
   setError(t('failed_load_retry'));
  }
  setLoading(false);
@@ -118,7 +119,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
   setError(t('failed_save'));
   }
  } catch (err) {
-  console.warn('InterventionPrefsSection: save failed', err);
+  warn('InterventionPrefsSection: save failed', err);
   setError(t('failed_save_retry'));
  }
  setSaving(false);

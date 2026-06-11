@@ -10,6 +10,7 @@
  *  - Adds a copy-to-clipboard button to each highlighted block.
  */
 
+import { warn } from './logger';
 let prismReady = false;
 let prismPromise: Promise<void> | null = null;
 
@@ -186,7 +187,7 @@ function addCopyButton(pre: HTMLPreElement, language: string | null): void {
       btn.textContent = 'Copied!';
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     } catch (err) {
-      console.warn('Code block copy failed:', err);
+      warn('Code block copy failed:', err);
       btn.textContent = 'Failed';
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     }

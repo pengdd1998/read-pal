@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import type { Collection } from '@read-pal/shared';
+import { warn } from '@/lib/logger';
 
 interface CollectionCheckItemProps {
  name: string;
@@ -56,7 +57,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
        const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
        setCollections(items);
      }
-   }).catch((err) => { console.warn("CollectionPicker: failed to load collections", err); if (!stale) setLoadError(true); }).finally(() => { if (!stale) setLoading(false); });
+   }).catch((err) => { warn("CollectionPicker: failed to load collections", err); if (!stale) setLoadError(true); }).finally(() => { if (!stale) setLoading(false); });
    return () => { stale = true; };
  }, []);
  const [showCreate, setShowCreate] = useState(false);
@@ -98,7 +99,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   return { ...c, bookIds: Array.from(ids) };
   }));
  } catch (err) {
-  console.warn('CollectionPicker: toggle failed', err);
+  warn('CollectionPicker: toggle failed', err);
   toast(t('collection_picker_toggle_failed'), 'error');
   // Reload from server to revert optimistic update
   try {
@@ -107,7 +108,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
     const items = retryRes.data.items ?? (Array.isArray(retryRes.data) ? retryRes.data as unknown as Collection[] : []);
     setCollections(items);
    }
-  } catch (retryErr) { console.warn('CollectionPicker: best effort reload failed', retryErr); }
+  } catch (retryErr) { warn('CollectionPicker: best effort reload failed', retryErr); }
  }
  if (mountedRef.current) setToggling(null);
  };
@@ -127,7 +128,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   setShowCreate(false);
   }
  } catch (err) {
-  console.warn('CollectionPicker: create failed', err);
+  warn('CollectionPicker: create failed', err);
   toast(t('collection_picker_create_failed'), 'error');
   // Keep name so user can retry
  } finally {

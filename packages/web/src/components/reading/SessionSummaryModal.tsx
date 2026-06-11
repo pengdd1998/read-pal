@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 interface SessionSummaryModalProps {
  duration: number;
@@ -42,7 +43,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
    setAiSummary(res.data.summary);
   }
   })
-  .catch((err) => { console.warn("SessionSummaryModal: AI summary failed", err); setSummaryError(true); })
+  .catch((err) => { warn("SessionSummaryModal: AI summary failed", err); setSummaryError(true); })
   .finally(() => { if (!stale) setSummaryLoading(false); });
   return () => { stale = true; };
  }, [sessionId]);
@@ -112,7 +113,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
       setSummaryLoading(true);
       api.post<{ summary: string }>(`/api/reading-sessions/${sessionId}/summarize`)
        .then((res) => { if (mountedRef.current && res.success && res.data?.summary) setAiSummary(res.data.summary); })
-       .catch((err) => { console.warn('SessionSummaryModal: AI summary retry failed', err); if (mountedRef.current) setSummaryError(true); })
+       .catch((err) => { warn('SessionSummaryModal: AI summary retry failed', err); if (mountedRef.current) setSummaryError(true); })
        .finally(() => { if (mountedRef.current) setSummaryLoading(false); });
      }
     }} className="mt-1 text-[10px] text-amber-600 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('session_retry_insight')}</button>

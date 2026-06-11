@@ -2,6 +2,7 @@
  * Date formatting utilities
  */
 
+import { warn } from './logger';
 export interface RelativeTimeLabels {
   just_now: string;
   minutes_ago: string;
@@ -35,7 +36,7 @@ export function formatRelativeTime(dateStr: string, labels?: RelativeTimeLabels,
     if (diffDay < 7) return l.days_ago.replace('%n', String(diffDay));
     return date.toLocaleDateString(locale || undefined, { month: 'short', day: 'numeric' });
   } catch (err) {
-    console.warn('formatRelativeTime: invalid date:', dateStr, err);
+    warn('formatRelativeTime: invalid date:', dateStr, err);
     return dateStr;
   }
 }

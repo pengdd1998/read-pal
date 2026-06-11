@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 
 interface UseExportShareLinkOptions {
  bookId: string;
@@ -43,7 +44,7 @@ export function useExportShareLink({ bookId, format, selectedTypes, selectedTag 
     toast(t('export_failed_share_link'), 'error');
    }
   } catch (error) {
-   console.warn('useExportShareLink: share failed', error);
+   warn('useExportShareLink: share failed', error);
    if (mountedRef.current) toast(t('export_failed_share_link'), 'error');
   } finally {
    if (mountedRef.current) setSharing(false);

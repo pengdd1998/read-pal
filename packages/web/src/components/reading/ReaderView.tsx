@@ -11,6 +11,7 @@ import { useReaderKeyboardNav } from '@/hooks/useReaderKeyboardNav';
 import { useReaderSwipeNav } from '@/hooks/useReaderSwipeNav';
 import { ChapterDropdown } from '@/components/reading/ChapterDropdown';
 import { ReaderFooter } from '@/components/reading/ReaderFooter';
+import { warn } from '@/lib/logger';
 
 interface ChapterItem {
  title: string;
@@ -152,7 +153,7 @@ export const ReaderView = React.memo(function ReaderView({
  useEffect(() => {
  const el = articleRef.current;
  if (!el) return;
- highlightCodeBlocks(el).catch((err) => { console.warn("ReaderView: code highlighting failed", err); });
+ highlightCodeBlocks(el).catch((err) => { warn("ReaderView: code highlighting failed", err); });
  }, [sanitizedContent]);
 
  const goNextPage = useCallback(() => {

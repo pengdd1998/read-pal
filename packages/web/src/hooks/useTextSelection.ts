@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, type RefObject } from 'react';
+import { warn } from '@/lib/logger';
 
 export interface TextSelection {
   text: string;
@@ -73,7 +74,7 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
         rect = range.getBoundingClientRect();
       } catch (err) {
         // getRangeAt can fail in some edge cases
-        console.warn('Selection capture: getRangeAt failed', err);
+        warn('Selection capture: getRangeAt failed', err);
       }
 
       // Compute character offsets NOW, before any DOM mutations from mark
@@ -87,7 +88,7 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>): T
           const start = preRange.toString().length;
           const end = start + range.toString().length;
           offsets = { start, end };
-        } catch (err) { console.warn('Selection capture: failed to compute character offsets', err); }
+        } catch (err) { warn('Selection capture: failed to compute character offsets', err); }
       }
 
       setSelection({

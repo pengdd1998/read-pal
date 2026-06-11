@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { BookComparisonCard } from '@/components/synthesis/BookComparisonCard';
 import { SingleBookAnalysisCard } from '@/components/synthesis/SingleBookAnalysisCard';
@@ -36,7 +37,7 @@ export default function SynthesisPage() {
    setBooks(res.data);
   }
   } catch (err) {
-  console.warn('Synthesis: failed to load books', err);
+  warn('Synthesis: failed to load books', err);
   if (!cancelled) setBooksError(t('network_error'));
   } finally {
   if (!cancelled) setBooksLoading(false);
@@ -57,7 +58,7 @@ export default function SynthesisPage() {
   setError(t('analysis_failed'));
   }
  } catch (err) {
-  console.warn('Synthesis: analysis failed', err);
+  warn('Synthesis: analysis failed', err);
   setError(t('network_error'));
  } finally {
   setLoading(false);

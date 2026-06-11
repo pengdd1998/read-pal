@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface InterventionToastProps {
  bookId: string;
@@ -103,7 +104,7 @@ export const InterventionToast = React.memo(function InterventionToast({
   }
   } catch (err) {
   if (stale) return;
-  console.warn('InterventionToast: intervention check failed', err);
+  warn('InterventionToast: intervention check failed', err);
   toast(t('intervention_check_failed'), 'error');
   }
  }, CHECK_INTERVAL);
@@ -127,7 +128,7 @@ export const InterventionToast = React.memo(function InterventionToast({
   api.post('/api/interventions/feedback', {
   interventionType: intervention.type,
   dismissed: true,
-  }).catch((err) => { console.warn('InterventionToast: failed to record dismissal feedback', err); }).finally(() => setSubmitting(false));
+  }).catch((err) => { warn('InterventionToast: failed to record dismissal feedback', err); }).finally(() => setSubmitting(false));
  } else {
   setSubmitting(false);
  }
@@ -140,7 +141,7 @@ export const InterventionToast = React.memo(function InterventionToast({
   api.post('/api/interventions/feedback', {
   interventionType: intervention.type,
   helpful: true,
-  }).catch((err) => { console.warn('InterventionToast: failed to record helpful feedback', err); }).finally(() => setSubmitting(false));
+  }).catch((err) => { warn('InterventionToast: failed to record helpful feedback', err); }).finally(() => setSubmitting(false));
  }
  setVisible(false);
  }, [intervention, submitting]);

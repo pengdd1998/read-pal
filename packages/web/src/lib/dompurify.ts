@@ -7,6 +7,7 @@
  * Extracted from CompanionChat, ReaderView, and chat/page.
  */
 
+import { warn } from './logger';
 let _domPurify: typeof import('dompurify').default | null = null;
 let _loadPromise: Promise<void> | null = null;
 
@@ -58,7 +59,7 @@ export function preloadDOMPurify(onReady?: () => void): void {
       _domPurify = m.default;
       onReady?.();
     }).catch((err) => {
-      console.warn('dompurify: failed to load DOMPurify', err);
+      warn('dompurify: failed to load DOMPurify', err);
       _loadPromise = null;
     });
   } else if (_domPurify && onReady) {
@@ -67,7 +68,7 @@ export function preloadDOMPurify(onReady?: () => void): void {
   } else if (_loadPromise && onReady) {
     // Loading in progress — chain callback
     _loadPromise.then(onReady).catch((err) => {
-      console.warn('dompurify: onReady callback failed', err);
+      warn('dompurify: onReady callback failed', err);
     });
   }
 }

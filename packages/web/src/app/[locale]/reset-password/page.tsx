@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
+import { warn } from '@/lib/logger';
 import { LoadingSpinner, ErrorAlert } from '@/components/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useTranslations } from 'next-intl';
@@ -59,7 +60,7 @@ function ResetPasswordForm() {
   setError(t('reset_failed'));
   }
  } catch (err) {
-  console.warn('ResetPassword: failed', err);
+  warn('ResetPassword: failed', err);
   setError(t('reset_failed_expired'));
  } finally {
   setLoading(false);

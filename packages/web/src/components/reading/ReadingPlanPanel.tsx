@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { warn } from '@/lib/logger';
 
 interface ReadingPlanPanelProps {
  bookId: string;
@@ -53,7 +54,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   }
  } catch (e) {
   if (!mountedRef.current) return;
-  console.warn('ReadingPlanPanel: failed to fetch reading plan', e);
+  warn('ReadingPlanPanel: failed to fetch reading plan', e);
   setPlan(null);
   toast(t('reading_plan_load_failed'), 'error');
  } finally {
@@ -76,7 +77,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   }
   } catch (e) {
   if (stale) return;
-  console.warn('ReadingPlanPanel: failed to load reading plan on open', e);
+  warn('ReadingPlanPanel: failed to load reading plan on open', e);
   setPlan(null);
   toast(t('reading_plan_load_failed'), 'error');
   } finally {
@@ -107,7 +108,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   }
  } catch (e) {
   if (!mountedRef.current) return;
-  console.warn('ReadingPlanPanel: failed to generate reading plan', e);
+  warn('ReadingPlanPanel: failed to generate reading plan', e);
   setError(t('reading_plan_error'));
   toast(t('reading_plan_error'), 'error');
  } finally {
@@ -127,7 +128,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   }
  } catch (e) {
   if (!mountedRef.current) return;
-  console.warn('ReadingPlanPanel: failed to advance reading plan day', e);
+  warn('ReadingPlanPanel: failed to advance reading plan day', e);
   setError(t('reading_plan_error'));
   toast(t('reading_plan_error'), 'error');
  }
