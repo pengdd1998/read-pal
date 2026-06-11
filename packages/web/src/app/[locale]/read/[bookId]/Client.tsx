@@ -128,7 +128,7 @@ export default function ReadPage() {
     {isNetworkError ? t('network_error_hint') : t('book_not_found_hint')}
    </p>
    <div className="flex gap-3 justify-center">
-    <button onClick={() => window.location.reload()} className="btn btn-secondary">{t('retry')}</button>
+    <button type="button" onClick={() => window.location.reload()} className="btn btn-secondary">{t('retry')}</button>
     <Link href="/library" className="btn btn-primary">{t('back_to_library')}</Link>
    </div>
   </div>

@@ -466,7 +466,8 @@
     "failed_seed_sample": "Failed to load sample book",
     "book_by_author": "by {author}",
     "meta_title": "My Library | read-pal",
-    "meta_description": "Browse and manage your personal reading collection on read-pal."
+    "meta_description": "Browse and manage your personal reading collection on read-pal.",
+    "retry": "Retry"
   },
   "reader": {
     "companion_title": "Reading Companion",
@@ -2222,7 +2223,8 @@
     "type_bookmark": "Bookmark",
     "type_highlight": "Highlight",
     "type_note": "Note",
-    "retry": "Retry"
+    "retry": "Retry",
+    "synthesis_retry": "Retry"
   },
   "seo": {
     "knowledge_title": "Knowledge Graph | read-pal",

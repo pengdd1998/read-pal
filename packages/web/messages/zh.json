@@ -466,7 +466,8 @@
     "failed_seed_sample": "加载示例图书失败",
     "book_by_author": "作者：{author}",
     "meta_title": "我的书库 | read-pal",
-    "meta_description": "浏览和管理你的个人阅读收藏。"
+    "meta_description": "浏览和管理你的个人阅读收藏。",
+    "retry": "重试"
   },
   "reader": {
     "companion_title": "阅读伴侣",
@@ -2222,7 +2223,8 @@
     "type_bookmark": "书签",
     "type_highlight": "高亮",
     "type_note": "笔记",
-    "retry": "重试"
+    "retry": "重试",
+    "synthesis_retry": "重试"
   },
   "seo": {
     "knowledge_title": "知识图谱 | read-pal",

@@ -71,7 +71,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
  <div className={`relative z-40 flex items-center justify-between px-2 sm:px-3 h-12 backdrop-blur-md ${HEADER_CLASSES[theme]} border-b shrink-0`}>
   {/* Left: Back + Book info */}
   <div className="flex items-center gap-1.5 min-w-0 flex-1">
-  <button onClick={onBack} className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100/60 dark:hover:bg-gray-700/40 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('back_to_library_label')}>
+  <button type="button" onClick={onBack} className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100/60 dark:hover:bg-gray-700/40 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('back_to_library_label')}>
    <svg aria-hidden="true" className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
    </svg>
@@ -89,7 +89,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
 
   {/* Right: Primary actions */}
   <div className="flex items-center gap-0.5 flex-shrink-0">
-  <button onClick={onToggleSearch} className={searchOpen ? ActiveIconStyle(theme) : ICON_IDLE} aria-label={t('search_label')}>
+  <button type="button" onClick={onToggleSearch} className={searchOpen ? ActiveIconStyle(theme) : ICON_IDLE} aria-label={t('search_label')}>
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
    </svg>
@@ -97,7 +97,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
 
   <BookmarkToggle isBookmarked={isBookmarked} onToggle={onToggleBookmark} />
 
-  <button onClick={onToggleSidebar} className={`${sidebarOpen ? ActiveIconStyle(theme) : ICON_IDLE} relative`} aria-label={t('annotations_label')}>
+  <button type="button" onClick={onToggleSidebar} className={`${sidebarOpen ? ActiveIconStyle(theme) : ICON_IDLE} relative`} aria-label={t('annotations_label')}>
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
    </svg>
@@ -126,7 +126,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'sepia' ? 'bg-amber-100 border-amber-200/60' : 'bg-white border-gray-100'
     }`}>
     {/* Study mode */}
-    <button onClick={() => { onToggleStudyMode(); setMoreOpen(false); }} aria-label={t('study_mode_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onToggleStudyMode(); setMoreOpen(false); }} aria-label={t('study_mode_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      studyModeEnabled ? 'text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/40 dark:hover:bg-gray-700/40'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -136,7 +136,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     </button>
 
     {/* Synthesis */}
-    <button onClick={() => { onToggleSynthesis(); setMoreOpen(false); }} aria-label={t('synthesize_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onToggleSynthesis(); setMoreOpen(false); }} aria-label={t('synthesize_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      synthesisOpen ? 'text-teal-700 dark:text-teal-300 bg-teal-50/50 dark:bg-teal-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/40 dark:hover:bg-gray-700/40'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -146,7 +146,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     </button>
 
     {/* Reading plan */}
-    <button onClick={() => { onToggleReadingPlan(); setMoreOpen(false); }} aria-label={t('reading_plan_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onToggleReadingPlan(); setMoreOpen(false); }} aria-label={t('reading_plan_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      readingPlanOpen ? 'text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/40 dark:hover:bg-gray-700/40'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -156,7 +156,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     </button>
 
     {/* Chapter timeline */}
-    <button onClick={() => { onShowTimeline(); setMoreOpen(false); }} aria-label={t('chapter_timeline_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onShowTimeline(); setMoreOpen(false); }} aria-label={t('chapter_timeline_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      timelineOpen ? 'text-violet-700 dark:text-violet-300 bg-violet-50/50 dark:bg-violet-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/40 dark:hover:bg-gray-700/40'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -170,7 +170,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     <div className={`my-1 h-px ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
 
     {/* Settings */}
-    <button onClick={() => { onShowSettings(); setMoreOpen(false); }} aria-label={t('settings_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onShowSettings(); setMoreOpen(false); }} aria-label={t('settings_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      settingsMenuOpen ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50/40 dark:hover:bg-gray-700/40'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

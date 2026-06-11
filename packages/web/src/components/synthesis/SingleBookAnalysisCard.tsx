@@ -163,7 +163,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   {error && (
   <div className="mb-6 p-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300 flex items-center justify-between">
    <span>{error}</span>
-   <button onClick={handleAnalyze} className="text-xs font-medium underline hover:no-underline">{t("retry", { defaultValue: "Retry" })}</button>
+   <button type="button" onClick={handleAnalyze} className="text-xs font-medium underline hover:no-underline">{t("retry")}</button>
   </div>
   )}
 
