@@ -5,6 +5,48 @@ import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 
+interface ApiKeyRowProps {
+ k: ApiKeyData;
+ isRevoking: boolean;
+ revokeLabel: string;
+ revokingLabel: string;
+ createdLabel: string;
+ lastUsedLabel: string;
+ locale: string;
+ onRevoke: (id: string) => void;
+}
+
+const ApiKeyRow = React.memo(function ApiKeyRow({ k, isRevoking, revokeLabel, revokingLabel, createdLabel, lastUsedLabel, locale, onRevoke }: ApiKeyRowProps) {
+ return (
+  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-1 border border-surface-3">
+   <div className="min-w-0 flex-1">
+    <div className="text-sm font-medium truncate">{k.name}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
+     <code className="font-mono">{k.keyPrefix}...</code>
+     <span>{createdLabel} {new Date(k.createdAt).toLocaleDateString(locale)}</span>
+     {k.lastUsedAt && <span>{lastUsedLabel} {new Date(k.lastUsedAt).toLocaleDateString(locale)}</span>}
+    </div>
+   </div>
+   <button
+    onClick={() => onRevoke(k.id)}
+    disabled={isRevoking}
+    aria-label={`${revokeLabel} ${k.name}`}
+    className="ml-3 min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   >
+    {isRevoking ? (
+     <span className="flex items-center gap-1.5">
+     <svg aria-hidden="true" className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+     </svg>
+     {revokingLabel}
+     </span>
+    ) : revokeLabel}
+   </button>
+  </div>
+ );
+});
+
 interface ApiKeyData {
  id: string;
  name: string;
@@ -118,41 +160,20 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
 
   {loading ? (
   <div className="space-y-2">
-   {Array.from({ length: 2 }).map((_, i) => (
-   <div key={i} className="h-12 bg-surface-1 rounded-xl animate-pulse" />
-   ))}
-  </div>
-  ) : keys.length > 0 ? (
-  <div className="space-y-2">
-   {keys.map((k) => (
-   <div key={k.id} className="flex items-center justify-between p-3 rounded-xl bg-surface-1 border border-surface-3">
-    <div className="min-w-0 flex-1">
-    <div className="text-sm font-medium truncate">{k.name}</div>
-    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
-     <code className="font-mono">{k.keyPrefix}...</code>
-     <span>{t('api_key_created_label')} {new Date(k.createdAt).toLocaleDateString(locale)}</span>
-     {k.lastUsedAt && <span>{t('api_key_last_used')} {new Date(k.lastUsedAt).toLocaleDateString(locale)}</span>}
-    </div>
-    </div>
-    <button
-    onClick={() => handleRevoke(k.id)}
-    disabled={revokingId === k.id}
-    aria-label={`${t('api_key_revoke')} ${k.name}`}
-    className="ml-3 min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
-    >
-    {revokingId === k.id ? (
-     <span className="flex items-center gap-1.5">
-     <svg aria-hidden="true" className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-     </svg>
-     {t('api_key_revoking') ?? t('api_key_revoke')}
-     </span>
-    ) : t('api_key_revoke')}
-    </button>
-   </div>
-   ))}
-  </div>
+	   {keys.map((k) => (
+	   <ApiKeyRow
+	    key={k.id}
+	    k={k}
+	    isRevoking={revokingId === k.id}
+	    revokeLabel={t('api_key_revoke')}
+	    revokingLabel={t('api_key_revoking') ?? t('api_key_revoke')}
+	    createdLabel={t('api_key_created_label')}
+	    lastUsedLabel={t('api_key_last_used')}
+	    locale={locale}
+	    onRevoke={handleRevoke}
+	   />
+	   ))}
+	  </div>
   ) : (
   <p className="text-sm text-gray-500 dark:text-gray-400">
    {t('api_key_empty')}

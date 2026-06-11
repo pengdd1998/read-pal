@@ -16,6 +16,28 @@ const CITATION_FORMATS: { value: CitationFormat; labelKey: string }[] = [
  { value: 'annotated_bib', labelKey: 'share_citation_annotated' },
 ];
 
+interface CitationFormatButtonProps {
+ fmt: { value: CitationFormat; labelKey: string };
+ isActive: boolean;
+ label: string;
+ onClick: () => void;
+}
+
+const CitationFormatButton = React.memo(function CitationFormatButton({ isActive, label, onClick }: CitationFormatButtonProps) {
+ return (
+  <button
+   onClick={onClick}
+   className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
+   isActive
+   ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-400/30'
+   : 'border-surface-3 hover:border-surface-3'
+   }`}
+  >
+   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</span>
+  </button>
+ );
+});
+
 interface ShareCitationTabProps {
  bookId: string;
 }
@@ -72,18 +94,14 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
 
   <div className="grid grid-cols-2 gap-2">
   {CITATION_FORMATS.map((fmt) => (
-   <button
-   key={fmt.value}
-   onClick={() => { setCitationFormat(fmt.value); setCitationText(null); }}
-   className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
-    citationFormat === fmt.value
-    ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-400/30'
-    : 'border-surface-3 hover:border-surface-3'
-   }`}
-   >
-   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t(fmt.labelKey)}</span>
-   </button>
-  ))}
+	   <CitationFormatButton
+	   key={fmt.value}
+	   fmt={fmt}
+	   isActive={citationFormat === fmt.value}
+	   label={t(fmt.labelKey)}
+	   onClick={() => { setCitationFormat(fmt.value); setCitationText(null); }}
+	   />
+	  ))}
   </div>
 
   <button

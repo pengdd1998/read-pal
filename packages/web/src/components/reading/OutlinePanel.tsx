@@ -25,6 +25,30 @@ const TYPE_ICONS: Record<string, string> = {
  bookmark: '\u{1F516}',
 };
 
+interface FilterButtonProps {
+ optKey: 'all' | 'highlight' | 'note' | 'bookmark';
+ label: string;
+ ariaLabel: string;
+ isActive: boolean;
+ onClick: () => void;
+}
+
+const FilterButton = React.memo(function FilterButton({ optKey, label, ariaLabel, isActive, onClick }: FilterButtonProps) {
+ return (
+  <button
+   onClick={onClick}
+   aria-label={ariaLabel}
+   className={`px-2 py-1 rounded text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${
+   isActive
+    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+    : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-surface-2'
+   }`}
+  >
+   {label}
+  </button>
+ );
+});
+
 export const OutlinePanel = React.memo(function OutlinePanel({
  annotations,
  onScrollToAnnotation,
@@ -156,18 +180,14 @@ export const OutlinePanel = React.memo(function OutlinePanel({
    { key: 'note' as const, label: `${TYPE_ICONS.note} ${totalNotes}`, ariaLabel: t('outline_filter_notes', { count: totalNotes }) },
    { key: 'bookmark' as const, label: `${TYPE_ICONS.bookmark} ${totalBookmarks}`, ariaLabel: t('outline_filter_bookmarks', { count: totalBookmarks }) },
    ].map((opt) => (
-   <button
+   <FilterButton
     key={opt.key}
+    optKey={opt.key}
+    label={opt.label}
+    ariaLabel={opt.ariaLabel}
+    isActive={filterType === opt.key}
     onClick={() => setFilterType(opt.key)}
-    aria-label={opt.ariaLabel}
-    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${
-    filterType === opt.key
-     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-     : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-surface-2'
-    }`}
-   >
-    {opt.label}
-   </button>
+   />
    ))}
   </div>
   </div>

@@ -4,6 +4,31 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { TYPE_OPTIONS } from './ExportPreviewModal.constants';
 
+interface TypeFilterButtonProps {
+ opt: { value: string; labelKey: string; color: string };
+ isSelected: boolean;
+ label: string;
+ ariaLabel: string;
+ onToggle: () => void;
+}
+
+const TypeFilterButton = React.memo(function TypeFilterButton({ opt, isSelected, label, ariaLabel, onToggle }: TypeFilterButtonProps) {
+ return (
+  <button
+   onClick={onToggle}
+   aria-pressed={isSelected}
+   aria-label={ariaLabel}
+   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+   isSelected
+    ? opt.color + ' ring-1 ring-current/20'
+    : 'bg-surface-1 text-gray-400 dark:text-gray-500'
+   }`}
+  >
+   {label}
+  </button>
+ );
+});
+
 interface ExportFilterPanelProps {
  selectedTypes: Set<string>;
  selectedTag: string;
@@ -52,23 +77,19 @@ export const ExportFilterPanel = React.memo(function ExportFilterPanel({
    {/* Type filters */}
    <div>
    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{t('export_include_types')}</p>
-   <div className="flex flex-wrap gap-1.5">
-    {TYPE_OPTIONS.map((opt) => (
-    <button
-     key={opt.value}
-     onClick={() => onToggleType(opt.value)}
-     aria-pressed={selectedTypes.has(opt.value)}
-     aria-label={t(opt.labelKey)}
-     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-     selectedTypes.has(opt.value)
-      ? opt.color + ' ring-1 ring-current/20'
-      : 'bg-surface-1 text-gray-400 dark:text-gray-500'
-     }`}
-    >
-     {t(opt.labelKey)}
-    </button>
-    ))}
-   </div>
+   
+	   <div className="flex flex-wrap gap-1.5">
+	    {TYPE_OPTIONS.map((opt) => (
+	    <TypeFilterButton
+	     key={opt.value}
+	     opt={opt}
+	     isSelected={selectedTypes.has(opt.value)}
+	     label={t(opt.labelKey)}
+	     ariaLabel={t(opt.labelKey)}
+	     onToggle={() => onToggleType(opt.value)}
+	    />
+	    ))}
+	   </div>
    </div>
 
    {/* Tag filter */}

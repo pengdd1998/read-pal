@@ -15,6 +15,30 @@ import {
 } from '@/components/synthesis';
 import type { SynthesisAction, AnalysisResult, SynthesisPanelProps } from '@/components/synthesis';
 
+interface SynthesisTabProps {
+ tab: { key: SynthesisAction; icon: React.ReactNode; label: string };
+ isActive: boolean;
+ onClick: () => void;
+ label: string;
+}
+
+const SynthesisTab = React.memo(function SynthesisTab({ tab, isActive, onClick, label }: SynthesisTabProps) {
+ return (
+  <button
+   onClick={onClick}
+   role="tab"
+   aria-selected={isActive}
+   className={`flex items-center gap-1.5 px-2.5 py-2.5 text-[11px] font-medium transition-colors relative whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+   isActive ? 'text-amber-700 dark:text-amber-300' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
+   }`}
+  >
+   {tab.icon}
+   {label}
+   {isActive && <span className="absolute bottom-0 left-1 right-1 h-0.5 bg-amber-500 rounded-full" />}
+  </button>
+ );
+});
+
 export const SynthesisPanel = React.memo(function SynthesisPanel({
  bookId,
  bookTitle,
@@ -164,23 +188,17 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
   )}
 
   {/* Tabs */}
-  <div role="tablist" aria-label={t('synthesis_tab_label')} className="flex border-b border-surface-3 px-1 overflow-x-auto">
-   {TABS.map((tab) => (
-   <button
-    key={tab.key}
-    onClick={() => { setActiveTab(tab.key); setResult(null); setError(null); }}
-    role="tab"
-    aria-selected={activeTab === tab.key}
-    className={`flex items-center gap-1.5 px-2.5 py-2.5 text-[11px] font-medium transition-colors relative whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
-    activeTab === tab.key ? 'text-amber-700 dark:text-amber-300' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
-    }`}
-   >
-    {tab.icon}
-    {t(tab.label)}
-    {activeTab === tab.key && <span className="absolute bottom-0 left-1 right-1 h-0.5 bg-amber-500 rounded-full" />}
-   </button>
-   ))}
-  </div>
+	  <div role="tablist" aria-label={t('synthesis_tab_label')} className="flex border-b border-surface-3 px-1 overflow-x-auto">
+	   {TABS.map((tab) => (
+	   <SynthesisTab
+	    key={tab.key}
+	    tab={tab}
+	    isActive={activeTab === tab.key}
+	    onClick={() => { setActiveTab(tab.key); setResult(null); setError(null); }}
+	    label={t(tab.label)}
+	   />
+	   ))}
+	  </div>
 
   {/* Content */}
   <div className="flex-1 overflow-y-auto p-4 space-y-4">

@@ -6,6 +6,15 @@ import type { Annotation } from '@read-pal/shared';
 import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 
+interface QuestionItemProps {
+ question: string;
+ index: number;
+}
+
+const QuestionItem = React.memo(function QuestionItem({ question }: QuestionItemProps) {
+ return <li>{question}</li>;
+});
+
 interface DiscussionTabProps {
  annotations: Annotation[];
  bookId: string;
@@ -192,8 +201,8 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
     </p>
     <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
     {questions.map((q, i) => (
-     <li key={q}>{q}</li>
-    ))}
+	     <QuestionItem key={q} question={q} index={i} />
+	    ))}
     </ol>
    </div>
    )}
