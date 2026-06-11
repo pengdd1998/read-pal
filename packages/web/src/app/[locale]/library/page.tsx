@@ -5,7 +5,6 @@ import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { LibraryGrid } from '@/components/library/LibraryGrid';
 import { CollectionsSidebar } from '@/components/library/CollectionsSidebar';
-import { FreeBooksSection } from '@/components/library/FreeBooksSection';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 function MemoryBooksLink() {
@@ -162,8 +161,6 @@ export default function LibraryPage() {
   </div>
   </div>
 
-  {/* Free books to explore */}
-  <FreeBooksSection searchQuery={searchQuery} />
  </main>
  );
 }
