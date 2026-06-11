@@ -96,7 +96,7 @@ export default function OfflinePage() {
         setLoading(false);
       }
     }
-  }, []);
+  }, [t]);
 
   // Load cached books on mount
   useEffect(() => {

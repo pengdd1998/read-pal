@@ -54,7 +54,7 @@ export function useDashboardData() {
     window.addEventListener('focus', onFocus);
     return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [retryCount]);
+  }, [retryCount, t]);
 
   const stats = dashboardData?.stats ?? null;
   const recentBooks = dashboardData?.recentBooks ?? [];
