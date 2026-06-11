@@ -59,7 +59,7 @@ export function useBookClubProgress(clubId: string, currentBookId?: string) {
       })
       .catch((err) => {
         console.warn('useBookClubProgress: fetch failed', err);
-        if (!cancelled) setError(t('progress_failed_load', { defaultValue: 'Failed to load reading progress' }));
+        if (!cancelled) setError(t('progress_failed_load'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -93,7 +93,7 @@ export function useBookClubDiscussion(clubId: string) {
       })
       .catch((err) => {
         console.warn('useBookClubDiscussion: fetch failed', err);
-        if (!cancelled) setError(t('discussions_failed_load', { defaultValue: 'Failed to load discussions' }));
+        if (!cancelled) setError(t('discussions_failed_load'));
       });
 
     return () => { cancelled = true; };
