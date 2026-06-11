@@ -24,12 +24,12 @@ export async function getAuthTokenAsync(): Promise<string | null> {
 }
 
 /** Get the refresh token from localStorage (SSR-safe, synchronous). */
-export function getRefreshToken(): string | null {
+function getRefreshToken(): string | null {
   return typeof window !== 'undefined' ? safeGetItem('refresh_token') : null;
 }
 
 /** Get the refresh token from native storage when in Capacitor (async). */
-export async function getRefreshTokenAsync(): Promise<string | null> {
+async function getRefreshTokenAsync(): Promise<string | null> {
   if (isCapacitor()) return getItem('refresh_token');
   return getRefreshToken();
 }

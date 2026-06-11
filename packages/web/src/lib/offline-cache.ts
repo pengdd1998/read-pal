@@ -27,7 +27,7 @@ export async function checkOfflineCache(bookId: string): Promise<boolean> {
     if (!db.objectStoreNames.contains('bookContent')) return false;
     const tx = db.transaction('bookContent', 'readonly');
     const store = tx.objectStore('bookContent');
-    const result = await new Promise<any>((resolve) => {
+    const result = await new Promise<{ chaptersCached: number } | null>((resolve) => {
       const req = store.get(bookId);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => resolve(null);
