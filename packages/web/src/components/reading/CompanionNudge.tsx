@@ -37,7 +37,7 @@ export const CompanionNudge = React.memo(function CompanionNudge() {
    <p className="text-xs font-medium text-teal-800 dark:text-teal-200">{t('companion_nudge_title')}</p>
    <p className="text-[10px] text-teal-600/70 dark:text-teal-400/60 mt-0.5">{t('companion_nudge_desc')}</p>
    </div>
-   <button onClick={handleDismiss} className="text-teal-400 hover:text-teal-600 dark:hover:text-teal-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 flex-shrink-0 -mt-0.5 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label={t('dismiss_label')}>
+   <button type="button" onClick={handleDismiss} className="text-teal-400 hover:text-teal-600 dark:hover:text-teal-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 flex-shrink-0 -mt-0.5 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label={t('dismiss_label')}>
    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>

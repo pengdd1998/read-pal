@@ -134,7 +134,7 @@ export function NetworkStatus() {
   <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
    <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm shadow-lg">
    <span>{t('sync_failed')}</span>
-   <button onClick={() => setSyncError(false)} className="text-amber-500 hover:text-amber-700 dark:hover:text-amber-200 font-medium text-xs min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('dismiss')}</button>
+   <button type="button" onClick={() => setSyncError(false)} className="text-amber-500 hover:text-amber-700 dark:hover:text-amber-200 font-medium text-xs min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('dismiss')}</button>
    </div>
   </div>
  );

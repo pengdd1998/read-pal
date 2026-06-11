@@ -187,7 +187,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
    ) : error ? (
    <div className="flex flex-col items-center gap-3 py-8 text-center">
     <p className="text-sm text-gray-500 dark:text-gray-400">{t('timeline_load_failed')}</p>
-    <button onClick={loadStats} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
+    <button type="button" onClick={loadStats} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
      {t('timeline_retry')}
     </button>
    </div>

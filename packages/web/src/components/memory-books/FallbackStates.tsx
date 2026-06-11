@@ -22,7 +22,7 @@ export const ErrorState = React.memo(function ErrorState({ error, onRetry }: Err
   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('generationFailed')}</h2>
   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{error}</p>
   <div className="flex gap-3 justify-center">
-  <button onClick={onRetry} className="btn btn-primary">{t('tryAgain')}</button>
+  <button type="button" onClick={onRetry} className="btn btn-primary">{t('tryAgain')}</button>
   <Link href="/memory-books" className="btn bg-surface-1 text-gray-700 dark:text-gray-300">
    {t('backToMemoryBooks')}
   </Link>

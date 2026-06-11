@@ -71,7 +71,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
     return (
       <div className="card text-center py-4">
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('failed_load_challenges')}</p>
-        <button onClick={fetchChallenges} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
+        <button type="button" onClick={fetchChallenges} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
       </div>
     );
   }

@@ -138,7 +138,7 @@ export const PageError = memo(function PageError({
   )}
 
   <div className="flex items-center gap-3">
-   <button onClick={reset} className="btn btn-primary">
+   <button type="button" onClick={reset} className="btn btn-primary">
    {t('try_again')}
    </button>
    {isChunkError ? (

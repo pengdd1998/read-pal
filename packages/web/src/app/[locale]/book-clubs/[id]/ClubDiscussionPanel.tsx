@@ -89,7 +89,7 @@ export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
   {sendError && (
   <div className="mb-3 flex items-center gap-2 text-xs text-red-500">
    <span>{sendError}</span>
-   <button onClick={onClearSendError} className="underline hover:text-red-700 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded">
+   <button type="button" onClick={onClearSendError} className="underline hover:text-red-700 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded">
     {t('dismiss')}
    </button>
   </div>
