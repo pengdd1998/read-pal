@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
 import type { ChapterObjective, ConceptCheck, MasteryReport } from '@/hooks/useStudyMode';
@@ -40,7 +40,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
 
  if (!enabled) return null;
 
- const completedCount = objectives.filter((o) => o.completed).length;
+ const completedCount = useMemo(() => objectives.filter((o) => o.completed).length, [objectives]);
  const answeredCount = revealedAnswers.size;
 
  return (
