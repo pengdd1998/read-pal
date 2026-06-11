@@ -43,7 +43,7 @@ export const ReadyStep = React.memo(function ReadyStep({
         <button
           onClick={onFinish}
           disabled={saving}
-          className="px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+          className="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         >
           {saving ? t('onboarding_saving') : t('onboarding_skip_for_now')}
         </button>

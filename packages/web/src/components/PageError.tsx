@@ -132,7 +132,7 @@ export const PageError = memo(function PageError({
   </p>
 
   {error.digest && (
-   <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+   <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
    {t('error_id', { id: error.digest })}
    </p>
   )}

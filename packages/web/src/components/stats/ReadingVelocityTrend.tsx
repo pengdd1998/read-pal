@@ -46,7 +46,7 @@ export const ReadingVelocityTrend = React.memo(function ReadingVelocityTrend({ s
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
   <div className="flex items-center justify-between mb-4">
   <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('reading_velocity')}</h2>
-  <span className="text-xs text-gray-400 dark:text-gray-500">
+  <span className="text-xs text-gray-500 dark:text-gray-400">
    {t('avg_pages_session', { count: avgPages })}
   </span>
   </div>

@@ -70,7 +70,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  if (error) {
  return (
   <div className="card text-center py-4">
-  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('weekly_summary_load_failed')}</p>
+  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('weekly_summary_load_failed')}</p>
   <button
    onClick={fetchData}
    className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400"
@@ -93,7 +93,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
    {t('weekly_summary_title')}
   </h3>
-  <span className="text-[10px] text-gray-400 dark:text-gray-500">
+  <span className="text-[10px] text-gray-500 dark:text-gray-400">
    {(() => {
     const d1 = new Date(data.weekStart + 'T00:00:00');
     const d2 = new Date(data.weekEnd + 'T00:00:00');
@@ -105,7 +105,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
 
   {isEmpty ? (
   <div className="text-center py-6">
-   <p className="text-xs text-gray-400 dark:text-gray-500">{t('weekly_summary_empty')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400">{t('weekly_summary_empty')}</p>
   </div>
   ) : (
   <>
@@ -141,7 +141,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
      style={{ height: `${height}%` }}
      title={t('daily_tooltip', { date: day.date, minutes: day.minutes, pages: day.pages })}
      />
-     <span className={`text-[9px] ${isToday ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'}`}>
+     <span className={`text-[9px] ${isToday ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
      {DAY_LABELS[i]}
      </span>
     </div>
@@ -159,7 +159,7 @@ const StatCard = React.memo(function StatCard({ label, value, unit }: { label: s
  <div className="text-center p-2 rounded-lg bg-surface-1">
   <div>
   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{value}</span>
-  {unit && <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">{unit}</span>}
+  {unit && <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">{unit}</span>}
   </div>
   <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
  </div>

@@ -88,7 +88,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    <button
     onClick={handleShareClick}
     disabled={sharing}
-    className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:text-teal-500 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
     aria-label={tc('share_as_image')}
     title={tc('share_as_quote')}
    >
@@ -99,7 +99,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    )}
    <button
    onClick={startEdit}
-   className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={tc('edit')}
    >
    <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -108,7 +108,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    </button>
    <button
    onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-   className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={tc('delete')}
    >
    <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

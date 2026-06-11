@@ -163,7 +163,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
    ))}
 
    {collections.length === 0 && !showCreate && (
-   <p className="text-xs text-gray-400 dark:text-gray-500 px-2.5 py-2">{t('collection_picker_empty')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 px-2.5 py-2">{t('collection_picker_empty')}</p>
    )}
   </div>
   )}

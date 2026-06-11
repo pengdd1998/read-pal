@@ -22,7 +22,7 @@ export const StatsLink = React.memo(function StatsLink({ label }: StatsLinkProps
           </div>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
         </div>
-        <svg aria-hidden="true" className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </Link>

@@ -9,7 +9,7 @@ export const ExploreMoreSection = React.memo(function ExploreMoreSection() {
 
  return (
  <div className="mt-10 pt-6 border-t border-surface-2 animate-fade-in">
-  <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide mb-3">{t('explore_more')}</p>
+  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mb-3">{t('explore_more')}</p>
   <div className="flex flex-wrap gap-x-6 gap-y-2">
   <Link
    href="/library"

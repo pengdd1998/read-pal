@@ -55,7 +55,7 @@ export const CollectionCreateForm = React.memo(function CollectionCreateForm({
    key={ic.value}
    onClick={() => onIconChange(ic.value)}
    aria-label={t('select_icon', { label: ic.label })}
-   className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${newIcon === ic.value ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1'}`}
+   className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${newIcon === ic.value ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-surface-1'}`}
    title={ic.label}
    >
    <CollectionIcon icon={ic.value} color={newIcon === ic.value ? '#f59e0b' : 'currentColor'} />

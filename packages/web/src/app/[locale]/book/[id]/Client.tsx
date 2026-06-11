@@ -139,7 +139,7 @@ export default function BookDetailPage() {
    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-3 ${status.color}`}>
    {status.label}
    </span>
-   {lastRead && <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{t('lastRead', { date: lastRead })}</p>}
+   {lastRead && <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('lastRead', { date: lastRead })}</p>}
   </div>
   </div>
 
@@ -163,8 +163,8 @@ export default function BookDetailPage() {
    const finishStr = finishDate.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
    return (
    <div className="flex items-center justify-between mt-2">
-    <p className="text-xs text-gray-400 dark:text-gray-500">{t('remaining', { time: timeStr })}</p>
-    <p className="text-xs text-gray-400 dark:text-gray-500">
+    <p className="text-xs text-gray-500 dark:text-gray-400">{t('remaining', { time: timeStr })}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400">
     {t('finishBy', { date: finishStr })} {readingWpm > 0 && <span className="text-teal-500">{t('wpm', { wpm: readingWpm })}</span>}
     </p>
    </div>
@@ -197,7 +197,7 @@ export default function BookDetailPage() {
     </span>
    ))}
    {tags.length > 15 && (
-    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs text-gray-400 dark:text-gray-500">
+    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs text-gray-500 dark:text-gray-400">
     {t('moreTags', { count: tags.length - 15 })}
     </span>
    )}

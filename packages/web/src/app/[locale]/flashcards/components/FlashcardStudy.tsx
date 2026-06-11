@@ -88,7 +88,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    </svg>
    {t('decks_label')}
   </button>
-  <span className="text-xs text-gray-400 dark:text-gray-500 font-medium tabular-nums">
+  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium tabular-nums">
    {currentIndex + 1} / {cards.length}
   </span>
   </div>
@@ -113,7 +113,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    {currentCard.bookTitle && (
    <div className="flex items-center gap-2 mb-3 px-1">
     <span className="text-xs">{'\uD83D\uDCD6'}</span>
-    <span className="text-xs text-gray-400 dark:text-gray-500 truncate">{currentCard.bookTitle}</span>
+    <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{currentCard.bookTitle}</span>
    </div>
    )}
 
@@ -141,7 +141,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    </div>
 
    {!showAnswer && (
-    <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">{t('tap_to_reveal')}</p>
+    <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-6">{t('tap_to_reveal')}</p>
    )}
    </div>
 
@@ -156,7 +156,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   {/* Rating buttons */}
   {showAnswer && (
   <div className="animate-slide-up">
-   <p className="text-xs text-gray-400 dark:text-gray-500 text-center mb-3">{t('how_well')} <span className="hidden sm:inline text-gray-400 dark:text-gray-500">{t('keys_hint')}</span></p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-3">{t('how_well')} <span className="hidden sm:inline text-gray-500 dark:text-gray-400">{t('keys_hint')}</span></p>
    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
    {RATINGS.map(({ value, labelKey, hint, color, focusRing }) => (
     <button

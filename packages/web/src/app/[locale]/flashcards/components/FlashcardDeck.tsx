@@ -57,7 +57,7 @@ const DeckCard = React.memo(function DeckCard({
     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
      {deck.bookTitle}
     </h3>
-    {isDisplayableAuthor(deck.author) && <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{deck.author}</p>}
+    {isDisplayableAuthor(deck.author) && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{deck.author}</p>}
     <div className="flex items-center gap-3 mt-1.5">
      <span className="text-xs text-gray-500 dark:text-gray-400">{cardsCount}</span>
      {deck.due > 0 ? (

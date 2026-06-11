@@ -71,7 +71,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
  <div className={`relative z-40 flex items-center justify-between px-2 sm:px-3 h-12 backdrop-blur-md ${HEADER_CLASSES[theme]} border-b shrink-0`}>
   {/* Left: Back + Book info */}
   <div className="flex items-center gap-1.5 min-w-0 flex-1">
-  <button type="button" onClick={onBack} className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100/60 dark:hover:bg-gray-700/40 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('back_to_library_label')}>
+  <button type="button" onClick={onBack} className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100/60 dark:hover:bg-gray-700/40 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1" aria-label={t('back_to_library_label')}>
    <svg aria-hidden="true" className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
    </svg>

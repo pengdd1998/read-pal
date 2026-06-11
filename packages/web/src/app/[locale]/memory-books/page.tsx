@@ -215,12 +215,12 @@ export default function MemoryBooksPage() {
        <span className="text-xs text-amber-600 dark:text-amber-400">{t('highlights', { count: mb.stats.totalHighlights })}</span>
        <span className="text-xs text-teal-600 dark:text-teal-400">{t('notes', { count: mb.stats.totalNotes })}</span>
        {mb.stats.readingDuration && mb.stats.readingDuration > 0 && (
-       <span className="text-xs text-gray-400 dark:text-gray-500">{formatDuration(mb.stats.readingDuration)}</span>
+       <span className="text-xs text-gray-500 dark:text-gray-400">{formatDuration(mb.stats.readingDuration)}</span>
        )}
       </div>
       )}
      </div>
-     <svg aria-hidden="true" className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+     <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
      </svg>
      </div>

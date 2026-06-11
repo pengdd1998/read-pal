@@ -61,7 +61,7 @@ export const CompanionStep = React.memo(function CompanionStep({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{p.name}</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">{t(p.personalityKey)}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t(p.personalityKey)}</span>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t(p.descKey)}</p>
               </div>

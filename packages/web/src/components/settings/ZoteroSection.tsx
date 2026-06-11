@@ -84,7 +84,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <polyline points="20 6 9 17 4 12" />
    </svg>
-   {t('zotero_connected_label')} {userId && <span className="text-gray-400 dark:text-gray-500">{t('zotero_user_label', { userId })}</span>}
+   {t('zotero_connected_label')} {userId && <span className="text-gray-500 dark:text-gray-400">{t('zotero_user_label', { userId })}</span>}
   </div>
   <p className="text-xs text-gray-500 dark:text-gray-400">
    {t('zotero_export_desc')}
@@ -135,7 +135,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    {validationError}
   </p>
   )}
-  <p className="text-[10px] text-gray-400 dark:text-gray-500">
+  <p className="text-[10px] text-gray-500 dark:text-gray-400">
   {t('zotero_get_key')} <span className="text-blue-500">zotero.org/settings/keys</span>
   </p>
   <button

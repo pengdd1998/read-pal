@@ -40,7 +40,7 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
    {/* Group progress */}
    {progress.length > 0 && (
    <div className="space-y-2">
-    <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium">{t('groupProgress')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('groupProgress')}</p>
     {progress.map((p) => (
     <div key={p.userId} className="flex items-center gap-3">
      <span className="text-sm text-gray-700 dark:text-gray-300 w-24 truncate">
@@ -62,7 +62,7 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
   </div>
   ) : (
   <div className="text-center py-6">
-   <p className="text-sm text-gray-400 dark:text-gray-500">
+   <p className="text-sm text-gray-500 dark:text-gray-400">
    {isAdmin ? t('setBookPrompt') : t('noBookSelected')}
    </p>
    {isAdmin && (

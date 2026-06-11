@@ -196,7 +196,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
    {/* Questions preview */}
    {questions.length > 0 && (
    <div>
-    <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
+    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
     {t('share_ai_discussion_questions')}
     </p>
     <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
@@ -258,7 +258,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
    <button
    aria-label={t('share_regenerate')}
    onClick={() => { setGuideHtml(null); setQuestions([]); setShareLink(null); }}
-   className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
    {t('share_regenerate')}
    </button>

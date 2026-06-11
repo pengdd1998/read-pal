@@ -118,7 +118,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
    {/* Theme selector */}
    <div className="flex items-center gap-2">
-   <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium">
+   <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
     {tr('theme_label')}
    </span>
    <button

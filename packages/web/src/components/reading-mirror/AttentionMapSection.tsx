@@ -19,7 +19,7 @@ interface PeakMomentRowProps {
 const PeakMomentRow = React.memo(function PeakMomentRow({ peak }: PeakMomentRowProps) {
   return (
     <div className="flex items-start gap-3 bg-surface-0 border border-surface-3 rounded-lg p-3">
-      <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0 mt-0.5 font-mono">{peak.date}</span>
+      <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 mt-0.5 font-mono">{peak.date}</span>
       <p className="text-sm text-gray-700 dark:text-gray-300 m-0 leading-relaxed">{peak.description}</p>
     </div>
   );

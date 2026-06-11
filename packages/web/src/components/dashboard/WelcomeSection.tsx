@@ -57,7 +57,7 @@ export const WelcomeSection = React.memo(function WelcomeSection({ onSeedSample,
    >
    <span className="text-2xl block mb-2">{f.icon}</span>
    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(f.titleKey)}</h3>
-   <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t(f.descKey)}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t(f.descKey)}</p>
    </Link>
   ))}
   </div>

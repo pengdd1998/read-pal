@@ -21,7 +21,7 @@ const TypeFilterButton = React.memo(function TypeFilterButton({ opt, isSelected,
    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
    isSelected
     ? opt.color + ' ring-1 ring-current/20'
-    : 'bg-surface-1 text-gray-400 dark:text-gray-500'
+    : 'bg-surface-1 text-gray-500 dark:text-gray-400'
    }`}
   >
    {label}
@@ -114,7 +114,7 @@ export const ExportFilterPanel = React.memo(function ExportFilterPanel({
    <button
     onClick={onClearFilters}
     aria-label={t('export_clear_filters_btn')}
-    className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
+    className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400"
    >
     {t('export_clear_filters_btn')}
    </button>

@@ -67,7 +67,7 @@ export default function BookClubDetailPage() {
  <main className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
   {/* Breadcrumb */}
-  <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 mb-6">
+  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
    <Link href="/dashboard" className="hover:text-gray-600 dark:hover:text-gray-300">{t('dashboard')}</Link>
    <span>/</span>
    <Link href="/book-clubs" className="hover:text-gray-600 dark:hover:text-gray-300">{t('pageTitle')}</Link>
@@ -94,7 +94,7 @@ export default function BookClubDetailPage() {
   <div className="flex items-center justify-between">
    <Link
    href="/book-clubs"
-   className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+   className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
    >
    &larr; {t('backToClubs')}
    </Link>

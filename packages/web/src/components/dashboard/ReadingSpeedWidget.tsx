@@ -52,7 +52,7 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
  if (error) {
  return (
   <div className="card text-center py-4">
-  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('reading_speed_load_failed')}</p>
+  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('reading_speed_load_failed')}</p>
   <button
    onClick={fetchData}
    className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400"
@@ -77,7 +77,7 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
  <div className="card">
   <div className="flex items-center justify-between mb-3">
   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('reading_speed_title')}</h3>
-  <span className="text-[10px] text-gray-400 dark:text-gray-500">
+  <span className="text-[10px] text-gray-500 dark:text-gray-400">
    {avgWpm > 0 ? `${avgWpm} ${t('words_min')}` : t('words_min')}
   </span>
   </div>

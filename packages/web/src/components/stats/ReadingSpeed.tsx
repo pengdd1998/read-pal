@@ -45,7 +45,7 @@ export const ReadingSpeed = React.memo(function ReadingSpeed({ speedData, bookSp
 
   {/* No data hint */}
   {showNoData && (
-  <p className="text-sm text-gray-400 dark:text-gray-500">{t('speed_no_data')}</p>
+  <p className="text-sm text-gray-500 dark:text-gray-400">{t('speed_no_data')}</p>
   )}
  </div>
  );

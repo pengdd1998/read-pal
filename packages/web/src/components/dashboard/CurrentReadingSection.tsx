@@ -178,11 +178,11 @@ const ActiveBookCard = React.memo(function ActiveBookCard({ book, isFirst, isMul
                 />
               </div>
             </div>
-            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums font-medium">{book.progress}%</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums font-medium">{book.progress}%</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">{lastReadLabel}</span>
+          <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{lastReadLabel}</span>
           <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
             {continueLabel}
             <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -284,11 +284,11 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
                       />
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums font-medium">{currentBook.progress}%</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums font-medium">{currentBook.progress}%</span>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">{fmtTime(currentBook.lastRead)}</span>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{fmtTime(currentBook.lastRead)}</span>
                 <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
                   {t('continue_button')}
                   <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -363,12 +363,12 @@ const ReadingStreakCard = React.memo(function ReadingStreakCard({ streak, loadin
         <div className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{t('day_streak')}</div>
       </div>
       {streak === 0 && !loading && (
-        <p className="text-xs text-gray-400 dark:text-gray-500">{t('start_streak')}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t('start_streak')}</p>
       )}
       {streak >= 3 && !loading && (
         <div className="text-right">
           <p className="text-xs text-orange-500 dark:text-orange-400 font-medium">{t('keep_going')}</p>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('next_milestone', { days: streak < 7 ? 7 : streak < 14 ? 14 : streak < 30 ? 30 : 60 })}</p>
+          <p className="text-[10px] text-gray-500 dark:text-gray-400">{t('next_milestone', { days: streak < 7 ? 7 : streak < 14 ? 14 : streak < 30 ? 30 : 60 })}</p>
         </div>
       )}
     </div>

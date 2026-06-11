@@ -181,7 +181,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
         {/* Skip */}
         <button
           onClick={complete}
-          className="absolute top-4 right-4 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
+          className="absolute top-4 right-4 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
         >
           {t('onboarding_skip')}
         </button>

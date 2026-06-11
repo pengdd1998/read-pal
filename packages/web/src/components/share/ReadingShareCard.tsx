@@ -135,7 +135,7 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
    {/* Currently reading */}
    {card.currentlyReading && (
     <div className="bg-surface-0/70 rounded-xl p-3 mb-3">
-    <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium mb-1">{t('currently_reading')}</div>
+    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium mb-1">{t('currently_reading')}</div>
     <div className="font-medium text-sm text-gray-900 dark:text-gray-100">{card.currentlyReading.title}</div>
     {isDisplayableAuthor(card.currentlyReading.author) && <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{card.currentlyReading.author}</div>}
     <div className="w-full bg-surface-2 rounded-full h-2">
@@ -144,19 +144,19 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
      style={{ width: `${Math.min(100, Math.max(0, card.currentlyReading.progress))}%` }}
      />
     </div>
-    <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{card.currentlyReading.progress}% {t('complete')}</div>
+    <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{card.currentlyReading.progress}% {t('complete')}</div>
     </div>
    )}
 
    {/* Recent books */}
    {card.recentBooks && card.recentBooks.length > 1 && (
-    <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium mb-1">{t('recently_read')}</div>
+    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium mb-1">{t('recently_read')}</div>
    )}
    {card.recentBooks && card.recentBooks.slice(card.currentlyReading ? 1 : 0, 3).map((book) => (
     <div key={book.title} className="flex items-center gap-2 py-1">
     <div className="w-1 h-1 rounded-full bg-amber-400" />
     <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{book.title}</span>
-    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">{book.progress}%</span>
+    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-auto">{book.progress}%</span>
     </div>
    ))}
    </div>
@@ -179,7 +179,7 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
 
    <button
    onClick={() => setCard(null)}
-   className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+   className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
    >
    {t('dismiss')}
    </button>

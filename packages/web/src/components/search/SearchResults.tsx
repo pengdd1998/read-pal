@@ -19,7 +19,7 @@ export const SearchResults = React.memo(function SearchResults({ results, highli
  <div className="space-y-6">
   {results.length > 0 && (
   <div>
-   <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+   <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
    {t('books_heading', { count: results.length })}
    </h2>
    <div className="space-y-3">
@@ -32,7 +32,7 @@ export const SearchResults = React.memo(function SearchResults({ results, highli
 
   {highlights.length > 0 && (
   <div>
-   <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
+   <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
    {filter === 'notes'
     ? t('notes_heading', { count: highlights.length })
     : filter === 'highlights'

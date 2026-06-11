@@ -40,7 +40,7 @@ export const WelcomeActions = React.memo(function WelcomeActions({
             safeSetItem(ONBOARDING_KEY, 'true');
             router.push('/dashboard');
           }}
-          className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center"
+          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors min-h-[44px] inline-flex items-center"
         >
           {t('go_dashboard')}
         </button>

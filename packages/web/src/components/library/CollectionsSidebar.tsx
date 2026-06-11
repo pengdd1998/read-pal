@@ -165,7 +165,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   </button>
   <button
    onClick={() => setShowCreate((v) => !v)}
-   className="p-1 rounded-md text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="p-1 rounded-md text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    title={t('collections_new')}
    aria-label={t('collections_new')}
   >
@@ -226,7 +226,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
    ))}
 
    {collections.length === 0 && !showCreate && (
-   <p className="text-xs text-gray-400 dark:text-gray-500 px-3 py-2">
+   <p className="text-xs text-gray-500 dark:text-gray-400 px-3 py-2">
     {t('collections_empty')}
    </p>
    )}

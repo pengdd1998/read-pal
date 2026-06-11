@@ -21,7 +21,7 @@ const WeeklyBar = React.memo(function WeeklyBar({ day, maxPages, locale }: Weekl
    style={{ height: `${height}%` }}
   />
   </div>
-  <span className="text-[10px] text-gray-400 dark:text-gray-500">{getDayName(day.day, locale)}</span>
+  <span className="text-[10px] text-gray-500 dark:text-gray-400">{getDayName(day.day, locale)}</span>
  </div>
  );
 });

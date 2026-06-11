@@ -149,7 +149,7 @@ function StreakCalendarInner() {
   <SkeletonHeatmap />
   ) : error ? (
   <div className="h-32 flex flex-col items-center justify-center gap-2">
-   <p className="text-sm text-gray-400 dark:text-gray-500">{error}</p>
+   <p className="text-sm text-gray-500 dark:text-gray-400">{error}</p>
    <button type="button" onClick={fetchData} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
   </div>
   ) : (
@@ -159,7 +159,7 @@ function StreakCalendarInner() {
     const nextCol = monthMarkers[i + 1]?.col ?? weeks.length;
     const spanCols = nextCol - m.col;
     return (
-    <div key={`${m.label}-${m.col}`} className="text-[10px] text-gray-400 dark:text-gray-500 font-medium" style={{ width: `${spanCols * 16}px` }}>
+    <div key={`${m.label}-${m.col}`} className="text-[10px] text-gray-500 dark:text-gray-400 font-medium" style={{ width: `${spanCols * 16}px` }}>
      {spanCols >= 2 ? m.label : ''}
     </div>
     );
@@ -168,7 +168,7 @@ function StreakCalendarInner() {
    <div className="flex gap-0">
    <div className="flex flex-col gap-[3px] mr-1">
     {dayLabels.map((label, i) => (
-    <div key={i} className="h-[13px] flex items-center text-[10px] text-gray-400 dark:text-gray-500 font-medium leading-none pr-1">{label}</div>
+    <div key={i} className="h-[13px] flex items-center text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-none pr-1">{label}</div>
     ))}
    </div>
    <div className="flex gap-[3px]">

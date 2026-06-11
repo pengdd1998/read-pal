@@ -136,7 +136,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
    <button
     type="button"
     onClick={() => setShowPassword(!showPassword)}
-    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 min-w-[44px] min-h-[44px]"
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 min-w-[44px] min-h-[44px]"
     aria-label={showPassword ? t('hide_password') : t('show_password')}
    >
     <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -159,7 +159,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
      { key: 'req_lowercase', met: /[a-z]/.test(password) },
      { key: 'req_digit', met: /\d/.test(password) },
     ]).map(({ key, met }) => (
-     <div key={key} className={`flex items-center gap-1.5 text-xs ${met ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+     <div key={key} className={`flex items-center gap-1.5 text-xs ${met ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
       {met ? (
        <svg aria-hidden="true" className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -236,7 +236,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
     <div className="w-full border-t border-surface-3" />
    </div>
    <div className="relative flex justify-center text-xs">
-    <span className="bg-surface-0 px-2 text-gray-400 dark:text-gray-500">{t('or_divider')}</span>
+    <span className="bg-surface-0 px-2 text-gray-500 dark:text-gray-400">{t('or_divider')}</span>
    </div>
    </div>
    <a

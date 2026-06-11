@@ -42,7 +42,7 @@ export const RecentBooks = React.memo(function RecentBooks({ books }: RecentBook
 
   return (
   <div>
-   <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">
+   <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
    {t('your_library')}
    </h2>
    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

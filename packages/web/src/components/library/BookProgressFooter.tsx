@@ -52,7 +52,7 @@ export const BookProgressFooter = React.memo(function BookProgressFooter({
    />
    </div>
    <div className="flex items-center justify-between mt-1.5">
-   <p className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
+   <p className="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums">
     {t('card_pages', { current: currentPage, total: totalPages })}
    </p>
    <p className="text-[10px] text-primary-500 font-semibold tabular-nums">
@@ -64,7 +64,7 @@ export const BookProgressFooter = React.memo(function BookProgressFooter({
 
   {/* Last read */}
   {formattedDate && (
-  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
+  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2">
    {formattedDate}
   </p>
   )}

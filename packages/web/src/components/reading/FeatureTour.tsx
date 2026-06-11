@@ -194,7 +194,7 @@ export const FeatureTour = React.memo(function FeatureTour() {
    <div className="px-4 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between border-t border-surface-2">
    <button
     onClick={handleSkip}
-    className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center"
+    className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center"
    >
     {t('tour_skip')}
    </button>

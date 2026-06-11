@@ -26,7 +26,7 @@ const CachedBookRow = React.memo(function CachedBookRow({ cb, onRemove, removeLa
       </div>
       <button
         onClick={() => onRemove(cb.bookId)}
-        className="min-h-[44px] px-3 py-1 text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+        className="min-h-[44px] px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
       >
         {removeLabel}
       </button>
@@ -48,7 +48,7 @@ const BookCheckboxRow = React.memo(function BookCheckboxRow({ book, isSelected, 
         className="rounded border-surface-3 text-teal-600 focus:ring-teal-500"
       />
       <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{book.title}</span>
-      {isDisplayableAuthor(book.author) && <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{book.author}</span>}
+      {isDisplayableAuthor(book.author) && <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{book.author}</span>}
     </label>
   );
 });
@@ -213,7 +213,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         <div className="pt-4 border-t border-surface-2">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('offline_cached_books')}</h3>
           {cachedBooks.length === 0 ? (
-            <p className="text-xs text-gray-400 dark:text-gray-500">{t('offline_no_cached')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('offline_no_cached')}</p>
           ) : (
             <div className="space-y-2">
               {cachedBooks.map((cb) => (
@@ -240,7 +240,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{t('offline_loading')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('offline_loading')}</p>
           </div>
         ) : loadError ? (
           <div className="pt-4 border-t border-surface-2">
@@ -263,7 +263,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
                   />
                 ))}
               {books.filter((b) => !cachedIds.has(b.id)).length === 0 && (
-                <p className="text-xs text-gray-400 dark:text-gray-500">{t('offline_all_cached')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('offline_all_cached')}</p>
               )}
             </div>
             {selectedBooks.size > 0 && (

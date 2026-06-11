@@ -18,7 +18,7 @@ const ChallengeItemRow = React.memo(function ChallengeItemRow({ c, title, progre
           <span>{c.icon}</span>
           <span className="font-medium">{title}</span>
         </span>
-        <span className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">{progressLabel}</span>
+        <span className="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums">{progressLabel}</span>
       </div>
       <div className="w-full bg-surface-1 rounded-full h-1.5" role="progressbar" aria-valuenow={Math.round(c.percentage)} aria-valuemin={0} aria-valuemax={100}>
         <div
@@ -70,7 +70,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
   if (error) {
     return (
       <div className="card text-center py-4">
-        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('failed_load_challenges')}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('failed_load_challenges')}</p>
         <button type="button" onClick={fetchChallenges} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
       </div>
     );
@@ -98,7 +98,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('challenges_title')}</h3>
-        <span className="text-[10px] text-gray-400 dark:text-gray-500">{t('challenges_done', { completed: completedCount, total: completedCount + active.length })}</span>
+        <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('challenges_done', { completed: completedCount, total: completedCount + active.length })}</span>
       </div>
       <div className="space-y-3">
         {active.map((c) => (
