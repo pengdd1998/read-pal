@@ -41,7 +41,7 @@ export default function SettingsPage() {
         clearTimeout(saveTimerRef.current);
         const pending = pendingUpdatesRef.current;
         if (pending) {
-          api.patch<UserSettings>('/api/settings', pending.updates as Record<string, unknown>).catch(() => { /* best-effort flush */ });
+          api.patch<UserSettings>('/api/settings', pending.updates as Record<string, unknown>).catch((err) => { warn('SettingsPage: failed to flush pending updates', err); });
         }
       }
       if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
@@ -67,8 +67,9 @@ export default function SettingsPage() {
     } catch (err) {
       warn('Settings: load failed', err);
       setError(t('failed_load_retry'));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [t]);
 
   useEffect(() => {

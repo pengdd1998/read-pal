@@ -49,6 +49,8 @@ export default function KnowledgePage() {
     setSelectedNode((prev) => (prev?.id === node.id ? null : node));
   }, []);
 
+  const handleDeselect = useCallback(() => setSelectedNode(null), []);
+
   const connectedEdges = useMemo(
     () => selectedNode
       ? edges.filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
@@ -160,7 +162,7 @@ export default function KnowledgePage() {
                     node={selectedNode}
                     connectedEdges={connectedEdges}
                     allNodes={nodes}
-                    onDeselect={() => setSelectedNode(null)}
+                    onDeselect={handleDeselect}
                     t={t}
                     bookTitleMap={bookTitleMap}
                   />

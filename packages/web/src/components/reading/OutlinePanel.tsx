@@ -25,18 +25,20 @@ const TYPE_ICONS: Record<string, string> = {
  bookmark: '\u{1F516}',
 };
 
+type FilterType = 'all' | 'highlight' | 'note' | 'bookmark';
+
 interface FilterButtonProps {
- optKey: 'all' | 'highlight' | 'note' | 'bookmark';
+ optKey: FilterType;
  label: string;
  ariaLabel: string;
  isActive: boolean;
- onClick: () => void;
+ onClick: (key: FilterType) => void;
 }
 
 const FilterButton = React.memo(function FilterButton({ optKey, label, ariaLabel, isActive, onClick }: FilterButtonProps) {
  return (
   <button type="button"
-   onClick={onClick}
+   onClick={() => onClick(optKey)}
    aria-label={ariaLabel}
    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${
    isActive
@@ -56,9 +58,10 @@ export const OutlinePanel = React.memo(function OutlinePanel({
  const t = useTranslations('reader');
  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
  const [searchQuery, setSearchQuery] = useState('');
- const [filterType, setFilterType] = useState<'all' | 'highlight' | 'note' | 'bookmark'>('all');
+ const [filterType, setFilterType] = useState<FilterType>('all');
 
  const stableScrollTo = useCallback((a: Annotation) => { onScrollToAnnotation(a); }, [onScrollToAnnotation]);
+ const handleFilterChange = useCallback((key: FilterType) => setFilterType(key), []);
 
  const chapters = useMemo(() => {
  const filtered = annotations.filter((a) => {
@@ -186,7 +189,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
     label={opt.label}
     ariaLabel={opt.ariaLabel}
     isActive={filterType === opt.key}
-    onClick={() => setFilterType(opt.key)}
+    onClick={handleFilterChange}
    />
    ))}
   </div>

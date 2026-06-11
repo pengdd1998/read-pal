@@ -28,6 +28,8 @@ export const NetworkStatus = React.memo(function NetworkStatus() {
  const [lastSync, setLastSync] = useState<SyncResult | null>(null);
  const [isAuthenticated] = useState(!!getAuthToken());
 
+ const dismissBanner = useCallback(() => setShowBanner(false), []);
+
  const syncQueue = useCallback(async () => {
  if (!navigator.onLine) return;
  setSyncing(true);
@@ -41,8 +43,9 @@ export const NetworkStatus = React.memo(function NetworkStatus() {
  } catch (err) {
   warn('NetworkStatus: failed to sync offline queue', err);
   setSyncError(true);
+ } finally {
+  setSyncing(false);
  }
- setSyncing(false);
  }, []);
 
  useEffect(() => {
@@ -150,7 +153,7 @@ export const NetworkStatus = React.memo(function NetworkStatus() {
  }
 
  if (!offline && showBanner) {
- return <BackOnlineBanner onDismiss={() => setShowBanner(false)} />;
+ return <BackOnlineBanner onDismiss={dismissBanner} />;
  }
 
  if (queuedCount > 0 && !offline) {

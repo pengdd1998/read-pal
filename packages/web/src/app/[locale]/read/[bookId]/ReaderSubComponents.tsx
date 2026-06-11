@@ -31,15 +31,15 @@ export const ReaderLoadingSkeleton = React.memo(function ReaderLoadingSkeleton({
       </div>
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="h-8 w-64 rounded bg-gray-200 animate-pulse mb-6" />
-        {[...Array(6)].map((_, i) => (
+        {[85, 92, 75, 95, 80, 88].map((w, i) => (
           <div key={i} className="mb-4">
             <div
               className="h-4 rounded bg-gray-200 animate-pulse mb-2"
-              style={{ width: `${70 + Math.random() * 30}%` }}
+              style={{ width: `${w}%` }}
             />
             <div
               className="h-4 rounded bg-gray-200 animate-pulse"
-              style={{ width: `${50 + Math.random() * 40}%` }}
+              style={{ width: `${w - 20}%` }}
             />
           </div>
         ))}

@@ -101,7 +101,7 @@ const MemoryBookCard = React.memo(function MemoryBookCard({ mb, locale, dateLabe
 const EligibleBookRow = React.memo(function EligibleBookRow({ book, isGenerating, onGenerate, generateLabel, generatingLabel, authorPrefix, completeLabel }: {
   book: Book;
   isGenerating: boolean;
-  onGenerate: () => void;
+  onGenerate: (bookId: string) => void;
   generateLabel: string;
   generatingLabel: string;
   authorPrefix: string;
@@ -117,7 +117,7 @@ const EligibleBookRow = React.memo(function EligibleBookRow({ book, isGenerating
         <p className="text-xs text-gray-500">{authorPrefix}{completeLabel}</p>
       </div>
       <button type="button"
-        onClick={onGenerate}
+        onClick={() => onGenerate(book.id)}
         disabled={isGenerating}
         className="px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
       >
@@ -170,7 +170,7 @@ export default function MemoryBooksPage() {
     return () => window.removeEventListener('focus', onFocus);
   }, [fetchData, generating]);
 
-  const handleGenerate = async (bookId: string) => {
+  const handleGenerate = useCallback(async (bookId: string) => {
     setGenerating(bookId);
     try {
       const res = await api.post<MemoryBook>('/api/v1/reading-book/generate', {
@@ -191,7 +191,7 @@ export default function MemoryBooksPage() {
     } finally {
       if (mountedRef.current) setGenerating(null);
     }
-  };
+  }, [t, router]);
 
   const eligibleBooks = useMemo(() => {
     const existingBookIds = new Set(memoryBooks.map((mb) => mb.bookId));
@@ -268,7 +268,7 @@ export default function MemoryBooksPage() {
                 key={book.id}
                 book={book}
                 isGenerating={generating === book.id}
-                onGenerate={() => handleGenerate(book.id)}
+                onGenerate={handleGenerate}
                 generateLabel={t('generate')}
                 generatingLabel={t('generating')}
                 authorPrefix={isDisplayableAuthor(book.author) ? `${book.author} · ` : ''}

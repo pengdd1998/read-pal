@@ -82,7 +82,7 @@ export function useApi<T>(
       setError('Network error');
       setStatus('error');
       if (logErrors) {
-        warn(`[useApi] ${url}: network error`);
+        warn(`[useApi] ${url}: network error`, err);
       }
       return undefined;
     }

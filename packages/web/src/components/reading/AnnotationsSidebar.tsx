@@ -69,6 +69,15 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
  const stableOnUpdateAnnotation = useCallback((updated: Annotation) => onUpdateAnnotation(updated), [onUpdateAnnotation]);
  const stableOnScrollToAnnotation = useCallback((annotation: Annotation) => onScrollToAnnotation(annotation), [onScrollToAnnotation]);
 
+ // Stable callbacks for SidebarHeader to avoid defeating React.memo
+ const handleToggleViewMode = useCallback(() => setViewMode((v) => v === 'list' ? 'outline' : 'list'), []);
+ const handleToggleBulkMode = useCallback(() => setBulkMode((v) => !v), []);
+ const handleShowShareDialog = useCallback(() => setShowShareDialog(true), []);
+ const handleShowExportModal = useCallback(() => setShowExportModal(true), []);
+
+ // Stable callback for TagFilterChips
+ const handleClearTags = useCallback(() => setSelectedTags([]), []);
+
  // Escape key to close
  useEffect(() => {
  if (!isOpen) return;
@@ -143,10 +152,10 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
    viewMode={viewMode}
    bulkMode={bulkMode}
    onClose={onClose}
-   onToggleViewMode={() => setViewMode((v) => v === 'list' ? 'outline' : 'list')}
-   onToggleBulkMode={() => setBulkMode((v) => !v)}
-   onShowShareDialog={() => setShowShareDialog(true)}
-   onShowExportModal={() => setShowExportModal(true)}
+   onToggleViewMode={handleToggleViewMode}
+   onToggleBulkMode={handleToggleBulkMode}
+   onShowShareDialog={handleShowShareDialog}
+   onShowExportModal={handleShowExportModal}
   />
 
   <AnnotationSearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -156,7 +165,7 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
    tagCounts={tagCounts}
    selectedTags={selectedTags}
    onToggleTag={toggleTag}
-   onClearTags={() => setSelectedTags([])}
+   onClearTags={handleClearTags}
   />
 
   {viewMode === 'list' && (

@@ -108,9 +108,10 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     } catch (e) {
       warn('AnnotationActions: failed to save highlight', e);
       toastError(toast.failed_save_highlight);
+    } finally {
+      dismissSelection();
+      isCreatingRef.current = false;
     }
-    dismissSelection();
-    isCreatingRef.current = false;
   }, [bookId, currentChapter, chapters, selectionRange, selectionOffsets, contentRef, setAnnotations, toastError, toast.failed_save_highlight, dismissSelection]);
 
   const handleAddNote = useCallback(async (text: string, note: string, tags?: string[]) => {
@@ -148,8 +149,9 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     } catch (e) {
       warn('AnnotationActions: failed to save note', e);
       toastError(toast.failed_save_note);
+    } finally {
+      dismissSelection();
     }
-    dismissSelection();
   }, [bookId, currentChapter, chapters, selectionRange, selectionOffsets, contentRef, setAnnotations, toastError, toast.failed_save_note, dismissSelection]);
 
   const handleToggleBookmark = useCallback(async () => {

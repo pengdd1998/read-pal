@@ -81,25 +81,28 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  const [error, setError] = useState<string | null>(null);
  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
- const loadPrefs = useCallback(async () => {
+ const loadPrefs = useCallback(async (signal?: AbortSignal) => {
  try {
   const res = await api.get<InterventionPrefs>(
   '/api/v1/interventions/preferences'
   );
+  if (signal?.aborted) return;
   if (res.success && res.data) {
   setPrefs({ ...DEFAULT_PREFS, ...res.data });
   }
  } catch (err) {
+  if (signal?.aborted) return;
   warn('InterventionPrefsSection: load failed', err);
   setError(t('failed_load_retry'));
+ } finally {
+  if (!signal?.aborted) setLoading(false);
  }
- setLoading(false);
  }, [t]);
 
  useEffect(() => {
- let stale = false;
- loadPrefs().finally(() => { if (stale) return; });
- return () => { stale = true; if (savedTimerRef.current) clearTimeout(savedTimerRef.current); };
+ const ac = new AbortController();
+ loadPrefs(ac.signal);
+ return () => { ac.abort(); if (savedTimerRef.current) clearTimeout(savedTimerRef.current); };
  }, [loadPrefs]);
 
  async function savePrefs(updated: InterventionPrefs) {

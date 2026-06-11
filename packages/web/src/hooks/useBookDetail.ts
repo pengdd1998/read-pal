@@ -76,8 +76,9 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
       } catch (err) {
         warn('useBookDetail: fetch failed', err);
         if (!cancelled) setError(t('failedToLoad'));
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      if (!cancelled) setLoading(false);
     })();
 
     // Background fetches -- non-critical, silenced errors

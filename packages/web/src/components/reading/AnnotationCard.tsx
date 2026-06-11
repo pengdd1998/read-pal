@@ -53,6 +53,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
  setSharing(false);
  }, [quoteText, sharing, handleShare]);
 
+ const cancelEdit = useCallback(() => setEditing(false), []);
  const startEdit = (e: React.MouseEvent) => {
  e.stopPropagation();
  setEditing(true);
@@ -64,7 +65,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
   annotation={annotation}
   borderColor={borderColor}
   onUpdate={onUpdate}
-  onCancel={() => setEditing(false)}
+  onCancel={cancelEdit}
   />
  );
  }

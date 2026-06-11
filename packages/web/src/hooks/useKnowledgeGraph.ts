@@ -89,10 +89,12 @@ export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn
     const rawNodes = rawNodesRef.current;
     const rawEdges = rawEdgesRef.current;
     if (rawNodes.length === 0) return;
-    const simNodes: SimNode[] = rawNodes.map((n) => ({
+    // Deterministic initial positions based on node index to avoid
+    // layout jumps on every resize. The force simulation refines positions.
+    const simNodes: SimNode[] = rawNodes.map((n, i) => ({
       ...n,
-      x: dimensions.width / 2 + (Math.random() - 0.5) * 300,
-      y: dimensions.height / 2 + (Math.random() - 0.5) * 300,
+      x: dimensions.width / 2 + ((i * 137.5) % 600) - 300,
+      y: dimensions.height / 2 + ((i * 89.3) % 500) - 250,
       vx: 0,
       vy: 0,
     }));

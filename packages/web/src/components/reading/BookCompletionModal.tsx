@@ -39,8 +39,9 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
   router.push(`/memory-books/${bookId}`);
  } catch (error) {
   warn('BookCompletionModal: generate failed', error);
-  setGenerating(false);
   setGenError(t('completion_failed_generate'));
+ } finally {
+  setGenerating(false);
  }
  };
 

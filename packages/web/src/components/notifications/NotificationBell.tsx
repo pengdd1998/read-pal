@@ -74,12 +74,12 @@ export const NotificationBell = memo(function NotificationBell() {
   const { toast } = useToast();
   const t = useTranslations('common');
 
-  const fmtTime = (d: string) => formatRelativeTime(d, {
+  const fmtTime = useCallback((d: string) => formatRelativeTime(d, {
     just_now: t('just_now'),
     minutes_ago: t('minutes_ago'),
     hours_ago: t('hours_ago'),
     days_ago: t('days_ago'),
-  } as const);
+  } as const), [t]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -144,7 +144,7 @@ export const NotificationBell = memo(function NotificationBell() {
 
 
 
-  async function markAsRead(id: string) {
+  const markAsRead = useCallback(async (id: string) => {
     const prev = notifications;
     const prevCount = unreadCount;
     setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
@@ -157,7 +157,7 @@ export const NotificationBell = memo(function NotificationBell() {
       warn('Notifications: failed to mark notification as read', err);
       toast(t('notification_mark_read_failed'), 'error');
     }
-  }
+  }, [notifications, unreadCount, t, toast]);
 
   async function markAllRead() {
     const prev = notifications;

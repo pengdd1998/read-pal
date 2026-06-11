@@ -92,7 +92,9 @@ export default function FlashcardsPage() {
   setToast(t('toast_load_cards'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
- if (mountedRef.current) setLoading(false);
+ finally {
+  if (mountedRef.current) setLoading(false);
+ }
  }, [t]);
 
  useEffect(() => {
@@ -122,7 +124,9 @@ export default function FlashcardsPage() {
   setToast(t('toast_save_review'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
- if (mountedRef.current) setReviewing(false);
+ finally {
+  if (mountedRef.current) setReviewing(false);
+ }
  }, [cards, currentIndex, t]);
 
  // Keyboard shortcuts for review mode
