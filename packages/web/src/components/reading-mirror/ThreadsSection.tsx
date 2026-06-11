@@ -13,6 +13,37 @@ interface ThreadsSectionProps {
   data: Record<string, unknown>;
 }
 
+interface ThreadCardProps {
+  thread: Thread;
+}
+
+const ThreadCard = React.memo(function ThreadCard({ thread }: ThreadCardProps) {
+  return (
+    <div className="bg-surface-0 border border-surface-3 rounded-xl p-5 space-y-2">
+      <h4 className="font-serif text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">
+        {thread.theme}
+      </h4>
+
+      {thread.books && thread.books.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {thread.books.map((book, j) => (
+            <span
+              key={j}
+              className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-xs text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50"
+            >
+              {book}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <p className="text-sm text-gray-600 dark:text-gray-400 m-0 leading-relaxed">
+        {thread.connection}
+      </p>
+    </div>
+  );
+});
+
 export default React.memo(function ThreadsSection({ data }: ThreadsSectionProps) {
   const t = useTranslations('readingMirror');
   const threads = (data.threads as Thread[]) || [];
@@ -38,31 +69,7 @@ export default React.memo(function ThreadsSection({ data }: ThreadsSectionProps)
 
       <div className="space-y-4">
         {threads.map((thread, i) => (
-          <div
-            key={i}
-            className="bg-surface-0 border border-surface-3 rounded-xl p-5 space-y-2"
-          >
-            <h4 className="font-serif text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">
-              {thread.theme}
-            </h4>
-
-            {thread.books && thread.books.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {thread.books.map((book, j) => (
-                  <span
-                    key={j}
-                    className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-xs text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50"
-                  >
-                    {book}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <p className="text-sm text-gray-600 dark:text-gray-400 m-0 leading-relaxed">
-              {thread.connection}
-            </p>
-          </div>
+          <ThreadCard key={i} thread={thread} />
         ))}
       </div>
 

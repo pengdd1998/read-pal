@@ -13,6 +13,49 @@ interface AnnotationsWovenSectionProps {
   data: Record<string, unknown>;
 }
 
+interface KeyNoteChipProps {
+  note: string;
+}
+
+const KeyNoteChip = React.memo(function KeyNoteChip({ note }: KeyNoteChipProps) {
+  return (
+    <span className="inline-block px-2.5 py-1 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg text-xs text-amber-800 dark:text-amber-200 italic">
+      {'“'}{note}{'”'}
+    </span>
+  );
+});
+
+interface PhaseTimelineItemProps {
+  phase: Phase;
+}
+
+const PhaseTimelineItem = React.memo(function PhaseTimelineItem({ phase }: PhaseTimelineItemProps) {
+  return (
+    <div className="relative">
+      {/* Timeline dot */}
+      <div className="absolute -left-[calc(1.5rem+5px)] top-0 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-surface-0" />
+
+      <div className="space-y-2">
+        <h4 className="font-serif text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">
+          {phase.name}
+        </h4>
+
+        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed m-0">
+          {phase.narrative}
+        </p>
+
+        {phase.key_notes && phase.key_notes.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {phase.key_notes.map((note, j) => (
+              <KeyNoteChip key={j} note={note} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
 export default React.memo(function AnnotationsWovenSection({ data }: AnnotationsWovenSectionProps) {
   const t = useTranslations('readingMirror');
   const phases = (data.phases as Phase[]) || [];
@@ -38,33 +81,7 @@ export default React.memo(function AnnotationsWovenSection({ data }: Annotations
       {/* Phase timeline */}
       <div className="relative pl-6 border-l-2 border-amber-200 dark:border-amber-800 space-y-6">
         {phases.map((phase, i) => (
-          <div key={i} className="relative">
-            {/* Timeline dot */}
-            <div className="absolute -left-[calc(1.5rem+5px)] top-0 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-surface-0" />
-
-            <div className="space-y-2">
-              <h4 className="font-serif text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">
-                {phase.name}
-              </h4>
-
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed m-0">
-                {phase.narrative}
-              </p>
-
-              {phase.key_notes && phase.key_notes.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {phase.key_notes.map((note, j) => (
-                    <span
-                      key={j}
-                      className="inline-block px-2.5 py-1 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg text-xs text-amber-800 dark:text-amber-200 italic"
-                    >
-                      &ldquo;{note}&rdquo;
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <PhaseTimelineItem key={i} phase={phase} />
         ))}
       </div>
     </div>

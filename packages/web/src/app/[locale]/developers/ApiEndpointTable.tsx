@@ -1,8 +1,31 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { endpoints, methodColor } from './api-constants';
+
+interface EndpointRowProps {
+ method: string;
+ path: string;
+ description: string;
+ auth: boolean | undefined;
+ authBadgeLabel: string;
+}
+
+const EndpointRow = React.memo(function EndpointRow({ method, path, description, auth, authBadgeLabel }: EndpointRowProps) {
+ return (
+  <div className="px-4 py-3 flex items-center gap-3 hover:bg-surface-1">
+  <span className={`px-2 py-0.5 rounded text-xs font-bold ${methodColor(method)}`}>
+   {method}
+  </span>
+  <code className="text-sm font-mono text-gray-800 dark:text-gray-200 flex-1">{path}</code>
+  <span className="text-xs text-gray-500 dark:text-gray-400">{description}</span>
+  {auth && (
+   <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">{authBadgeLabel}</span>
+  )}
+  </div>
+ );
+});
 
 export function ApiEndpointTable() {
  const t = useTranslations('developers');
@@ -36,16 +59,14 @@ export function ApiEndpointTable() {
    <div className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">{t('endpoints_no_match')}</div>
   )}
   {filtered.map((ep) => (
-   <div key={ep.method + "-" + ep.path} className="px-4 py-3 flex items-center gap-3 hover:bg-surface-1">
-   <span className={`px-2 py-0.5 rounded text-xs font-bold ${methodColor(ep.method)}`}>
-    {ep.method}
-   </span>
-   <code className="text-sm font-mono text-gray-800 dark:text-gray-200 flex-1">{ep.path}</code>
-   <span className="text-xs text-gray-500 dark:text-gray-400">{t(ep.descriptionKey)}</span>
-   {ep.auth && (
-    <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">{t('endpoints_auth_badge')}</span>
-   )}
-   </div>
+   <EndpointRow
+    key={ep.method + "-" + ep.path}
+    method={ep.method}
+    path={ep.path}
+    description={t(ep.descriptionKey)}
+    auth={ep.auth}
+    authBadgeLabel={t('endpoints_auth_badge')}
+   />
   ))}
   </div>
   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('endpoints_count', { count: filtered.length })}</p>

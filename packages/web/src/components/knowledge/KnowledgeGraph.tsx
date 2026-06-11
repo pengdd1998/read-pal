@@ -18,6 +18,86 @@ interface KnowledgeGraphProps {
  clickHintLabel: string;
 }
 
+interface EdgeLineProps {
+ edge: VisualizationEdge;
+ source: SimNode | undefined;
+ target: SimNode | undefined;
+ isHighlighted: boolean;
+ isDimmed: boolean;
+}
+
+const EdgeLine = React.memo(function EdgeLine({ edge, source, target, isHighlighted, isDimmed }: EdgeLineProps) {
+ if (!source || !target) return null;
+ if (!Number.isFinite(source.x) || !Number.isFinite(source.y) || !Number.isFinite(target.x) || !Number.isFinite(target.y)) return null;
+
+ return (
+  <line
+   x1={source.x}
+   y1={source.y}
+   x2={target.x}
+   y2={target.y}
+   stroke={isDimmed ? 'var(--gray-200)' : isHighlighted ? '#0d9488' : 'var(--gray-300)'}
+   strokeWidth={isHighlighted ? 2 : 1}
+   strokeOpacity={isDimmed ? 0.3 : 0.7}
+   markerEnd={isHighlighted ? 'url(#arrowhead)' : undefined}
+  />
+ );
+});
+
+interface NodeGroupProps {
+ node: SimNode;
+ isSelected: boolean;
+ isConnected: boolean;
+ hasSelection: boolean;
+ ariaLabel: string;
+ onNodeClick: (node: SimNode) => void;
+}
+
+const NodeGroup = React.memo(function NodeGroup({ node, isSelected, isConnected, hasSelection, ariaLabel, onNodeClick }: NodeGroupProps) {
+ const nx = Number.isFinite(node.x) ? node.x : 0;
+ const ny = Number.isFinite(node.y) ? node.y : 0;
+ if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) return null;
+ const isDimmed = hasSelection && !isConnected;
+ const radius = Math.max(6, Math.min(20, 6 + (node.weight ?? 1) * 2));
+ const color = getColor(node.group);
+ const freshness = node.freshness ?? 1.0;
+ const freshnessOpacity = freshness >= 0.7 ? 1.0 : freshness >= 0.3 ? 0.6 : 0.35;
+
+ return (
+  <g
+   role="button"
+   tabIndex={0}
+   aria-label={ariaLabel}
+   onClick={() => onNodeClick(node)}
+   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNodeClick(node); } }}
+   className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 rounded-full"
+   opacity={isDimmed ? 0.3 : freshnessOpacity}
+  >
+   {isSelected && (
+    <circle cx={nx} cy={ny} r={radius + 4} fill="none" stroke={color} strokeWidth={2} strokeDasharray="4 2" />
+   )}
+   <circle
+    cx={nx}
+    cy={ny}
+    r={radius}
+    fill={color}
+    fillOpacity={0.85}
+    stroke="white"
+    strokeWidth={1.5}
+   />
+   <text
+    x={nx}
+    y={ny + radius + 14}
+    textAnchor="middle"
+    className="text-[10px] fill-gray-700 dark:fill-gray-300 pointer-events-none"
+    fontWeight="500"
+   >
+    {node.label.length > 16 ? node.label.slice(0, 15) + '...' : node.label}
+   </text>
+  </g>
+ );
+});
+
 export const KnowledgeGraph = React.memo(React.forwardRef<SVGSVGElement, KnowledgeGraphProps>(
  function KnowledgeGraph(
  {
@@ -85,78 +165,29 @@ export const KnowledgeGraph = React.memo(React.forwardRef<SVGSVGElement, Knowled
    </defs>
 
    {/* Edges */}
-   {edges.map((edge) => {
-    const source = nodeMap.get(edge.source);
-    const target = nodeMap.get(edge.target);
-    if (!source || !target) return null;
-    if (!Number.isFinite(source.x) || !Number.isFinite(source.y) || !Number.isFinite(target.x) || !Number.isFinite(target.y)) return null;
-
-    const isHighlighted = selectedNode && connectedEdgeSet.has(edge);
-    const isDimmed = selectedNode && !isHighlighted;
-
-    return (
-    <line
+   {edges.map((edge) => (
+    <EdgeLine
      key={`${edge.source}-${edge.target}`}
-     x1={source.x}
-     y1={source.y}
-     x2={target.x}
-     y2={target.y}
-     stroke={isDimmed ? 'var(--gray-200)' : isHighlighted ? '#0d9488' : 'var(--gray-300)'}
-     strokeWidth={isHighlighted ? 2 : 1}
-     strokeOpacity={isDimmed ? 0.3 : 0.7}
-     markerEnd={isHighlighted ? 'url(#arrowhead)' : undefined}
+     edge={edge}
+     source={nodeMap.get(edge.source)}
+     target={nodeMap.get(edge.target)}
+     isHighlighted={!!selectedNode && connectedEdgeSet.has(edge)}
+     isDimmed={!!selectedNode && !connectedEdgeSet.has(edge)}
     />
-    );
-   })}
+   ))}
 
    {/* Nodes */}
-   {nodes.map((node) => {
-    const nx = Number.isFinite(node.x) ? node.x : 0;
-    const ny = Number.isFinite(node.y) ? node.y : 0;
-    if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) return null;
-    const isSelected = selectedNode?.id === node.id;
-    const isConnected = connectedNodeIds.has(node.id);
-    const isDimmed = selectedNode && !isConnected;
-    const radius = Math.max(6, Math.min(20, 6 + (node.weight ?? 1) * 2));
-    const color = getColor(node.group);
-    const freshness = node.freshness ?? 1.0;
-    const freshnessOpacity = freshness >= 0.7 ? 1.0 : freshness >= 0.3 ? 0.6 : 0.35;
-
-    return (
-    <g
+   {nodes.map((node) => (
+    <NodeGroup
      key={node.id}
-     role="button"
-     tabIndex={0}
-     aria-label={`${node.label}${node.bookTitle ? ` ${t('knowledge_from')} ${node.bookTitle}` : ''}`}
-     onClick={() => onNodeClick(node)}
-     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNodeClick(node); } }}
-     className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 rounded-full"
-     opacity={isDimmed ? 0.3 : freshnessOpacity}
-    >
-     {isSelected && (
-     <circle cx={nx} cy={ny} r={radius + 4} fill="none" stroke={color} strokeWidth={2} strokeDasharray="4 2" />
-     )}
-     <circle
-     cx={nx}
-     cy={ny}
-     r={radius}
-     fill={color}
-     fillOpacity={0.85}
-     stroke="white"
-     strokeWidth={1.5}
-     />
-     <text
-     x={nx}
-     y={ny + radius + 14}
-     textAnchor="middle"
-     className="text-[10px] fill-gray-700 dark:fill-gray-300 pointer-events-none"
-     fontWeight="500"
-     >
-     {node.label.length > 16 ? node.label.slice(0, 15) + '…' : node.label}
-     </text>
-    </g>
-    );
-   })}
+     node={node}
+     isSelected={selectedNode?.id === node.id}
+     isConnected={connectedNodeIds.has(node.id)}
+     hasSelection={!!selectedNode}
+     ariaLabel={`${node.label}${node.bookTitle ? ` ${t('knowledge_from')} ${node.bookTitle}` : ''}`}
+     onNodeClick={onNodeClick}
+    />
+   ))}
    </svg>
   )}
   </div>

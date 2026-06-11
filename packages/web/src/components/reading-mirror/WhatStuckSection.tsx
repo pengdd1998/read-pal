@@ -17,6 +17,32 @@ interface WhatStuckSectionProps {
   data: Record<string, unknown>;
 }
 
+interface StuckItemCardProps {
+  item: StuckItem;
+}
+
+const StuckItemCard = React.memo(function StuckItemCard({ item }: StuckItemCardProps) {
+  return (
+    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg p-3">
+      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.concept}</span>
+      <p className="text-xs text-gray-600 dark:text-gray-400 m-0 mt-1 leading-relaxed">{item.evidence}</p>
+    </div>
+  );
+});
+
+interface SlippingItemCardProps {
+  item: SlippingItem;
+}
+
+const SlippingItemCard = React.memo(function SlippingItemCard({ item }: SlippingItemCardProps) {
+  return (
+    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg p-3">
+      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.concept}</span>
+      <p className="text-xs text-gray-600 dark:text-gray-400 m-0 mt-1 leading-relaxed">{item.tip}</p>
+    </div>
+  );
+});
+
 export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionProps) {
   const t = useTranslations('readingMirror');
   const stuck = (data.stuck as StuckItem[]) || [];
@@ -62,10 +88,7 @@ export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionPr
             </h4>
             <div className="space-y-2">
               {stuck.map((item, i) => (
-                <div key={i} className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg p-3">
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.concept}</span>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 m-0 mt-1 leading-relaxed">{item.evidence}</p>
-                </div>
+                <StuckItemCard key={i} item={item} />
               ))}
             </div>
           </div>
@@ -79,10 +102,7 @@ export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionPr
             </h4>
             <div className="space-y-2">
               {slipping.map((item, i) => (
-                <div key={i} className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg p-3">
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.concept}</span>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 m-0 mt-1 leading-relaxed">{item.tip}</p>
-                </div>
+                <SlippingItemCard key={i} item={item} />
               ))}
             </div>
           </div>

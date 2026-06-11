@@ -16,6 +16,28 @@ interface Recommendation {
  urgency?: string;
 }
 
+interface RecommendationCardProps {
+ rec: Recommendation;
+ urgencyLabel: string;
+ byAuthorLabel: string;
+}
+
+const RecommendationCard = React.memo(function RecommendationCard({ rec, urgencyLabel, byAuthorLabel }: RecommendationCardProps) {
+ return (
+  <div className="rec-card">
+   <div className="rec-header">
+    <h4 className="rec-title">{rec.title}</h4>
+    <span className="rec-urgency">{urgencyLabel}</span>
+   </div>
+   {isDisplayableAuthor(rec.author) && <p className="rec-author">{byAuthorLabel}</p>}
+   {rec.connection_to_current && (
+    <div className="rec-connection">{rec.connection_to_current}</div>
+   )}
+   <p className="rec-reason">{rec.reason}</p>
+  </div>
+ );
+});
+
 export default React.memo(function RecommendationSection({ data }: RecommendationSectionProps) {
  const t = useTranslations('readingMirror');
  const recs = (data.recommendations as Recommendation[]) || [];
@@ -32,19 +54,13 @@ export default React.memo(function RecommendationSection({ data }: Recommendatio
  <div className="rec-section">
   {recs.map((rec) => {
   const urgency = rec.urgency || 'soon';
-  const label = t(`urgency_${urgency}`, { defaultValue: urgency });
   return (
-   <div key={rec.title + '-' + rec.author} className="rec-card">
-   <div className="rec-header">
-    <h4 className="rec-title">{rec.title}</h4>
-    <span className="rec-urgency">{label}</span>
-   </div>
-   {isDisplayableAuthor(rec.author) && <p className="rec-author">{t('by_author', { author: rec.author })}</p>}
-   {rec.connection_to_current && (
-    <div className="rec-connection">{rec.connection_to_current}</div>
-   )}
-   <p className="rec-reason">{rec.reason}</p>
-   </div>
+   <RecommendationCard
+    key={rec.title + '-' + rec.author}
+    rec={rec}
+    urgencyLabel={t(`urgency_${urgency}`, { defaultValue: urgency })}
+    byAuthorLabel={t('by_author', { author: rec.author })}
+   />
   );
   })}
 

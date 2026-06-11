@@ -22,6 +22,59 @@ interface Cluster {
  highlights: HighlightQuote[];
 }
 
+interface HighlightItemProps {
+ highlight: HighlightQuote;
+ bookId: string;
+ locale: string;
+ goToPassageLabel: string;
+}
+
+const HighlightItem = React.memo(function HighlightItem({ highlight, bookId, locale, goToPassageLabel }: HighlightItemProps) {
+ return (
+  <div className="highlight-item">
+   <blockquote className="highlight-quote">{highlight.quote}</blockquote>
+   {highlight.why_it_mattered && (
+    <p className="highlight-commentary">{highlight.why_it_mattered}</p>
+   )}
+   {highlight.page_location && (
+    <Link
+    href={`/${locale}/read/${bookId}?location=${encodeURIComponent(highlight.page_location)}`}
+    className="go-to-passage"
+    >
+    {goToPassageLabel}
+    </Link>
+   )}
+  </div>
+ );
+});
+
+interface ClusterCardProps {
+ cluster: Cluster;
+ bookId: string;
+ locale: string;
+ goToPassageLabel: string;
+}
+
+const ClusterCard = React.memo(function ClusterCard({ cluster, bookId, locale, goToPassageLabel }: ClusterCardProps) {
+ return (
+  <div className="cluster-card">
+   <h3 className="cluster-name">{cluster.name}</h3>
+   <p className="cluster-desc">{cluster.description}</p>
+   <div className="cluster-highlights">
+   {cluster.highlights?.map((h) => (
+    <HighlightItem
+     key={h.page_location ?? h.quote}
+     highlight={h}
+     bookId={bookId}
+     locale={locale}
+     goToPassageLabel={goToPassageLabel}
+    />
+   ))}
+   </div>
+  </div>
+ );
+});
+
 export default React.memo(function HighlightClusterSection({ data, bookId, locale }: HighlightClusterSectionProps) {
  const t = useTranslations('readingMirror');
  const clusters = (data.clusters as Cluster[]) || [];
@@ -37,28 +90,13 @@ export default React.memo(function HighlightClusterSection({ data, bookId, local
  return (
  <div className="highlights-section">
   {clusters.map((cluster) => (
-  <div key={cluster.name} className="cluster-card">
-   <h3 className="cluster-name">{cluster.name}</h3>
-   <p className="cluster-desc">{cluster.description}</p>
-   <div className="cluster-highlights">
-   {cluster.highlights?.map((h) => (
-    <div key={h.page_location ?? h.quote} className="highlight-item">
-    <blockquote className="highlight-quote">{h.quote}</blockquote>
-    {h.why_it_mattered && (
-     <p className="highlight-commentary">{h.why_it_mattered}</p>
-    )}
-    {h.page_location && (
-     <Link
-     href={`/${locale}/read/${bookId}?location=${encodeURIComponent(h.page_location)}`}
-     className="go-to-passage"
-     >
-     {t('go_to_passage')}
-     </Link>
-    )}
-    </div>
-   ))}
-   </div>
-  </div>
+  <ClusterCard
+   key={cluster.name}
+   cluster={cluster}
+   bookId={bookId}
+   locale={locale}
+   goToPassageLabel={t('go_to_passage')}
+  />
   ))}
 
   <style jsx>{`

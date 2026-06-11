@@ -9,6 +9,62 @@ interface ChapterItem {
  title: string;
 }
 
+interface ChapterItemRowProps {
+ chapter: ChapterItem;
+ index: number;
+ isCurrent: boolean;
+ theme: ReaderTheme;
+ onPageChange: (page: number) => void;
+ onClose: () => void;
+ chapterLabel: string;
+}
+
+const ChapterItemRow = React.memo(function ChapterItemRow({
+ chapter,
+ index,
+ isCurrent,
+ theme,
+ onPageChange,
+ onClose,
+ chapterLabel,
+}: ChapterItemRowProps) {
+ return (
+  <button
+   onClick={() => {
+    onPageChange(index);
+    onClose();
+   }}
+   className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-2 transition-colors ${
+    isCurrent
+     ? theme === 'dark'
+     ? 'bg-amber-900/30 text-amber-300'
+     : theme === 'sepia'
+      ? 'bg-amber-200/50 text-amber-900'
+      : 'bg-amber-100/60 text-amber-800'
+     : theme === 'dark'
+     ? 'text-gray-300 hover:bg-gray-700/60'
+     : theme === 'sepia'
+      ? 'text-amber-900/80 hover:bg-amber-100/40'
+      : 'text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800/50'
+   }`}
+  >
+   <span className={`flex-shrink-0 w-6 text-xs font-mono text-right ${
+    isCurrent ? 'font-bold' : 'opacity-40'
+   }`}>
+    {index + 1}
+   </span>
+   <span className={`truncate ${isCurrent ? 'font-semibold' : ''}`}>
+    {chapter.title || chapterLabel}
+   </span>
+   {isCurrent && (
+    <span className="flex-shrink-0 ml-auto">
+     <CheckCircle className="w-4 h-4 text-amber-500" />
+    </span>
+   )}
+  </button>
+ );
+});
+
 interface ChapterDropdownProps {
  currentPage: number;
  totalPages: number;
@@ -129,45 +185,18 @@ export const ChapterDropdown = React.memo(function ChapterDropdown({
     {t('toc_title')}
    </div>
 
-   {chapters.map((ch, i) => {
-    const isCurrent = i === currentPage;
-    return (
-    <button
+   {chapters.map((ch, i) => (
+    <ChapterItemRow
      key={ch.title + '-' + i}
-     onClick={() => {
-     onPageChange(i);
-     closeChapterMenu();
-     }}
-     className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-2 transition-colors ${
-     isCurrent
-      ? theme === 'dark'
-      ? 'bg-amber-900/30 text-amber-300'
-      : theme === 'sepia'
-       ? 'bg-amber-200/50 text-amber-900'
-       : 'bg-amber-100/60 text-amber-800'
-      : theme === 'dark'
-      ? 'text-gray-300 hover:bg-gray-700/60'
-      : theme === 'sepia'
-       ? 'text-amber-900/80 hover:bg-amber-100/40'
-       : 'text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800/50'
-     }`}
-    >
-     <span className={`flex-shrink-0 w-6 text-xs font-mono text-right ${
-     isCurrent ? 'font-bold' : 'opacity-40'
-     }`}>
-     {i + 1}
-     </span>
-     <span className={`truncate ${isCurrent ? 'font-semibold' : ''}`}>
-     {ch.title || t('reader_chapter', { num: i + 1 })}
-     </span>
-     {isCurrent && (
-     <span className="flex-shrink-0 ml-auto">
-      <CheckCircle className="w-4 h-4 text-amber-500" />
-     </span>
-     )}
-    </button>
-    );
-   })}
+     chapter={ch}
+     index={i}
+     isCurrent={i === currentPage}
+     theme={theme}
+     onPageChange={onPageChange}
+     onClose={closeChapterMenu}
+     chapterLabel={t('reader_chapter', { num: i + 1 })}
+    />
+   ))}
    </div>
   </>
   )}
