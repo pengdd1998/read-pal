@@ -129,7 +129,7 @@ export default function SettingsPage() {
           </div>
           <p className="text-lg font-semibold mb-4">{t('failed_load')}</p>
           {error && <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{error}</p>}
-          <button onClick={loadSettings} className="btn btn-primary min-h-[44px]">{t('retry')}</button>
+          <button type="button" onClick={loadSettings} className="btn btn-primary min-h-[44px]">{t('retry')}</button>
         </div>
       </div>
     );

@@ -101,6 +101,7 @@ export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCar
    {/* Header */}
    <div className="flex items-center justify-between mb-6">
    <button
+    type="button"
     onClick={() => window.history.back()}
     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400"
    >
@@ -133,6 +134,7 @@ export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCar
    {/* Review All button */}
    {totalDue > 0 && (
    <button
+    type="button"
     onClick={() => onStartReview(null)}
     className="w-full btn btn-primary mb-6 hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >

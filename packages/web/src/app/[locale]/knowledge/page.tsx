@@ -123,6 +123,7 @@ export default function KnowledgePage() {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => router.push('/library')}
             className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >

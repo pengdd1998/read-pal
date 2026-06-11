@@ -100,6 +100,7 @@ export default function BookClubDetailPage() {
    </Link>
    {!isAdmin && (
    <button
+    type="button"
     onClick={handleLeave}
     className="text-sm text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors min-h-[44px] inline-flex items-center px-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded"
    >
