@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 
 const SETTINGS_KEY_PREFIX = 'reader-settings';
@@ -69,11 +69,17 @@ export function useReaderSettings(bookId: string, loading: boolean) {
     }
   }, [bookId]);
 
-  // Persist settings when they change (after initial load)
+  // Persist settings when they change (debounced for slider perf)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
-    if (!loading) {
+    if (loading) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
       saveSettings(bookId, { fontSize, theme, quietMode, fontFamily, lineHeight });
-    }
+    }, 300);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [bookId, fontSize, theme, quietMode, fontFamily, lineHeight, loading]);
 
   return { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight };

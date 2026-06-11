@@ -141,14 +141,6 @@ def _render_bookmarks(bookmarks: list[Annotation]) -> list[str]:
     return sections
 
 
-def _group_by_type(annotations: list[Annotation]) -> tuple[list[Annotation], list[Annotation], list[Annotation]]:
-    """Split annotations into highlights, notes, and bookmarks."""
-    highlights = [a for a in annotations if match_annotation_type(a.type, AnnotationType.highlight)]
-    notes = [a for a in annotations if match_annotation_type(a.type, AnnotationType.note)]
-    bookmarks = [a for a in annotations if match_annotation_type(a.type, AnnotationType.bookmark)]
-    return highlights, notes, bookmarks
-
-
 _HTML_STYLES = (
     'body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:2rem;color:#333}'
     'h1{color:#1a1a1a} h2{color:#444;border-bottom:1px solid #eee;padding-bottom:.5rem}'

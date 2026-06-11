@@ -36,26 +36,14 @@ export function useReadingSession({
   // AbortController to cancel in-flight API requests on cleanup
   const abortRef = useRef<AbortController | null>(null);
 
-  // Keep refs in sync
+  // Keep refs in sync (single effect to reduce overhead)
   useEffect(() => {
     currentChapterRef.current = currentChapter;
-  }, [currentChapter]);
-
-  useEffect(() => {
     isPausedRef.current = isPaused;
-  }, [isPaused]);
-
-  useEffect(() => {
     scrollProgressRef.current = scrollProgress;
-  }, [scrollProgress]);
-
-  useEffect(() => {
     chaptersLengthRef.current = chaptersLength;
-  }, [chaptersLength]);
-
-  useEffect(() => {
     activeSecondsRef.current = activeSeconds;
-  }, [activeSeconds]);
+  }, [currentChapter, isPaused, scrollProgress, chaptersLength, activeSeconds]);
 
   // Start/end reading session lifecycle
   useEffect(() => {
