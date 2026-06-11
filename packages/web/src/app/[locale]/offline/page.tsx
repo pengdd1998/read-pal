@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -13,14 +13,45 @@ interface CachedBook {
   totalChapters: number;
 }
 
+interface CachedBookRowProps {
+  book: CachedBook;
+  chaptersCachedLabel: string;
+}
+
+const CachedBookRow = React.memo(function CachedBookRow({ book, chaptersCachedLabel }: CachedBookRowProps) {
+  return (
+   <Link
+    key={book.bookId}
+    href={`/read/${book.bookId}`}
+    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-surface-3 hover:border-amber-300 dark:hover:border-amber-700 transition-colors text-left"
+   >
+    <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+     <svg aria-hidden="true" className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+     </svg>
+    </div>
+    <div className="flex-1 min-w-0">
+     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+     {book.title}
+     </p>
+     <p className="text-xs text-gray-400 dark:text-gray-500">
+     {chaptersCachedLabel}
+     </p>
+    </div>
+   </Link>
+  );
+});
+
 export default function OfflinePage() {
   const t = useTranslations('offline');
   usePageTitle(t('page_title'));
   const [isOnline, setIsOnline] = useState(false);
   const [cachedBooks, setCachedBooks] = useState<CachedBook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadCachedBooks = useCallback(async (staleRef: { current: boolean }) => {
+    setError(null);
     try {
       const db = await openDB();
       const tx = db.transaction('bookContent', 'readonly');
@@ -59,7 +90,10 @@ export default function OfflinePage() {
       }
     } catch (err) {
       console.warn('OfflinePage: IndexedDB not available', err);
-      if (!staleRef.current) setLoading(false);
+      if (!staleRef.current) {
+        setError(t('load_error', { defaultValue: 'Failed to load cached books' }));
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -115,6 +149,17 @@ export default function OfflinePage() {
       ) : (
       <>
         <div className="text-center max-w-md w-full animate-fade-in">
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400 flex items-center justify-between" role="alert">
+              <span>{error}</span>
+              <button
+                onClick={() => { const staleRef = { current: false }; loadCachedBooks(staleRef); }}
+                className="ml-3 px-3 py-1 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-400"
+              >
+                {t('tryAgain', { defaultValue: 'Retry' })}
+              </button>
+            </div>
+          )}
           {/* Icon */}
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center">
             {isOnline ? (
@@ -169,25 +214,11 @@ export default function OfflinePage() {
                     </p>
                     <div className="space-y-2">
                       {cachedBooks.map((book) => (
-                        <Link
+                        <CachedBookRow
                           key={book.bookId}
-                          href={`/read/${book.bookId}`}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-surface-3 hover:border-amber-300 dark:hover:border-amber-700 transition-colors text-left"
-                        >
-                          <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
-                            <svg aria-hidden="true" className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                              {book.title}
-                            </p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">
-                              {t('chapters_cached', { cached: book.chaptersCached, total: book.totalChapters })}
-                            </p>
-                          </div>
-                        </Link>
+                          book={book}
+                          chaptersCachedLabel={t('chapters_cached', { cached: book.chaptersCached, total: book.totalChapters })}
+                        />
                       ))}
                     </div>
                   </div>

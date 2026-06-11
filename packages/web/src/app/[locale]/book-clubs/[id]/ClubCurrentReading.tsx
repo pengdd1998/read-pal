@@ -9,10 +9,11 @@ import type { ClubDetail, MemberProgress } from './types';
 interface ClubCurrentReadingProps {
  club: ClubDetail;
  progress: MemberProgress[];
+ progressError: string | null;
  isAdmin: boolean;
 }
 
-export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club, progress, isAdmin }: ClubCurrentReadingProps) {
+export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club, progress, progressError, isAdmin }: ClubCurrentReadingProps) {
  const t = useTranslations('bookClubs');
 
  return (
@@ -23,6 +24,9 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
   </h2>
   {club.currentBook ? (
   <div>
+   {progressError && (
+    <p className="text-xs text-red-500 dark:text-red-400 mb-2">{progressError}</p>
+   )}
    <div className="flex items-center gap-3 mb-4">
    <div className={`w-10 h-14 rounded bg-gradient-to-br ${getBookCoverColors(club.currentBook.title)[0]} flex items-center justify-center`}>
 	    <span className={`${getBookCoverColors(club.currentBook.title)[1]} text-xs font-bold`}>{getBookInitials(club.currentBook.title)}</span>

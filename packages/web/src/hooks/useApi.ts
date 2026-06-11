@@ -122,6 +122,9 @@ export function useBackgroundApi() {
           if (!cancelledRef.current && res.success && res.data != null) {
             setter(res.data);
           }
+        })
+        .catch((err) => {
+          console.warn('[useBackgroundApi]', url, err);
         });
     },
     [],

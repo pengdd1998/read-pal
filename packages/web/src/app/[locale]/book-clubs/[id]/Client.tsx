@@ -19,8 +19,8 @@ export default function BookClubDetailPage() {
 
  const router = useRouter();
  const { club, loading, error, setError } = useBookClubDetail(clubId);
- const { progress } = useBookClubProgress(clubId, club?.currentBookId);
- const { messages, newMessage, setNewMessage, sending, sendMessage, sendError, clearSendError } = useBookClubDiscussion(clubId);
+ const { progress, error: progressError } = useBookClubProgress(clubId, club?.currentBookId);
+ const { messages, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError } = useBookClubDiscussion(clubId);
 
  async function handleLeave() {
  if (!confirm(t('leaveConfirm'))) return;
@@ -76,7 +76,7 @@ export default function BookClubDetailPage() {
   </div>
 
   <ClubHeaderCard club={club} memberCount={memberCount} />
-  <ClubCurrentReading club={club} progress={progress} isAdmin={isAdmin} />
+  <ClubCurrentReading club={club} progress={progress} progressError={progressError} isAdmin={isAdmin} />
   <ClubMembersList members={club.clubMembers || []} memberCount={memberCount} />
   <ClubDiscussionPanel
    messages={messages}
@@ -85,6 +85,7 @@ export default function BookClubDetailPage() {
    onSend={sendMessage}
    sending={sending}
    currentUserRole={club.currentUserRole}
+   loadError={discussionError}
    sendError={sendError}
    onClearSendError={clearSendError}
   />
