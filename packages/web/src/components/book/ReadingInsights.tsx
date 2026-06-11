@@ -32,7 +32,7 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
  <div className="bg-surface-0 rounded-2xl border border-surface-3 mb-6 animate-slide-up stagger-4 overflow-hidden">
   <div className="px-5 py-4 border-b border-surface-2">
   <div className="flex items-center gap-2">
-   <svg
+   <svg aria-hidden="true"
    className="w-4 h-4 text-purple-500"
    fill="none"
    viewBox="0 0 24 24"

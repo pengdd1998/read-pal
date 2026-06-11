@@ -23,7 +23,7 @@ export default function KnowledgeLoading() {
    </div>
    {/* SVG area placeholder with fake nodes */}
    <div className="h-[420px] relative bg-gray-50/50 dark:bg-gray-800/50">
-    <svg className="w-full h-full" viewBox="0 0 600 420">
+    <svg aria-hidden="true" className="w-full h-full" viewBox="0 0 600 420">
     {/* Fake connection lines */}
     <line x1="120" y1="100" x2="300" y2="180" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.5" />
     <line x1="300" y1="180" x2="200" y2="300" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.5" />

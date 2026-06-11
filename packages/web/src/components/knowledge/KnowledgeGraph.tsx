@@ -131,7 +131,7 @@ export const KnowledgeGraph = React.memo(React.forwardRef<SVGSVGElement, Knowled
   </div>
   {loading ? (
    <div className="relative bg-gray-50/50 dark:bg-gray-800/50" style={{ height: dimensions.height || 420 }}>
-   <svg className="w-full h-full" viewBox="0 0 600 420">
+   <svg className="w-full h-full" viewBox="0 0 600 420" aria-hidden="true">
     {/* Skeleton connection lines */}
     <line x1="120" y1="100" x2="300" y2="180" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
     <line x1="300" y1="180" x2="200" y2="300" stroke="var(--gray-200)" strokeWidth="1.5" opacity="0.4" />
@@ -157,6 +157,8 @@ export const KnowledgeGraph = React.memo(React.forwardRef<SVGSVGElement, Knowled
    height={dimensions.height}
    viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
    className="w-full"
+   role="img"
+   aria-label={conceptMapLabel}
    >
    <defs>
     <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
