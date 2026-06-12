@@ -65,7 +65,7 @@ export const CollectionItem = React.memo(function CollectionItem({
   >
   <CollectionIcon icon={col.icon || 'folder'} color={col.color || 'rgb(245, 158, 11)'} />
   <span className="flex-1 text-left truncate">{col.name}</span>
-  <span className="text-[10px] text-gray-500">{col.bookCount ?? (col.bookIds || []).length}</span>
+  <span className="text-[10px] text-gray-500 dark:text-gray-400">{col.bookCount ?? (col.bookIds || []).length}</span>
   {/* Hover actions */}
   <div className="hidden md:group-hover:flex items-center gap-0.5">
    <button type="button"

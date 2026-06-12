@@ -115,7 +115,7 @@ export const ProgressSection = memo(function ProgressSection({
         <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-500 transition-all duration-500" style={{ width: `${progressPct}%` }} />
       </div>
       <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-500">{t('chaptersOf', { current: currentPage, total: totalPages })}</span>
+        <span className="text-gray-500 dark:text-gray-400">{t('chaptersOf', { current: currentPage, total: totalPages })}</span>
         <span className="font-semibold text-amber-600 dark:text-amber-400">{progressPct}%</span>
       </div>
       {isReading && estimatedMinutesLeft > 0 && (() => {
@@ -128,8 +128,8 @@ export const ProgressSection = memo(function ProgressSection({
         const finishStr = finishDate.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
         return (
           <div className="flex items-center justify-between mt-2">
-            <p className="text-xs text-gray-500">{t('remaining', { time: timeStr })}</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('remaining', { time: timeStr })}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {t('finishBy', { date: finishStr })} {readingWpm > 0 && <span className="text-teal-500">{t('wpm', { wpm: readingWpm })}</span>}
             </p>
           </div>
@@ -169,11 +169,11 @@ export const TagCloud = memo(function TagCloud({ tags, moreLabel }: {
         {tags.slice(0, 15).map((tag) => (
           <span key={tag.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-1 text-gray-600 hover:bg-amber-100 dark:hover:bg-amber-900/20 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-default">
             {tag.name}
-            <span className="text-[9px] text-gray-500">{tag.count}</span>
+            <span className="text-[9px] text-gray-500 dark:text-gray-400">{tag.count}</span>
           </span>
         ))}
         {tags.length > 15 && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs text-gray-500">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs text-gray-500 dark:text-gray-400">
             {moreLabel}
           </span>
         )}
@@ -197,7 +197,7 @@ export const PersonalReadingBookSection = memo(function PersonalReadingBookSecti
         </svg>
         <div>
           <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('personalReadingBook')}</h2>
-          <p className="text-xs text-gray-500">{t('personalReadingBookDesc')}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('personalReadingBookDesc')}</p>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -232,7 +232,7 @@ export const KnowledgeGraphCard = memo(function KnowledgeGraphCard({ t }: {
           <span className="text-2xl" aria-hidden="true">{'🗣️'}</span>
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('knowledgeGraph')}</h2>
-            <p className="text-xs text-gray-500">{t('knowledgeGraphDesc')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('knowledgeGraphDesc')}</p>
           </div>
         </div>
         <Link href="/knowledge" prefetch={false} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-500 hover:bg-violet-600 text-white transition-colors">
@@ -267,7 +267,7 @@ export const ActionButtons = memo(function ActionButtons({ bookId, bookStatus, s
       </Link>
       <Link
         href="/library" prefetch={false}
-        className="btn bg-surface-0 border border-surface-3 text-gray-700"
+        className="btn bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300"
       >
         {libraryLabel}
       </Link>

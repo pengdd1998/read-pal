@@ -139,7 +139,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
  return (
   <div className="text-center py-12 px-4">
   <div className="text-4xl opacity-30 mb-3">{'\u{1F4D1}'}</div>
-  <p className="text-sm text-gray-500">{t('outline_empty')}</p>
+  <p className="text-sm text-gray-500 dark:text-gray-400">{t('outline_empty')}</p>
   </div>
  );
  }
@@ -149,7 +149,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
   {/* Header */}
   <div className="px-4 py-3 border-b border-surface-3">
   <div className="flex items-center justify-between mb-2">
-   <h3 className="font-semibold text-sm text-gray-800">
+   <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">
    {t('outline_title')}
    </h3>
    <div className="flex gap-1">
@@ -200,7 +200,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
   <div className="flex-1 overflow-y-auto">
   {chapters.length === 0 ? (
    <div className="text-center py-8">
-   <p className="text-xs text-gray-500">{t('outline_no_match')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400">{t('outline_no_match')}</p>
    </div>
   ) : (
    <div className="divide-y divide-gray-100">

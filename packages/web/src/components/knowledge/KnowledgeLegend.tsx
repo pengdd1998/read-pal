@@ -10,7 +10,7 @@ export const KnowledgeLegend = React.memo(function KnowledgeLegend({ t }: Knowle
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
   <h3 className="font-semibold text-gray-900 mb-3">{t('legend_title')}</h3>
-  <div className="space-y-2 text-sm text-gray-600">
+  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
   <div className="flex items-center gap-2">
    <div className="w-3 h-3 rounded-full bg-teal-500" />
    {t('legend_weight')}

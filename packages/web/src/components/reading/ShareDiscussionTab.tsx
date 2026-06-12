@@ -172,7 +172,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
         {t('share_discussion_desc')}
       </p>
 

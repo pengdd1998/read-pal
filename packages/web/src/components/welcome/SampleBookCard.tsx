@@ -21,7 +21,7 @@ export const SampleBookCard = React.memo(function SampleBookCard({ bookTitle }: 
           <div className="font-semibold text-sm">
             {bookTitle || t('sample_book_title')}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
             {t('sample_book_ready')}
           </div>
         </div>

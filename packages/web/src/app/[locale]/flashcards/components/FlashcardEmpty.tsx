@@ -32,7 +32,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
     <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
      {step}
     </span>
-    <p className="text-sm text-gray-600">
+    <p className="text-sm text-gray-600 dark:text-gray-400">
      {t(`empty_step${step}` as 'empty_step1' | 'empty_step2' | 'empty_step3')}
     </p>
     </div>

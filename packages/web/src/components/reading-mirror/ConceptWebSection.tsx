@@ -59,7 +59,7 @@ interface PeripheralChipProps {
 
 const PeripheralChip = React.memo(function PeripheralChip({ concept }: PeripheralChipProps) {
   return (
-    <span className="px-2.5 py-1 rounded-full bg-surface-1 border border-surface-3 text-xs text-gray-600">
+    <span className="px-2.5 py-1 rounded-full bg-surface-1 border border-surface-3 text-xs text-gray-600 dark:text-gray-400">
       {concept}
     </span>
   );

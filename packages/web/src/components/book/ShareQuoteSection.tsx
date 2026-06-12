@@ -153,7 +153,7 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
     {t('shareAQuote')}
     </h3>
-    <p className="text-xs text-gray-500">
+    <p className="text-xs text-gray-500 dark:text-gray-400">
     {t('shareAQuoteDesc')}
     </p>
    </div>

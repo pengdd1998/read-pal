@@ -98,7 +98,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
    {t('weekly_summary_title')}
   </h3>
-  <span className="text-[10px] text-gray-500">
+  <span className="text-[10px] text-gray-500 dark:text-gray-400">
    {(() => {
     const d1 = new Date(data.weekStart + 'T00:00:00');
     const d2 = new Date(data.weekEnd + 'T00:00:00');
@@ -110,7 +110,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
 
   {isEmpty ? (
   <div className="text-center py-6">
-   <p className="text-xs text-gray-500">{t('weekly_summary_empty')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400">{t('weekly_summary_empty')}</p>
   </div>
   ) : (
   <>
@@ -173,7 +173,7 @@ const StatCard = React.memo(function StatCard({ label, value, unit }: { label: s
  return (
  <div className="text-center p-2 rounded-lg bg-surface-1">
   <div>
-  <span className="text-lg font-bold text-gray-900">{value}</span>
+  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{value}</span>
   {unit && <span className="text-[10px] text-gray-500 ml-1">{unit}</span>}
   </div>
   <p className="text-[10px] text-gray-500 mt-0.5">{label}</p>

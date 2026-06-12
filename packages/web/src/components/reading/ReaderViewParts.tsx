@@ -68,7 +68,7 @@ export const EmptyChapterState = React.memo(function EmptyChapterState() {
     <div className="text-center py-16 px-4">
       <svg
         aria-hidden="true"
-        className="w-10 h-10 mx-auto mb-4 text-gray-500"
+        className="w-10 h-10 mx-auto mb-4 text-gray-500 dark:text-gray-400"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

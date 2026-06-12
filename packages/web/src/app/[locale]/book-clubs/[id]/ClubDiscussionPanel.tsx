@@ -39,7 +39,7 @@ const MessageItem = React.memo(function MessageItem({
    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
     {msg.author?.name || fallbackName}
    </span>
-   <span className="text-[10px] text-gray-500">{formattedDate}</span>
+   <span className="text-[10px] text-gray-500 dark:text-gray-400">{formattedDate}</span>
    </div>
    <p className="text-sm text-gray-600 mt-0.5 whitespace-pre-wrap break-words">
    {msg.content}

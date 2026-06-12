@@ -22,7 +22,7 @@ export const LanguageSection = React.memo(function LanguageSection({ onLanguageC
         </div>
         <div>
           <h2 className="text-lg font-semibold">{t('language_title')}</h2>
-          <p className="text-xs text-gray-500">{t('language_desc')}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('language_desc')}</p>
         </div>
       </div>
       <div className="bg-surface-0 rounded-2xl border border-surface-3 p-4">

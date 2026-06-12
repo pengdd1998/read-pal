@@ -73,7 +73,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
  return (
  <div className="card">
   <div className="flex items-center justify-between mb-3">
-  <h3 className="text-sm font-semibold text-gray-900">{t('recommended_title')}</h3>
+  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('recommended_title')}</h3>
   <Link href="/search" prefetch={false} className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline">{t('see_all')}</Link>
   </div>
   <div className="space-y-2">

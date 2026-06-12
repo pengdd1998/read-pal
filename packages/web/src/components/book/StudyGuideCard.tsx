@@ -62,7 +62,7 @@ export const StudyGuideCard = React.memo(function StudyGuideCard({
    <h2 className="font-semibold text-gray-900 dark:text-gray-100">
    {t('studyGuide')}
    </h2>
-   <p className="text-xs text-gray-500">{t('studyGuideDesc')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400">{t('studyGuideDesc')}</p>
   </div>
   </div>
   <div className="flex items-center gap-3">

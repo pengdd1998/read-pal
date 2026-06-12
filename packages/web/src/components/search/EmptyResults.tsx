@@ -18,7 +18,7 @@ export const EmptyResults = React.memo(function EmptyResults({ query }: EmptyRes
   </svg>
   </div>
   <p className="text-gray-500 mb-1">{t('no_results', { query })}</p>
-  <p className="text-sm text-gray-500">{t('try_different')}</p>
+  <p className="text-sm text-gray-500 dark:text-gray-400">{t('try_different')}</p>
  </div>
  );
 });

@@ -185,7 +185,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
 	   ))}
 	  </div>
   ) : (
-  <p className="text-sm text-gray-500">
+  <p className="text-sm text-gray-500 dark:text-gray-400">
    {t('api_key_empty')}
   </p>
   )}

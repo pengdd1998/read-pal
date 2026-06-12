@@ -153,7 +153,7 @@ function AuthPageContent() {
 
   <AuthForm mode={mode} onSuccess={handleSuccess} />
 
-  <p className="mt-6 text-center text-xs text-gray-500">
+  <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
    {t('terms_agreement')}
   </p>
   </div>
@@ -166,7 +166,7 @@ export default function AuthPage() {
  return (
  <div className="min-h-screen"><Suspense fallback={
   <div className="min-h-[80vh] flex items-center justify-center">
-  <div className="flex items-center gap-2 text-gray-500">
+  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
    <LoadingSpinner />
    {tc('loading')}
   </div>

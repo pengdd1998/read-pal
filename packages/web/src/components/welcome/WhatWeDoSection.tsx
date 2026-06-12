@@ -58,7 +58,7 @@ export const WhatWeDoSection = React.memo(function WhatWeDoSection({ visible }: 
             <span className="mt-0.5"><FeatureIcon type={item.icon} /></span>
             <div>
               <div className="font-medium text-sm">{t(item.titleKey)}</div>
-              <div className="text-xs text-gray-500">{t(item.descKey)}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t(item.descKey)}</div>
             </div>
           </div>
         ))}

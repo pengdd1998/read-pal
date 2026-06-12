@@ -44,7 +44,7 @@ const SessionRow = React.memo(function SessionRow({
   <span className="text-sm text-gray-600 dark:text-gray-300 flex-1 truncate">
   {session.bookTitle || (session.startedAt ? new Date(session.startedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric' }) : '—')}
   </span>
-  <span className="text-xs text-gray-500">
+  <span className="text-xs text-gray-500 dark:text-gray-400">
   {t('session_pages', { count: session.pagesRead })}
   </span>
   <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">

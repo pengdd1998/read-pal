@@ -55,17 +55,17 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
   )}
   <div className="text-sm space-y-1">
   <div>
-   <span className="text-gray-500">{t('connections_label')} </span>
+   <span className="text-gray-500 dark:text-gray-400">{t('connections_label')} </span>
    <span className="font-medium text-gray-900 dark:text-gray-100">{connectedEdges.length}</span>
   </div>
   {(node.annotationCount ?? 0) > 0 && (
    <div>
-   <span className="text-gray-500">{t('annotation_count_label')} </span>
+   <span className="text-gray-500 dark:text-gray-400">{t('annotation_count_label')} </span>
    <span className="font-medium text-gray-900 dark:text-gray-100">{node.annotationCount}</span>
    </div>
   )}
   <div>
-   <span className="text-gray-500">{t('freshness_label')} </span>
+   <span className="text-gray-500 dark:text-gray-400">{t('freshness_label')} </span>
    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${freshnessColorClass}`}>
    {t(freshnessLabel)}
    </span>
@@ -73,7 +73,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
   </div>
   {node.sourceBookIds && node.sourceBookIds.length > 0 && (
   <div className="mt-2">
-   <span className="text-xs text-gray-500">{t('source_books_label')}</span>
+   <span className="text-xs text-gray-500 dark:text-gray-400">{t('source_books_label')}</span>
    <div className="flex flex-wrap gap-1 mt-1">
    {node.sourceBookIds.map((bid) => (
     <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-surface-1 text-gray-600 rounded">
@@ -91,7 +91,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
    return (
     <div key={e.source + "-" + e.target + "-" + e.label} className="flex items-center gap-2 text-sm">
     <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-    <span className="text-gray-600">{e.label}</span>
+    <span className="text-gray-600 dark:text-gray-400">{e.label}</span>
     <span className="text-gray-900 dark:text-gray-100 font-medium">{otherNode?.label || otherId}</span>
     </div>
    );

@@ -83,7 +83,7 @@ export default React.memo(function SectionNav({
     />
    ) : (
     <div className="text-center py-20">
-    <p className="text-gray-500">{t('noContent')}</p>
+    <p className="text-gray-500 dark:text-gray-400">{t('noContent')}</p>
     </div>
    )}
    </div>

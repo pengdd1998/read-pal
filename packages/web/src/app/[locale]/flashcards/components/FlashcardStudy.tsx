@@ -144,7 +144,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
 
    {currentCard.repetitionCount > 0 && (
    <div className="flex items-center justify-center gap-1 mt-3">
-    <span className="text-[10px] text-gray-500">{t('reviewed_times', { count: currentCard.repetitionCount })}</span>
+    <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('reviewed_times', { count: currentCard.repetitionCount })}</span>
    </div>
    )}
   </div>
@@ -153,7 +153,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   {/* Rating buttons */}
   {showAnswer && (
   <div className="animate-slide-up">
-   <p className="text-xs text-gray-500 text-center mb-3">{t('how_well')} <span className="hidden sm:inline text-gray-500">{t('keys_hint')}</span></p>
+   <p className="text-xs text-gray-500 text-center mb-3">{t('how_well')} <span className="hidden sm:inline text-gray-500 dark:text-gray-400">{t('keys_hint')}</span></p>
    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
    {RATINGS.map(({ value, labelKey, hint, color, focusRing }) => (
     <button type="button"
@@ -182,7 +182,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('reviewed_label')}</div>
    </div>
    <div>
-   <div className="text-lg font-bold text-gray-600">{stats.total}</div>
+   <div className="text-lg font-bold text-gray-600 dark:text-gray-400">{stats.total}</div>
    <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('total_label')}</div>
    </div>
   </div>

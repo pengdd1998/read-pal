@@ -15,7 +15,7 @@ export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
  return (
  <section>
   <h2 className="text-xl font-bold font-serif text-gray-900 mb-4">{t('webhooks_title')}</h2>
-  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 space-y-4 text-sm text-gray-700">
+  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
   <p>
    {t('webhooks_intro', { code: 'POST' })}
   </p>

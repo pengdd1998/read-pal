@@ -31,7 +31,7 @@ export const DeveloperSection = React.memo(function DeveloperSection({ settings 
    </div>
    <div>
     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('zotero_title')}</h3>
-    <p className="text-xs text-gray-500">{t('zotero_desc')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400">{t('zotero_desc')}</p>
    </div>
    </div>
    <ZoteroSection initialSettings={settings} />
@@ -43,13 +43,13 @@ export const DeveloperSection = React.memo(function DeveloperSection({ settings 
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6">
    <div className="flex items-center gap-3 mb-4">
    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-100 dark:from-gray-800 to-slate-200 dark:to-slate-700 flex items-center justify-center">
-    <svg aria-hidden="true" className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg aria-hidden="true" className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
     </svg>
    </div>
    <div>
     <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('developer_api_title')}</h3>
-    <p className="text-xs text-gray-500">{t('developer_api_desc')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400">{t('developer_api_desc')}</p>
    </div>
    </div>
    <ApiKeysSection />

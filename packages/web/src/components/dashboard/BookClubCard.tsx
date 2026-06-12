@@ -62,7 +62,7 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
    )}
   </div>
   <div className="flex items-center gap-3 mt-0.5">
-   <span className="text-xs text-gray-500">
+   <span className="text-xs text-gray-500 dark:text-gray-400">
    {(club.clubMembers || []).length} {(club.clubMembers || []).length !== 1 ? t('memberCountPlural', { count: (club.clubMembers || []).length }) : t('memberCount', { count: 1 })}
    </span>
    {club.currentBookId && (

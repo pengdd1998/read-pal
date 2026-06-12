@@ -90,7 +90,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
 
  return (
  <div className="space-y-3">
-  <p className="text-xs text-gray-500">
+  <p className="text-xs text-gray-500 dark:text-gray-400">
   {t('share_citation_desc')}
   </p>
 

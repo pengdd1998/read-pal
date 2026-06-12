@@ -114,7 +114,7 @@ export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', 
           />
 
           <div className="flex items-center justify-between animate-slide-up">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {filteredBooks.length === books.length
                 ? t('books_in_library', { count: books.length })
                 : t('books_of_total', { filtered: filteredBooks.length, total: books.length })}

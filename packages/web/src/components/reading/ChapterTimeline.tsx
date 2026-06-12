@@ -165,7 +165,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   </div>
 
   {/* Legend */}
-  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-[10px] text-gray-500">
+  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400">
    <span className="flex items-center gap-1">
    <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" /> {t('timeline_highlights')}
    </span>

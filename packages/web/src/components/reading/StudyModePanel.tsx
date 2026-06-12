@@ -166,7 +166,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {loading && (
    <div className="flex items-center justify-center py-8">
    <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
-   <span className="ml-2 text-sm text-gray-500">{t('generating')}</span>
+   <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">{t('generating')}</span>
    </div>
   )}
 
@@ -221,7 +221,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {!loading && activeTab === 'mastery' && !mastery && (
    <div className="text-center py-8">
     <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin mx-auto mb-3" />
-    <p className="text-sm text-gray-500">{t('loading_mastery')}</p>
+    <p className="text-sm text-gray-500 dark:text-gray-400">{t('loading_mastery')}</p>
    </div>
   )}
   {!loading && activeTab === 'mastery' && mastery && (
@@ -248,13 +248,13 @@ export const StudyModePanel = React.memo(function StudyModePanel({
     <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
      {mastery.chaptersCompleted}/{mastery.totalChapters}
     </div>
-    <div className="text-xs text-gray-500">{t('chapters_read')}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400">{t('chapters_read')}</div>
     </div>
     <div className="bg-surface-1 rounded-lg p-3">
     <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
      {mastery.cardsDue}
     </div>
-    <div className="text-xs text-gray-500">{t('cards_due')}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400">{t('cards_due')}</div>
     </div>
    </div>
 

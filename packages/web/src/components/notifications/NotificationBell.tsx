@@ -226,7 +226,7 @@ export const NotificationBell = memo(function NotificationBell() {
 
           <div className="max-h-80 overflow-y-auto" role="list" aria-label={t('notifications')}>
             {notifications.length === 0 ? (
-              <div className="p-6 text-center text-sm text-gray-500">
+              <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {loadingNotifs ? t('loading') : t('notifications_no_notifications')}
               </div>
             ) : (

@@ -154,7 +154,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
       <div className="fixed right-0 top-0 h-full w-80 sm:w-96 bg-surface-0 border-l border-surface-3 z-50 flex flex-col shadow-xl animate-slide-in-right">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-surface-3">
-          <h3 className="text-sm font-semibold text-gray-800">
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
             {t('reading_plan_title')}
           </h3>
           <button
@@ -163,7 +163,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
             className="p-1 rounded-lg hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
             aria-label={t('close_label')}
           >
-            <svg aria-hidden="true" className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

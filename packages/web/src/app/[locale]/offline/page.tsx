@@ -35,7 +35,7 @@ const CachedBookRow = React.memo(function CachedBookRow({ book, chaptersCachedLa
      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
      {book.title}
      </p>
-     <p className="text-xs text-gray-500">
+     <p className="text-xs text-gray-500 dark:text-gray-400">
      {chaptersCachedLabel}
      </p>
     </div>
@@ -147,7 +147,7 @@ export default function OfflinePage() {
       {loading ? (
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin" />
-          <p className="text-sm text-gray-500">{t('loading')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('loading')}</p>
         </div>
       ) : (
       <>

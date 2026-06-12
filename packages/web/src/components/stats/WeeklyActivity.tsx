@@ -14,14 +14,14 @@ const WeeklyBar = React.memo(function WeeklyBar({ day, maxPages, locale }: Weekl
  const height = Math.max(4, (day.pages / maxPages) * 100);
  return (
  <div className="flex-1 flex flex-col items-center gap-1">
-  <span className="text-[10px] font-medium text-gray-500">{day.pages}</span>
+  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{day.pages}</span>
   <div className="w-full bg-surface-1 rounded-t-sm relative" style={{ height: '100%' }}>
   <div
    className="absolute bottom-0 w-full bg-gradient-to-t from-amber-500 to-amber-400 rounded-t-sm transition-all duration-500"
    style={{ height: `${height}%` }}
   />
   </div>
-  <span className="text-[10px] text-gray-500">{getDayName(day.day, locale)}</span>
+  <span className="text-[10px] text-gray-500 dark:text-gray-400">{getDayName(day.day, locale)}</span>
  </div>
  );
 });

@@ -57,7 +57,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
 
   {/* Font size */}
   <div className="flex items-center justify-between mb-5">
-   <span className="text-sm text-gray-600">{t('settings_size')}</span>
+   <span className="text-sm text-gray-600 dark:text-gray-400">{t('settings_size')}</span>
    <div className="flex items-center gap-3">
    <button type="button"
     onClick={() => onFontSizeChange(Math.max(12, fontSize - 2))}
@@ -79,7 +79,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
 
   {/* Line height */}
   <div className="flex items-center justify-between mb-5">
-   <span className="text-sm text-gray-600">{t('settings_line_height')}</span>
+   <span className="text-sm text-gray-600 dark:text-gray-400">{t('settings_line_height')}</span>
    <div className="flex items-center gap-3">
    <button type="button"
     onClick={() => onLineHeightChange(Math.max(1.2, +(lineHeight - 0.15).toFixed(2)))}
@@ -121,7 +121,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
 
   {/* Theme */}
   <div className="flex items-center justify-between">
-   <span className="text-sm text-gray-600">{t('settings_theme')}</span>
+   <span className="text-sm text-gray-600 dark:text-gray-400">{t('settings_theme')}</span>
    <div className="flex gap-2">
    {(['light', 'sepia', 'dark'] as const).map((themeKey) => (
     <button type="button"
@@ -142,7 +142,7 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
   {/* Quiet mode */}
   <div className="flex items-center justify-between mt-5">
    <div>
-   <span className="text-sm text-gray-600">{t('settings_quiet_mode')}</span>
+   <span className="text-sm text-gray-600 dark:text-gray-400">{t('settings_quiet_mode')}</span>
    <p className="text-[10px] text-gray-500 mt-0.5">{t('settings_quiet_desc')}</p>
    </div>
    <button type="button"

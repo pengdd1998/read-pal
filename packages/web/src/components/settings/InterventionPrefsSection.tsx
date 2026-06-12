@@ -173,7 +173,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
   </div>
   <div>
    <h2 className="text-lg font-semibold">{t('intervention_prefs_title')}</h2>
-   <p className="text-xs text-gray-500">
+   <p className="text-xs text-gray-500 dark:text-gray-400">
    {t('intervention_prefs_desc')}
    </p>
   </div>

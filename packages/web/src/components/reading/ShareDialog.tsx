@@ -97,7 +97,7 @@ export const ShareDialog = React.memo(function ShareDialog({
   <div className="flex-1 overflow-y-auto p-5 space-y-4">
    {/* Book info */}
    {bookTitle && (
-   <p className="text-sm text-gray-500">
+   <p className="text-sm text-gray-500 dark:text-gray-400">
     {bookTitle}{author ? ` ${t('share_by_author', { author })}` : ''}
    </p>
    )}

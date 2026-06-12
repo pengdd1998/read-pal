@@ -52,7 +52,7 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
         )}
         {engagementScore != null && (
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500">{t('engagement')}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{t('engagement')}</span>
             <div className="flex gap-0.5">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div

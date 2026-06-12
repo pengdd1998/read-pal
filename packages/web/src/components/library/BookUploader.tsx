@@ -194,7 +194,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
     />
     </div>
     <div className="flex items-center justify-between mt-2">
-    <p className="text-xs text-gray-500">
+    <p className="text-xs text-gray-500 dark:text-gray-400">
      {uploadProgress < 100 ? t('upload_progress', { progress: uploadProgress }) : t('upload_processing')}
     </p>
     <button type="button"

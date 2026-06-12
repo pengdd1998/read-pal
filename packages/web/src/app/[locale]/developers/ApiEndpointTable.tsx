@@ -19,7 +19,7 @@ const EndpointRow = React.memo(function EndpointRow({ method, path, description,
    {method}
   </span>
   <code className="text-sm font-mono text-gray-800 flex-1">{path}</code>
-  <span className="text-xs text-gray-500">{description}</span>
+  <span className="text-xs text-gray-500 dark:text-gray-400">{description}</span>
   {auth && (
    <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">{authBadgeLabel}</span>
   )}

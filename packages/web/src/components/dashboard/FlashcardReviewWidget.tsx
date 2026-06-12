@@ -71,10 +71,10 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
    {stats.due > 0 ? (
     <>
     <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{t('due_now', { count: stats.due })}</span>
-    <span className="text-xs text-gray-500">{t('reviewed', { count: stats.reviewed })}</span>
+    <span className="text-xs text-gray-500 dark:text-gray-400">{t('reviewed', { count: stats.reviewed })}</span>
     </>
    ) : (
-    <span className="text-xs text-gray-500">{t('all_caught_up')}</span>
+    <span className="text-xs text-gray-500 dark:text-gray-400">{t('all_caught_up')}</span>
    )}
    </div>
   </div>

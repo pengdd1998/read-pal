@@ -53,7 +53,7 @@ const ClubDiscoveryCard = React.memo(function ClubDiscoveryCard({
     )}
     </div>
    </div>
-   <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+   <div className="flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-gray-400">
     <span>{memberLabel}</span>
     {club.maxMembers != null && <span>{maxLabel}</span>}
    </div>

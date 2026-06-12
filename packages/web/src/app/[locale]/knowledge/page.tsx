@@ -120,8 +120,8 @@ export default function KnowledgePage() {
       <div className="border-b border-surface-3 bg-surface-0">
         <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{t('header_title')}</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('header_title')}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {t('header_stats', { nodes: nodes.length, edges: edges.length })}
             </p>
           </div>

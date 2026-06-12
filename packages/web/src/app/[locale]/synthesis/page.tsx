@@ -97,10 +97,10 @@ export default function SynthesisPage() {
  <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
   {/* Header */}
   <div className="mb-8">
-  <h1 className="text-2xl font-bold text-gray-900">
+  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
    {t('page_title')}
   </h1>
-  <p className="mt-1 text-sm text-gray-500">
+  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
    {t('page_subtitle')}
   </p>
   </div>

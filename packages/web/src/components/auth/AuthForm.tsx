@@ -237,7 +237,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
     <div className="w-full border-t border-surface-3" />
    </div>
    <div className="relative flex justify-center text-xs">
-    <span className="bg-surface-0 px-2 text-gray-500">{t('or_divider')}</span>
+    <span className="bg-surface-0 px-2 text-gray-500 dark:text-gray-400">{t('or_divider')}</span>
    </div>
    </div>
    <a

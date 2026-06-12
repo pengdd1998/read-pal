@@ -14,7 +14,7 @@ const ThemeItem = React.memo(function ThemeItem({ theme, t }: { theme: CrossBook
       <div className="w-2 h-2 rounded-full bg-violet-500 mt-1.5 shrink-0" />
       <div>
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{theme.concept}</p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {t('found_in_books', { count: theme.bookTitles.length })}
         </p>
       </div>

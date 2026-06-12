@@ -85,12 +85,12 @@ const MemoryBookCard = React.memo(function MemoryBookCard({ mb, locale, dateLabe
               <span className="text-xs text-amber-600 dark:text-amber-400">{highlightsLabel}</span>
               <span className="text-xs text-teal-600 dark:text-teal-400">{notesLabel}</span>
               {durationStr && (
-                <span className="text-xs text-gray-500">{durationStr}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{durationStr}</span>
               )}
             </div>
           )}
         </div>
-        <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </div>
@@ -114,7 +114,7 @@ const EligibleBookRow = React.memo(function EligibleBookRow({ book, isGenerating
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{book.title}</h3>
-        <p className="text-xs text-gray-500">{authorPrefix}{completeLabel}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{authorPrefix}{completeLabel}</p>
       </div>
       <button type="button"
         onClick={() => onGenerate(book.id)}

@@ -39,7 +39,7 @@ export const KnowledgeGaps = React.memo(function KnowledgeGaps({ gaps, t }: Know
     <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
       <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('knowledge_gaps_title')}</h3>
       {gaps.length === 0 ? (
-        <p className="text-sm text-gray-500">{t('knowledge_gaps_empty')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t('knowledge_gaps_empty')}</p>
       ) : (
         <div className="space-y-3">
           {gaps.map((gap) => (

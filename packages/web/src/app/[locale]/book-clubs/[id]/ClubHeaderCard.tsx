@@ -34,7 +34,7 @@ export const ClubHeaderCard = React.memo(function ClubHeaderCard({ club, memberC
     <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
     {club.name}
     {club.isPrivate && (
-     <svg aria-hidden="true" className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+     <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
      </svg>
     )}
@@ -60,10 +60,10 @@ export const ClubHeaderCard = React.memo(function ClubHeaderCard({ club, memberC
    aria-label={t('copy_invite_code')}
    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 hover:border-primary-400 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
   >
-   <code className="text-sm font-mono font-bold tracking-widest text-gray-700">
+   <code className="text-sm font-mono font-bold tracking-widest text-gray-700 dark:text-gray-300">
    {club.inviteCode}
    </code>
-   <span className="text-[10px] text-gray-500">
+   <span className="text-[10px] text-gray-500 dark:text-gray-400">
    {copiedCode ? t('copied') : t('copy')}
    </span>
   </button>

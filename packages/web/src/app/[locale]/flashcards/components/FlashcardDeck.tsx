@@ -59,7 +59,7 @@ const DeckCard = React.memo(function DeckCard({
     </h3>
     {isDisplayableAuthor(deck.author) && <p className="text-xs text-gray-500 truncate">{deck.author}</p>}
     <div className="flex items-center gap-3 mt-1.5">
-     <span className="text-xs text-gray-500">{cardsCount}</span>
+     <span className="text-xs text-gray-500 dark:text-gray-400">{cardsCount}</span>
      {deck.due > 0 ? (
      <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{dueCount}</span>
      ) : (
@@ -126,7 +126,7 @@ export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCar
     <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('reviewed_label')}</div>
     </div>
     <div>
-    <div className="text-2xl font-bold text-gray-600">{totalCards}</div>
+    <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{totalCards}</div>
     <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('total_label')}</div>
     </div>
    </div>

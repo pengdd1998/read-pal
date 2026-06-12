@@ -139,7 +139,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
   <div className="flex items-center justify-between mb-5">
    <div>
     <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('free_books_title')}</h2>
-    <p className="text-sm text-gray-500">{t('free_books_desc')}</p>
+    <p className="text-sm text-gray-500 dark:text-gray-400">{t('free_books_desc')}</p>
    </div>
    <div className="flex items-center gap-3">
     <button type="button"

@@ -76,7 +76,7 @@ function ResetPasswordForm() {
    <div className="inline-flex w-12 h-12 rounded-xl bg-primary-600 items-center justify-center text-white text-xl font-bold mb-4 shadow-soft" aria-hidden="true">
    r
    </div>
-   <h1 className="text-2xl font-bold text-gray-900">
+   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
    {success ? t('reset_title_success') : t('reset_title_default')}
    </h1>
    <p className="text-sm text-gray-600 mt-1">
@@ -94,7 +94,7 @@ function ResetPasswordForm() {
      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
     </svg>
     </div>
-    <p className="text-sm text-gray-600">
+    <p className="text-sm text-gray-600 dark:text-gray-400">
     {t('reset_success_text')}{' '}
     <Link href="/auth?mode=login" className="text-amber-700 hover:text-amber-800 dark:text-amber-400 font-medium">
      {t('reset_sign_in_link')}
@@ -170,7 +170,7 @@ function ResetPasswordForm() {
    )}
   </div>
 
-  <p className="mt-6 text-center text-sm text-gray-600">
+  <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
    <Link href="/auth?mode=login" className="text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 font-medium">
    {t('back_to_login')}
    </Link>
@@ -185,7 +185,7 @@ export default function ResetPasswordPage() {
  return (
  <Suspense fallback={
   <div className="min-h-[80vh] flex items-center justify-center">
-  <div className="flex items-center gap-2 text-gray-500">
+  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
    <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
    {t('loading')}
   </div>

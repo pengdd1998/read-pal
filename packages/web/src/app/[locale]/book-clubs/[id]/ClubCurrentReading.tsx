@@ -33,7 +33,7 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
    </div>
    <div>
     <p className="font-semibold text-gray-900 dark:text-gray-100">{club.currentBook.title}</p>
-    {isDisplayableAuthor(club.currentBook.author) && <p className="text-sm text-gray-500">{club.currentBook.author}</p>}
+    {isDisplayableAuthor(club.currentBook.author) && <p className="text-sm text-gray-500 dark:text-gray-400">{club.currentBook.author}</p>}
    </div>
    </div>
 
@@ -62,7 +62,7 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
   </div>
   ) : (
   <div className="text-center py-6">
-   <p className="text-sm text-gray-500">
+   <p className="text-sm text-gray-500 dark:text-gray-400">
    {isAdmin ? t('setBookPrompt') : t('noBookSelected')}
    </p>
    {isAdmin && (

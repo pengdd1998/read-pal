@@ -23,7 +23,7 @@ const CachedBookRow = React.memo(function CachedBookRow({ cb, onRemove, removeLa
     <div className="flex items-center justify-between py-1.5">
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true" />
-        <span className="text-sm text-gray-700">{cb.title || cb.bookId}</span>
+        <span className="text-sm text-gray-700 dark:text-gray-300">{cb.title || cb.bookId}</span>
       </div>
       <button type="button"
         onClick={() => onRemove(cb.bookId)}
@@ -215,7 +215,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         <div className="pt-4 border-t border-surface-2">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('offline_cached_books')}</h3>
           {cachedBooks.length === 0 ? (
-            <p className="text-xs text-gray-500">{t('offline_no_cached')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('offline_no_cached')}</p>
           ) : (
             <div className="space-y-2">
               {cachedBooks.map((cb) => (
@@ -265,7 +265,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
                   />
                 ))}
               {books.filter((b) => !cachedIds.has(b.id)).length === 0 && (
-                <p className="text-xs text-gray-500">{t('offline_all_cached')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('offline_all_cached')}</p>
               )}
             </div>
             {selectedBooks.size > 0 && (

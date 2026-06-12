@@ -139,7 +139,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  return (
  <div ref={ref} className="absolute right-0 top-full mt-1 z-50 w-56 bg-surface-0 border border-surface-3 rounded-xl shadow-lg animate-slide-up overflow-hidden">
   <div className="px-3 py-2 border-b border-surface-2">
-  <p className="text-xs font-semibold text-gray-500">{t('collection_picker_title')}</p>
+  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('collection_picker_title')}</p>
   </div>
 
   {loading ? (

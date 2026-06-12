@@ -151,7 +151,7 @@ function StreakCalendarInner() {
   <SkeletonHeatmap />
   ) : error ? (
   <div className="h-32 flex flex-col items-center justify-center gap-2">
-   <p className="text-sm text-gray-500">{error}</p>
+   <p className="text-sm text-gray-500 dark:text-gray-400">{error}</p>
    <button type="button" onClick={fetchData} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
   </div>
   ) : (
@@ -191,7 +191,7 @@ function StreakCalendarInner() {
 
   {/* Legend */}
   {!loading && !error && (
-  <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-500">
+  <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-500 dark:text-gray-400">
    <span>{t('heatmap_less')}</span>
    <div className="w-[13px] h-[13px] rounded-[3px] bg-surface-1" />
    <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-200 dark:bg-amber-900/50" />
