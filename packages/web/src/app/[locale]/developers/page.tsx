@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -18,6 +18,8 @@ import { ApiCodeExamples } from './ApiCodeExamples';
 
 export default function DevelopersPage() {
  const t = useTranslations('developers');
+ const tRef = useRef(t);
+ tRef.current = t;
  usePageTitle(t('page_title'));
  const { user } = useAuth();
  const [apiKeyHint, setApiKeyHint] = useState<string | null>(null);
@@ -41,13 +43,13 @@ export default function DevelopersPage() {
   .catch((err) => {
   if (stale) return;
   warn('Developers: API key fetch failed', err);
-  setApiKeyError(t('api_key_fetch_error'));
+  setApiKeyError(tRef.current('api_key_fetch_error'));
   })
   .finally(() => {
   if (!stale) setApiKeyLoading(false);
   });
  return () => { stale = true; };
- }, [user, t]);
+ }, [user]);
 
  return (
  <div className="min-h-screen bg-surface-1">

@@ -129,6 +129,8 @@ const EligibleBookRow = React.memo(function EligibleBookRow({ book, isGenerating
 
 export default function MemoryBooksPage() {
   const t = useTranslations('memoryBooks');
+  const tRef = useRef(t);
+  tRef.current = t;
   const locale = useLocale();
   usePageTitle(t('pageTitle'));
   const [memoryBooks, setMemoryBooks] = useState<MemoryBook[]>([]);
@@ -157,9 +159,9 @@ export default function MemoryBooksPage() {
           setBooks(list.filter((b) => b.progress > 10));
         }
       })
-      .catch((err) => { warn('MemoryBooks: failed to load', err); if (mountedRef.current) setError(t('failedToLoad')); })
+      .catch((err) => { warn('MemoryBooks: failed to load', err); if (mountedRef.current) setError(tRef.current('failedToLoad')); })
       .finally(() => { if (mountedRef.current) setLoading(false); });
-  }, [t]);
+  }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -182,16 +184,16 @@ export default function MemoryBooksPage() {
         if (!mountedRef.current) return;
         router.push(`/memory-books/${bookId}`);
       } else {
-        setError(t('failedToGenerate'));
+        setError(tRef.current('failedToGenerate'));
       }
     } catch (err) {
       warn('MemoryBooks: generate failed', err);
       if (!mountedRef.current) return;
-      setError(t('failedToGenerate'));
+      setError(tRef.current('failedToGenerate'));
     } finally {
       if (mountedRef.current) setGenerating(null);
     }
-  }, [t, router]);
+  }, [router]);
 
   const eligibleBooks = useMemo(() => {
     const existingBookIds = new Set(memoryBooks.map((mb) => mb.bookId));

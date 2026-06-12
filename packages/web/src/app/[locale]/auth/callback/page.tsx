@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -10,6 +10,8 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 
 function OAuthCallback() {
  const t = useTranslations('auth');
+ const tRef = useRef(t);
+ tRef.current = t;
  usePageTitle(t('signing_in'));
  const router = useRouter();
  const searchParams = useSearchParams();
@@ -28,7 +30,7 @@ function OAuthCallback() {
  }
 
  if (!token || !userStr) {
-  router.replace(`/auth?mode=login&error=${encodeURIComponent(t('callback_missing_data'))}`);
+  router.replace(`/auth?mode=login&error=${encodeURIComponent(tRef.current('callback_missing_data'))}`);
   return;
  }
 
@@ -38,9 +40,9 @@ function OAuthCallback() {
   router.push('/dashboard');
  } catch (err) {
   warn('AuthCallback: failed', err);
-  router.replace(`/auth?mode=login&error=${encodeURIComponent(t('parse_response_failed'))}`);
+  router.replace(`/auth?mode=login&error=${encodeURIComponent(tRef.current('parse_response_failed'))}`);
  }
- }, [searchParams, router, oauthLogin, t]);
+ }, [searchParams, router, oauthLogin]);
 
  return (
  <div className="min-h-[80vh] flex items-center justify-center">

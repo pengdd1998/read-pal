@@ -53,6 +53,8 @@ export default function ReadingMirrorPage() {
  const [error, setError] = useState<string | null>(null);
  const genTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
  const mountedRef = useRef(true);
+ const tRef = useRef(t);
+ tRef.current = t;
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; if (genTimerRef.current) clearInterval(genTimerRef.current); }; }, []);
 
  // Fetch existing mirror + book metadata
@@ -75,10 +77,10 @@ export default function ReadingMirrorPage() {
   }
  }).catch((err) => {
   warn('MemoryBookDetail: failed to load', err);
-  if (mountedRef.current) setError(t('failedToLoad'));
+  if (mountedRef.current) setError(tRef.current('failedToLoad'));
   })
  .finally(() => { if (mountedRef.current) setLoading(false); });
- }, [bookId, t]);
+ }, [bookId]);
 
  useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -116,19 +118,19 @@ export default function ReadingMirrorPage() {
   if (res.success && res.data) {
   setMirror(res.data);
   } else {
-  setError(t('generationEmpty'));
+  setError(tRef.current('generationEmpty'));
   setGenStep('error');
   }
  } catch (err) {
   warn('MemoryBookDetail: generate failed', err);
   if (genTimerRef.current) { clearInterval(genTimerRef.current); genTimerRef.current = null; }
   if (!mountedRef.current) return;
-  setError(t('generationFailedError'));
+  setError(tRef.current('generationFailedError'));
   setGenStep('error');
  } finally {
   if (mountedRef.current) setGenerating(false);
  }
- }, [bookId, t]);
+ }, [bookId]);
 
  // Download as HTML
  const handleDownload = useCallback(() => {
@@ -147,13 +149,13 @@ export default function ReadingMirrorPage() {
  if (!mirror?.htmlContent) return;
  const printWindow = window.open('', '_blank');
  if (!printWindow) {
-  toast(t('popupBlocked'), 'error');
+  toast(tRef.current('popupBlocked'), 'error');
   return;
  }
  printWindow.document.write(mirror.htmlContent);
  printWindow.document.close();
  printWindow.onload = () => printWindow.print();
- }, [mirror, toast, t]);
+ }, [mirror, toast]);
 
  // ---------------------------------------------------------------------------
  // Loading state

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { warn } from '@/lib/logger';
 import { useTranslations } from 'next-intl';
@@ -45,6 +45,8 @@ const CachedBookRow = React.memo(function CachedBookRow({ book, chaptersCachedLa
 
 export default function OfflinePage() {
   const t = useTranslations('offline');
+  const tRef = useRef(t);
+  tRef.current = t;
   usePageTitle(t('page_title'));
   const [isOnline, setIsOnline] = useState(false);
   const [cachedBooks, setCachedBooks] = useState<CachedBook[]>([]);
@@ -92,11 +94,11 @@ export default function OfflinePage() {
     } catch (err) {
       warn('OfflinePage: IndexedDB not available', err);
       if (!staleRef.current) {
-        setError(t('load_error'));
+        setError(tRef.current('load_error'));
         setLoading(false);
       }
     }
-  }, [t]);
+  }, []);
 
   // Load cached books on mount
   useEffect(() => {

@@ -12,6 +12,8 @@ import { useTranslations } from 'next-intl';
 
 function ResetPasswordForm() {
  const t = useTranslations('auth');
+ const tRef = useRef(t);
+ tRef.current = t;
  usePageTitle(t('reset_page_title'));
  const router = useRouter();
  const searchParams = useSearchParams();
@@ -28,12 +30,12 @@ function ResetPasswordForm() {
  useEffect(() => {
  if (!token) {
   setTokenValid(false);
-  setError(t('reset_missing_token'));
+  setError(tRef.current('reset_missing_token'));
  }
  return () => {
   if (redirectTimer.current) clearTimeout(redirectTimer.current);
  };
- }, [token, t]);
+ }, [token]);
 
  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
  e.preventDefault();

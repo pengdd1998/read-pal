@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -29,6 +29,8 @@ const PERSONAS = [
 
 export default function WelcomePage() {
   const t = useTranslations('welcome');
+  const tRef = useRef(t);
+  tRef.current = t;
   usePageTitle(t('page_title'));
   const router = useRouter();
   const { isAuthenticated } = useAuth();
@@ -65,10 +67,10 @@ export default function WelcomePage() {
     } catch (err) {
       if (signal.stale) return;
       warn('Welcome: failed to load sample book list', err);
-      setError(t('book_load_error'));
+      setError(tRef.current('book_load_error'));
     }
     setLoading(false);
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     const alreadyOnboarded = safeGetItem(ONBOARDING_KEY) === 'true';

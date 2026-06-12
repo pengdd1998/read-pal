@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
@@ -18,6 +18,8 @@ interface BookOption {
 
 export default function SynthesisPage() {
  const t = useTranslations('synthesis');
+ const tRef = useRef(t);
+ tRef.current = t;
   usePageTitle(t('page_title'));
  const [books, setBooks] = useState<BookOption[]>([]);
  const [booksLoading, setBooksLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function SynthesisPage() {
   }
   } catch (err) {
   warn('Synthesis: failed to load books', err);
-  if (!cancelled) setBooksError(t('network_error'));
+  if (!cancelled) setBooksError(tRef.current('network_error'));
   } finally {
   if (!cancelled) setBooksLoading(false);
   }
@@ -55,15 +57,15 @@ export default function SynthesisPage() {
   if (res.success && res.data) {
   setResult(res.data);
   } else {
-  setError(t('analysis_failed'));
+  setError(tRef.current('analysis_failed'));
   }
  } catch (err) {
   warn('Synthesis: analysis failed', err);
-  setError(t('network_error'));
+  setError(tRef.current('network_error'));
  } finally {
   setLoading(false);
  }
- }, [t]);
+ }, []);
 
  if (booksLoading) {
  return (

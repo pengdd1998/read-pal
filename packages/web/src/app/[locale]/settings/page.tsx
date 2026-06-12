@@ -33,6 +33,8 @@ export default function SettingsPage() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUpdatesRef = useRef<{ updates: Partial<UserSettings>; previous?: UserSettings } | null>(null);
+  const tRef = useRef(t);
+  tRef.current = t;
 
   // Flush pending saves and clear timers on unmount
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function SettingsPage() {
       if (res.success && res.data) {
         setSettings(res.data);
       } else {
-        setError(t('failed_load'));
+        setError(tRef.current('failed_load'));
       }
       const meRes = await api.get<{ name: string; email: string }>('/api/auth/me');
       if (meRes.success && meRes.data) {
@@ -66,11 +68,11 @@ export default function SettingsPage() {
       }
     } catch (err) {
       warn('Settings: load failed', err);
-      setError(t('failed_load_retry'));
+      setError(tRef.current('failed_load_retry'));
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     if (authUser) {
@@ -78,7 +80,7 @@ export default function SettingsPage() {
       setUserEmail(authUser.email || '');
     }
     let stale = false;
-    loadSettings().finally(() => { if (!stale) setLoading(false); });
+    loadSettings();
     return () => { stale = true; };
   }, [authUser, loadSettings]);
 
@@ -96,15 +98,15 @@ export default function SettingsPage() {
         savedTimeoutRef.current = setTimeout(() => setSaved(false), 2000);
       } else {
         if (previousSettings) setSettings(previousSettings);
-        setError(t('failed_save'));
+        setError(tRef.current('failed_save'));
       }
     } catch (err) {
       warn('Settings: save failed', err);
       if (previousSettings) setSettings(previousSettings);
-      setError(t('failed_save_retry'));
+      setError(tRef.current('failed_save_retry'));
     }
     setSaving(false);
-  }, [settings, t]);
+  }, [settings]);
 
   const debouncedSave = useCallback((updates: Partial<UserSettings>, previousSettings?: UserSettings) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);

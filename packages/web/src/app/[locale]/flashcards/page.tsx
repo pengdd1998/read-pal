@@ -36,6 +36,8 @@ interface DeckInfo {
 
 export default function FlashcardsPage() {
  const t = useTranslations('flashcards');
+ const tRef = useRef(t);
+ tRef.current = t;
  usePageTitle(t('page_title'));
 
  const [mode, setMode] = useState<'decks' | 'review'>('decks');
@@ -70,10 +72,10 @@ export default function FlashcardsPage() {
  } catch (err) {
   if (!mountedRef.current) return;
   warn('FlashcardsPage: fetchDecks failed', err);
-  setToast(t('toast_load_decks'));
+  setToast(tRef.current('toast_load_decks'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
- }, [t]);
+ }, []);
 
  const fetchCards = useCallback(async (bookId?: string | null) => {
  setLoading(true);
@@ -91,13 +93,13 @@ export default function FlashcardsPage() {
  } catch (err) {
   if (!mountedRef.current) return;
   warn('FlashcardsPage: fetchCards failed', err);
-  setToast(t('toast_load_cards'));
+  setToast(tRef.current('toast_load_cards'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
  finally {
   if (mountedRef.current) setLoading(false);
  }
- }, [t]);
+ }, []);
 
  useEffect(() => {
  let stale = false;
@@ -123,13 +125,13 @@ export default function FlashcardsPage() {
  } catch (err) {
   if (!mountedRef.current) return;
   warn('FlashcardsPage: handleRate failed', err);
-  setToast(t('toast_save_review'));
+  setToast(tRef.current('toast_save_review'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
  finally {
   if (mountedRef.current) setReviewing(false);
  }
- }, [cards, currentIndex, t]);
+ }, [cards, currentIndex]);
 
  // Keyboard shortcuts for review mode
  useEffect(() => {

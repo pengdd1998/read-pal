@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
@@ -17,6 +17,8 @@ type FilterKey = 'all' | 'books' | 'highlights' | 'notes';
 
 export default function SearchPage() {
  const t = useTranslations('search');
+ const tRef = useRef(t);
+ tRef.current = t;
  usePageTitle(t('page_title'));
  const [query, setQuery] = useState('');
  const [results, setResults] = useState<Book[]>([]);
@@ -101,7 +103,7 @@ export default function SearchPage() {
   } catch (err) {
   warn('Search: failed to search', err);
   if (stale) return;
-  setError(t('failed_search'));
+  setError(tRef.current('failed_search'));
   setResults([]);
   setHighlights([]);
   setSearched(true);
@@ -114,7 +116,7 @@ export default function SearchPage() {
   stale = true;
   clearTimeout(timer);
  };
- }, [query, t]);
+ }, [query]);
 
  const hasResults = results.length > 0 || highlights.length > 0;
 

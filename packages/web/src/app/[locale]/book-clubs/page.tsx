@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -65,6 +65,8 @@ const ClubDiscoveryCard = React.memo(function ClubDiscoveryCard({
 
 export default function BookClubsPage() {
   const t = useTranslations('bookClubs');
+  const tRef = useRef(t);
+  tRef.current = t;
   usePageTitle(t('pageTitle'));
   const [myClubs, setMyClubs] = useState<ClubListItem[]>([]);
   const [discoverClubs, setDiscoverClubs] = useState<ClubListItem[]>([]);
@@ -94,7 +96,7 @@ export default function BookClubsPage() {
    }
    } catch (err) {
    warn('BookClubs: failed to load', err);
-   if (!cancelled) setError(t('clubs_failed_load'));
+   if (!cancelled) setError(tRef.current('clubs_failed_load'));
    } finally {
    if (!cancelled) setLoading(false);
    }
@@ -104,7 +106,7 @@ export default function BookClubsPage() {
   const onFocus = () => { fetchData(); };
   window.addEventListener('focus', onFocus);
   return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
-  }, [t]);
+  }, []);
 
   const displayClubs = tab === 'my' ? myClubs : discoverClubs;
 
