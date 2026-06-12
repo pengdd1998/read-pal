@@ -47,8 +47,12 @@ async def create_club(
     return club
 
 
-async def get_club(db: AsyncSession, club_id: UUID) -> dict | None:
-    """Get club details with computed member count."""
+async def get_club(
+    db: AsyncSession,
+    club_id: UUID,
+    user_id: UUID | None = None,
+) -> dict | None:
+    """Get club details with computed member count and current user's role."""
     async with db_error_guard('get_club', club_id=str(club_id)):
         result = await db.execute(
             select(BookClub).where(BookClub.id == club_id),
@@ -64,6 +68,16 @@ async def get_club(db: AsyncSession, club_id: UUID) -> dict | None:
         )
         member_count = count_result.scalar() or 0
 
+        current_user_role = None
+        if user_id is not None:
+            role_result = await db.execute(
+                select(BookClubMember.role).where(
+                    BookClubMember.club_id == club_id,
+                    BookClubMember.user_id == user_id,
+                ),
+            )
+            current_user_role = role_result.scalar_one_or_none()
+
     return {
         'id': str(club.id),
         'name': club.name,
@@ -77,6 +91,7 @@ async def get_club(db: AsyncSession, club_id: UUID) -> dict | None:
         'memberCount': member_count,
         'createdAt': club.created_at.isoformat() if club.created_at else None,
         'updatedAt': club.updated_at.isoformat() if club.updated_at else None,
+        'currentUserRole': current_user_role,
     }
 
 

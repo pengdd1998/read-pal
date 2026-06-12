@@ -96,7 +96,7 @@ async def get_club(
 ) -> dict:
     """Get club details. Public clubs visible to all; private only to members."""
     uid = UUID(user['id'])
-    club = await book_club_service.get_club(db, club_id)
+    club = await book_club_service.get_club(db, club_id, uid)
     if club is None:
         raise not_found_error(t('errors.club_not_found'))
     if club.get('isPrivate') and not await book_club_service.is_member(db, uid, club_id):
@@ -250,7 +250,7 @@ async def get_club_progress(
     uid = UUID(user['id'])
     if not await book_club_service.is_member(db, uid, club_id):
         raise not_found_error(t('errors.club_not_found'))
-    club = await book_club_service.get_club(db, club_id)
+    club = await book_club_service.get_club(db, club_id, uid)
     if club is None:
         raise not_found_error(t('errors.club_not_found'))
 
