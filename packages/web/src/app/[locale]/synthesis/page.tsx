@@ -53,7 +53,7 @@ export default function SynthesisPage() {
  setError(null);
  setResult(null);
  try {
-  const res = await api.get<AnalysisResult>('/api/synthesis/cross-book');
+  const res = await api.get<AnalysisResult>('/api/synthesis/cross-book', undefined, { timeout: 120_000 });
   if (res.success && res.data) {
   setResult(res.data);
   } else {

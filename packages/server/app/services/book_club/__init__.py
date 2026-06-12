@@ -15,6 +15,7 @@ from app.services.book_club.members import (
     get_members,
     is_member,
     join_club,
+    join_club_by_id,
     leave_club,
 )
 from app.services.book_club.progress import (
@@ -33,6 +34,7 @@ __all__ = [
     'get_members',
     'is_member',
     'join_club',
+    'join_club_by_id',
     'leave_club',
     'list_clubs',
     'update_club',

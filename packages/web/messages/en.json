@@ -1891,6 +1891,8 @@
     "enterCode": "Enter 6-character invite code",
     "joining": "Joining...",
     "joinClub": "Join Club",
+    "joinPrompt": "You're viewing a public club. Join to participate in discussions and track reading progress together!",
+    "failedToJoin": "Failed to join club",
     "noClubsYet": "No book clubs yet",
     "noClubsHint": "Create a club or join one with an invite code",
     "adminBadge": "Admin",

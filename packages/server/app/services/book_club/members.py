@@ -64,6 +64,58 @@ async def join_club(
     return club
 
 
+async def join_club_by_id(
+    db: AsyncSession,
+    user_id: UUID,
+    club_id: UUID,
+) -> 'BookClub':
+    """Join a public club by ID. Validates capacity and membership."""
+    from app.models.book_club import BookClub
+
+    async with db_error_guard('members.join_club_by_id'):
+        result = await db.execute(
+            select(BookClub).where(BookClub.id == club_id),
+        )
+        club = result.scalar_one_or_none()
+        if club is None:
+            raise ValueError('Club not found')
+        if club.is_private:
+            raise ValueError('Cannot join a private club without an invite code')
+
+        existing = await db.execute(
+            select(BookClubMember).where(
+                BookClubMember.club_id == club_id,
+                BookClubMember.user_id == user_id,
+            ),
+        )
+        if existing.scalar_one_or_none() is not None:
+            raise ValueError('Already a member of this club')
+
+        count_result = await db.execute(
+            select(func.count())
+            .select_from(BookClubMember)
+            .where(BookClubMember.club_id == club_id),
+        )
+        if (count_result.scalar() or 0) >= club.max_members:
+            raise ValueError('Club is full')
+
+        member = BookClubMember(
+            club_id=club_id,
+            user_id=user_id,
+            role='member',
+        )
+        db.add(member)
+        try:
+            await db.flush()
+        except IntegrityError as exc:
+            await db.rollback()
+            logger.debug('join_club_by_id IntegrityError: %s', exc)
+            raise ValueError('Already a member of this club') from None
+
+    logger.info('User %s joined club %s by ID', user_id, club_id)
+    return club
+
+
 async def leave_club(
     db: AsyncSession,
     user_id: UUID,

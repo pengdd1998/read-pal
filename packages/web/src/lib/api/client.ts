@@ -107,7 +107,7 @@ export class ApiClient {
    * GET request — returns { success: false } for HTTP errors instead of throwing.
    * Only throws on truly unexpected errors (e.g., request cancellation).
    */
-  async get<T>(url: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
+  async get<T>(url: string, params?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const ttl = getCacheTTL(url);
     pruneStaleEntries(this.cache);
     const cacheKey = `${url}:${JSON.stringify(params ?? {})}`;
@@ -130,7 +130,7 @@ export class ApiClient {
 
     const bookContentMatch = url.match(/\/api\/upload\/books\/([^/]+)\/content/);
 
-    const requestPromise = this.requestWithRetry<ApiResponse<T>>('get', url, { params })
+    const requestPromise = this.requestWithRetry<ApiResponse<T>>('get', url, { params, ...options })
       .then((data) => {
         if (data.success && ttl > 0) {
           this.cache.set(cacheKey, { data, expiry: Date.now() + ttl });

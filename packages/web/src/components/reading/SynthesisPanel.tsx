@@ -122,7 +122,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
   includeNotes: true,
   includeConversations: true,
   ...input,
-  }, { signal: controller.signal });
+  }, { signal: controller.signal, timeout: 120_000 });
 
   if (response.success && response.data) {
   setResult(response.data as AnalysisResult);

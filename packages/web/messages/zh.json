@@ -1665,6 +1665,8 @@
     "enterCode": "输入6位邀请码",
     "joining": "加入中...",
     "joinClub": "加入读书会",
+    "joinPrompt": "你正在浏览一个公开的读书会。加入后即可参与讨论并一起追踪阅读进度！",
+    "failedToJoin": "加入读书会失败",
     "noClubsYet": "还没有读书会",
     "noClubsHint": "创建一个读书会，或用邀请码加入",
     "adminBadge": "管理员",

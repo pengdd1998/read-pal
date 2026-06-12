@@ -110,7 +110,7 @@ export default function ReadingMirrorPage() {
  try {
   const res = await api.post<ReadingMirror>(`/api/v1/reading-book/${bookId}/generate`, {
   format: 'reading_mirror',
-  });
+  }, { timeout: 120_000 });
   if (genTimerRef.current) { clearInterval(genTimerRef.current); genTimerRef.current = null; }
   if (!mountedRef.current) return;
   setGenStep('done');

@@ -11,6 +11,7 @@ from app.services.book_club import (  # noqa: F401
     get_members,
     is_member,
     join_club,
+    join_club_by_id,
     leave_club,
     list_clubs,
     update_club,

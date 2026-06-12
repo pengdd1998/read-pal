@@ -178,7 +178,7 @@ export default function MemoryBooksPage() {
       const res = await api.post<MemoryBook>('/api/v1/reading-book/generate', {
         book_id: bookId,
         format: 'personal_book',
-      });
+      }, { timeout: 120_000 });
       if (res.success && res.data) {
         analytics.track('reading_book_generated');
         if (!mountedRef.current) return;

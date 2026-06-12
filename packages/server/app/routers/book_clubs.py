@@ -94,12 +94,12 @@ async def get_club(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    """Get club details. Only visible to members."""
+    """Get club details. Public clubs visible to all; private only to members."""
     uid = UUID(user['id'])
-    if not await book_club_service.is_member(db, uid, club_id):
-        raise not_found_error(t('errors.club_not_found'))
     club = await book_club_service.get_club(db, club_id)
     if club is None:
+        raise not_found_error(t('errors.club_not_found'))
+    if club.get('isPrivate') and not await book_club_service.is_member(db, uid, club_id):
         raise not_found_error(t('errors.club_not_found'))
     return {'success': True, 'data': club}
 
@@ -168,6 +168,32 @@ async def join_club(
         )
     except ValueError as exc:
         logger.debug('validation error in book_clubs')
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={'code': 'BAD_REQUEST', 'message': translate_error(exc, lang)},
+        ) from exc
+    return {
+        'success': True,
+        'data': {
+            'id': str(club.id),
+            'name': club.name,
+        },
+    }
+
+
+@router.post('/{club_id}/join', response_model=GenericResponse)
+async def join_club_by_id(
+    club_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Join a public club by ID."""
+    lang = await _get_user_lang(db, UUID(user['id']))
+    try:
+        club = await book_club_service.join_club_by_id(
+            db, UUID(user['id']), club_id,
+        )
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={'code': 'BAD_REQUEST', 'message': translate_error(exc, lang)},

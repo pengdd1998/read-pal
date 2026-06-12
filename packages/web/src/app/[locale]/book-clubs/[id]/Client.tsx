@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Link, useRouter } from '@/i18n/navigation';
@@ -19,9 +20,29 @@ export default function BookClubDetailPage() {
  const clubId = params?.id as string;
 
  const router = useRouter();
- const { club, loading, error, setError } = useBookClubDetail(clubId);
+ const { club, setClub, loading, error, setError } = useBookClubDetail(clubId);
  const { progress, error: progressError } = useBookClubProgress(clubId, club?.currentBookId);
  const { messages, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError } = useBookClubDiscussion(clubId);
+ const [joining, setJoining] = useState(false);
+
+ const isMember = !!club?.currentUserRole;
+
+ async function handleJoin() {
+   setJoining(true);
+   try {
+     const res = await api.post<{ id: string; name: string }>(`/api/book-clubs/${clubId}/join`);
+     if (res.success) {
+       setClub((prev) => prev ? { ...prev, currentUserRole: 'member', memberCount: (prev.memberCount || 0) + 1 } : prev);
+     } else {
+       setError(t('failedToJoin'));
+     }
+   } catch (err) {
+     warn('BookClubDetail: join failed', err);
+     setError(t('failedToJoin'));
+   } finally {
+     setJoining(false);
+   }
+ }
 
  async function handleLeave() {
  if (!confirm(t('leaveConfirm'))) return;
@@ -77,19 +98,39 @@ export default function BookClubDetailPage() {
   </div>
 
   <ClubHeaderCard club={club} memberCount={memberCount} />
-  <ClubCurrentReading club={club} progress={progress} progressError={progressError} isAdmin={isAdmin} />
-  <ClubMembersList members={club.clubMembers || []} memberCount={memberCount} />
-  <ClubDiscussionPanel
-   messages={messages}
-   newMessage={newMessage}
-   onNewMessageChange={setNewMessage}
-   onSend={sendMessage}
-   sending={sending}
-   currentUserRole={club.currentUserRole}
-   loadError={discussionError}
-   sendError={sendError}
-   onClearSendError={clearSendError}
-  />
+
+  {/* Join prompt for non-members */}
+  {!isMember && (
+    <div className="card mb-6 text-center">
+      <p className="text-gray-600 mb-4">{t('joinPrompt')}</p>
+      <button
+        type="button"
+        onClick={handleJoin}
+        disabled={joining}
+        className="px-6 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
+      >
+        {joining ? t('joining') : t('joinClub')}
+      </button>
+    </div>
+  )}
+
+  {isMember && (
+    <>
+      <ClubCurrentReading club={club} progress={progress} progressError={progressError} isAdmin={isAdmin} />
+      <ClubMembersList members={club.clubMembers || []} memberCount={memberCount} />
+      <ClubDiscussionPanel
+        messages={messages}
+        newMessage={newMessage}
+        onNewMessageChange={setNewMessage}
+        onSend={sendMessage}
+        sending={sending}
+        currentUserRole={club.currentUserRole}
+        loadError={discussionError}
+        sendError={sendError}
+        onClearSendError={clearSendError}
+      />
+    </>
+  )}
 
   {/* Actions */}
   <div className="flex items-center justify-between">
@@ -99,7 +140,7 @@ export default function BookClubDetailPage() {
    >
    &larr; {t('backToClubs')}
    </Link>
-   {!isAdmin && (
+   {isMember && !isAdmin && (
    <button
     type="button"
     onClick={handleLeave}

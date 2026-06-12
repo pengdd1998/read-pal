@@ -35,7 +35,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   const res = await api.post<AnalysisResult>('/api/synthesis/cross-book/compare', {
   bookId1: compareBook1,
   bookId2: compareBook2,
-  });
+  }, { timeout: 120_000 });
   if (res.success && res.data) {
   setCompareResult(res.data);
   } else {

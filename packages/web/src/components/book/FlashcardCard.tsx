@@ -36,6 +36,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
    bookId,
    count: 5,
   },
+  { timeout: 120_000 },
   );
   if (res.success && res.data) {
   router.push('/flashcards');
