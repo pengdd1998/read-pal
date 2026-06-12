@@ -33,6 +33,8 @@ export default function SettingsPage() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUpdatesRef = useRef<{ updates: Partial<UserSettings>; previous?: UserSettings } | null>(null);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
   const tRef = useRef(t);
   tRef.current = t;
 
@@ -88,7 +90,7 @@ export default function SettingsPage() {
   }, [authUser, loadSettings]);
 
   const saveSettings = useCallback(async (updates: Partial<UserSettings>, previousSettings?: UserSettings) => {
-    if (!settings) return;
+    if (!settingsRef.current) return;
     setSaving(true);
     setSaved(false);
     setError(null);
@@ -109,7 +111,7 @@ export default function SettingsPage() {
       setError(tRef.current('failed_save_retry'));
     }
     setSaving(false);
-  }, [settings]);
+  }, []);
 
   const debouncedSave = useCallback((updates: Partial<UserSettings>, previousSettings?: UserSettings) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);

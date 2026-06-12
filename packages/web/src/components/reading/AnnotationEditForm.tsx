@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { type Annotation, ANNOTATION_COLORS } from '@read-pal/shared';
 import { api } from '@/lib/api';
@@ -25,6 +25,8 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
  const [tagInput, setTagInput] = useState('');
  const [saving, setSaving] = useState(false);
  const tagInputRef = useRef<HTMLInputElement>(null);
+ const mountedRef = useRef(true);
+ useEffect(() => () => { mountedRef.current = false; }, []);
 
  const handleSave = async () => {
  setSaving(true);
@@ -50,7 +52,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   warn('AnnotationEditForm: save failed', error);
   toast(t('card_failed_save'), 'error');
  }
- setSaving(false);
+ if (mountedRef.current) setSaving(false);
  };
 
  const addTag = (tag: string) => {

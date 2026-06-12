@@ -24,6 +24,7 @@ export default function BookClubDetailPage() {
  const { progress, error: progressError } = useBookClubProgress(clubId, club?.currentBookId);
  const { messages, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError } = useBookClubDiscussion(clubId);
  const [joining, setJoining] = useState(false);
+ const [leaving, setLeaving] = useState(false);
 
  const isMember = !!club?.currentUserRole;
 
@@ -46,12 +47,15 @@ export default function BookClubDetailPage() {
 
  async function handleLeave() {
  if (!confirm(t('leaveConfirm'))) return;
+ setLeaving(true);
  try {
   await api.post(`/api/book-clubs/${clubId}/leave`);
   router.push('/book-clubs');
  } catch (err) {
   warn('BookClubDetail: leave failed', err);
   setError(t('failedToLeave'));
+ } finally {
+  setLeaving(false);
  }
  }
 
@@ -144,9 +148,10 @@ export default function BookClubDetailPage() {
    <button
     type="button"
     onClick={handleLeave}
-    className="text-sm text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors min-h-[44px] inline-flex items-center px-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded"
+    disabled={leaving}
+    className="text-sm text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors min-h-[44px] inline-flex items-center px-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
    >
-    {t('leaveClub')}
+    {leaving ? '...' : t('leaveClub')}
    </button>
    )}
   </div>

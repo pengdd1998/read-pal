@@ -23,11 +23,13 @@ export const PlanLoadingSkeleton = React.memo(function PlanLoadingSkeleton() {
 interface PlanProgressViewProps {
   plan: PlanData;
   onAdvance: () => void;
+  advancing?: boolean;
 }
 
 export const PlanProgressView = React.memo(function PlanProgressView({
   plan,
   onAdvance,
+  advancing,
 }: PlanProgressViewProps) {
   const t = useTranslations('reader');
 
@@ -58,7 +60,8 @@ export const PlanProgressView = React.memo(function PlanProgressView({
         <button
           type="button"
           onClick={onAdvance}
-          className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-teal-500 text-white hover:bg-teal-600 transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+          disabled={advancing}
+          className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-teal-500 text-white hover:bg-teal-600 transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

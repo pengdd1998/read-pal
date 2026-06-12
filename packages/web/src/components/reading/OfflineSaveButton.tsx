@@ -44,6 +44,7 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
   setState('saving');
   setProgress(0);
   await removeCachedBook(bookId);
+  if (!mountedRef.current) return;
   setState('idle');
   setProgress(0);
   return;

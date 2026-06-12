@@ -128,7 +128,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
                 clearTimeout(timer);
                 reject(new DOMException('Aborted', 'AbortError'));
               }, { once: true });
-            }).catch(() => { /* aborted */ });
+            }).catch((err) => { if (err instanceof DOMException && err.name === 'AbortError') return; throw err; });
             if (fetchController.signal.aborted) return;
             return attemptStream(attempt + 1);
           }
@@ -231,7 +231,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
               clearTimeout(timer);
               reject(new DOMException('Aborted', 'AbortError'));
             }, { once: true });
-          }).catch(() => { /* aborted */ });
+          }).catch((err) => { if (err instanceof DOMException && err.name === 'AbortError') return; throw err; });
           if (fetchController.signal.aborted) return;
           return attemptStream(attempt + 1);
         }

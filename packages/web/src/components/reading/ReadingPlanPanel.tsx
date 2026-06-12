@@ -30,6 +30,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [advancing, setAdvancing] = useState(false);
   const [totalDays, setTotalDays] = useState(14);
   const [dailyMinutes, setDailyMinutes] = useState(30);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +117,8 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   };
 
   const handleAdvance = async () => {
-    if (!bookId) return;
+    if (!bookId || advancing) return;
+    setAdvancing(true);
     setError(null);
     try {
       const res = await api.post<{ message: string }>('/api/agent/reading-plan/advance', { bookId });
@@ -130,6 +132,8 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
       warn('ReadingPlanPanel: failed to advance reading plan day', e);
       setError(t('reading_plan_error'));
       toast(t('reading_plan_error'), 'error');
+    } finally {
+      if (mountedRef.current) setAdvancing(false);
     }
   };
 
@@ -170,7 +174,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
           {loading ? (
             <PlanLoadingSkeleton />
           ) : plan ? (
-            <PlanProgressView plan={plan} onAdvance={handleAdvance} />
+            <PlanProgressView plan={plan} onAdvance={handleAdvance} advancing={advancing} />
           ) : (
             <PlanGenerateForm
               error={error}

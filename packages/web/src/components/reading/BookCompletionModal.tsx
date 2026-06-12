@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -28,6 +28,8 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
  const [generating, setGenerating] = useState(false);
  const [showPersonalBookCTA, setShowPersonalBookCTA] = useState(true);
  const [genError, setGenError] = useState<string | null>(null);
+ const mountedRef = useRef(true);
+ useEffect(() => () => { mountedRef.current = false; }, []);
 
  const handleGeneratePersonalBook = async () => {
  setGenerating(true);
@@ -36,12 +38,14 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
   await api.post(`/api/memory-books/${bookId}/generate`, {
   format: 'personal_book',
   }, { timeout: 120_000 });
+  if (!mountedRef.current) return;
   router.push(`/memory-books/${bookId}`);
  } catch (error) {
+  if (!mountedRef.current) return;
   warn('BookCompletionModal: generate failed', error);
   setGenError(t('completion_failed_generate'));
  } finally {
-  setGenerating(false);
+  if (mountedRef.current) setGenerating(false);
  }
  };
 

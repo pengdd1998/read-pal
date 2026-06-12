@@ -108,7 +108,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
    {summaryError && !summaryLoading && !aiSummary && (
    <div className="mb-4 px-3 py-2 rounded-xl bg-surface-1 text-left">
     <p className="text-xs text-gray-500 italic">{t('session_insight_unavailable')}</p>
-    <button type="button" onClick={() => {
+    <button type="button" disabled={summaryLoading} onClick={() => {
      setSummaryError(false);
      if (sessionId) {
       setSummaryLoading(true);

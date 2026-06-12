@@ -37,8 +37,9 @@ export const AccountSection = React.memo(function AccountSection() {
    safeRemoveItem('refresh_token');
    router.push('/');
    } else {
-    const data = await res.json().catch(() => ({}));
-    setDeleteError(data?.detail || t('account_delete_failed'));
+    let detail = '';
+    try { const data = await res.json(); detail = data?.detail || ''; } catch { /* non-JSON response */ }
+    setDeleteError(detail || t('account_delete_failed'));
    }
   } catch (err) {
    warn('AccountSection: account deletion failed', err);
