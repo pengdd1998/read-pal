@@ -54,12 +54,12 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
    ? 'bg-amber-500'
    : isRead
    ? 'bg-teal-400'
-   : 'bg-gray-300'
+   : 'bg-gray-300 dark:bg-gray-600'
   }`} />
   <span className={`text-xs font-medium truncate ${
    isCurrent
    ? 'text-amber-700 dark:text-amber-300'
-   : 'text-gray-700'
+   : 'text-gray-700 dark:text-gray-300'
   }`}>
    {title}
   </span>
@@ -79,7 +79,7 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
     style={{ width: `${barWidth}%` }}
    />
    </div>
-   <div className="flex items-center gap-1.5 text-[10px] text-gray-500 flex-shrink-0">
+   <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-400 flex-shrink-0">
    {stat.highlights > 0 && <span>{stat.highlights}{t('highlight_abbr')}</span>}
    {stat.notes > 0 && <span>{stat.notes}{t('note_abbr')}</span>}
    {stat.bookmarks > 0 && <span>{stat.bookmarks}{t('bookmark_abbr')}</span>}
@@ -151,14 +151,14 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   <div className="sticky top-0 bg-surface-0 border-b border-surface-3 p-4 flex items-center justify-between z-10">
    <div>
    <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('timeline_title')}</h2>
-   <p className="text-xs text-gray-500 mt-0.5">{t('timeline_subtitle')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('timeline_subtitle')}</p>
    </div>
    <button type="button"
    onClick={onClose}
    className="p-1.5 rounded-lg hover:bg-surface-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
    aria-label={t('timeline_close')}
    >
-   <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
    </svg>
    </button>
@@ -187,7 +187,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
    </div>
    ) : error ? (
    <div className="flex flex-col items-center gap-3 py-8 text-center">
-    <p className="text-sm text-gray-500">{t('timeline_load_failed')}</p>
+    <p className="text-sm text-gray-500 dark:text-gray-400">{t('timeline_load_failed')}</p>
     <button type="button" onClick={loadStats} disabled={loading} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
      {t('timeline_retry')}
     </button>

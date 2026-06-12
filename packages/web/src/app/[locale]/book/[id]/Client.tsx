@@ -87,7 +87,7 @@ export default function BookDetailPage() {
       : remainingChapters * 8
     : 0;
   const statusConfig = {
-    unread: { label: t('notStarted'), color: 'bg-surface-1 text-gray-600' },
+    unread: { label: t('notStarted'), color: 'bg-surface-1 text-gray-600 dark:text-gray-400' },
     reading: { label: t('reading'), color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' },
     completed: { label: t('completed'), color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' },
   };

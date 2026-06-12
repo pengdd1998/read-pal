@@ -43,14 +43,14 @@ export const PlanProgressView = React.memo(function PlanProgressView({
             style={{ width: `${Math.min((plan.currentDay / plan.totalDays) * 100, 100)}%` }}
           />
         </div>
-        <span className="text-xs text-gray-500 whitespace-nowrap">
+        <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
           {plan.currentDay}/{plan.totalDays} {t('reading_plan_days')}
         </span>
       </div>
 
       {/* Plan text */}
       <div className="prose prose-sm dark:prose-invert max-w-none">
-        <pre className="whitespace-pre-wrap text-xs text-gray-700 font-sans leading-relaxed bg-surface-1 p-3 rounded-lg">
+        <pre className="whitespace-pre-wrap text-xs text-gray-700 dark:text-gray-300 font-sans leading-relaxed bg-surface-1 p-3 rounded-lg">
           {plan.planText}
         </pre>
       </div>
@@ -114,12 +114,12 @@ export const PlanGenerateForm = React.memo(function PlanGenerateForm({
           </button>
         </div>
       )}
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-600 dark:text-gray-400">
         {t('reading_plan_no_plan')}
       </p>
 
       <div>
-        <label htmlFor="reading-plan-days" className="text-xs font-medium text-gray-500">
+        <label htmlFor="reading-plan-days" className="text-xs font-medium text-gray-500 dark:text-gray-400">
           {t('reading_plan_total_days')}
         </label>
         <input
@@ -134,7 +134,7 @@ export const PlanGenerateForm = React.memo(function PlanGenerateForm({
       </div>
 
       <div>
-        <label htmlFor="reading-plan-minutes" className="text-xs font-medium text-gray-500">
+        <label htmlFor="reading-plan-minutes" className="text-xs font-medium text-gray-500 dark:text-gray-400">
           {t('reading_plan_daily_minutes')}
         </label>
         <input

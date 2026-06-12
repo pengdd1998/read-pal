@@ -138,10 +138,10 @@ const GuidePreview = React.memo(function GuidePreview({
       {/* Questions preview */}
       {questions.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
             {questionTitle}
           </p>
-          <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700">
+          <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300">
             {questions.map((q, i) => (
               <QuestionItem key={q} question={q} index={i} />
             ))}
@@ -187,24 +187,24 @@ const ActionGrid = React.memo(function ActionGrid({
   return (
     <div className="grid grid-cols-4 gap-2">
       <ActionButton ariaLabel={copyLabel} onClick={onCopy}>
-        <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
-        <span className="text-xs text-gray-600">{copyLabel}</span>
+        <span className="text-xs text-gray-600 dark:text-gray-400">{copyLabel}</span>
       </ActionButton>
 
       <ActionButton ariaLabel={htmlLabel} onClick={onDownload}>
-        <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
-        <span className="text-xs text-gray-600">{htmlLabel}</span>
+        <span className="text-xs text-gray-600 dark:text-gray-400">{htmlLabel}</span>
       </ActionButton>
 
       <ActionButton ariaLabel={printLabel} onClick={onPrint}>
-        <svg aria-hidden="true" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg aria-hidden="true" className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
         </svg>
-        <span className="text-xs text-gray-600">{printLabel}</span>
+        <span className="text-xs text-gray-600 dark:text-gray-400">{printLabel}</span>
       </ActionButton>
 
       <ActionButton ariaLabel={linkLabel} onClick={onShareLink} disabled={sharing} variant="primary">
@@ -243,7 +243,7 @@ const ShareLinkBar = React.memo(function ShareLinkBar({
         readOnly
         value={shareLink}
         aria-label={linkLabel}
-        className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 focus:ring-2 focus:ring-amber-500/30"
+        className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-500/30"
         onClick={(e) => (e.target as HTMLInputElement).select()}
       />
       <button

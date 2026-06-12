@@ -173,7 +173,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    </button>
    <button type="button"
     onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
-    className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600 hover:bg-gray-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-gray-400"
+    className="px-2 py-1 text-xs font-medium rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 min-h-[44px] focus-visible:ring-2 focus-visible:ring-gray-400"
    >
     {tc('cancel')}
    </button>

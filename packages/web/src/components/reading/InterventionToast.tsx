@@ -171,7 +171,7 @@ export const InterventionToast = React.memo(function InterventionToast({
     <button type="button"
     onClick={handleDismiss}
     disabled={submitting}
-    className="text-xs text-gray-500 hover:text-gray-600 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
     {t('dismiss')}
     </button>
