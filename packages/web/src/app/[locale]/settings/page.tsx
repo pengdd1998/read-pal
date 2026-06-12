@@ -171,8 +171,11 @@ export default function SettingsPage() {
       />
 
       {error && (
-        <div role="alert" className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up">
-          {error}
+        <div role="alert" className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up flex items-center justify-between">
+          <span>{error}</span>
+          <button type="button" onClick={() => loadSettings()} className="ml-3 underline hover:text-red-800 dark:hover:text-red-200 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded">
+            {t('retry')}
+          </button>
         </div>
       )}
 

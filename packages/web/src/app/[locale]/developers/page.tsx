@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -25,6 +25,8 @@ export default function DevelopersPage() {
  const [apiKeyHint, setApiKeyHint] = useState<string | null>(null);
  const [apiKeyLoading, setApiKeyLoading] = useState(false);
  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+ const [apiKeyFetchKey, setApiKeyFetchKey] = useState(0);
+ const retryApiKeys = useCallback(() => setApiKeyFetchKey((k) => k + 1), []);
 
  useEffect(() => {
  if (!user) return;
@@ -49,7 +51,7 @@ export default function DevelopersPage() {
   if (!stale) setApiKeyLoading(false);
   });
  return () => { stale = true; };
- }, [user]);
+ }, [user, apiKeyFetchKey]);
 
  return (
  <div className="min-h-screen bg-surface-1">
@@ -83,10 +85,13 @@ export default function DevelopersPage() {
    </div>
   )}
   {apiKeyError && (
-   <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-300">
-   {apiKeyError}
-   </div>
-  )}
+	   <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-300 flex items-center justify-between">
+	   <span>{apiKeyError}</span>
+	   <button type="button" onClick={retryApiKeys} className="ml-3 underline hover:text-red-800 dark:hover:text-red-200 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded">
+	    {t('retry')}
+	   </button>
+	   </div>
+	  )}
   {apiKeyHint && (
    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-sm text-emerald-800 dark:text-emerald-300">
    {t('api_key_active', { code: apiKeyHint })}

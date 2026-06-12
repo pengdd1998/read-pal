@@ -1842,7 +1842,8 @@
     "desc_webhooks_delete": "Delete webhook",
     "desc_webhooks_test": "Send test ping",
     "desc_webhooks_events": "List available event types",
-    "desc_companion_chat": "Chat with AI companion"
+    "desc_companion_chat": "Chat with AI companion",
+    "retry": "Retry"
   },
   "bookClubs": {
     "pageTitle": "Book Clubs",
