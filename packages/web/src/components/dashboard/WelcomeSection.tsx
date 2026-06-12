@@ -24,7 +24,7 @@ export const WelcomeSection = React.memo(function WelcomeSection({ onSeedSample,
   <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center">
    <span className="text-4xl">{'\uD83D\uDCDA'}</span>
   </div>
-  <h2 className="text-xl font-bold text-gray-900 mb-2">
+  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
    {t('ready_first_book')}
   </h2>
   <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
@@ -56,7 +56,7 @@ export const WelcomeSection = React.memo(function WelcomeSection({ onSeedSample,
    className={`stagger-${fi + 1} animate-slide-up card text-center group hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 py-5`}
    >
    <span className="text-2xl block mb-2">{f.icon}</span>
-   <h3 className="text-sm font-semibold text-gray-900">{t(f.titleKey)}</h3>
+   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(f.titleKey)}</h3>
    <p className="text-xs text-gray-500 mt-1">{t(f.descKey)}</p>
    </Link>
   ))}

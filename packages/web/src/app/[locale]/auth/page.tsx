@@ -79,9 +79,9 @@ function AuthPageContent() {
    <span className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
     r
    </span>
-   <span className="text-2xl font-display font-bold text-gray-900">read-pal</span>
+   <span className="text-2xl font-display font-bold text-gray-900 dark:text-gray-100">read-pal</span>
    </Link>
-   <h2 className="text-4xl xl:text-5xl font-bold font-display text-gray-900 leading-tight mb-5">
+   <h2 className="text-4xl xl:text-5xl font-bold font-display text-gray-900 dark:text-gray-100 leading-tight mb-5">
    {mode === 'login' ? t('login_title') : t('register_title')}
    </h2>
    <p className="text-lg text-gray-600 leading-relaxed">
@@ -113,7 +113,7 @@ function AuthPageContent() {
     r
    </span>
    </Link>
-   <h1 className="text-2xl font-bold font-display text-gray-900">
+   <h1 className="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">
    {mode === 'login' ? t('login_title') : t('register_title')}
    </h1>
    <p className="text-sm text-gray-600 mt-1">
@@ -130,7 +130,7 @@ function AuthPageContent() {
    onClick={() => switchMode('register')}
    className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     mode === 'register'
-    ? 'bg-surface-0 text-gray-900 shadow-xs'
+    ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-xs'
     : 'text-gray-500 hover:text-gray-700'
    }`}
    >
@@ -143,7 +143,7 @@ function AuthPageContent() {
    onClick={() => switchMode('login')}
    className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     mode === 'login'
-    ? 'bg-surface-0 text-gray-900 shadow-xs'
+    ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-xs'
     : 'text-gray-500 hover:text-gray-700'
    }`}
    >

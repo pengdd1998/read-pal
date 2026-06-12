@@ -198,7 +198,7 @@ export default async function DocsPage({
    <div className="space-y-12">
    {SECTIONS.map((section) => (
     <section key={section.id} id={section.id}>
-    <h2 className="text-2xl font-bold text-gray-900 font-display flex items-center gap-3 mb-6">
+    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-display flex items-center gap-3 mb-6">
      <span className="text-3xl">{section.icon}</span>
      {section.title}
     </h2>
@@ -208,7 +208,7 @@ export default async function DocsPage({
       key={item.title}
       className="bg-surface-0 rounded-xl border border-surface-3 p-5"
      >
-      <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
+      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{item.title}</h3>
       <p className="text-sm text-gray-600 leading-relaxed">{item.content}</p>
      </div>
      ))}

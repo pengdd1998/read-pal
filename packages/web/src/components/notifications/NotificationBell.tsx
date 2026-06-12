@@ -51,7 +51,7 @@ const NotificationItem = React.memo(function NotificationItem({ notif, onMarkAsR
         <span className="text-lg flex-shrink-0 mt-0.5">{getNotificationIcon(notif.type)}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 truncate">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
               {notif.title}
             </span>
             {!notif.read && (
@@ -212,7 +212,7 @@ export const NotificationBell = memo(function NotificationBell() {
       {isOpen && (
         <div id="notification-dropdown" className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-surface-0 rounded-xl border border-surface-3 shadow-lg z-50 overflow-hidden animate-slide-down">
           <div className="flex items-center justify-between px-4 py-3 border-b border-surface-2">
-            <h3 className="text-sm font-semibold text-gray-900">{t('notifications')}</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('notifications')}</h3>
             {unreadCount > 0 && (
               <button type="button"
                 onClick={markAllRead}

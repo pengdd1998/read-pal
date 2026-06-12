@@ -42,7 +42,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
   <div className="flex items-center gap-2 mb-2">
-  <h3 className="font-semibold text-gray-900">{node.label}</h3>
+  <h3 className="font-semibold text-gray-900 dark:text-gray-100">{node.label}</h3>
   <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getTypeBadgeClass(node.type)}`}>
    {nodeType}
   </span>
@@ -56,12 +56,12 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
   <div className="text-sm space-y-1">
   <div>
    <span className="text-gray-500">{t('connections_label')} </span>
-   <span className="font-medium text-gray-900">{connectedEdges.length}</span>
+   <span className="font-medium text-gray-900 dark:text-gray-100">{connectedEdges.length}</span>
   </div>
   {(node.annotationCount ?? 0) > 0 && (
    <div>
    <span className="text-gray-500">{t('annotation_count_label')} </span>
-   <span className="font-medium text-gray-900">{node.annotationCount}</span>
+   <span className="font-medium text-gray-900 dark:text-gray-100">{node.annotationCount}</span>
    </div>
   )}
   <div>
@@ -92,7 +92,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
     <div key={e.source + "-" + e.target + "-" + e.label} className="flex items-center gap-2 text-sm">
     <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
     <span className="text-gray-600">{e.label}</span>
-    <span className="text-gray-900 font-medium">{otherNode?.label || otherId}</span>
+    <span className="text-gray-900 dark:text-gray-100 font-medium">{otherNode?.label || otherId}</span>
     </div>
    );
    })}

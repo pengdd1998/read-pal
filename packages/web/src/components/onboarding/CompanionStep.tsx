@@ -36,7 +36,7 @@ export const CompanionStep = React.memo(function CompanionStep({
   return (
     <div>
       <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           {t('onboarding_pick_title')}
         </h2>
         <p className="text-sm text-gray-500">
@@ -60,7 +60,7 @@ export const CompanionStep = React.memo(function CompanionStep({
               {p.emoji === '🦉' || p.emoji === '🌊' ? <span className="text-2xl">{p.emoji}</span> : <PersonaIcon type={p.emoji} className="w-6 h-6 text-gray-600" />}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-gray-900">{p.name}</span>
+                  <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{p.name}</span>
                   <span className="text-xs text-gray-500">{t(p.personalityKey)}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">{t(p.descKey)}</p>

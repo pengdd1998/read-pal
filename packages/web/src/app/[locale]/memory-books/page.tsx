@@ -72,7 +72,7 @@ const MemoryBookCard = React.memo(function MemoryBookCard({ mb, locale, dateLabe
           <span className="text-2xl">{isPersonalBook ? '📕' : '📓'}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 truncate">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
             {mb.book?.title || mb.title}
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -113,7 +113,7 @@ const EligibleBookRow = React.memo(function EligibleBookRow({ book, isGenerating
         <span className="text-lg">{'📖'}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-sm text-gray-900 truncate">{book.title}</h3>
+        <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{book.title}</h3>
         <p className="text-xs text-gray-500">{authorPrefix}{completeLabel}</p>
       </div>
       <button type="button"
@@ -225,7 +225,7 @@ export default function MemoryBooksPage() {
         <div className="flex items-center gap-3">
           <span className="text-3xl">{'📕'}</span>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('title')}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
             <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
           </div>
         </div>

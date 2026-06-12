@@ -32,7 +32,7 @@ const CachedBookRow = React.memo(function CachedBookRow({ book, chaptersCachedLa
      </svg>
     </div>
     <div className="flex-1 min-w-0">
-     <p className="text-sm font-medium text-gray-900 truncate">
+     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
      {book.title}
      </p>
      <p className="text-xs text-gray-500">
@@ -178,7 +178,7 @@ export default function OfflinePage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             {isOnline ? t('online_title') : t('offline_title')}
           </h1>
           <p className="text-gray-500 mb-6">

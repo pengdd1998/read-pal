@@ -37,7 +37,7 @@ const ClubDiscoveryCard = React.memo(function ClubDiscoveryCard({
    <div className="flex items-start justify-between">
     <div className="flex-1 min-w-0">
     <div className="flex items-center gap-2">
-     <h3 className="font-semibold text-gray-900 truncate">
+     <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
      {club.name}
      </h3>
      {club.isPrivate && (
@@ -114,7 +114,7 @@ export default function BookClubsPage() {
    {/* Header */}
    <div className="flex items-center justify-between mb-6">
     <div>
-    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
      <svg aria-hidden="true" className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> {t('pageTitle')}
     </h1>
     <p className="text-sm text-gray-500 mt-1">
@@ -141,7 +141,7 @@ export default function BookClubsPage() {
      onClick={() => setTab(tabKey)}
      className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      tab === tabKey
-      ? 'bg-surface-0 text-gray-900 shadow-sm'
+      ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-sm'
       : 'text-gray-500 hover:text-gray-700'
      }`}
     >
