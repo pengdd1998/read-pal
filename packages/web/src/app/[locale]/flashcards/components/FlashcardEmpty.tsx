@@ -16,13 +16,13 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
  if (variant === 'no-decks') {
  return (
   <div className="max-w-lg mx-auto px-4 py-8 sm:py-12 animate-fade-in">
-  <h1 className="text-2xl font-bold text-gray-900 mb-6">
+  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
    {t('page_title')}
   </h1>
 
   <div className="card text-center py-12 sm:py-16">
    <span className="text-5xl block mb-4">{'\uD83D\uDCC7'}</span>
-   <h2 className="text-xl font-bold text-gray-900 mb-2">{t('empty_title')}</h2>
+   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('empty_title')}</h2>
    <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
    {t('empty_desc')}
    </p>
@@ -55,7 +55,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
   <h1 className="sr-only">{t('page_title')}</h1>
   <div className="card text-center py-16">
    <span className="text-5xl block mb-4">{'\uD83C\uDF89'}</span>
-   <h2 className="text-xl font-bold text-gray-900 mb-2">{t('review_complete_title')}</h2>
+   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('review_complete_title')}</h2>
    <p className="text-sm text-gray-500 mb-6">
    {t('review_complete_desc', { count: reviewedCount })}
    </p>
@@ -79,7 +79,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
   <h1 className="sr-only">{t('page_title')}</h1>
   <div className="card text-center py-16">
   <span className="text-5xl block mb-4">{'\u2705'}</span>
-  <h2 className="text-xl font-bold text-gray-900 mb-2">{t('all_caught_up')}</h2>
+  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('all_caught_up')}</h2>
   <p className="text-sm text-gray-500 mb-6">
    {t('all_caught_up_desc')}
   </p>

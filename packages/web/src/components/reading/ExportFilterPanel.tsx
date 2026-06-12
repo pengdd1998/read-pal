@@ -74,7 +74,7 @@ export const ExportFilterPanel = React.memo(function ExportFilterPanel({
   </button>
 
   {showFilters && (
-  <div className="mt-2 p-3 bg-gray-50/50 rounded-xl border border-surface-3 space-y-3">
+  <div className="mt-2 p-3 bg-surface-1 rounded-xl border border-surface-3 space-y-3">
    {/* Type filters */}
    <div>
    <p className="text-xs text-gray-500 mb-1.5">{t('export_include_types')}</p>

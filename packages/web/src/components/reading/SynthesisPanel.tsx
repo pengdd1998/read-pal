@@ -181,7 +181,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
   </div>
 
   {bookTitle && (
-   <div className="px-4 py-2 bg-gray-50/50 border-b border-surface-2">
+   <div className="px-4 py-2 bg-surface-1 border-b border-surface-2">
    <p className="text-xs text-gray-500 truncate">
     {bookTitle}{author ? t('synthesis_by_author', { author }) : ''}
    </p>

@@ -22,15 +22,15 @@ export default function TermsPage() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-10 space-y-10 text-gray-700 text-sm leading-relaxed">
+      <div className="max-w-4xl mx-auto px-6 py-10 space-y-10 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s1_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s1_title')}</h2>
           <p>{t('s1_body')}</p>
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s2_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s2_title')}</h2>
           <p>{t.rich('s2_body', {
             githubLink: (chunks) => (
               <a href="https://github.com/pengdd1998/read-pal" target="_blank" rel="noopener noreferrer" className={linkClass}>{chunks}</a>
@@ -39,12 +39,12 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s3_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s3_title')}</h2>
           <p>{t('s3_body')}</p>
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s4_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s4_title')}</h2>
           <p>{t('s4_body')}</p>
           <ul className="list-disc list-inside mt-2 space-y-1 ml-2">
             <li>{t('s4_item1')}</li>
@@ -56,7 +56,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s5_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s5_title')}</h2>
           <p>{t.rich('s5_body', {
             mitLink: (chunks) => (
               <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" className={linkClass}>{chunks}</a>
@@ -65,27 +65,27 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s6_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s6_title')}</h2>
           <p>{t('s6_body')}</p>
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s7_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s7_title')}</h2>
           <p>{t('s7_body')}</p>
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s8_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s8_title')}</h2>
           <p>{t('s8_body')}</p>
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s9_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s9_title')}</h2>
           <p>{t('s9_body')}</p>
         </section>
 
         <section>
-          <h2 className="text-lg font-bold font-serif text-gray-900 mb-3">{t('s10_title')}</h2>
+          <h2 className="text-lg font-bold font-serif text-gray-900 dark:text-gray-100 mb-3">{t('s10_title')}</h2>
           <p>{t.rich('s10_body', {
             issuesLink: (chunks) => (
               <a href="https://github.com/pengdd1998/read-pal/issues" target="_blank" rel="noopener noreferrer" className={linkClass}>{chunks}</a>

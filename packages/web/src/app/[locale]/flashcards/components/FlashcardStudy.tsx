@@ -132,7 +132,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
     <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-3 block">
     {showAnswer ? t('answer_label') : t('question_label')}
     </span>
-    <p className="text-lg font-medium text-gray-900 leading-relaxed px-4">
+    <p className="text-lg font-medium text-gray-900 dark:text-gray-100 leading-relaxed px-4">
     {showAnswer ? currentCard.answer : currentCard.question}
     </p>
    </div>

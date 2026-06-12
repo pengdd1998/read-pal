@@ -194,7 +194,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         {/* Status */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">{t('offline_sync_status')}</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100">{t('offline_sync_status')}</h3>
             <p className="text-xs text-gray-500 mt-0.5">
               {queueCount > 0
                 ? t('offline_queue_pending', { count: queueCount })
@@ -213,7 +213,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
 
         {/* Cached books */}
         <div className="pt-4 border-t border-surface-2">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('offline_cached_books')}</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('offline_cached_books')}</h3>
           {cachedBooks.length === 0 ? (
             <p className="text-xs text-gray-500">{t('offline_no_cached')}</p>
           ) : (
@@ -233,7 +233,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         {/* Cache more books */}
         {loading ? (
           <div className="pt-4 border-t border-surface-2">
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('offline_cache_heading')}</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('offline_cache_heading')}</h3>
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-2 py-1.5">
@@ -251,7 +251,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
           </div>
         ) : books.length > 0 && (
           <div className="pt-4 border-t border-surface-2">
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('offline_cache_heading')}</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('offline_cache_heading')}</h3>
             <p className="text-xs text-gray-500 mb-3">{t('offline_cache_desc')}</p>
             <div className="space-y-1.5 max-h-48 overflow-y-auto">
               {books

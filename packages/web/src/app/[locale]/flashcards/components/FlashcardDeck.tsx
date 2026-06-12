@@ -54,7 +54,7 @@ const DeckCard = React.memo(function DeckCard({
     )}
     </div>
     <div className="flex-1 min-w-0">
-    <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
      {deck.bookTitle}
     </h3>
     {isDisplayableAuthor(deck.author) && <p className="text-xs text-gray-500 truncate">{deck.author}</p>}
@@ -111,7 +111,7 @@ export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCar
     </svg>
     {t('back_to_decks')}
    </button>
-   <span className="text-sm font-semibold text-gray-900">{t('page_title')}</span>
+   <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100">{t('page_title')}</span>
    </div>
 
    {/* Total stats */}

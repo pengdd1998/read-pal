@@ -61,7 +61,7 @@ export default function BookClubDetailPage() {
 
  if (loading) {
  return (
-  <div className="min-h-screen bg-gray-50/50">
+  <div className="min-h-screen bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
    <div className="animate-pulse space-y-4">
    <div className="h-8 w-48 bg-surface-1 rounded" />
@@ -75,7 +75,7 @@ export default function BookClubDetailPage() {
 
  if (error || !club) {
  return (
-  <div className="min-h-screen bg-gray-50/50">
+  <div className="min-h-screen bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-8 text-center">
    <p className="text-gray-500">{error || t('clubNotFound')}</p>
    <Link href="/book-clubs" prefetch={false} className="text-sm text-primary-600 hover:underline mt-2 inline-block">
@@ -90,7 +90,7 @@ export default function BookClubDetailPage() {
  const memberCount = club.memberCount ?? (club.clubMembers || []).length;
 
  return (
- <div className="min-h-screen bg-gray-50/50">
+ <div className="min-h-screen bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
   {/* Breadcrumb */}
   <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">

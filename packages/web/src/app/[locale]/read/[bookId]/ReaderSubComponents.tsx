@@ -17,7 +17,7 @@ export const ReaderLoadingSkeleton = React.memo(function ReaderLoadingSkeleton({
   return (
     <div aria-label={ariaLabel} className="h-dvh bg-surface-1">
       {/* Reader skeleton loader */}
-      <div className="h-14 border-b border-gray-200 flex items-center px-4 gap-3">
+      <div className="h-14 border-b border-surface-3 flex items-center px-4 gap-3">
         <div className="w-8 h-8 rounded-md bg-gray-200 animate-pulse" />
         <div className="flex-1">
           <div className="h-4 w-40 rounded bg-gray-200 animate-pulse mb-1" />
@@ -190,7 +190,7 @@ export const ShortcutsHelpButton = React.memo(function ShortcutsHelpButton({
     <button
       type="button"
       onClick={onClick}
-      className="hidden sm:flex fixed bottom-5 right-20 z-10 w-11 h-11 rounded-full bg-surface-0/60 backdrop-blur-sm border border-gray-200/50 text-gray-500 hover:text-amber-500 hover:border-amber-300/50 focus-visible:ring-2 focus-visible:ring-amber-400 transition-all items-center justify-center"
+      className="hidden sm:flex fixed bottom-5 right-20 z-10 w-11 h-11 rounded-full bg-surface-0/60 backdrop-blur-sm border border-surface-3/50 text-gray-500 hover:text-amber-500 hover:border-amber-300/50 focus-visible:ring-2 focus-visible:ring-amber-400 transition-all items-center justify-center"
       aria-label={ariaLabel}
     >
       <span className="text-xs font-bold">?</span>
