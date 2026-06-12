@@ -1648,7 +1648,9 @@
     "admin": "管理员",
     "mod": "版主",
     "discussion": "讨论",
-    "noMessages": "还没有消息。开始对话吧！",
+    "noMessages": "还没有消息。",
+    "startDiscussion": "成为第一个发起讨论的人！",
+    "loading": "加载消息中...",
     "discussionPlaceholder": "分享你的想法...",
     "send": "发送",
     "sending": "发送中...",
@@ -2155,6 +2157,7 @@
     "s10_body_link_url": "https://github.com/pengdd1998/read-pal/issues"
   },
   "study": {
+    "retry": "重试",
     "mastery_percent": "掌握度：{pct}%",
     "goals_tab": "目标 ({done}/{total})",
     "checks_tab": "检查 ({done}/{total})",

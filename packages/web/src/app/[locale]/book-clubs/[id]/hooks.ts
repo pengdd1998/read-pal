@@ -86,6 +86,9 @@ export function useBookClubDiscussion(clubId: string) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [fetchKey, setFetchKey] = useState(0);
+
+  const refetch = useCallback(() => setFetchKey((k) => k + 1), []);
 
   useEffect(() => {
     if (!clubId) return;
@@ -109,7 +112,7 @@ export function useBookClubDiscussion(clubId: string) {
       });
 
     return () => { cancelled = true; };
-  }, [clubId]);
+  }, [clubId, fetchKey]);
 
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || sending) return;
@@ -135,5 +138,5 @@ export function useBookClubDiscussion(clubId: string) {
 
   const clearSendError = useCallback(() => setSendError(null), []);
 
-  return { messages, loading, newMessage, setNewMessage, sending, sendMessage, error, sendError, clearSendError };
+  return { messages, loading, newMessage, setNewMessage, sending, sendMessage, error, sendError, clearSendError, refetch };
 }

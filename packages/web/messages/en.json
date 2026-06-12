@@ -1875,7 +1875,9 @@
     "admin": "Admin",
     "mod": "Mod",
     "discussion": "Discussion",
-    "noMessages": "No messages yet. Start the conversation\\!",
+    "noMessages": "No messages yet.",
+    "startDiscussion": "Be the first to start the conversation!",
+    "loading": "Loading messages...",
     "discussionPlaceholder": "Share your thoughts...",
     "send": "Send",
     "sending": "Sending...",
@@ -2155,6 +2157,7 @@
     "s10_body_link_url": "https://github.com/pengdd1998/read-pal/issues"
   },
   "study": {
+    "retry": "Try again",
     "mastery_percent": "Mastery: {pct}%",
     "goals_tab": "Goals ({done}/{total})",
     "checks_tab": "Checks ({done}/{total})",

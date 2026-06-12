@@ -22,7 +22,7 @@ export default function BookClubDetailPage() {
  const router = useRouter();
  const { club, setClub, loading, error, setError } = useBookClubDetail(clubId);
  const { progress, error: progressError } = useBookClubProgress(clubId, club?.currentBookId);
- const { messages, loading: discussionLoading, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError } = useBookClubDiscussion(clubId);
+ const { messages, loading: discussionLoading, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError, refetch: refetchDiscussion } = useBookClubDiscussion(clubId);
  const [joining, setJoining] = useState(false);
  const [leaving, setLeaving] = useState(false);
 
@@ -137,6 +137,7 @@ export default function BookClubDetailPage() {
         loadError={discussionError}
         sendError={sendError}
         onClearSendError={clearSendError}
+        onRetryLoad={refetchDiscussion}
       />
     </>
   )}
