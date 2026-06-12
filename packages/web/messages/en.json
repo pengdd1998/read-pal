@@ -2062,7 +2062,9 @@
     "durationSec": "{count}s",
     "durationMin": "{count}m",
     "durationHm": "{hours}h {mins}m",
-    "popupBlocked": "Pop-up blocked. Please allow pop-ups for this site."
+    "popupBlocked": "Pop-up blocked. Please allow pop-ups for this site.",
+    "regenerate_confirm": "Regenerate? This will overwrite your current reading mirror.",
+    "confirm": "Confirm"
   },
   "shareCard": {
     "button_generate": "Share My Reading Progress",

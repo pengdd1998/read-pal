@@ -1834,7 +1834,9 @@
     "durationSec": "{count}秒",
     "durationMin": "{count}分钟",
     "durationHm": "{hours}小时 {mins}分钟",
-    "popupBlocked": "弹出窗口被阻止，请允许本站弹出窗口。"
+    "popupBlocked": "弹出窗口被阻止，请允许本站弹出窗口。",
+    "regenerate_confirm": "重新生成？这将覆盖当前的阅读镜像。",
+    "confirm": "确认"
   },
   "welcome": {
     "page_title": "欢迎",

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 interface ActionButtonsProps {
@@ -15,12 +15,30 @@ export default React.memo(function ActionButtons({
  onPrint,
 }: ActionButtonsProps) {
  const t = useTranslations('memoryBooks');
+ const [showConfirm, setShowConfirm] = useState(false);
 
  return (
  <div className="flex items-center gap-2">
+  {showConfirm ? (
+  <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+   <span>{t('regenerate_confirm')}</span>
+   <button type="button"
+   onClick={() => { setShowConfirm(false); onRegenerate(); }}
+   className="px-2 py-1 rounded-lg bg-amber-500 text-white font-medium hover:bg-amber-600 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
+   >
+   {t('confirm')}
+   </button>
+   <button type="button"
+   onClick={() => setShowConfirm(false)}
+   className="px-2 py-1 rounded-lg bg-surface-2 hover:bg-surface-3 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
+   >
+   {t('cancel')}
+   </button>
+  </div>
+  ) : (
   <button type="button"
-  onClick={onRegenerate}
-  className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+  onClick={() => setShowConfirm(true)}
+  className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
   title={t('regenerate_title')}
   aria-label={t('regenerate_title')}
   >
@@ -28,6 +46,7 @@ export default React.memo(function ActionButtons({
    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
   </svg>
   </button>
+  )}
   <button type="button"
   onClick={onDownload}
   className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
