@@ -21,7 +21,7 @@ const RecentBookCard = React.memo(function RecentBookCard({ book }: RecentBookCa
     <span className="text-[10px] font-bold">{getBookInitials(book.title)}</span>
    </div>
    <div className="flex-1 min-w-0">
-    <h3 className="font-medium text-sm text-gray-900 truncate">{book.title}</h3>
+    <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{book.title}</h3>
     {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 truncate">{book.author}</p>}
     {book.progress > 0 && (
     <div className="w-full bg-surface-1 rounded-full h-1 mt-1.5">

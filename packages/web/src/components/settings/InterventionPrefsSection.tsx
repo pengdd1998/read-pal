@@ -242,7 +242,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
     <select
     value={prefs.quietHoursEnd ?? ''}
     onChange={(e) => handleQuietHoursChange('quietHoursEnd', e.target.value)}
-    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+    className="bg-surface-2 border border-surface-3 rounded-lg px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
     aria-label={t('quiet_hours_end')}
     >
     <option value="">--</option>

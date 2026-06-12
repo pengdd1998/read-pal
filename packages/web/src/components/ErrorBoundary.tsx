@@ -60,7 +60,7 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Rec
     </svg>
    </div>
 
-   <h3 className="text-sm font-semibold text-gray-900 mb-1">
+   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
     {this.props.label ? t('in_section', { label: this.props.label }) : t('something_wrong')}
    </h3>
 

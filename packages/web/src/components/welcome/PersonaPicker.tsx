@@ -46,7 +46,7 @@ export const PersonaPicker = React.memo(function PersonaPicker({
               <span className="text-xl">{p.emoji}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-gray-900">{p.name}</span>
+                  <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{p.name}</span>
                   <span className="text-[10px] text-gray-500">{t(p.personalityKey)}</span>
                 </div>
               </div>

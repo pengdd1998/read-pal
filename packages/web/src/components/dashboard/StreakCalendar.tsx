@@ -117,7 +117,7 @@ function StreakCalendarInner() {
   {/* Header */}
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
   <div>
-   <h3 className="text-lg font-bold text-gray-900">{t('streak_title')}</h3>
+   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('streak_title')}</h3>
    {loading ? (
    <div className="mt-1 h-4 w-40 bg-surface-1 rounded animate-pulse" />
    ) : error ? (

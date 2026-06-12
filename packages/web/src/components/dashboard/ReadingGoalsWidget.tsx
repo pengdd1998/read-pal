@@ -61,7 +61,7 @@ export const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
 
  return (
  <div className="card">
-  <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('reading_goals_title')}</h3>
+  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('reading_goals_title')}</h3>
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
   <div className="text-center p-2 rounded-lg bg-surface-1">
    <div className="flex items-center justify-center gap-1">

@@ -33,7 +33,7 @@ export const CreateClubForm = React.memo(function CreateClubForm({
   aria-label={t('clubName')}
   value={newName}
   onChange={(e) => onNameChange(e.target.value)}
-  className="w-full px-3 py-2 rounded-lg border border-surface-3 bg-surface-0 text-sm text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+  className="w-full px-3 py-2 rounded-lg border border-surface-3 bg-surface-0 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
   maxLength={100}
   />
   <textarea

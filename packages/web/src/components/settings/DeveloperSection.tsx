@@ -48,7 +48,7 @@ export const DeveloperSection = React.memo(function DeveloperSection({ settings 
     </svg>
    </div>
    <div>
-    <h3 className="text-sm font-semibold text-gray-900">{t('developer_api_title')}</h3>
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('developer_api_title')}</h3>
     <p className="text-xs text-gray-500">{t('developer_api_desc')}</p>
    </div>
    </div>

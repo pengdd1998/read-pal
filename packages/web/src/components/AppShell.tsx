@@ -85,7 +85,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   <div className="px-4 sm:px-6 lg:px-8">
    <div className="flex items-center justify-between h-14 sm:h-16">
    <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-    <Link href="/dashboard" prefetch={false} className="flex items-center gap-2 text-base sm:text-lg font-display font-bold tracking-tight text-gray-900 shrink-0">
+    <Link href="/dashboard" prefetch={false} className="flex items-center gap-2 text-base sm:text-lg font-display font-bold tracking-tight text-gray-900 dark:text-gray-100 shrink-0">
     <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold">r</span>
     <span className="hidden sm:inline">read-pal</span>
     </Link>

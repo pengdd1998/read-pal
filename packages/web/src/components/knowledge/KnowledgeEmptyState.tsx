@@ -41,7 +41,7 @@ export const KnowledgeEmptyState = React.memo(function KnowledgeEmptyState({
             <circle cx="40" cy="80" r="8" fill="#d97706" opacity="0.6" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">{buildingTitle}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{buildingTitle}</h1>
         <p className="text-gray-600 mb-6">{buildingDesc}</p>
         <div className="bg-surface-0 rounded-xl border border-surface-3 p-4 text-sm text-gray-500 mb-6">
           <div className="space-y-2">

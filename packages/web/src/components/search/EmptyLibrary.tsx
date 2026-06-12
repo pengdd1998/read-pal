@@ -14,7 +14,7 @@ export const EmptyLibrary = React.memo(function EmptyLibrary() {
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
     </svg>
   </div>
-  <h2 className="text-xl font-bold text-gray-900 mb-2">
+  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
   {t('search_across_library')}
   </h2>
   <p className="text-gray-500 mb-4 max-w-md mx-auto leading-relaxed">

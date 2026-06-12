@@ -53,7 +53,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
    </svg>
    </div>
   </div>
-  <h3 className="font-bold text-gray-900 text-xl mb-2">
+  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-xl mb-2">
    {t('start_reading_journey')}
   </h3>
   <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6 leading-relaxed">

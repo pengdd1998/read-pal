@@ -37,7 +37,7 @@ interface SlippingItemCardProps {
 const SlippingItemCard = React.memo(function SlippingItemCard({ item }: SlippingItemCardProps) {
   return (
     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg p-3">
-      <span className="text-sm font-medium text-gray-900">{item.concept}</span>
+      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.concept}</span>
       <p className="text-xs text-gray-600 m-0 mt-1 leading-relaxed">{item.tip}</p>
     </div>
   );

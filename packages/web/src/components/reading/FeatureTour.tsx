@@ -186,7 +186,7 @@ export const FeatureTour = React.memo(function FeatureTour() {
     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
     {step + 1}
     </span>
-    <h4 className="text-sm font-semibold text-gray-900">{t(current.titleKey)}</h4>
+    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(current.titleKey)}</h4>
    </div>
    <p className="text-xs text-gray-500 leading-relaxed">{t(current.descKey)}</p>
    </div>

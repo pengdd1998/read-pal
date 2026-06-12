@@ -150,7 +150,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   >
   <div className="sticky top-0 bg-surface-0 border-b border-surface-3 p-4 flex items-center justify-between z-10">
    <div>
-   <h2 className="font-semibold text-gray-900">{t('timeline_title')}</h2>
+   <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('timeline_title')}</h2>
    <p className="text-xs text-gray-500 mt-0.5">{t('timeline_subtitle')}</p>
    </div>
    <button type="button"

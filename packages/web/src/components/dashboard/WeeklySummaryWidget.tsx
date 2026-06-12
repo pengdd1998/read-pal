@@ -95,7 +95,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  <div className="card">
   {/* Header */}
   <div className="flex items-center justify-between mb-3">
-  <h3 className="text-sm font-semibold text-gray-900">
+  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
    {t('weekly_summary_title')}
   </h3>
   <span className="text-[10px] text-gray-500">

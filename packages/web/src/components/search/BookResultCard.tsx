@@ -16,7 +16,7 @@ export const BookResultCard = React.memo(function BookResultCard({ book }: BookR
  >
   <div className="flex justify-between items-center">
   <div>
-   <h3 className="font-semibold text-gray-900">{book.title}</h3>
+   <h3 className="font-semibold text-gray-900 dark:text-gray-100">{book.title}</h3>
    {isDisplayableAuthor(book.author) && <p className="text-sm text-gray-500">{book.author}</p>}
   </div>
   <div className="flex items-center gap-3">
