@@ -22,6 +22,7 @@ export const ChatPanelHeader = React.memo(function ChatPanelHeader({
  t,
 }: ChatPanelHeaderProps) {
  return (
+ <>
  <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/50 dark:border-amber-900/30">
   <div className="flex items-center gap-2.5">
   <div className="relative w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-teal-500 text-sm shrink-0">
@@ -74,5 +75,11 @@ export const ChatPanelHeader = React.memo(function ChatPanelHeader({
   </svg>
   </button>
  </div>
- );
+ {aiHealthy === false && (
+  <div role="alert" className="px-4 py-1.5 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
+   {t('companion_ai_degraded')}
+  </div>
+ )}
+ </>);
 });
+

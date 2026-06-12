@@ -997,7 +997,8 @@
     "explain_passage_prompt": "Can you explain this passage: '{text}'",
     "tell_about_character_prompt": "Tell me about {name} — their role, motivations, and how they've developed so far.",
     "readingPage": "Reading",
-    "outline_item_aria": "{type} annotation"
+    "outline_item_aria": "{type} annotation",
+    "companion_ai_degraded": "AI responses may be slow or unavailable. Your messages will be saved."
   },
   "stats": {
     "title": "Reading Stats",
