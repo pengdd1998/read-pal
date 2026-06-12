@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth';
 import { isCapacitor } from '@/lib/capacitor';
@@ -22,6 +23,7 @@ const PROTECTED_PREFIXES = [
 ];
 
 export function MobileAuthGuard({ children }: { children: ReactNode }) {
+ const t = useTranslations('auth');
  const { isAuthenticated, loading } = useAuth();
  const pathname = usePathname();
  const router = useRouter();
@@ -46,7 +48,7 @@ export function MobileAuthGuard({ children }: { children: ReactNode }) {
    r
    </div>
    <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" role="status" aria-label="Loading" />
-   <p className="text-xs text-gray-500 dark:text-gray-400">Loading...</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400">{t('loading')}</p>
   </div>
   </div>
  );

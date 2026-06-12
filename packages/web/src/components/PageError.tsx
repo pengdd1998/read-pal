@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { warn } from '@/lib/logger';
+import { Link } from '@/i18n/navigation';
 
 interface PageErrorProps {
  error: Error & { digest?: string };
@@ -150,9 +151,9 @@ export const PageError = memo(function PageError({
     {t('reload_page')}
    </button>
    ) : (
-   <a href="/" className="btn btn-secondary">
+   <Link href="/" className="btn btn-secondary">
     {t('go_home')}
-   </a>
+   </Link>
    )}
   </div>
   </div>

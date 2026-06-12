@@ -68,7 +68,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
    <label htmlFor="compare-book-1" className="text-xs font-medium text-amber-700 dark:text-amber-300 mb-1 block">
    {t('compare_book_1')}
    </label>
-   <select
+   <select aria-label={t("select_book")}
    id="compare-book-1"
    value={compareBook1}
    onChange={(e) => setCompareBook1(e.target.value)}
@@ -86,7 +86,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
    <label htmlFor="compare-book-2" className="text-xs font-medium text-amber-700 dark:text-amber-300 mb-1 block">
    {t('compare_book_2')}
    </label>
-   <select
+   <select aria-label={t("select_book")}
    id="compare-book-2"
    value={compareBook2}
    onChange={(e) => setCompareBook2(e.target.value)}
