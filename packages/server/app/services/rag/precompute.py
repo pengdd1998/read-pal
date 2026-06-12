@@ -23,15 +23,15 @@ async def precompute_book_embeddings(
     from app.models.book_chunk import BookChunk
 
     if not chapters:
-        logger.debug('precompute.skip', reason='no_chapters', book_id=str(book_id))
+        logger.debug('precompute.skip reason=no_chapters book_id=%s', book_id)
         return
 
     settings = get_settings()
     if not settings.embedding_enabled:
-        logger.debug('precompute.skip', reason='disabled', book_id=str(book_id))
+        logger.debug('precompute.skip reason=disabled book_id=%s', book_id)
         return
     if not settings.glm_api_key or settings.glm_api_key == 'dev-key':
-        logger.debug('precompute.skip', reason='no_api_key', book_id=str(book_id))
+        logger.debug('precompute.skip reason=no_api_key book_id=%s', book_id)
         return
 
     try:
@@ -46,13 +46,13 @@ async def precompute_book_embeddings(
                 async with session.begin():
                     session.add_all(_chunks_to_insert)
     except (DBAPIError, OSError):
-        logger.debug('rag precompute failed', exc_info=True)
+        logger.error('rag precompute failed book_id=%s', book_id, exc_info=True)
         return
 
     embedded = sum(1 for c in _chunks_to_insert if c.embedding is not None)
     logger.info(
-        'precompute.done', book_id=str(book_id),
-        total=len(_chunks_to_insert), embedded=embedded,
+        'precompute.done book_id=%s total=%d embedded=%d',
+        book_id, len(_chunks_to_insert), embedded,
     )
 
 
@@ -99,9 +99,8 @@ async def _generate_chunks(
 
     if chunks_no_embed:
         logger.warning(
-            'precompute.cap_reached', book_id=str(book_id),
-            max_calls=max_calls,
-            remaining=len(chunks_no_embed),
+            'precompute.cap_reached book_id=%s max_calls=%d remaining=%d',
+            book_id, max_calls, len(chunks_no_embed),
         )
 
     # Concurrent embedding with bounded parallelism (P1-6)
@@ -134,8 +133,8 @@ async def _generate_chunks(
 
     if embedding_failures > 0:
         logger.warning(
-            'precompute.embedding_failures', book_id=str(book_id),
-            failures=embedding_failures, total=len(all_chunks),
+            'precompute.embedding_failures book_id=%s failures=%d total=%d',
+            book_id, embedding_failures, len(all_chunks),
         )
 
     return chunks_to_insert
