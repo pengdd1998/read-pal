@@ -190,7 +190,7 @@ export const NotesOutline = React.memo(function NotesOutline({
     onFilterChange={setOutlineFilter}
     t={t}
    />
-   <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+   <div className="divide-y divide-surface-2 max-h-80 overflow-y-auto">
     {outlineChapters.map((chapter) => (
      <OutlineChapterRow
       key={chapter.chapterIndex}

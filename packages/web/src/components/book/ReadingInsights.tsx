@@ -88,7 +88,7 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
   </div>
 
   {/* Session list */}
-  <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+  <div className="divide-y divide-surface-2 max-h-64 overflow-y-auto">
   {readingLog.map((entry) => (
    <SessionEntryItem key={entry.id} entry={entry} t={t} locale={locale} />
   ))}

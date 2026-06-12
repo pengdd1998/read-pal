@@ -44,7 +44,7 @@ export const ApiWebhooksSection = React.memo(function ApiWebhooksSection() {
      <th className="pb-2 font-semibold">{t('webhooks_trigger')}</th>
     </tr>
     </thead>
-    <tbody className="divide-y divide-gray-200">
+    <tbody className="divide-y divide-surface-2">
     <tr><td className="py-1.5 font-mono text-xs">book.started</td><td>{t('webhook_book_started')}</td></tr>
     <tr><td className="py-1.5 font-mono text-xs">book.completed</td><td>{t('webhook_book_completed')}</td></tr>
     <tr><td className="py-1.5 font-mono text-xs">book.updated</td><td>{t('webhook_book_updated')}</td></tr>

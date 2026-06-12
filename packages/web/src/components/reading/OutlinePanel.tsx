@@ -203,7 +203,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
    <p className="text-xs text-gray-500 dark:text-gray-400">{t('outline_no_match')}</p>
    </div>
   ) : (
-   <div className="divide-y divide-gray-100">
+   <div className="divide-y divide-surface-2">
    {chapters.map((chapter) => (
     <OutlineChapterGroup
     key={chapter.chapterIndex}
