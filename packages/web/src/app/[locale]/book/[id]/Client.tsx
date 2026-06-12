@@ -1,18 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useBookDetail } from '@/hooks/useBookDetail';
 import { BookDetailLoading, BookDetailError } from '@/components/book/BookDetailSkeleton';
-import { ShareQuoteSection } from '@/components/book/ShareQuoteSection';
-import { NotesOutline } from '@/components/book/NotesOutline';
-import { ExportActions } from '@/components/book/ExportActions';
-import { ReadingInsights } from '@/components/book/ReadingInsights';
-import { FlashcardCard } from '@/components/book/FlashcardCard';
-import { StudyGuideCard } from '@/components/book/StudyGuideCard';
 import {
   ErrorBanner,
   SuccessBanner,
@@ -25,6 +20,25 @@ import {
   KnowledgeGraphCard,
   ActionButtons,
 } from '@/components/book/BookDetailSections';
+
+const ShareQuoteSection = dynamic(
+  () => import('@/components/book/ShareQuoteSection').then((m) => m.ShareQuoteSection),
+);
+const NotesOutline = dynamic(
+  () => import('@/components/book/NotesOutline').then((m) => m.NotesOutline),
+);
+const ExportActions = dynamic(
+  () => import('@/components/book/ExportActions').then((m) => m.ExportActions),
+);
+const ReadingInsights = dynamic(
+  () => import('@/components/book/ReadingInsights').then((m) => m.ReadingInsights),
+);
+const FlashcardCard = dynamic(
+  () => import('@/components/book/FlashcardCard').then((m) => m.FlashcardCard),
+);
+const StudyGuideCard = dynamic(
+  () => import('@/components/book/StudyGuideCard').then((m) => m.StudyGuideCard),
+);
 
 export default function BookDetailPage() {
   const t = useTranslations('book');

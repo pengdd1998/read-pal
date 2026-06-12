@@ -5,19 +5,33 @@ import { Link } from '@/i18n/navigation';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStatsData } from '@/hooks/useStatsData';
 import { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { StatsLoadingSkeleton } from '@/components/stats/StatsLoadingSkeleton';
 import { EmptyState } from '@/components/stats/EmptyState';
 import { OverviewCards } from '@/components/stats/OverviewCards';
-import { FlashcardMetrics } from '@/components/stats/FlashcardMetrics';
 import { LibraryStatus } from '@/components/stats/LibraryStatus';
 import { WeeklyActivity } from '@/components/stats/WeeklyActivity';
 import { ReadingSpeed } from '@/components/stats/ReadingSpeed';
-import { ReadingVelocityTrend } from '@/components/stats/ReadingVelocityTrend';
 import { RecentSessions } from '@/components/stats/RecentSessions';
-import { BookBreakdown } from '@/components/stats/BookBreakdown';
-import { ActivityHeatmap } from '@/components/stats/ActivityHeatmap';
-import { Achievements } from '@/components/stats/Achievements';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+const FlashcardMetrics = dynamic(
+  () => import('@/components/stats/FlashcardMetrics').then((m) => m.FlashcardMetrics),
+);
+const ReadingVelocityTrend = dynamic(
+  () => import('@/components/stats/ReadingVelocityTrend').then((m) => m.ReadingVelocityTrend),
+  { ssr: false },
+);
+const BookBreakdown = dynamic(
+  () => import('@/components/stats/BookBreakdown').then((m) => m.BookBreakdown),
+);
+const ActivityHeatmap = dynamic(
+  () => import('@/components/stats/ActivityHeatmap').then((m) => m.ActivityHeatmap),
+  { ssr: false },
+);
+const Achievements = dynamic(
+  () => import('@/components/stats/Achievements').then((m) => m.Achievements),
+);
 
 export default function StatsPage() {
  const t = useTranslations('stats');

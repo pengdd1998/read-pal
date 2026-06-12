@@ -1,11 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import SectionRenderer, {
+import {
  getSectionTitle,
  type MirrorSection,
 } from '@/components/reading-mirror/SectionRenderer';
+
+const SectionRenderer = dynamic(
+  () => import('@/components/reading-mirror/SectionRenderer').then((m) => m.default),
+  { ssr: false },
+);
 
 interface SectionNavProps {
  sections: MirrorSection[];

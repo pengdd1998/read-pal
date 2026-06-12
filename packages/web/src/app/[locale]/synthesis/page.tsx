@@ -1,15 +1,23 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { BookComparisonCard } from '@/components/synthesis/BookComparisonCard';
-import { SingleBookAnalysisCard } from '@/components/synthesis/SingleBookAnalysisCard';
-import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { AnalysisResult } from '@/components/synthesis/types';
+
+const BookComparisonCard = dynamic(
+  () => import('@/components/synthesis/BookComparisonCard').then((m) => m.BookComparisonCard),
+);
+const SingleBookAnalysisCard = dynamic(
+  () => import('@/components/synthesis/SingleBookAnalysisCard').then((m) => m.SingleBookAnalysisCard),
+);
+const AnalysisResultView = dynamic(
+  () => import('@/components/synthesis/AnalysisResultView').then((m) => m.AnalysisResultView),
+);
 
 interface BookOption {
  id: string;

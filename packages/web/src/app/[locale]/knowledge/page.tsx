@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from '@/i18n/navigation';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useTranslations } from 'next-intl';
 import { useKnowledgeGraph } from '@/hooks/useKnowledgeGraph';
 import { KnowledgeGraph } from '@/components/knowledge/KnowledgeGraph';
-import { NodeDetailPanel } from '@/components/knowledge/NodeDetailPanel';
 import { CrossBookThemes } from '@/components/knowledge/CrossBookThemes';
 import { KnowledgeGaps } from '@/components/knowledge/KnowledgeGaps';
 import { KnowledgeLegend } from '@/components/knowledge/KnowledgeLegend';
@@ -16,6 +16,11 @@ import { KnowledgeEmptyState } from '@/components/knowledge/KnowledgeEmptyState'
 import { KnowledgeSidebarSkeleton } from '@/components/knowledge/KnowledgeSidebarSkeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { SimNode } from '@/types/knowledge';
+
+const NodeDetailPanel = dynamic(
+  () => import('@/components/knowledge/NodeDetailPanel').then((m) => m.NodeDetailPanel),
+  { ssr: false },
+);
 
 export default function KnowledgePage() {
   const t = useTranslations('knowledge');
