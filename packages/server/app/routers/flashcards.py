@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import ai_heavy_limiter
+from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
 from app.schemas.flashcard import FlashcardCreate, FlashcardGenerateRequest, FlashcardResponse, FlashcardReview
 from app.schemas.common import GenericResponse
 from app.services import flashcard_service
@@ -73,7 +73,7 @@ async def get_due_cards(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def create_flashcard(
     body: FlashcardCreate,
     db: AsyncSession = Depends(get_db),
@@ -84,7 +84,7 @@ async def create_flashcard(
     return {'success': True, 'data': _serialize_card(card)}
 
 
-@router.post('/{flashcard_id}/review', response_model=GenericResponse)
+@router.post('/{flashcard_id}/review', response_model=GenericResponse, dependencies=[write_limiter])
 async def review_flashcard(
     flashcard_id: UUID,
     body: FlashcardReview,
@@ -140,7 +140,7 @@ async def review_alias(
     }
 
 
-@router.post('/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.post('/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
 async def generate_flashcards(
     body: FlashcardGenerateRequest,
     db: AsyncSession = Depends(get_db),

@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
-from app.middleware.rate_limiter import password_reset_limiter
+from app.middleware.rate_limiter import password_reset_limiter, write_limiter
 from app.schemas.auth import (
     ForgotPasswordRequest,
     MessageResponse,
@@ -29,7 +29,7 @@ logger = logging.getLogger('read-pal.password_reset')
 router = APIRouter(prefix='/api/v1/auth', tags=['auth'], dependencies=[api_limiter])
 
 
-@router.post('/forgot-password', response_model=MessageResponse, dependencies=[password_reset_limiter])
+@router.post('/forgot-password', response_model=MessageResponse, dependencies=[password_reset_limiter, write_limiter])
 async def forgot_password(
     body: ForgotPasswordRequest,
     db: AsyncSession = Depends(get_db),
@@ -60,7 +60,7 @@ async def forgot_password(
     )
 
 
-@router.post('/reset-password', response_model=MessageResponse, dependencies=[password_reset_limiter])
+@router.post('/reset-password', response_model=MessageResponse, dependencies=[password_reset_limiter, write_limiter])
 async def reset_password(
     body: ResetPasswordRequest,
     db: AsyncSession = Depends(get_db),

@@ -21,14 +21,12 @@ interface ClubDiscoveryCardProps {
   club: ClubListItem;
   memberLabel: string;
   maxLabel: string;
-  privateAriaLabel: string;
 }
 
 const ClubDiscoveryCard = React.memo(function ClubDiscoveryCard({
   club,
   memberLabel,
   maxLabel,
-  privateAriaLabel,
 }: ClubDiscoveryCardProps) {
   return (
    <Link
@@ -43,7 +41,7 @@ const ClubDiscoveryCard = React.memo(function ClubDiscoveryCard({
      {club.name}
      </h3>
      {club.isPrivate && (
-     <svg aria-label={privateAriaLabel} className="w-4 h-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+     <svg aria-hidden="true" className="w-4 h-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
      </svg>
      )}
@@ -198,7 +196,6 @@ export default function BookClubsPage() {
      club={club}
      memberLabel={club.memberCount != null ? t(club.memberCount === 1 ? 'memberCount' : 'memberCountPlural', { count: club.memberCount }) : `— ${t('members')}`}
      maxLabel={t('max', { count: club.maxMembers })}
-     privateAriaLabel={t('private_club')}
      />
     ))}
     </div>

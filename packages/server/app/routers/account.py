@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import account_limiter
+from app.middleware.rate_limiter import account_limiter, write_limiter
 from app.schemas.auth import DeleteAccountRequest, UpdateProfileRequest
 from app.schemas.common import GenericResponse
 from app.services import account_service
@@ -23,7 +23,7 @@ router = APIRouter(prefix='/api/v1/auth', tags=['auth'], dependencies=[api_limit
 # PATCH /api/v1/auth/me
 # ---------------------------------------------------------------------------
 
-@router.patch('/me', response_model=GenericResponse)
+@router.patch('/me', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_me(
     body: UpdateProfileRequest,
     current_user: dict = Depends(get_current_user),
@@ -48,7 +48,7 @@ async def update_me(
 # DELETE /api/v1/auth/account
 # ---------------------------------------------------------------------------
 
-@router.delete('/account', status_code=status.HTTP_204_NO_CONTENT, dependencies=[account_limiter])
+@router.delete('/account', status_code=status.HTTP_204_NO_CONTENT, dependencies=[account_limiter, write_limiter])
 async def delete_account(
     body: DeleteAccountRequest,
     current_user: dict = Depends(get_current_user),

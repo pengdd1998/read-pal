@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import api_limiter
+from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.settings import SettingsUpdate
 from app.services import settings_service
@@ -61,7 +61,7 @@ async def get_settings(
     return {'success': True, 'data': settings}
 
 
-@router.patch('', response_model=GenericResponse)
+@router.patch('', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_settings(
     body: SettingsUpdate,
     current_user: dict = Depends(get_current_user),
@@ -94,7 +94,7 @@ async def get_reading_goals(
     return {'success': True, 'data': goals}
 
 
-@router.post('/zotero/validate', response_model=GenericResponse)
+@router.post('/zotero/validate', response_model=GenericResponse, dependencies=[write_limiter])
 async def validate_zotero_key(
     body: ZoteroValidateRequest,
     current_user: dict = Depends(get_current_user),
@@ -123,7 +123,7 @@ async def validate_zotero_key(
         }
 
 
-@router.post('/push-token', response_model=GenericResponse)
+@router.post('/push-token', response_model=GenericResponse, dependencies=[write_limiter])
 async def register_push_token(
     body: PushTokenRequest,
     current_user: dict = Depends(get_current_user),

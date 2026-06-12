@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.common import GenericResponse
-from app.middleware.rate_limiter import upload_limiter
+from app.middleware.rate_limiter import upload_limiter, write_limiter
 from app.services.upload_service import (
     MAX_FILE_SIZE,
     create_book_with_content,
@@ -120,7 +120,7 @@ async def _process_upload(
     return tmp_path, _build_book_response(book)
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[upload_limiter])
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[upload_limiter, write_limiter])
 async def upload_book(
     file: UploadFile,
     db: AsyncSession = Depends(get_db),

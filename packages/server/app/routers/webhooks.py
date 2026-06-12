@@ -52,7 +52,7 @@ async def list_webhook_events(
     return {'success': True, 'data': events}
 
 
-@router.post('/{webhook_id}/test', response_model=GenericResponse)
+@router.post('/{webhook_id}/test', response_model=GenericResponse, dependencies=[write_limiter])
 async def test_webhook(
     webhook_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -104,7 +104,7 @@ async def list_webhooks(
     return {'success': True, 'data': {'items': items}}
 
 
-@router.patch('/{webhook_id}', response_model=GenericResponse)
+@router.patch('/{webhook_id}', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_webhook(
     webhook_id: UUID,
     body: WebhookUpdate,
@@ -123,7 +123,7 @@ async def update_webhook(
     return {'success': True, 'data': data}
 
 
-@router.delete('/{webhook_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{webhook_id}', status_code=status.HTTP_204_NO_CONTENT, dependencies=[write_limiter])
 async def delete_webhook(
     webhook_id: UUID,
     db: AsyncSession = Depends(get_db),

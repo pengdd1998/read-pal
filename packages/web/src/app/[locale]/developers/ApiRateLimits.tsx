@@ -30,7 +30,7 @@ export const ApiRateLimits = React.memo(function ApiRateLimits() {
    <div>X-RateLimit-Limit: 10</div>
    <div>X-RateLimit-Remaining: 7</div>
    <div>X-RateLimit-Reset: 1713456789</div>
-   <div>Retry-After: 45 &nbsp;# only on 429 responses</div>
+   <div>Retry-After: 45 &nbsp;# {t('rate_429_note')}</div>
   </div>
   </div>
  </section>

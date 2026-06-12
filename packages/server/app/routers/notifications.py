@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import api_limiter
+from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.notification import NotificationResponse, NotificationUpdate
 from app.services import notification_service
@@ -50,7 +50,7 @@ async def list_notifications(
     }
 
 
-@router.patch('/{notification_id}', response_model=GenericResponse)
+@router.patch('/{notification_id}', response_model=GenericResponse, dependencies=[write_limiter])
 async def mark_notification_read(
     notification_id: UUID,
     body: NotificationUpdate,
@@ -66,7 +66,7 @@ async def mark_notification_read(
     return {'success': True, 'data': _dump(notification)}
 
 
-@router.patch('/{notification_id}/read', response_model=GenericResponse)
+@router.patch('/{notification_id}/read', response_model=GenericResponse, dependencies=[write_limiter])
 async def mark_read_alias(
     notification_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -81,7 +81,7 @@ async def mark_read_alias(
     return {'success': True, 'data': _dump(notification)}
 
 
-@router.post('/mark-all-read', response_model=GenericResponse)
+@router.post('/mark-all-read', response_model=GenericResponse, dependencies=[write_limiter])
 async def mark_all_read(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),

@@ -1751,6 +1751,7 @@
     "rate_minute": "1 minute",
     "rate_5_minutes": "5 minutes",
     "rate_headers_intro": "Rate-limited responses include these headers:",
+    "rate_429_note": "only on 429 responses",
     "response_format": "Response Format",
     "response_intro": "All API responses use a consistent envelope:",
     "response_comment_success": "// Success",

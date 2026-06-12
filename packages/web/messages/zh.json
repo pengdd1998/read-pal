@@ -1960,6 +1960,7 @@
     "rate_minute": "1 分钟",
     "rate_5_minutes": "5 分钟",
     "rate_headers_intro": "速率限制响应包含以下请求头：",
+    "rate_429_note": "仅在 429 响应中出现",
     "response_format": "响应格式",
     "response_intro": "所有 API 响应使用一致的信封格式：",
     "response_comment_success": "// 成功",

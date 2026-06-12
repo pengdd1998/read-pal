@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import api_limiter
+from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.intervention import (
     InterventionCheckRequest,
@@ -38,7 +38,7 @@ router = APIRouter(
 # ---------------------------------------------------------------------------
 
 
-@router.post('/check', response_model=GenericResponse)
+@router.post('/check', response_model=GenericResponse, dependencies=[write_limiter])
 async def check_intervention(
     body: InterventionCheckRequest,
     current_user: dict = Depends(get_current_user),
@@ -65,7 +65,7 @@ async def check_intervention(
     }
 
 
-@router.post('/feedback', response_model=GenericResponse)
+@router.post('/feedback', response_model=GenericResponse, dependencies=[write_limiter])
 async def submit_feedback(
     body: InterventionFeedbackRequest,
     current_user: dict = Depends(get_current_user),
@@ -108,7 +108,7 @@ async def get_intervention_preferences(
     return {'success': True, 'data': prefs}
 
 
-@router.put('/preferences', response_model=GenericResponse)
+@router.put('/preferences', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_intervention_preferences(
     body: InterventionPreferencesRequest,
     current_user: dict = Depends(get_current_user),

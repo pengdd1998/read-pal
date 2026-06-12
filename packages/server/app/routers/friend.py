@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import chat_limiter
+from app.middleware.rate_limiter import chat_limiter, write_limiter
 from app.schemas.agent import ChatResponse, FriendChatRequest
 from app.schemas.common import GenericResponse
 from app.services import friend_service
@@ -20,7 +20,7 @@ logger = logging.getLogger('read-pal.friend')
 router = APIRouter(prefix='/api/v1/friend', tags=['friend'], dependencies=[api_limiter])
 
 
-@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter])
+@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter, write_limiter])
 async def chat(
     body: FriendChatRequest,
     current_user: dict = Depends(get_current_user),

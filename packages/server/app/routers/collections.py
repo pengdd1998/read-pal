@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import api_limiter
+from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.collection import (
     CollectionBooksBatchRequest,
     CollectionCreate,
@@ -37,7 +37,7 @@ def _dump(col: object) -> dict:
     )
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def create_collection(
     body: CollectionCreate,
     db: AsyncSession = Depends(get_db),
@@ -74,7 +74,7 @@ async def get_collection(
     return {'success': True, 'data': _dump(col)}
 
 
-@router.patch('/{collection_id}', response_model=GenericResponse)
+@router.patch('/{collection_id}', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_collection(
     collection_id: UUID,
     body: CollectionUpdate,
@@ -93,7 +93,7 @@ async def update_collection(
     return {'success': True, 'data': _dump(col)}
 
 
-@router.delete('/{collection_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{collection_id}', status_code=status.HTTP_204_NO_CONTENT, dependencies=[write_limiter])
 async def delete_collection(
     collection_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -126,7 +126,7 @@ async def get_collection_books(
     }
 
 
-@router.post('/{collection_id}/books', response_model=GenericResponse)
+@router.post('/{collection_id}/books', response_model=GenericResponse, dependencies=[write_limiter])
 async def add_books_batch(
     collection_id: UUID,
     body: CollectionBooksBatchRequest,
@@ -145,7 +145,7 @@ async def add_books_batch(
     return {'success': True, 'data': _dump(col)}
 
 
-@router.post('/{collection_id}/books/remove', response_model=GenericResponse)
+@router.post('/{collection_id}/books/remove', response_model=GenericResponse, dependencies=[write_limiter])
 async def remove_books_batch(
     collection_id: UUID,
     body: CollectionBooksBatchRequest,
@@ -164,7 +164,7 @@ async def remove_books_batch(
     return {'success': True, 'data': _dump(col)}
 
 
-@router.post('/{collection_id}/books/{book_id}', response_model=GenericResponse)
+@router.post('/{collection_id}/books/{book_id}', response_model=GenericResponse, dependencies=[write_limiter])
 async def add_book(
     collection_id: UUID,
     book_id: UUID,
@@ -183,7 +183,7 @@ async def add_book(
     return {'success': True, 'data': _dump(col)}
 
 
-@router.delete('/{collection_id}/books/{book_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{collection_id}/books/{book_id}', status_code=status.HTTP_204_NO_CONTENT, dependencies=[write_limiter])
 async def remove_book(
     collection_id: UUID,
     book_id: UUID,

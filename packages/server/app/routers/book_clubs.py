@@ -104,7 +104,7 @@ async def get_club(
     return {'success': True, 'data': club}
 
 
-@router.patch('/{club_id}', response_model=GenericResponse)
+@router.patch('/{club_id}', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_club(
     club_id: UUID,
     body: BookClubUpdate,
@@ -135,7 +135,7 @@ async def update_club(
     }
 
 
-@router.delete('/{club_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{club_id}', status_code=status.HTTP_204_NO_CONTENT, dependencies=[write_limiter])
 async def delete_club(
     club_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -153,8 +153,8 @@ async def delete_club(
         ) from exc
 
 
-@router.post('/join', response_model=GenericResponse)
-@router.post('/join-code', response_model=GenericResponse)
+@router.post('/join', response_model=GenericResponse, dependencies=[write_limiter])
+@router.post('/join-code', response_model=GenericResponse, dependencies=[write_limiter])
 async def join_club(
     body: ClubJoinRequest,
     db: AsyncSession = Depends(get_db),
@@ -181,7 +181,7 @@ async def join_club(
     }
 
 
-@router.post('/{club_id}/join', response_model=GenericResponse)
+@router.post('/{club_id}/join', response_model=GenericResponse, dependencies=[write_limiter])
 async def join_club_by_id(
     club_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -207,7 +207,7 @@ async def join_club_by_id(
     }
 
 
-@router.post('/{club_id}/leave', response_model=GenericResponse)
+@router.post('/{club_id}/leave', response_model=GenericResponse, dependencies=[write_limiter])
 async def leave_club(
     club_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -296,7 +296,7 @@ async def get_discussions(
     }
 
 
-@router.post('/{club_id}/discussions', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('/{club_id}/discussions', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def add_discussion(
     club_id: UUID,
     body: DiscussionCreate,

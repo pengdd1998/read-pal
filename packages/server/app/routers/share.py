@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import api_limiter
+from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.share import ShareCreate, ShareResponse
 from app.services import share_service
@@ -30,7 +30,7 @@ def _dump(share: object, include_url: bool = False) -> dict:
     return resp.model_dump(by_alias=True, mode='json')
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def create_share(
     body: ShareCreate,
     db: AsyncSession = Depends(get_db),
@@ -78,7 +78,7 @@ async def get_shared_content(
     }
 
 
-@router.delete('/{share_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{share_id}', status_code=status.HTTP_204_NO_CONTENT, dependencies=[write_limiter])
 async def delete_share(
     share_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -93,7 +93,7 @@ async def delete_share(
         raise not_found_error(translate_error(exc, lang)) from exc
 
 
-@router.post('/export', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('/export', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def export_share(
     body: ShareCreate,
     db: AsyncSession = Depends(get_db),

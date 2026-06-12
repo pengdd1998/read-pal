@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import ai_heavy_limiter
+from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
 from app.schemas.reading_session import (
     HeartbeatRequest,
     SessionCreate,
@@ -120,7 +120,7 @@ async def get_session(
     }
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def create_session(
     body: SessionCreate,
     current_user: dict = Depends(get_current_user),
@@ -136,7 +136,7 @@ async def create_session(
     }
 
 
-@router.api_route('/{session_id}/end', methods=['PATCH', 'POST'], response_model=GenericResponse)
+@router.api_route('/{session_id}/end', methods=['PATCH', 'POST'], response_model=GenericResponse, dependencies=[write_limiter])
 async def end_session(
     session_id: UUID,
     body: SessionUpdate | None = None,
@@ -155,7 +155,7 @@ async def end_session(
     }
 
 
-@router.post('/start', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('/start', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def start_session(
     body: SessionStartRequest,
     current_user: dict = Depends(get_current_user),
@@ -171,8 +171,8 @@ async def start_session(
     }
 
 
-@router.patch('/{session_id}/heartbeat', response_model=GenericResponse)
-@router.post('/{session_id}/heartbeat', response_model=GenericResponse)
+@router.patch('/{session_id}/heartbeat', response_model=GenericResponse, dependencies=[write_limiter])
+@router.post('/{session_id}/heartbeat', response_model=GenericResponse, dependencies=[write_limiter])
 async def heartbeat_session(
     session_id: UUID,
     body: HeartbeatRequest | None = None,
@@ -188,7 +188,7 @@ async def heartbeat_session(
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 
 
-@router.post('/{session_id}/summarize', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.post('/{session_id}/summarize', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
 async def summarize_session(
     session_id: UUID,
     current_user: dict = Depends(get_current_user),

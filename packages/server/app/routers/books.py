@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import api_limiter
+from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.book import (
     BookCreate,
     BookListResponse,
@@ -94,7 +94,7 @@ async def get_book_chapters(
     return {'success': True, 'data': {'chapters': chapters}}
 
 
-@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def create_book(
     body: BookCreate,
     current_user: dict = Depends(get_current_user),
@@ -112,7 +112,7 @@ async def create_book(
     }
 
 
-@router.patch('/{book_id}', response_model=GenericResponse)
+@router.patch('/{book_id}', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_book(
     book_id: UUID,
     body: BookUpdate,
@@ -127,7 +127,7 @@ async def update_book(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
-@router.delete('/{book_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{book_id}', status_code=status.HTTP_204_NO_CONTENT, dependencies=[write_limiter])
 async def delete_book(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),
@@ -140,7 +140,7 @@ async def delete_book(
         raise not_found_error(t('errors.book_not_found', lang))
 
 
-@router.put('/{book_id}/tags', response_model=GenericResponse)
+@router.put('/{book_id}/tags', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_tags(
     book_id: UUID,
     body: BookTagsUpdateRequest,
@@ -156,7 +156,7 @@ async def update_tags(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
-@router.post('/seed-sample', status_code=status.HTTP_201_CREATED, response_model=GenericResponse)
+@router.post('/seed-sample', status_code=status.HTTP_201_CREATED, response_model=GenericResponse, dependencies=[write_limiter])
 async def seed_sample_book(
     body: SeedSampleBookRequest | None = None,
     current_user: dict = Depends(get_current_user),

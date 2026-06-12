@@ -150,7 +150,7 @@ async def create_annotation(
     }
 
 
-@router.patch('/{annotation_id}', response_model=GenericResponse)
+@router.patch('/{annotation_id}', response_model=GenericResponse, dependencies=[write_limiter])
 async def update_annotation(
     annotation_id: UUID,
     body: AnnotationUpdate,
@@ -174,7 +174,7 @@ async def update_annotation(
     }
 
 
-@router.delete('/{annotation_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{annotation_id}', status_code=status.HTTP_204_NO_CONTENT, dependencies=[write_limiter])
 async def delete_annotation(
     annotation_id: UUID,
     current_user: dict = Depends(get_current_user),

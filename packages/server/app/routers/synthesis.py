@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limiter import ai_heavy_limiter
+from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
 from app.schemas.common import GenericResponse
 from app.schemas.synthesis import CompareRequest, SynthesisRequest
 from app.services.cross_book_synthesis_service import (
@@ -27,7 +27,7 @@ logger = logging.getLogger('read-pal.synthesis')
 router = APIRouter(prefix='/api/v1/synthesis', tags=['synthesis'], dependencies=[api_limiter])
 
 
-@router.post('/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.post('/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
 async def run_synthesis(
     book_id: UUID,
     body: SynthesisRequest | None = None,
@@ -90,7 +90,7 @@ async def run_cross_book_synthesis(
     }
 
 
-@router.post('/cross-book/compare', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.post('/cross-book/compare', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
 async def run_book_comparison(
     body: CompareRequest,
     current_user: dict = Depends(get_current_user),
