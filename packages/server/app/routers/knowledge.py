@@ -96,13 +96,10 @@ async def get_knowledge_gaps(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Detect knowledge gaps in the user's combined knowledge graph."""
-    try:
-        gaps = await detect_gaps(db, UUID(current_user['id']))
-    except (ConnectionError, TimeoutError) as exc:
-        logger.error('Knowledge gaps detection failed: %s', exc)
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable')},
-        ) from exc
+    """Detect knowledge gaps in the user's combined knowledge graph.
+
+    Returns ``{gaps: []}`` gracefully when the graph is empty, Redis is
+    down, or the database is unreachable -- never a 500.
+    """
+    gaps = await detect_gaps(db, UUID(current_user['id']))
     return {'success': True, 'data': {'gaps': [g.model_dump(by_alias=True, mode='json') for g in gaps]}}

@@ -100,7 +100,7 @@ export function useKnowledgeGraph(errorMessage: string): UseKnowledgeGraphReturn
     }));
     runForceSimulation(simNodes, rawEdges, dimensions.width, dimensions.height);
     setNodes(simNodes);
-  }, [dimensions.width, dimensions.height, fetchKey]);
+  }, [dimensions.width, dimensions.height, fetchKey, edges]);
 
   // Responsive SVG
   useEffect(() => {

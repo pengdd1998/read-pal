@@ -78,7 +78,12 @@ async def _load_cached_graph(
             return None
 
         return GraphData.model_validate_json(cached_graph)
-    except (json.JSONDecodeError, ValueError, KeyError) as exc:
+    except (
+        json.JSONDecodeError,
+        ValueError,
+        KeyError,
+        redis.exceptions.RedisError,
+    ) as exc:
         logger.warning('knowledge.cache_read_failed', exc=str(exc)[:200])
         return None
 

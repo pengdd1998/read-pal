@@ -227,7 +227,7 @@ async def _build_merged_graph(
                 continue
             sub_graph = _build_sub_graph_from_cached(cached)
             _merge_sub_graph_into(merged, sub_graph)
-        except (ValueError, RuntimeError) as exc:
+        except Exception as exc:
             logger.warning('Failed to load graph for book %s', bid, exc_info=True)
             continue
     return merged
@@ -244,30 +244,39 @@ async def detect_gaps(
     """
     from app.models.book import Book as BookModel
 
-    async with db_error_guard('detect_gaps', user_id=str(user_id)):
-        result = await db.execute(
-            select(BookModel.id).where(BookModel.user_id == user_id),
+    try:
+        async with db_error_guard('detect_gaps', user_id=str(user_id)):
+            result = await db.execute(
+                select(BookModel.id).where(BookModel.user_id == user_id),
+            )
+            book_ids = [row[0] for row in result.all()]
+        if not book_ids:
+            return []
+
+        merged = await _build_merged_graph(db, user_id, book_ids)
+
+        if not merged.nodes:
+            return []
+
+        total_clusters = len(list(nx.connected_components(merged)))
+        if total_clusters <= 1 and all(merged.degree(n) > 1 for n in merged.nodes):
+            return []
+
+        gaps = _identify_gap_nodes(merged, total_clusters)
+        unique_gaps = _deduplicate_gaps(gaps)
+
+        logger.info(
+            'knowledge.detect_gaps.completed',
+            gap_count=len(unique_gaps),
+            total_clusters=total_clusters,
+            user_id=str(user_id),
         )
-        book_ids = [row[0] for row in result.all()]
-    if not book_ids:
+        return unique_gaps
+    except Exception as exc:
+        logger.error(
+            'knowledge.detect_gaps.failed',
+            error=str(exc)[:500],
+            user_id=str(user_id),
+            exc_info=True,
+        )
         return []
-
-    merged = await _build_merged_graph(db, user_id, book_ids)
-
-    if not merged.nodes:
-        return []
-
-    total_clusters = len(list(nx.connected_components(merged)))
-    if total_clusters <= 1 and all(merged.degree(n) > 1 for n in merged.nodes):
-        return []
-
-    gaps = _identify_gap_nodes(merged, total_clusters)
-    unique_gaps = _deduplicate_gaps(gaps)
-
-    logger.info(
-        'knowledge.detect_gaps.completed',
-        gap_count=len(unique_gaps),
-        total_clusters=total_clusters,
-        user_id=str(user_id),
-    )
-    return unique_gaps
