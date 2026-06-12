@@ -69,7 +69,7 @@ const CharacterItem = React.memo(function CharacterItem({
   className={`w-full text-left px-3 py-2.5 rounded-xl transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    isSelected
    ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700'
-   : 'bg-gray-50/50 border border-transparent hover:bg-surface-1'
+   : 'bg-surface-1 border border-transparent hover:bg-surface-1'
   }`}
   >
   <div className="flex items-center justify-between">

@@ -132,7 +132,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   <div className="space-y-2 pr-4">
   <div className="h-5 w-24 bg-surface-1 rounded animate-pulse" />
   {[1, 2, 3].map((i) => (
-   <div key={i} className="h-8 bg-gray-50/50 rounded-lg animate-pulse" />
+   <div key={i} className="h-8 bg-surface-1 rounded-lg animate-pulse" />
   ))}
   </div>
  );

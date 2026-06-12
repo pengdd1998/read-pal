@@ -57,7 +57,7 @@ export const ShareDialog = React.memo(function ShareDialog({
   >
   {/* Header */}
   <div className="px-5 py-4 border-b border-surface-3 flex items-center justify-between">
-   <h3 className="text-lg font-semibold text-gray-900">
+   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
    {t('share_title')}
    </h3>
    <button type="button"
@@ -82,7 +82,7 @@ export const ShareDialog = React.memo(function ShareDialog({
     className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
     activeTab === tab.key
      ? 'text-amber-600 dark:text-amber-400'
-     : 'text-gray-500 hover:text-gray-700'
+     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
     }`}
    >
     {t(tab.labelKey)}

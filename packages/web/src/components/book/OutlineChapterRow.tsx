@@ -29,7 +29,7 @@ export const OutlineChapterRow = React.memo(function OutlineChapterRow({
   <div>
    <button type="button"
     onClick={onToggle}
-    className="w-full flex items-center gap-2 px-5 py-3 hover:bg-gray-50/50 transition-colors text-left focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="w-full flex items-center gap-2 px-5 py-3 hover:bg-surface-1 transition-colors text-left focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     <svg aria-hidden="true"
      className={`w-3.5 h-3.5 text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}

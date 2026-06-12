@@ -17,7 +17,7 @@ export const FictionMoodIndicator = React.memo(function FictionMoodIndicator({ m
   </p>
   <div className="flex items-center gap-2" role="status" aria-label={t(`fiction_mood_${mood}`)}>
   <div className={`w-3 h-3 rounded-full ${MOOD_COLORS[mood]}`} aria-hidden="true" />
-  <span className="text-sm text-gray-700">
+  <span className="text-sm text-gray-700 dark:text-gray-300">
    {MOOD_ICONS[mood]} {t(`fiction_mood_${mood}`)}
   </span>
   </div>

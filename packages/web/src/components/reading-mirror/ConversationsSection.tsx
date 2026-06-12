@@ -21,11 +21,11 @@ interface BreakthroughCardProps {
 const BreakthroughCard = React.memo(function BreakthroughCard({ bt }: BreakthroughCardProps) {
   return (
     <div className="bg-surface-0 border border-amber-100 dark:border-amber-900/40 rounded-xl p-5 space-y-3">
-      <h4 className="font-serif text-lg font-semibold text-gray-900 m-0">
+      <h4 className="font-serif text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">
         {bt.title}
       </h4>
 
-      <p className="text-gray-700 text-sm leading-relaxed m-0">
+      <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed m-0">
         {bt.narrative}
       </p>
 
@@ -67,7 +67,7 @@ export default React.memo(function ConversationsSection({ data }: ConversationsS
   return (
     <div className="py-8 space-y-6">
       {summary && (
-        <p className="text-gray-600 text-base italic leading-relaxed max-w-[65ch]">
+        <p className="text-gray-600 dark:text-gray-300 text-base italic leading-relaxed max-w-[65ch]">
           {summary}
         </p>
       )}

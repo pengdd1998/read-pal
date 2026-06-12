@@ -50,7 +50,7 @@ export const PlanProgressView = React.memo(function PlanProgressView({
 
       {/* Plan text */}
       <div className="prose prose-sm dark:prose-invert max-w-none">
-        <pre className="whitespace-pre-wrap text-xs text-gray-700 font-sans leading-relaxed bg-gray-50/50 p-3 rounded-lg">
+        <pre className="whitespace-pre-wrap text-xs text-gray-700 font-sans leading-relaxed bg-surface-1 p-3 rounded-lg">
           {plan.planText}
         </pre>
       </div>

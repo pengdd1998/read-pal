@@ -48,7 +48,7 @@ const ObjectiveItem = React.memo(function ObjectiveItem({ obj, completedLabel, i
         )}
       </span>
       <span className={`text-sm leading-relaxed ${
-        obj.completed ? 'text-emerald-700 dark:text-emerald-300 line-through' : 'text-gray-700'
+        obj.completed ? 'text-emerald-700 dark:text-emerald-300 line-through' : 'text-gray-700 dark:text-gray-300'
       }`}>
         {obj.text}
       </span>
@@ -66,7 +66,7 @@ const ConceptCheckItem = React.memo(function ConceptCheckItem({ check, isReveale
   return (
     <div className="border border-surface-3 rounded-lg overflow-hidden">
       <div className="p-3">
-        <p className="text-sm font-medium text-gray-800">{check.question}</p>
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{check.question}</p>
         {!isRevealed && check.hint && (
           <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 italic">{hintPrefix}</p>
         )}
@@ -229,7 +229,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
    {/* Mastery bar */}
    <div>
     <div className="flex justify-between text-xs mb-1">
-    <span className="text-gray-600">{t('overall_mastery')}</span>
+    <span className="text-gray-600 dark:text-gray-300">{t('overall_mastery')}</span>
     <span className="font-medium text-amber-700 dark:text-amber-400">
      {Math.round(mastery.overallMastery * 100)}%
     </span>
@@ -245,7 +245,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
    {/* Stats grid */}
    <div className="grid grid-cols-2 gap-3">
     <div className="bg-surface-1 rounded-lg p-3">
-    <div className="text-lg font-bold text-gray-900">
+    <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
      {mastery.chaptersCompleted}/{mastery.totalChapters}
     </div>
     <div className="text-xs text-gray-500">{t('chapters_read')}</div>
@@ -264,7 +264,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
     <h4 className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">{t('strong_areas')}</h4>
     <div className="space-y-1">
      {mastery.strongAreas.slice(0, 3).map((area) => (
-     <div key={area} className="text-xs text-gray-600 truncate">
+     <div key={area} className="text-xs text-gray-600 dark:text-gray-400 truncate">
       {area.slice(0, 80)}{area.length > 80 ? '...' : ''}
      </div>
      ))}

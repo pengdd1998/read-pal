@@ -47,7 +47,7 @@ export default React.memo(function GeneratingState({ genStep }: GeneratingStateP
   <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 flex items-center justify-center">
   <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" role="status" aria-label={t('creatingTitle')} />
   </div>
-  <h2 className="text-xl font-bold text-gray-900 mb-2">{t('creatingTitle')}</h2>
+  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('creatingTitle')}</h2>
   <p className="text-sm text-gray-500 mb-6">{t('creatingDesc')}</p>
   <div className="space-y-2" aria-live="polite">
   {STEPS.map((step) => (

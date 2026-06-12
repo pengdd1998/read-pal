@@ -23,9 +23,9 @@ const HubConceptCard = React.memo(function HubConceptCard({ hub }: HubConceptCar
     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-1.5">
         <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-        <span className="font-serif font-semibold text-gray-900">{hub.name}</span>
+        <span className="font-serif font-semibold text-gray-900 dark:text-gray-100">{hub.name}</span>
       </div>
-      <p className="text-sm text-gray-600 m-0 leading-relaxed">{hub.why_central}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-300 m-0 leading-relaxed">{hub.why_central}</p>
     </div>
   );
 });
@@ -88,7 +88,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
   return (
     <div className="py-8 space-y-6">
       {narrative && (
-        <p className="text-gray-600 text-base italic leading-relaxed max-w-[65ch]">
+        <p className="text-gray-600 dark:text-gray-300 text-base italic leading-relaxed max-w-[65ch]">
           {narrative}
         </p>
       )}

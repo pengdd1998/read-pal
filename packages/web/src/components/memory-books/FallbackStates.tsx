@@ -19,11 +19,11 @@ export const ErrorState = React.memo(function ErrorState({ error, onRetry }: Err
  return (
  <div className="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
   <div className="text-5xl mb-4">{'\u{1F614}'}</div>
-  <h2 className="text-xl font-bold text-gray-900 mb-2">{t('generationFailed')}</h2>
+  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('generationFailed')}</h2>
   <p className="text-sm text-gray-500 mb-6">{error}</p>
   <div className="flex gap-3 justify-center">
   <button type="button" onClick={onRetry} className="btn btn-primary">{t('tryAgain')}</button>
-  <Link href="/memory-books" prefetch={false} className="btn bg-surface-1 text-gray-700">
+  <Link href="/memory-books" prefetch={false} className="btn bg-surface-1 text-gray-700 dark:text-gray-300">
    {t('backToMemoryBooks')}
   </Link>
   </div>
@@ -48,7 +48,7 @@ export const EmptyCta = React.memo(function EmptyCta({ onGenerate }: EmptyCtaPro
   {t('createButton')}
   </button>
   <div className="mt-6">
-  <Link href="/memory-books" prefetch={false} className="text-sm text-gray-500 hover:text-gray-600 transition-colors">
+  <Link href="/memory-books" prefetch={false} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
    {t('backToMemoryBooks')}
   </Link>
   </div>

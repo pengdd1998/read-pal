@@ -26,7 +26,7 @@ const MemberRow = React.memo(function MemberRow({
   return (
    <div
    key={member.id}
-   className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50/50 transition-colors"
+   className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-1 transition-colors"
    >
    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center text-sm font-bold text-primary-700 dark:text-primary-300">
     {memberInitial}

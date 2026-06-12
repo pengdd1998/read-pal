@@ -36,11 +36,11 @@ const PhaseTimelineItem = React.memo(function PhaseTimelineItem({ phase }: Phase
       <div className="absolute -left-[calc(1.5rem+5px)] top-0 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-surface-0" />
 
       <div className="space-y-2">
-        <h4 className="font-serif text-lg font-semibold text-gray-900 m-0">
+        <h4 className="font-serif text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">
           {phase.name}
         </h4>
 
-        <p className="text-gray-700 text-sm leading-relaxed m-0">
+        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed m-0">
           {phase.narrative}
         </p>
 

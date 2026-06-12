@@ -64,7 +64,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
   onClick={(e) => e.stopPropagation()}
   >
   <div className="text-6xl mb-4">{'\uD83C\uDF89'}</div>
-  <h3 className="text-2xl font-bold text-gray-900 mb-1">{t('completion_title')}</h3>
+  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">{t('completion_title')}</h3>
   <p className="text-gray-500 mb-5">{t('completion_subtitle')} <strong>{bookTitle}</strong></p>
 
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">

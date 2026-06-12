@@ -121,7 +121,7 @@ const SessionEntryItem = React.memo(function SessionEntryItem({
 
  return (
  <div
-  className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/50 transition-colors"
+  className="flex items-start gap-3 px-5 py-3 hover:bg-surface-1 transition-colors"
  >
  <div className="text-xs text-gray-500 min-w-[52px] pt-0.5">
   <div>{dateStr}</div>

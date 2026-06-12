@@ -14,7 +14,7 @@ const BadgeCard = React.memo(function BadgeCard({ badge }: BadgeCardProps) {
   className={`rounded-xl p-3 text-center transition-all ${
    badge.unlocked
    ? 'bg-gradient-to-br from-amber-50 to-teal-50 dark:from-amber-900/10 dark:to-teal-900/10 border border-amber-200 dark:border-amber-800'
-   : 'bg-gray-50/50 opacity-50'
+   : 'bg-surface-1 opacity-50'
   }`}
  >
   <div className={`text-2xl mb-1 ${badge.unlocked ? '' : 'grayscale'}`} aria-hidden="true">{badge.icon}</div>

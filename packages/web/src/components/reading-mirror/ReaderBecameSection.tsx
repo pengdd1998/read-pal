@@ -26,7 +26,7 @@ export default React.memo(function ReaderBecameSection({ data }: ReaderBecameSec
     <div className="py-8 space-y-6">
       {/* Reflective essay */}
       {essay && (
-        <div className="font-serif text-lg leading-[1.85] text-gray-800 max-w-[65ch]">
+        <div className="font-serif text-lg leading-[1.85] text-gray-800 dark:text-gray-200 max-w-[65ch]">
           <p className="m-0">{essay}</p>
         </div>
       )}
@@ -40,7 +40,7 @@ export default React.memo(function ReaderBecameSection({ data }: ReaderBecameSec
               <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1">
                 {t('key_transformation')}
               </h4>
-              <p className="text-gray-800 m-0 font-serif text-base leading-relaxed italic">
+              <p className="text-gray-800 dark:text-gray-200 m-0 font-serif text-base leading-relaxed italic">
                 {transformation}
               </p>
             </div>
@@ -54,7 +54,7 @@ export default React.memo(function ReaderBecameSection({ data }: ReaderBecameSec
           <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">
             {t('parting_question')}
           </p>
-          <p className="font-serif text-xl text-gray-900 m-0 leading-relaxed">
+          <p className="font-serif text-xl text-gray-900 dark:text-gray-100 m-0 leading-relaxed">
             &ldquo;{question}&rdquo;
           </p>
         </div>

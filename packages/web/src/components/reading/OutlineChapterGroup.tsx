@@ -37,7 +37,7 @@ export const OutlineChapterGroup = memo(function OutlineChapterGroup({
   onClick={() => onToggle(chapter.chapterIndex)}
   aria-expanded={isExpanded}
   aria-label={isExpanded ? t('outline_collapse', { label: chapter.label }) : t('outline_expand', { label: chapter.label })}
-  className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+  className="w-full flex items-center gap-2 px-4 py-3 hover:bg-surface-1 transition-colors text-left"
   >
   <svg aria-hidden="true"
    className={`w-3.5 h-3.5 text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}

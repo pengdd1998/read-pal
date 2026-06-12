@@ -64,7 +64,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
   >
   <div className="text-center">
    <div className="text-4xl mb-3">{'\uD83D\uDCD6'}</div>
-   <h3 className="text-lg font-bold text-gray-900 mb-1">{t('session_title')}</h3>
+   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('session_title')}</h3>
    <p className="text-sm text-gray-500 mb-4">{t('session_great_reading')}</p>
 
    <div className="grid grid-cols-2 gap-3 mb-4">
@@ -102,7 +102,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
     </svg>
     {t('session_reading_insight')}
     </div>
-    <p className="text-xs text-gray-700 leading-relaxed">{aiSummary}</p>
+    <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{aiSummary}</p>
    </div>
    )}
    {summaryError && !summaryLoading && !aiSummary && (

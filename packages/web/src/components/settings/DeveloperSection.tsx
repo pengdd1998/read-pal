@@ -18,7 +18,7 @@ export const DeveloperSection = React.memo(function DeveloperSection({ settings 
  <>
   {/* Integrations — Zotero */}
   <section className="mt-10 animate-slide-up stagger-3">
-  <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+  <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
    <svg aria-hidden="true" className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
    </svg>
@@ -30,7 +30,7 @@ export const DeveloperSection = React.memo(function DeveloperSection({ settings 
     Z
    </div>
    <div>
-    <h3 className="text-sm font-semibold text-gray-900">{t('zotero_title')}</h3>
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('zotero_title')}</h3>
     <p className="text-xs text-gray-500">{t('zotero_desc')}</p>
    </div>
    </div>

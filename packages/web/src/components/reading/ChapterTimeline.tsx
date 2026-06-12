@@ -43,8 +43,8 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
   isCurrent
    ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700'
    : isRead
-   ? 'bg-gray-50/50 hover:bg-surface-1 border border-transparent'
-   : 'border border-transparent hover:bg-gray-50/30'
+   ? 'bg-surface-1 hover:bg-surface-1 border border-transparent'
+   : 'border border-transparent hover:bg-surface-1'
   }`}
  >
   <div className="flex items-center gap-2 mb-1">

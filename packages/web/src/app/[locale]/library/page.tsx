@@ -20,7 +20,7 @@ function MemoryBooksLink() {
     </svg>
    </span>
    <div>
-    <p className="text-sm font-medium text-gray-800">{t('memory_books_link_title')}</p>
+    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{t('memory_books_link_title')}</p>
     <p className="text-xs text-gray-500 mt-0.5">{t('memory_books_link_desc')}</p>
    </div>
   </Link>
@@ -67,7 +67,7 @@ export default function LibraryPage() {
     onChange={(e) => setSearchQuery(e.target.value)}
     placeholder={t('search_library')}
     aria-label={t('search_library')}
-    className="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 w-32 sm:w-44 lg:w-48"
+    className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 w-32 sm:w-44 lg:w-48"
    />
    {searchQuery && (
     <button type="button" onClick={() => setSearchQuery('')} aria-label={t('clear_search')} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">
@@ -127,7 +127,7 @@ export default function LibraryPage() {
     onChange={(e) => setSearchQuery(e.target.value)}
     placeholder={t('search_library')}
     aria-label={t('search_library')}
-    className="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 flex-1"
+    className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 flex-1"
    />
   </div>
   </div>

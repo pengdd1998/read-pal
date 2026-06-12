@@ -20,7 +20,7 @@ interface ThreadCardProps {
 const ThreadCard = React.memo(function ThreadCard({ thread }: ThreadCardProps) {
   return (
     <div className="bg-surface-0 border border-surface-3 rounded-xl p-5 space-y-2">
-      <h4 className="font-serif text-lg font-semibold text-gray-900 m-0">
+      <h4 className="font-serif text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">
         {thread.theme}
       </h4>
 
@@ -37,7 +37,7 @@ const ThreadCard = React.memo(function ThreadCard({ thread }: ThreadCardProps) {
         </div>
       )}
 
-      <p className="text-sm text-gray-600 m-0 leading-relaxed">
+      <p className="text-sm text-gray-600 dark:text-gray-300 m-0 leading-relaxed">
         {thread.connection}
       </p>
     </div>
@@ -62,7 +62,7 @@ export default React.memo(function ThreadsSection({ data }: ThreadsSectionProps)
   return (
     <div className="py-8 space-y-6">
       {readingPattern && (
-        <p className="text-gray-600 text-base italic leading-relaxed max-w-[65ch]">
+        <p className="text-gray-600 dark:text-gray-300 text-base italic leading-relaxed max-w-[65ch]">
           {readingPattern}
         </p>
       )}

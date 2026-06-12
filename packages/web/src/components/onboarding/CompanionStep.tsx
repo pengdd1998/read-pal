@@ -54,7 +54,7 @@ export const CompanionStep = React.memo(function CompanionStep({
               className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-left focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
                 isSelected
                   ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/15 ring-1 ring-amber-400/30'
-                  : 'border-surface-3 hover:border-surface-3 hover:bg-gray-50/50'
+                  : 'border-surface-3 hover:border-surface-3 hover:bg-surface-1'
               }`}
             >
               {p.emoji === '🦉' || p.emoji === '🌊' ? <span className="text-2xl">{p.emoji}</span> : <PersonaIcon type={p.emoji} className="w-6 h-6 text-gray-600" />}

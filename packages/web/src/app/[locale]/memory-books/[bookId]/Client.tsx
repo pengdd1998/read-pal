@@ -219,8 +219,8 @@ export default function ReadingMirrorPage() {
    </svg>
    </Link>
    <div>
-   <h1 className="text-lg font-bold text-gray-900">{bookTitle || mirror.title}</h1>
-   <p className="text-xs text-gray-500">
+   <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{bookTitle || mirror.title}</h1>
+   <p className="text-xs text-gray-500 dark:text-gray-400">
     {t('generatedDate', { date: mirror.generatedAt ? new Date(mirror.generatedAt).toLocaleDateString(locale) : '' })}
     {mirror.version > 1 && <span className="ml-1 opacity-60">(v{mirror.version})</span>}
    </p>

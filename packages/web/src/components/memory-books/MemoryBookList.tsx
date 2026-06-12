@@ -50,7 +50,7 @@ export const EmptyState = React.memo(function EmptyState({ title, description, c
       <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center">
         <span className="text-3xl">{'📕'}</span>
       </div>
-      <h2 className="text-xl font-bold text-gray-900 mb-2">{title}</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{title}</h2>
       <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
         {description}
       </p>

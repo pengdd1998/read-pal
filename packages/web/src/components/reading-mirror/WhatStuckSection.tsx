@@ -24,8 +24,8 @@ interface StuckItemCardProps {
 const StuckItemCard = React.memo(function StuckItemCard({ item }: StuckItemCardProps) {
   return (
     <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg p-3">
-      <span className="text-sm font-medium text-gray-900">{item.concept}</span>
-      <p className="text-xs text-gray-600 m-0 mt-1 leading-relaxed">{item.evidence}</p>
+      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.concept}</span>
+      <p className="text-xs text-gray-600 dark:text-gray-300 m-0 mt-1 leading-relaxed">{item.evidence}</p>
     </div>
   );
 });
@@ -62,7 +62,7 @@ export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionPr
   return (
     <div className="py-8 space-y-6">
       {retentionSummary && (
-        <p className="text-gray-600 text-base italic leading-relaxed max-w-[65ch]">
+        <p className="text-gray-600 dark:text-gray-300 text-base italic leading-relaxed max-w-[65ch]">
           {retentionSummary}
         </p>
       )}
@@ -72,7 +72,7 @@ export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionPr
         <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 border border-teal-200 dark:border-teal-800/50 rounded-xl p-4">
           <div className="flex items-start gap-3">
             <span className="text-lg shrink-0">💡</span>
-            <p className="text-gray-800 m-0 text-sm leading-relaxed font-medium">
+            <p className="text-gray-800 dark:text-gray-200 m-0 text-sm leading-relaxed font-medium">
               {topInsight}
             </p>
           </div>

@@ -24,7 +24,7 @@ const CachedBookRow = React.memo(function CachedBookRow({ book, chaptersCachedLa
    <Link
     key={book.bookId}
     href={`/read/${book.bookId}`}
-    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-surface-3 hover:border-amber-300 dark:hover:border-amber-700 transition-colors text-left"
+    className="flex items-center gap-3 p-3 rounded-xl bg-surface-1 border border-surface-3 hover:border-amber-300 dark:hover:border-amber-700 transition-colors text-left"
    >
     <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
      <svg aria-hidden="true" className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
