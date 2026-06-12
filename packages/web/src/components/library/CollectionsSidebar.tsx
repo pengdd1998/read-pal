@@ -141,7 +141,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  if (error) {
  return (
   <div className="pr-2 sm:pr-4">
-  <p className="text-xs text-red-500 mb-2">{t('collections_load_failed')}</p>
+  <p role="alert" className="text-xs text-red-500 dark:text-red-400 mb-2">{t('collections_load_failed')}</p>
   <button type="button"
    onClick={loadCollections}
    className="min-h-[44px] inline-flex items-center px-2 text-xs text-primary-600 hover:text-primary-700 underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"

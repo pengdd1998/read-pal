@@ -102,7 +102,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
     )}
    </button>
    {genError && (
-    <p className="text-xs text-red-500 mb-3">{genError}</p>
+    <p role="alert" className="text-xs text-red-500 dark:text-red-400 mb-3">{genError}</p>
    )}
    </>
   )}

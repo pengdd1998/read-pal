@@ -96,7 +96,7 @@ function ResetPasswordForm() {
     </div>
     <p className="text-sm text-gray-600 dark:text-gray-400">
     {t('reset_success_text')}{' '}
-    <Link href="/auth?mode=login" className="text-amber-700 hover:text-amber-800 dark:text-amber-400 font-medium">
+    <Link href="/auth?mode=login" className="text-amber-700 hover:text-amber-800 dark:text-amber-400 font-medium focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">
      {t('reset_sign_in_link')}
     </Link>.
     </p>
@@ -106,7 +106,7 @@ function ResetPasswordForm() {
     <ErrorAlert message={error} />
     <Link
     href="/forgot-password"
-    className="inline-block mt-4 text-amber-700 hover:text-amber-800 dark:text-amber-400 font-medium text-sm"
+    className="inline-block mt-4 text-amber-700 hover:text-amber-800 dark:text-amber-400 font-medium text-sm focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded"
     >
     {t('reset_request_new_link')}
     </Link>
@@ -146,7 +146,7 @@ function ResetPasswordForm() {
      autoComplete="new-password"
     />
     {confirmPassword.length > 0 && password !== confirmPassword && (
-     <p className="text-xs text-red-500 mt-1" role="alert">{t('passwords_mismatch')}</p>
+     <p className="text-xs text-red-500 dark:text-red-400 mt-1" role="alert">{t('passwords_mismatch')}</p>
     )}
     </div>
 
@@ -171,7 +171,7 @@ function ResetPasswordForm() {
   </div>
 
   <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-   <Link href="/auth?mode=login" className="text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 font-medium">
+   <Link href="/auth?mode=login" className="text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 font-medium focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">
    {t('back_to_login')}
    </Link>
   </p>

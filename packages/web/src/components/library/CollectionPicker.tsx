@@ -148,7 +148,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   </div>
   ) : loadError ? (
   <div className="px-3 py-4 text-center">
-   <p className="text-xs text-red-500 dark:text-red-400 mb-2">{t('collection_picker_load_failed')}</p>
+   <p role="alert" className="text-xs text-red-500 dark:text-red-400 mb-2">{t('collection_picker_load_failed')}</p>
    <button type="button" onClick={fetchCollections} className="text-xs text-primary-600 dark:text-primary-400 hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('collection_picker_retry')}</button>
   </div>
   ) : (

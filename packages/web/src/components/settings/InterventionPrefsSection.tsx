@@ -30,7 +30,7 @@ const DEFAULT_PREFS: InterventionPrefs = {
  quietHoursEnd: null,
 };
 
-function ToggleSwitch({
+const ToggleSwitch = React.memo(function ToggleSwitch({
  checked,
  onChange,
  disabled,
@@ -58,6 +58,7 @@ function ToggleSwitch({
  </button>
  );
 }
+);
 
 const PREF_KEYS: { key: keyof InterventionPrefs; labelKey: string }[] = [
  { key: 'marathonEnabled', labelKey: 'pref_marathon' },
@@ -190,8 +191,11 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
   )}
 
   {error && (
-   <div role="alert" className="p-3 rounded-xl text-sm bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300">
-   {error}
+   <div role="alert" className="p-3 rounded-xl text-sm bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 flex items-center justify-between">
+   <span>{error}</span>
+   <button type="button" onClick={() => { setError(null); setLoading(true); loadPrefs(); }} className="ml-3 underline hover:text-red-800 dark:hover:text-red-200 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded">
+    {t('retry')}
+   </button>
    </div>
   )}
 

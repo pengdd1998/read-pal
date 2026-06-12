@@ -37,7 +37,7 @@ export const WelcomeIntro = React.memo(function WelcomeIntro({
         </div>
       ) : error ? (
         <div className="space-y-4">
-          <p className="text-red-600 dark:text-red-400 text-lg">{error}</p>
+          <p role="alert" className="text-red-600 dark:text-red-400 text-lg">{error}</p>
           <button type="button"
             onClick={onRetry}
             className="btn btn-primary py-2 px-6 rounded-xl"

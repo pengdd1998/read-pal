@@ -20,9 +20,9 @@ export const Footer = React.memo(function Footer() {
    </span>
   </div>
   <div className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center">
-   <Link href="/terms" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans py-1">{tc('terms')}</Link>
-   <Link href="/privacy" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans py-1">{tc('privacy')}</Link>
-   <Link href="/settings" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans py-1">{t('nav_settings')}</Link>
+   <Link href="/terms" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans py-1 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">{tc('terms')}</Link>
+   <Link href="/privacy" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans py-1 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">{tc('privacy')}</Link>
+   <Link href="/settings" className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-amber-400 transition-colors duration-200 font-sans py-1 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">{t('nav_settings')}</Link>
   </div>
   </div>
  </footer>

@@ -14,7 +14,7 @@ export default async function PrivacyPage() {
   {/* Header */}
   <header className="bg-amber-800 dark:bg-amber-900 text-white">
   <div className="max-w-3xl mx-auto px-6 py-8">
-   <Link href="/dashboard" prefetch={false} className="text-amber-200 hover:text-white text-sm mb-2 min-h-[44px] inline-flex items-center">
+   <Link href="/dashboard" prefetch={false} className="text-amber-200 hover:text-white text-sm mb-2 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">
    {t('back_to_dashboard')}
    </Link>
    <h1 className="text-3xl font-bold font-serif">{t('page_title')}</h1>
@@ -94,7 +94,7 @@ export default async function PrivacyPage() {
     href={t('s10_body_link_url')}
     target="_blank"
     rel="noopener noreferrer"
-    className="text-amber-700 dark:text-amber-400 underline hover:text-amber-600"
+    className="text-amber-700 dark:text-amber-400 underline hover:text-amber-600 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded"
    >
     {t('s10_body_link')}
    </a>
@@ -103,7 +103,7 @@ export default async function PrivacyPage() {
   </section>
 
   <div className="pt-6 border-t border-surface-3">
-   <Link href="/" className="text-amber-700 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 text-sm font-medium min-h-[44px] inline-flex items-center">
+   <Link href="/" className="text-amber-700 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 text-sm font-medium min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">
    {t('back_to_home')}
    </Link>
   </div>

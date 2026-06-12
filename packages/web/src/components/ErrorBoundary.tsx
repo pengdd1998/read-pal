@@ -99,7 +99,7 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Rec
    {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
     <details className="mt-4 text-left">
     <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer">{t('stack_trace')}</summary>
-    <pre className="mt-2 text-[10px] text-red-500 overflow-auto max-h-32 bg-red-50 dark:bg-red-950/20 p-2 rounded-lg">
+    <pre className="mt-2 text-[10px] text-red-500 dark:text-red-400 overflow-auto max-h-32 bg-red-50 dark:bg-red-950/20 p-2 rounded-lg">
      {this.state.errorInfo.componentStack}
     </pre>
     </details>

@@ -127,7 +127,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   </button>
 
   {compareError && (
-  <div className="mt-3 p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
+  <div role="alert" className="mt-3 p-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
    {compareError}
   </div>
   )}

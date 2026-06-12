@@ -161,7 +161,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {/* Content */}
   <div className="p-4 max-h-80 overflow-y-auto">
   {error && (
-   <div className="mb-3 flex items-center justify-between gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-600 dark:text-red-400">
+   <div role="alert" className="mb-3 flex items-center justify-between gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-600 dark:text-red-400">
     <span>{error}</span>
     {onRetry && (
      <button type="button" onClick={onRetry} className="underline hover:text-red-700 dark:hover:text-red-300 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded">

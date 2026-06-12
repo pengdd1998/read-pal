@@ -86,7 +86,7 @@ export default function BookClubDetailPage() {
    <button type="button" onClick={refetchClub} className="text-sm text-amber-600 dark:text-amber-400 hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 rounded">
     {t('retry')}
    </button>
-   <Link href="/book-clubs" prefetch={false} className="text-sm text-primary-600 hover:underline min-h-[44px] inline-flex items-center">
+   <Link href="/book-clubs" prefetch={false} className="text-sm text-primary-600 hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">
    {t('backToBookClubs')}
    </Link>
    </div>
@@ -103,9 +103,9 @@ export default function BookClubDetailPage() {
   <div className="px-4 sm:px-6 lg:px-8 py-8">
   {/* Breadcrumb */}
   <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-   <Link href="/dashboard" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-400">{t('dashboard')}</Link>
+   <Link href="/dashboard" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-400 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">{t('dashboard')}</Link>
    <span>/</span>
-   <Link href="/book-clubs" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-400">{t('pageTitle')}</Link>
+   <Link href="/book-clubs" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-400 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">{t('pageTitle')}</Link>
    <span>/</span>
    <span className="text-gray-700 dark:text-gray-300">{club.name}</span>
   </div>

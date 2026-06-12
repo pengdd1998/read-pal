@@ -14,7 +14,7 @@ interface NotificationsSectionProps {
  onSave: (updates: Partial<UserSettings>) => void;
 }
 
-function ToggleSwitch({
+const ToggleSwitch = React.memo(function ToggleSwitch({
  checked,
  onChange,
  disabled,
@@ -50,6 +50,7 @@ function ToggleSwitch({
  </button>
  );
 }
+);
 
 export const NotificationsSection = React.memo(function NotificationsSection({ settings, saving, onSave }: NotificationsSectionProps) {
  const { toast } = useToast();

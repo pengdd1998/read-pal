@@ -200,7 +200,7 @@ function BookClubsWidgetInner() {
   )}
 
   {error && (
-  <div className="text-xs text-red-500 dark:text-red-400 mb-3 flex items-center justify-between"><span>{error}</span><button type="button" onClick={() => window.location.reload()} className="font-medium underline hover:no-underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t("retry")}</button></div>
+  <div role="alert" className="text-xs text-red-500 dark:text-red-400 mb-3 flex items-center justify-between"><span>{error}</span><button type="button" onClick={() => window.location.reload()} className="font-medium underline hover:no-underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t("retry")}</button></div>
   )}
 
   {/* Club list */}

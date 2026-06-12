@@ -199,7 +199,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
     </p>
     <button type="button"
      onClick={(e) => { e.stopPropagation(); cancelUpload(); }}
-     className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+     className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      aria-label={t('upload_cancel')}
     >
      {t('upload_cancel')}
@@ -211,9 +211,9 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   )}
 
   {error && (
-  <div className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-lg text-sm flex items-center justify-between">
+  <div role="alert" className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-lg text-sm flex items-center justify-between">
    <span>{error}</span>
-   <button type="button" onClick={() => { setError(''); }} className="text-xs font-medium underline hover:no-underline">{t("retry")}</button>
+   <button type="button" onClick={() => { setError(''); }} className="text-xs font-medium underline hover:no-underline focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">{t("retry")}</button>
   </div>
   )}
  </div>

@@ -25,7 +25,7 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
   {club.currentBook ? (
   <div>
    {progressError && (
-    <p className="text-xs text-red-500 dark:text-red-400 mb-2">{progressError}</p>
+    <p role="alert" className="text-xs text-red-500 dark:text-red-400 mb-2">{progressError}</p>
    )}
    <div className="flex items-center gap-3 mb-4">
    <div className={`w-10 h-14 rounded bg-gradient-to-br ${getBookCoverColors(club.currentBook.title)[0]} flex items-center justify-center`}>

@@ -160,7 +160,7 @@ export default async function DocsPage({
   <header className="bg-navy-700 dark:bg-navy-900 text-white">
   <div className="px-4 sm:px-6 lg:px-8 py-12">
    <div className="flex items-center gap-2 text-sm text-amber-200 mb-4">
-   <Link href="/" className="hover:text-white">{t('breadcrumb_home')}</Link>
+   <Link href="/" className="hover:text-white focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">{t('breadcrumb_home')}</Link>
    <span>/</span>
    <span>{t('breadcrumb_docs')}</span>
    </div>

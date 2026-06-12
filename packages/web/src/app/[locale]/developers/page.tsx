@@ -58,7 +58,7 @@ export default function DevelopersPage() {
   {/* Header */}
   <header className="bg-amber-800 dark:bg-amber-900 text-white">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
-   <Link href="/dashboard" prefetch={false} className="text-amber-200 hover:text-white text-sm mb-2 inline-block min-h-[44px] leading-[44px]">
+   <Link href="/dashboard" prefetch={false} className="text-amber-200 hover:text-white text-sm mb-2 inline-block min-h-[44px] leading-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">
    {t('back_dashboard')}
    </Link>
    <h1 className="text-3xl font-bold font-serif">{t('header_title')}</h1>
@@ -85,7 +85,7 @@ export default function DevelopersPage() {
    </div>
   )}
   {apiKeyError && (
-	   <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-300 flex items-center justify-between">
+	   <div role="alert" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-300 flex items-center justify-between">
 	   <span>{apiKeyError}</span>
 	   <button type="button" onClick={retryApiKeys} className="ml-3 underline hover:text-red-800 dark:hover:text-red-200 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded">
 	    {t('retry')}

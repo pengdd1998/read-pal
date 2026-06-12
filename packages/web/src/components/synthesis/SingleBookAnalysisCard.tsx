@@ -81,7 +81,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    {booksLoading ? (
    <div className="h-10 bg-surface-1 rounded-lg animate-pulse" />
    ) : booksError ? (
-   <div className="px-3 py-2.5 text-sm rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
+   <div role="alert" className="px-3 py-2.5 text-sm rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
     {booksError}
    </div>
    ) : (
@@ -168,9 +168,9 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
 
   {/* Error */}
   {error && (
-  <div className="mb-6 p-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300 flex items-center justify-between">
+  <div role="alert" className="mb-6 p-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300 flex items-center justify-between">
    <span>{error}</span>
-   <button type="button" onClick={handleAnalyze} className="text-xs font-medium underline hover:no-underline">{t("retry")}</button>
+   <button type="button" onClick={handleAnalyze} className="text-xs font-medium underline hover:no-underline focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">{t("retry")}</button>
   </div>
   )}
 

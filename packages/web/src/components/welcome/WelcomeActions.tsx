@@ -88,7 +88,7 @@ function SeedButton() {
         {seeding ? '...' : t('load_sample')}
       </button>
       {seedError && (
-        <div className="text-xs text-red-500 mt-1 ml-4">{t('seed_error')}</div>
+        <div role="alert" className="text-xs text-red-500 dark:text-red-400 mt-1 ml-4">{t('seed_error')}</div>
       )}
     </div>
   );

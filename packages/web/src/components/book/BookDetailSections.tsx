@@ -16,7 +16,7 @@ interface ErrorBannerProps {
 
 export const ErrorBanner = memo(function ErrorBanner({ error, onDismiss, dismissLabel }: ErrorBannerProps) {
   return (
-    <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center justify-between animate-scale-in">
+    <div role="alert" className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center justify-between animate-scale-in">
       <span>{error}</span>
       <button type="button" onClick={onDismiss} aria-label={dismissLabel} className="ml-2 text-red-400 hover:text-red-600 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400">&times;</button>
     </div>
@@ -201,7 +201,7 @@ export const PersonalReadingBookSection = memo(function PersonalReadingBookSecti
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <Link href={`/memory-books/${bookId}`} prefetch={false} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors">
+        <Link href={`/memory-books/${bookId}`} prefetch={false} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">
           <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
@@ -235,7 +235,7 @@ export const KnowledgeGraphCard = memo(function KnowledgeGraphCard({ t }: {
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('knowledgeGraphDesc')}</p>
           </div>
         </div>
-        <Link href="/knowledge" prefetch={false} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-500 hover:bg-violet-600 text-white transition-colors">
+        <Link href="/knowledge" prefetch={false} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-500 hover:bg-violet-600 text-white transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">
           <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>

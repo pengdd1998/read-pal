@@ -195,7 +195,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
     autoComplete="new-password"
    />
    {confirmPassword.length > 0 && password !== confirmPassword && (
-    <p className="text-xs text-red-500 mt-1" role="alert">{t('passwords_mismatch')}</p>
+    <p className="text-xs text-red-500 dark:text-red-400 mt-1" role="alert">{t('passwords_mismatch')}</p>
    )}
    </div>
   )}

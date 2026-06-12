@@ -102,7 +102,7 @@ export default function DashboardPage() {
 
       {/* Error */}
       {error && (
-        <div className="mb-8 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up flex items-center justify-between">
+        <div role="alert" className="mb-8 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm animate-slide-up flex items-center justify-between">
           <span>{error}</span>
           <button
             type="button"

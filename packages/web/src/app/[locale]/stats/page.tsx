@@ -54,7 +54,7 @@ export default function StatsPage() {
  <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
   {/* Back */}
   <div className="mb-6">
-  <Link href="/dashboard" prefetch={false} className="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px]" aria-label={t('dashboard')}>
+  <Link href="/dashboard" prefetch={false} className="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none" aria-label={t('dashboard')}>
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
    </svg>
@@ -69,7 +69,7 @@ export default function StatsPage() {
   </div>
 
   {error && (
-  <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm flex items-center justify-between">
+  <div role="alert" className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm flex items-center justify-between">
    <span>{error}</span>
    <button type="button"
     onClick={refetch}

@@ -66,7 +66,7 @@ export default React.memo(function SectionRenderer({
  // Error state
  if (section.error && !section.placeholder) {
  return (
-  <div className="p-8 italic text-red-500">
+  <div role="alert" className="p-8 italic text-red-500 dark:text-red-400">
   {section.error}
   </div>
  );

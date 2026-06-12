@@ -150,7 +150,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
     >
      {importing === 'sample' ? t('adding') : t('quick_start')}
     </button>
-    <Link href="/search" prefetch={false} className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+    <Link href="/search" prefetch={false} className="text-sm text-primary-600 dark:text-primary-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">
      {t('browse_all')}
     </Link>
    </div>

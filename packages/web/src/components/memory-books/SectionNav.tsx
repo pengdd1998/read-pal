@@ -38,7 +38,7 @@ export default React.memo(function SectionNav({
  if (sections.length === 0) return (
   <div className="text-center py-12">
    <p className="text-gray-500 dark:text-gray-400 mb-4">{tr('empty_sections')}</p>
-   <Link href="/memory-books" prefetch={false} className="text-sm text-amber-600 dark:text-amber-400 hover:underline">
+   <Link href="/memory-books" prefetch={false} className="text-sm text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">
     {t('backToList')}
    </Link>
   </div>

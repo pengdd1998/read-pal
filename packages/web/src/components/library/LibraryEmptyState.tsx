@@ -92,7 +92,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
   </p>
   </div>
   {error && (
-  <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs text-center">
+  <div role="alert" className="mt-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-xs text-center">
    <p>{error}</p>
    <button type="button"
     onClick={handleSeedSample}

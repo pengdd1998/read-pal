@@ -165,7 +165,7 @@ export default function BookClubsPage() {
 
    {/* Club list */}
    {!loading && error && (
-    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl p-4 text-sm flex items-center justify-between">
+    <div role="alert" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl p-4 text-sm flex items-center justify-between">
     <span>{error}</span>
     <button type="button" onClick={() => window.location.reload()} className="text-xs font-medium underline hover:no-underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('retry')}</button>
     </div>

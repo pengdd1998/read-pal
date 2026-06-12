@@ -81,7 +81,7 @@ export const AccountSection = React.memo(function AccountSection() {
     </svg>
     {t('account_delete_heading')}
     </summary>
-    <div className="mt-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30">
+    <div role="alert" className="mt-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30">
     <p className="text-xs text-red-600 dark:text-red-400 mb-3">
      {t('account_delete_warning')}
     </p>
@@ -122,7 +122,7 @@ export const AccountSection = React.memo(function AccountSection() {
      autoFocus
      aria-label={t('account_delete_password_placeholder')}
     />
-    {deleteError && <p className="text-xs text-red-600 dark:text-red-400 mb-3">{deleteError}</p>}
+    {deleteError && <p role="alert" className="text-xs text-red-600 dark:text-red-400 mb-3">{deleteError}</p>}
     <div className="flex gap-2 justify-end">
      <button type="button"
       onClick={() => { setShowDeleteModal(false); setConfirmPassword(''); setDeleteError(''); }}

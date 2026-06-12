@@ -121,7 +121,7 @@ function StreakCalendarInner() {
    {loading ? (
    <div className="mt-1 h-4 w-40 bg-surface-1 rounded animate-pulse" />
    ) : error ? (
-   <p className="text-sm text-red-500 dark:text-red-400 mt-1">{error}</p>
+   <p role="alert" className="text-sm text-red-500 dark:text-red-400 mt-1">{error}</p>
    ) : (
    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
     {t('active_days', { active: data?.totalDaysActive ?? 0, total: totalDays })}

@@ -116,7 +116,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
    <div className="flex items-center gap-1 sm:gap-3 min-w-0">
     {mounted && isAuthenticated ? (
     <>
-     <Link href="/search" prefetch={false} className="hidden md:min-w-[44px] md:min-h-[44px] md:flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors" aria-label={t('nav_search')}>
+     <Link href="/search" prefetch={false} className="hidden md:min-w-[44px] md:min-h-[44px] md:flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none" aria-label={t('nav_search')}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
      </svg>
