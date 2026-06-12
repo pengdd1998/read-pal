@@ -17,7 +17,7 @@ export const ExportModalHeader = React.memo(function ExportModalHeader({
   return (
     <div className="px-5 py-4 border-b border-surface-3 flex items-center justify-between">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           {t('export_title')}
         </h3>
         {bookTitle && (

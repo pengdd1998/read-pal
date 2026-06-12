@@ -34,7 +34,7 @@ const CitationFormatButton = React.memo(function CitationFormatButton({ isActive
    : 'border-surface-3 hover:border-surface-3'
    }`}
   >
-   <span className="text-sm font-medium text-gray-900">{label}</span>
+   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</span>
   </button>
  );
 });
@@ -116,7 +116,7 @@ export const ShareCitationTab = React.memo(function ShareCitationTab({ bookId }:
 
   {citationText && (
   <div className="space-y-2">
-   <pre className="bg-surface-1 rounded-lg p-3 text-xs text-gray-700 whitespace-pre-wrap break-words border border-surface-3">
+   <pre className="bg-surface-1 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words border border-surface-3">
    {citationText}
    </pre>
    <button type="button"

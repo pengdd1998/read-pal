@@ -30,7 +30,7 @@ export const ShareQuoteTab = React.memo(function ShareQuoteTab({ selectedAnnotat
   {t('share_quote_desc')}
   </p>
   <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-900/30">
-  <p className="text-sm text-gray-700 italic line-clamp-4">
+  <p className="text-sm text-gray-700 dark:text-gray-300 italic line-clamp-4">
    {selectedAnnotation.content}
   </p>
   </div>

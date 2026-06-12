@@ -27,7 +27,7 @@ const FormatButton = React.memo(function FormatButton({ f, isActive, label, desc
      : 'border-surface-3 hover:border-surface-3'
    }`}
   >
-   <span className="text-sm font-medium text-gray-900">{label}</span>
+   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</span>
    <span className="block text-xs text-gray-500 mt-0.5">{description}</span>
   </button>
  );
