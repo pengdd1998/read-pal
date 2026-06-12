@@ -114,7 +114,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    placeholder={t('zotero_api_key_placeholder')}
    aria-invalid={validationError ? true : undefined}
    aria-describedby={validationError ? 'zotero-error' : undefined}
-   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    />
   </div>
   <div>

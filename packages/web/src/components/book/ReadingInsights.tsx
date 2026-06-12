@@ -78,7 +78,7 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
    },
   ].map((item) => (
    <div key={item.label} className="bg-surface-0 p-3 text-center">
-   <div className="text-lg font-bold text-gray-900">
+   <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
     {item.value}
    </div>
    <div className="text-[10px] text-gray-500">{item.label}</div>

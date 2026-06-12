@@ -81,7 +81,7 @@ export const BookHeader = memo(function BookHeader({ book, status, lastRead, cov
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight">{book.title}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">{book.title}</h1>
         {isDisplayableAuthor(book.author) && <p className="text-gray-500 mt-1">{byLabel}</p>}
         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-3 ${status.color}`}>
           {status.label}
@@ -196,7 +196,7 @@ export const PersonalReadingBookSection = memo(function PersonalReadingBookSecti
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
         <div>
-          <h2 className="font-semibold text-gray-900">{t('personalReadingBook')}</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('personalReadingBook')}</h2>
           <p className="text-xs text-gray-500">{t('personalReadingBookDesc')}</p>
         </div>
       </div>
@@ -231,7 +231,7 @@ export const KnowledgeGraphCard = memo(function KnowledgeGraphCard({ t }: {
         <div className="flex items-center gap-3">
           <span className="text-2xl" aria-hidden="true">{'🗣️'}</span>
           <div>
-            <h2 className="font-semibold text-gray-900">{t('knowledgeGraph')}</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">{t('knowledgeGraph')}</h2>
             <p className="text-xs text-gray-500">{t('knowledgeGraphDesc')}</p>
           </div>
         </div>

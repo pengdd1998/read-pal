@@ -197,7 +197,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
    onChange={(e) => setNewKeyName(e.target.value)}
    placeholder={t('api_key_name_placeholder')}
    aria-label={t('api_key_name_placeholder')}
-   className="flex-1 px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="flex-1 px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
    autoFocus
    />

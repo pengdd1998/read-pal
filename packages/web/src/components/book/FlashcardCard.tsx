@@ -54,7 +54,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
   <div className="flex items-center gap-3 mb-3">
   <span className="text-2xl">{'📇'}</span>
   <div>
-   <h2 className="font-semibold text-gray-900">
+   <h2 className="font-semibold text-gray-900 dark:text-gray-100">
    {t('flashcardReview')}
    </h2>
    <p className="text-xs text-gray-500">{t('flashcardReviewDesc')}</p>
