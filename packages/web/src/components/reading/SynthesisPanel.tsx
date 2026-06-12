@@ -158,7 +158,6 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
    onClick={onClose}
    onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
    tabIndex={-1}
-   role="button"
    aria-label={t('synthesis_close_label')}
   />
   )}

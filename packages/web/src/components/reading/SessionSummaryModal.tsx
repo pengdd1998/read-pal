@@ -55,8 +55,9 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
   aria-label={t('session_title')}
   className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
   onClick={onKeepReading}
-  onKeyDown={handleBackdropKey}
- >
+        tabIndex={-1}
+        onKeyDown={handleBackdropKey}
+      >
   <div
   className="bg-surface-0 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 animate-scale-in"
   onClick={handlePanelClick}

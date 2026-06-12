@@ -45,8 +45,9 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
   aria-label={t('settings_title')}
   className="fixed inset-0 z-40 sm:hidden bg-black/30 backdrop-blur-sm animate-fade-in"
   onClick={onClose}
-  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
- >
+        tabIndex={-1}
+        onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+     >
   <div
   className="absolute bottom-0 left-0 right-0 bg-surface-0 rounded-t-2xl shadow-2xl p-5 animate-scale-in overscroll-contain max-h-[80vh] overflow-y-auto safe-area-bottom"
   onClick={(e) => e.stopPropagation()}

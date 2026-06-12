@@ -68,8 +68,9 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
   <div
   className="fixed inset-0 z-30 hidden md:block md:bg-black/10"
   onClick={onClose}
-  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
-  />
+       tabIndex={-1}
+       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+/>
 
   {/* Mobile: bottom sheet — Desktop: sidebar */}
   <div

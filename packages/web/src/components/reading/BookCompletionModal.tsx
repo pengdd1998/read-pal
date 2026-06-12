@@ -52,8 +52,9 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
   aria-label={t('completion_title')}
   className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
   onClick={onClose}
-  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
- >
+        tabIndex={-1}
+        onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+     >
   <div
   className="bg-surface-0 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-scale-in text-center"
   onClick={(e) => e.stopPropagation()}

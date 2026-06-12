@@ -159,9 +159,10 @@ export const ChapterDropdown = React.memo(function ChapterDropdown({
    {/* Mobile backdrop */}
    <div
    className="fixed inset-0 z-30 md:hidden bg-black/20 backdrop-blur-sm"
-   onClick={closeChapterMenu}
-   onKeyDown={(e) => { if (e.key === 'Escape') closeChapterMenu(); }}
-   />
+	   onClick={closeChapterMenu}
+	   tabIndex={-1}
+	   onKeyDown={(e) => { if (e.key === 'Escape') closeChapterMenu(); }}
+/>
 
    {/* Dropdown panel — opens upward since footer is at bottom */}
    <div

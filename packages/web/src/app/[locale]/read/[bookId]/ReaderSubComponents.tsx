@@ -125,7 +125,6 @@ export const StudyModeOverlay = React.memo(function StudyModeOverlay({
             if (e.key === 'Escape') onToggleStudyMode();
           }}
           tabIndex={-1}
-          role="button"
           aria-label={closeLabel}
         />
       )}

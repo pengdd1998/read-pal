@@ -143,7 +143,6 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
         onClick={onClose}
         onKeyDown={handleBackdropKey}
         tabIndex={-1}
-        role="button"
         aria-label={t('close_label')}
       />
 

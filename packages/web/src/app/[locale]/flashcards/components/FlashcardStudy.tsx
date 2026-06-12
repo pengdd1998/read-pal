@@ -117,17 +117,14 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    </div>
    )}
 
-   <div
-   className={`card min-h-[240px] flex flex-col justify-center cursor-pointer transition-all duration-300 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
-    showAnswer ? 'ring-2 ring-teal-300 dark:ring-teal-700' : ''
-   }`}
-   onClick={() => onShowAnswer(!showAnswer)}
-   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onShowAnswer(!showAnswer); } }}
-   tabIndex={0}
-   onTouchStart={handleTouchStart}
-   onTouchEnd={handleTouchEnd}
-   role="button"
-   aria-live="polite"
+   <button type="button"
+	   className={`card min-h-[240px] flex flex-col justify-center cursor-pointer transition-all duration-300 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
+	    showAnswer ? 'ring-2 ring-teal-300 dark:ring-teal-700' : ''
+	   }`}
+	   onClick={() => onShowAnswer(!showAnswer)}
+	   onTouchStart={handleTouchStart}
+	   onTouchEnd={handleTouchEnd}
+	   aria-live="polite"
    aria-expanded={showAnswer}
    aria-label={showAnswer ? t('answer_label') : t('question_label')}
    >
@@ -141,9 +138,9 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    </div>
 
    {!showAnswer && (
-    <p className="text-center text-xs text-gray-500 mt-6">{t('tap_to_reveal')}</p>
-   )}
-   </div>
+	    <p className="text-center text-xs text-gray-500 mt-6">{t('tap_to_reveal')}</p>
+	   )}
+	   </button>
 
    {currentCard.repetitionCount > 0 && (
    <div className="flex items-center justify-center gap-1 mt-3">

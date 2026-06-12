@@ -169,8 +169,9 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
           overlayVisible ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={complete}
+        tabIndex={-1}
         onKeyDown={(e) => { if (e.key === 'Escape') complete(); }}
-      />
+     />
 
       {/* Card */}
       <div
