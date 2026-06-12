@@ -47,7 +47,7 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
 
   <div className="flex-1 min-w-0">
   <div className="flex items-center gap-2">
-   <span className="text-sm font-semibold text-gray-900 truncate">
+   <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
    {club.name}
    </span>
    {club.isPrivate && (

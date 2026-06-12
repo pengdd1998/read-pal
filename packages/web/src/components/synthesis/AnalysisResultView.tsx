@@ -23,7 +23,7 @@ const ThemeChip = React.memo(function ThemeChip({ name, strength }: { name: stri
 
 const InsightItem = React.memo(function InsightItem({ insight }: { insight: string }) {
   return (
-    <li className="text-xs text-gray-700 pl-3 border-l-2 border-teal-400">
+    <li className="text-xs text-gray-700 dark:text-gray-300 pl-3 border-l-2 border-teal-400">
       {insight}
     </li>
   );
@@ -43,11 +43,11 @@ const ReferenceItem = React.memo(function ReferenceItem({ ref: refData, t }: {
               ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               : refData.type === 'extending'
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-surface-1 text-gray-600'
+                : 'bg-surface-1 text-gray-600 dark:text-gray-300'
         }`}>
           {t(`ref_${refData.type}`, { defaultValue: refData.type })}
         </span>
-        <span className="text-xs font-medium text-gray-800 truncate">
+        <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
           {refData.book.title}
         </span>
       </div>
@@ -85,7 +85,7 @@ const ContradictionItem = React.memo(function ContradictionItem({ c, t }: {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
         <div className="p-2 rounded bg-surface-0 border border-gray-100">
-          <p className="font-medium text-gray-700 mb-0.5">{c.position1.book.title}</p>
+          <p className="font-medium text-gray-700 dark:text-gray-300 mb-0.5">{c.position1.book.title}</p>
           <p className="text-gray-500 line-clamp-3">{c.position1.claim}</p>
         </div>
         <div className="p-2 rounded bg-surface-0 border border-gray-100">
@@ -231,7 +231,7 @@ export const AnalysisResultView = React.memo(function AnalysisResultView({ resul
           <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             {t('analysis_label')}
           </h4>
-          <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 whitespace-pre-wrap leading-relaxed bg-surface-1 rounded-lg p-3 border border-surface-3 max-h-[400px] overflow-y-auto">
+          <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-surface-1 rounded-lg p-3 border border-surface-3 max-h-[400px] overflow-y-auto">
             {textContent}
           </div>
         </div>

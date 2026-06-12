@@ -49,7 +49,7 @@ const ActiveBookCard = React.memo(function ActiveBookCard({ book, isFirst, isMul
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-gray-900 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
               {book.title}
             </h3>
             {isFirst && isMultiple && (
@@ -88,7 +88,7 @@ const StatItem = React.memo(function StatItem({ icon, value, label }: { icon: st
     <div className="card py-3 px-3 flex items-center gap-2">
       <DashboardStatIcon type={icon} />
       <div>
-        <div className="text-lg font-bold text-gray-900 tabular-nums">{value}</div>
+        <div className="text-lg font-bold text-gray-900 dark:text-gray-100 tabular-nums">{value}</div>
         <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wide leading-tight">{label}</div>
       </div>
     </div>

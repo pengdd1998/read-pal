@@ -52,7 +52,7 @@ export const FlashcardMetrics = React.memo(function FlashcardMetrics({ flashcard
       </div>
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm text-gray-600">{t('flashcards_retention')}</span>
+          <span className="text-sm text-gray-600 dark:text-gray-300">{t('flashcards_retention')}</span>
           <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{flashcardStats.retentionRate}%</span>
         </div>
         <div className="h-2.5 bg-surface-1 rounded-full overflow-hidden">

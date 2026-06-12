@@ -15,7 +15,7 @@ const ChallengeItemRow = React.memo(function ChallengeItemRow({ c, title, progre
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-gray-700 flex items-center gap-1.5">
+        <span className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
           <span>{c.icon}</span>
           <span className="font-medium">{title}</span>
         </span>
@@ -88,7 +88,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
   if (error) {
     return (
       <div className="card text-center py-4">
-        <p className="text-xs text-gray-600 mb-2">{t('failed_load_challenges')}</p>
+        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{t('failed_load_challenges')}</p>
         <button type="button" onClick={fetchChallenges} className="min-h-[44px] inline-flex items-center text-xs text-amber-600 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('retry')}</button>
       </div>
     );
@@ -98,7 +98,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">{t('challenges_title')}</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('challenges_title')}</h3>
         <span className="text-[10px] text-gray-500">{t('challenges_done', { completed: completedCount, total: completedCount + active.length })}</span>
       </div>
       <div className="space-y-3">

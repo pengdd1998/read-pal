@@ -25,7 +25,7 @@ export const SynthesizeForm = React.memo(function SynthesizeForm({
  return (
  <div className="space-y-3">
   <div>
-  <label htmlFor="synthesis-query" className="block text-xs font-medium text-gray-600 mb-1">
+  <label htmlFor="synthesis-query" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
    {t('synthesis_query_label')}
   </label>
   <textarea
@@ -34,7 +34,7 @@ export const SynthesizeForm = React.memo(function SynthesizeForm({
    onChange={(e) => onQueryChange(e.target.value)}
    placeholder={t('synthesis_query_placeholder')}
    rows={3}
-   className="w-full px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all resize-none"
+   className="w-full px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all resize-none"
   />
   </div>
   <div>

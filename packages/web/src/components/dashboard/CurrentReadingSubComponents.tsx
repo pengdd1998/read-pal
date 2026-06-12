@@ -67,7 +67,7 @@ export const QuickActions = React.memo(function QuickActions() {
           className={`card flex flex-col items-center gap-2 py-4 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200 bg-gradient-to-br ${action.color}`}
         >
           <DashboardActionIcon type={action.icon} />
-          <span className="text-xs font-medium text-gray-700">{action.label}</span>
+          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{action.label}</span>
         </Link>
       ))}
     </div>
@@ -86,7 +86,7 @@ export const InsightCard = React.memo(function InsightCard({ insightKey }: { ins
           <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
             {insightKey ? t(insightKey.agentKey) : ''}
           </div>
-          <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
             {insightKey ? t(insightKey.key) : ''}
           </p>
         </div>

@@ -155,14 +155,14 @@ function BookClubsWidgetInner() {
  <div className="rounded-2xl border border-surface-2 bg-surface-0 p-5 sm:p-6 shadow-sm">
   {/* Header */}
   <div className="flex items-center justify-between mb-4">
-  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
    <svg aria-hidden="true" className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
    {t('pageTitle')}
   </h3>
   <div className="flex items-center gap-2">
    <button type="button"
    onClick={() => { setShowJoin(!showJoin); setShowCreate(false); setError(null); }}
-   className="text-xs px-3 py-1.5 rounded-lg border border-surface-3 text-gray-600 hover:bg-surface-1 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="text-xs px-3 py-1.5 rounded-lg border border-surface-3 text-gray-600 dark:text-gray-400 hover:bg-surface-1 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    {t('join')}
    </button>

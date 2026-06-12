@@ -72,7 +72,7 @@ const WpmTrend = React.memo(function WpmTrend({ data }: { data: SpeedData }) {
  return (
  <div className="mb-5">
   <div className="flex items-center justify-between mb-2">
-  <span className="text-sm text-gray-600">{t('speed_trend')}</span>
+  <span className="text-sm text-gray-600 dark:text-gray-300">{t('speed_trend')}</span>
   </div>
   <svg viewBox="0 0 300 70" className="w-full h-20" preserveAspectRatio="none" role="img" aria-label={t('speed_trend_chart')}>
   <path d={areaPath} fill="url(#speedGrad)" opacity={0.25} />
@@ -100,7 +100,7 @@ const BookSpeedChart = React.memo(function BookSpeedChart({ bookSpeeds }: { book
 
  return (
  <div>
-  <span className="text-sm text-gray-600 mb-3 block">{t('speed_by_book')}</span>
+  <span className="text-sm text-gray-600 dark:text-gray-300 mb-3 block">{t('speed_by_book')}</span>
   <div className="space-y-2.5">
   {bookSpeeds.slice(0, 6).map((book) => (
    <BookSpeedBar key={book.bookId} book={book} maxWpm={maxWpm} t={t} />
@@ -120,7 +120,7 @@ const BookSpeedBar = React.memo(function BookSpeedBar({ book, maxWpm, t }: BookS
  const pct = Math.max(3, (book.wpm / maxWpm) * 100);
  return (
  <div className="flex items-center gap-3">
-  <span className="text-xs text-gray-600 w-28 truncate" title={book.title}>
+  <span className="text-xs text-gray-600 dark:text-gray-400 w-28 truncate" title={book.title}>
   {book.title}
   </span>
   <div className="flex-1 h-3 bg-surface-1 rounded-full overflow-hidden">

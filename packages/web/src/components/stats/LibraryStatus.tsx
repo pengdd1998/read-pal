@@ -25,7 +25,7 @@ export const LibraryStatus = React.memo(function LibraryStatus({ stats, statusCo
   <div className="space-y-3">
   {items.map((item) => (
    <div key={item.label} className="flex items-center gap-3">
-   <span className="text-sm text-gray-600 w-24">{item.label}</span>
+   <span className="text-sm text-gray-600 dark:text-gray-300 w-24">{item.label}</span>
    <div className="flex-1 h-3 bg-surface-1 rounded-full overflow-hidden">
     <div className={`h-full ${item.color} rounded-full transition-all duration-500`} style={{ width: `${Math.max(2, item.pct)}%` }} />
    </div>
