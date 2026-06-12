@@ -139,9 +139,17 @@ app.add_middleware(
 @app.middleware('http')
 async def add_security_headers(request: Request, call_next: Callable[[Request], Awaitable[StarletteResponse]]) -> StarletteResponse:
     response = await call_next(request)
+    # Suppress server identification (L5)
+    if 'server' in response.headers:
+        del response.headers['server']
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # CSP for API responses — restrictive; front-end sets its own via meta tag
     if request.url.path.startswith('/api/'):
+        response.headers['Content-Security-Policy'] = "default-src 'none'; frame-ancestors 'none'"
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
     if not settings.is_dev:
@@ -151,6 +159,39 @@ async def add_security_headers(request: Request, call_next: Callable[[Request], 
 
 app.add_middleware(ApiCompatMiddleware)
 app.add_middleware(RequestLogMiddleware)
+
+
+# --- Body size limit (M6) ----------------------------------------------------
+_MAX_BODY_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+class BodySizeLimitMiddleware:
+    """Pure ASGI middleware — rejects request bodies exceeding the size limit."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope['type'] != 'http':
+            await self.app(scope, receive, send)
+            return
+
+        headers = dict((k.decode().lower(), v.decode()) for k, v in scope.get('headers', []))
+        content_length = int(headers.get('content-length', 0))
+        if content_length > _MAX_BODY_BYTES:
+            await send({
+                'type': 'http.response.start',
+                'status': 413,
+                'headers': [[b'content-type', b'application/json']],
+            })
+            body = b'{"detail":{"code":"PAYLOAD_TOO_LARGE","message":"Request body exceeds size limit"}}'
+            await send({'type': 'http.response.body', 'body': body})
+            return
+
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(BodySizeLimitMiddleware)
 
 
 @app.get('/api/v1/health')

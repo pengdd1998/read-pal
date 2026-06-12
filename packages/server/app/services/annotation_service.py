@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.schemas.annotation import AnnotationCreate, AnnotationUpdate
+from app.middleware.exception_handlers import NotFoundError
 from app.utils.db import db_error_guard
 from app.utils.limits import ANNOTATION_FETCH_LIMIT
 
@@ -80,7 +81,7 @@ async def create_annotation(
         select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
     )
     if book is None:
-        raise ValueError('Book not found')
+        raise NotFoundError('Book not found')
 
     annotation = Annotation(
         user_id=user_id,

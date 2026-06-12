@@ -24,10 +24,14 @@ async def get_user_books(
     db: AsyncSession,
     user_id: str,
     status: str | None = None,
+    q: str | None = None,
+    tag: str | None = None,
     page: int = 1,
     per_page: int = 20,
 ) -> tuple[list[Book], int]:
     """Return paginated list of user's books, ordered by last_read_at desc."""
+    from sqlalchemy import or_
+
     async with db_error_guard('get_user_books', user_id=user_id):
         base = select(Book).where(Book.user_id == user_id)
         count_base = select(func.count()).select_from(Book).where(Book.user_id == user_id)
@@ -35,6 +39,17 @@ async def get_user_books(
         if status:
             base = base.where(Book.status == status)
             count_base = count_base.where(Book.status == status)
+
+        if q:
+            pattern = f'%{q.replace("%", "\\%").replace("_", "\\_")}%'
+            text_filter = or_(Book.title.ilike(pattern), Book.author.ilike(pattern))
+            base = base.where(text_filter)
+            count_base = count_base.where(text_filter)
+
+        if tag:
+            tag_filter = Book.tags.contains([tag])
+            base = base.where(tag_filter)
+            count_base = count_base.where(tag_filter)
 
         total_result = await db.execute(count_base)
         total = total_result.scalar() or 0
@@ -153,13 +168,13 @@ async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
                 select(
                     func.count().label('total'),
                     func.coalesce(func.sum(
-                        case((Book.status == 'reading', 1), else_=0),
+                        case((Book.status == BookStatus.reading, 1), else_=0),
                     ), 0).label('reading'),
                     func.coalesce(func.sum(
-                        case((Book.status == 'completed', 1), else_=0),
+                        case((Book.status == BookStatus.completed, 1), else_=0),
                     ), 0).label('completed'),
                     func.coalesce(func.sum(
-                        case((Book.status == 'unread', 1), else_=0),
+                        case((Book.status == BookStatus.unread, 1), else_=0),
                     ), 0).label('unread'),
                     func.coalesce(func.sum(Book.current_page), 0).label('pages'),
                 ).where(Book.user_id == user_id)
@@ -200,7 +215,19 @@ async def create_sample_book(
     title: str = 'Sample Book',
     author: str = 'Sample Author',
 ) -> Book:
-    """Create a minimal sample book for testing."""
+    """Create a minimal sample book for testing (idempotent)."""
+    # Check for existing sample book to prevent duplicates
+    from sqlalchemy import select
+    existing = await db.execute(
+        select(Book).where(
+            Book.user_id == user_id,
+            Book.tags.contains(['sample']),
+        )
+    )
+    existing_book = existing.scalar_one_or_none()
+    if existing_book:
+        return existing_book
+
     sample = Book(
         user_id=user_id,
         title=title,

@@ -23,6 +23,7 @@ from app.schemas.book import (
 from app.schemas.common import GenericResponse
 from app.services import book_service
 from app.utils.i18n import _get_user_lang, not_found_error, t
+from app.utils.sanitizer import sanitize_book_fields, sanitize_annotation_fields, strip_html
 
 router = APIRouter(
     prefix='/api/v1/books',
@@ -34,16 +35,20 @@ router = APIRouter(
 @router.get('', response_model=BookListResponse)
 async def list_books(
     status_filter: str | None = Query(None, alias='status'),
+    q: str | None = Query(None, min_length=1, max_length=200),
+    tag: str | None = Query(None, max_length=100),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> BookListResponse:
-    """List user's books with optional status filter and pagination."""
+    """List user's books with optional status, search, and tag filters."""
     books, total = await book_service.get_user_books(
         db,
         UUID(current_user['id']),
         status=status_filter,
+        q=q,
+        tag=tag,
         page=page,
         per_page=per_page,
     )
@@ -96,6 +101,10 @@ async def create_book(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Create a new book."""
+    # XSS prevention: strip HTML from user-supplied fields
+    body_dict = body.model_dump()
+    sanitize_book_fields(body_dict)
+    body = BookCreate(**body_dict)
     book = await book_service.create_book(db, UUID(current_user['id']), body)
     return {
         'success': True,
@@ -140,7 +149,7 @@ async def update_tags(
 ) -> dict:
     """Set tags for a book."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
-    tags = body.tags
+    tags = [strip_html(t) for t in body.tags]
     book = await book_service.update_tags(db, UUID(current_user['id']), book_id, tags)
     if book is None:
         raise not_found_error(t('errors.book_not_found', lang))

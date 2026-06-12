@@ -90,11 +90,14 @@ def create_access_token(
 def create_token_pair(
     user_id: str,
     platform: str = 'web',
+    lang: str = 'en',
 ) -> tuple[str, str]:
     """Create an access + refresh token pair.
 
     Returns (access_token, refresh_token).
     Platform 'mobile' gets longer-lived tokens than 'web'.
+    ``lang`` is embedded in the access token so the middleware can
+    return it without a DB/Redis lookup on every request.
     """
     settings = get_settings()
 
@@ -106,7 +109,7 @@ def create_token_pair(
         refresh_ttl = timedelta(seconds=settings.jwt_refresh_web_seconds)
 
     access_token = create_access_token(
-        {'userId': user_id, 'type': 'access'},
+        {'userId': user_id, 'type': 'access', 'lang': lang},
         expires_delta=access_ttl,
     )
     refresh_token = create_access_token(

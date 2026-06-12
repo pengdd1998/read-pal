@@ -1,6 +1,7 @@
 """User CRUD — registration, profile lookup, password change, OAuth check."""
 
 import logging
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -59,6 +60,8 @@ async def _create_user_with_seed(
         name=name,
         password_hash=password_hash,
         settings=dict(DEFAULT_USER_SETTINGS),
+        created_at=datetime.now(tz=timezone.utc),
+        updated_at=datetime.now(tz=timezone.utc),
     )
     db.add(user)
     async with db_error_guard('_create_user_with_seed'):
@@ -175,5 +178,17 @@ async def change_user_password(
     user.password_hash = hash_password(new_password)
     async with db_error_guard('change_user_password.flush'):
         await db.flush()
+
+    # Invalidate all existing JWTs by setting password-change marker (P2-13)
+    try:
+        from app.core.redis import get_redis
+        redis = get_redis()
+        await redis.set(
+            f'pwd-reset:{user_id}',
+            str(int(datetime.now(timezone.utc).timestamp())),
+            ex=86400 * 30,  # 30 days — longer than any token TTL
+        )
+    except Exception:
+        logger.warning('Failed to set password-change marker in Redis for user %s', user_id)
 
     return t('errors.password_changed', lang)

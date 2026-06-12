@@ -86,36 +86,50 @@ async def _generate_chunks(
     chapters: list[dict],
 ) -> list:
     """Generate BookChunk objects with embeddings for all chapters."""
+    import asyncio
     from app.models.book_chunk import BookChunk
 
     settings = get_settings()
     all_chunks = _split_chapters(chapters)
     max_calls = settings.max_embedding_calls
 
+    # Pre-slice to max_calls to respect embedding budget
+    chunks_to_embed = all_chunks[:max_calls]
+    chunks_no_embed = all_chunks[max_calls:]
+
+    if chunks_no_embed:
+        logger.warning(
+            'precompute.cap_reached', book_id=str(book_id),
+            max_calls=max_calls,
+            remaining=len(chunks_no_embed),
+        )
+
+    # Concurrent embedding with bounded parallelism (P1-6)
+    semaphore = asyncio.Semaphore(5)
+
+    async def _embed_one(ch_idx: int, ck_idx: int, text: str):
+        async with semaphore:
+            return await _embed_chunk(text, ck_idx)
+
+    results = await asyncio.gather(
+        *[_embed_one(ch_idx, ck_idx, text) for ch_idx, ck_idx, text in chunks_to_embed],
+    )
+
+    embedding_failures = sum(1 for r in results if r is None)
+
     chunks_to_insert: list[BookChunk] = []
-    api_calls = 0
-    capped = False
-    embedding_failures = 0
-
-    for ch_idx, ck_idx, chunk_text in all_chunks:
-        embedding = None
-        if not capped:
-            embedding = await _embed_chunk(chunk_text, ck_idx)
-            if embedding is None:
-                embedding_failures += 1
-            api_calls += 1
-            if api_calls >= max_calls:
-                capped = True
-                logger.warning(
-                    'precompute.cap_reached', book_id=str(book_id),
-                    max_calls=max_calls,
-                    remaining=len(all_chunks) - len(chunks_to_insert) - 1,
-                )
-
+    for i, (ch_idx, ck_idx, text) in enumerate(chunks_to_embed):
         chunks_to_insert.append(BookChunk(
             book_id=book_id, document_id=document_id,
             chapter_index=ch_idx, chunk_index=ck_idx,
-            content=chunk_text, embedding=embedding,
+            content=text, embedding=results[i],
+        ))
+    # Remaining chunks without embeddings
+    for ch_idx, ck_idx, text in chunks_no_embed:
+        chunks_to_insert.append(BookChunk(
+            book_id=book_id, document_id=document_id,
+            chapter_index=ch_idx, chunk_index=ck_idx,
+            content=text, embedding=None,
         ))
 
     if embedding_failures > 0:

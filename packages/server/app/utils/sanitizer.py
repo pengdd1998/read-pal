@@ -1,11 +1,13 @@
-"""Input sanitizer for LLM prompt injection defense.
+"""Input sanitizer for LLM prompt injection defense and XSS prevention.
 
 Sanitizes user-provided content before injection into system prompts.
 Provides defense-in-depth against prompt injection attacks.
+Also strips HTML tags from user-supplied text fields to prevent stored XSS.
 """
 
 from __future__ import annotations
 
+import html
 import logging
 import re
 
@@ -116,3 +118,46 @@ def _wrap_as_data(text: str) -> str:
         f'{text}\n'
         '[END USER PROVIDED DATA]'
     )
+
+
+# ---------------------------------------------------------------------------
+# XSS prevention — strip HTML from user-supplied text fields
+# ---------------------------------------------------------------------------
+
+_HTML_TAG_RE = re.compile(r'<[^>]*>')
+_EVENT_HANDLER_RE = re.compile(r'\bon\w+\s*=\s*["\']', re.IGNORECASE)
+
+
+def strip_html(text: str | None) -> str | None:
+    """Remove all HTML tags and decode entities from a string.
+
+    Used to prevent stored XSS when user-supplied text is later rendered
+    in a browser (book titles, annotation content, etc.).
+    """
+    if not text:
+        return text
+    text = _HTML_TAG_RE.sub('', text)
+    text = html.unescape(text)
+    return text
+
+
+def sanitize_book_fields(data: dict, fields: list[str] | None = None) -> dict:
+    """Strip HTML from book-related string fields in a dict."""
+    if fields is None:
+        fields = ['title', 'author']
+    for field in fields:
+        if field in data and isinstance(data[field], str):
+            data[field] = strip_html(data[field])
+    if 'tags' in data and isinstance(data['tags'], list):
+        data['tags'] = [strip_html(t) for t in data['tags'] if isinstance(t, str)]
+    return data
+
+
+def sanitize_annotation_fields(data: dict) -> dict:
+    """Strip HTML from annotation content/notes/tags."""
+    for field in ('content', 'note'):
+        if field in data and isinstance(data[field], str):
+            data[field] = strip_html(data[field])
+    if 'tags' in data and isinstance(data['tags'], list):
+        data['tags'] = [strip_html(t) for t in data['tags'] if isinstance(t, str)]
+    return data

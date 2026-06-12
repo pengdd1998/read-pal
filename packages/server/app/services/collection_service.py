@@ -1,6 +1,7 @@
 """Collection business logic — CRUD and book management."""
 
 import logging
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -20,6 +21,7 @@ async def create_collection(
     data: CollectionCreate,
 ) -> Collection:
     """Create a new collection."""
+    now = datetime.now(tz=timezone.utc)
     collection = Collection(
         user_id=user_id,
         name=data.name,
@@ -27,6 +29,8 @@ async def create_collection(
         icon=data.icon or 'folder',
         color=data.color or '#f59e0b',
         book_ids=[],
+        created_at=now,
+        updated_at=now,
     )
     db.add(collection)
     await db.flush()

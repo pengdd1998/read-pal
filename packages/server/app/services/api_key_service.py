@@ -1,9 +1,11 @@
 """Business logic for API key CRUD operations."""
 
 import logging
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import delete as sa_delete, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.api_key import ApiKey, generate_api_key
@@ -38,17 +40,29 @@ async def list_keys(db: AsyncSession, user_id: UUID) -> list[dict]:
 
 async def create_key(db: AsyncSession, user_id: UUID, name: str) -> dict:
     """Generate and persist a new API key. Returns dict with the plain key (shown once)."""
-    async with db_error_guard('api_key_service.create_key'):
-        plain_key, key_hash, key_prefix = generate_api_key()
+    plain_key, key_hash, key_prefix = generate_api_key()
+    now = datetime.now(tz=timezone.utc)
 
-        api_key = ApiKey(
-            user_id=user_id,
-            name=name,
-            key_hash=key_hash,
-            key_prefix=key_prefix,
-        )
-        db.add(api_key)
-        await db.flush()
+    api_key = ApiKey(
+        user_id=user_id,
+        name=name,
+        key_hash=key_hash,
+        key_prefix=key_prefix,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(api_key)
+
+    try:
+        async with db_error_guard('api_key_service.create_key'):
+            await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        from fastapi import HTTPException, status
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={'code': 'DUPLICATE_KEY', 'message': 'API key already exists'},
+        ) from None
 
     data = serialize_key(api_key)
     data['key'] = plain_key

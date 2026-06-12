@@ -22,6 +22,7 @@ from app.schemas.annotation import (
 from app.schemas.common import GenericResponse
 from app.services import annotation_service
 from app.utils.i18n import _get_user_lang, not_found_error, t
+from app.utils.sanitizer import sanitize_annotation_fields
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.annotations')
@@ -132,6 +133,10 @@ async def create_annotation(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Create a new annotation."""
+    # XSS prevention: strip HTML from user-supplied fields
+    body_dict = body.model_dump()
+    sanitize_annotation_fields(body_dict)
+    body = AnnotationCreate(**body_dict)
     try:
         annotation = await annotation_service.create_annotation(
             db, UUID(current_user['id']), body,
@@ -154,6 +159,10 @@ async def update_annotation(
 ) -> dict:
     """Partially update an annotation."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
+    # XSS prevention: strip HTML from user-supplied fields
+    body_dict = body.model_dump(exclude_unset=True)
+    sanitize_annotation_fields(body_dict)
+    body = AnnotationUpdate(**body_dict)
     annotation = await annotation_service.update_annotation(
         db, UUID(current_user['id']), annotation_id, body,
     )
