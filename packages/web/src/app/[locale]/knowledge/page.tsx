@@ -14,6 +14,7 @@ import { KnowledgeErrorState } from '@/components/knowledge/KnowledgeErrorState'
 import { KnowledgeNotConfigured } from '@/components/knowledge/KnowledgeNotConfigured';
 import { KnowledgeEmptyState } from '@/components/knowledge/KnowledgeEmptyState';
 import { KnowledgeSidebarSkeleton } from '@/components/knowledge/KnowledgeSidebarSkeleton';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { SimNode } from '@/types/knowledge';
 
 export default function KnowledgePage() {
@@ -137,6 +138,7 @@ export default function KnowledgePage() {
       <div className="px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Graph visualization */}
+          <ErrorBoundary label="KnowledgeGraph">
           <KnowledgeGraph
             ref={svgRef}
             nodes={nodes}
@@ -150,6 +152,7 @@ export default function KnowledgePage() {
             conceptMapLabel={t('concept_map')}
             clickHintLabel={t('click_hint')}
           />
+          </ErrorBoundary>
 
           {/* Sidebar */}
           <div className="space-y-4">

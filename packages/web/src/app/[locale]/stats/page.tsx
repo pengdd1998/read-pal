@@ -17,6 +17,7 @@ import { RecentSessions } from '@/components/stats/RecentSessions';
 import { BookBreakdown } from '@/components/stats/BookBreakdown';
 import { ActivityHeatmap } from '@/components/stats/ActivityHeatmap';
 import { Achievements } from '@/components/stats/Achievements';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function StatsPage() {
  const t = useTranslations('stats');
@@ -36,7 +37,7 @@ export default function StatsPage() {
  const statusCounts = data?.booksByStatus || { unread: 0, reading: 0, completed: 0 };
 
  return (
- <section id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
+ <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
   {/* Back */}
   <div className="mb-6">
   <Link href="/dashboard" prefetch={false} className="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px]" aria-label={t('dashboard')}>
@@ -83,15 +84,21 @@ export default function StatsPage() {
 
    <ReadingSpeed speedData={speedData} bookSpeeds={bookSpeeds} />
 
-   <ReadingVelocityTrend sessions={sessions} />
+   <ErrorBoundary label="ReadingVelocityTrend">
+     <ReadingVelocityTrend sessions={sessions} />
+   </ErrorBoundary>
 
    <RecentSessions sessions={sessions} />
 
    {data?.recentBooks && data.recentBooks.length > 0 && (
-   <BookBreakdown books={data.recentBooks} />
+   <ErrorBoundary label="BookBreakdown">
+     <BookBreakdown books={data.recentBooks} />
+   </ErrorBoundary>
    )}
 
-   <ActivityHeatmap sessions={sessions} />
+   <ErrorBoundary label="ActivityHeatmap">
+     <ActivityHeatmap sessions={sessions} />
+   </ErrorBoundary>
 
    {stats && (
    <Achievements stats={stats} />

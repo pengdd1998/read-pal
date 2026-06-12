@@ -256,6 +256,18 @@ class TestPrecomputeBookEmbeddings:
         mock_session.add_all = MagicMock()
         mock_session.begin = MagicMock()
 
+        # Mock execute for preflight checks:
+        #   call 1: _check_embedding_column → first() returns (data_type, 'vector')
+        #   call 2: _check_record_exists (Book) → scalar_one_or_none() returns book_id
+        #   call 3: _check_record_exists (Document) → scalar_one_or_none() returns document_id
+        col_result = MagicMock()
+        col_result.first.return_value = MagicMock(udt_name='vector')
+        book_result = MagicMock()
+        book_result.scalar_one_or_none.return_value = book_id
+        doc_result = MagicMock()
+        doc_result.scalar_one_or_none.return_value = document_id
+        mock_session.execute = AsyncMock(side_effect=[col_result, book_result, doc_result])
+
         # session.begin() returns an async context manager
         mock_begin = MagicMock()
         mock_begin.__aenter__ = AsyncMock(return_value=None)

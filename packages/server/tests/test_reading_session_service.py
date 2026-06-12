@@ -133,16 +133,14 @@ class TestCreateSession:
         user_id = str(uuid4())
         book_id = uuid4()
         data = _make_session_create(book_id=book_id, started_at=None)
+        book = _make_book(book_id=book_id, user_id=user_id, status='reading')
 
         added = []
         db.add = lambda obj: added.append(obj)
         db.flush = AsyncMock()
         db.refresh = AsyncMock()
 
-        # Book lookup returns None (book not found path is simplest)
-        book_result = MagicMock()
-        book_result.scalar_one_or_none.return_value = None
-        db.execute = AsyncMock(return_value=book_result)
+        _mock_execute_return(db, book)
 
         with patch('app.services.reading_session_service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 1, 1, 12, 0, 0)
@@ -161,15 +159,14 @@ class TestCreateSession:
         book_id = uuid4()
         explicit_time = datetime(2026, 3, 15, 10, 30, 0)
         data = _make_session_create(book_id=book_id, started_at=explicit_time)
+        book = _make_book(book_id=book_id, user_id=user_id, status='reading')
 
         added = []
         db.add = lambda obj: added.append(obj)
         db.flush = AsyncMock()
         db.refresh = AsyncMock()
 
-        book_result = MagicMock()
-        book_result.scalar_one_or_none.return_value = None
-        db.execute = AsyncMock(return_value=book_result)
+        _mock_execute_return(db, book)
 
         result = await reading_session_service.create_session(db, user_id, data)
 
@@ -228,24 +225,20 @@ class TestCreateSession:
 
     @pytest.mark.asyncio
     async def test_handles_book_not_found_gracefully(self):
+        from fastapi import HTTPException
+
         db = _make_db_session()
         user_id = str(uuid4())
         book_id = uuid4()
         data = _make_session_create(book_id=book_id)
 
-        added = []
-        db.add = lambda obj: added.append(obj)
-        db.flush = AsyncMock()
-        db.refresh = AsyncMock()
-
-        # Book not found
         book_result = MagicMock()
         book_result.scalar_one_or_none.return_value = None
         db.execute = AsyncMock(return_value=book_result)
 
-        # Should not raise
-        result = await reading_session_service.create_session(db, user_id, data)
-        assert len(added) == 1
+        with pytest.raises(HTTPException) as exc_info:
+            await reading_session_service.create_session(db, user_id, data)
+        assert exc_info.value.status_code == 404
 
 
 # ---------------------------------------------------------------------------

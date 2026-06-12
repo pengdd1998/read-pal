@@ -21,9 +21,16 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  const [dragOver, setDragOver] = useState(false);
  const fileInputRef = useRef<HTMLInputElement>(null);
  const abortControllerRef = useRef<AbortController | null>(null);
+ const uploadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	 const mountedRef = useRef(true);
 
- useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => {
+   mountedRef.current = true;
+   return () => {
+     mountedRef.current = false;
+     if (uploadTimerRef.current) clearTimeout(uploadTimerRef.current);
+   };
+ }, []);
 
 	 const cancelUpload = () => {
   abortControllerRef.current?.abort();
@@ -58,8 +65,9 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   const { book } = result.data;
   setUploadProgress(100);
   setSuccess(true);
-  setTimeout(() => {
+  uploadTimerRef.current = setTimeout(() => {
    if (!mountedRef.current) return;
+   uploadTimerRef.current = null;
    onUploadComplete(book);
    setSuccess(false);
   }, 1500);

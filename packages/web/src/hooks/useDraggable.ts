@@ -151,6 +151,11 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableReturn {
     return () => window.removeEventListener('resize', handleResize);
   }, [btnSize, edgeMargin, headerMinY]);
 
+  // Cleanup snap timer on unmount
+  useEffect(() => () => {
+    if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
+  }, []);
+
   const onDragStart = useCallback((clientX: number, clientY: number) => {
     setIsSnapping(false);
     dragRef.current = {

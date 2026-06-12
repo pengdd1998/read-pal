@@ -51,12 +51,12 @@ export function useReaderActions({
     } else {
       ui.setShowSettingsMenu((v: boolean) => !v);
     }
-  }, [ui]);
+  }, [ui.setShowMobileSettings, ui.setShowSettingsMenu]);
 
   const handleToggleStudyMode = useCallback(() => {
     if (!studyMode.enabled) ui.closeAllPanels();
     studyMode.toggleStudyMode();
-  }, [studyMode, ui]);
+  }, [studyMode.enabled, studyMode.toggleStudyMode, ui.closeAllPanels]);
 
   const handleBackToLibrary = useCallback(() => {
     setSessionSummary(null);

@@ -146,31 +146,43 @@ export const NotificationBell = memo(function NotificationBell() {
 
 
   const markAsRead = useCallback(async (id: string) => {
-    const prev = notifications;
-    const prevCount = unreadCount;
-    setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    setUnreadCount((c) => Math.max(0, c - 1));
+    let prev: typeof notifications | undefined;
+    let prevCount: number | undefined;
+    setNotifications((ns) => {
+      prev = ns;
+      return ns.map((n) => (n.id === id ? { ...n, read: true } : n));
+    });
+    setUnreadCount((c) => {
+      prevCount = c;
+      return Math.max(0, c - 1);
+    });
     try {
       await api.patch(`/api/notifications/${id}/read`);
     } catch (err) {
-      setNotifications(prev);
-      setUnreadCount(prevCount);
+      if (prev) setNotifications(prev);
+      if (prevCount !== undefined) setUnreadCount(prevCount);
       warn('Notifications: failed to mark notification as read', err);
       toast(tRef.current('notification_mark_read_failed'), 'error');
     }
-  }, [notifications, unreadCount, toast]);
+  }, [toast]);
 
   async function markAllRead() {
-    const prev = notifications;
-    const prevCount = unreadCount;
-    setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
+    let prev: typeof notifications | undefined;
+    let prevCount: number | undefined;
+    setNotifications((ns) => {
+      prev = ns;
+      return ns.map((n) => ({ ...n, read: true }));
+    });
+    setUnreadCount((c) => {
+      prevCount = c;
+      return 0;
+    });
     setMarkingAll(true);
     try {
       await api.post('/api/notifications/mark-all-read');
     } catch (err) {
-      setNotifications(prev);
-      setUnreadCount(prevCount);
+      if (prev) setNotifications(prev);
+      if (prevCount !== undefined) setUnreadCount(prevCount);
       warn('Notifications: failed to mark all as read', err);
       toast(t('notification_mark_all_read_failed'), 'error');
     } finally {

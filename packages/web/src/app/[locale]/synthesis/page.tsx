@@ -8,6 +8,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { BookComparisonCard } from '@/components/synthesis/BookComparisonCard';
 import { SingleBookAnalysisCard } from '@/components/synthesis/SingleBookAnalysisCard';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { AnalysisResult } from '@/components/synthesis/types';
 
 interface BookOption {
@@ -84,7 +85,7 @@ export default function SynthesisPage() {
  }
 
  return (
- <section id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
+ <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
   {/* Header */}
   <div className="mb-8">
   <h1 className="text-2xl font-bold text-gray-900">
@@ -136,12 +137,18 @@ export default function SynthesisPage() {
    <h3 className="text-sm font-semibold text-gray-800 mb-4">
    {t('results_title')}
    </h3>
-   <AnalysisResultView result={result} />
+   <ErrorBoundary label="AnalysisResult">
+     <AnalysisResultView result={result} />
+   </ErrorBoundary>
   </div>
   )}
 
-  <BookComparisonCard books={books} />
-  <SingleBookAnalysisCard books={books} booksLoading={booksLoading} booksError={booksError} />
+  <ErrorBoundary label="BookComparison">
+    <BookComparisonCard books={books} />
+  </ErrorBoundary>
+  <ErrorBoundary label="SingleBookAnalysis">
+    <SingleBookAnalysisCard books={books} booksLoading={booksLoading} booksError={booksError} />
+  </ErrorBoundary>
  </section>
  );
 }

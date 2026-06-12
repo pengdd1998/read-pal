@@ -15,7 +15,7 @@ export const ReaderLoadingSkeleton = React.memo(function ReaderLoadingSkeleton({
   ariaLabel: string;
 }) {
   return (
-    <div id="main-content" aria-label={ariaLabel} className="h-dvh bg-surface-1">
+    <div aria-label={ariaLabel} className="h-dvh bg-surface-1">
       {/* Reader skeleton loader */}
       <div className="h-14 border-b border-gray-200 flex items-center px-4 gap-3">
         <div className="w-8 h-8 rounded-md bg-gray-200 animate-pulse" />
@@ -78,7 +78,6 @@ export const ReaderErrorState = React.memo(function ReaderErrorState({
 
   return (
     <div
-      id="main-content"
       aria-label={ariaLabel}
       className="flex items-center justify-center h-dvh bg-surface-1"
     >

@@ -18,6 +18,7 @@ import {
   ReaderStatusIndicators, ShortcutsHelpButton, ReaderModals,
 } from './ReaderSubComponents';
 import { useReaderCallbacks } from './useReaderCallbacks';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function ReadPage() {
   const {
@@ -210,39 +211,47 @@ export default function ReadPage() {
         onUpdateAnnotation={annotationActions.handleUpdateAnnotation}
         onScrollToAnnotation={annotationActions.handleScrollToAnnotation}
       />
-      <SynthesisPanel bookId={bookId} bookTitle={book?.title} author={book?.author} isOpen={ui.synthesisOpen} onClose={handleCloseSynthesis} />
+      <ErrorBoundary label="SynthesisPanel">
+        <SynthesisPanel bookId={bookId} bookTitle={book?.title} author={book?.author} isOpen={ui.synthesisOpen} onClose={handleCloseSynthesis} />
+      </ErrorBoundary>
       <ReadingPlanPanel bookId={bookId} bookTitle={book?.title || ''} isOpen={ui.readingPlanOpen} onClose={handleCloseReadingPlan} />
-      <StudyModeOverlay enabled={studyMode.enabled} closeLabel={t('close_study_mode')} onToggleStudyMode={studyMode.toggleStudyMode}>
-        <StudyModePanel
-          enabled={studyMode.enabled}
-          loading={studyMode.loading}
-          error={studyMode.error}
-          saveStatus={studyMode.saveStatus}
-          objectives={studyMode.objectives}
-          checks={studyMode.checks}
-          revealedAnswers={studyMode.revealedAnswers}
-          mastery={studyMode.mastery}
-          onLoadMastery={studyMode.loadMastery}
-          onToggleObjective={studyMode.toggleObjective}
-          onRevealAnswer={studyMode.revealAnswer}
-          onSaveChecks={studyMode.saveChecks}
+      <ErrorBoundary label="StudyMode">
+        <StudyModeOverlay enabled={studyMode.enabled} closeLabel={t('close_study_mode')} onToggleStudyMode={studyMode.toggleStudyMode}>
+          <StudyModePanel
+            enabled={studyMode.enabled}
+            loading={studyMode.loading}
+            error={studyMode.error}
+            saveStatus={studyMode.saveStatus}
+            objectives={studyMode.objectives}
+            checks={studyMode.checks}
+            revealedAnswers={studyMode.revealedAnswers}
+            mastery={studyMode.mastery}
+            onLoadMastery={studyMode.loadMastery}
+            onToggleObjective={studyMode.toggleObjective}
+            onRevealAnswer={studyMode.revealAnswer}
+            onSaveChecks={studyMode.saveChecks}
+          />
+        </StudyModeOverlay>
+      </ErrorBoundary>
+      <ErrorBoundary label="CompanionChat">
+        <CompanionChatDynamic
+          onReady={handleCompanionReady}
+          bookId={bookId}
+          currentPage={currentChapter}
+          totalPages={chapters.length}
+          bookTitle={book?.title || ''}
+          author={book?.author || ''}
+          chapterContent={pageContent || chapterContent}
+          genreMetadata={genreMetadata}
+          bookDescription={bookDescription}
+          externalIsOpen={ui.chatOpen}
+          onOpenChange={ui.setChatOpen}
         />
-      </StudyModeOverlay>
-      <CompanionChatDynamic
-        onReady={handleCompanionReady}
-        bookId={bookId}
-        currentPage={currentChapter}
-        totalPages={chapters.length}
-        bookTitle={book?.title || ''}
-        author={book?.author || ''}
-        chapterContent={pageContent || chapterContent}
-        genreMetadata={genreMetadata}
-        bookDescription={bookDescription}
-        externalIsOpen={ui.chatOpen}
-        onOpenChange={ui.setChatOpen}
-      />
+      </ErrorBoundary>
       {!loading && isFiction && pageContent && (
-        <FictionPanel chapterContent={pageContent} chapterIndex={currentChapter} onAskAboutCharacter={handleAskAboutCharacter} />
+        <ErrorBoundary label="FictionPanel">
+          <FictionPanel chapterContent={pageContent} chapterIndex={currentChapter} onAskAboutCharacter={handleAskAboutCharacter} />
+        </ErrorBoundary>
       )}
       {!loading && book && !quietMode && (
         <InterventionToast

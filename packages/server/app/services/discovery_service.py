@@ -46,6 +46,41 @@ def _book_to_dict(book: Book) -> dict:
     }
 
 
+def _build_books_where(user_id: UUID, pattern: str | None) -> tuple:
+    """Build the WHERE clause for book queries.
+
+    If pattern is None, returns a simple user filter.
+    Otherwise includes title/author/tags ILIKE matching.
+    """
+    if pattern is None:
+        return (Book.user_id == user_id,)
+    return (
+        Book.user_id == user_id,
+        Book.title.ilike(pattern) | Book.author.ilike(pattern) | _tags_search(pattern),
+    )
+
+
+async def _execute_books_query(
+    db: AsyncSession,
+    where: tuple,
+    page: int,
+    limit: int,
+) -> tuple[list[Book], int]:
+    """Execute paginated count + data queries in parallel."""
+    total_q = select(func.count()).select_from(Book).where(*where)
+    data_q = (
+        select(Book)
+        .where(*where)
+        .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    total_result, books_result = await asyncio.gather(
+        db.execute(total_q), db.execute(data_q),
+    )
+    return books_result.scalars().all(), total_result.scalar_one()
+
+
 async def search_books(
     db: AsyncSession,
     user_id: UUID,
@@ -61,41 +96,9 @@ async def search_books(
     Returns (serialized_book_list, total_count).
     """
     async with db_error_guard('search_books', user_id=str(user_id), q=q):
-        if not q.strip():
-            total_q = select(func.count()).select_from(Book).where(Book.user_id == user_id)
-            data_q = (
-                select(Book)
-                .where(Book.user_id == user_id)
-                .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
-                .offset((page - 1) * limit)
-                .limit(limit)
-            )
-            total_result, books_result = await asyncio.gather(
-                db.execute(total_q), db.execute(data_q),
-            )
-            total = total_result.scalar_one()
-            books = books_result.scalars().all()
-        else:
-            pattern = f'%{_escape_like(q.strip())}%'
-            base_filter = (
-                Book.user_id == user_id,
-                Book.title.ilike(pattern) | Book.author.ilike(pattern) | _tags_search(pattern),
-            )
-
-            total_q = select(func.count()).select_from(Book).where(*base_filter)
-            data_q = (
-                select(Book)
-                .where(*base_filter)
-                .order_by(Book.last_read_at.desc().nullslast(), Book.added_at.desc())
-                .offset((page - 1) * limit)
-                .limit(limit)
-            )
-            total_result, books_result = await asyncio.gather(
-                db.execute(total_q), db.execute(data_q),
-            )
-            total = total_result.scalar_one()
-            books = books_result.scalars().all()
-
+        pattern = f'%{_escape_like(q.strip())}%' if q.strip() else None
+        where = _build_books_where(user_id, pattern)
+        books, total = await _execute_books_query(db, where, page, limit)
         return [_book_to_dict(b) for b in books], total
 
 

@@ -48,21 +48,17 @@ logger = logging.getLogger('read-pal.sessions')
 # ---------------------------------------------------------------------------
 
 
-async def create_session(
+async def _verify_book_ownership(
     db: AsyncSession,
+    book_id,
     user_id: str,
-    data: SessionCreate,
-) -> ReadingSession:
-    """Create a new reading session, close stale ones, update book status."""
+) -> 'Book':
+    """Return the book if it exists and belongs to the user, else raise 404."""
     from fastapi import HTTPException, status as http_status
-    from sqlalchemy.exc import IntegrityError
-    from app.models.book import Book, BookStatus
+    from app.models.book import Book
 
-    now = utcnow()
-
-    # Verify the book exists and belongs to the user (M5: return 404 instead of 500 FK error)
     result = await db.execute(
-        select(Book).where(Book.id == data.book_id, Book.user_id == user_id),
+        select(Book).where(Book.id == book_id, Book.user_id == user_id),
     )
     book = result.scalar_one_or_none()
     if book is None:
@@ -70,12 +66,20 @@ async def create_session(
             status_code=http_status.HTTP_404_NOT_FOUND,
             detail={'code': 'NOT_FOUND', 'message': 'Book not found'},
         )
+    return book
 
-    # Close any existing active sessions for this user+book
+
+async def _close_stale_sessions(
+    db: AsyncSession,
+    user_id: str,
+    book_id,
+    now,
+) -> None:
+    """Close any existing active sessions for this user+book."""
     stale = await db.execute(
         select(ReadingSession).where(
             ReadingSession.user_id == user_id,
-            ReadingSession.book_id == data.book_id,
+            ReadingSession.book_id == book_id,
             ReadingSession.is_active.is_(True),
         ),
     )
@@ -86,6 +90,31 @@ async def create_session(
             raw_dur = int((now - old.started_at).total_seconds())
             old.duration = min(raw_dur, _MAX_SESSION_SECONDS)
 
+
+def _mark_book_reading(book: 'Book', now) -> None:
+    """Update book status to 'reading' if not already."""
+    from app.models.book import BookStatus
+
+    if book.status != BookStatus.reading:
+        book.status = BookStatus.reading
+        if book.started_at is None:
+            book.started_at = now
+
+
+async def create_session(
+    db: AsyncSession,
+    user_id: str,
+    data: SessionCreate,
+) -> ReadingSession:
+    """Create a new reading session, close stale ones, update book status."""
+    from fastapi import HTTPException, status as http_status
+    from sqlalchemy.exc import IntegrityError
+
+    now = utcnow()
+
+    book = await _verify_book_ownership(db, data.book_id, user_id)
+    await _close_stale_sessions(db, user_id, data.book_id, now)
+
     session = ReadingSession(
         user_id=user_id,
         book_id=data.book_id,
@@ -93,17 +122,11 @@ async def create_session(
         is_active=True,
     )
     db.add(session)
-
-    # Update book status to 'reading'
-    if book.status != BookStatus.reading:
-        book.status = BookStatus.reading
-        if book.started_at is None:
-            book.started_at = now
+    _mark_book_reading(book, now)
 
     try:
         await db.flush()
     except IntegrityError:
-        # Race condition: another concurrent request created an active session
         await db.rollback()
         raise HTTPException(
             status_code=http_status.HTTP_409_CONFLICT,
@@ -111,7 +134,6 @@ async def create_session(
         ) from None
 
     await db.refresh(session)
-
     logger.info('Session created: %s for book %s', session.id, data.book_id)
     return session
 
