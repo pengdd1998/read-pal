@@ -53,6 +53,8 @@ export const ShareDialog = React.memo(function ShareDialog({
   role="dialog"
   aria-modal="true"
   aria-label={t('share_title')}
+  tabIndex={-1}
+  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
   className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-surface-3"
   >
   {/* Header */}

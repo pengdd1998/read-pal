@@ -27,13 +27,20 @@ export default function SearchPage() {
  const [error, setError] = useState<string | null>(null);
  const [searched, setSearched] = useState(false);
  const [recentBooks, setRecentBooks] = useState<Book[]>([]);
+ const [recentLoading, setRecentLoading] = useState(true);
+ const [recentError, setRecentError] = useState<string | null>(null);
+ const [recentFetchKey, setRecentFetchKey] = useState(0);
+
  const [filter, setFilter] = useState<FilterKey>('all');
  const [fetchKey, setFetchKey] = useState(0);
  const retrySearch = useCallback(() => setFetchKey((k) => k + 1), []);
+ const retryRecent = useCallback(() => setRecentFetchKey((k) => k + 1), []);
 
  // Load recent books for recommendations when no search
  useEffect(() => {
  let stale = false;
+ setRecentLoading(true);
+ setRecentError(null);
  function loadRecent() {
   api.get<Book[]>('/api/books')
   .then((res) => {
@@ -47,13 +54,17 @@ export default function SearchPage() {
   if (stale) return;
   warn('SearchPage: recent books load failed', err);
   setRecentBooks([]);
+  setRecentError(tRef.current('failed_recent'));
+  })
+  .finally(() => {
+  if (!stale) setRecentLoading(false);
   });
  }
  loadRecent();
  const onFocus = () => { loadRecent(); };
  window.addEventListener('focus', onFocus);
  return () => { stale = true; window.removeEventListener('focus', onFocus); };
- }, []);
+ }, [recentFetchKey]);
 
  // Debounced search across books, annotations, and semantic index
  useEffect(() => {
@@ -174,11 +185,22 @@ export default function SearchPage() {
   )
   ) : query.trim().length < 2 && !searching ? (
   /* Default state — recommendations */
-  recentBooks.length > 0 ? (
+  recentError ? (
+   <div role="alert" className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm flex items-center justify-between">
+    <span>{recentError}</span>
+    <button
+     type="button"
+     onClick={retryRecent}
+     className="ml-3 underline hover:text-red-800 dark:hover:text-red-200 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded"
+    >
+     {t('retry')}
+    </button>
+   </div>
+  ) : recentBooks.length > 0 ? (
    <RecentBooks books={recentBooks} />
-  ) : (
+  ) : !recentLoading ? (
    <EmptyLibrary />
-  )
+  ) : null
   ) : null}
  </section>
  );

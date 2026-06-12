@@ -52,6 +52,8 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
   role="dialog"
   aria-modal="true"
   aria-label={tc('share_quote_card')}
+  tabIndex={-1}
+  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
  >
   {/* Backdrop */}
   <div className="absolute inset-0 bg-black/60 dark:bg-surface-0/80 backdrop-blur-sm" />

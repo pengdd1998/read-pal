@@ -83,7 +83,7 @@ export const FictionPanel = React.memo(function FictionPanel({
    tabIndex={-1}
    />
 
-   <div role="dialog" aria-modal="true" aria-label={tc('character_tracker')} className="fixed left-0 bottom-0 safe-area-bottom z-50 w-full md:left-6 md:bottom-20 md:w-80 md:max-h-[70vh] bg-surface-0 shadow-2xl rounded-t-2xl md:rounded-2xl border border-purple-200/50 dark:border-purple-800/30 flex flex-col animate-slide-in-up md:animate-fade-in max-h-[60vh]">
+   <div role="dialog" aria-modal="true" aria-label={tc('character_tracker')} tabIndex={-1} onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false); }} className="fixed left-0 bottom-0 safe-area-bottom z-50 w-full md:left-6 md:bottom-20 md:w-80 md:max-h-[70vh] bg-surface-0 shadow-2xl rounded-t-2xl md:rounded-2xl border border-purple-200/50 dark:border-purple-800/30 flex flex-col animate-slide-in-up md:animate-fade-in max-h-[60vh]">
    {/* Header */}
    <div className="flex items-center justify-between px-4 py-3 border-b border-purple-200/50 dark:border-purple-900/30">
     <div className="flex items-center gap-2">

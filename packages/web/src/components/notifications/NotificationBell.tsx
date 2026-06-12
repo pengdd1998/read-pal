@@ -212,7 +212,12 @@ export const NotificationBell = memo(function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div id="notification-dropdown" className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-surface-0 rounded-xl border border-surface-3 shadow-lg z-50 overflow-hidden animate-slide-down">
+        <div
+          id="notification-dropdown"
+          tabIndex={-1}
+          onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false); }}
+          className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-surface-0 rounded-xl border border-surface-3 shadow-lg z-50 overflow-hidden animate-slide-down"
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-surface-2">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('notifications')}</h3>
             {unreadCount > 0 && (

@@ -143,6 +143,8 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
   role="dialog"
   aria-modal="true"
   aria-label={t("sidebar_annotations")}
+  tabIndex={-1}
+  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
   className={`fixed right-0 top-[61px] bottom-0 w-full md:w-[360px] bg-surface-0 border-l border-surface-3 shadow-lg z-30 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col overscroll-contain ${
    isOpen ? 'translate-x-0' : 'translate-x-full'
   }`}

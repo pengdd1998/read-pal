@@ -1505,7 +1505,8 @@
     "type_highlight": "高亮",
     "type_note": "笔记",
     "type_bookmark": "书签",
-    "retry": "重试"
+    "retry": "重试",
+    "failed_recent": "加载最近书籍失败，请重试。"
   },
   "flashcards": {
     "page_title": "闪卡",

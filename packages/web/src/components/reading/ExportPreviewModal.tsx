@@ -57,7 +57,7 @@ export const ExportPreviewModal = React.memo(function ExportPreviewModal({ bookI
       onClick={handleBackdropClick}
       onKeyDown={handleBackdropKeyDown}
     >
-      <div role="dialog" aria-modal="true" aria-label={t('export_aria_label')} className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-surface-3">
+      <div role="dialog" aria-modal="true" aria-label={t('export_aria_label')} tabIndex={-1} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-surface-3">
         <ExportModalHeader bookTitle={bookTitle} onClose={onClose} />
 
         {/* Format + Filter selection */}

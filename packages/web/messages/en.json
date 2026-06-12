@@ -1505,7 +1505,8 @@
     "type_highlight": "Highlight",
     "type_note": "Note",
     "type_bookmark": "Bookmark",
-    "retry": "Retry"
+    "retry": "Retry",
+    "failed_recent": "Failed to load recent books. Please try again."
   },
   "flashcards": {
     "page_title": "Flashcards",

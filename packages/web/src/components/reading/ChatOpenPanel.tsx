@@ -77,6 +77,8 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
   role="dialog"
   aria-modal="true"
   aria-label={t('companion_aria_chat_with', { name: friendName })}
+  tabIndex={-1}
+  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
   className="fixed right-0 bottom-0 max-h-[40vh] md:max-h-none h-auto md:h-full w-full md:top-0 md:bottom-0 md:w-[400px] bg-surface-0 shadow-2xl z-40 flex flex-col rounded-t-2xl md:rounded-none animate-slide-in-up md:animate-slide-in-right overscroll-contain safe-area-bottom"
   >
   {/* Mobile drag handle */}
