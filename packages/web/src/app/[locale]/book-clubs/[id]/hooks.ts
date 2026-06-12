@@ -13,6 +13,7 @@ export function useBookClubDetail(clubId: string) {
   const [club, setClub] = useState<ClubDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fetchKey, setFetchKey] = useState(0);
 
   useEffect(() => {
     if (!clubId) return;
@@ -36,9 +37,11 @@ export function useBookClubDetail(clubId: string) {
 
     fetch();
     return () => { cancelled = true; };
-  }, [clubId]);
+  }, [clubId, fetchKey]);
 
-  return { club, setClub, loading, error, setError };
+  const refetch = useCallback(() => setFetchKey((k) => k + 1), []);
+
+  return { club, setClub, loading, error, setError, refetch };
 }
 
 export function useBookClubProgress(clubId: string, currentBookId?: string) {

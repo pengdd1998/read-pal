@@ -20,7 +20,7 @@ export default function BookClubDetailPage() {
  const clubId = params?.id as string;
 
  const router = useRouter();
- const { club, setClub, loading, error, setError } = useBookClubDetail(clubId);
+ const { club, setClub, loading, error, setError, refetch: refetchClub } = useBookClubDetail(clubId);
  const { progress, error: progressError } = useBookClubProgress(clubId, club?.currentBookId);
  const { messages, loading: discussionLoading, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError, refetch: refetchDiscussion } = useBookClubDiscussion(clubId);
  const [joining, setJoining] = useState(false);
@@ -82,9 +82,14 @@ export default function BookClubDetailPage() {
   <div className="min-h-screen bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-8 text-center">
    <p className="text-gray-500 dark:text-gray-400" role="alert">{error || t('clubNotFound')}</p>
-   <Link href="/book-clubs" prefetch={false} className="text-sm text-primary-600 hover:underline mt-2 inline-block">
+   <div className="flex items-center justify-center gap-3 mt-3">
+   <button type="button" onClick={refetchClub} className="text-sm text-amber-600 dark:text-amber-400 hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 rounded">
+    {t('retry')}
+   </button>
+   <Link href="/book-clubs" prefetch={false} className="text-sm text-primary-600 hover:underline min-h-[44px] inline-flex items-center">
    {t('backToBookClubs')}
    </Link>
+   </div>
   </div>
   </div>
  );
@@ -157,7 +162,7 @@ export default function BookClubDetailPage() {
     disabled={leaving}
     className="text-sm text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors min-h-[44px] inline-flex items-center px-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
    >
-    {leaving ? '...' : t('leaveClub')}
+    {leaving ? t('leaving') : t('leaveClub')}
    </button>
    )}
   </div>

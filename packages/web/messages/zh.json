@@ -1657,6 +1657,7 @@
     "sending": "发送中...",
     "backToClubs": "返回读书会",
     "leaveClub": "退出读书会",
+    "leaving": "退出中...",
     "leaveConfirm": "确定退出这个读书会吗？",
     "failedToLeave": "退出失败",
     "join": "加入",
