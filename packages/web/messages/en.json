@@ -1499,6 +1499,7 @@
     "search_across_library": "Search across your library",
     "search_across_desc": "Find books by title or author, search highlights and notes, or discover relevant passages with AI-powered semantic search.",
     "add_books_started": "Add books to get started",
+    "searching": "Searching...",
     "type_highlight": "Highlight",
     "type_note": "Note",
     "type_bookmark": "Bookmark"
@@ -2022,6 +2023,7 @@
     "emptyTitle": "No Reading Mirrors Yet",
     "emptyDesc": "Start reading and making highlights to build your first Reading Mirror — a personal reflection of your reading journey across 10 unique sections.",
     "startReading": "Start Reading",
+    "backToList": "Back to Reading Mirrors",
     "detailPageTitle": "Reading Mirror",
     "loading": "Loading...",
     "creatingTitle": "Creating Your Reading Mirror",

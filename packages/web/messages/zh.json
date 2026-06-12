@@ -1499,6 +1499,7 @@
     "search_across_library": "搜索你的书架",
     "search_across_desc": "按书名或作者查找书籍，搜索高亮和笔记，或通过 AI 语义搜索发现相关段落。",
     "add_books_started": "添加书籍开始使用",
+    "searching": "搜索中...",
     "type_highlight": "高亮",
     "type_note": "笔记",
     "type_bookmark": "书签"
@@ -1795,6 +1796,7 @@
     "emptyTitle": "暂无阅读镜像",
     "emptyDesc": "开始阅读并添加高亮，构建你的第一个阅读镜像——一个从 10 个独特视角回顾你阅读旅程的个人映照。",
     "startReading": "开始阅读",
+    "backToList": "返回阅读镜像列表",
     "detailPageTitle": "阅读镜像",
     "loading": "加载中...",
     "creatingTitle": "正在创建你的阅读镜像",

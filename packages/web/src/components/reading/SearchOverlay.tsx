@@ -141,7 +141,7 @@ const SearchResultItem = React.memo(function SearchResultItem({
  return (
  <button type="button"
   onClick={() => onNavigate(result.index)}
-  className={`w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+  className={`w-full text-left px-4 py-3 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] ${
   isCurrent ? 'bg-amber-50/50 dark:bg-amber-900/5' : ''
   }`}
  >

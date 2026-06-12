@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import {
  getSectionTitle,
  type MirrorSection,
@@ -34,7 +35,14 @@ export default React.memo(function SectionNav({
  const tr = useTranslations('readingMirror');
  const [activeSection, setActiveSection] = useState(0);
 
- if (sections.length === 0) return <p className="text-center text-gray-500 dark:text-gray-400 py-12">{tr('empty_sections')}</p>;
+ if (sections.length === 0) return (
+  <div className="text-center py-12">
+   <p className="text-gray-500 dark:text-gray-400 mb-4">{tr('empty_sections')}</p>
+   <Link href="/memory-books" prefetch={false} className="text-sm text-amber-600 dark:text-amber-400 hover:underline">
+    {t('backToList')}
+   </Link>
+  </div>
+ );
 
  return (
  <>

@@ -30,7 +30,7 @@ export const SearchBar = React.memo(function SearchBar({ query, searching, onQue
   />
   {searching && (
   <div className="absolute right-4 top-4">
-   <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+   <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" role="status" aria-label={t('searching')} />
   </div>
   )}
  </div>

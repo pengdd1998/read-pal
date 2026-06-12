@@ -43,7 +43,7 @@ export const TagPicker = React.memo(function TagPicker({ variant, onTagSelect }:
    key={qt.id}
    onClick={() => onTagSelect(ANNOTATION_COLORS[0], qt.id)}
    aria-label={t(qt.labelKey)}
-   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[32px]"
+   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px]"
    >
    <span aria-hidden="true">{qt.emoji}</span>
    {t(qt.labelKey)}
