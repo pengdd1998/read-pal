@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 
 interface ChatFabButtonProps {
  btnRef: React.Ref<HTMLButtonElement>;
@@ -33,6 +33,18 @@ export const ChatFabButton = React.memo(function ChatFabButton({
  onOpen,
  ariaLabel,
 }: ChatFabButtonProps) {
+ const activeDragListeners = useRef<{ move: (ev: MouseEvent) => void; up: () => void } | null>(null);
+
+ useEffect(() => {
+   return () => {
+     if (activeDragListeners.current) {
+       window.removeEventListener('mousemove', activeDragListeners.current.move);
+       window.removeEventListener('mouseup', activeDragListeners.current.up);
+       activeDragListeners.current = null;
+     }
+   };
+ }, []);
+
  const fabStyle = useMemo(() => ({
   left: btnPos.x,
   top: btnPos.y,
@@ -61,9 +73,11 @@ export const ChatFabButton = React.memo(function ChatFabButton({
    onDragEnd();
    window.removeEventListener('mousemove', onMouseMove);
    window.removeEventListener('mouseup', onMouseUp);
+   activeDragListeners.current = null;
   };
   window.addEventListener('mousemove', onMouseMove);
   window.addEventListener('mouseup', onMouseUp);
+  activeDragListeners.current = { move: onMouseMove, up: onMouseUp };
   }}
   onTouchStart={(e) => {
   const touch = e.touches[0];

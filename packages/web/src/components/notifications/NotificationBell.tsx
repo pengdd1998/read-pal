@@ -159,6 +159,7 @@ export const NotificationBell = memo(function NotificationBell() {
     try {
       await api.patch(`/api/notifications/${id}/read`);
     } catch (err) {
+      if (staleRef.current) return;
       if (prev) setNotifications(prev);
       if (prevCount !== undefined) setUnreadCount(prevCount);
       warn('Notifications: failed to mark notification as read', err);
@@ -181,12 +182,13 @@ export const NotificationBell = memo(function NotificationBell() {
     try {
       await api.post('/api/notifications/mark-all-read');
     } catch (err) {
+      if (staleRef.current) return;
       if (prev) setNotifications(prev);
       if (prevCount !== undefined) setUnreadCount(prevCount);
       warn('Notifications: failed to mark all as read', err);
       toast(t('notification_mark_all_read_failed'), 'error');
     } finally {
-      setMarkingAll(false);
+      if (!staleRef.current) setMarkingAll(false);
     }
   }
 
