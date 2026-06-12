@@ -62,7 +62,7 @@ export const MobileSelectionToolbar = memo(function MobileSelectionToolbar({
   className="absolute bottom-0 left-0 right-0 bg-surface-0 rounded-t-2xl shadow-2xl animate-slide-up-mobile max-h-[70vh] overflow-y-auto safe-area-bottom"
   onClick={(e) => e.stopPropagation()}
   >
-  <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mt-3 mb-2" />
+  <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mt-3 mb-2" />
 
   {/* Text preview */}
   <div className="px-4 pb-2">

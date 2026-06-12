@@ -74,7 +74,7 @@ export const DayCell = memo(function DayCell({
     {t('day_tooltip_format', { pages: day.pages, minutes: day.minutes })}
    </span>
    )}
-   <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-[3px] border-transparent border-t-gray-900" />
+   <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-[3px] border-transparent border-t-gray-900 dark:border-t-gray-100" />
   </div>
   )}
  </div>

@@ -85,7 +85,7 @@ export const MOOD_COLORS: Record<MoodType, string> = {
   sad: 'bg-blue-400',
   romantic: 'bg-pink-400',
   mysterious: 'bg-purple-400',
-  neutral: 'bg-gray-300',
+  neutral: 'bg-gray-300 dark:bg-gray-600',
 };
 
 export const MOOD_ICONS: Record<MoodType, string> = {

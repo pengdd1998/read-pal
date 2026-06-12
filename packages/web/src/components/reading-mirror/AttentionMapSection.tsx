@@ -57,7 +57,7 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2 h-4 rounded-sm ${i < engagementScore ? 'bg-amber-500' : 'bg-gray-200'}`}
+                  className={`w-2 h-4 rounded-sm ${i < engagementScore ? 'bg-amber-500' : 'bg-gray-200 dark:bg-gray-700'}`}
                 />
               ))}
             </div>

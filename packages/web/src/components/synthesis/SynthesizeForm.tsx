@@ -33,6 +33,7 @@ export const SynthesizeForm = React.memo(function SynthesizeForm({
    value={query}
    onChange={(e) => onQueryChange(e.target.value)}
    placeholder={t('synthesis_query_placeholder')}
+   aria-label={t('synthesis_query_label')}
    rows={3}
    className="w-full px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all resize-none"
   />
