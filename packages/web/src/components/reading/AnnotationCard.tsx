@@ -21,6 +21,7 @@ interface AnnotationCardProps {
 
 export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTitle, author, onDelete, onUpdate, onClick }: AnnotationCardProps) {
  const t = useTranslations('reader');
+ const tRef = useRef(t); tRef.current = t;
  const tc = useTranslations('common');
  const { toast } = useToast();
  const [editing, setEditing] = useState(false);
@@ -33,8 +34,8 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
  const quoteText = annotation.content || '';
 
  const TYPE_LABELS = useMemo<Record<string, string>>(() => ({
-  highlight: t('card_highlight'), note: t('card_note'), bookmark: t('card_bookmark'),
- }), [t]);
+  highlight: tRef.current('card_highlight'), note: tRef.current('card_note'), bookmark: tRef.current('card_bookmark'),
+ }), []);
 
  const icon = TYPE_ICONS[annotation.type] || TYPE_ICONS.highlight;
  const label = TYPE_LABELS[annotation.type] || TYPE_LABELS.highlight;

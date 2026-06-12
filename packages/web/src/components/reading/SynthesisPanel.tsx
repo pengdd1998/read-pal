@@ -49,6 +49,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
 }: SynthesisPanelProps) {
  const { toast } = useToast();
  const t = useTranslations('reader');
+ const tRef = useRef(t); tRef.current = t;
  const [activeTab, setActiveTab] = useState<SynthesisAction>('cross_reference');
  const [loading, setLoading] = useState(false);
  const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -84,17 +85,17 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
  const buildInput = useCallback((): Record<string, unknown> | null => {
  switch (activeTab) {
   case 'cross_reference':
-  if (!concept.trim()) { setError(t('synthesis_enter_concept')); return null; }
+  if (!concept.trim()) { setError(tRef.current('synthesis_enter_concept')); return null; }
   return { concept: concept.trim(), sourceBookId: bookId, analysisType };
   case 'concept_map':
-  if (!topic.trim()) { setError(t('synthesis_enter_topic_map')); return null; }
+  if (!topic.trim()) { setError(tRef.current('synthesis_enter_topic_map')); return null; }
   return { topic: topic.trim(), maxNodes: 20 };
   case 'find_contradictions':
   return { ...(topic.trim() ? { topic: topic.trim() } : {}), minSeverity, bookIds: [bookId] };
   case 'summary_report':
   return { bookIds: [bookId], ...(focus.trim() ? { focus: focus.trim() } : {}), format: reportFormat };
   case 'synthesize':
-  if (!query.trim()) { setError(t('synthesis_enter_query')); return null; }
+  if (!query.trim()) { setError(tRef.current('synthesis_enter_query')); return null; }
   return { query: query.trim(), bookIds: [bookId], depth };
   default: return null;
  }
@@ -126,17 +127,17 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
   if (response.success && response.data) {
   setResult(response.data as AnalysisResult);
   } else {
-  setError(t('synthesis_analysis_failed'));
+  setError(tRef.current('synthesis_analysis_failed'));
   }
  } catch (err) {
   if ((err as Error).name === 'AbortError' || (err as Error).name === 'CanceledError') return;
   warn('SynthesisPanel: analysis failed', err);
-  setError(t('synthesis_network_error'));
-  toast(t('synthesis_analysis_failed'), 'error');
+  setError(tRef.current('synthesis_network_error'));
+  toast(tRef.current('synthesis_analysis_failed'), 'error');
  } finally {
   if (!controller.signal.aborted) setLoading(false);
  }
- }, [activeTab, bookId, buildInput, toast, t]);
+ }, [activeTab, bookId, buildInput, toast]);
 
  const renderForm = () => {
  switch (activeTab) {

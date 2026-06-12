@@ -81,7 +81,7 @@ export default function SearchPage() {
   const failedCount = settled.filter((r) => r.status === 'rejected').length;
   if (failedCount > 0) {
    warn(`search: ${failedCount} of 3 search queries failed`);
-   setError(t('partial_failure'));
+   setError(tRef.current('partial_failure'));
   }
 
   const bookRes = settled[0].status === 'fulfilled' ? settled[0].value : { success: false as const, data: [] as Book[] };

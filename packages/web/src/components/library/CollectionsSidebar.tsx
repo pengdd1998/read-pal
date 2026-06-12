@@ -17,6 +17,7 @@ interface CollectionsSidebarProps {
 export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activeCollectionId, onSelectCollection }: CollectionsSidebarProps) {
  const { toast } = useToast();
  const t = useTranslations('library');
+ const tRef = useRef(t); tRef.current = t;
  const [collections, setCollections] = useState<Collection[]>([]);
  const [loading, setLoading] = useState(true);
  const [showCreate, setShowCreate] = useState(false);
@@ -33,15 +34,15 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const ICONS: { value: string; label: string }[] = useMemo(() => [
- { value: 'folder', label: t('icon_folder') },
- { value: 'book', label: t('icon_books') },
- { value: 'star', label: t('icon_favorites') },
- { value: 'briefcase', label: t('icon_work') },
- { value: 'heart', label: t('icon_love') },
- { value: 'graduation-cap', label: t('icon_study') },
- { value: 'lightbulb', label: t('icon_ideas') },
- { value: 'bookmark', label: t('icon_to_read') },
- ], [t]);
+ { value: 'folder', label: tRef.current('icon_folder') },
+ { value: 'book', label: tRef.current('icon_books') },
+ { value: 'star', label: tRef.current('icon_favorites') },
+ { value: 'briefcase', label: tRef.current('icon_work') },
+ { value: 'heart', label: tRef.current('icon_love') },
+ { value: 'graduation-cap', label: tRef.current('icon_study') },
+ { value: 'lightbulb', label: tRef.current('icon_ideas') },
+ { value: 'bookmark', label: tRef.current('icon_to_read') },
+ ], []);
 
  const loadCollections = useCallback(async () => {
  try {

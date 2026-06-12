@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -14,6 +14,7 @@ interface BookTagEditorProps {
 
 export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, onTagsChange }: BookTagEditorProps) {
  const t = useTranslations('library');
+ const tRef = useRef(t); tRef.current = t;
  const { toast } = useToast();
  const [editingTags, setEditingTags] = useState(false);
  const [tagInput, setTagInput] = useState('');
@@ -31,11 +32,11 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
   setTagInput('');
  } catch (error) {
   warn('BookTagEditor: add tag failed', error);
-  toast(t('tag_update_failed'), 'error');
+  toast(tRef.current('tag_update_failed'), 'error');
  } finally {
   setSaving(false);
  }
- }, [tagInput, tags, bookId, onTagsChange, t, toast]);
+ }, [tagInput, tags, bookId, onTagsChange, toast]);
 
  const handleRemoveTag = useCallback(async (tag: string) => {
  const newTags = tags.filter((t) => t !== tag);

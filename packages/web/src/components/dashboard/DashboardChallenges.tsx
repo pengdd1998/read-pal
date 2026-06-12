@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
@@ -33,6 +33,7 @@ const ChallengeItemRow = React.memo(function ChallengeItemRow({ c, title, progre
 
 export const DashboardChallenges = memo(function DashboardChallenges() {
   const t = useTranslations('dashboard');
+  const tRef = useRef(t); tRef.current = t;
   const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -57,21 +58,21 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
   const active = useMemo(() => challenges.filter((c) => !c.completed).slice(0, 4), [challenges]);
   const completedCount = useMemo(() => challenges.filter((c) => c.completed).length, [challenges]);
   const challengeTitleMap = useMemo((): Record<string, string> => ({
-    'daily-reading': t('challenge_daily_reading'),
-    'weekly-pages': t('challenge_weekly_pages'),
-    'highlight-streak': t('challenge_highlight_streak'),
-    'book-completion': t('challenge_book_completion'),
-    'flashcard-review': t('challenge_flashcard_review'),
-    'monthly-books': t('challenge_monthly_books'),
-  }), [t]);
+    'daily-reading': tRef.current('challenge_daily_reading'),
+    'weekly-pages': tRef.current('challenge_weekly_pages'),
+    'highlight-streak': tRef.current('challenge_highlight_streak'),
+    'book-completion': tRef.current('challenge_book_completion'),
+    'flashcard-review': tRef.current('challenge_flashcard_review'),
+    'monthly-books': tRef.current('challenge_monthly_books'),
+  }), []);
   const unitMap = useMemo((): Record<string, string> => ({
-    minutes: t('challenge_unit_minutes'),
-    pages: t('challenge_unit_pages'),
-    days: t('challenge_unit_days'),
-    percent: t('challenge_unit_percent'),
-    cards: t('challenge_unit_cards'),
-    books: t('challenge_unit_books'),
-  }), [t]);
+    minutes: tRef.current('challenge_unit_minutes'),
+    pages: tRef.current('challenge_unit_pages'),
+    days: tRef.current('challenge_unit_days'),
+    percent: tRef.current('challenge_unit_percent'),
+    cards: tRef.current('challenge_unit_cards'),
+    books: tRef.current('challenge_unit_books'),
+  }), []);
 
   if (loading) {
     return (

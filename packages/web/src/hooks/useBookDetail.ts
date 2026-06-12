@@ -12,6 +12,8 @@ import type {
 } from '@/types/book';
 
 export function useBookDetail(bookId: string, t: (key: string) => string) {
+  const tRef = useRef(t);
+  tRef.current = t;
   const [book, setBook] = useState<BookData | null>(null);
   const [annotationStats, setAnnotationStats] = useState<AnnotationStats>({
     highlights: 0,
@@ -61,7 +63,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
         if (res.success && res.data) {
           setBook(res.data);
         } else {
-          setError(t('bookNotFound'));
+          setError(tRef.current('bookNotFound'));
         }
         if (annRes.success && annRes.data) {
           const annotations = Array.isArray(annRes.data) ? annRes.data : [];
@@ -75,7 +77,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
         }
       } catch (err) {
         warn('useBookDetail: fetch failed', err);
-        if (!cancelled) setError(t('failedToLoad'));
+        if (!cancelled) setError(tRef.current('failedToLoad'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -121,7 +123,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
     return () => {
       cancelled = true;
     };
-  }, [bookId, bgFetch, t, retryCount]);
+  }, [bookId, bgFetch, retryCount]);
 
   const refetch = useCallback(() => setRetryCount((c) => c + 1), []);
 

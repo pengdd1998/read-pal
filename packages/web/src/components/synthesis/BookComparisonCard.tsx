@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
@@ -19,6 +19,7 @@ interface BookComparisonCardProps {
 
 export const BookComparisonCard = React.memo(function BookComparisonCard({ books }: BookComparisonCardProps) {
  const t = useTranslations('synthesis');
+ const tRef = useRef(t); tRef.current = t;
   const [compareBook1, setCompareBook1] = useState<string>('');
  const [compareBook2, setCompareBook2] = useState<string>('');
  const [compareLoading, setCompareLoading] = useState(false);
@@ -38,15 +39,15 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   if (res.success && res.data) {
   setCompareResult(res.data);
   } else {
-  setCompareError(t('analysis_failed'));
+  setCompareError(tRef.current('analysis_failed'));
   }
  } catch (error) {
   warn('BookComparisonCard: compare failed', error);
-  setCompareError(t('network_error'));
+  setCompareError(tRef.current('network_error'));
  } finally {
   setCompareLoading(false);
  }
- }, [compareBook1, compareBook2, t]);
+ }, [compareBook1, compareBook2]);
 
  return (
  <div className="mb-6 p-4 sm:p-5 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">

@@ -73,13 +73,14 @@ const NotificationItem = React.memo(function NotificationItem({ notif, onMarkAsR
 export const NotificationBell = memo(function NotificationBell() {
   const { toast } = useToast();
   const t = useTranslations('common');
+  const tRef = useRef(t); tRef.current = t;
 
   const fmtTime = useCallback((d: string) => formatRelativeTime(d, {
-    just_now: t('just_now'),
-    minutes_ago: t('minutes_ago'),
-    hours_ago: t('hours_ago'),
-    days_ago: t('days_ago'),
-  } as const), [t]);
+    just_now: tRef.current('just_now'),
+    minutes_ago: tRef.current('minutes_ago'),
+    hours_ago: tRef.current('hours_ago'),
+    days_ago: tRef.current('days_ago'),
+  } as const), []);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -110,12 +111,12 @@ export const NotificationBell = memo(function NotificationBell() {
     } catch (err) {
       if (staleRef.current) return;
       warn('Notifications: failed to load notifications', err);
-      toast(t('notification_load_failed'), 'error');
+      toast(tRef.current('notification_load_failed'), 'error');
     } finally {
       loadingRef.current = false;
       setLoadingNotifs(false);
     }
-  }, [t, toast]);
+  }, [toast]);
 
   useEffect(() => {
     staleRef.current = false;
@@ -155,9 +156,9 @@ export const NotificationBell = memo(function NotificationBell() {
       setNotifications(prev);
       setUnreadCount(prevCount);
       warn('Notifications: failed to mark notification as read', err);
-      toast(t('notification_mark_read_failed'), 'error');
+      toast(tRef.current('notification_mark_read_failed'), 'error');
     }
-  }, [notifications, unreadCount, t, toast]);
+  }, [notifications, unreadCount, toast]);
 
   async function markAllRead() {
     const prev = notifications;

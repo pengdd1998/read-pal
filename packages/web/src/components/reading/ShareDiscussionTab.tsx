@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { useToast } from '@/components/Toast';
@@ -37,6 +37,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
   progress,
 }: DiscussionTabProps) {
   const t = useTranslations('reader');
+  const tRef = useRef(t); tRef.current = t;
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
   const [questions, setQuestions] = useState<string[]>([]);
@@ -54,8 +55,8 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
       const res = await api.post<{ questions: string[] }>(
         '/api/agents/discussion-questions',
         {
-          bookTitle: bookTitle || t('share_unknown_book'),
-          author: author || t('share_unknown_author'),
+          bookTitle: bookTitle || tRef.current('share_unknown_book'),
+          author: author || tRef.current('share_unknown_author'),
           annotations: highlights.slice(0, 15).map((a) => ({ content: a.content })),
         },
       );
@@ -68,7 +69,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
       setQuestionWarning(true);
       return [];
     }
-  }, [highlights, bookTitle, author, t]);
+  }, [highlights, bookTitle, author]);
 
   const handleGenerateGuide = useCallback(async () => {
     setGenerating(true);
@@ -80,8 +81,8 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
 
       const html = generateDiscussionGuideHtml({
         book: {
-          title: bookTitle || t('share_unknown_book'),
-          author: author || t('share_unknown_author'),
+          title: bookTitle || tRef.current('share_unknown_book'),
+          author: author || tRef.current('share_unknown_author'),
           totalPages,
           currentPage,
           progress,
@@ -100,32 +101,32 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
       });
 
       setGuideHtml(html);
-      toast(t('share_guide_generated'), 'success');
+      toast(tRef.current('share_guide_generated'), 'success');
     } catch (err) {
       warn('ShareDiscussionTab: generate failed', err);
-      toast(t('share_failed_generate'), 'error');
+      toast(tRef.current('share_failed_generate'), 'error');
     } finally {
       setGenerating(false);
     }
-  }, [annotations, bookTitle, author, totalPages, currentPage, progress, highlights, generateQuestions, toast, t]);
+  }, [annotations, bookTitle, author, totalPages, currentPage, progress, highlights, generateQuestions, toast]);
 
   const handleCopyGuide = useCallback(async () => {
     if (!guideHtml) return;
     const { copyDiscussionGuide } = await import('@/lib/export-discussion-guide');
     const ok = await copyDiscussionGuide(guideHtml);
     if (ok) {
-      toast(t('share_guide_copied'), 'success');
+      toast(tRef.current('share_guide_copied'), 'success');
     } else {
-      toast(t('share_copy_failed'), 'error');
+      toast(tRef.current('share_copy_failed'), 'error');
     }
-  }, [guideHtml, toast, t]);
+  }, [guideHtml, toast]);
 
   const handleDownloadGuide = useCallback(async () => {
     if (!guideHtml) return;
     const { downloadDiscussionGuide } = await import('@/lib/export-discussion-guide');
     downloadDiscussionGuide(guideHtml, bookTitle || 'book');
-    toast(t('share_guide_downloaded'), 'success');
-  }, [guideHtml, bookTitle, toast, t]);
+    toast(tRef.current('share_guide_downloaded'), 'success');
+  }, [guideHtml, bookTitle, toast]);
 
   const handlePrintGuide = useCallback(async () => {
     if (!guideHtml) return;
@@ -146,15 +147,15 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
         const fullUrl = `${baseUrl}/api/share/s/${res.data.token}`;
         setShareLink(fullUrl);
         await navigator.clipboard.writeText(fullUrl);
-        toast(t('share_link_copied'), 'success');
+        toast(tRef.current('share_link_copied'), 'success');
       }
     } catch (err) {
       warn('ShareDiscussionTab: share link failed', err);
-      toast(t('share_failed_share_link'), 'error');
+      toast(tRef.current('share_failed_share_link'), 'error');
     } finally {
       setSharing(false);
     }
-  }, [bookId, guideHtml, toast, t]);
+  }, [bookId, guideHtml, toast]);
 
   const handleReset = useCallback(() => {
     setGuideHtml(null);
@@ -165,9 +166,9 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
   const handleCopyShareLink = useCallback(() => {
     if (shareLink) {
       navigator.clipboard.writeText(shareLink);
-      toast(t('share_link_copied'), 'success');
+      toast(tRef.current('share_link_copied'), 'success');
     }
-  }, [shareLink, toast, t]);
+  }, [shareLink, toast]);
 
   return (
     <div className="space-y-4">

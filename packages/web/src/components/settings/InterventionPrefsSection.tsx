@@ -73,6 +73,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 export const InterventionPrefsSection = React.memo(function InterventionPrefsSection() {
  const t = useTranslations('settings_page');
+ const tRef = useRef(t); tRef.current = t;
  const { toast } = useToast();
  const [prefs, setPrefs] = useState<InterventionPrefs>(DEFAULT_PREFS);
  const [loading, setLoading] = useState(true);
@@ -93,11 +94,11 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  } catch (err) {
   if (signal?.aborted) return;
   warn('InterventionPrefsSection: load failed', err);
-  setError(t('failed_load_retry'));
+  setError(tRef.current('failed_load_retry'));
  } finally {
   if (!signal?.aborted) setLoading(false);
  }
- }, [t]);
+ }, []);
 
  useEffect(() => {
  const ac = new AbortController();

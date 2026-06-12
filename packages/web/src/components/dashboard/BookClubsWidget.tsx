@@ -68,6 +68,7 @@ function Skeleton() {
 
 function BookClubsWidgetInner() {
  const t = useTranslations('bookClubs');
+ const tRef = useRef(t); tRef.current = t;
  const [clubs, setClubs] = useState<BookClub[]>([]);
  const [loading, setLoading] = useState(true);
  const [showCreate, setShowCreate] = useState(false);
@@ -91,12 +92,12 @@ function BookClubsWidgetInner() {
    setClubs(list);
   }
   })
-  .catch((err) => { warn('BookClubsWidget: fetch failed', err); if (!cancelled) setError(t('clubs_failed_load')); })
+  .catch((err) => { warn('BookClubsWidget: fetch failed', err); if (!cancelled) setError(tRef.current('clubs_failed_load')); })
   .finally(() => {
   if (!cancelled) setLoading(false);
   });
  return () => { cancelled = true; };
- }, [t]);
+ }, []);
 
  const handleCreate = useCallback(async () => {
  if (!newName.trim()) return;
@@ -116,11 +117,11 @@ function BookClubsWidgetInner() {
   }
  } catch (err) {
   warn('BookClubsWidget: create failed', err);
-  setError(t('failedToLoad'));
+  setError(tRef.current('failedToLoad'));
  } finally {
   setCreating(false);
  }
- }, [newName, newDesc, t]);
+ }, [newName, newDesc]);
 
  const handleJoin = useCallback(async () => {
  if (!joinCode.trim()) return;
@@ -142,11 +143,11 @@ function BookClubsWidgetInner() {
   }
  } catch (err) {
   warn('BookClubsWidget: join failed', err);
-  setError(t('clubNotFound'));
+  setError(tRef.current('clubNotFound'));
  } finally {
   setJoining(false);
  }
- }, [joinCode, t]);
+ }, [joinCode]);
 
  if (loading) return <Skeleton />;
 

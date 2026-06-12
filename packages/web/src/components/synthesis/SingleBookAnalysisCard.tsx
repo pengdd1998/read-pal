@@ -31,6 +31,7 @@ interface SingleBookAnalysisCardProps {
 
 export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard({ books, booksLoading, booksError }: SingleBookAnalysisCardProps) {
  const t = useTranslations('synthesis');
+ const tRef = useRef(t); tRef.current = t;
   const [selectedBookId, setSelectedBookId] = useState<string>('');
  const [mode, setMode] = useState<AnalysisMode>('cross_reference');
  const [query, setQuery] = useState('');
@@ -54,15 +55,15 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   if (res.success && res.data) {
   setResult(res.data);
   } else {
-  setError(t('analysis_failed'));
+  setError(tRef.current('analysis_failed'));
   }
  } catch (error) {
   warn('SingleBookAnalysisCard: analyze failed', error);
-  if (mountedRef.current) setError(t('network_error'));
+  if (mountedRef.current) setError(tRef.current('network_error'));
  } finally {
   if (mountedRef.current) setLoading(false);
  }
- }, [selectedBookId, query, mode, t]);
+ }, [selectedBookId, query, mode]);
 
  return (
  <>

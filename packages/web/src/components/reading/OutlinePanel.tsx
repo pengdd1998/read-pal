@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { OutlineChapterGroup } from './OutlineChapterGroup';
@@ -56,6 +56,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
  onScrollToAnnotation,
 }: OutlinePanelProps) {
  const t = useTranslations('reader');
+ const tRef = useRef(t); tRef.current = t;
  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
  const [searchQuery, setSearchQuery] = useState('');
  const [filterType, setFilterType] = useState<FilterType>('all');
@@ -94,7 +95,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
   .sort(([a], [b]) => a - b)
   .map(([idx, items]) => ({
   chapterIndex: idx,
-  label: t('outline_chapter', { number: idx + 1 }),
+  label: tRef.current('outline_chapter', { number: idx + 1 }),
   highlights: items.filter((a) => a.type === 'highlight'),
   notes: items.filter((a) => a.type === 'note'),
   bookmarks: items.filter((a) => a.type === 'bookmark'),
@@ -103,7 +104,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
  if (ungrouped.length > 0) {
   groups.push({
   chapterIndex: -1,
-  label: t('outline_other'),
+  label: tRef.current('outline_other'),
   highlights: ungrouped.filter((a) => a.type === 'highlight'),
   notes: ungrouped.filter((a) => a.type === 'note'),
   bookmarks: ungrouped.filter((a) => a.type === 'bookmark'),
@@ -111,7 +112,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
  }
 
  return groups;
- }, [annotations, filterType, searchQuery, t]);
+ }, [annotations, filterType, searchQuery]);
 
  const toggleChapter = useCallback((chapterIndex: number) => {
  setExpandedChapters((prev) => {

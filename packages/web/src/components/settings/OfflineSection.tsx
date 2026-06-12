@@ -57,6 +57,7 @@ const BookCheckboxRow = React.memo(function BookCheckboxRow({ book, isSelected, 
 export const OfflineSection = React.memo(function OfflineSection() {
   const { toast } = useToast();
   const t = useTranslations('settings_page');
+  const tRef = useRef(t); tRef.current = t;
   const [queueCount, setQueueCount] = useState(0);
   const [cachedBooks, setCachedBooks] = useState<CachedBook[]>([]);
   const [books, setBooks] = useState<Array<{ id: string; title: string; author: string }>>([]);
@@ -100,13 +101,13 @@ export const OfflineSection = React.memo(function OfflineSection() {
         if (stale) return;
         warn('OfflineSection: failed to load offline data', err);
         setLoadError(true);
-        toast(t('offline_load_failed'), 'error');
+        toast(tRef.current('offline_load_failed'), 'error');
       } finally {
         if (!stale) setLoading(false);
       }
     })();
     return () => { stale = true; };
-  }, [t, toast]);
+  }, [toast]);
 
   useEffect(() => { return loadOfflineData(); }, [loadOfflineData]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { DayCell, SkeletonHeatmap } from './StreakDayCell';
@@ -34,6 +34,7 @@ function todayISO(): string {
 
 function StreakCalendarInner() {
  const t = useTranslations('stats');
+ const tRef = useRef(t); tRef.current = t;
  const monthLabels = useMemo(() => MONTH_KEYS.map((k) => t(k)), [t]);
  const dayLabels = useMemo(() => DAY_KEYS.map((k) => (k ? t(k) : '')), [t]);
  const [data, setData] = useState<ReadingCalendarData | null>(null);
@@ -51,13 +52,13 @@ function StreakCalendarInner() {
   })
   .catch((err) => {
   warn('StreakCalendar: failed to load calendar', err);
-  if (!cancelled) setError(t('calendar_load_error'));
+  if (!cancelled) setError(tRef.current('calendar_load_error'));
   })
   .finally(() => {
   if (!cancelled) setLoading(false);
   });
  return () => { cancelled = true; };
- }, [t]);
+ }, []);
 
  useEffect(() => { return fetchData(); }, [fetchData]);
 

@@ -40,6 +40,8 @@ const STATUS_BAR_COLORS: Record<string, string> = {
  */
 export function useReaderPage() {
   const t = useTranslations('reader');
+  const tRef = useRef(t);
+  tRef.current = t;
   usePageTitle(t('page_title'));
   const params = useParams();
   const router = useRouter();
@@ -88,15 +90,15 @@ export function useReaderPage() {
 
   // --- Annotation actions ---
   const toastMessages = useMemo(() => ({
-    failed_load_annotations: t('failed_load_annotations'),
-    failed_save_highlight: t('failed_save_highlight'),
-    failed_save_note: t('failed_save_note'),
-    failed_remove_bookmark: t('failed_remove_bookmark'),
-    failed_add_bookmark: t('failed_add_bookmark'),
-    failed_delete_annotation: t('failed_delete_annotation'),
-    failed_update_annotation: t('failed_update_annotation'),
-    failed_save_progress: t('failed_save_progress'),
-  }), [t]);
+    failed_load_annotations: tRef.current('failed_load_annotations'),
+    failed_save_highlight: tRef.current('failed_save_highlight'),
+    failed_save_note: tRef.current('failed_save_note'),
+    failed_remove_bookmark: tRef.current('failed_remove_bookmark'),
+    failed_add_bookmark: tRef.current('failed_add_bookmark'),
+    failed_delete_annotation: tRef.current('failed_delete_annotation'),
+    failed_update_annotation: tRef.current('failed_update_annotation'),
+    failed_save_progress: tRef.current('failed_save_progress'),
+  }), []);
 
   // --- Chapter navigation (defined early for annotation scroll-to support) ---
   const navigatingRef = useRef(false);
@@ -116,11 +118,11 @@ export function useReaderPage() {
       await api.patch(`/api/books/${bookId}`, { current_page: chapterIndex, current_segment: 0 });
     } catch (err) {
       warn('useReaderPage: progress save failed', err);
-      if (mountedRef.current) toast(t('failed_save_progress'), 'error');
+      if (mountedRef.current) toast(tRef.current('failed_save_progress'), 'error');
     } finally {
       navigatingRef.current = false;
     }
-  }, [currentChapter, chapters.length, bookId, setChapterFade, setCurrentChapter, toast, t]);
+  }, [currentChapter, chapters.length, bookId, setChapterFade, setCurrentChapter, toast]);
 
   const annotationActions = useAnnotationActions({
     bookId, currentChapter, chapters, contentRef, selectionRange: selection.range,

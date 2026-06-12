@@ -59,6 +59,7 @@ interface ApiKeyData {
 export const ApiKeysSection = React.memo(function ApiKeysSection() {
  const { toast } = useToast();
  const t = useTranslations('settings_page');
+ const tRef = useRef(t); tRef.current = t;
  const locale = useLocale();
  const [keys, setKeys] = useState<ApiKeyData[]>([]);
  const [loading, setLoading] = useState(true);
@@ -78,10 +79,10 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   }
  } catch (err) {
   warn('ApiKeysSection: load failed', err);
-  if (mountedRef.current) toast(t('api_key_load_failed'), 'error');
+  if (mountedRef.current) toast(tRef.current('api_key_load_failed'), 'error');
  }
  if (mountedRef.current) setLoading(false);
- }, [t, toast]);
+ }, [toast]);
 
  useEffect(() => {
  loadKeys();

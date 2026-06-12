@@ -1,8 +1,6 @@
 'use client';
 
-import React from 'react';
-
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { SkeletonPulse } from './SkeletonPulse';
@@ -30,10 +28,11 @@ interface WeeklySummaryData {
 
 export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  const t = useTranslations('dashboard');
+ const tRef = useRef(t); tRef.current = t;
  const locale = useLocale();
  const DAY_LABELS = useMemo(
- () => [t('day_mon'), t('day_tue'), t('day_wed'), t('day_thu'), t('day_fri'), t('day_sat'), t('day_sun')],
- [t],
+ () => [tRef.current('day_mon'), tRef.current('day_tue'), tRef.current('day_wed'), tRef.current('day_thu'), tRef.current('day_fri'), tRef.current('day_sat'), tRef.current('day_sun')],
+ [],
  );
  const [data, setData] = useState<WeeklySummaryData | null>(null);
  const [loading, setLoading] = useState(true);

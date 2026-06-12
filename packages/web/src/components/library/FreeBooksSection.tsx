@@ -22,6 +22,7 @@ interface FreeBooksSectionProps {
 
 export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQuery }: FreeBooksSectionProps) {
  const t = useTranslations('library');
+ const tRef = useRef(t); tRef.current = t;
  const tc = useTranslations('common');
  const { toast } = useToast();
  const [suggestions, setSuggestions] = useState<FreeBook[]>([]);
@@ -46,10 +47,10 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
    .catch((err) => {
     warn('FreeBooksSection: suggestions fetch failed', err);
     setError(true);
-    toast(t('toast_suggestions_fail'), 'error');
+    toast(tRef.current('toast_suggestions_fail'), 'error');
    })
    .finally(() => setLoading(false));
- }, [t, toast]);
+ }, [toast]);
 
  useEffect(() => {
   let stale = false;
@@ -67,13 +68,13 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
     if (stale) return;
     warn('FreeBooksSection: free books fetch failed', err);
     setError(true);
-    toast(t('toast_suggestions_fail'), 'error');
+    toast(tRef.current('toast_suggestions_fail'), 'error');
    })
    .finally(() => {
     if (!stale) setLoading(false);
    });
   return () => { stale = true; };
- }, [t, toast]);
+ }, [toast]);
 
  const handleSeedSample = async () => {
   if (importing) return;

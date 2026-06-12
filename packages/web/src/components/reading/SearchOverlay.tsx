@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Chapter } from '@read-pal/shared';
 
@@ -29,6 +29,7 @@ export const SearchOverlay = React.memo(function SearchOverlay({
  onClose,
 }: SearchOverlayProps) {
  const t = useTranslations('reader');
+ const tRef = useRef(t); tRef.current = t;
 
  const searchResults = useMemo(() => {
  const q = searchQuery.trim().toLowerCase();
@@ -48,10 +49,10 @@ export const SearchOverlay = React.memo(function SearchOverlay({
    ch.content!.slice(start, end) +
    (end < ch.content!.length ? '...' : '');
   }
-  return { index: i, title: ch.title || t('reader_chapter', { num: i + 1 }), snippet, titleMatch };
+  return { index: i, title: ch.title || tRef.current('reader_chapter', { num: i + 1 }), snippet, titleMatch };
   })
   .filter(Boolean) as SearchResult[];
- }, [searchQuery, chapters, t]);
+ }, [searchQuery, chapters]);
 
  const handleResultNavigate = useCallback((chapterIndex: number) => {
   onNavigate(chapterIndex);

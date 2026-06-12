@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, forwardRef, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useMemo, memo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { preloadDOMPurify } from '@/lib/dompurify';
 import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
@@ -57,6 +57,7 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
 }, ref) {
  const { toast } = useToast();
  const t = useTranslations('reader');
+ const tRef = useRef(t); tRef.current = t;
  const [internalOpen, setInternalOpen] = useState(false);
  const isOpen = externalIsOpen ?? internalOpen;
  const setIsOpen = useCallback((open: boolean) => {
@@ -195,12 +196,12 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
 
  const suggestedPrompts = useMemo(
  () => {
-  const tp = t as (key: string, params?: Record<string, string | number>) => string;
+  const tp = tRef.current as (key: string, params?: Record<string, string | number>) => string;
   return companionMode === 'socratic'
   ? getSocraticPrompts(tp, bookTitle ?? '')
   : getGenreTemplate(genre).suggestedPrompts(tp, bookTitle ?? '');
  },
- [companionMode, genre, bookTitle, t],
+ [companionMode, genre, bookTitle],
  );
 
  return (
