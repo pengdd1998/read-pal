@@ -22,7 +22,7 @@ export default function BookClubDetailPage() {
  const router = useRouter();
  const { club, setClub, loading, error, setError } = useBookClubDetail(clubId);
  const { progress, error: progressError } = useBookClubProgress(clubId, club?.currentBookId);
- const { messages, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError } = useBookClubDiscussion(clubId);
+ const { messages, loading: discussionLoading, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError } = useBookClubDiscussion(clubId);
  const [joining, setJoining] = useState(false);
  const [leaving, setLeaving] = useState(false);
 
@@ -49,8 +49,12 @@ export default function BookClubDetailPage() {
  if (!confirm(t('leaveConfirm'))) return;
  setLeaving(true);
  try {
-  await api.post(`/api/book-clubs/${clubId}/leave`);
-  router.push('/book-clubs');
+  const res = await api.post(`/api/book-clubs/${clubId}/leave`);
+  if (res.success) {
+   router.push('/book-clubs');
+  } else {
+   setError(t('failedToLeave'));
+  }
  } catch (err) {
   warn('BookClubDetail: leave failed', err);
   setError(t('failedToLeave'));
@@ -77,7 +81,7 @@ export default function BookClubDetailPage() {
  return (
   <div className="min-h-screen bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-8 text-center">
-   <p className="text-gray-500">{error || t('clubNotFound')}</p>
+   <p className="text-gray-500" role="alert">{error || t('clubNotFound')}</p>
    <Link href="/book-clubs" prefetch={false} className="text-sm text-primary-600 hover:underline mt-2 inline-block">
    {t('backToBookClubs')}
    </Link>
@@ -98,7 +102,7 @@ export default function BookClubDetailPage() {
    <span>/</span>
    <Link href="/book-clubs" prefetch={false} className="hover:text-gray-600">{t('pageTitle')}</Link>
    <span>/</span>
-   <span className="text-gray-700">{club.name}</span>
+   <span className="text-gray-700 dark:text-gray-300">{club.name}</span>
   </div>
 
   <ClubHeaderCard club={club} memberCount={memberCount} />
@@ -124,6 +128,7 @@ export default function BookClubDetailPage() {
       <ClubMembersList members={club.clubMembers || []} memberCount={memberCount} />
       <ClubDiscussionPanel
         messages={messages}
+        loading={discussionLoading}
         newMessage={newMessage}
         onNewMessageChange={setNewMessage}
         onSend={sendMessage}

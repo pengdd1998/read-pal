@@ -6,6 +6,7 @@ import type { DiscussionMessage } from './types';
 
 interface ClubDiscussionPanelProps {
  messages: DiscussionMessage[];
+ loading?: boolean;
  newMessage: string;
  onNewMessageChange: (value: string) => void;
  onSend: () => void;
@@ -50,6 +51,7 @@ const MessageItem = React.memo(function MessageItem({
 
 export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
  messages,
+ loading,
  newMessage,
  onNewMessageChange,
  onSend,
@@ -70,14 +72,19 @@ export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
 
   {/* Load error */}
   {loadError && (
-  <div className="mb-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-xs text-red-600 dark:text-red-400">
+  <div role="alert" className="mb-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-xs text-red-600 dark:text-red-400">
    {loadError}
   </div>
   )}
 
   {/* Messages */}
   <div className="space-y-3 max-h-80 overflow-y-auto mb-4 pr-1">
-  {messages.length === 0 && (
+  {loading && (
+   <div className="flex justify-center py-6">
+   <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+   </div>
+  )}
+  {!loading && messages.length === 0 && (
    <p className="text-sm text-gray-500 text-center py-6">
    {t('noMessages')}
    </p>
@@ -89,7 +96,7 @@ export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
 
   {/* Send error */}
   {sendError && (
-  <div className="mb-3 flex items-center gap-2 text-xs text-red-500">
+  <div role="alert" className="mb-3 flex items-center gap-2 text-xs text-red-500">
    <span>{sendError}</span>
    <button type="button" onClick={onClearSendError} className="underline hover:text-red-700 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded">
     {t('dismiss')}

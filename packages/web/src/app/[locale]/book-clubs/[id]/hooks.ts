@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
@@ -8,6 +8,8 @@ import type { ClubDetail, MemberProgress, DiscussionMessage } from './types';
 
 export function useBookClubDetail(clubId: string) {
   const t = useTranslations('bookClubs');
+  const tRef = useRef(t);
+  tRef.current = t;
   const [club, setClub] = useState<ClubDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export function useBookClubDetail(clubId: string) {
         }
       } catch (err) {
         warn('useBookClubDetail: fetch failed', err);
-        if (!cancelled) setError(t('failedToLoad'));
+        if (!cancelled) setError(tRef.current('failedToLoad'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -34,13 +36,15 @@ export function useBookClubDetail(clubId: string) {
 
     fetch();
     return () => { cancelled = true; };
-  }, [clubId, t]);
+  }, [clubId]);
 
   return { club, setClub, loading, error, setError };
 }
 
 export function useBookClubProgress(clubId: string, currentBookId?: string) {
   const t = useTranslations('bookClubs');
+  const tRef = useRef(t);
+  tRef.current = t;
   const [progress, setProgress] = useState<MemberProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,21 +64,24 @@ export function useBookClubProgress(clubId: string, currentBookId?: string) {
       })
       .catch((err) => {
         warn('useBookClubProgress: fetch failed', err);
-        if (!cancelled) setError(t('progress_failed_load'));
+        if (!cancelled) setError(tRef.current('progress_failed_load'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
 
     return () => { cancelled = true; };
-  }, [clubId, currentBookId, t]);
+  }, [clubId, currentBookId]);
 
   return { progress, loading, error };
 }
 
 export function useBookClubDiscussion(clubId: string) {
   const t = useTranslations('bookClubs');
+  const tRef = useRef(t);
+  tRef.current = t;
   const [messages, setMessages] = useState<DiscussionMessage[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +91,7 @@ export function useBookClubDiscussion(clubId: string) {
     if (!clubId) return;
     let cancelled = false;
     setError(null);
+    setLoading(true);
 
     api
       .get<{ data: DiscussionMessage[] }>(`/api/book-clubs/${clubId}/discussions?limit=50`)
@@ -94,11 +102,14 @@ export function useBookClubDiscussion(clubId: string) {
       })
       .catch((err) => {
         warn('useBookClubDiscussion: fetch failed', err);
-        if (!cancelled) setError(t('discussions_failed_load'));
+        if (!cancelled) setError(tRef.current('discussions_failed_load'));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
 
     return () => { cancelled = true; };
-  }, [clubId, t]);
+  }, [clubId]);
 
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || sending) return;
@@ -112,17 +123,17 @@ export function useBookClubDiscussion(clubId: string) {
         setMessages((prev) => [...prev, res.data as DiscussionMessage]);
         setNewMessage('');
       } else {
-        setSendError(t('failedToSend'));
+        setSendError(tRef.current('failedToSend'));
       }
     } catch (err) {
       warn('useBookClubDiscussion: sendMessage failed', err);
-      setSendError(t('failedToSend'));
+      setSendError(tRef.current('failedToSend'));
     } finally {
       setSending(false);
     }
-  }, [clubId, newMessage, sending, t]);
+  }, [clubId, newMessage, sending]);
 
   const clearSendError = useCallback(() => setSendError(null), []);
 
-  return { messages, newMessage, setNewMessage, sending, sendMessage, error, sendError, clearSendError };
+  return { messages, loading, newMessage, setNewMessage, sending, sendMessage, error, sendError, clearSendError };
 }
