@@ -19,11 +19,11 @@ export default function RegisterPage() {
  }, [locale]);
 
  return (
- <main className="min-h-[80vh] flex items-center justify-center">
+ <div className="min-h-[80vh] flex items-center justify-center">
   <div className="flex items-center gap-2 text-gray-500">
   <LoadingSpinner />
   {tc('loading')}
   </div>
- </main>
+ </div>
  );
 }

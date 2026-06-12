@@ -75,7 +75,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
  };
 
  return (
- <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+ <div className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
   <h1 className="sr-only">{t('page_title')}</h1>
   {/* Header */}
   <div className="flex items-center justify-between mb-6">
@@ -190,6 +190,6 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    </div>
   </div>
   </div>
- </main>
+ </div>
  );
 });

@@ -43,24 +43,24 @@ function OAuthCallback() {
  }, [searchParams, router, oauthLogin, t]);
 
  return (
- <main className="min-h-[80vh] flex items-center justify-center">
+ <div className="min-h-[80vh] flex items-center justify-center">
   <div className="text-center space-y-3">
   <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
   <p className="text-sm text-gray-500">{t('completing_sign_in')}</p>
   </div>
- </main>
+ </div>
  );
 }
 
 export default function OAuthCallbackPage() {
  return (
  <Suspense fallback={
-  <main className="min-h-[80vh] flex items-center justify-center">
+  <div className="min-h-[80vh] flex items-center justify-center">
   <div className="text-center space-y-3">
    <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" aria-hidden="true" />
    <p className="text-sm text-gray-500 sr-only">Signing in...</p>
   </div>
-  </main>
+  </div>
  }>
   <OAuthCallback />
  </Suspense>

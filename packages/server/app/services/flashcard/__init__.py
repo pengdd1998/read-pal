@@ -7,6 +7,7 @@ from app.services.flashcard.generation import generate_flashcards
 from app.services.flashcard.sm2 import (
     DEFAULT_EASE_FACTOR,
     MIN_EASE_FACTOR,
+    count_reviewed,
     count_total,
     create_flashcard,
     get_due_cards,
@@ -19,6 +20,7 @@ from app.services.flashcard.sm2 import (
 __all__ = [
     'DEFAULT_EASE_FACTOR',
     'MIN_EASE_FACTOR',
+    'count_reviewed',
     'count_total',
     'create_flashcard',
     'generate_flashcards',

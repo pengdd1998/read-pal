@@ -15,7 +15,7 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
 
  if (variant === 'no-decks') {
  return (
-  <main className="max-w-lg mx-auto px-4 py-8 sm:py-12 animate-fade-in">
+  <div className="max-w-lg mx-auto px-4 py-8 sm:py-12 animate-fade-in">
   <h1 className="text-2xl font-bold text-gray-900 mb-6">
    {t('page_title')}
   </h1>
@@ -45,13 +45,13 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
    {t('go_to_library')}
    </Link>
   </div>
-  </main>
+  </div>
  );
  }
 
  if (variant === 'review-complete') {
  return (
-  <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+  <div className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
   <h1 className="sr-only">{t('page_title')}</h1>
   <div className="card text-center py-16">
    <span className="text-5xl block mb-4">{'\uD83C\uDF89'}</span>
@@ -69,13 +69,13 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
    </button>
    </div>
   </div>
-  </main>
+  </div>
  );
  }
 
  // all-caught-up
  return (
- <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+ <div className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
   <h1 className="sr-only">{t('page_title')}</h1>
   <div className="card text-center py-16">
   <span className="text-5xl block mb-4">{'\u2705'}</span>
@@ -93,6 +93,6 @@ export const FlashcardEmpty = React.memo(function FlashcardEmpty({ variant, revi
    <Link href="/dashboard" prefetch={false} className="btn btn-primary">{t('dashboard')}</Link>
   </div>
   </div>
- </main>
+ </div>
  );
 });

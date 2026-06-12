@@ -164,7 +164,7 @@ function AuthPageContent() {
 export default function AuthPage() {
  const tc = useTranslations('common');
  return (
- <main className="min-h-screen"><Suspense fallback={
+ <div className="min-h-screen"><Suspense fallback={
   <div className="min-h-[80vh] flex items-center justify-center">
   <div className="flex items-center gap-2 text-gray-500">
    <LoadingSpinner />
@@ -173,6 +173,6 @@ export default function AuthPage() {
   </div>
  }>
   <AuthPageContent />
- </Suspense></main>
+ </Suspense></div>
  );
 }

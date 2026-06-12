@@ -134,7 +134,7 @@ async def review_alias(
             'stats': {
                 'total': await flashcard_service.count_total(db, UUID(user['id'])),
                 'due': len(cards),
-                'reviewed': 0,
+                'reviewed': await flashcard_service.count_reviewed(db, UUID(user['id'])),
             },
         },
     }
@@ -161,6 +161,12 @@ async def generate_flashcards(
     except ValueError as exc:
         logger.debug('validation error in flashcards')
         raise not_found_error(translate_error(exc, lang)) from exc
+    except Exception as exc:
+        logger.warning('flashcard generation failed user=%s book=%s', user['id'], book_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable', lang)},
+        ) from exc
     return {
         'success': True,
         'data': {

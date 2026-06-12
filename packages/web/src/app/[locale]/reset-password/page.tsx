@@ -68,7 +68,7 @@ function ResetPasswordForm() {
  };
 
  return (
- <main className="min-h-[80vh] flex items-center justify-center px-4">
+ <div className="min-h-[80vh] flex items-center justify-center px-4">
   <div className="max-w-sm w-full animate-fade-in">
   <header className="text-center mb-8">
    <div className="inline-flex w-12 h-12 rounded-xl bg-primary-600 items-center justify-center text-white text-xl font-bold mb-4 shadow-soft" aria-hidden="true">
@@ -174,7 +174,7 @@ function ResetPasswordForm() {
    </Link>
   </p>
   </div>
- </main>
+ </div>
  );
 }
 
@@ -182,12 +182,12 @@ export default function ResetPasswordPage() {
  const t = useTranslations('common');
  return (
  <Suspense fallback={
-  <main className="min-h-[80vh] flex items-center justify-center">
+  <div className="min-h-[80vh] flex items-center justify-center">
   <div className="flex items-center gap-2 text-gray-500">
    <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
    {t('loading')}
   </div>
-  </main>
+  </div>
  }>
   <ResetPasswordForm />
  </Suspense>

@@ -30,6 +30,7 @@
     "api_key_limit": "Maximum number of API keys reached",
     "friend_request_exists": "Friend request already sent",
     "friend_request_not_found": "Friend request not found",
+    "ai_service_unavailable": "AI service temporarily unavailable, please try again later",
     "internal_error": "Internal server error",
     "reading_book_not_found": "Reading book not found",
     "session_not_found": "Reading session not found",

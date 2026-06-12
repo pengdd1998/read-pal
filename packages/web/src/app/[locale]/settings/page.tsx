@@ -149,7 +149,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
+    <section id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
       {/* Header */}
       <div className="mb-6 sm:mb-8 animate-slide-up">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('page_title')}</h1>
@@ -190,6 +190,6 @@ export default function SettingsPage() {
           {t('back_to_dashboard')}
         </Link>
       </div>
-    </main>
+    </section>
   );
 }

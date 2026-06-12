@@ -1,6 +1,6 @@
 export default function SettingsLoading() {
  return (
- <main className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
+ <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
   <div className="mb-8">
   <div className="h-8 bg-surface-2 rounded-lg w-32 animate-pulse" />
   <div className="h-4 bg-surface-2 rounded-lg w-56 mt-2 animate-pulse" />
@@ -23,6 +23,6 @@ export default function SettingsLoading() {
    </div>
   </div>
   ))}
- </main>
+ </div>
  );
 }

@@ -99,7 +99,7 @@ export default function BookDetailPage() {
   const highlights = allAnnotations.filter((a) => a.type === 'highlight');
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
+    <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
       {error && <ErrorBanner error={error} onDismiss={() => setError('')} dismissLabel={t('dismiss')} />}
       {exportSuccess && <SuccessBanner message={exportSuccess} onDismiss={() => setExportSuccess('')} dismissLabel={t('dismiss')} />}
 
@@ -182,6 +182,6 @@ export default function BookDetailPage() {
         continueLabel={t('continueReading')}
         libraryLabel={t('library')}
       />
-    </main>
+    </div>
   );
 }

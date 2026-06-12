@@ -89,14 +89,15 @@ interface FlashcardDeckProps {
   decks: DeckInfo[];
   totalCards: number;
   totalDue: number;
+  totalReviewed: number;
   onStartReview: (bookId: string | null) => void;
 }
 
-export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCards, totalDue, onStartReview }: FlashcardDeckProps) {
+export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCards, totalDue, totalReviewed, onStartReview }: FlashcardDeckProps) {
   const t = useTranslations('flashcards');
 
   return (
-  <main className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+  <div className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <h1 className="sr-only">{t('page_title')}</h1>
    {/* Header */}
    <div className="flex items-center justify-between mb-6">
@@ -121,7 +122,7 @@ export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCar
     <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('due_label')}</div>
     </div>
     <div>
-    <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{totalCards - totalDue}</div>
+    <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{totalReviewed}</div>
     <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('reviewed_label')}</div>
     </div>
     <div>
@@ -158,6 +159,6 @@ export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCar
     />
    ))}
    </div>
-  </main>
+  </div>
   );
 });

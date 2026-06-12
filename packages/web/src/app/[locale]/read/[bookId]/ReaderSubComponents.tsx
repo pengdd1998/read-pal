@@ -15,7 +15,7 @@ export const ReaderLoadingSkeleton = React.memo(function ReaderLoadingSkeleton({
   ariaLabel: string;
 }) {
   return (
-    <main id="main-content" aria-label={ariaLabel} className="h-dvh bg-surface-1">
+    <div id="main-content" aria-label={ariaLabel} className="h-dvh bg-surface-1">
       {/* Reader skeleton loader */}
       <div className="h-14 border-b border-gray-200 flex items-center px-4 gap-3">
         <div className="w-8 h-8 rounded-md bg-gray-200 animate-pulse" />
@@ -48,7 +48,7 @@ export const ReaderLoadingSkeleton = React.memo(function ReaderLoadingSkeleton({
           <div className="h-10 w-24 rounded-lg bg-gray-200 animate-pulse" />
         </div>
       </div>
-    </main>
+    </div>
   );
 });
 
@@ -77,7 +77,7 @@ export const ReaderErrorState = React.memo(function ReaderErrorState({
   const isNetworkError = error === failedConnectLabel;
 
   return (
-    <main
+    <div
       id="main-content"
       aria-label={ariaLabel}
       className="flex items-center justify-center h-dvh bg-surface-1"
@@ -97,7 +97,7 @@ export const ReaderErrorState = React.memo(function ReaderErrorState({
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 });
 

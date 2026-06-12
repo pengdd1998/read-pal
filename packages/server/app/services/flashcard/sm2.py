@@ -176,6 +176,16 @@ async def count_total(db: AsyncSession, user_id: UUID) -> int:
     return result.scalar() or 0
 
 
+async def count_reviewed(db: AsyncSession, user_id: UUID) -> int:
+    """Count flashcards reviewed at least once."""
+    result = await db.execute(
+        select(func.count())
+        .select_from(Flashcard)
+        .where(Flashcard.user_id == user_id, Flashcard.repetition_count > 0),
+    )
+    return result.scalar() or 0
+
+
 async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
     """List flashcard decks grouped by book."""
     async with db_error_guard('list_decks', user_id=str(user_id)):
@@ -188,6 +198,7 @@ async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
                 Book.cover_url,
                 func.count(Flashcard.id).label('card_count'),
                 func.sum(case((Flashcard.next_review_at <= now, 1), else_=0)).label('due_count'),
+                func.sum(case((Flashcard.repetition_count > 0, 1), else_=0)).label('reviewed_count'),
             )
             .join(Book, Book.id == Flashcard.book_id)
             .where(Flashcard.user_id == user_id)
@@ -201,6 +212,7 @@ async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
             'coverUrl': row.cover_url,
             'total': row.card_count,
             'due': int(row.due_count or 0),
+            'reviewed': int(row.reviewed_count or 0),
         }
         for row in result.all()
     ]
@@ -208,4 +220,5 @@ async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
         'decks': decks,
         'totalCards': sum(d['total'] for d in decks),
         'totalDue': sum(d['due'] for d in decks),
+        'totalReviewed': sum(d['reviewed'] for d in decks),
     }

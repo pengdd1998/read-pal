@@ -30,6 +30,7 @@
     "api_key_limit": "已达到 API 密钥数量上限",
     "friend_request_exists": "好友请求已发送",
     "friend_request_not_found": "好友请求未找到",
+    "ai_service_unavailable": "AI 服务暂时不可用，请稍后再试",
     "internal_error": "服务器内部错误",
     "reading_book_not_found": "阅读笔记未找到",
     "session_not_found": "阅读会话未找到",

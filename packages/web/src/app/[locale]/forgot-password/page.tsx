@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
  };
 
  return (
- <main className="min-h-[80vh] flex items-center justify-center px-4">
+ <div className="min-h-[80vh] flex items-center justify-center px-4">
   <div className="max-w-sm w-full animate-fade-in">
   {/* Brand */}
   <header className="text-center mb-8">
@@ -116,6 +116,6 @@ export default function ForgotPasswordPage() {
    </Link>
   </p>
   </div>
- </main>
+ </div>
  );
 }

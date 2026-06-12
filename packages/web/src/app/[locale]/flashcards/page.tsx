@@ -42,6 +42,7 @@ export default function FlashcardsPage() {
  const [decks, setDecks] = useState<DeckInfo[]>([]);
  const [deckTotalCards, setDeckTotalCards] = useState(0);
  const [deckTotalDue, setDeckTotalDue] = useState(0);
+ const [deckTotalReviewed, setDeckTotalReviewed] = useState(0);
  const [cards, setCards] = useState<FlashcardData[]>([]);
  const [stats, setStats] = useState<ReviewStats>({ total: 0, due: 0, reviewed: 0 });
  const [currentIndex, setCurrentIndex] = useState(0);
@@ -58,12 +59,13 @@ export default function FlashcardsPage() {
 
  const fetchDecks = useCallback(async () => {
  try {
-  const res = await api.get<{ decks: DeckInfo[]; totalCards: number; totalDue: number }>('/api/flashcards/decks');
+  const res = await api.get<{ decks: DeckInfo[]; totalCards: number; totalDue: number; totalReviewed: number }>('/api/flashcards/decks');
   if (!mountedRef.current) return;
   if (res.success && res.data) {
   setDecks(res.data.decks);
   setDeckTotalCards(res.data.totalCards);
   setDeckTotalDue(res.data.totalDue);
+  setDeckTotalReviewed(res.data.totalReviewed);
   }
  } catch (err) {
   if (!mountedRef.current) return;
@@ -178,7 +180,7 @@ export default function FlashcardsPage() {
  return (
   <>
   {toastEl}
-  <main id="main-content" aria-label={t('page_title')} className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+  <section id="main-content" aria-label={t('page_title')} className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <div className="mb-8">
    <div className="h-7 bg-surface-2 rounded-lg w-40 animate-pulse" />
    </div>
@@ -195,7 +197,7 @@ export default function FlashcardsPage() {
     </div>
    ))}
    </div>
-  </main>
+  </section>
   </>
  );
  }
@@ -204,14 +206,14 @@ export default function FlashcardsPage() {
  return (
   <>
   {toastEl}
-  <main id="main-content" aria-label={t('page_title')} className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
+  <section id="main-content" aria-label={t('page_title')} className="max-w-lg mx-auto px-4 py-12 animate-fade-in">
    <div className="mb-8">
    <div className="h-7 bg-surface-2 rounded-lg w-40 animate-pulse" />
    </div>
    <div className="card">
    <div className="h-48 bg-surface-1 rounded-xl animate-pulse" />
    </div>
-  </main>
+  </section>
   </>
  );
  }
@@ -240,6 +242,7 @@ export default function FlashcardsPage() {
    decks={decks}
    totalCards={deckTotalCards}
    totalDue={deckTotalDue}
+   totalReviewed={deckTotalReviewed}
    onStartReview={startReview}
   />
   </>

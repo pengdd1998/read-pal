@@ -82,7 +82,7 @@ export default function SynthesisPage() {
  }
 
  return (
- <main id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
+ <section id="main-content" aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
   {/* Header */}
   <div className="mb-8">
   <h1 className="text-2xl font-bold text-gray-900">
@@ -140,6 +140,6 @@ export default function SynthesisPage() {
 
   <BookComparisonCard books={books} />
   <SingleBookAnalysisCard books={books} booksLoading={booksLoading} booksError={booksError} />
- </main>
+ </section>
  );
 }
