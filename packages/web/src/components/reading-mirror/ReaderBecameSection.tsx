@@ -17,7 +17,7 @@ export default React.memo(function ReaderBecameSection({ data }: ReaderBecameSec
     return (
       <div className="py-8 text-center">
         <span className="text-2xl">🪞</span>
-        <p className="text-sm text-gray-500 mt-2 italic">{t('no_reflection')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{t('no_reflection')}</p>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export default React.memo(function ReaderBecameSection({ data }: ReaderBecameSec
       {/* Parting question */}
       {question && (
         <div className="bg-surface-0 border border-surface-3 rounded-xl p-5 text-center">
-          <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">
+          <p className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider mb-2">
             {t('parting_question')}
           </p>
           <p className="font-serif text-xl text-gray-900 dark:text-gray-100 m-0 leading-relaxed">

@@ -55,7 +55,7 @@ export const CollectionCreateForm = React.memo(function CollectionCreateForm({
    key={ic.value}
    onClick={() => onIconChange(ic.value)}
    aria-label={t('select_icon', { label: ic.label })}
-   className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${newIcon === ic.value ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' : 'text-gray-500 hover:text-gray-600 hover:bg-surface-1'}`}
+   className={`p-1.5 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${newIcon === ic.value ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 hover:bg-surface-1'}`}
    title={ic.label}
    >
    <CollectionIcon icon={ic.value} color={newIcon === ic.value ? '#f59e0b' : 'currentColor'} />
@@ -84,7 +84,7 @@ export const CollectionCreateForm = React.memo(function CollectionCreateForm({
   </button>
   <button type="button"
    onClick={onCancel}
-   className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {t('collections_cancel')}
   </button>

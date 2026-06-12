@@ -75,7 +75,7 @@ const MemoryBookCard = React.memo(function MemoryBookCard({ mb, locale, dateLabe
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
             {mb.book?.title || mb.title}
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {isPersonalBook ? chaptersLabel : momentsLabel}
             {' · '}
             {dateLabel}
@@ -212,7 +212,7 @@ export default function MemoryBooksPage() {
     <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in" aria-label={t('pageTitle')}>
       {/* Back */}
       <div className="mb-6">
-        <Link href="/dashboard" prefetch={false} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">
+        <Link href="/dashboard" prefetch={false} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">
           <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
@@ -226,7 +226,7 @@ export default function MemoryBooksPage() {
           <span className="text-3xl">{'📕'}</span>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
-            <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('subtitle')}</p>
           </div>
         </div>
       </div>
@@ -241,7 +241,7 @@ export default function MemoryBooksPage() {
       {/* Existing personal reading books */}
       {!loading && memoryBooks.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('yourBooks')}</h2>
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('yourBooks')}</h2>
           <div className="space-y-3">
             {memoryBooks.map((mb) => (
               <MemoryBookCard
@@ -263,7 +263,7 @@ export default function MemoryBooksPage() {
       {/* Generate new */}
       {!loading && eligibleBooks.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('generateNew')}</h2>
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('generateNew')}</h2>
           <div className="space-y-2">
             {eligibleBooks.map((book) => (
               <EligibleBookRow

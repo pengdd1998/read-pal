@@ -18,7 +18,7 @@ export const AnnotationRow = React.memo(function AnnotationRow({ ann, type, book
    : 'hover:bg-violet-50 dark:hover:bg-violet-900/5';
  const contentColor = type === 'note'
   ? 'text-xs font-medium text-blue-700 dark:text-blue-300 line-clamp-3'
-  : 'text-xs text-gray-600 line-clamp-2';
+  : 'text-xs text-gray-600 dark:text-gray-400 line-clamp-2';
 
  return (
   <div className={`px-7 py-2 ${hoverBg} transition-colors`}>
@@ -29,7 +29,7 @@ export const AnnotationRow = React.memo(function AnnotationRow({ ann, type, book
       {type === 'bookmark' && !ann.content ? bookmarkLabel : ann.content}
      </p>
      {ann.note && (
-      <p className="text-[10px] text-gray-500 mt-0.5 italic line-clamp-1">
+      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 italic line-clamp-1">
        {ann.note}
       </p>
      )}
@@ -38,7 +38,7 @@ export const AnnotationRow = React.memo(function AnnotationRow({ ann, type, book
        {ann.tags.slice(0, 3).map((tag) => (
         <span
          key={tag}
-         className="text-[9px] bg-surface-1 text-gray-500 px-1 py-0.5 rounded"
+         className="text-[9px] bg-surface-1 text-gray-500 dark:text-gray-400 px-1 py-0.5 rounded"
         >
          {tag}
         </span>

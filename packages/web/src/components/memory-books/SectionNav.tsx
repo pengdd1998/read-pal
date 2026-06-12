@@ -28,7 +28,7 @@ export default React.memo(function SectionNav({
  const tr = useTranslations('readingMirror');
  const [activeSection, setActiveSection] = useState(0);
 
- if (sections.length === 0) return <p className="text-center text-gray-500 py-12">{tr('empty_sections')}</p>;
+ if (sections.length === 0) return <p className="text-center text-gray-500 dark:text-gray-400 py-12">{tr('empty_sections')}</p>;
 
  return (
  <>

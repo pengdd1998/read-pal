@@ -90,7 +90,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
    id="compare-book-2"
    value={compareBook2}
    onChange={(e) => setCompareBook2(e.target.value)}
-   className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg bg-surface-0 text-gray-800 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
+   className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
    >
    <option value="">{t('compare_select')}</option>
    {books.map((book) => (

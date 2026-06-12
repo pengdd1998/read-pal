@@ -54,7 +54,7 @@ export default React.memo(function ThreadsSection({ data }: ThreadsSectionProps)
     return (
       <div className="py-8 text-center">
         <span className="text-2xl">📚</span>
-        <p className="text-sm text-gray-500 mt-2 italic">{t('no_threads')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{t('no_threads')}</p>
       </div>
     );
   }

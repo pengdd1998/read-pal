@@ -41,13 +41,13 @@ const ClubDiscoveryCard = React.memo(function ClubDiscoveryCard({
      {club.name}
      </h3>
      {club.isPrivate && (
-     <svg aria-hidden="true" className="w-4 h-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+     <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
      </svg>
      )}
     </div>
     {club.description && (
-     <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
      {club.description}
      </p>
     )}
@@ -117,13 +117,13 @@ export default function BookClubsPage() {
     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
      <svg aria-hidden="true" className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> {t('pageTitle')}
     </h1>
-    <p className="text-sm text-gray-500 mt-1">
+    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
      {t('subtitle')}
     </p>
     </div>
     <Link
     href="/dashboard"
-    className="text-sm text-gray-500 hover:text-gray-600 transition-colors min-h-[44px] inline-flex items-center px-2"
+    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center px-2"
     >
     {t('backToDashboard')}
     </Link>
@@ -142,7 +142,7 @@ export default function BookClubsPage() {
      className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      tab === tabKey
       ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-sm'
-      : 'text-gray-500 hover:text-gray-700'
+      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
      }`}
     >
      {tabKey === 'my' ? t('myClubs', { count: myClubs.length }) : t('discover', { count: discoverClubs.length })}
@@ -174,12 +174,12 @@ export default function BookClubsPage() {
    {!loading && !error && displayClubs.length === 0 && (
     <div className="text-center py-16">
     <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-amber-50 to-teal-50 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center"><svg aria-hidden="true" className="w-8 h-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div>
-    <p className="text-gray-500 mb-1">
+    <p className="text-gray-500 dark:text-gray-400 mb-1">
      {tab === 'my' ? t('noJoinedClubs') : t('noPublicClubs')}
     </p>
     {tab === 'my' && (
      <div>
-     <p className="text-sm text-gray-500 mb-3">
+     <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
      {t('discoverHint')}
      </p>
      <button type="button" onClick={() => setTab('discover')} className="text-sm text-amber-600 dark:text-amber-400 font-medium hover:underline min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('discoverClubs')}</button>

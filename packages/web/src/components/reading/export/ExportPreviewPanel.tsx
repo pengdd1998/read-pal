@@ -17,7 +17,7 @@ export const ExportPreviewPanel = React.memo(function ExportPreviewPanel({
   return (
     <div className="mt-3">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('export_preview_label')}</span>
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('export_preview_label')}</span>
         <button type="button"
           onClick={onCopy}
           aria-label={t('export_copy')}

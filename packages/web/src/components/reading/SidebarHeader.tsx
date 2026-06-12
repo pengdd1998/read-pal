@@ -35,7 +35,7 @@ export const SidebarHeader = React.memo(function SidebarHeader({
   </h2>
   <button type="button"
   onClick={onClose}
-  className="p-2.5 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
+  className="p-2.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
   aria-label={t('sidebar_close_esc')}
   title={t('sidebar_close_esc')}
   >
@@ -49,7 +49,7 @@ export const SidebarHeader = React.memo(function SidebarHeader({
    className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400 ${
    viewMode === 'outline'
     ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20'
-    : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+    : 'text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
    }`}
    title={viewMode === 'list' ? t('sidebar_outline_view') : t('sidebar_list_view')}
    aria-label={viewMode === 'list' ? t('sidebar_switch_outline') : t('sidebar_switch_list')}
@@ -71,7 +71,7 @@ export const SidebarHeader = React.memo(function SidebarHeader({
    className={`p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400 ${
    bulkMode
     ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20'
-    : 'text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+    : 'text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20'
    }`}
    title={bulkMode ? t('sidebar_cancel_selection') : t('sidebar_select_multiple')}
    aria-label={bulkMode ? t('sidebar_cancel_selection') : t('sidebar_select_multiple')}
@@ -86,7 +86,7 @@ export const SidebarHeader = React.memo(function SidebarHeader({
    <button type="button"
    aria-label={t('sidebar_share_export')}
    onClick={onShowShareDialog}
-   className="p-2 rounded-lg text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
    title={t('sidebar_share_export')}
    >
    <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -96,7 +96,7 @@ export const SidebarHeader = React.memo(function SidebarHeader({
    <button type="button"
    aria-label={t('sidebar_export_annotations')}
    onClick={onShowExportModal}
-   className="p-2 rounded-lg text-gray-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-400"
    title={t('sidebar_export_annotations')}
    >
    <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

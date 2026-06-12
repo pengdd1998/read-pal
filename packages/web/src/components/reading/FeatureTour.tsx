@@ -188,13 +188,13 @@ export const FeatureTour = React.memo(function FeatureTour() {
     </span>
     <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(current.titleKey)}</h4>
    </div>
-   <p className="text-xs text-gray-500 leading-relaxed">{t(current.descKey)}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{t(current.descKey)}</p>
    </div>
 
    <div className="px-4 py-2.5 bg-surface-1 flex items-center justify-between border-t border-surface-2">
    <button type="button"
     onClick={handleSkip}
-    className="text-[11px] text-gray-500 hover:text-gray-600 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
+    className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
    >
     {t('tour_skip')}
    </button>

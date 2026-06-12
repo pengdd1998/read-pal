@@ -50,7 +50,7 @@ const BookProgressRow = React.memo(function BookProgressRow({ book }: BookProgre
    />
   </div>
   </div>
-  <span className="text-xs font-medium text-gray-500 tabular-nums">{Math.round(book.progress)}%</span>
+  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 tabular-nums">{Math.round(book.progress)}%</span>
  </Link>
  );
 });

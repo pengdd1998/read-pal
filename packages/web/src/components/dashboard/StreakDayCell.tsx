@@ -70,7 +70,7 @@ export const DayCell = memo(function DayCell({
   <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[11px] rounded-md whitespace-nowrap shadow-lg pointer-events-none">
    {formatTooltipDate(day.date, locale)}
    {level > 0 && (
-   <span className="ml-1 text-gray-300">
+   <span className="ml-1 text-gray-300 dark:text-gray-600">
     {t('day_tooltip_format', { pages: day.pages, minutes: day.minutes })}
    </span>
    )}

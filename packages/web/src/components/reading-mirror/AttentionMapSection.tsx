@@ -19,7 +19,7 @@ interface PeakMomentRowProps {
 const PeakMomentRow = React.memo(function PeakMomentRow({ peak }: PeakMomentRowProps) {
   return (
     <div className="flex items-start gap-3 bg-surface-0 border border-surface-3 rounded-lg p-3">
-      <span className="text-xs text-gray-500 shrink-0 mt-0.5 font-mono">{peak.date}</span>
+      <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 mt-0.5 font-mono">{peak.date}</span>
       <p className="text-sm text-gray-700 dark:text-gray-300 m-0 leading-relaxed">{peak.description}</p>
     </div>
   );
@@ -36,7 +36,7 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
     return (
       <div className="py-8 text-center">
         <span className="text-2xl">📊</span>
-        <p className="text-sm text-gray-500 mt-2 italic">{t('no_attention_data')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{t('no_attention_data')}</p>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
       {/* Peak moments */}
       {peaks.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             {t('peak_moments')}
           </h4>
           <div className="space-y-2">

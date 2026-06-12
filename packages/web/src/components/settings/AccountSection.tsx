@@ -75,7 +75,7 @@ export const AccountSection = React.memo(function AccountSection() {
    </div>
    <div className="pt-3 border-t border-surface-2">
    <details className="group">
-    <summary className="cursor-pointer text-xs text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors list-none flex items-center gap-1.5 min-h-[44px]">
+    <summary className="cursor-pointer text-xs text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors list-none flex items-center gap-1.5 min-h-[44px]">
     <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
@@ -112,7 +112,7 @@ export const AccountSection = React.memo(function AccountSection() {
     onClick={(e) => e.stopPropagation()}
    >
     <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">{t('account_delete_heading')}</h3>
-    <p className="text-sm text-gray-600 mb-4">{t('account_delete_confirm_password')}</p>
+    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('account_delete_confirm_password')}</p>
     <input
      type="password"
      value={confirmPassword}
@@ -127,7 +127,7 @@ export const AccountSection = React.memo(function AccountSection() {
      <button type="button"
       onClick={() => { setShowDeleteModal(false); setConfirmPassword(''); setDeleteError(''); }}
       disabled={deleting}
-      className="px-4 py-2 rounded-lg text-sm text-gray-600 bg-surface-1 hover:bg-surface-2 transition-colors disabled:opacity-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+      className="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 bg-surface-1 hover:bg-surface-2 transition-colors disabled:opacity-50 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      >
       {t('account_delete_cancel')}
      </button>

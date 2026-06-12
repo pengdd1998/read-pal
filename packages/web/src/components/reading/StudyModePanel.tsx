@@ -36,7 +36,7 @@ const ObjectiveItem = React.memo(function ObjectiveItem({ obj, completedLabel, i
           : 'bg-surface-1 hover:bg-surface-2'
       }`}
     >
-      <span className={`flex-shrink-0 mt-0.5 ${obj.completed ? 'text-emerald-500' : 'text-gray-300'}`}>
+      <span className={`flex-shrink-0 mt-0.5 ${obj.completed ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600'}`}>
         {obj.completed ? (
           <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -173,7 +173,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {!loading && activeTab === 'objectives' && (
    <div className="space-y-2">
    {objectives.length === 0 ? (
-    <p className="text-sm text-gray-500 text-center py-4">
+    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
     {t('highlight_for_objectives')}
     </p>
    ) : (
@@ -187,7 +187,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   {!loading && activeTab === 'checks' && (
    <div className="space-y-3">
    {checks.length === 0 ? (
-    <p className="text-sm text-gray-500 text-center py-4">
+    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
     {t('checks_appear')}
     </p>
    ) : (
@@ -276,7 +276,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
     <h4 className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">{t('needs_review')}</h4>
     <div className="space-y-1">
      {mastery.weakAreas.slice(0, 3).map((area) => (
-     <div key={area} className="text-xs text-gray-600 truncate">
+     <div key={area} className="text-xs text-gray-600 dark:text-gray-400 truncate">
       {area.slice(0, 80)}{area.length > 80 ? '...' : ''}
      </div>
      ))}

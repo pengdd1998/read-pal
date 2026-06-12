@@ -3,7 +3,7 @@
 import React from 'react';
 
 export const DashboardStatIcon = React.memo(function DashboardStatIcon({ type }: { type: string }) {
-  const cls = 'w-5 h-5 text-gray-500';
+  const cls = 'w-5 h-5 text-gray-500 dark:text-gray-400';
   switch (type) {
     case 'books':
       return (

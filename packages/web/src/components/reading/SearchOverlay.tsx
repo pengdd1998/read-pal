@@ -83,7 +83,7 @@ export const SearchOverlay = React.memo(function SearchOverlay({
     onChange={(e) => onQueryChange(e.target.value)}
     placeholder={t('search_in_book')}
     aria-label={t('search_in_book')}
-    className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30"
+    className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30"
     autoFocus
    />
    <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -92,7 +92,7 @@ export const SearchOverlay = React.memo(function SearchOverlay({
    <button type="button"
     onClick={() => { onQueryChange(''); onClose(); }}
     aria-label={t('search_close')}
-    className="p-2.5 rounded-lg text-gray-500 hover:text-gray-600 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="p-2.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -147,7 +147,7 @@ const SearchResultItem = React.memo(function SearchResultItem({
  >
  <div className="flex items-center gap-2">
   <span className="text-xs text-amber-500 font-mono font-bold">{result.index + 1}</span>
-  <span className="text-sm font-medium text-gray-800 truncate">
+  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
   {result.title}
   </span>
   {isCurrent && (
@@ -157,7 +157,7 @@ const SearchResultItem = React.memo(function SearchResultItem({
   )}
  </div>
  {result.snippet && (
-  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed pl-5">
+  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2 leading-relaxed pl-5">
   {result.snippet}
   </p>
  )}

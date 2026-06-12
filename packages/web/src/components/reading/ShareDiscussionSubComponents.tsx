@@ -141,7 +141,7 @@ const GuidePreview = React.memo(function GuidePreview({
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
             {questionTitle}
           </p>
-          <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300">
+          <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
             {questions.map((q, i) => (
               <QuestionItem key={q} question={q} index={i} />
             ))}

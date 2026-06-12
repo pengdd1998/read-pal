@@ -41,14 +41,14 @@ const ConnectionCard = React.memo(function ConnectionCard({ connection }: Connec
         <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-xs font-medium text-amber-800 dark:text-amber-200">
           {connection.from}
         </span>
-        <svg aria-hidden="true" className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <svg aria-hidden="true" className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
         </svg>
         <span className="px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/40 text-xs font-medium text-teal-800 dark:text-teal-200">
           {connection.to}
         </span>
       </div>
-      <p className="text-sm text-gray-600 m-0 leading-relaxed">{connection.insight}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-400 m-0 leading-relaxed">{connection.insight}</p>
     </div>
   );
 });
@@ -80,7 +80,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
     return (
       <div className="py-8 text-center">
         <span className="text-2xl">🕸️</span>
-        <p className="text-sm text-gray-500 mt-2 italic">{t('no_concepts')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{t('no_concepts')}</p>
       </div>
     );
   }
@@ -96,7 +96,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
       {/* Hub concepts */}
       {hubs.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             {t('hub_concepts')}
           </h4>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -110,7 +110,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
       {/* Surprising connections */}
       {connections.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             {t('surprising_connections')}
           </h4>
           <div className="space-y-2">
@@ -124,7 +124,7 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
       {/* Peripheral concepts */}
       {peripheral.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
             {t('peripheral_concepts')}
           </h4>
           <div className="flex flex-wrap gap-2">

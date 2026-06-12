@@ -64,7 +64,7 @@ export const BulkActionBar = React.memo(function BulkActionBar({
    </button>
    <button type="button"
     onClick={onCancelBulkDelete}
-    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-surface-2 min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 dark:text-gray-400 hover:bg-surface-2 min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {tc('cancel')}
    </button>
@@ -72,7 +72,7 @@ export const BulkActionBar = React.memo(function BulkActionBar({
   )}
   <button type="button"
    onClick={onExitBulkMode}
-   className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+   className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {t('sidebar_done')}
   </button>

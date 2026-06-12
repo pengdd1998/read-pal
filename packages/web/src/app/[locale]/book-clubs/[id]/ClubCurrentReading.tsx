@@ -40,10 +40,10 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
    {/* Group progress */}
    {progress.length > 0 && (
    <div className="space-y-2">
-    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">{t('groupProgress')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('groupProgress')}</p>
     {progress.map((p) => (
     <div key={p.userId} className="flex items-center gap-3">
-     <span className="text-sm text-gray-700 w-24 truncate">
+     <span className="text-sm text-gray-700 dark:text-gray-300 w-24 truncate">
      {p.user?.name || t('memberName')}
      </span>
      <div className="flex-1 h-2 bg-surface-1 rounded-full overflow-hidden">
@@ -52,7 +52,7 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
       style={{ width: `${Math.min(p.progress, 100)}%` }}
      />
      </div>
-     <span className="text-xs text-gray-500 tabular-nums w-10 text-right">
+     <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums w-10 text-right">
      {p.progress}%
      </span>
     </div>

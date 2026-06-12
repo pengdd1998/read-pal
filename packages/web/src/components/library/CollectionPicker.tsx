@@ -24,7 +24,7 @@ const CollectionCheckItem = React.memo(function CollectionCheckItem({
   <button type="button"
   onClick={onToggle}
   disabled={isToggling}
-  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-surface-1 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
    isChecked ? 'border-primary-500 bg-primary-500' : 'border-surface-3'
@@ -164,7 +164,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
    ))}
 
    {collections.length === 0 && !showCreate && (
-   <p className="text-xs text-gray-500 px-2.5 py-2">{t('collection_picker_empty')}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 px-2.5 py-2">{t('collection_picker_empty')}</p>
    )}
   </div>
   )}

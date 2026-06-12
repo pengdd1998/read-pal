@@ -20,7 +20,7 @@ export default React.memo(function ActionButtons({
  <div className="flex items-center gap-2">
   <button type="button"
   onClick={onRegenerate}
-  className="p-2 rounded-lg text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+  className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
   title={t('regenerate_title')}
   aria-label={t('regenerate_title')}
   >
@@ -30,7 +30,7 @@ export default React.memo(function ActionButtons({
   </button>
   <button type="button"
   onClick={onDownload}
-  className="p-2 rounded-lg text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+  className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
   title={t('download_html_title')}
   aria-label={t('download_html_title')}
   >
@@ -40,7 +40,7 @@ export default React.memo(function ActionButtons({
   </button>
   <button type="button"
   onClick={onPrint}
-  className="p-2 rounded-lg text-gray-500 hover:text-violet-600 dark:hover:text-violet-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+  className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 min-h-[44px] min-w-[44px] inline-flex items-center justify-center hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
   title={t('print_save_pdf')}
   aria-label={t('print_save_pdf')}
   >

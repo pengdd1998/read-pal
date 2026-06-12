@@ -48,7 +48,7 @@ export const WelcomeIntro = React.memo(function WelcomeIntro({
       ) : (
         <>
           <h1 className="text-3xl font-bold mb-2">{t('greeting', { name: personaName })}</h1>
-          <p className="text-gray-600 text-lg leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
             {t('intro')}
           </p>
         </>

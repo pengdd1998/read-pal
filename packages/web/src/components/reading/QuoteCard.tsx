@@ -118,7 +118,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
    {/* Theme selector */}
    <div className="flex items-center gap-2">
-   <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+   <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
     {tr('theme_label')}
    </span>
    <button type="button"
@@ -135,7 +135,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
     className={`w-7 h-7 rounded-full bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 border-2 transition-all duration-200 ${
     theme === 'dark'
      ? 'border-amber-500 scale-110 shadow-glow-amber'
-     : 'border-transparent hover:border-gray-500 hover:scale-105 focus-visible:ring-2 focus-visible:ring-amber-400'
+     : 'border-transparent hover:border-gray-500 dark:border-gray-500 hover:scale-105 focus-visible:ring-2 focus-visible:ring-amber-400'
     }`}
     aria-label={tc('dark_theme')}
    />
@@ -146,7 +146,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
    {/* Copy Image */}
    <button type="button"
     onClick={handleCopyImage}
-    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 hover:bg-white/20 border border-white/10 hover:border-white/20 focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 dark:text-gray-600 hover:bg-white/20 border border-white/10 hover:border-white/20 focus-visible:ring-2 focus-visible:ring-amber-400"
     title={tc('copy_image_to_clipboard')}
    aria-label={tc('copy_image_to_clipboard')}
    >
@@ -184,7 +184,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
    <button type="button"
     onClick={handleDownload}
     disabled={downloading}
-    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 hover:bg-white/20 border border-white/10 hover:border-white/20 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 bg-white/10 dark:bg-white/5 text-gray-300 dark:text-gray-600 hover:bg-white/20 border border-white/10 hover:border-white/20 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-400"
     title={tc('download_as_png')}
     aria-label={tc('download_as_png')}
    >
@@ -207,7 +207,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
    {/* Close */}
    <button type="button"
     onClick={onClose}
-    className="flex items-center justify-center w-11 h-11 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 border border-white/5 transition-all duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-white"
+    className="flex items-center justify-center w-11 h-11 rounded-xl text-gray-400 dark:text-gray-500 hover:text-white hover:bg-white/10 border border-white/5 transition-all duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-white"
     aria-label={tr('share_close_quote')}
    >
     <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

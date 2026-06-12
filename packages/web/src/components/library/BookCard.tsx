@@ -73,10 +73,10 @@ function BookCardInner({
   />
 
   {/* Title & Author */}
-  <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug mb-1 group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">
+  <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm line-clamp-2 leading-snug mb-1 group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">
    {title}
   </h3>
-  {isDisplayableAuthor(author) && <p className="text-xs text-gray-500 mb-2">{author}</p>}
+  {isDisplayableAuthor(author) && <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{author}</p>}
 
   {/* Tags */}
   <BookTagEditor bookId={id} tags={tags} onTagsChange={onTagsChange} />

@@ -27,7 +27,7 @@ export const WelcomeSection = React.memo(function WelcomeSection({ onSeedSample,
   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
    {t('ready_first_book')}
   </h2>
-  <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
    {t('first_book_desc')}
   </p>
   <div className="flex items-center justify-center gap-3">
@@ -40,7 +40,7 @@ export const WelcomeSection = React.memo(function WelcomeSection({ onSeedSample,
    <button type="button"
    onClick={onSeedSample}
    disabled={seeding}
-   className="btn hover:scale-105 active:scale-95 transition-transform duration-200 bg-surface-0 border border-surface-3 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+   className="btn hover:scale-105 active:scale-95 transition-transform duration-200 bg-surface-0 border border-surface-3 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
    >
    {seeding ? t('adding_sample') : t('try_sample')}
    </button>
@@ -57,7 +57,7 @@ export const WelcomeSection = React.memo(function WelcomeSection({ onSeedSample,
    >
    <span className="text-2xl block mb-2">{f.icon}</span>
    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(f.titleKey)}</h3>
-   <p className="text-xs text-gray-500 mt-1">{t(f.descKey)}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t(f.descKey)}</p>
    </Link>
   ))}
   </div>

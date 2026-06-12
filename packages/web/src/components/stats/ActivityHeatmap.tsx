@@ -51,7 +51,7 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ sessions }:
 
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
-  <h2 className="font-semibold text-gray-900 mb-4">{t('activity_title')}</h2>
+  <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('activity_title')}</h2>
   <div className="flex flex-wrap gap-1">
   {cells}
   </div>

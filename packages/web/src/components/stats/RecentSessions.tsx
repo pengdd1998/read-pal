@@ -17,7 +17,7 @@ export const RecentSessions = React.memo(function RecentSessions({ sessions }: R
 
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
-  <h2 className="font-semibold text-gray-900 mb-4">{t('recent_sessions')}</h2>
+  <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('recent_sessions')}</h2>
   <div className="space-y-2">
   {sessions.slice(0, 10).map((session) => (
   <SessionRow key={session.startedAt} session={session} t={t} locale={locale} />

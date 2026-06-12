@@ -17,7 +17,7 @@ export const EmptyLibrary = React.memo(function EmptyLibrary() {
   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
   {t('search_across_library')}
   </h2>
-  <p className="text-gray-500 mb-4 max-w-md mx-auto leading-relaxed">
+  <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto leading-relaxed">
   {t('search_across_desc')}
   </p>
   <Link href="/library" prefetch={false} className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">

@@ -76,7 +76,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  if (error) {
  return (
   <div className="card text-center py-4">
-  <p className="text-xs text-gray-600 mb-2">{t('weekly_summary_load_failed')}</p>
+  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{t('weekly_summary_load_failed')}</p>
   <button type="button"
    onClick={fetchData}
    className="min-h-[44px] inline-flex items-center text-xs text-amber-600 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400"
@@ -162,7 +162,7 @@ const DayBar = React.memo(function DayBar({ day, dayLabel, maxMinutes, todayStr,
         style={{ height: `${height}%` }}
         title={tooltip}
       />
-      <span className={`text-[9px] ${isToday ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-gray-500'}`}>
+      <span className={`text-[9px] ${isToday ? 'font-bold text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
         {dayLabel}
       </span>
     </div>
@@ -174,9 +174,9 @@ const StatCard = React.memo(function StatCard({ label, value, unit }: { label: s
  <div className="text-center p-2 rounded-lg bg-surface-1">
   <div>
   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{value}</span>
-  {unit && <span className="text-[10px] text-gray-500 ml-1">{unit}</span>}
+  {unit && <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">{unit}</span>}
   </div>
-  <p className="text-[10px] text-gray-500 mt-0.5">{label}</p>
+  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
  </div>
  );
 });

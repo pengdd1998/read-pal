@@ -44,10 +44,10 @@ const ChapterItemRow = React.memo(function ChapterItemRow({
       ? 'bg-amber-200/50 text-amber-900'
       : 'bg-amber-100/60 text-amber-800'
      : theme === 'dark'
-     ? 'text-gray-300 hover:bg-gray-700/60'
+     ? 'text-gray-300 dark:text-gray-600 hover:bg-gray-700/60'
      : theme === 'sepia'
       ? 'text-amber-900/80 hover:bg-amber-100/40'
-      : 'text-gray-700 hover:bg-amber-50'
+      : 'text-gray-700 dark:text-gray-300 hover:bg-amber-50'
    }`}
   >
    <span className={`flex-shrink-0 w-6 text-xs font-mono text-right ${
@@ -136,10 +136,10 @@ export const ChapterDropdown = React.memo(function ChapterDropdown({
     ? 'bg-amber-200/60 text-amber-800'
     : 'bg-amber-100/70 text-amber-700'
    : theme === 'dark'
-    ? 'text-gray-400 hover:bg-white/5'
+    ? 'text-gray-400 dark:text-gray-500 hover:bg-white/5'
     : theme === 'sepia'
     ? 'text-amber-800/60 hover:bg-black/5'
-    : 'text-gray-500 hover:bg-black/5 focus-visible:ring-2 focus-visible:ring-amber-400'
+    : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 focus-visible:ring-2 focus-visible:ring-amber-400'
   }`}
   aria-label={t('reader_open_chapter_list')}
   aria-expanded={showChapterMenu}
@@ -180,7 +180,7 @@ export const ChapterDropdown = React.memo(function ChapterDropdown({
    {/* Header */}
    <div className={`sticky top-0 px-3 py-2 text-xs font-semibold uppercase tracking-wider border-b ${
     theme === 'dark'
-    ? 'bg-gray-800 text-gray-400 border-gray-700'
+    ? 'bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-700 dark:border-gray-700'
     : theme === 'sepia'
      ? 'bg-amber-50 text-amber-700 border-amber-300/60'
      : 'bg-surface-0 text-amber-600 border-amber-200/60'

@@ -217,7 +217,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
    <label className="text-sm font-medium block mb-2">{t('quiet_hours')}</label>
    <div className="flex items-center gap-3">
    <div className="flex-1">
-    <span className="text-xs text-gray-500 mr-2">
+    <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
     {t('quiet_hours_start')}
     </span>
     <select
@@ -234,9 +234,9 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
     ))}
     </select>
    </div>
-   <span className="text-gray-500 text-sm">-</span>
+   <span className="text-gray-500 dark:text-gray-400 text-sm">-</span>
    <div className="flex-1">
-    <span className="text-xs text-gray-500 mr-2">
+    <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
     {t('quiet_hours_end')}
     </span>
     <select

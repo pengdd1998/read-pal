@@ -18,7 +18,7 @@ export const ReadingSpeed = React.memo(function ReadingSpeed({ speedData, bookSp
 
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
-  <h2 className="font-semibold text-gray-900 mb-4">{t('speed_title')}</h2>
+  <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('speed_title')}</h2>
 
   {/* Average WPM metric */}
   {speedData && (
@@ -27,7 +27,7 @@ export const ReadingSpeed = React.memo(function ReadingSpeed({ speedData, bookSp
    <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
     {Math.round(speedData.averageWordsPerMinute)}
    </div>
-   <div className="text-xs text-gray-500 mt-0.5">{t('speed_average_wpm')}</div>
+   <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('speed_average_wpm')}</div>
    <div className="text-[10px] text-teal-500 dark:text-teal-400 mt-0.5">{t('speed_wpm_unit')}</div>
    </div>
   </div>

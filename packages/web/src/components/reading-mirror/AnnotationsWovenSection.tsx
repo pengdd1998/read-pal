@@ -65,7 +65,7 @@ export default React.memo(function AnnotationsWovenSection({ data }: Annotations
     return (
       <div className="py-8 text-center">
         <span className="text-2xl">🧵</span>
-        <p className="text-sm text-gray-500 mt-2 italic">{t('no_annotations_woven')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{t('no_annotations_woven')}</p>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default React.memo(function AnnotationsWovenSection({ data }: Annotations
   return (
     <div className="py-8 space-y-6">
       {arcSummary && (
-        <p className="text-gray-600 text-base italic leading-relaxed max-w-[65ch]">
+        <p className="text-gray-600 dark:text-gray-400 text-base italic leading-relaxed max-w-[65ch]">
           {arcSummary}
         </p>
       )}

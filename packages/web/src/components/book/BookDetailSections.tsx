@@ -45,7 +45,7 @@ export const BackButton = memo(function BackButton({ onBack, label }: { onBack: 
     <div className="mb-8 animate-slide-up">
       <button type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+        className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
       >
         <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -82,11 +82,11 @@ export const BookHeader = memo(function BookHeader({ book, status, lastRead, cov
       </div>
       <div className="flex-1 min-w-0">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">{book.title}</h1>
-        {isDisplayableAuthor(book.author) && <p className="text-gray-500 mt-1">{byLabel}</p>}
+        {isDisplayableAuthor(book.author) && <p className="text-gray-500 dark:text-gray-400 mt-1">{byLabel}</p>}
         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-3 ${status.color}`}>
           {status.label}
         </span>
-        {lastRead && <p className="text-xs text-gray-500 mt-2">{lastReadLabel}</p>}
+        {lastRead && <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{lastReadLabel}</p>}
       </div>
     </div>
   );
@@ -149,7 +149,7 @@ export const StatsGrid = memo(function StatsGrid({ items }: {
       {items.map((item) => (
         <div key={item.label} className={`${item.bg} rounded-xl p-4 text-center`} aria-label={`${item.value} ${item.label.toLowerCase()}`}>
           <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
-          <div className="text-xs text-gray-500 mt-1">{item.label}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.label}</div>
         </div>
       ))}
     </div>
@@ -167,7 +167,7 @@ export const TagCloud = memo(function TagCloud({ tags, moreLabel }: {
     <div className="mb-6 animate-slide-up stagger-3">
       <div className="flex flex-wrap gap-1.5">
         {tags.slice(0, 15).map((tag) => (
-          <span key={tag.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-1 text-gray-600 hover:bg-amber-100 dark:hover:bg-amber-900/20 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-default">
+          <span key={tag.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-1 text-gray-600 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-amber-900/20 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-default">
             {tag.name}
             <span className="text-[9px] text-gray-500 dark:text-gray-400">{tag.count}</span>
           </span>

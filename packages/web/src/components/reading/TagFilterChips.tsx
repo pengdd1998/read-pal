@@ -41,7 +41,7 @@ export const TagFilterChips = React.memo(function TagFilterChips({
      : tag === 'question'
      ? 'bg-blue-500 text-white'
      : 'bg-amber-500 text-white'
-    : 'bg-surface-1 text-gray-500 hover:bg-surface-2'
+    : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-surface-2'
    }`}
    >
    #{tag}
@@ -54,7 +54,7 @@ export const TagFilterChips = React.memo(function TagFilterChips({
    <button type="button"
    onClick={onClearTags}
    aria-label={t('sidebar_clear_all_tags')}
-   className="min-h-[44px] inline-flex items-center px-1.5 py-1 rounded-full text-[10px] text-gray-500 hover:text-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="min-h-[44px] inline-flex items-center px-1.5 py-1 rounded-full text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
    {t('sidebar_clear')}
    </button>

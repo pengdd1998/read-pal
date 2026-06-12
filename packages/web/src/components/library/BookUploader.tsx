@@ -181,7 +181,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
    <h3 className="text-lg font-semibold mb-1">
    {uploading ? t('uploading') : t('upload_drag_here')}
    </h3>
-   <p className="text-gray-500 text-sm">
+   <p className="text-gray-500 dark:text-gray-400 text-sm">
    {t('upload_format_hint')}
    </p>
 

@@ -56,7 +56,7 @@ const ActiveBookCard = React.memo(function ActiveBookCard({ book, isFirst, isMul
               <span className="text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-1.5 py-0.5 rounded-full whitespace-nowrap">{continueLabel}</span>
             )}
           </div>
-          {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>}
+          {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{book.author}</p>}
           <div className="flex items-center gap-3 mt-2">
             <div className="flex-1 max-w-[180px]">
               <div className="w-full bg-surface-1 rounded-full h-2" role="progressbar" aria-label={continueLabel} aria-valuenow={Math.round(book.progress)} aria-valuemin={0} aria-valuemax={100}>
@@ -66,11 +66,11 @@ const ActiveBookCard = React.memo(function ActiveBookCard({ book, isFirst, isMul
                 />
               </div>
             </div>
-            <span className="text-xs text-gray-500 tabular-nums font-medium">{book.progress}%</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums font-medium">{book.progress}%</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="text-[10px] text-gray-500 whitespace-nowrap">{lastReadLabel}</span>
+          <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{lastReadLabel}</span>
           <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
             {continueLabel}
             <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -89,7 +89,7 @@ const StatItem = React.memo(function StatItem({ icon, value, label }: { icon: st
       <DashboardStatIcon type={icon} />
       <div>
         <div className="text-lg font-bold text-gray-900 dark:text-gray-100 tabular-nums">{value}</div>
-        <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wide leading-tight">{label}</div>
+        <div className="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide leading-tight">{label}</div>
       </div>
     </div>
   );
@@ -130,10 +130,10 @@ const CompletedBookCard = React.memo(function CompletedBookCard({ book, coverAlt
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
             {book.title}
           </h3>
-          {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>}
+          {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{book.author}</p>}
           <div className="flex items-center gap-3 mt-2">
             <div className="flex-1 max-w-[180px]">
               <div className="w-full bg-surface-1 rounded-full h-2" role="progressbar" aria-label={continueLabel} aria-valuenow={Math.round(book.progress)} aria-valuemin={0} aria-valuemax={100}>
@@ -143,11 +143,11 @@ const CompletedBookCard = React.memo(function CompletedBookCard({ book, coverAlt
                 />
               </div>
             </div>
-            <span className="text-xs text-gray-500 tabular-nums font-medium">{book.progress}%</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums font-medium">{book.progress}%</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="text-[10px] text-gray-500 whitespace-nowrap">{lastReadLabel}</span>
+          <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{lastReadLabel}</span>
           <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm">
             {continueLabel}
             <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -163,7 +163,7 @@ const CompletedBookCard = React.memo(function CompletedBookCard({ book, coverAlt
 const EmptyReadingState = React.memo(function EmptyReadingState({ noActiveLabel, pickBookLabel }: { noActiveLabel: string; pickBookLabel: string }) {
   return (
     <div className="card text-center py-10">
-      <p className="text-sm text-gray-500 mb-4">{noActiveLabel}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{noActiveLabel}</p>
       <Link href="/library" prefetch={false} className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">
         {pickBookLabel}
       </Link>
@@ -211,7 +211,7 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
     <div className="space-y-5 animate-fade-in">
       {/* Card 1: Current Reading */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
           {activeBooks.length > 1 ? t('currently_reading') : t('current_reading')}
         </h2>
         {loading ? (

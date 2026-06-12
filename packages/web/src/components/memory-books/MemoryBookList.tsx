@@ -51,7 +51,7 @@ export const EmptyState = React.memo(function EmptyState({ title, description, c
         <span className="text-3xl">{'📕'}</span>
       </div>
       <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{title}</h2>
-      <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
         {description}
       </p>
       <Link href={ctaHref} prefetch={false} className="btn btn-primary hover:scale-105 active:scale-95 transition-transform duration-200">

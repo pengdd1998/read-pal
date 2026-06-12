@@ -19,7 +19,7 @@ const ChallengeItemRow = React.memo(function ChallengeItemRow({ c, title, progre
           <span>{c.icon}</span>
           <span className="font-medium">{title}</span>
         </span>
-        <span className="text-[10px] text-gray-500 tabular-nums">{progressLabel}</span>
+        <span className="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums">{progressLabel}</span>
       </div>
       <div className="w-full bg-surface-1 rounded-full h-1.5" role="progressbar" aria-valuenow={Math.round(c.percentage)} aria-valuemin={0} aria-valuemax={100}>
         <div

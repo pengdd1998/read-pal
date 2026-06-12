@@ -97,10 +97,10 @@ export default function BookClubDetailPage() {
  <div className="min-h-screen bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-8">
   {/* Breadcrumb */}
-  <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-   <Link href="/dashboard" prefetch={false} className="hover:text-gray-600 dark:text-gray-400">{t('dashboard')}</Link>
+  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+   <Link href="/dashboard" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-400">{t('dashboard')}</Link>
    <span>/</span>
-   <Link href="/book-clubs" prefetch={false} className="hover:text-gray-600 dark:text-gray-400">{t('pageTitle')}</Link>
+   <Link href="/book-clubs" prefetch={false} className="hover:text-gray-600 dark:hover:text-gray-400">{t('pageTitle')}</Link>
    <span>/</span>
    <span className="text-gray-700 dark:text-gray-300">{club.name}</span>
   </div>
@@ -110,7 +110,7 @@ export default function BookClubDetailPage() {
   {/* Join prompt for non-members */}
   {!isMember && (
     <div className="card mb-6 text-center">
-      <p className="text-gray-600 mb-4">{t('joinPrompt')}</p>
+      <p className="text-gray-600 dark:text-gray-400 mb-4">{t('joinPrompt')}</p>
       <button
         type="button"
         onClick={handleJoin}
@@ -145,7 +145,7 @@ export default function BookClubDetailPage() {
   <div className="flex items-center justify-between">
    <Link
    href="/book-clubs" prefetch={false}
-   className="text-sm text-gray-500 hover:text-gray-600 transition-colors"
+   className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
    >
    &larr; {t('backToClubs')}
    </Link>

@@ -82,7 +82,7 @@ export const ReadingInsights = React.memo(function ReadingInsights({ readingLog,
     {item.value}
    </div>
    <div className="text-[10px] text-gray-500 dark:text-gray-400">{item.label}</div>
-   <div className="text-[9px] text-gray-500 mt-0.5">{item.sub}</div>
+   <div className="text-[9px] text-gray-500 dark:text-gray-400 mt-0.5">{item.sub}</div>
    </div>
   ))}
   </div>
@@ -123,7 +123,7 @@ const SessionEntryItem = React.memo(function SessionEntryItem({
  <div
   className="flex items-start gap-3 px-5 py-3 hover:bg-surface-1 transition-colors"
  >
- <div className="text-xs text-gray-500 min-w-[52px] pt-0.5">
+ <div className="text-xs text-gray-500 dark:text-gray-400 min-w-[52px] pt-0.5">
   <div>{dateStr}</div>
   <div className="text-[10px]">{timeStr}</div>
  </div>
@@ -141,7 +141,7 @@ const SessionEntryItem = React.memo(function SessionEntryItem({
   )}
   </div>
   {entry.summary && (
-  <p className="text-xs text-gray-600 mt-1 leading-relaxed line-clamp-2">
+  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed line-clamp-2">
   {entry.summary}
   </p>
   )}

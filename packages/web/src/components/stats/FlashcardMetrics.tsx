@@ -18,8 +18,8 @@ const MetricCard = React.memo(function MetricCard({ value, label, sub, color, bg
   return (
     <div className={`${bg} rounded-xl p-3 text-center`}>
       <div className={`text-xl font-bold ${color}`}>{value}</div>
-      <div className="text-xs text-gray-500 mt-0.5">{label}</div>
-      {sub && <div className="text-[10px] text-gray-500 mt-0.5">{sub}</div>}
+      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</div>
+      {sub && <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{sub}</div>}
     </div>
   );
 });
@@ -37,7 +37,7 @@ export const FlashcardMetrics = React.memo(function FlashcardMetrics({ flashcard
 
   return (
     <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
-      <h2 className="font-semibold text-gray-900 mb-4">{t('flashcards_title')}</h2>
+      <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('flashcards_title')}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         {metrics.map((item) => (
           <MetricCard

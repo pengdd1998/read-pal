@@ -38,7 +38,7 @@ export const SynthesizeForm = React.memo(function SynthesizeForm({
   />
   </div>
   <div>
-  <label className="block text-xs font-medium text-gray-600 mb-1">
+  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
    {t('synthesis_depth_label')}
   </label>
   <div className="flex gap-1.5">
@@ -49,7 +49,7 @@ export const SynthesizeForm = React.memo(function SynthesizeForm({
     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     depth === d
      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200'
-     : 'bg-surface-1 text-gray-500'
+     : 'bg-surface-1 text-gray-500 dark:text-gray-400'
     }`}
    >
     {t('synthesis_depth_' + d)}

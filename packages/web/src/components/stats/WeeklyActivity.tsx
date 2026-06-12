@@ -40,7 +40,7 @@ export const WeeklyActivity = React.memo(function WeeklyActivity({ weekly }: Wee
 
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
-  <h2 className="font-semibold text-gray-900 mb-4">{t('weekly_activity')}</h2>
+  <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('weekly_activity')}</h2>
   <div className="flex items-end gap-2 h-32" role="img" aria-label={t('weekly_activity_chart')}>
   {weekly.map((day) => (
    <WeeklyBar key={day.day} day={day} maxPages={maxPages} locale={locale} />

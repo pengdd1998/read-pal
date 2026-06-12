@@ -59,7 +59,7 @@ export const CollectionItem = React.memo(function CollectionItem({
 	  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
    isActive
    ? 'bg-primary-50 dark:bg-primary-900/20 font-medium'
-   : 'text-gray-600 hover:bg-surface-1'
+   : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
   }`}
   style={isActive ? { color: col.color || 'rgb(245, 158, 11)' } : undefined}
   >
@@ -70,7 +70,7 @@ export const CollectionItem = React.memo(function CollectionItem({
   <div className="hidden md:group-hover:flex items-center gap-0.5">
    <button type="button"
    onClick={(e) => { e.stopPropagation(); onStartEdit(); }}
-   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    title={t('collections_rename')}
    aria-label={t('collections_rename')}
    >
@@ -80,7 +80,7 @@ export const CollectionItem = React.memo(function CollectionItem({
    </button>
    <button type="button"
    onClick={(e) => { e.stopPropagation(); onDelete(); }}
-   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 hover:text-red-500 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-red-500 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    title={t('collections_delete')}
    aria-label={t('collections_delete')}
    >

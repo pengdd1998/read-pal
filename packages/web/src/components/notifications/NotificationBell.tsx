@@ -58,10 +58,10 @@ const NotificationItem = React.memo(function NotificationItem({ notif, onMarkAsR
               <span className="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0" />
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
             {notif.message}
           </p>
-          <span className="text-[10px] text-gray-500 mt-1 block">
+          <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 block">
             {fmtTime(notif.createdAt)}
           </span>
         </div>
@@ -194,7 +194,7 @@ export const NotificationBell = memo(function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button type="button"
         onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadNotifications(); }}
-        className="relative p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-surface-1 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+        className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-surface-1 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         aria-label={t('notifications')}
         aria-expanded={isOpen}
         aria-controls="notification-dropdown"

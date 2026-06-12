@@ -105,7 +105,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
  <div className="space-y-3">
   <div className="space-y-2">
   <div>
-   <label htmlFor="zotero-api-key" className="block text-xs font-medium text-gray-600 mb-1">{t('zotero_api_key_label')}</label>
+   <label htmlFor="zotero-api-key" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_api_key_label')}</label>
    <input
    id="zotero-api-key"
    type="password"
@@ -118,7 +118,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    />
   </div>
   <div>
-   <label htmlFor="zotero-user-id" className="block text-xs font-medium text-gray-600 mb-1">{t('zotero_user_id')}</label>
+   <label htmlFor="zotero-user-id" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('zotero_user_id')}</label>
    <input
    id="zotero-user-id"
    type="text"
@@ -127,7 +127,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    placeholder={t('zotero_user_id_placeholder')}
    aria-invalid={validationError ? true : undefined}
    aria-describedby={validationError ? 'zotero-error' : undefined}
-   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
    />
   </div>
   </div>

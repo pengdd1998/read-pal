@@ -27,7 +27,7 @@ export const PersonaPicker = React.memo(function PersonaPicker({
 
   return (
     <div className="mb-4">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
         {t('pick_companion')}
       </h3>
       <div className="grid grid-cols-1 gap-1.5 text-left">

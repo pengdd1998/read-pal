@@ -41,7 +41,7 @@ const MessageItem = React.memo(function MessageItem({
    </span>
    <span className="text-[10px] text-gray-500 dark:text-gray-400">{formattedDate}</span>
    </div>
-   <p className="text-sm text-gray-600 mt-0.5 whitespace-pre-wrap break-words">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 whitespace-pre-wrap break-words">
    {msg.content}
    </p>
   </div>
@@ -85,7 +85,7 @@ export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
    </div>
   )}
   {!loading && messages.length === 0 && (
-   <p className="text-sm text-gray-500 text-center py-6">
+   <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-6">
    {t('noMessages')}
    </p>
   )}

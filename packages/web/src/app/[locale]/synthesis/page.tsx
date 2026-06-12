@@ -143,7 +143,7 @@ export default function SynthesisPage() {
 
   {result && (
   <div className="mb-6 bg-surface-0 rounded-xl border border-surface-3 p-5">
-   <h3 className="text-sm font-semibold text-gray-800 mb-4">
+   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
    {t('results_title')}
    </h3>
    <ErrorBoundary label="AnalysisResult">

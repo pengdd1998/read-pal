@@ -38,7 +38,7 @@ const SlippingItemCard = React.memo(function SlippingItemCard({ item }: Slipping
   return (
     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg p-3">
       <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.concept}</span>
-      <p className="text-xs text-gray-600 m-0 mt-1 leading-relaxed">{item.tip}</p>
+      <p className="text-xs text-gray-600 dark:text-gray-400 m-0 mt-1 leading-relaxed">{item.tip}</p>
     </div>
   );
 });
@@ -54,7 +54,7 @@ export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionPr
     return (
       <div className="py-8 text-center">
         <span className="text-2xl">🧠</span>
-        <p className="text-sm text-gray-500 mt-2 italic">{t('no_retention_data')}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{t('no_retention_data')}</p>
       </div>
     );
   }

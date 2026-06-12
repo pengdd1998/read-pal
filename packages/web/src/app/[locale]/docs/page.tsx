@@ -165,7 +165,7 @@ export default async function DocsPage({
    <span>{t('breadcrumb_docs')}</span>
    </div>
    <h1 className="text-4xl font-bold font-display tracking-tight">{t('header_title')}</h1>
-   <p className="text-gray-600 mt-3 text-lg max-w-2xl">
+   <p className="text-gray-600 dark:text-gray-400 mt-3 text-lg max-w-2xl">
    {t('header_subtitle')}
    </p>
   </div>
@@ -179,7 +179,7 @@ export default async function DocsPage({
     <a
     key={s.id}
     href={`#${s.id}`}
-    className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-surface-0 hover:text-navy-700 dark:hover:text-navy-300 transition-colors"
+    className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-surface-0 hover:text-navy-700 dark:hover:text-navy-300 transition-colors"
     >
     <span className="text-base">{s.icon}</span>
     {s.title}
@@ -209,7 +209,7 @@ export default async function DocsPage({
       className="bg-surface-0 rounded-xl border border-surface-3 p-5"
      >
       <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{item.title}</h3>
-      <p className="text-sm text-gray-600 leading-relaxed">{item.content}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.content}</p>
      </div>
      ))}
     </div>
@@ -219,7 +219,7 @@ export default async function DocsPage({
    {/* CTA */}
    <div className="rounded-2xl bg-gradient-to-br from-navy-700 to-navy-800 dark:from-navy-800 dark:to-navy-900 p-8 text-center">
     <h2 className="text-2xl font-bold text-white mb-3">{t('cta_title')}</h2>
-    <p className="text-gray-300 mb-6">{t('cta_subtitle')}</p>
+    <p className="text-gray-300 dark:text-gray-600 mb-6">{t('cta_subtitle')}</p>
     <Link
     href="/auth?mode=register"
     className="inline-block px-8 py-3 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-colors"

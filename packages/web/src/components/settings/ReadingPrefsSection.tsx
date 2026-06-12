@@ -64,7 +64,7 @@ const AppearanceCard = React.memo(function AppearanceCard({ settings, saving, on
    disabled={saving}
    aria-label={t('font_size_label')}
   />
-  <div className="flex justify-between text-xs text-gray-500 mt-1">
+  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
    <span>A</span>
    <span className="text-lg">A</span>
   </div>
@@ -139,7 +139,7 @@ const ReadingGoalsCard = React.memo(function ReadingGoalsCard({ settings, saving
    disabled={saving}
    aria-label={t('daily_reading_time')}
   />
-  <div className="flex justify-between text-xs text-gray-500 mt-1">
+  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
    <span>5{t('min_suffix')}</span>
    <span>1{t('hr_suffix')}</span>
    <span>2{t('hr_suffix')}</span>
@@ -209,7 +209,7 @@ const ReadingFriendCard = React.memo(function ReadingFriendCard({ settings, savi
     <div className="text-sm font-medium">
     {t(labelKey)}
     </div>
-    <div className="text-xs text-gray-500 mt-0.5">{t(`${labelKey}_desc`)}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t(`${labelKey}_desc`)}</div>
    </button>
    ))}
   </div>

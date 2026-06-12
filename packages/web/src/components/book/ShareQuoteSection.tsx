@@ -19,7 +19,7 @@ const QuoteRow = React.memo(function QuoteRow({ h, index, isSharing, onShare, sh
    key={h.id}
    className="flex items-start gap-3 group p-2.5 rounded-xl hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors"
    >
-   <p className="flex-1 text-sm text-gray-700 italic line-clamp-2 leading-relaxed">
+   <p className="flex-1 text-sm text-gray-700 dark:text-gray-300 italic line-clamp-2 leading-relaxed">
     &ldquo;{h.content}&rdquo;
    </p>
    <button type="button"

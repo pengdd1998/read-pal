@@ -48,10 +48,10 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
   </span>
   </div>
   {node.bookTitle && (
-  <p className="text-sm text-gray-500 mb-3">{t('from_label', { title: node.bookTitle })}</p>
+  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('from_label', { title: node.bookTitle })}</p>
   )}
   {node.description && (
-  <p className="text-sm text-gray-600 mb-3">{node.description}</p>
+  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{node.description}</p>
   )}
   <div className="text-sm space-y-1">
   <div>
@@ -76,7 +76,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
    <span className="text-xs text-gray-500 dark:text-gray-400">{t('source_books_label')}</span>
    <div className="flex flex-wrap gap-1 mt-1">
    {node.sourceBookIds.map((bid) => (
-    <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-surface-1 text-gray-600 rounded">
+    <span key={bid} className="inline-block px-2 py-0.5 text-xs bg-surface-1 text-gray-600 dark:text-gray-400 rounded">
     {bookTitleMap?.get(bid) || bid.slice(0, 8) + '...'}
     </span>
    ))}
@@ -98,12 +98,12 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
    })}
   </div>
   ) : (
-  <p className="mt-3 text-sm text-gray-400 italic">{t('no_connections')}</p>
+  <p className="mt-3 text-sm text-gray-400 dark:text-gray-500 italic">{t('no_connections')}</p>
   )}
   <button type="button"
   onClick={onDeselect}
   aria-label={t('close_details')}
-  className="mt-3 text-xs text-gray-500 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+  className="mt-3 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
   {t('deselect')}
   </button>

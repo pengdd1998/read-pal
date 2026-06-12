@@ -31,7 +31,7 @@ export const ClubHeaderCard = React.memo(function ClubHeaderCard({ club, memberC
     {'📚'}
    </div>
    <div>
-    <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+    <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
     {club.name}
     {club.isPrivate && (
      <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -39,13 +39,13 @@ export const ClubHeaderCard = React.memo(function ClubHeaderCard({ club, memberC
      </svg>
     )}
     </h1>
-    <p className="text-sm text-gray-500 mt-0.5">
+    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
     {memberCount === 1 ? t('memberCount', { count: memberCount }) : t('memberCountPlural', { count: memberCount })} &middot; {t('max', { count: club.maxMembers })}
     </p>
    </div>
    </div>
    {club.description && (
-   <p className="text-sm text-gray-600 mt-3">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
     {club.description}
    </p>
    )}
@@ -54,7 +54,7 @@ export const ClubHeaderCard = React.memo(function ClubHeaderCard({ club, memberC
 
   {/* Invite code */}
   <div className="mt-4 flex items-center gap-3">
-  <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">{t('inviteCode')}</span>
+  <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('inviteCode')}</span>
   <button type="button"
    onClick={copyInviteCode}
    aria-label={t('copy_invite_code')}

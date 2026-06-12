@@ -22,7 +22,7 @@ const RecentBookCard = React.memo(function RecentBookCard({ book }: RecentBookCa
    </div>
    <div className="flex-1 min-w-0">
     <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{book.title}</h3>
-    {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 truncate">{book.author}</p>}
+    {isDisplayableAuthor(book.author) && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{book.author}</p>}
     {book.progress > 0 && (
     <div className="w-full bg-surface-1 rounded-full h-1 mt-1.5">
      <div className="bg-amber-400 rounded-full h-1" style={{ width: `${Math.min(100, Math.round(book.progress))}%` }} />
@@ -42,7 +42,7 @@ export const RecentBooks = React.memo(function RecentBooks({ books }: RecentBook
 
   return (
   <div>
-   <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+   <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
    {t('your_library')}
    </h2>
    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

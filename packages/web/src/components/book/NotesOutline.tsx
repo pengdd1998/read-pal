@@ -43,7 +43,7 @@ const OutlineFilterBar = React.memo(function OutlineFilterBar({
      className={`px-2 py-1 rounded text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${
       activeFilter === opt.key
        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-       : 'bg-surface-1 text-gray-500 hover:bg-surface-2'
+       : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-surface-2'
      }`}
     >
      {opt.label}
@@ -85,20 +85,20 @@ const NotesOutlineHeader = React.memo(function NotesOutlineHeader({
    <div className="flex items-center justify-between mb-3">
     <div>
      <h2 className="font-semibold">{t('notesOutline')}</h2>
-     <p className="text-[10px] text-gray-500 mt-0.5">
+     <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
       {t(subtitleKey, { count: totalAnnotations, chapters: outlineChapters.length })}
      </p>
     </div>
     <div className="flex gap-1">
      <button type="button"
       onClick={onExpandAll}
-      className="text-[10px] text-gray-500 hover:text-gray-700 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+      className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
      >
       {t('expandAll')}
      </button>
      <button type="button"
       onClick={onCollapseAll}
-      className="text-[10px] text-gray-500 hover:text-gray-700 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+      className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
      >
       {t('collapseAll')}
      </button>
@@ -172,8 +172,8 @@ export const NotesOutline = React.memo(function NotesOutline({
  if (allAnnotations.length === 0) {
   return (
    <div className="bg-surface-0 rounded-2xl border border-surface-3 p-5 mb-6 animate-slide-up stagger-3 text-center">
-    <p className="text-gray-500 text-sm">{t('noAnnotationsYet')}</p>
-    <p className="text-gray-500 text-xs mt-1">{t('startReadingHint')}</p>
+    <p className="text-gray-500 dark:text-gray-400 text-sm">{t('noAnnotationsYet')}</p>
+    <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{t('startReadingHint')}</p>
    </div>
   );
  }

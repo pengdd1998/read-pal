@@ -84,7 +84,7 @@ function AuthPageContent() {
    <h2 className="text-4xl xl:text-5xl font-bold font-display text-gray-900 dark:text-gray-100 leading-tight mb-5">
    {mode === 'login' ? t('login_title') : t('register_title')}
    </h2>
-   <p className="text-lg text-gray-600 leading-relaxed">
+   <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
    {mode === 'login'
     ? t('login_subtitle_alt')
     : t('register_subtitle_alt')}
@@ -97,7 +97,7 @@ function AuthPageContent() {
    ].map((f) => (
     <div key={f.label} className="text-center p-4 rounded-2xl bg-surface-2/60 backdrop-blur-sm">
     <div className="text-3xl mb-3"><span aria-hidden="true">{f.emoji}</span></div>
-    <div className="text-sm text-gray-600 font-semibold">{f.label}</div>
+    <div className="text-sm text-gray-600 dark:text-gray-400 font-semibold">{f.label}</div>
     </div>
    ))}
    </div>
@@ -116,7 +116,7 @@ function AuthPageContent() {
    <h1 className="text-2xl font-bold font-display text-gray-900 dark:text-gray-100">
    {mode === 'login' ? t('login_title') : t('register_title')}
    </h1>
-   <p className="text-sm text-gray-600 mt-1">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
    {mode === 'login' ? t('login_subtitle_alt') : t('register_subtitle_alt')}
    </p>
   </div>
@@ -131,7 +131,7 @@ function AuthPageContent() {
    className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     mode === 'register'
     ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-xs'
-    : 'text-gray-500 hover:text-gray-700'
+    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
    }`}
    >
    {t('sign_up_tab')}
@@ -144,7 +144,7 @@ function AuthPageContent() {
    className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
     mode === 'login'
     ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-xs'
-    : 'text-gray-500 hover:text-gray-700'
+    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
    }`}
    >
    {t('sign_in_tab')}

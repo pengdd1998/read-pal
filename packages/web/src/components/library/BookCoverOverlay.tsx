@@ -43,7 +43,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const STATUS_CONFIG = useMemo(() => ({
- unread: { label: t('card_unread'), dot: 'bg-surface-3', ring: 'bg-surface-1 text-gray-600' },
+ unread: { label: t('card_unread'), dot: 'bg-surface-3', ring: 'bg-surface-1 text-gray-600 dark:text-gray-400' },
  reading: { label: t('card_reading'), dot: 'bg-primary-400', ring: 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300' },
  completed: { label: t('card_completed'), dot: 'bg-emerald-400', ring: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
  } as const), [t]);
@@ -180,14 +180,14 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
    </button>
    {showDeleteConfirm && (
    <div
-    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-36 rounded-lg bg-gray-900 shadow-xl border border-gray-700 p-2 z-50 animate-in fade-in duration-150"
+    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-36 rounded-lg bg-gray-900 shadow-xl border border-gray-700 dark:border-gray-700 p-2 z-50 animate-in fade-in duration-150"
     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
    >
-    <p className="text-[10px] text-gray-300 text-center mb-2">{t('card_confirm_delete')}</p>
+    <p className="text-[10px] text-gray-300 dark:text-gray-600 text-center mb-2">{t('card_confirm_delete')}</p>
     <div className="flex gap-1.5">
     <button type="button"
      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteCancel(); }}
-     className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+     className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-gray-700 text-gray-300 dark:text-gray-600 hover:bg-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
      {t('card_cancel')}
     </button>

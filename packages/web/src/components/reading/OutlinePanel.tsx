@@ -43,7 +43,7 @@ const FilterButton = React.memo(function FilterButton({ optKey, label, ariaLabel
    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-400 ${
    isActive
     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-    : 'bg-surface-1 text-gray-500 hover:bg-surface-2'
+    : 'bg-surface-1 text-gray-500 dark:text-gray-400 hover:bg-surface-2'
    }`}
   >
    {label}
@@ -155,13 +155,13 @@ export const OutlinePanel = React.memo(function OutlinePanel({
    <div className="flex gap-1">
    <button type="button"
     onClick={expandAll}
-    className="text-[10px] text-gray-500 hover:text-gray-700 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {t('outline_expand_all')}
    </button>
    <button type="button"
     onClick={collapseAll}
-    className="text-[10px] text-gray-500 hover:text-gray-700 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-1.5 py-0.5 rounded hover:bg-surface-1 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     {t('outline_collapse_all')}
    </button>
@@ -174,7 +174,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
    onChange={(e) => setSearchQuery(e.target.value)}
    placeholder={t('outline_search_placeholder')}
    aria-label={t('outline_search_placeholder')}
-   className="w-full px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all mb-2"
+   className="w-full px-3 py-2 rounded-lg bg-surface-1 border border-surface-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none focus:ring-1 focus:ring-amber-400/50 focus:border-amber-400 transition-all mb-2"
   />
 
   <div className="flex gap-1">

@@ -36,11 +36,11 @@ export const THEMES: Record<CardTheme, {
  dark: {
  bg: 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900',
  bgGradient: '',
- textColor: 'text-gray-100',
+ textColor: 'text-gray-100 dark:text-gray-800',
  accentColor: 'border-amber-500/30',
  quoteMarkColor: 'text-amber-500/20',
  titleColor: 'text-amber-400',
- watermarkColor: 'text-gray-600',
+ watermarkColor: 'text-gray-600 dark:text-gray-400',
  canvasStops: [
   [0, '#111827', 0.4, '#1F2937'],
   [0.7, '#1F2937', 1, '#111827'],

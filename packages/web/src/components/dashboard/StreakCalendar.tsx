@@ -123,7 +123,7 @@ function StreakCalendarInner() {
    ) : error ? (
    <p className="text-sm text-red-500 dark:text-red-400 mt-1">{error}</p>
    ) : (
-   <p className="text-sm text-gray-500 mt-0.5">
+   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
     {t('active_days', { active: data?.totalDaysActive ?? 0, total: totalDays })}
    </p>
    )}
@@ -131,12 +131,12 @@ function StreakCalendarInner() {
   {!loading && !error && data && (
    <div className="flex items-center gap-3 sm:gap-4">
    <div className="text-center">
-    <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide font-medium">{t('streak_longest')}</div>
-    <div className="text-lg font-bold text-gray-700 tabular-nums">{data.longestStreak}</div>
+    <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('streak_longest')}</div>
+    <div className="text-lg font-bold text-gray-700 dark:text-gray-300 tabular-nums">{data.longestStreak}</div>
    </div>
    <div className="w-px h-8 bg-surface-2" />
    <div className="text-center">
-    <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide font-medium">{t('streak_current')}</div>
+    <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('streak_current')}</div>
     <div className="flex items-center justify-center gap-1">
     <span className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{data.currentStreak}</span>
     {data.currentStreak > 0 && <span className="text-xl" role="img" aria-label={t('fire_streak_aria')}>{'🔥'}</span>}
@@ -161,7 +161,7 @@ function StreakCalendarInner() {
     const nextCol = monthMarkers[i + 1]?.col ?? weeks.length;
     const spanCols = nextCol - m.col;
     return (
-    <div key={`${m.label}-${m.col}`} className="text-[10px] text-gray-500 font-medium" style={{ width: `${spanCols * 16}px` }}>
+    <div key={`${m.label}-${m.col}`} className="text-[10px] text-gray-500 dark:text-gray-400 font-medium" style={{ width: `${spanCols * 16}px` }}>
      {spanCols >= 2 ? m.label : ''}
     </div>
     );
@@ -170,7 +170,7 @@ function StreakCalendarInner() {
    <div className="flex gap-0">
    <div className="flex flex-col gap-[3px] mr-1">
     {dayLabels.map((label, i) => (
-    <div key={i} className="h-[13px] flex items-center text-[10px] text-gray-500 font-medium leading-none pr-1">{label}</div>
+    <div key={i} className="h-[13px] flex items-center text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-none pr-1">{label}</div>
     ))}
    </div>
    <div className="flex gap-[3px]">

@@ -32,7 +32,7 @@ export const ReadingStreakCard = React.memo(function ReadingStreakCard({ streak,
         <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 tabular-nums">
           {loading ? <SkeletonPulse className="h-8 w-10 inline-block" /> : streak}
         </div>
-        <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t('day_streak')}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{t('day_streak')}</div>
       </div>
       {streak === 0 && !loading && (
         <p className="text-xs text-gray-500 dark:text-gray-400">{t('start_streak')}</p>

@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
    {submitted ? t('forgot_title_submitted') : t('forgot_title_default')}
    </h1>
-   <p className="text-sm text-gray-600 mt-1">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
    {submitted
     ? t('forgot_desc_submitted')
     : t('forgot_desc_default')}
@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
    ) : (
    <form onSubmit={handleSubmit} className="space-y-5" aria-label={t('forgot_form_label')}>
     <div>
-    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
      {t('email_label')}
     </label>
     <input

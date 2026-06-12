@@ -26,8 +26,8 @@ interface ReaderFooterProps {
 }
 
 const FOOTER_CLASSES = {
- light: 'border-gray-100 bg-white/90',
- dark: 'border-gray-800/50 bg-gray-950/90',
+ light: 'border-gray-100 dark:border-gray-800 bg-white/90',
+ dark: 'border-gray-800 dark:border-gray-700/50 bg-gray-950/90',
  sepia: 'border-amber-200/40 bg-amber-100/90',
 } as const;
 

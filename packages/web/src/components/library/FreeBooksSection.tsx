@@ -110,7 +110,7 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
  if (loading) {
   return (
    <div className="mt-12 pt-8 border-t border-surface-3">
-    <h3 className="text-sm font-medium text-gray-700 mb-4">{t('free_books_title')}</h3>
+    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">{t('free_books_title')}</h3>
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
      {[1, 2, 3, 4].map((i) => (
       <div key={i} className="animate-pulse rounded-xl bg-surface-1 h-32" />
@@ -122,10 +122,10 @@ export const FreeBooksSection = React.memo(function FreeBooksSection({ searchQue
  if (error) {
   return (
    <div className="mt-12 pt-8 border-t border-surface-3 text-center">
-   <p className="text-sm text-gray-500 mb-3">{t('toast_suggestions_fail')}</p>
+   <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t('toast_suggestions_fail')}</p>
    <button type="button"
     onClick={fetchSuggestions}
-    className="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-surface-1 border border-surface-3 text-gray-600 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-surface-1 border border-surface-3 text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {tc('retry')}
    </button>

@@ -78,7 +78,7 @@ export default function DevelopersPage() {
 
   {/* Status indicator */}
   {apiKeyLoading && (
-   <div className="bg-surface-2 rounded-xl p-4 text-sm text-gray-500 animate-pulse">
+   <div className="bg-surface-2 rounded-xl p-4 text-sm text-gray-500 dark:text-gray-400 animate-pulse">
    {t('api_key_loading')}
    </div>
   )}

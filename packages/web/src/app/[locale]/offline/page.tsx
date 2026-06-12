@@ -181,7 +181,7 @@ export default function OfflinePage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             {isOnline ? t('online_title') : t('offline_title')}
           </h1>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
             {isOnline ? t('online_desc') : t('offline_desc')}
           </p>
 
@@ -212,7 +212,7 @@ export default function OfflinePage() {
                 {/* Cached content access */}
                 {cachedBooks.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-500 mb-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                       {t('available_offline')}
                     </p>
                     <div className="space-y-2">

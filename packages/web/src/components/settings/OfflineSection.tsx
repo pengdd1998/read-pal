@@ -27,7 +27,7 @@ const CachedBookRow = React.memo(function CachedBookRow({ cb, onRemove, removeLa
       </div>
       <button type="button"
         onClick={() => onRemove(cb.bookId)}
-        className="min-h-[44px] px-3 py-1 text-xs text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+        className="min-h-[44px] px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
       >
         {removeLabel}
       </button>
@@ -48,8 +48,8 @@ const BookCheckboxRow = React.memo(function BookCheckboxRow({ book, isSelected, 
         onChange={(e) => onToggle(book.id, e.target.checked)}
         className="rounded border-surface-3 text-teal-600 focus:ring-teal-500"
       />
-      <span className="text-sm text-gray-700 truncate">{book.title}</span>
-      {isDisplayableAuthor(book.author) && <span className="text-xs text-gray-500 ml-auto">{book.author}</span>}
+      <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{book.title}</span>
+      {isDisplayableAuthor(book.author) && <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{book.author}</span>}
     </label>
   );
 });
@@ -194,8 +194,8 @@ export const OfflineSection = React.memo(function OfflineSection() {
         {/* Status */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100">{t('offline_sync_status')}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('offline_sync_status')}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {queueCount > 0
                 ? t('offline_queue_pending', { count: queueCount })
                 : t('offline_all_synced')}
@@ -204,7 +204,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
           {queueCount > 0 && (
             <button type="button"
               onClick={handleClearQueue}
-              className="min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium text-gray-600 bg-surface-1 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+              className="min-h-[44px] px-3 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 bg-surface-1 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
             >
               {t('offline_clear_queue')}
             </button>
@@ -242,7 +242,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">{t('offline_loading')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('offline_loading')}</p>
           </div>
         ) : loadError ? (
           <div className="pt-4 border-t border-surface-2">
@@ -252,7 +252,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         ) : books.length > 0 && (
           <div className="pt-4 border-t border-surface-2">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('offline_cache_heading')}</h3>
-            <p className="text-xs text-gray-500 mb-3">{t('offline_cache_desc')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t('offline_cache_desc')}</p>
             <div className="space-y-1.5 max-h-48 overflow-y-auto">
               {books
                 .filter((b) => !cachedIds.has(b.id))

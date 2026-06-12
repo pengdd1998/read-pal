@@ -65,20 +65,20 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
   <div className="text-center">
    <div className="text-4xl mb-3">{'\uD83D\uDCD6'}</div>
    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('session_title')}</h3>
-   <p className="text-sm text-gray-500 mb-4">{t('session_great_reading')}</p>
+   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('session_great_reading')}</p>
 
    <div className="grid grid-cols-2 gap-3 mb-4">
    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
     <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
     {Math.floor(duration / 60)}m {duration % 60}s
     </div>
-    <div className="text-xs text-gray-500 mt-1">{t('session_time_spent')}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('session_time_spent')}</div>
    </div>
    <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
     <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
     {chaptersRead}/{totalChapters}
     </div>
-    <div className="text-xs text-gray-500 mt-1">{t('session_chapters_read')}</div>
+    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('session_chapters_read')}</div>
    </div>
    </div>
 
@@ -107,7 +107,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
    )}
    {summaryError && !summaryLoading && !aiSummary && (
    <div className="mb-4 px-3 py-2 rounded-xl bg-surface-1 text-left">
-    <p className="text-xs text-gray-500 italic">{t('session_insight_unavailable')}</p>
+    <p className="text-xs text-gray-500 dark:text-gray-400 italic">{t('session_insight_unavailable')}</p>
     <button type="button" disabled={summaryLoading} onClick={() => {
      setSummaryError(false);
      if (sessionId) {
@@ -124,7 +124,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
    <div className="flex gap-3">
    <button type="button"
     onClick={onKeepReading}
-    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-surface-1 text-gray-700 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-surface-1 text-gray-700 dark:text-gray-300 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {t('session_keep_reading')}
    </button>

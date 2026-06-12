@@ -206,7 +206,7 @@ function BookClubsWidgetInner() {
   {/* Club list */}
   {clubs.length === 0 ? (
   <div className="text-center py-6">
-   <p className="text-sm text-gray-500 mb-2">
+   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
    {t('noClubsYet')}
    </p>
    <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -224,7 +224,7 @@ function BookClubsWidgetInner() {
   {/* Discover link */}
   <Link
   href="/book-clubs"
-  className="mt-4 flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+  className="mt-4 flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
   >
   {t('discoverClubs')}
   <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

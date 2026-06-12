@@ -32,7 +32,7 @@ export const OutlineChapterRow = React.memo(function OutlineChapterRow({
     className="w-full flex items-center gap-2 px-5 py-3 hover:bg-surface-1 transition-colors text-left focus-visible:ring-2 focus-visible:ring-amber-400"
    >
     <svg aria-hidden="true"
-     className={`w-3.5 h-3.5 text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+     className={`w-3.5 h-3.5 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
      fill="none"
      viewBox="0 0 24 24"
      stroke="currentColor"
@@ -40,7 +40,7 @@ export const OutlineChapterRow = React.memo(function OutlineChapterRow({
     >
      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
     </svg>
-    <span className="text-sm font-medium text-gray-700 flex-1">
+    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">
      {chapter.label}
     </span>
     <div className="flex items-center gap-1.5">
@@ -68,7 +68,7 @@ export const OutlineChapterRow = React.memo(function OutlineChapterRow({
       <AnnotationRow key={ann.id} ann={ann} type="bookmark" bookmarkLabel={bookmarkLabel} />
      ))}
      {totalCount === 0 && (
-      <p className="text-[10px] text-gray-500 px-7 py-1">{noMatchingLabel}</p>
+      <p className="text-[10px] text-gray-500 dark:text-gray-400 px-7 py-1">{noMatchingLabel}</p>
      )}
     </div>
    )}

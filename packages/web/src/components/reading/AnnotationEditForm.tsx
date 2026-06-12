@@ -155,7 +155,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
      key={preset}
      onMouseDown={(e) => { e.preventDefault(); addTag(preset); }}
      aria-label={t('add_tag_aria', { tag: preset })}
-     className="w-full px-2.5 py-1 text-left text-xs text-gray-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+     className="w-full px-2.5 py-1 text-left text-xs text-gray-600 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
     >
      #{preset}
     </button>
@@ -170,7 +170,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
     key={preset}
     onClick={() => addTag(preset)}
     aria-label={t('add_tag_aria', { tag: preset })}
-    className="px-1.5 py-0.5 rounded text-[10px] text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-surface-3 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="px-1.5 py-0.5 rounded text-[10px] text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors border border-dashed border-surface-3 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
     +{preset}
     </button>
@@ -190,7 +190,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   </button>
   <button type="button"
    onClick={onCancel}
-   className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="min-h-[44px] inline-flex items-center px-3 py-1 rounded-md bg-surface-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-surface-2 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
   >
    {tc('cancel')}
   </button>

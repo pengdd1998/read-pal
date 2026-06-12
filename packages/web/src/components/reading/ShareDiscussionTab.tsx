@@ -211,7 +211,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
             type="button"
             aria-label={t('share_regenerate')}
             onClick={handleReset}
-            className="text-xs text-gray-500 hover:text-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
           >
             {t('share_regenerate')}
           </button>

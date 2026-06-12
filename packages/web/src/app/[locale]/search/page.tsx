@@ -139,7 +139,7 @@ export default function SearchPage() {
   {/* Header */}
   <div className="mb-6 sm:mb-8">
   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{t('page_title')}</h1>
-  <p className="text-sm sm:text-base text-gray-500 mt-1">{t('subtitle')}</p>
+  <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">{t('subtitle')}</p>
   </div>
 
   <SearchBar query={query} searching={searching} onQueryChange={setQuery} />

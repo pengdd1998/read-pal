@@ -24,7 +24,7 @@ export const LibraryNoResults = React.memo(function LibraryNoResults({
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </div>
-      <p className="text-gray-500 mb-1">
+      <p className="text-gray-500 dark:text-gray-400 mb-1">
         {t('no_books_match', { query: searchQuery })}
         {statusFilter !== 'all' ? ` ${t('with_status', { status: statusFilter })}` : ''}
       </p>

@@ -129,7 +129,7 @@ export const PlanGenerateForm = React.memo(function PlanGenerateForm({
           onChange={(e) => onTotalDaysChange(Math.max(1, Math.min(90, parseInt(e.target.value) || 1)))}
           min={1}
           max={90}
-          className="w-full mt-1 px-3 py-2 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+          className="w-full mt-1 px-3 py-2 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
         />
       </div>
 
@@ -144,7 +144,7 @@ export const PlanGenerateForm = React.memo(function PlanGenerateForm({
           onChange={(e) => onDailyMinutesChange(Math.max(10, Math.min(240, parseInt(e.target.value) || 30)))}
           min={10}
           max={240}
-          className="w-full mt-1 px-3 py-2 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+          className="w-full mt-1 px-3 py-2 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
         />
       </div>
 

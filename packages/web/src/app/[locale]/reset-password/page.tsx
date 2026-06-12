@@ -79,7 +79,7 @@ function ResetPasswordForm() {
    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
    {success ? t('reset_title_success') : t('reset_title_default')}
    </h1>
-   <p className="text-sm text-gray-600 mt-1">
+   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
    {success
     ? t('reset_desc_success')
     : t('reset_desc_default')}
@@ -114,7 +114,7 @@ function ResetPasswordForm() {
    ) : (
    <form onSubmit={handleSubmit} className="space-y-5" aria-label={t('reset_form_label')}>
     <div>
-    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
      {t('reset_new_password_label')}
     </label>
     <input
@@ -131,7 +131,7 @@ function ResetPasswordForm() {
     </div>
 
     <div>
-    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
      {t('confirm_password_label')}
     </label>
     <input

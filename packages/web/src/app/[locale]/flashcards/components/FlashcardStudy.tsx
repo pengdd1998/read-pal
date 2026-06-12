@@ -81,14 +81,14 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   <div className="flex items-center justify-between mb-6">
   <button type="button"
    onClick={onBackToDecks}
-   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400"
+   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400"
   >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
    </svg>
    {t('decks_label')}
   </button>
-  <span className="text-xs text-gray-500 font-medium tabular-nums">
+  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium tabular-nums">
    {currentIndex + 1} / {cards.length}
   </span>
   </div>
@@ -113,7 +113,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    {currentCard.bookTitle && (
    <div className="flex items-center gap-2 mb-3 px-1">
     <span className="text-xs">{'\uD83D\uDCD6'}</span>
-    <span className="text-xs text-gray-500 truncate">{currentCard.bookTitle}</span>
+    <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{currentCard.bookTitle}</span>
    </div>
    )}
 
@@ -138,7 +138,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    </div>
 
    {!showAnswer && (
-	    <p className="text-center text-xs text-gray-500 mt-6">{t('tap_to_reveal')}</p>
+	    <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-6">{t('tap_to_reveal')}</p>
 	   )}
 	   </button>
 
@@ -175,15 +175,15 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center max-sm:gap-2 max-sm:text-[10px]">
    <div>
    <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{stats.due}</div>
-   <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('due_label')}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('due_label')}</div>
    </div>
    <div>
    <div className="text-lg font-bold text-teal-600 dark:text-teal-400">{stats.reviewed}</div>
-   <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('reviewed_label')}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('reviewed_label')}</div>
    </div>
    <div>
    <div className="text-lg font-bold text-gray-600 dark:text-gray-400">{stats.total}</div>
-   <div className="text-[10px] text-gray-500 uppercase tracking-wide">{t('total_label')}</div>
+   <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('total_label')}</div>
    </div>
   </div>
   </div>

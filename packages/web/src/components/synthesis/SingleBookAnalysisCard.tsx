@@ -69,13 +69,13 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
  <>
   {/* Single-book analysis form */}
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-5 mb-6">
-  <h3 className="text-sm font-semibold text-gray-800 mb-4">
+  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
    {t('single_book_title')}
   </h3>
 
   {/* Book selector */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 mb-1 block">
+   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">
    {t('select_book')}
    </label>
    {booksLoading ? (
@@ -88,7 +88,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    <select
     value={selectedBookId}
     onChange={(e) => setSelectedBookId(e.target.value)}
-    className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+    className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
    >
     <option value="">{t('choose_book')}</option>
     {books.map((book) => (
@@ -102,7 +102,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
 
   {/* Mode selector */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 mb-2 block">
+   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">
    {t('analysis_mode')}
    </label>
    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('analysis_mode')}>
@@ -115,7 +115,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      mode === m.key
      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700'
-     : 'bg-surface-1 text-gray-600 border border-surface-3 hover:bg-surface-1'
+     : 'bg-surface-1 text-gray-600 dark:text-gray-400 border border-surface-3 hover:bg-surface-1'
     }`}
     >
     <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -129,7 +129,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
 
   {/* Query input */}
   <div className="mb-4">
-   <label className="text-xs font-medium text-gray-500 mb-1 block">
+   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">
    {t('query_label')}
    </label>
    <textarea
@@ -137,7 +137,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    onChange={(e) => setQuery(e.target.value)}
    placeholder={t('query_placeholder')}
    rows={3}
-   className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+   className="w-full px-3 py-2.5 text-sm border border-surface-3 rounded-lg bg-surface-0 text-gray-800 dark:text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
    />
   </div>
 
@@ -175,7 +175,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   {/* Result */}
   {result && (
   <div className="bg-surface-0 rounded-xl border border-surface-3 p-5">
-   <h3 className="text-sm font-semibold text-gray-800 mb-4">
+   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
    {t('results_title')}
    </h3>
    <AnalysisResultView result={result} />

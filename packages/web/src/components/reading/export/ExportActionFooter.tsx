@@ -35,7 +35,7 @@ export const ExportActionFooter = React.memo(function ExportActionFooter({
         <button type="button"
           onClick={onPreview}
           disabled={loading}
-          className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-surface-3 text-gray-700 hover:bg-surface-1 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+          className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-surface-3 text-gray-700 dark:text-gray-300 hover:bg-surface-1 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         >
           {loading ? t('export_loading') : hasPreview ? t('export_refresh') : t('export_preview_button')}
         </button>
@@ -69,7 +69,7 @@ export const ExportActionFooter = React.memo(function ExportActionFooter({
                 readOnly
                 value={shareLink}
                 aria-label={t('export_share_via_link')}
-                className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="flex-1 px-3 py-2 text-xs bg-surface-1 border border-surface-3 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
               <button type="button"

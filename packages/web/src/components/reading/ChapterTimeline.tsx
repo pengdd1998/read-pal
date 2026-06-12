@@ -79,7 +79,7 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
     style={{ width: `${barWidth}%` }}
    />
    </div>
-   <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-400 flex-shrink-0">
+   <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">
    {stat.highlights > 0 && <span>{stat.highlights}{t('highlight_abbr')}</span>}
    {stat.notes > 0 && <span>{stat.notes}{t('note_abbr')}</span>}
    {stat.bookmarks > 0 && <span>{stat.bookmarks}{t('bookmark_abbr')}</span>}
