@@ -292,8 +292,9 @@ async def _safe_precompute(
         try:
             await precompute_book_embeddings(book_id, document_id, chapters)
             return
-        except (ConnectionError, TimeoutError, ValueError) as exc:
-            if attempt < max_retries:
+        except Exception as exc:
+            retriable = isinstance(exc, (ConnectionError, TimeoutError, ValueError))
+            if retriable and attempt < max_retries:
                 delay = 2 ** attempt * 5
                 logger.warning(
                     'Embedding pre-computation attempt %d/%d failed for book %s, retrying in %ds: %s',
@@ -303,5 +304,5 @@ async def _safe_precompute(
             else:
                 logger.error(
                     'Background embedding pre-computation failed after %d attempts for book %s: %s',
-                    max_retries + 1, book_id, exc,
+                    attempt + 1, book_id, exc, exc_info=not retriable,
                 )

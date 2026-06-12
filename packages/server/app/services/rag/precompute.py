@@ -34,12 +34,20 @@ async def precompute_book_embeddings(
         logger.debug('precompute.skip reason=no_api_key book_id=%s', book_id)
         return
 
+    # --- Pre-flight: validate DB is reachable and schema is compatible ---
+    # Do this BEFORE calling the paid embedding API to avoid wasting money
+    # if the DB write will fail anyway.
+    if not await _preflight_check(book_id, document_id):
+        return
+
+    # --- Expensive operation: call embedding API ---
     try:
         _chunks_to_insert = await _generate_chunks(book_id, document_id, chapters)
     except (ValueError, KeyError, RuntimeError) as exc:
         logger.error('precompute.generation_failed book_id=%s: %s', str(book_id), str(exc))
         return
 
+    # --- Persist results ---
     try:
         async with db_error_guard('rag.precompute_book_embeddings', book_id=str(book_id)):
             async with async_session() as session:
@@ -54,6 +62,68 @@ async def precompute_book_embeddings(
         'precompute.done book_id=%s total=%d embedded=%d',
         book_id, len(_chunks_to_insert), embedded,
     )
+
+
+async def _preflight_check(book_id: UUID, document_id: UUID) -> bool:
+    """Validate DB connectivity and schema before making expensive API calls.
+
+    Returns True if everything looks good, False if we should abort early.
+    """
+    from app.db import async_session
+    from app.models.book_chunk import BookChunk
+    from sqlalchemy import text, select
+
+    try:
+        async with async_session() as session:
+            # 1. Verify the book_chunks table exists and has the expected schema
+            #    (pgvector extension loaded, embedding column is vector type)
+            result = await session.execute(text(
+                "SELECT data_type, udt_name FROM information_schema.columns "
+                "WHERE table_name = 'book_chunks' AND column_name = 'embedding'"
+            ))
+            col_info = result.first()
+            if col_info is None:
+                logger.error(
+                    'preflight.fail book_id=%s reason=embedding_column_missing',
+                    book_id,
+                )
+                return False
+            if col_info.udt_name != 'vector':
+                logger.error(
+                    'preflight.fail book_id=%s reason=wrong_embedding_type udt=%s expected=vector',
+                    book_id, col_info.udt_name,
+                )
+                return False
+
+            # 2. Verify the book record exists (FK constraint would fail otherwise)
+            from app.models.book import Book
+            result = await session.execute(
+                select(Book.id).where(Book.id == book_id)
+            )
+            if result.scalar_one_or_none() is None:
+                logger.error(
+                    'preflight.fail book_id=%s reason=book_not_found', book_id,
+                )
+                return False
+
+            # 3. Verify the document record exists
+            from app.models.document import Document
+            result = await session.execute(
+                select(Document.id).where(Document.id == document_id)
+            )
+            if result.scalar_one_or_none() is None:
+                logger.error(
+                    'preflight.fail book_id=%s doc_id=%s reason=document_not_found',
+                    book_id, document_id,
+                )
+                return False
+
+    except Exception:
+        logger.error('preflight.fail book_id=%s reason=db_error', book_id, exc_info=True)
+        return False
+
+    logger.debug('preflight.ok book_id=%s', book_id)
+    return True
 
 
 def _split_chapters(chapters: list[dict]) -> list[tuple[int, int, str]]:
