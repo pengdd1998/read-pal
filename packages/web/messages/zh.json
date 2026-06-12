@@ -1375,6 +1375,8 @@
     "account_delete_confirm": "确定要删除账户吗？此操作无法撤销。",
     "account_delete_failed": "删除账户失败，请重试。",
     "account_sign_out": "退出登录",
+    "sign_out_confirm_title": "退出登录？",
+    "sign_out_confirm_message": "确定要退出登录吗？您需要重新登录才能访问您的图书馆。",
     "account_delete_heading": "删除账户",
     "account_delete_warning": "这将永久删除你的账户和所有数据，包括书籍、高亮和阅读历史。此操作无法撤销。",
     "account_delete_button": "删除我的账户",
@@ -1502,7 +1504,8 @@
     "searching": "搜索中...",
     "type_highlight": "高亮",
     "type_note": "笔记",
-    "type_bookmark": "书签"
+    "type_bookmark": "书签",
+    "retry": "重试"
   },
   "flashcards": {
     "page_title": "闪卡",
@@ -1615,7 +1618,9 @@
     "sync_failed": "同步失败，稍后将重试。",
     "dismiss": "关闭",
     "load_error": "加载缓存书籍失败",
-    "tryAgain": "重试"
+    "tryAgain": "重试",
+    "no_offline_books_title": "没有离线可用的书籍",
+    "no_offline_books_desc": "在线时打开过的书籍会被缓存以供离线阅读。连接网络并打开一本书即可使其离线可用。"
   },
   "bookClubs": {
     "pageTitle": "读书会",

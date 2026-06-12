@@ -1375,6 +1375,8 @@
     "account_delete_confirm": "Are you sure you want to delete your account? This cannot be undone.",
     "account_delete_failed": "Failed to delete account. Please try again.",
     "account_sign_out": "Sign Out",
+    "sign_out_confirm_title": "Sign Out?",
+    "sign_out_confirm_message": "Are you sure you want to sign out? You'll need to sign back in to access your library.",
     "account_delete_heading": "Delete account",
     "account_delete_warning": "This will permanently delete your account and all your data, including books, highlights, and reading history. This cannot be undone.",
     "account_delete_button": "Delete my account",
@@ -1502,7 +1504,8 @@
     "searching": "Searching...",
     "type_highlight": "Highlight",
     "type_note": "Note",
-    "type_bookmark": "Bookmark"
+    "type_bookmark": "Bookmark",
+    "retry": "Retry"
   },
   "flashcards": {
     "page_title": "Flashcards",
@@ -1615,7 +1618,9 @@
     "sync_failed": "Sync failed. Will retry later.",
     "dismiss": "Dismiss",
     "load_error": "Failed to load cached books",
-    "tryAgain": "Retry"
+    "tryAgain": "Retry",
+    "no_offline_books_title": "No Books Available Offline",
+    "no_offline_books_desc": "Books you've opened while online will be cached for offline reading. Connect to the internet and open a book to make it available."
   },
   "welcome": {
     "page_title": "Welcome",

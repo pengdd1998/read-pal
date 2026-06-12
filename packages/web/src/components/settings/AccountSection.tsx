@@ -14,6 +14,7 @@ export const AccountSection = React.memo(function AccountSection() {
  const t = useTranslations('settings_page');
  const [deleting, setDeleting] = useState(false);
  const [showDeleteModal, setShowDeleteModal] = useState(false);
+ const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
  const [confirmPassword, setConfirmPassword] = useState('');
  const [deleteError, setDeleteError] = useState('');
 
@@ -67,7 +68,7 @@ export const AccountSection = React.memo(function AccountSection() {
   <div className="space-y-4">
    <div className="pt-3 border-t border-surface-2">
    <button type="button"
-    onClick={handleSignOut}
+    onClick={() => setShowSignOutConfirm(true)}
     className="min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800/30 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    >
     {t('account_sign_out')}
@@ -145,6 +146,40 @@ export const AccountSection = React.memo(function AccountSection() {
        {t('account_deleting')}
        </span>
       ) : t('account_delete_button')}
+     </button>
+    </div>
+   </div>
+  </div>
+  )}
+
+  {/* Sign-out confirmation modal */}
+  {showSignOutConfirm && (
+  <div
+   role="dialog"
+   aria-modal="true"
+   aria-labelledby="sign-out-dialog-title"
+   className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
+   onClick={() => setShowSignOutConfirm(false)}
+   onKeyDown={(e) => { if (e.key === 'Escape') setShowSignOutConfirm(false); }}
+  >
+   <div
+    className="bg-surface-0 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 animate-scale-in"
+    onClick={(e) => e.stopPropagation()}
+   >
+    <h3 id="sign-out-dialog-title" className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">{t('sign_out_confirm_title')}</h3>
+    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{t('sign_out_confirm_message')}</p>
+    <div className="flex gap-2 justify-end">
+     <button type="button"
+      onClick={() => setShowSignOutConfirm(false)}
+      className="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 bg-surface-1 hover:bg-surface-2 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
+     >
+      {t('cancel')}
+     </button>
+     <button type="button"
+      onClick={() => { setShowSignOutConfirm(false); handleSignOut(); }}
+      className="px-4 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
+     >
+      {t('account_sign_out')}
      </button>
     </div>
    </div>

@@ -210,7 +210,7 @@ export default function OfflinePage() {
                 </button>
 
                 {/* Cached content access */}
-                {cachedBooks.length > 0 && (
+                {cachedBooks.length > 0 ? (
                   <div className="mt-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                       {t('available_offline')}
@@ -224,6 +224,20 @@ export default function OfflinePage() {
                         />
                       ))}
                     </div>
+                  </div>
+                ) : (
+                  <div className="mt-6 p-6 rounded-xl bg-surface-2 border border-surface-3 animate-fade-in">
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <svg aria-hidden="true" className="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                      {t('no_offline_books_title')}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                      {t('no_offline_books_desc')}
+                    </p>
                   </div>
                 )}
               </>

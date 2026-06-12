@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
@@ -28,6 +28,8 @@ export default function SearchPage() {
  const [searched, setSearched] = useState(false);
  const [recentBooks, setRecentBooks] = useState<Book[]>([]);
  const [filter, setFilter] = useState<FilterKey>('all');
+ const [fetchKey, setFetchKey] = useState(0);
+ const retrySearch = useCallback(() => setFetchKey((k) => k + 1), []);
 
  // Load recent books for recommendations when no search
  useEffect(() => {
@@ -116,7 +118,7 @@ export default function SearchPage() {
   stale = true;
   clearTimeout(timer);
  };
- }, [query]);
+ }, [query, fetchKey]);
 
  const hasResults = results.length > 0 || highlights.length > 0;
 
@@ -146,8 +148,15 @@ export default function SearchPage() {
 
   {/* Error */}
   {error && (
-  <div role="alert" className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm">
-   {error}
+  <div role="alert" className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-sm flex items-center justify-between">
+   <span>{error}</span>
+   <button
+    type="button"
+    onClick={retrySearch}
+    className="ml-3 underline hover:text-red-800 dark:hover:text-red-200 min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded"
+   >
+    {t('retry')}
+   </button>
   </div>
   )}
 
