@@ -28,6 +28,7 @@ export default function SynthesisPage() {
  const [loading, setLoading] = useState(false);
  const [result, setResult] = useState<AnalysisResult | null>(null);
  const [error, setError] = useState<string | null>(null);
+ const abortRef = useRef<AbortController | null>(null);
 
  // Fetch user's books on mount
  useEffect(() => {
@@ -49,22 +50,30 @@ export default function SynthesisPage() {
  return () => { cancelled = true; };
  }, []);
 
+ // Cleanup cross-book analysis on unmount
+ useEffect(() => () => { abortRef.current?.abort(); }, []);
+
  const handleCrossBook = useCallback(async () => {
+ abortRef.current?.abort();
+ const controller = new AbortController();
+ abortRef.current = controller;
  setLoading(true);
  setError(null);
  setResult(null);
  try {
   const res = await api.get<AnalysisResult>('/api/synthesis/cross-book', undefined, { timeout: 120_000 });
+  if (controller.signal.aborted) return;
   if (res.success && res.data) {
   setResult(res.data);
   } else {
   setError(tRef.current('analysis_failed'));
   }
  } catch (err) {
+  if (controller.signal.aborted) return;
   warn('Synthesis: analysis failed', err);
   setError(tRef.current('network_error'));
  } finally {
-  setLoading(false);
+  if (!controller.signal.aborted) setLoading(false);
  }
  }, []);
 

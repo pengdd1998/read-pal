@@ -50,27 +50,30 @@ export default function SettingsPage() {
     };
   }, []);
 
-  const loadSettings = useCallback(async () => {
+  const loadSettings = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
       const res = await api.get<UserSettings>('/api/settings');
+      if (signal?.aborted) return;
       if (res.success && res.data) {
         setSettings(res.data);
       } else {
         setError(tRef.current('failed_load'));
       }
       const meRes = await api.get<{ name: string; email: string }>('/api/auth/me');
+      if (signal?.aborted) return;
       if (meRes.success && meRes.data) {
         const d = meRes.data;
         if (d.name) setUserName(d.name);
         if (d.email) setUserEmail(d.email);
       }
     } catch (err) {
+      if (signal?.aborted) return;
       warn('Settings: load failed', err);
       setError(tRef.current('failed_load_retry'));
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
@@ -79,9 +82,9 @@ export default function SettingsPage() {
       setUserName(authUser.name || '');
       setUserEmail(authUser.email || '');
     }
-    let stale = false;
-    loadSettings();
-    return () => { stale = true; };
+    const controller = new AbortController();
+    loadSettings(controller.signal);
+    return () => { controller.abort(); };
   }, [authUser, loadSettings]);
 
   const saveSettings = useCallback(async (updates: Partial<UserSettings>, previousSettings?: UserSettings) => {
@@ -144,7 +147,7 @@ export default function SettingsPage() {
           </div>
           <p className="text-lg font-semibold mb-4">{t('failed_load')}</p>
           {error && <p className="text-sm text-gray-500 mb-4">{error}</p>}
-          <button type="button" onClick={loadSettings} className="btn btn-primary min-h-[44px]">{t('retry')}</button>
+          <button type="button" onClick={() => loadSettings()} className="btn btn-primary min-h-[44px]">{t('retry')}</button>
         </div>
       </div>
     );
