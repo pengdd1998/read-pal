@@ -103,6 +103,7 @@ export default function FlashcardsPage() {
 
  useEffect(() => {
  let stale = false;
+ setLoading(true);
  fetchDecks().finally(() => { if (!stale) setLoading(false); });
  const onFocus = () => { fetchDecks(); };
  window.addEventListener('focus', onFocus);

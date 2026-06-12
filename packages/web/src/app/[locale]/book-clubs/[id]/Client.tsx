@@ -21,7 +21,7 @@ export default function BookClubDetailPage() {
 
  const router = useRouter();
  const { club, setClub, loading, error, setError, refetch: refetchClub } = useBookClubDetail(clubId);
- const { progress, error: progressError } = useBookClubProgress(clubId, club?.currentBookId);
+ const { progress, loading: progressLoading, error: progressError } = useBookClubProgress(clubId, club?.currentBookId);
  const { messages, loading: discussionLoading, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError, refetch: refetchDiscussion } = useBookClubDiscussion(clubId);
  const [joining, setJoining] = useState(false);
  const [leaving, setLeaving] = useState(false);
@@ -129,7 +129,7 @@ export default function BookClubDetailPage() {
 
   {isMember && (
     <>
-      <ClubCurrentReading club={club} progress={progress} progressError={progressError} isAdmin={isAdmin} />
+      <ClubCurrentReading club={club} progress={progress} progressLoading={progressLoading} progressError={progressError} isAdmin={isAdmin} />
       <ClubMembersList members={club.clubMembers || []} memberCount={memberCount} />
       <ClubDiscussionPanel
         messages={messages}

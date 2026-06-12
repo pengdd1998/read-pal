@@ -9,11 +9,12 @@ import type { ClubDetail, MemberProgress } from './types';
 interface ClubCurrentReadingProps {
  club: ClubDetail;
  progress: MemberProgress[];
+ progressLoading: boolean;
  progressError: string | null;
  isAdmin: boolean;
 }
 
-export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club, progress, progressError, isAdmin }: ClubCurrentReadingProps) {
+export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club, progress, progressLoading, progressError, isAdmin }: ClubCurrentReadingProps) {
  const t = useTranslations('bookClubs');
 
  return (
@@ -38,7 +39,19 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
    </div>
 
    {/* Group progress */}
-   {progress.length > 0 && (
+   {progressLoading && (
+    <div className="space-y-2 animate-pulse">
+     <div className="h-3 bg-surface-2 rounded w-24" />
+     {Array.from({ length: 3 }).map((_, i) => (
+      <div key={i} className="flex items-center gap-3">
+       <div className="h-3 bg-surface-2 rounded w-24" />
+       <div className="flex-1 h-2 bg-surface-2 rounded-full" />
+       <div className="h-3 bg-surface-2 rounded w-10" />
+      </div>
+     ))}
+    </div>
+   )}
+   {!progressLoading && progress.length > 0 && (
    <div className="space-y-2">
     <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('groupProgress')}</p>
     {progress.map((p) => (
