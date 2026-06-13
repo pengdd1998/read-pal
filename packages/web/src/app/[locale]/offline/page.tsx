@@ -14,6 +14,14 @@ interface CachedBook {
   totalChapters: number;
 }
 
+interface IndexedBookRow {
+  bookId: string;
+  cachedAt?: number;
+  chapters?: unknown[];
+  chaptersCached?: number;
+  totalChapters?: number;
+}
+
 interface CachedBookRowProps {
   book: CachedBook;
   chaptersCachedLabel: string;
@@ -59,7 +67,7 @@ export default function OfflinePage() {
       const db = await openDB();
       const tx = db.transaction('bookContent', 'readonly');
       const store = tx.objectStore('bookContent');
-      const items = await new Promise<any[]>((resolve, reject) => {
+      const items = await new Promise<IndexedBookRow[]>((resolve, reject) => {
         const req = store.getAll();
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
@@ -83,8 +91,8 @@ export default function OfflinePage() {
           bookId: item.bookId,
           title,
           author,
-          chaptersCached: item.chaptersCached,
-          totalChapters: item.totalChapters,
+          chaptersCached: item.chaptersCached ?? 0,
+          totalChapters: item.totalChapters ?? 0,
         });
       }
       if (!staleRef.current) {
