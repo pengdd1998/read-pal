@@ -39,14 +39,23 @@ async def run_synthesis(
     include_notes = body.include_notes if body else True
     include_conversations = body.include_conversations if body else True
 
-    response = await synthesize(
-        db,
-        UUID(current_user['id']),
-        book_id,
-        include_highlights=include_highlights,
-        include_notes=include_notes,
-        include_conversations=include_conversations,
-    )
+    try:
+        response = await synthesize(
+            db,
+            UUID(current_user['id']),
+            book_id,
+            include_highlights=include_highlights,
+            include_notes=include_notes,
+            include_conversations=include_conversations,
+        )
+    except ValueError as exc:
+        raise not_found_error(str(exc)) from exc
+    except Exception as exc:
+        logger.warning('synthesis failed user=%s book=%s', current_user['id'], book_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
+        ) from exc
 
     if not response.success:
         raise not_found_error(t('errors.book_not_found'))
@@ -78,11 +87,18 @@ async def run_cross_book_synthesis(
             },
         }
 
-    response = await cross_book_synthesize(
-        db,
-        UUID(current_user['id']),
-        book_ids,
-    )
+    try:
+        response = await cross_book_synthesize(
+            db,
+            UUID(current_user['id']),
+            book_ids,
+        )
+    except Exception as exc:
+        logger.warning('cross-book synthesis failed user=%s', current_user['id'], exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
+        ) from exc
 
     return {
         'success': True,
@@ -97,12 +113,21 @@ async def run_book_comparison(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Compare two books — find common themes, unique perspectives, and connections."""
-    response = await compare_books(
-        db,
-        UUID(current_user['id']),
-        body.book_id_1,
-        body.book_id_2,
-    )
+    try:
+        response = await compare_books(
+            db,
+            UUID(current_user['id']),
+            body.book_id_1,
+            body.book_id_2,
+        )
+    except ValueError as exc:
+        raise not_found_error(str(exc)) from exc
+    except Exception as exc:
+        logger.warning('book comparison failed user=%s', current_user['id'], exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
+        ) from exc
 
     if not response.success:
         raise not_found_error(t('errors.book_not_found'))

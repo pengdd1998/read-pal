@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -38,13 +38,22 @@ async def generate_objectives(
 ) -> dict:
     """Generate study objectives for a chapter using LLM."""
     user_id = UUID(current_user['id'])
-    data = await svc_generate_objectives(
-        book_id=body.book_id,
-        chapter_title=body.chapter_title or 'this chapter',
-        chapter_index=body.chapter_index,
-        chapter_content=body.chapter_content or '',
-        user_id=user_id,
-    )
+    try:
+        data = await svc_generate_objectives(
+            book_id=body.book_id,
+            chapter_title=body.chapter_title or 'this chapter',
+            chapter_index=body.chapter_index,
+            chapter_content=body.chapter_content or '',
+            user_id=user_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.warning('study objectives failed user=%s book=%s', user_id, body.book_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
+        ) from exc
     return {'success': True, 'data': data}
 
 
@@ -55,13 +64,22 @@ async def generate_concept_checks(
 ) -> dict:
     """Generate concept check questions with answers and hints."""
     user_id = UUID(current_user['id'])
-    data = await svc_generate_checks(
-        book_id=body.book_id,
-        chapter_title=body.chapter_title or 'this chapter',
-        chapter_index=body.chapter_index,
-        chapter_content=body.chapter_content or '',
-        user_id=user_id,
-    )
+    try:
+        data = await svc_generate_checks(
+            book_id=body.book_id,
+            chapter_title=body.chapter_title or 'this chapter',
+            chapter_index=body.chapter_index,
+            chapter_content=body.chapter_content or '',
+            user_id=user_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.warning('concept checks failed user=%s book=%s', user_id, body.book_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
+        ) from exc
     return {'success': True, 'data': data}
 
 
