@@ -266,6 +266,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
   );
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);

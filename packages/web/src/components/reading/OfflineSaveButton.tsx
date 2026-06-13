@@ -20,10 +20,13 @@ export const OfflineSaveButton = React.memo(function OfflineSaveButton({ bookId 
  const mountedRef = useRef(true);
  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
- useEffect(() => () => {
-  mountedRef.current = false;
-  if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-  if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+ useEffect(() => {
+  mountedRef.current = true;
+  return () => {
+   mountedRef.current = false;
+   if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+   if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+  };
  }, []);
 
  // Check if already cached on mount

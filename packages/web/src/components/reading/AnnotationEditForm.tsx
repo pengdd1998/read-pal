@@ -26,7 +26,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
  const [saving, setSaving] = useState(false);
  const tagInputRef = useRef<HTMLInputElement>(null);
  const mountedRef = useRef(true);
- useEffect(() => () => { mountedRef.current = false; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleSave = async () => {
  setSaving(true);

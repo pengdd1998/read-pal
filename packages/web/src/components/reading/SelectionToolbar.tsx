@@ -37,10 +37,13 @@ export const SelectionToolbar = React.memo(function SelectionToolbar({
   const [showTagPicker, setShowTagPicker] = useState(false);
   const mountedRef = useRef(true);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  useEffect(() => () => {
-    mountedRef.current = false;
-    timersRef.current.forEach((t) => clearTimeout(t));
-  }, []);
+  useEffect(() => {
+   mountedRef.current = true;
+   return () => {
+     mountedRef.current = false;
+     timersRef.current.forEach((t) => clearTimeout(t));
+   };
+ }, []);
 
   const isMobile = useIsMobile();
 

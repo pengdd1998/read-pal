@@ -28,7 +28,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
  const [generating, setGenerating] = useState(false);
  const [genError, setGenError] = useState<string | null>(null);
  const mountedRef = useRef(true);
- useEffect(() => () => { mountedRef.current = false; }, []);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleGeneratePersonalBook = async () => {
  setGenerating(true);
