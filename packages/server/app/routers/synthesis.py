@@ -57,7 +57,11 @@ async def run_synthesis(
             detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
         ) from exc
 
-    if not response.success:
+    # Service uses success=False for both "book not found" (no error field)
+    # and "LLM fallback" (error field set, partial data still useful).
+    # Pass through LLM fallback as success=True with embedded data.error so
+    # the frontend can render the warning instead of an opaque 404.
+    if not response.success and response.error is None:
         raise not_found_error(t('errors.book_not_found'))
 
     return {
@@ -129,7 +133,11 @@ async def run_book_comparison(
             detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
         ) from exc
 
-    if not response.success:
+    # Service uses success=False for both "book not found" (no error field)
+    # and "LLM fallback" (error field set, partial data still useful).
+    # Pass through LLM fallback as success=True with embedded data.error so
+    # the frontend can render the warning instead of an opaque 404.
+    if not response.success and response.error is None:
         raise not_found_error(t('errors.book_not_found'))
 
     return {

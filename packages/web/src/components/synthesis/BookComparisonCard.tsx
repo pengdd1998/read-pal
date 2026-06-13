@@ -40,9 +40,14 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   }, { timeout: 120_000 });
   if (!mountedRef.current) return;
   if (res.success && res.data) {
-  setCompareResult(res.data);
+  // Backend returns success=true even on LLM failure, embedding the error in data.error
+  if (res.data.error) {
+   setCompareError(res.data.error);
   } else {
-  setCompareError(tRef.current('analysis_failed'));
+   setCompareResult(res.data);
+  }
+  } else {
+  setCompareError(res.error?.message || tRef.current('analysis_failed'));
   }
  } catch (error) {
   warn('BookComparisonCard: compare failed', error);

@@ -65,6 +65,8 @@ export interface AnalysisResult {
   report?: string;
   booksCovered?: number;
   insights?: string[];
+  /** Set by backend when LLM synthesis failed — partial/empty results follow. */
+  error?: string;
 }
 
 export interface SynthesisPanelProps {

@@ -53,9 +53,14 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   }, { timeout: 120_000 });
   if (!mountedRef.current) return;
   if (res.success && res.data) {
-  setResult(res.data);
+  // Backend returns success=true even on LLM failure, embedding the error in data.error
+  if (res.data.error) {
+   setError(res.data.error);
   } else {
-  setError(tRef.current('analysis_failed'));
+   setResult(res.data);
+  }
+  } else {
+  setError(res.error?.message || tRef.current('analysis_failed'));
   }
  } catch (error) {
   warn('SingleBookAnalysisCard: analyze failed', error);

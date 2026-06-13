@@ -73,9 +73,14 @@ export default function SynthesisPage() {
   const res = await api.get<AnalysisResult>('/api/synthesis/cross-book', undefined, { timeout: 120_000 });
   if (controller.signal.aborted) return;
   if (res.success && res.data) {
-  setResult(res.data);
+  // Backend returns success=true even on LLM failure, embedding the error in data.error
+  if (res.data.error) {
+   setError(res.data.error);
   } else {
-  setError(tRef.current('analysis_failed'));
+   setResult(res.data);
+  }
+  } else {
+  setError(res.error?.message || tRef.current('analysis_failed'));
   }
  } catch (err) {
   if (controller.signal.aborted) return;
