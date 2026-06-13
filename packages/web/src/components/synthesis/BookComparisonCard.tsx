@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
@@ -25,6 +25,8 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
  const [compareLoading, setCompareLoading] = useState(false);
  const [compareResult, setCompareResult] = useState<AnalysisResult | null>(null);
  const [compareError, setCompareError] = useState<string | null>(null);
+ const mountedRef = useRef(true);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleCompare = useCallback(async () => {
  if (!compareBook1 || !compareBook2 || compareBook1 === compareBook2) return;
@@ -36,6 +38,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   bookId1: compareBook1,
   bookId2: compareBook2,
   }, { timeout: 120_000 });
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setCompareResult(res.data);
   } else {
@@ -43,9 +46,10 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   }
  } catch (error) {
   warn('BookComparisonCard: compare failed', error);
+  if (!mountedRef.current) return;
   setCompareError(tRef.current('network_error'));
  } finally {
-  setCompareLoading(false);
+  if (mountedRef.current) setCompareLoading(false);
  }
  }, [compareBook1, compareBook2]);
 

@@ -80,29 +80,31 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  const [saved, setSaved] = useState(false);
  const [error, setError] = useState<string | null>(null);
  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const mountedRef = useRef(true);
 
  const loadPrefs = useCallback(async (signal?: AbortSignal) => {
  try {
   const res = await api.get<InterventionPrefs>(
   '/api/v1/interventions/preferences'
   );
-  if (signal?.aborted) return;
+  if (signal?.aborted || !mountedRef.current) return;
   if (res.success && res.data) {
   setPrefs({ ...DEFAULT_PREFS, ...res.data });
   }
  } catch (err) {
-  if (signal?.aborted) return;
+  if (signal?.aborted || !mountedRef.current) return;
   warn('InterventionPrefsSection: load failed', err);
   setError(tRef.current('failed_load_retry'));
  } finally {
-  if (!signal?.aborted) setLoading(false);
+  if (!signal?.aborted && mountedRef.current) setLoading(false);
  }
  }, []);
 
  useEffect(() => {
+ mountedRef.current = true;
  const ac = new AbortController();
  loadPrefs(ac.signal);
- return () => { ac.abort(); if (savedTimerRef.current) clearTimeout(savedTimerRef.current); };
+ return () => { mountedRef.current = false; ac.abort(); if (savedTimerRef.current) clearTimeout(savedTimerRef.current); };
  }, [loadPrefs]);
 
  async function savePrefs(updated: InterventionPrefs) {
@@ -114,18 +116,20 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
   '/api/v1/interventions/preferences',
   updated as unknown as Record<string, unknown>
   );
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setPrefs(res.data);
   setSaved(true);
-  { if (savedTimerRef.current) clearTimeout(savedTimerRef.current); savedTimerRef.current = setTimeout(() => setSaved(false), 2000); }
+  { if (savedTimerRef.current) clearTimeout(savedTimerRef.current); savedTimerRef.current = setTimeout(() => { if (mountedRef.current) setSaved(false); }, 2000); }
   } else {
   setError(t('failed_save'));
   }
  } catch (err) {
   warn('InterventionPrefsSection: save failed', err);
+  if (!mountedRef.current) return;
   setError(t('failed_save_retry'));
  }
- setSaving(false);
+ if (mountedRef.current) setSaving(false);
  }
 
  function handleToggle(key: keyof InterventionPrefs) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -21,6 +21,8 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
  const [validating, setValidating] = useState(false);
  const [saving, setSaving] = useState(false);
  const [validationError, setValidationError] = useState<string | null>(null);
+ const mountedRef = useRef(true);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  useEffect(() => {
  const s = initialSettings as Record<string, unknown> | null | undefined;
@@ -42,6 +44,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
   apiKey: apiKey.trim(),
   userId: userId.trim(),
   });
+  if (!mountedRef.current) return;
   if (!valRes.success || !valRes.data?.valid) {
   setValidationError(valRes.data?.error || t('zotero_invalid_credentials'));
   return;
@@ -50,15 +53,17 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
   zoteroApiKey: apiKey.trim(),
   zoteroUserId: userId.trim(),
   });
+  if (!mountedRef.current) return;
   if (saveRes.success) {
   setConnected(true);
   toast(t('zotero_connected') + (valRes.data.username ? ` (${valRes.data.username})` : ''), 'success');
   }
  } catch (err) {
   warn('ZoteroSection: connect failed', err);
+  if (!mountedRef.current) return;
   setValidationError(t('zotero_connect_failed'));
  } finally {
-  setValidating(false);
+  if (mountedRef.current) setValidating(false);
  }
  }
 
@@ -66,15 +71,17 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
  setSaving(true);
  try {
   await api.patch('/api/settings', { zoteroApiKey: '', zoteroUserId: '' });
+  if (!mountedRef.current) return;
   setConnected(false);
   setApiKey('');
   setUserId('');
   toast(t('zotero_disconnected'), 'success');
  } catch (err) {
   warn('ZoteroSection: disconnect failed', err);
+  if (!mountedRef.current) return;
   toast(t('zotero_disconnect_failed'), 'error');
  } finally {
-  setSaving(false);
+  if (mountedRef.current) setSaving(false);
  }
  }
 
