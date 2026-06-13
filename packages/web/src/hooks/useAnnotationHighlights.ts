@@ -125,7 +125,7 @@ export function useAnnotationHighlights(
         const parent = entry.element.parentNode;
         if (parent) {
           while (entry.element.firstChild) {
-            parent.insertBefore(entry.element.firstChild, parent);
+            parent.insertBefore(entry.element.firstChild, entry.element);
           }
           parent.removeChild(entry.element);
           parent.normalize();
