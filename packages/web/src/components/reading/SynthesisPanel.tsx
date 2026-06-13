@@ -49,6 +49,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
 }: SynthesisPanelProps) {
  const { toast } = useToast();
  const t = useTranslations('reader');
+ const ts = useTranslations('synthesis');
  const tRef = useRef(t); tRef.current = t;
  const [activeTab, setActiveTab] = useState<SynthesisAction>('cross_reference');
  const [loading, setLoading] = useState(false);
@@ -220,7 +221,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
    </p>
    {renderForm()}
    {error && (
-   <div role="alert" className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{error}</span><button type="button" onClick={handleAnalyze} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-400 rounded">{t("synthesis_retry")}</button></div>
+   <div role="alert" className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{error}</span><button type="button" onClick={handleAnalyze} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-400 rounded">{ts("synthesis_retry")}</button></div>
    )}
    {loading && (
    <div aria-live="polite" className="flex items-center gap-3 py-8 justify-center">

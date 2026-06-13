@@ -15,6 +15,7 @@ export default React.memo(function ActionButtons({
  onPrint,
 }: ActionButtonsProps) {
  const t = useTranslations('memoryBooks');
+ const tc = useTranslations('common');
  const [showConfirm, setShowConfirm] = useState(false);
 
  return (
@@ -32,7 +33,7 @@ export default React.memo(function ActionButtons({
    onClick={() => setShowConfirm(false)}
    className="px-2 py-1 rounded-lg bg-surface-2 hover:bg-surface-3 min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
    >
-   {t('cancel')}
+   {tc('cancel')}
    </button>
   </div>
   ) : (

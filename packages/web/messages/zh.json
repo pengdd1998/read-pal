@@ -259,6 +259,7 @@
     "footer_terms": "条款"
   },
   "auth": {
+    "loading": "加载中...",
     "login_title": "欢迎回来",
     "login_subtitle": "登录以继续你的阅读旅程",
     "login_subtitle_alt": "登录以继续阅读",
@@ -1108,6 +1109,8 @@
     "title": "设置",
     "profile_title": "个人资料",
     "appearance_title": "外观",
+    "reading_goals_title": "阅读目标",
+    "reading_friend_title": "阅读伙伴",
     "reading_title": "阅读",
     "notifications_title": "通知",
     "language_title": "语言",

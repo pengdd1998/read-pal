@@ -266,7 +266,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         ) : loadError ? (
           <div className="pt-4 border-t border-surface-2">
             <p role="alert" className="text-xs text-red-600 dark:text-red-400 mb-2">{t('offline_load_failed')}</p>
-            <button type="button" onClick={loadOfflineData} className="min-h-[44px] px-3 py-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('offline_retry')}</button>
+            <button type="button" onClick={loadOfflineData} className="min-h-[44px] px-3 py-1 text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">{t('retry')}</button>
           </div>
         ) : books.length > 0 && (
           <div className="pt-4 border-t border-surface-2">

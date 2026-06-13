@@ -10,6 +10,7 @@ import { warn } from '@/lib/logger';
 
 export const AccountSection = React.memo(function AccountSection() {
  const t = useTranslations('settings_page');
+ const tc = useTranslations('common');
  const [deleting, setDeleting] = useState(false);
  const [showDeleteModal, setShowDeleteModal] = useState(false);
  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
@@ -171,7 +172,7 @@ export const AccountSection = React.memo(function AccountSection() {
       onClick={() => setShowSignOutConfirm(false)}
       className="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 bg-surface-1 hover:bg-surface-2 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
      >
-      {t('cancel')}
+      {tc('cancel')}
      </button>
      <button type="button"
       onClick={() => { setShowSignOutConfirm(false); handleSignOut(); }}

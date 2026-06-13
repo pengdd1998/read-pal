@@ -23,7 +23,7 @@ const PROTECTED_PREFIXES = [
 ];
 
 export function MobileAuthGuard({ children }: { children: ReactNode }) {
- const t = useTranslations('auth');
+ const t = useTranslations('common');
  const { isAuthenticated, loading } = useAuth();
  const pathname = usePathname();
  const router = useRouter();
