@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { parseUTCDate } from '@/lib/date';
 import { useBookDetail } from '@/hooks/useBookDetail';
 import { BookDetailLoading, BookDetailError } from '@/components/book/BookDetailSkeleton';
 import {
@@ -107,7 +108,7 @@ export default function BookDetailPage() {
   };
   const status = statusConfig[book.status];
   const lastRead = book.lastReadAt
-    ? new Date(book.lastReadAt).toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' })
+    ? parseUTCDate(book.lastReadAt).toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' })
     : null;
   const totalAnnotations = annotationStats.highlights + annotationStats.notes + annotationStats.bookmarks;
   const highlights = allAnnotations.filter((a) => a.type === 'highlight');

@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { parseUTCDate } from '@/lib/date';
 import type { SessionData } from './types';
 
 interface ActivityHeatmapProps {
@@ -24,7 +25,7 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ sessions }:
  const cells = useMemo(() => {
  const sessionMap = new Map<string, SessionData>();
  for (const s of sessions) {
-  sessionMap.set(new Date(s.startedAt).toDateString(), s);
+  sessionMap.set(parseUTCDate(s.startedAt).toDateString(), s);
  }
 
  const result = [];

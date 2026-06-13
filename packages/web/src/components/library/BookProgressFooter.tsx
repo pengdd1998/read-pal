@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { parseUTCDate } from '@/lib/date';
 
 interface BookProgressFooterProps {
  status: 'unread' | 'reading' | 'completed';
@@ -30,7 +31,7 @@ export const BookProgressFooter = React.memo(function BookProgressFooter({
  const cfg = STATUS_CONFIG[status];
 
  const formattedDate = useMemo(() => lastReadAt
- ? new Date(lastReadAt).toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+ ? parseUTCDate(typeof lastReadAt === 'string' ? lastReadAt : lastReadAt.toISOString()).toLocaleDateString(locale, { month: 'short', day: 'numeric' })
  : null, [lastReadAt, locale]);
 
  return (

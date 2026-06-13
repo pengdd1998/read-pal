@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { parseUTCDate } from '@/lib/date';
 import type { Highlight } from './types';
 
 interface HighlightResultCardProps {
@@ -35,7 +36,7 @@ export const HighlightResultCard = React.memo(function HighlightResultCard({ hig
   </span>
   <div className="flex-1 min-w-0">
    <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{highlight.content}</p>
-   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{typeLabel} &middot; {new Date(highlight.createdAt).toLocaleDateString(locale)}</p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{typeLabel} &middot; {parseUTCDate(highlight.createdAt).toLocaleDateString(locale)}</p>
   </div>
   </div>
  </Link>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { parseUTCDate } from '@/lib/date';
 import { formatTime } from '@/lib/stats-utils';
 import type { SessionData } from './types';
 
@@ -42,7 +43,7 @@ const SessionRow = React.memo(function SessionRow({
  <div className="flex items-center gap-3 py-2 border-b border-surface-2 last:border-0">
   <div className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" />
   <span className="text-sm text-gray-600 dark:text-gray-300 flex-1 truncate">
-  {session.bookTitle || (session.startedAt ? new Date(session.startedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric' }) : '—')}
+  {session.bookTitle || (session.startedAt ? parseUTCDate(session.startedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric' }) : '—')}
   </span>
   <span className="text-xs text-gray-500 dark:text-gray-400">
   {t('session_pages', { count: session.pagesRead })}

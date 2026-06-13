@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { parseUTCDate } from '@/lib/date';
 import type { DiscussionMessage } from './types';
 
 interface ClubDiscussionPanelProps {
@@ -27,7 +28,7 @@ const MessageItem = React.memo(function MessageItem({
 }) {
  const locale = useLocale();
  const formattedDate = useMemo(() => {
-  const d = new Date(msg.createdAt);
+  const d = parseUTCDate(msg.createdAt);
   return `${d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`;
  }, [msg.createdAt, locale]);
  return (

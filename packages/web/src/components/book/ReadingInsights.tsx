@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { parseUTCDate } from '@/lib/date';
 import type { ReadingLogEntry } from '@/types/book';
 
 interface ReadingInsightsProps {
@@ -108,7 +109,7 @@ const SessionEntryItem = React.memo(function SessionEntryItem({
  t,
  locale,
 }: SessionEntryItemProps) {
- const date = new Date(entry.startedAt);
+ const date = parseUTCDate(entry.startedAt);
  const dateStr = date.toLocaleDateString(locale, {
  month: 'short',
  day: 'numeric',

@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { warn } from '@/lib/logger';
+import { parseUTCDate } from '@/lib/date';
 
 interface ApiKeyRowProps {
  k: ApiKeyData;
@@ -24,8 +25,8 @@ const ApiKeyRow = React.memo(function ApiKeyRow({ k, isRevoking, revokeLabel, re
     <div className="text-sm font-medium truncate">{k.name}</div>
     <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
      <code className="font-mono">{k.keyPrefix}...</code>
-     <span>{createdLabel} {new Date(k.createdAt).toLocaleDateString(locale)}</span>
-     {k.lastUsedAt && <span>{lastUsedLabel} {new Date(k.lastUsedAt).toLocaleDateString(locale)}</span>}
+     <span>{createdLabel} {parseUTCDate(k.createdAt).toLocaleDateString(locale)}</span>
+     {k.lastUsedAt && <span>{lastUsedLabel} {parseUTCDate(k.lastUsedAt).toLocaleDateString(locale)}</span>}
     </div>
    </div>
    <button type="button"
