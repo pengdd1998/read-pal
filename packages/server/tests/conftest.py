@@ -234,6 +234,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         patch('redis.asyncio.from_url', return_value=mock_redis),
         patch('app.services.llm.get_llm', return_value=mock_llm),
         patch('app.services.llm.registry.get_registry', return_value=mock_registry),
+        patch('app.services.upload_service._safe_precompute', new_callable=AsyncMock),
     ):
         async with AsyncClient(
             transport=ASGITransport(app=app),

@@ -191,6 +191,7 @@ class TestStreamingErrors:
         from app.services.companion_service import stream_chat
 
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         user_id = uuid4()
         book_id = uuid4()
 
@@ -238,6 +239,7 @@ class TestStreamingErrors:
         from app.services.companion_service import stream_chat
 
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         user_id = uuid4()
         book_id = uuid4()
 
@@ -295,6 +297,7 @@ class TestStreamingErrors:
         from app.services.companion_service import stream_chat
 
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         user_id = uuid4()
         book_id = uuid4()
 

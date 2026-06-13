@@ -300,10 +300,11 @@ class TestCreateBookWithContent:
         with (
             patch('app.services.upload_service.process_epub', new_callable=AsyncMock, return_value=parser_result),
             patch('app.services.upload_service.process_pdf', new_callable=AsyncMock),
-            patch('app.services.upload_service.asyncio.create_task'),
+            patch('app.services.upload_service._safe_precompute', new_callable=AsyncMock),
         ):
             db = AsyncMock()
             db.flush = AsyncMock()
+            db.add = MagicMock()
             db.refresh = AsyncMock()
 
             book = await create_book_with_content(
@@ -338,10 +339,11 @@ class TestCreateBookWithContent:
         with (
             patch('app.services.upload_service.process_pdf', new_callable=AsyncMock, return_value=parser_result),
             patch('app.services.upload_service.process_epub', new_callable=AsyncMock),
-            patch('app.services.upload_service.asyncio.create_task'),
+            patch('app.services.upload_service._safe_precompute', new_callable=AsyncMock),
         ):
             db = AsyncMock()
             db.flush = AsyncMock()
+            db.add = MagicMock()
             db.refresh = AsyncMock()
 
             book = await create_book_with_content(
@@ -371,10 +373,11 @@ class TestCreateBookWithContent:
 
         with (
             patch('app.services.upload_service.process_epub', new_callable=AsyncMock, return_value=parser_result),
-            patch('app.services.upload_service.asyncio.create_task'),
+            patch('app.services.upload_service._safe_precompute', new_callable=AsyncMock),
         ):
             db = AsyncMock()
             db.flush = AsyncMock()
+            db.add = MagicMock()
             db.refresh = AsyncMock()
 
             book = await create_book_with_content(
@@ -405,10 +408,11 @@ class TestCreateBookWithContent:
 
         with (
             patch('app.services.upload_service.process_epub', new_callable=AsyncMock, return_value=parser_result),
-            patch('app.services.upload_service.asyncio.create_task'),
+            patch('app.services.upload_service._safe_precompute', new_callable=AsyncMock),
         ):
             db = AsyncMock()
             db.flush = AsyncMock()
+            db.add = MagicMock()
             db.refresh = AsyncMock()
 
             book = await create_book_with_content(
@@ -437,10 +441,11 @@ class TestCreateBookWithContent:
 
         with (
             patch('app.services.upload_service.process_epub', new_callable=AsyncMock, return_value=parser_result),
-            patch('app.services.upload_service.asyncio.create_task'),
+            patch('app.services.upload_service._safe_precompute', new_callable=AsyncMock),
         ):
             db = AsyncMock()
             db.flush = AsyncMock()
+            db.add = MagicMock()
             db.refresh = AsyncMock()
 
             book = await create_book_with_content(
@@ -468,10 +473,11 @@ class TestCreateBookWithContent:
 
         with (
             patch('app.services.upload_service.process_epub', new_callable=AsyncMock, return_value=parser_result),
-            patch('app.services.upload_service.asyncio.create_task'),
+            patch('app.services.upload_service._safe_precompute', new_callable=AsyncMock),
         ):
             db = AsyncMock()
             db.flush = AsyncMock()
+            db.add = MagicMock()
             db.refresh = AsyncMock()
 
             book = await create_book_with_content(
