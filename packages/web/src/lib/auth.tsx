@@ -70,8 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   getAuthTokenAsync().then(async (savedToken) => {
   const savedUser = await getItem('user');
   if (savedToken && savedUser) {
-   setToken(savedToken);
-   setUser(JSON.parse(savedUser));
+   try {
+    setUser(JSON.parse(savedUser));
+    setToken(savedToken);
+   } catch (err) {
+    warn('auth: failed to parse stored user on Capacitor restore', err);
+   }
   }
   setLoading(false);
   });
