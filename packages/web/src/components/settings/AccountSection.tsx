@@ -6,11 +6,9 @@ import { useRouter } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
 import { safeGetItem, safeRemoveItem } from '@/lib/safe-storage';
-import { useToast } from '@/components/Toast';
 import { warn } from '@/lib/logger';
 
 export const AccountSection = React.memo(function AccountSection() {
- useToast();
  const t = useTranslations('settings_page');
  const [deleting, setDeleting] = useState(false);
  const [showDeleteModal, setShowDeleteModal] = useState(false);

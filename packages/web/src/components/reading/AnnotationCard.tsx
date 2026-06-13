@@ -3,7 +3,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
-import { useToast } from '@/components/Toast';
 import { AnnotationEditForm } from './AnnotationEditForm';
 import { useShareAsImage } from '@/hooks/useShareAsImage';
 
@@ -23,7 +22,6 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
  const t = useTranslations('reader');
  const tRef = useRef(t); tRef.current = t;
  const tc = useTranslations('common');
- useToast();
  const [editing, setEditing] = useState(false);
  const [sharing, setSharing] = useState(false);
  const [confirmDelete, setConfirmDelete] = useState(false);

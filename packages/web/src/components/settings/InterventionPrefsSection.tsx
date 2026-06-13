@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
 import { warn } from '@/lib/logger';
 
 interface InterventionPrefs {
@@ -75,7 +74,6 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 export const InterventionPrefsSection = React.memo(function InterventionPrefsSection() {
  const t = useTranslations('settings_page');
  const tRef = useRef(t); tRef.current = t;
- useToast();
  const [prefs, setPrefs] = useState<InterventionPrefs>(DEFAULT_PREFS);
  const [loading, setLoading] = useState(true);
  const [saving, setSaving] = useState(false);
