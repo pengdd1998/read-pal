@@ -19,6 +19,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  const [success, setSuccess] = useState(false);
  const [error, setError] = useState('');
  const [dragOver, setDragOver] = useState(false);
+ const [lastFile, setLastFile] = useState<File | null>(null);
  const fileInputRef = useRef<HTMLInputElement>(null);
  const abortControllerRef = useRef<AbortController | null>(null);
  const uploadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,6 +46,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  setUploadProgress(0);
  setError('');
  setSuccess(false);
+ setLastFile(file);
 
  const controller = new AbortController();
  abortControllerRef.current = controller;
@@ -65,6 +67,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   const { book } = result.data;
   setUploadProgress(100);
   setSuccess(true);
+  setLastFile(null);
   uploadTimerRef.current = setTimeout(() => {
    if (!mountedRef.current) return;
    uploadTimerRef.current = null;
@@ -97,14 +100,21 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   ext === 'pdf';
 
  if (!isValid) {
+  setLastFile(null);
   setError(t('upload_format_error'));
   return;
  }
  if (file.size > 100 * 1024 * 1024) {
+  setLastFile(null);
   setError(t('upload_size_error'));
   return;
  }
  uploadFile(file);
+ };
+
+ const handleRetry = () => {
+  if (lastFile) uploadFile(lastFile);
+  else setError('');
  };
 
  const handleDrop = (e: React.DragEvent) => {
@@ -213,7 +223,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   {error && (
   <div role="alert" className="mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-lg text-sm flex items-center justify-between">
    <span>{error}</span>
-   <button type="button" onClick={() => { setError(''); }} className="text-xs font-medium underline hover:no-underline focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none">{t("retry")}</button>
+   <button type="button" onClick={handleRetry} disabled={!lastFile || uploading} className="text-xs font-medium underline hover:no-underline focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed min-h-[44px] inline-flex items-center">{t("retry")}</button>
   </div>
   )}
  </div>
