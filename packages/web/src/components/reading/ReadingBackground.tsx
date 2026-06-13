@@ -46,6 +46,9 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
   setSceneData(result.data);
   }
  } catch (err) {
+  // CanceledError is expected — we abort previous requests before starting new ones
+  // and abort on unmount. Don't warn for intentional cancellations.
+  if (ctrl.signal.aborted || (err as { name?: string })?.name === 'CanceledError') return;
   warn("ReadingBackground: mood scene fetch failed", err);
  } finally {
   clearTimeout(timeout);
