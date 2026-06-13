@@ -87,7 +87,7 @@ export const ExportActions = React.memo(function ExportActions({
  setZoteroExporting(true);
  try {
   const res = await authFetch(`/api/v1/export/${bookId}/zotero`);
-  if (!res.ok) throw new Error('Export failed');
+  if (!res.ok) throw new Error('EXPORT_FAILED');
   const text = await res.text();
   downloadBlob(
    text,

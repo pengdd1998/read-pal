@@ -1624,7 +1624,8 @@
     "load_error": "加载缓存书籍失败",
     "tryAgain": "重试",
     "no_offline_books_title": "没有离线可用的书籍",
-    "no_offline_books_desc": "在线时打开过的书籍会被缓存以供离线阅读。连接网络并打开一本书即可使其离线可用。"
+    "no_offline_books_desc": "在线时打开过的书籍会被缓存以供离线阅读。连接网络并打开一本书即可使其离线可用。",
+    "book_fallback": "书籍 {id}"
   },
   "bookClubs": {
     "pageTitle": "读书会",

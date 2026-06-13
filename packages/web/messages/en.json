@@ -1624,7 +1624,8 @@
     "load_error": "Failed to load cached books",
     "tryAgain": "Retry",
     "no_offline_books_title": "No Books Available Offline",
-    "no_offline_books_desc": "Books you've opened while online will be cached for offline reading. Connect to the internet and open a book to make it available."
+    "no_offline_books_desc": "Books you've opened while online will be cached for offline reading. Connect to the internet and open a book to make it available.",
+    "book_fallback": "Book {id}"
   },
   "welcome": {
     "page_title": "Welcome",

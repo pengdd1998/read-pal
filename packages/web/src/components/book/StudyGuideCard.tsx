@@ -34,7 +34,7 @@ export const StudyGuideCard = React.memo(function StudyGuideCard({
  try {
   setGenerating(true);
   const res = await authFetch(`/api/v1/export/${bookId}/study_guide`);
-  if (!res.ok) throw new Error('Export failed');
+  if (!res.ok) throw new Error('EXPORT_FAILED');
   const text = await res.text();
   const blob = new Blob([text], { type: 'text/markdown; charset=utf-8' });
   const url = URL.createObjectURL(blob);

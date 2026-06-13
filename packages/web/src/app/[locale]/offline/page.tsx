@@ -69,7 +69,7 @@ export default function OfflinePage() {
       const apiCache = await caches.open('readpal-api-v5');
       const books: CachedBook[] = [];
       for (const item of items) {
-        let title = `Book ${item.bookId.slice(0, 8)}`;
+        let title = tRef.current('book_fallback', { id: item.bookId.slice(0, 8) });
         let author = '';
         try {
           const apiResp = await apiCache.match(new Request(`/api/v1/books/${item.bookId}`));
