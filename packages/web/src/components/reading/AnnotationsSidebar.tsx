@@ -63,21 +63,18 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
  const [viewMode, setViewMode] = useState<ViewMode>('list');
  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
- // Stabilize prop callbacks for memoized children
  const stableOnDeleteAnnotation = useCallback((id: string) => onDeleteAnnotation(id), [onDeleteAnnotation]);
  const stableOnUpdateAnnotation = useCallback((updated: Annotation) => onUpdateAnnotation(updated), [onUpdateAnnotation]);
  const stableOnScrollToAnnotation = useCallback((annotation: Annotation) => onScrollToAnnotation(annotation), [onScrollToAnnotation]);
 
- // Stable callbacks for SidebarHeader to avoid defeating React.memo
  const handleToggleViewMode = useCallback(() => setViewMode((v) => v === 'list' ? 'outline' : 'list'), []);
  const handleToggleBulkMode = useCallback(() => setBulkMode((v) => !v), []);
  const handleShowShareDialog = useCallback(() => setShowShareDialog(true), []);
  const handleShowExportModal = useCallback(() => setShowExportModal(true), []);
-
- // Stable callback for TagFilterChips
  const handleClearTags = useCallback(() => setSelectedTags([]), []);
+ const handleCloseExport = useCallback(() => setShowExportModal(false), []);
+ const handleCloseShare = useCallback(() => setShowShareDialog(false), []);
 
- // Escape key to close
  useEffect(() => {
  if (!isOpen) return;
  const handleKeyDown = (e: KeyboardEvent) => {
@@ -98,40 +95,42 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
  selectedTags,
  });
 
- const toggleTag = (tag: string) => {
+ const toggleTag = useCallback((tag: string) => {
  setSelectedTags((prev) =>
   prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
  );
- };
+ }, []);
 
- const toggleSelect = (id: string) => {
+ const toggleSelect = useCallback((id: string) => {
  setSelectedIds((prev) => {
   const next = new Set(prev);
   if (next.has(id)) next.delete(id);
   else next.add(id);
   return next;
  });
- };
+ }, []);
 
- const selectAll = () => setSelectedIds(new Set(filtered.map((a) => a.id)));
- const deselectAll = () => setSelectedIds(new Set());
+ const selectAll = useCallback(() => setSelectedIds(new Set(filtered.map((a) => a.id))), [filtered]);
+ const deselectAll = useCallback(() => setSelectedIds(new Set()), []);
 
- const bulkDelete = () => {
+ const bulkDelete = useCallback(() => {
  for (const id of selectedIds) onDeleteAnnotation(id);
  setSelectedIds(new Set());
  setBulkMode(false);
  setConfirmBulkDelete(false);
- };
+ }, [selectedIds, onDeleteAnnotation]);
 
- const requestBulkDelete = () => {
+ const requestBulkDelete = useCallback(() => {
  setConfirmBulkDelete(true);
- };
+ }, []);
 
- const exitBulkMode = () => {
+ const exitBulkMode = useCallback(() => {
  setBulkMode(false);
  setSelectedIds(new Set());
  setConfirmBulkDelete(false);
- };
+ }, []);
+
+ const handleCancelBulkDelete = useCallback(() => setConfirmBulkDelete(false), []);
 
  return (
  <>
@@ -184,7 +183,7 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
    confirmDelete={confirmBulkDelete}
    onBulkDelete={requestBulkDelete}
    onConfirmBulkDelete={bulkDelete}
-   onCancelBulkDelete={() => setConfirmBulkDelete(false)}
+   onCancelBulkDelete={handleCancelBulkDelete}
    onSelectAll={selectAll}
    onDeselectAll={deselectAll}
    onExitBulkMode={exitBulkMode}
@@ -222,7 +221,7 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
    bookId={bookId}
    bookTitle={bookTitle}
    availableTags={uniqueTags}
-   onClose={() => setShowExportModal(false)}
+   onClose={handleCloseExport}
   />
   )}
 
@@ -236,7 +235,7 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
    totalPages={totalPages}
    currentPage={currentPage}
    progress={progress}
-   onClose={() => setShowShareDialog(false)}
+   onClose={handleCloseShare}
   />
   )}
  </>
