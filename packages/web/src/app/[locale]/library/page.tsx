@@ -63,6 +63,7 @@ export default function LibraryPage() {
    </svg>
    <input
     type="text"
+    autoComplete="off"
     value={searchQuery}
     onChange={(e) => setSearchQuery(e.target.value)}
     placeholder={t('search_library')}
@@ -123,6 +124,7 @@ export default function LibraryPage() {
    </svg>
    <input
     type="text"
+    autoComplete="off"
     value={searchQuery}
     onChange={(e) => setSearchQuery(e.target.value)}
     placeholder={t('search_library')}

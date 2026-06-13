@@ -194,6 +194,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
    <div className="flex gap-1.5">
    <input
     type="text"
+    autoComplete="off"
     value={newName}
     onChange={(e) => setNewName(e.target.value)}
     onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setShowCreate(false); }}

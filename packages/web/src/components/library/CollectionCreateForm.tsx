@@ -40,6 +40,7 @@ export const CollectionCreateForm = React.memo(function CollectionCreateForm({
  <div className="mb-3 p-3 bg-surface-0 border border-surface-3 rounded-xl space-y-2 animate-slide-up">
   <input
   type="text"
+  autoComplete="off"
   value={newName}
   onChange={(e) => onNameChange(e.target.value)}
   onKeyDown={(e) => { if (e.key === 'Enter') onCreate(); if (e.key === 'Escape') onCancel(); }}

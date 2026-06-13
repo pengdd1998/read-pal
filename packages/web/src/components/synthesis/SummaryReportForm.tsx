@@ -31,6 +31,7 @@ export const SummaryReportForm = React.memo(function SummaryReportForm({
   <input
    id="focus-input"
    type="text"
+   autoComplete="off"
    value={focus}
    onChange={(e) => onFocusChange(e.target.value)}
    placeholder={t('synthesis_report_placeholder')}

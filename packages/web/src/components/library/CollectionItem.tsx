@@ -38,6 +38,7 @@ export const CollectionItem = React.memo(function CollectionItem({
   <div className="flex items-center gap-1.5 px-3 py-2">
    <input
    type="text"
+   autoComplete="off"
    value={editName}
    onChange={(e) => onEditNameChange(e.target.value)}
    onKeyDown={(e) => { if (e.key === 'Enter') onRename(); if (e.key === 'Escape') onCancelEdit(); }}

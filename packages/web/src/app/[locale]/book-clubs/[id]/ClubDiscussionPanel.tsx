@@ -117,6 +117,7 @@ export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
   <div className="flex gap-2">
    <input
    type="text"
+   autoComplete="off"
    placeholder={t('discussionPlaceholder')}
    aria-label={t('discussionPlaceholder')}
    value={newMessage}

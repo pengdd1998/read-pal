@@ -31,6 +31,7 @@ export const CrossReferenceForm = React.memo(function CrossReferenceForm({
   <input
    id="concept-input"
    type="text"
+   autoComplete="off"
    value={concept}
    onChange={(e) => onConceptChange(e.target.value)}
    placeholder={t('synthesis_cross_ref_placeholder')}

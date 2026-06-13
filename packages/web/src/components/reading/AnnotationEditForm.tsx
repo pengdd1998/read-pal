@@ -145,6 +145,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   <div className="relative">
    <input
    ref={tagInputRef}
+   autoComplete="off"
    value={tagInput}
    onChange={(e) => setTagInput(e.target.value)}
    onKeyDown={handleTagKeyDown}

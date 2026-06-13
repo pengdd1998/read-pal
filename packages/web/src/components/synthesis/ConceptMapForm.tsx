@@ -27,6 +27,7 @@ export const ConceptMapForm = React.memo(function ConceptMapForm({
   <input
    id="topic-input"
    type="text"
+   autoComplete="off"
    value={topic}
    onChange={(e) => onTopicChange(e.target.value)}
    placeholder={t('synthesis_concept_map_placeholder')}

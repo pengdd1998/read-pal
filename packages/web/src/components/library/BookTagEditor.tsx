@@ -91,6 +91,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
   {editingTags ? (
   <input
    type="text"
+   autoComplete="off"
    value={tagInput}
    onChange={(e) => setTagInput(e.target.value)}
    onKeyDown={(e) => { e.stopPropagation(); handleAddTag(e); }}

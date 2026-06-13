@@ -168,6 +168,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
 
   <input
    type="text"
+   autoComplete="off"
    value={searchQuery}
    onChange={(e) => setSearchQuery(e.target.value)}
    placeholder={t('outline_search_placeholder')}

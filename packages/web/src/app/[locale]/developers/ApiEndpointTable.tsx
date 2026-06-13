@@ -47,6 +47,7 @@ export const ApiEndpointTable = React.memo(function ApiEndpointTable() {
 
   <input
   type="text"
+  autoComplete="off"
   placeholder={t('endpoints_filter')}
   value={filter}
   onChange={(e) => setFilter(e.target.value)}

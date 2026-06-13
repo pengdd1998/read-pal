@@ -31,6 +31,7 @@ export const ContradictionsForm = React.memo(function ContradictionsForm({
   <input
    id="topic-input"
    type="text"
+   autoComplete="off"
    value={topic}
    onChange={(e) => onTopicChange(e.target.value)}
    placeholder={t('synthesis_contradictions_placeholder')}
