@@ -23,11 +23,19 @@ export function ServiceWorkerRegistrar() {
  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
  let mounted = true;
 
+ // Track registration-scoped listeners so the outer cleanup can remove them.
+ // (Returning cleanup from inside .then() loses it — the promise's resolved
+ // value is not treated as a cleanup function by React.)
+ let activeReg: ServiceWorkerRegistration | null = null;
+ let activeOnFocus: (() => void) | null = null;
+ let activeOnUpdateFound: (() => void) | null = null;
+
  navigator.serviceWorker
   .register('/sw.js')
   .then((reg) => {
   if (!mounted) return;
   setRegistration(reg);
+  activeReg = reg;
 
   if (reg.waiting) {
    setUpdateAvailable(true);
@@ -50,17 +58,14 @@ export function ServiceWorkerRegistrar() {
   };
 
   reg.addEventListener('updatefound', onUpdateFound);
+  activeOnUpdateFound = onUpdateFound;
 
   // Check for updates when the tab gains focus
   const onFocus = () => {
    reg.update().catch((err) => { warn('SW update check failed:', err); });
   };
   window.addEventListener('focus', onFocus);
-
-  return () => {
-   window.removeEventListener('focus', onFocus);
-   reg.removeEventListener('updatefound', onUpdateFound);
-  };
+  activeOnFocus = onFocus;
   })
   .catch((err) => { warn('SW registration failed:', err); });
 
@@ -87,6 +92,10 @@ export function ServiceWorkerRegistrar() {
 
  return () => {
   mounted = false;
+  if (activeOnFocus) window.removeEventListener('focus', activeOnFocus);
+  if (activeOnUpdateFound && activeReg) {
+  activeReg.removeEventListener('updatefound', activeOnUpdateFound);
+  }
   navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
   navigator.serviceWorker.removeEventListener('message', onMessage);
  };
