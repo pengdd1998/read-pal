@@ -87,8 +87,8 @@ export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionPr
               {t('what_stuck')}
             </h4>
             <div className="space-y-2">
-              {stuck.map((item, i) => (
-                <StuckItemCard key={i} item={item} />
+              {stuck.map((item) => (
+                <StuckItemCard key={item.concept} item={item} />
               ))}
             </div>
           </div>
@@ -101,8 +101,8 @@ export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionPr
               {t('what_slipping')}
             </h4>
             <div className="space-y-2">
-              {slipping.map((item, i) => (
-                <SlippingItemCard key={i} item={item} />
+              {slipping.map((item) => (
+                <SlippingItemCard key={item.concept} item={item} />
               ))}
             </div>
           </div>

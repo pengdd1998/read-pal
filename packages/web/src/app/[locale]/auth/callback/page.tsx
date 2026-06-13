@@ -59,7 +59,7 @@ function OAuthCallback() {
  return (
  <div className="min-h-[80vh] flex items-center justify-center">
   <div className="text-center space-y-3">
-  <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+  <div aria-hidden="true" className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
   <p className="text-sm text-gray-500 dark:text-gray-400">{t('completing_sign_in')}</p>
   </div>
  </div>

@@ -32,7 +32,7 @@ export const WelcomeIntro = React.memo(function WelcomeIntro({
 
       {loading ? (
         <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
-          <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          <div aria-hidden="true" className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
           {t('preparing')}
         </div>
       ) : error ? (

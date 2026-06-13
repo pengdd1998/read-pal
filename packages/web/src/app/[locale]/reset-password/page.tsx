@@ -186,7 +186,7 @@ export default function ResetPasswordPage() {
  <Suspense fallback={
   <div className="min-h-[80vh] flex items-center justify-center">
   <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-   <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+   <div aria-hidden="true" className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
    {t('loading')}
   </div>
   </div>

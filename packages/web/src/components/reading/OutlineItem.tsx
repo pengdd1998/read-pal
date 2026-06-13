@@ -51,6 +51,7 @@ export const OutlineItem = memo(function OutlineItem({
    } ${annotation.type === 'highlight' ? 'line-clamp-2' : 'line-clamp-3'}`}>
    {annotation.type === 'highlight' && annotation.color && (
     <span
+    aria-hidden="true"
     className="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle"
     style={{ backgroundColor: annotation.color }}
     />

@@ -73,8 +73,8 @@ export default React.memo(function ConversationsSection({ data }: ConversationsS
       )}
 
       <div className="space-y-5">
-        {breakthroughs.map((bt, i) => (
-          <BreakthroughCard key={i} bt={bt} />
+        {breakthroughs.map((bt) => (
+          <BreakthroughCard key={bt.title} bt={bt} />
         ))}
       </div>
     </div>

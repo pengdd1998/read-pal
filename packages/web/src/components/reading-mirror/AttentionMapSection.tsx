@@ -78,8 +78,8 @@ export default React.memo(function AttentionMapSection({ data }: AttentionMapSec
             {t('peak_moments')}
           </h4>
           <div className="space-y-2">
-            {peaks.map((peak, i) => (
-              <PeakMomentRow key={i} peak={peak} />
+            {peaks.map((peak) => (
+              <PeakMomentRow key={peak.date} peak={peak} />
             ))}
           </div>
         </div>

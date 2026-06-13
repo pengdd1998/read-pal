@@ -36,7 +36,7 @@ export const SavingIndicator = React.memo(function SavingIndicator({
         </>
       ) : (
         <>
-          <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          <div aria-hidden="true" className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
           {savingText}
         </>
       )}

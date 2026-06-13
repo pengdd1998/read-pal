@@ -80,8 +80,8 @@ export default React.memo(function AnnotationsWovenSection({ data }: Annotations
 
       {/* Phase timeline */}
       <div className="relative pl-6 border-l-2 border-amber-200 dark:border-amber-800 space-y-6">
-        {phases.map((phase, i) => (
-          <PhaseTimelineItem key={i} phase={phase} />
+        {phases.map((phase) => (
+          <PhaseTimelineItem key={phase.name} phase={phase} />
         ))}
       </div>
     </div>

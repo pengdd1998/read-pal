@@ -182,7 +182,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
    <div
     tabIndex={-1}
     onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onDeleteCancel(); } }}
-    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-36 rounded-lg bg-gray-900 shadow-xl border border-gray-700 dark:border-gray-700 p-2 z-50 animate-in fade-in duration-150"
+    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-36 rounded-lg bg-gray-900 shadow-xl border border-gray-700 p-2 z-50 animate-in fade-in duration-150"
     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
    >
     <p className="text-[10px] text-gray-300 text-center mb-2">{t('card_confirm_delete')}</p>
