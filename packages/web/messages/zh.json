@@ -2297,7 +2297,15 @@
     "dashboard_title": "仪表盘",
     "dashboard_description": "你的阅读伴侣——追踪进度、查看统计、管理阅读目标、获取 AI 洞察。",
     "welcome_title": "欢迎",
-    "welcome_description": "开始使用 read-pal——认识你的 AI 阅读伴侣，开启你的阅读之旅。"
+    "welcome_description": "开始使用 read-pal——认识你的 AI 阅读伴侣，开启你的阅读之旅。",
+    "reader_title": "阅读器",
+    "reader_description": "沉浸式阅读体验，配备 AI 伴侣对话、高亮、注释、书签和多主题支持。",
+    "reader_og_title": "阅读器 | read-pal",
+    "reader_og_description": "与 AI 伴侣一起阅读，解释概念、回答问题，帮助你深入理解。",
+    "search_title": "搜索",
+    "search_description": "通过 AI 驱动的语义搜索，跨书籍、高亮和注释进行检索。",
+    "book_detail_title": "书籍详情",
+    "book_detail_description": "查看书籍详情、阅读进度、统计、高亮，并与你的 AI 伴侣讨论。"
   },
   "readingMirror": {
     "by_author": "作者：{author}",

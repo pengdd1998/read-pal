@@ -1,15 +1,18 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
- title: 'Reader',
- description:
- 'Immersive reading experience with AI companion chat, highlights, annotations, bookmarks, and multi-theme support.',
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+ const { locale } = await params;
+ const t = await getTranslations({ locale, namespace: 'seo' });
+ return {
+ title: t('reader_title'),
+ description: t('reader_description'),
  openGraph: {
- title: 'Reader | read-pal',
- description:
-  'Read with AI companions that explain concepts, answer questions, and help you learn deeply.',
+ title: t('reader_og_title'),
+ description: t('reader_og_description'),
  },
-};
+ };
+}
 
 export default function ReadLayout({
  children,

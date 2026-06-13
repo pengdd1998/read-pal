@@ -2297,7 +2297,15 @@
     "dashboard_title": "Dashboard",
     "dashboard_description": "Your reading companion — track progress, view stats, manage reading goals, and get AI-powered insights.",
     "welcome_title": "Welcome",
-    "welcome_description": "Get started with read-pal — meet your AI reading companion and begin your reading journey."
+    "welcome_description": "Get started with read-pal — meet your AI reading companion and begin your reading journey.",
+    "reader_title": "Reader",
+    "reader_description": "Immersive reading experience with AI companion chat, highlights, annotations, bookmarks, and multi-theme support.",
+    "reader_og_title": "Reader | read-pal",
+    "reader_og_description": "Read with AI companions that explain concepts, answer questions, and help you learn deeply.",
+    "search_title": "Search",
+    "search_description": "Search across your books, highlights, and annotations with AI-powered semantic search.",
+    "book_detail_title": "Book Detail",
+    "book_detail_description": "View book details, reading progress, stats, highlights, and discuss with your AI companion."
   },
   "readingMirror": {
     "by_author": "by {author}",
