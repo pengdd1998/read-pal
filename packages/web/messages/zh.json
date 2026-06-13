@@ -1843,7 +1843,11 @@
     "durationHm": "{hours}小时 {mins}分钟",
     "popupBlocked": "弹出窗口被阻止，请允许本站弹出窗口。",
     "regenerate_confirm": "重新生成？这将覆盖当前的阅读镜像。",
-    "confirm": "确认"
+    "confirm": "确认",
+    "mirror_completely_broken": "所有章节均生成失败。你的阅读数据完好，请尝试重新生成。",
+    "mirror_partially_broken": "{total} 个章节中有 {failed} 个生成失败。可重新生成以重试。",
+    "section_failed_label": "失败",
+    "regenerate_cta": "重新生成"
   },
   "welcome": {
     "page_title": "欢迎",

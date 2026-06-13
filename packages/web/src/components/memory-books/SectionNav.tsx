@@ -57,6 +57,7 @@ export default React.memo(function SectionNav({
    {sections.map((section, i) => (
    <option key={section.id || i} value={i}>
     {getSectionTitle(section.type, tr)}
+    {section.error ? ` · ${t('section_failed_label')}` : ''}
    </option>
    ))}
   </select>
@@ -71,13 +72,21 @@ export default React.memo(function SectionNav({
     <button type="button"
     key={section.id || i}
     onClick={() => setActiveSection(i)}
-    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+    aria-current={activeSection === i ? 'true' : undefined}
+    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
      activeSection === i
      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-surface-1'
     }`}
     >
-    {getSectionTitle(section.type, tr)}
+    <span className="flex-1 truncate">{getSectionTitle(section.type, tr)}</span>
+    {section.error && (
+    <span
+     aria-label={t('section_failed_label')}
+     title={t('section_failed_label')}
+     className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400"
+    />
+    )}
     </button>
    ))}
    </div>

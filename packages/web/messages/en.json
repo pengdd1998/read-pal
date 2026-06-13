@@ -2071,7 +2071,11 @@
     "durationHm": "{hours}h {mins}m",
     "popupBlocked": "Pop-up blocked. Please allow pop-ups for this site.",
     "regenerate_confirm": "Regenerate? This will overwrite your current reading mirror.",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "mirror_completely_broken": "Generation failed for all sections. Your reading data is safe — please try regenerating.",
+    "mirror_partially_broken": "{failed} of {total} sections failed to generate. Regenerate to retry them.",
+    "section_failed_label": "failed",
+    "regenerate_cta": "Regenerate"
   },
   "shareCard": {
     "button_generate": "Share My Reading Progress",

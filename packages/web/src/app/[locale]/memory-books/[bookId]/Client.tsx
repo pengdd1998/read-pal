@@ -201,6 +201,10 @@ export default function ReadingMirrorPage() {
  return <EmptyCta onGenerate={handleGenerate} />;
  }
 
+ const failedCount = mirror.sections.filter((s) => !!s.error).length;
+ const total = mirror.sections.length;
+ const allFailed = total > 0 && failedCount === total;
+
  // ---------------------------------------------------------------------------
  // Mirror display
  // ---------------------------------------------------------------------------
@@ -232,6 +236,40 @@ export default function ReadingMirrorPage() {
    onPrint={handlePrint}
   />
   </div>
+
+  {/* Broken mirror banner — surface when most or all sections errored */}
+  {failedCount > 0 && (
+  <div
+  role="alert"
+  className={`mb-4 rounded-xl border p-4 flex items-start gap-3 ${
+   allFailed
+   ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40'
+   : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40'
+  }`}
+  >
+  <svg aria-hidden="true" className={`w-5 h-5 flex-shrink-0 mt-0.5 ${allFailed ? 'text-red-500 dark:text-red-400' : 'text-amber-500 dark:text-amber-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4a2 2 0 00-3.48 0L3.16 16.25A2 2 0 005 19z" />
+  </svg>
+  <div className="flex-1 min-w-0">
+   <p className={`text-sm font-medium ${allFailed ? 'text-red-800 dark:text-red-200' : 'text-amber-800 dark:text-amber-200'}`}>
+   {allFailed
+    ? t('mirror_completely_broken')
+    : t('mirror_partially_broken', { failed: failedCount, total })}
+   </p>
+   <button
+   type="button"
+   onClick={handleGenerate}
+   disabled={generating}
+   className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   >
+   <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+   </svg>
+   {t('regenerate_cta')}
+   </button>
+  </div>
+  </div>
+  )}
 
   {/* Section navigation + content */}
   <SectionNav
