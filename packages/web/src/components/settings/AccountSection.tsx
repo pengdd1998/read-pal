@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api';
@@ -16,6 +16,10 @@ export const AccountSection = React.memo(function AccountSection() {
  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
  const [confirmPassword, setConfirmPassword] = useState('');
  const [deleteError, setDeleteError] = useState('');
+ const deleteDialogRef = useRef<HTMLDivElement>(null);
+ const signOutDialogRef = useRef<HTMLDivElement>(null);
+ useEffect(() => { if (showDeleteModal) deleteDialogRef.current?.focus(); }, [showDeleteModal]);
+ useEffect(() => { if (showSignOutConfirm) signOutDialogRef.current?.focus(); }, [showSignOutConfirm]);
 
  const router = useRouter();
  async function handleDeleteAccount() {
@@ -100,9 +104,11 @@ export const AccountSection = React.memo(function AccountSection() {
   {/* Password confirmation modal */}
   {showDeleteModal && (
   <div
+   ref={deleteDialogRef}
    role="dialog"
    aria-modal="true"
    aria-label={t('account_delete_heading')}
+   tabIndex={-1}
    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
    onClick={() => { setShowDeleteModal(false); setConfirmPassword(''); setDeleteError(''); }}
    onKeyDown={(e) => { if (e.key === 'Escape') { setShowDeleteModal(false); setConfirmPassword(''); setDeleteError(''); } }}
@@ -155,9 +161,11 @@ export const AccountSection = React.memo(function AccountSection() {
   {/* Sign-out confirmation modal */}
   {showSignOutConfirm && (
   <div
+   ref={signOutDialogRef}
    role="dialog"
    aria-modal="true"
    aria-labelledby="sign-out-dialog-title"
+   tabIndex={-1}
    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
    onClick={() => setShowSignOutConfirm(false)}
    onKeyDown={(e) => { if (e.key === 'Escape') setShowSignOutConfirm(false); }}

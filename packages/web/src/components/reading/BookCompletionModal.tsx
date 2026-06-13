@@ -28,7 +28,9 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
  const [generating, setGenerating] = useState(false);
  const [genError, setGenError] = useState<string | null>(null);
  const mountedRef = useRef(true);
+ const dialogRef = useRef<HTMLDivElement>(null);
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { dialogRef.current?.focus(); }, []);
 
  const handleGeneratePersonalBook = async () => {
  setGenerating(true);
@@ -55,14 +57,15 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
 
  return (
  <div
+  ref={dialogRef}
   role="dialog"
   aria-modal="true"
   aria-label={t('completion_title')}
   className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
   onClick={onClose}
-        tabIndex={-1}
-        onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
-     >
+  tabIndex={-1}
+  onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+ >
   <div
   className="bg-surface-0 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-scale-in text-center"
   onClick={(e) => e.stopPropagation()}

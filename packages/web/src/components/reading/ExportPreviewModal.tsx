@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { ExportFilterPanel } from './ExportFilterPanel';
 import { useExportShareLink } from './useExportShareLink';
@@ -47,8 +47,10 @@ export const ExportPreviewModal = React.memo(function ExportPreviewModal({ bookI
   });
 
   const backdropRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => { if (e.target === backdropRef.current) onClose(); }, [onClose]);
   const handleBackdropKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => { if (e.key === 'Escape') onClose(); }, [onClose]);
+  useEffect(() => { dialogRef.current?.focus(); }, []);
 
   return (
     <div
@@ -57,7 +59,7 @@ export const ExportPreviewModal = React.memo(function ExportPreviewModal({ bookI
       onClick={handleBackdropClick}
       onKeyDown={handleBackdropKeyDown}
     >
-      <div role="dialog" aria-modal="true" aria-label={t('export_aria_label')} tabIndex={-1} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-surface-3">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('export_aria_label')} tabIndex={-1} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} className="bg-surface-0 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-surface-3">
         <ExportModalHeader bookTitle={bookTitle} onClose={onClose} />
 
         {/* Format + Filter selection */}

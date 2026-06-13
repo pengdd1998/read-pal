@@ -27,7 +27,9 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
  const [summaryLoading, setSummaryLoading] = useState(false);
  const [summaryError, setSummaryError] = useState(false);
  const mountedRef = useRef(true);
+ const dialogRef = useRef<HTMLDivElement>(null);
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+ useEffect(() => { dialogRef.current?.focus(); }, []);
 
  const handleBackdropKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Escape') onKeepReading(); }, [onKeepReading]);
  const handlePanelClick = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
@@ -57,14 +59,15 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
 
  return (
  <div
+  ref={dialogRef}
   role="dialog"
   aria-modal="true"
   aria-label={t('session_title')}
   className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
   onClick={onKeepReading}
-        tabIndex={-1}
-        onKeyDown={handleBackdropKey}
-      >
+  tabIndex={-1}
+  onKeyDown={handleBackdropKey}
+ >
   <div
   className="bg-surface-0 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 animate-scale-in"
   onClick={handlePanelClick}

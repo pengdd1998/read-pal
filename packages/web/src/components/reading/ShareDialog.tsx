@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { ShareDiscussionTab } from './ShareDiscussionTab';
@@ -41,6 +41,8 @@ export const ShareDialog = React.memo(function ShareDialog({
  const t = useTranslations('reader');
  const [activeTab, setActiveTab] = useState<ShareTab>('discussion');
  const backdropRef = useRef<HTMLDivElement>(null);
+ const dialogRef = useRef<HTMLDivElement>(null);
+ useEffect(() => { dialogRef.current?.focus(); }, []);
 
  return (
  <div
@@ -50,6 +52,7 @@ export const ShareDialog = React.memo(function ShareDialog({
   onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
  >
   <div
+  ref={dialogRef}
   role="dialog"
   aria-modal="true"
   aria-label={t('share_title')}

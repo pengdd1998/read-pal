@@ -54,6 +54,8 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
 }: ChatOpenPanelProps) {
  const messagesEndRef = useRef<HTMLDivElement>(null);
  const chatContainerRef = useRef<HTMLDivElement>(null);
+ const dialogRef = useRef<HTMLDivElement>(null);
+ useEffect(() => { dialogRef.current?.focus(); }, []);
 
  // Auto-scroll
  const scrollToBottom = useCallback(() => {
@@ -74,6 +76,7 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
 
   {/* Mobile: bottom sheet — Desktop: sidebar */}
   <div
+  ref={dialogRef}
   role="dialog"
   aria-modal="true"
   aria-label={t('companion_aria_chat_with', { name: friendName })}
