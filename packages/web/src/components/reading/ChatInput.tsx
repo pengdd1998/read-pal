@@ -34,6 +34,7 @@ export const ChatInput = React.memo(function ChatInput({
    rows={2}
    disabled={loading}
    maxLength={4000}
+   enterKeyHint="enter"
   />
   {loading ? (
    <button type="button"
