@@ -150,12 +150,18 @@ export default function MemoryBooksPage() {
     ])
       .then(([mbRes, booksRes]) => {
         if (!mountedRef.current) return;
+        let anySuccess = false;
         if (mbRes.success && mbRes.data) {
           setMemoryBooks(Array.isArray(mbRes.data) ? mbRes.data : []);
+          anySuccess = true;
         }
         if (booksRes.success && booksRes.data) {
           const list = Array.isArray(booksRes.data) ? booksRes.data : [];
           setBooks(list.filter((b) => b.progress > 10));
+          anySuccess = true;
+        }
+        if (!anySuccess) {
+          setError(tRef.current('failedToLoad'));
         }
       })
       .catch((err) => { warn('MemoryBooks: failed to load', err); if (mountedRef.current) setError(tRef.current('failedToLoad')); })

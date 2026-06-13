@@ -67,13 +67,19 @@ export default function ReadingMirrorPage() {
   api.get<{ title: string; author: string; coverUrl?: string }>(`/api/books/${bookId}`),
  ]).then(([mirrorRes, bookRes]) => {
   if (!mountedRef.current) return;
+  let anySuccess = false;
   if (mirrorRes.success && mirrorRes.data) {
   setMirror(mirrorRes.data);
+  anySuccess = true;
   }
   if (bookRes.success && bookRes.data) {
   setBookTitle(bookRes.data.title);
   setBookAuthor(bookRes.data.author);
   setCoverUrl(bookRes.data.coverUrl);
+  anySuccess = true;
+  }
+  if (!anySuccess) {
+  setError(tRef.current('failedToLoad'));
   }
  }).catch((err) => {
   warn('MemoryBookDetail: failed to load', err);
