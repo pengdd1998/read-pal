@@ -23,25 +23,33 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ sessions }:
  const locale = useLocale();
 
  const cells = useMemo(() => {
+ // Bucket sessions by UTC date so the heatmap matches backend-aggregated
+ // stats (which group by `func.date(started_at)` on naive-UTC columns).
+ // Using local toDateString() here would split sessions across the wrong
+ // day for any client whose TZ offset crosses midnight UTC.
  const sessionMap = new Map<string, SessionData>();
  for (const s of sessions) {
-  sessionMap.set(parseUTCDate(s.startedAt).toDateString(), s);
+  const d = parseUTCDate(s.startedAt);
+  // UTC YYYY-MM-DD key — stable across client TZs
+  const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+  sessionMap.set(key, s);
  }
 
  const result = [];
+ const todayUTC = new Date();
  for (let i = 0; i < DAYS; i++) {
-  const date = new Date();
-  date.setDate(date.getDate() - (DAYS - 1 - i));
-  const dayActivity = sessionMap.get(date.toDateString());
+  const date = new Date(todayUTC);
+  date.setUTCDate(date.getUTCDate() - (DAYS - 1 - i));
+  const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+  const dayActivity = sessionMap.get(key);
   const level = dayActivity
   ? dayActivity.pagesRead > 10 ? 3
    : dayActivity.pagesRead > 5 ? 2
    : 1
   : 0;
-  const dateStr = date.toISOString().slice(0, 10);
   result.push(
   <div
-   key={dateStr}
+   key={key}
    className={`w-3 h-3 rounded-sm ${COLORS[level]}`}
    title={`${date.toLocaleDateString(locale)} - ${dayActivity ? t('heatmap_title', { count: dayActivity.pagesRead }) : t('heatmap_no_activity')}`}
   />,
