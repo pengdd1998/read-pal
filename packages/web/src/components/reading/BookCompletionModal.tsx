@@ -26,7 +26,6 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
  const t = useTranslations('reader');
  const router = useRouter();
  const [generating, setGenerating] = useState(false);
- const [showPersonalBookCTA, _setShowPersonalBookCTA] = useState(true);
  const [genError, setGenError] = useState<string | null>(null);
  const mountedRef = useRef(true);
  useEffect(() => () => { mountedRef.current = false; }, []);
@@ -82,7 +81,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
    </div>
   </div>
 
-  {showPersonalBookCTA && (totalHighlights > 0 || totalNotes > 0) && (
+  {(totalHighlights > 0 || totalNotes > 0) && (
    <>
    <button type="button"
     onClick={handleGeneratePersonalBook}
