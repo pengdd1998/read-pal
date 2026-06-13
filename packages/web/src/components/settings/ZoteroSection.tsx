@@ -57,6 +57,9 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
   if (saveRes.success) {
   setConnected(true);
   toast(t('zotero_connected') + (valRes.data.username ? ` (${valRes.data.username})` : ''), 'success');
+  } else {
+  warn('ZoteroSection: save settings returned success=false', saveRes.error);
+  setValidationError(t('zotero_connect_failed'));
   }
  } catch (err) {
   warn('ZoteroSection: connect failed', err);
@@ -70,12 +73,17 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
  async function handleDisconnect() {
  setSaving(true);
  try {
-  await api.patch('/api/settings', { zoteroApiKey: '', zoteroUserId: '' });
+  const res = await api.patch('/api/settings', { zoteroApiKey: '', zoteroUserId: '' });
   if (!mountedRef.current) return;
+  if (res.success) {
   setConnected(false);
   setApiKey('');
   setUserId('');
   toast(t('zotero_disconnected'), 'success');
+  } else {
+  warn('ZoteroSection: disconnect returned success=false', res.error);
+  toast(t('zotero_disconnect_failed'), 'error');
+  }
  } catch (err) {
   warn('ZoteroSection: disconnect failed', err);
   if (!mountedRef.current) return;

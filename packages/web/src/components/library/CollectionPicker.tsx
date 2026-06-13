@@ -87,13 +87,27 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  const toggleBook = async (col: Collection) => {
  const inCol = isInCollection(col);
  setToggling(col.id);
+ let res: { success: boolean; error?: unknown } | null = null;
  try {
   if (inCol) {
-  await api.post(`/api/collections/${col.id}/books/remove`, { bookIds: [bookId] });
+  res = await api.post(`/api/collections/${col.id}/books/remove`, { bookIds: [bookId] });
   } else {
-  await api.post(`/api/collections/${col.id}/books`, { bookIds: [bookId] });
+  res = await api.post(`/api/collections/${col.id}/books`, { bookIds: [bookId] });
   }
   if (!mountedRef.current) return;
+  if (!res || !res.success) {
+  warn('CollectionPicker: toggle returned success=false', res?.error);
+  toast(t('collection_picker_toggle_failed'), 'error');
+  // Reload from server to revert optimistic update
+  try {
+   const retryRes = await api.get<{ items: Collection[] }>('/api/collections');
+   if (mountedRef.current && retryRes.success && retryRes.data) {
+    const items = retryRes.data.items ?? (Array.isArray(retryRes.data) ? retryRes.data as unknown as Collection[] : []);
+    setCollections(items);
+   }
+  } catch (retryErr) { warn('CollectionPicker: best effort reload failed', retryErr); }
+  return;
+  }
   setCollections((prev) => prev.map((c) => {
   if (c.id !== col.id) return c;
   const ids = new Set(c.bookIds || []);
@@ -102,7 +116,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   }));
  } catch (err) {
   warn('CollectionPicker: toggle failed', err);
-  toast(t('collection_picker_toggle_failed'), 'error');
+  if (mountedRef.current) toast(t('collection_picker_toggle_failed'), 'error');
   // Reload from server to revert optimistic update
   try {
    const retryRes = await api.get<{ items: Collection[] }>('/api/collections');
@@ -128,6 +142,9 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   setCollections((prev) => [res.data as Collection, ...prev]);
   setNewName('');
   setShowCreate(false);
+  } else {
+  warn('CollectionPicker: create returned success=false', res.error);
+  toast(t('collection_picker_create_failed'), 'error');
   }
  } catch (err) {
   warn('CollectionPicker: create failed', err);

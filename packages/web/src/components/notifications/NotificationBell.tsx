@@ -157,7 +157,14 @@ export const NotificationBell = memo(function NotificationBell() {
       return Math.max(0, c - 1);
     });
     try {
-      await api.patch(`/api/notifications/${id}/read`);
+      const res = await api.patch(`/api/notifications/${id}/read`);
+      if (staleRef.current) return;
+      if (!res.success) {
+        if (prev) setNotifications(prev);
+        if (prevCount !== undefined) setUnreadCount(prevCount);
+        warn('Notifications: mark read returned success=false', res.error);
+        toast(tRef.current('notification_mark_read_failed'), 'error');
+      }
     } catch (err) {
       if (staleRef.current) return;
       if (prev) setNotifications(prev);
@@ -180,7 +187,14 @@ export const NotificationBell = memo(function NotificationBell() {
     });
     setMarkingAll(true);
     try {
-      await api.post('/api/notifications/mark-all-read');
+      const res = await api.post('/api/notifications/mark-all-read');
+      if (staleRef.current) return;
+      if (!res.success) {
+        if (prev) setNotifications(prev);
+        if (prevCount !== undefined) setUnreadCount(prevCount);
+        warn('Notifications: mark all read returned success=false', res.error);
+        toast(t('notification_mark_all_read_failed'), 'error');
+      }
     } catch (err) {
       if (staleRef.current) return;
       if (prev) setNotifications(prev);

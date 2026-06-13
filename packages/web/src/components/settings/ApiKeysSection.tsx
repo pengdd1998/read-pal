@@ -74,8 +74,13 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
  const loadKeys = useCallback(async () => {
  try {
   const res = await api.get<ApiKeyData[]>('/api/api-keys');
-  if (res.success && res.data && mountedRef.current) {
-  setKeys(res.data);
+  if (mountedRef.current) {
+  if (res.success && res.data) {
+   setKeys(res.data);
+  } else {
+   warn('ApiKeysSection: load returned success=false', res.error);
+   toast(tRef.current('api_key_load_failed'), 'error');
+  }
   }
  } catch (err) {
   warn('ApiKeysSection: load failed', err);
@@ -101,6 +106,9 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   setShowCreate(false);
   await loadKeys();
   toast(t('api_key_created_toast'), 'success');
+  } else if (mountedRef.current) {
+  warn('ApiKeysSection: create returned success=false', res.error);
+  toast(t('api_key_create_failed'), 'error');
   }
  } catch (err) {
   warn('ApiKeysSection: create failed', err);
@@ -116,6 +124,9 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   if (res.success && mountedRef.current) {
   setKeys((prev) => prev.filter((k) => k.id !== id));
   toast(t('api_key_revoked_toast'), 'success');
+  } else if (mountedRef.current) {
+  warn('ApiKeysSection: revoke returned success=false', res.error);
+  toast(t('api_key_revoke_failed'), 'error');
   }
  } catch (err) {
   warn('ApiKeysSection: revoke failed', err);

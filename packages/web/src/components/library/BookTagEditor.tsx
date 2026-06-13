@@ -29,10 +29,15 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
  const newTags = [...tags, tag];
  setSaving(true);
  try {
-  await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
+  const res = await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
   if (!mountedRef.current) return;
+  if (res.success) {
   onTagsChange?.(bookId, newTags);
   setTagInput('');
+  } else {
+  warn('BookTagEditor: add tag returned success=false', res.error);
+  toast(tRef.current('tag_update_failed'), 'error');
+  }
  } catch (error) {
   warn('BookTagEditor: add tag failed', error);
   if (!mountedRef.current) return;
@@ -46,9 +51,14 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
  const newTags = tags.filter((t) => t !== tag);
  setSaving(true);
  try {
-  await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
+  const res = await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
   if (!mountedRef.current) return;
+  if (res.success) {
   onTagsChange?.(bookId, newTags);
+  } else {
+  warn('BookTagEditor: remove tag returned success=false', res.error);
+  toast(t('tag_update_failed'), 'error');
+  }
  } catch (error) {
   warn('BookTagEditor: remove tag failed', error);
   if (!mountedRef.current) return;

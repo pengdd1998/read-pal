@@ -38,6 +38,9 @@ export const FlashcardCard = React.memo(function FlashcardCard({
   );
   if (res.success && res.data) {
   router.push('/flashcards');
+  } else {
+  warn('FlashcardCard: generate returned success=false', res.error);
+  onError(t('failedToGenerateFlashcards'));
   }
  } catch (error) {
   warn('FlashcardCard: generate failed', error);

@@ -45,6 +45,10 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
   );
   if (res.success && res.data) {
    onUpdate(res.data);
+  } else {
+   warn('AnnotationEditForm: save returned success=false', res.error);
+   toast(t('card_failed_save'), 'error');
+   return;
   }
   }
   onCancel();

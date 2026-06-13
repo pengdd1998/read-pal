@@ -70,7 +70,12 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
     const prev = books;
     setBooks((bs) => bs.filter((b) => b.id !== id));
     try {
-      await api.delete(`/api/books/${id}`);
+      const res = await api.delete(`/api/books/${id}`);
+      if (!mountedRef.current) return;
+      if (!res.success) {
+        warn('LibraryGrid: delete returned success=false', res.error);
+        setBooks(prev);
+      }
     } catch (err) {
       warn('LibraryGrid: failed to delete book', err);
       if (!mountedRef.current) return;

@@ -90,6 +90,9 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
   if (signal?.aborted || !mountedRef.current) return;
   if (res.success && res.data) {
   setPrefs({ ...DEFAULT_PREFS, ...res.data });
+  } else {
+  warn('InterventionPrefsSection: load returned success=false', res.error);
+  setError(tRef.current('failed_load_retry'));
   }
  } catch (err) {
   if (signal?.aborted || !mountedRef.current) return;

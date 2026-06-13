@@ -34,11 +34,16 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
  setGenerating(true);
  setGenError(null);
  try {
-  await api.post(`/api/memory-books/${bookId}/generate`, {
+  const res = await api.post(`/api/memory-books/${bookId}/generate`, {
   format: 'personal_book',
   }, { timeout: 120_000 });
   if (!mountedRef.current) return;
+  if (res.success) {
   router.push(`/memory-books/${bookId}`);
+  } else {
+  warn('BookCompletionModal: generate returned success=false', res.error);
+  setGenError(t('completion_failed_generate'));
+  }
  } catch (error) {
   if (!mountedRef.current) return;
   warn('BookCompletionModal: generate failed', error);

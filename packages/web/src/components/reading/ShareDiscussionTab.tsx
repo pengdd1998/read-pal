@@ -66,6 +66,8 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
       if (res.success && res.data) {
         return res.data.questions;
       }
+      warn('ShareDiscussionTab: generate questions returned success=false', res.error);
+      if (mountedRef.current) setQuestionWarning(true);
       return [];
     } catch (err) {
       warn('ShareDiscussionTab: failed to generate discussion questions', err);
@@ -157,6 +159,9 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
         await navigator.clipboard.writeText(fullUrl);
         if (!mountedRef.current) return;
         toast(tRef.current('share_link_copied'), 'success');
+      } else {
+        warn('ShareDiscussionTab: share link returned success=false', res.error);
+        toast(tRef.current('share_failed_share_link'), 'error');
       }
     } catch (err) {
       warn('ShareDiscussionTab: share link failed', err);

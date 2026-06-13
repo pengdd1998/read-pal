@@ -71,6 +71,10 @@ function SeedButton() {
       if (res.success && res.data) {
         safeSetItem(ONBOARDING_KEY, 'true');
         router.push(`/read/${res.data.book.id}`);
+      } else {
+        warn('Welcome: seed sample returned success=false', res.error);
+        setSeedError(true);
+        toast(t('seed_error'), 'error');
       }
     } catch (err) {
       warn('Welcome: failed to seed sample book', err);

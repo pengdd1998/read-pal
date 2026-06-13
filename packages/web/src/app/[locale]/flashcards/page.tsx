@@ -115,8 +115,14 @@ export default function FlashcardsPage() {
  if (!card) return;
  setReviewing(true);
  try {
-  await api.post(`/api/flashcards/${card.id}/review`, { rating });
+  const res = await api.post(`/api/flashcards/${card.id}/review`, { rating });
   if (!mountedRef.current) return;
+  if (!res.success) {
+  warn('FlashcardsPage: handleRate returned success=false', res.error);
+  setToast(tRef.current('toast_save_review'));
+  { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
+  return;
+  }
   if (currentIndex + 1 >= cards.length) {
   setCompleted(true);
   } else {
