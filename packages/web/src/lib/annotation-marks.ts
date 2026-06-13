@@ -97,7 +97,7 @@ export function createMark(
   }
 }
 
-export function findTextOffset(
+function findTextOffset(
   container: HTMLElement,
   offset: number,
   length: number,
