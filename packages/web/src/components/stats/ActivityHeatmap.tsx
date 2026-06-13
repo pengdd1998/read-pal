@@ -23,16 +23,15 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ sessions }:
  const locale = useLocale();
 
  const cells = useMemo(() => {
- // Bucket sessions by UTC date so the heatmap matches backend-aggregated
- // stats (which group by `func.date(started_at)` on naive-UTC columns).
- // Using local toDateString() here would split sessions across the wrong
- // day for any client whose TZ offset crosses midnight UTC.
- const sessionMap = new Map<string, SessionData>();
+ // Aggregate pages by UTC date so the heatmap matches backend-aggregated
+ // stats (which sum pages_read per `func.date(started_at)` bucket on
+ // naive-UTC columns). Multiple sessions on the same day must add up;
+ // previously Map.set overwrote and only the last session per day was kept.
+ const pagesByDay = new Map<string, number>();
  for (const s of sessions) {
   const d = parseUTCDate(s.startedAt);
-  // UTC YYYY-MM-DD key — stable across client TZs
   const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-  sessionMap.set(key, s);
+  pagesByDay.set(key, (pagesByDay.get(key) ?? 0) + s.pagesRead);
  }
 
  const result = [];
@@ -41,17 +40,17 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ sessions }:
   const date = new Date(todayUTC);
   date.setUTCDate(date.getUTCDate() - (DAYS - 1 - i));
   const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-  const dayActivity = sessionMap.get(key);
-  const level = dayActivity
-  ? dayActivity.pagesRead > 10 ? 3
-   : dayActivity.pagesRead > 5 ? 2
+  const pages = pagesByDay.get(key);
+  const level = pages
+  ? pages > 10 ? 3
+   : pages > 5 ? 2
    : 1
   : 0;
   result.push(
   <div
    key={key}
    className={`w-3 h-3 rounded-sm ${COLORS[level]}`}
-   title={`${date.toLocaleDateString(locale)} - ${dayActivity ? t('heatmap_title', { count: dayActivity.pagesRead }) : t('heatmap_no_activity')}`}
+   title={`${date.toLocaleDateString(locale)} - ${pages ? t('heatmap_title', { count: pages }) : t('heatmap_no_activity')}`}
   />,
   );
  }
