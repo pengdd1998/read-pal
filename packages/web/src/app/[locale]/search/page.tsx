@@ -48,6 +48,9 @@ export default function SearchPage() {
   if (res.success && res.data) {
    const data = res.data;
    setRecentBooks(Array.isArray(data) ? data.slice(0, 6) : []);
+  } else {
+   setRecentBooks([]);
+   setRecentError(tRef.current('failed_recent'));
   }
   })
   .catch((err) => {
@@ -91,8 +94,11 @@ export default function SearchPage() {
   ]);
   if (stale) return;
 
-  const failedCount = settled.filter((r) => r.status === 'rejected').length;
-  if (failedCount > 0) {
+  const failedCount = settled.filter((r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).length;
+  if (failedCount === 3) {
+   warn('search: all 3 search queries failed');
+   setError(tRef.current('failed_search'));
+  } else if (failedCount > 0) {
    warn(`search: ${failedCount} of 3 search queries failed`);
    setError(tRef.current('partial_failure'));
   }
