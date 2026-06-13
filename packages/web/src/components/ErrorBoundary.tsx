@@ -2,6 +2,7 @@
 
 import React, { Component, ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import { warn } from '@/lib/logger';
 
 interface Props {
  children: ReactNode;
@@ -28,7 +29,7 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Rec
 
  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
  if (process.env.NODE_ENV === 'development') {
-  console.error('ErrorBoundary caught:', error, errorInfo);
+  warn('ErrorBoundary caught:', error, errorInfo);
  }
  this.setState({ errorInfo });
  }
