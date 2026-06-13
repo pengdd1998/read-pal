@@ -113,7 +113,7 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   >
   {compareLoading ? (
    <>
-   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" aria-hidden="true" />
    {t('analyzing')}
    </>
   ) : (

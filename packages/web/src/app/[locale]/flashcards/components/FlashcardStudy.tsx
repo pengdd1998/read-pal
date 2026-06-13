@@ -153,7 +153,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
   {/* Rating buttons */}
   {showAnswer && (
   <div className="animate-slide-up">
-   <p className="text-xs text-gray-500 text-center mb-3">{t('how_well')} <span className="hidden sm:inline text-gray-500 dark:text-gray-400">{t('keys_hint')}</span></p>
+   <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-3">{t('how_well')} <span className="hidden sm:inline text-gray-500 dark:text-gray-400">{t('keys_hint')}</span></p>
    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
    {RATINGS.map(({ value, labelKey, hint, color, focusRing }) => (
     <button type="button"

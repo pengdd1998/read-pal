@@ -158,7 +158,7 @@ export const PlanGenerateForm = React.memo(function PlanGenerateForm({
       >
         {generating ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" aria-hidden="true" />
             {t('reading_plan_generating')}
           </>
         ) : (

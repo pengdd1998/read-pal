@@ -93,7 +93,7 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
   {loading && !sceneData && (
   <div className="absolute bottom-4 right-4 bg-black/30 dark:bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
    <div className="flex items-center gap-2">
-   <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+   <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" aria-hidden="true" />
    <span className="text-xs text-white/60">{t('generating_scene')}</span>
    </div>
   </div>

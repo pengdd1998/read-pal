@@ -85,7 +85,7 @@ export default React.memo(function SectionNav({
 
   {/* Section content */}
   <div className="flex-1 min-w-0">
-   <div className="bg-amber-50/50 border border-surface-3 rounded-xl p-6 md:p-8 shadow-xs">
+   <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-surface-3 rounded-xl p-6 md:p-8 shadow-xs">
    {sections[activeSection] ? (
     <SectionRenderer
     section={sections[activeSection]}

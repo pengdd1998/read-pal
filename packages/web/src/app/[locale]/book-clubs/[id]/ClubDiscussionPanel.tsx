@@ -88,7 +88,7 @@ export const ClubDiscussionPanel = React.memo(function ClubDiscussionPanel({
   <div className="space-y-3 max-h-80 overflow-y-auto mb-4 pr-1">
   {loading && (
    <div className="flex items-center justify-center gap-2 py-6" aria-live="polite" role="status">
-   <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+   <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
    <span className="text-xs text-gray-500 dark:text-gray-400">{t('loading')}</span>
    </div>
   )}

@@ -224,7 +224,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
    )}
    {loading && (
    <div aria-live="polite" className="flex items-center gap-3 py-8 justify-center">
-    <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-600 border-t-transparent" />
+    <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-600 border-t-transparent" aria-hidden="true" />
     <span className="text-sm text-gray-500 dark:text-gray-400">{t('synthesis_analyzing')}</span>
    </div>
    )}
@@ -243,7 +243,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
   <div className="px-4 py-3 border-t border-surface-3">
    <button type="button" onClick={handleAnalyze} disabled={loading} className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
    {loading ? (
-    <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />{t('synthesis_analyzing_btn')}</>
+    <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" aria-hidden="true" />{t('synthesis_analyzing_btn')}</>
    ) : (
     <>
     <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -172,7 +172,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   )}
   {loading && (
    <div className="flex items-center justify-center py-8" aria-live="polite" role="status">
-   <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
+   <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" aria-hidden="true" />
    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">{t('generating')}</span>
    </div>
   )}

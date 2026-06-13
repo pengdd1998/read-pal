@@ -146,7 +146,7 @@ export default function OfflinePage() {
     <div className="min-h-screen flex items-center justify-center bg-surface-0 px-6 py-12">
       {loading ? (
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin" />
+          <div className="w-12 h-12 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin" aria-hidden="true" />
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('loading')}</p>
         </div>
       ) : (
