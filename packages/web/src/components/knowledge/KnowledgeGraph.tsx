@@ -26,7 +26,7 @@ interface EdgeLineProps {
  isDimmed: boolean;
 }
 
-const EdgeLine = React.memo(function EdgeLine({ edge, source, target, isHighlighted, isDimmed }: EdgeLineProps) {
+const EdgeLine = React.memo(function EdgeLine({ source, target, isHighlighted, isDimmed }: EdgeLineProps) {
  if (!source || !target) return null;
  if (!Number.isFinite(source.x) || !Number.isFinite(source.y) || !Number.isFinite(target.x) || !Number.isFinite(target.y)) return null;
 

@@ -54,14 +54,6 @@ export async function clearAuthTokens(): Promise<void> {
   }
 }
 
-/** Create headers with Content-Type and optional Bearer token (sync). */
-function authHeaders(extra?: Record<string, string>): Record<string, string> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getAuthToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  return { ...headers, ...extra };
-}
-
 /** Create headers with auth token (async, uses native storage in Capacitor). */
 async function authHeadersAsync(extra?: Record<string, string>): Promise<Record<string, string>> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };

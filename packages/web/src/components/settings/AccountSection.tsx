@@ -10,7 +10,7 @@ import { useToast } from '@/components/Toast';
 import { warn } from '@/lib/logger';
 
 export const AccountSection = React.memo(function AccountSection() {
- const { toast } = useToast();
+ useToast();
  const t = useTranslations('settings_page');
  const [deleting, setDeleting] = useState(false);
  const [showDeleteModal, setShowDeleteModal] = useState(false);

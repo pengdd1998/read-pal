@@ -20,7 +20,6 @@ export const BulkActionBar = React.memo(function BulkActionBar({
  selectedCount,
  totalCount,
  confirmDelete,
- deleting = false,
  onBulkDelete,
  onConfirmBulkDelete,
  onCancelBulkDelete,

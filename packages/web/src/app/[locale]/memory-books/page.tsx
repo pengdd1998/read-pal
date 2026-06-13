@@ -47,9 +47,8 @@ interface Book {
   status: string;
 }
 
-const MemoryBookCard = React.memo(function MemoryBookCard({ mb, locale, dateLabel, chaptersLabel, momentsLabel, highlightsLabel, notesLabel, durationStr }: {
+const MemoryBookCard = React.memo(function MemoryBookCard({ mb, dateLabel, chaptersLabel, momentsLabel, highlightsLabel, notesLabel, durationStr }: {
   mb: MemoryBook;
-  locale: string;
   dateLabel: string;
   chaptersLabel: string;
   momentsLabel: string;
@@ -247,7 +246,6 @@ export default function MemoryBooksPage() {
               <MemoryBookCard
                 key={mb.id}
                 mb={mb}
-                locale={locale}
                 dateLabel={mb.generatedAt ? new Date(mb.generatedAt).toLocaleDateString(locale) : t('unknownDate')}
                 chaptersLabel={t('chapters', { count: mb.sections?.length || 0 })}
                 momentsLabel={t('moments', { count: mb.moments?.length || 0 })}

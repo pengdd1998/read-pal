@@ -25,7 +25,6 @@ export const DashboardHeader = React.memo(function DashboardHeader({
   hasData,
   firstName,
   streak,
-  greetingKey,
   greeting,
   welcomeBackName,
   welcomeBack,

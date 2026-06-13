@@ -75,7 +75,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 export const InterventionPrefsSection = React.memo(function InterventionPrefsSection() {
  const t = useTranslations('settings_page');
  const tRef = useRef(t); tRef.current = t;
- const { toast } = useToast();
+ useToast();
  const [prefs, setPrefs] = useState<InterventionPrefs>(DEFAULT_PREFS);
  const [loading, setLoading] = useState(true);
  const [saving, setSaving] = useState(false);

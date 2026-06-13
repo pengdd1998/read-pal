@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { Link } from '@/i18n/navigation';
 import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -98,6 +99,27 @@ export default function SynthesisPage() {
    <div className="h-64 rounded-xl bg-surface-1 animate-pulse" />
   </div>
   </div>
+ );
+ }
+
+ if (!booksLoading && books.length === 0 && !booksError) {
+ return (
+  <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
+  <div className="mb-8">
+   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('page_title')}</h1>
+   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('page_subtitle')}</p>
+  </div>
+  <div className="flex flex-col items-center justify-center py-16">
+   <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+   <svg aria-hidden="true" className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+   </svg>
+   </div>
+   <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('empty_books_title')}</h2>
+   <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm text-center">{t('empty_books_message')}</p>
+   <Link href="/library" className="btn btn-primary">{t('empty_books_action')}</Link>
+  </div>
+  </section>
  );
  }
 

@@ -20,7 +20,6 @@ interface ChatFabButtonProps {
 
 export const ChatFabButton = React.memo(function ChatFabButton({
  btnRef,
- friendName,
  wasDragRef,
  btnPos,
  isDragging,

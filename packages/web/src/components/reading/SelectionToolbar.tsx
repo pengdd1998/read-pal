@@ -23,7 +23,6 @@ interface SelectionToolbarProps {
 export const SelectionToolbar = React.memo(function SelectionToolbar({
   text,
   rect,
-  range,
   bookTitle,
   author,
   onHighlight,

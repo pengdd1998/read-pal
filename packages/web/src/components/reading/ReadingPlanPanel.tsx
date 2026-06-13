@@ -21,7 +21,6 @@ interface ReadingPlanPanelProps {
 
 export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   bookId,
-  bookTitle,
   isOpen,
   onClose,
 }: ReadingPlanPanelProps) {

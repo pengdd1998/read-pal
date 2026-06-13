@@ -23,7 +23,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
  const t = useTranslations('reader');
  const tRef = useRef(t); tRef.current = t;
  const tc = useTranslations('common');
- const { toast } = useToast();
+ useToast();
  const [editing, setEditing] = useState(false);
  const [sharing, setSharing] = useState(false);
  const [confirmDelete, setConfirmDelete] = useState(false);

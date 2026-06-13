@@ -2256,7 +2256,10 @@
     "ref_highlight": "highlight",
     "ref_note": "note",
     "ref_bookmark": "bookmark",
-    "node_entity": "entity"
+    "node_entity": "entity",
+    "empty_books_title": "No books yet",
+    "empty_books_message": "Upload some books to your library to unlock cross-book synthesis, comparisons, and deep analysis.",
+    "empty_books_action": "Go to Library"
   },
   "seo": {
     "knowledge_title": "Knowledge Graph",

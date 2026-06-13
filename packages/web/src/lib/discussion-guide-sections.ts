@@ -113,7 +113,7 @@ export function renderNotes(annotations: Annotation[]): string {
     </section>`;
 }
 
-export function renderStats(book: BookMeta, stats: ReadingStats): string {
+export function renderStats(stats: ReadingStats): string {
   const pct = stats.progress != null ? Math.round(stats.progress) : 0;
   const total = stats.totalAnnotations ?? 0;
   const items: string[] = [];

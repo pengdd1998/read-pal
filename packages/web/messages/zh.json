@@ -2256,7 +2256,10 @@
     "ref_highlight": "高亮",
     "ref_note": "笔记",
     "ref_bookmark": "书签",
-    "node_entity": "实体"
+    "node_entity": "实体",
+    "empty_books_title": "还没有书籍",
+    "empty_books_message": "上传一些书籍到您的书库，即可解锁跨书综合分析、对比和深度分析功能。",
+    "empty_books_action": "前往书库"
   },
   "seo": {
     "knowledge_title": "知识图谱",

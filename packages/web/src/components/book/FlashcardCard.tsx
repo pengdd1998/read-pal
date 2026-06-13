@@ -16,7 +16,6 @@ interface FlashcardCardProps {
 export const FlashcardCard = React.memo(function FlashcardCard({
  bookId,
  totalAnnotations,
- flashcardCount,
  t,
  onError,
 }: FlashcardCardProps) {

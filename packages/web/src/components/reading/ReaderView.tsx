@@ -65,8 +65,6 @@ export const ReaderView = React.memo(function ReaderView({
   externalTocOpen,
   onTocClose,
   highlightMode: _highlightMode,
-  highlightCount = 0,
-  bookmarkCount = 0,
   onScrollProgress,
   onPauseAutoHide,
   onResumeAutoHide,

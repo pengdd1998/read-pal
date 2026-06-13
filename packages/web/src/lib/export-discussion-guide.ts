@@ -49,7 +49,7 @@ export function generateDiscussionGuideHtml(
   const pct = safeStats.progress != null ? Math.round(safeStats.progress) : 0;
 
   const sections = [
-    renderStats(book, safeStats),
+    renderStats(safeStats),
     renderThemes(annotations),
     renderQuotes(annotations),
     renderNotes(annotations),

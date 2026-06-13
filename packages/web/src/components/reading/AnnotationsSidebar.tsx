@@ -62,7 +62,6 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
  const [viewMode, setViewMode] = useState<ViewMode>('list');
  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
-	 const [bulkDeleting, setBulkDeleting] = useState(false);
 
  // Stabilize prop callbacks for memoized children
  const stableOnDeleteAnnotation = useCallback((id: string) => onDeleteAnnotation(id), [onDeleteAnnotation]);

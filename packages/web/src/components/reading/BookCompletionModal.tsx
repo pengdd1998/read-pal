@@ -26,7 +26,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
  const t = useTranslations('reader');
  const router = useRouter();
  const [generating, setGenerating] = useState(false);
- const [showPersonalBookCTA, setShowPersonalBookCTA] = useState(true);
+ const [showPersonalBookCTA, _setShowPersonalBookCTA] = useState(true);
  const [genError, setGenError] = useState<string | null>(null);
  const mountedRef = useRef(true);
  useEffect(() => () => { mountedRef.current = false; }, []);

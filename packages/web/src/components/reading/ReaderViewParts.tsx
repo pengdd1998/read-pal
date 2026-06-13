@@ -120,11 +120,9 @@ interface ReaderViewLogicParams {
 export function useReaderViewLogic({
   bookId,
   chapterContent,
-  chapterTitle,
   currentPage,
   totalPages,
   onPageChange,
-  contentRef,
   fontSize,
   fontFamily,
   lineHeight,
