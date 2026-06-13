@@ -27,7 +27,12 @@ export const ReadingGoalsWidget = memo(function ReadingGoalsWidget() {
  setError(false);
  api.get<GoalsData>('/api/settings/reading-goals')
   .then((res) => {
-  if (!cancelled && res.data) setGoals(res.data);
+  if (cancelled) return;
+  if (res.success && res.data) {
+    setGoals(res.data);
+  } else {
+    setError(true);
+  }
   })
   .catch((err) => { warn('ReadingGoalsWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });

@@ -44,7 +44,12 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  setError(false);
  api.get<WeeklySummaryData>('/api/stats/weekly-summary')
   .then((res) => {
-  if (!cancelled && res.data) setData(res.data);
+  if (cancelled) return;
+  if (res.success && res.data) {
+    setData(res.data);
+  } else {
+    setError(true);
+  }
   })
   .catch((err) => { warn('WeeklySummaryWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });

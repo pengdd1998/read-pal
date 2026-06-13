@@ -87,9 +87,12 @@ function BookClubsWidgetInner() {
  api
   .get<{ items: BookClub[] }>('/api/book-clubs')
   .then((res) => {
-  if (!cancelled && res.success && res.data) {
-   const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
-   setClubs(list);
+  if (cancelled) return;
+  if (res.success && res.data) {
+    const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
+    setClubs(list);
+  } else {
+    setError(tRef.current('clubs_failed_load'));
   }
   })
   .catch((err) => { warn('BookClubsWidget: fetch failed', err); if (!cancelled) setError(tRef.current('clubs_failed_load')); })

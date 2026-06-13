@@ -20,7 +20,12 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
  setError(false);
  api.get<{ stats: FlashcardStats }>('/api/flashcards/review?limit=1')
   .then((res) => {
-  if (!cancelled && res.data) setStats(res.data.stats);
+  if (cancelled) return;
+  if (res.success && res.data) {
+    setStats(res.data.stats);
+  } else {
+    setError(true);
+  }
   })
   .catch((err) => { warn('FlashcardReviewWidget: fetch failed', err); if (!cancelled) setError(true); })
   .finally(() => { if (!cancelled) setLoading(false); });

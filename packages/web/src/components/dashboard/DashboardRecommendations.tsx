@@ -37,8 +37,11 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
  setError(false);
  api.get<{ recommendations: RecommendationItem[] }>('/api/recommendations')
   .then((res) => {
-  if (!cancelled && res.data) {
-   setRecs(res.data.recommendations ?? []);
+  if (cancelled) return;
+  if (res.success && res.data) {
+    setRecs(res.data.recommendations ?? []);
+  } else {
+    setError(true);
   }
   })
   .catch((err) => { warn('DashboardRecommendations: fetch failed', err); if (!cancelled) setError(true); })

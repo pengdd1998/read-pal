@@ -44,8 +44,11 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
     setError(false);
     api.get<{ challenges: ChallengeItem[] }>('/api/challenges')
       .then((res) => {
-        if (!cancelled && res.data) {
+        if (cancelled) return;
+        if (res.success && res.data) {
           setChallenges(res.data.challenges ?? []);
+        } else {
+          setError(true);
         }
       })
       .catch((err) => { warn('DashboardChallenges: fetch failed', err); if (!cancelled) setError(true); })

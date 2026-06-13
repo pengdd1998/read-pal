@@ -48,7 +48,12 @@ function StreakCalendarInner() {
  api
   .get<ReadingCalendarData>('/api/stats/reading-calendar?months=6')
   .then((res) => {
-  if (!cancelled && res.success && res.data) setData(res.data);
+  if (cancelled) return;
+  if (res.success && res.data) {
+    setData(res.data);
+  } else {
+    setError(tRef.current('calendar_load_error'));
+  }
   })
   .catch((err) => {
   warn('StreakCalendar: failed to load calendar', err);
