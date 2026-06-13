@@ -124,6 +124,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    <input
    id="zotero-api-key"
    type="password"
+   autoComplete="off"
    value={apiKey}
    onChange={(e) => { setApiKey(e.target.value); setValidationError(null); }}
    placeholder={t('zotero_api_key_placeholder')}
@@ -137,6 +138,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    <input
    id="zotero-user-id"
    type="text"
+   autoComplete="off"
    value={userId}
    onChange={(e) => { setUserId(e.target.value); setValidationError(null); }}
    placeholder={t('zotero_user_id_placeholder')}

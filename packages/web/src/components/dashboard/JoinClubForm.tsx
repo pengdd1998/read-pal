@@ -24,6 +24,7 @@ export const JoinClubForm = React.memo(function JoinClubForm({
  <div className="mb-4 p-4 rounded-xl bg-surface-1 space-y-3">
   <input
   type="text"
+  autoComplete="off"
   placeholder={t('enterCode')}
   aria-label={t('enterCode')}
   value={joinCode}

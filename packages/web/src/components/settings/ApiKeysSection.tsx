@@ -204,6 +204,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   <div className="flex items-center gap-2">
    <input
    type="text"
+   autoComplete="off"
    value={newKeyName}
    onChange={(e) => setNewKeyName(e.target.value)}
    placeholder={t('api_key_name_placeholder')}

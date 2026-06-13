@@ -79,6 +79,7 @@ export const SearchOverlay = React.memo(function SearchOverlay({
    </svg>
    <input
     type="text"
+    autoComplete="off"
     value={searchQuery}
     onChange={(e) => onQueryChange(e.target.value)}
     placeholder={t('search_in_book')}

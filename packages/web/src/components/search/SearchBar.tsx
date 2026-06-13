@@ -21,6 +21,7 @@ export const SearchBar = React.memo(function SearchBar({ query, searching, onQue
   </div>
   <input
   type="text"
+  autoComplete="off"
   value={query}
   onChange={(e) => onQueryChange(e.target.value)}
   placeholder={t('placeholder')}

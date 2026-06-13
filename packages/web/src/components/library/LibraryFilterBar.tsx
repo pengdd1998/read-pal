@@ -51,6 +51,7 @@ export const LibraryFilterBar = React.memo(function LibraryFilterBar({
   </div>
   <input
    type="text"
+   autoComplete="off"
    value={searchQuery}
    onChange={(e) => onSearchChange(e.target.value)}
    placeholder={t('search_title_author')}

@@ -29,6 +29,7 @@ export const CreateClubForm = React.memo(function CreateClubForm({
  <div className="mb-4 p-4 rounded-xl bg-surface-1 space-y-3">
   <input
   type="text"
+  autoComplete="off"
   placeholder={t('clubName')}
   aria-label={t('clubName')}
   value={newName}

@@ -15,6 +15,7 @@ export const AnnotationSearchBar = React.memo(function AnnotationSearchBar({ val
  <div className="px-3 pt-3 pb-1">
   <input
   type="text"
+  autoComplete="off"
   value={value}
   onChange={(e) => onChange(e.target.value)}
   placeholder={t('sidebar_search_annotations')}
