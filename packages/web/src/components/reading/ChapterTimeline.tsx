@@ -186,7 +186,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   {/* Timeline */}
   <div className="p-4 space-y-1.5">
    {loading ? (
-   <div className="space-y-2">
+   <div className="space-y-2" aria-busy="true">
     {Array.from({ length: 8 }).map((_, i) => (
     <div key={i} className="h-12 bg-surface-1 rounded-lg animate-pulse" />
     ))}

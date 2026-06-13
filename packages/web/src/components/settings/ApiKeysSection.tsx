@@ -174,7 +174,7 @@ export const ApiKeysSection = React.memo(function ApiKeysSection() {
   )}
 
   {loading ? (
-  <div className="space-y-2">
+  <div className="space-y-2" aria-busy="true" role="status">
    {[1, 2].map((i) => (
     <div key={i} className="h-16 rounded-xl bg-surface-1 animate-pulse" />
    ))}

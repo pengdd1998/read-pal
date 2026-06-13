@@ -40,7 +40,7 @@ export const ClubCurrentReading = React.memo(function ClubCurrentReading({ club,
 
    {/* Group progress */}
    {progressLoading && (
-    <div className="space-y-2 animate-pulse">
+    <div className="space-y-2 animate-pulse" aria-busy="true">
      <div className="h-3 bg-surface-2 rounded w-24" />
      {Array.from({ length: 3 }).map((_, i) => (
       <div key={i} className="flex items-center gap-3">

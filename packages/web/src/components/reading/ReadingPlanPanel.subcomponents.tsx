@@ -12,7 +12,7 @@ interface PlanData {
 
 export const PlanLoadingSkeleton = React.memo(function PlanLoadingSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" aria-busy="true" aria-label="Loading reading plan">
       <div className="h-4 bg-surface-1 rounded animate-pulse" />
       <div className="h-4 bg-surface-1 rounded w-3/4 animate-pulse" />
       <div className="h-4 bg-surface-1 rounded w-1/2 animate-pulse" />

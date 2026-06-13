@@ -165,7 +165,7 @@ export default function BookClubsPage() {
    <div role="tabpanel" id={`club-panel-${tab}`} aria-labelledby={`club-tab-${tab}`}>
    {/* Loading */}
    {loading && (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-busy="true">
     {[1, 2, 3].map((i) => (
      <div key={i} className="rounded-xl border border-surface-2 bg-surface-0 p-5 animate-pulse">
      <div className="h-5 w-40 bg-surface-1 rounded mb-2" />

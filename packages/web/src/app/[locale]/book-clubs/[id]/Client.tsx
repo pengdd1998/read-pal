@@ -72,7 +72,7 @@ export default function BookClubDetailPage() {
  if (loading) {
  return (
   <div className="min-h-screen bg-surface-0">
-  <div className="px-4 sm:px-6 lg:px-8 py-8">
+  <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-8">
    <div className="animate-pulse space-y-4">
    <div className="h-8 w-48 bg-surface-1 rounded" />
    <div className="h-4 w-64 bg-surface-1 rounded" />

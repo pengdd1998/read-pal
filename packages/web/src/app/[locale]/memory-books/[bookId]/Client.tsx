@@ -168,7 +168,7 @@ export default function ReadingMirrorPage() {
  // ---------------------------------------------------------------------------
  if (loading) {
  return (
-  <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
+  <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
   {/* Back link skeleton */}
   <div className="mb-8">
    <div className="h-4 bg-surface-2 rounded-lg w-20 animate-pulse" />
