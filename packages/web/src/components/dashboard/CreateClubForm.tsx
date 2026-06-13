@@ -26,7 +26,10 @@ export const CreateClubForm = React.memo(function CreateClubForm({
  const tc = useTranslations('common');
 
  return (
- <div className="mb-4 p-4 rounded-xl bg-surface-1 space-y-3">
+ <form
+  className="mb-4 p-4 rounded-xl bg-surface-1 space-y-3"
+  onSubmit={(e) => { e.preventDefault(); if (newName.trim() && !creating) onCreate(); }}
+ >
   <input
   type="text"
   autoComplete="off"
@@ -48,8 +51,7 @@ export const CreateClubForm = React.memo(function CreateClubForm({
   maxLength={500}
   />
   <div className="flex items-center gap-2">
-  <button type="button"
-   onClick={onCreate}
+  <button type="submit"
    disabled={creating || !newName.trim()}
    className="text-xs px-4 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
   >
@@ -62,6 +64,6 @@ export const CreateClubForm = React.memo(function CreateClubForm({
    {tc('cancel')}
   </button>
   </div>
- </div>
+ </form>
  );
 });

@@ -21,7 +21,10 @@ export const JoinClubForm = React.memo(function JoinClubForm({
  const t = useTranslations('bookClubs');
 
  return (
- <div className="mb-4 p-4 rounded-xl bg-surface-1 space-y-3">
+ <form
+  className="mb-4 p-4 rounded-xl bg-surface-1 space-y-3"
+  onSubmit={(e) => { e.preventDefault(); if (joinCode.length >= 6 && !joining) onJoin(); }}
+ >
   <input
   type="text"
   autoComplete="off"
@@ -37,8 +40,7 @@ export const JoinClubForm = React.memo(function JoinClubForm({
   enterKeyHint="done"
   />
   <div className="flex items-center gap-2">
-  <button type="button"
-   onClick={onJoin}
+  <button type="submit"
    disabled={joining || joinCode.length < 6}
    className="text-xs px-4 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-amber-400"
   >
@@ -51,6 +53,6 @@ export const JoinClubForm = React.memo(function JoinClubForm({
    {t('cancel')}
   </button>
   </div>
- </div>
+ </form>
  );
 });
