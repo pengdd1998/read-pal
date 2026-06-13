@@ -240,7 +240,7 @@ export function useReaderViewLogic({
   }, [currentSegment, currentPage, totalPages, onPageChange, onSegmentChange]);
 
   useReaderKeyboardNav({ goNextPage, goPrevPage, currentPage, totalPages, onPageChange });
-  useReaderSwipeNav({ containerRef, currentPage, totalPages, onPageChange, goNextPage, goPrevPage });
+  useReaderSwipeNav({ containerRef, goNextPage, goPrevPage });
 
   useEffect(() => {
     if (articleRef.current) {

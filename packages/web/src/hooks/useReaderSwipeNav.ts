@@ -4,9 +4,6 @@ import { useEffect, useRef } from 'react';
 
 interface UseReaderSwipeNavOptions {
   containerRef: React.RefObject<HTMLDivElement | null>;
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
   goNextPage: () => void;
   goPrevPage: () => void;
 }

@@ -10,7 +10,6 @@ interface UseCompanionPersonaReturn {
   friendEmoji: string;
   friendPersonaKey: string | undefined;
   companionMode: 'casual' | 'scholar' | 'socratic';
-  error: string | null;
   setFriendName: (name: string) => void;
   setFriendEmoji: (emoji: string) => void;
   setFriendPersonaKey: (key: string | undefined) => void;
@@ -22,12 +21,10 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
   const [friendEmoji, setFriendEmoji] = useState<string>(DEFAULT_PERSONA.emoji);
   const [friendPersonaKey, setFriendPersonaKey] = useState<string | undefined>(undefined);
   const [companionMode, setCompanionMode] = useState<'casual' | 'scholar' | 'socratic'>('casual');
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const loadPersona = async () => {
-      setError(null);
       try {
         const result = await api.get<{ friendPersona?: string; companionMode?: string }>('/api/settings');
         if (!cancelled && result.success && result.data) {
@@ -43,7 +40,6 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
         }
       } catch (err) {
         warn('useCompanionPersona: load failed', err);
-        if (!cancelled) setError('Failed to load companion settings. Please try again.');
       }
     };
     loadPersona();
@@ -55,7 +51,6 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
     friendEmoji,
     friendPersonaKey,
     companionMode,
-    error,
     setFriendName,
     setFriendEmoji,
     setFriendPersonaKey,
