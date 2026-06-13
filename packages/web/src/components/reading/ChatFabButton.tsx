@@ -4,7 +4,6 @@ import React, { useMemo, useRef, useEffect } from 'react';
 
 interface ChatFabButtonProps {
  btnRef: React.Ref<HTMLButtonElement>;
- friendName: string;
  wasDragRef: React.MutableRefObject<boolean>;
  btnPos: { x: number; y: number };
  isDragging: boolean;

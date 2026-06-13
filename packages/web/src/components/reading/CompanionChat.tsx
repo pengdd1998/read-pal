@@ -209,7 +209,6 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
   {!isOpen && (
   <ChatFabButton
    btnRef={btnRef}
-   friendName={friendName}
    wasDragRef={wasDragRef}
    btnPos={btnPos}
    isDragging={isDragging}
