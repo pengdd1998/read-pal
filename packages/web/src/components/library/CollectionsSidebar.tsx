@@ -51,6 +51,8 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   if (res.success && res.data) {
   const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
   setCollections(items);
+  } else {
+  setError(true);
   }
  } catch (err) {
   setError(true);
@@ -85,6 +87,8 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   setNewColor('#f59e0b');
   setShowCreate(false);
   toast(t('collections_created'), 'success');
+  } else {
+  toast(t('collections_create_failed'), 'error');
   }
  } catch (err) {
   warn('CollectionsSidebar: create failed', err);
@@ -100,9 +104,14 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  setCollections((cs) => cs.filter((c) => c.id !== id));
  if (activeCollectionId === id) onSelectCollection(null);
  try {
-  await api.delete(`/api/collections/${id}`);
+  const res = await api.delete(`/api/collections/${id}`);
   if (!mountedRef.current) return;
+  if (res.success) {
   toast(t('collections_deleted'), 'success');
+  } else {
+  setCollections(prev);
+  toast(t('collections_delete_failed'), 'error');
+  }
  } catch (err) {
   warn('CollectionsSidebar: delete failed', err);
   if (!mountedRef.current) return;
@@ -118,6 +127,8 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
   if (!mountedRef.current) return;
   if (res.success && res.data) {
   setCollections((prev) => prev.map((c) => (c.id === id ? (res.data as Collection) : c)));
+  } else {
+  toast(t('collections_rename_failed'), 'error');
   }
  } catch (err) {
   warn('CollectionsSidebar: rename failed', err);
