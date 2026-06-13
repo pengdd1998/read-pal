@@ -63,10 +63,6 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
  const [viewMode, setViewMode] = useState<ViewMode>('list');
  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
- const stableOnDeleteAnnotation = useCallback((id: string) => onDeleteAnnotation(id), [onDeleteAnnotation]);
- const stableOnUpdateAnnotation = useCallback((updated: Annotation) => onUpdateAnnotation(updated), [onUpdateAnnotation]);
- const stableOnScrollToAnnotation = useCallback((annotation: Annotation) => onScrollToAnnotation(annotation), [onScrollToAnnotation]);
-
  const handleToggleViewMode = useCallback(() => setViewMode((v) => v === 'list' ? 'outline' : 'list'), []);
  const handleToggleBulkMode = useCallback(() => setBulkMode((v) => !v), []);
  const handleShowShareDialog = useCallback(() => setShowShareDialog(true), []);
@@ -206,9 +202,9 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
     selectedIds={selectedIds}
     bookTitle={bookTitle}
     author={author}
-    onDelete={stableOnDeleteAnnotation}
-    onUpdate={stableOnUpdateAnnotation}
-    onScrollToAnnotation={stableOnScrollToAnnotation}
+    onDelete={onDeleteAnnotation}
+    onUpdate={onUpdateAnnotation}
+    onScrollToAnnotation={onScrollToAnnotation}
     onToggleSelect={toggleSelect}
    />
    </div>

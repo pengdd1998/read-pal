@@ -61,7 +61,6 @@ export const OutlinePanel = React.memo(function OutlinePanel({
  const [searchQuery, setSearchQuery] = useState('');
  const [filterType, setFilterType] = useState<FilterType>('all');
 
- const stableScrollTo = useCallback((a: Annotation) => { onScrollToAnnotation(a); }, [onScrollToAnnotation]);
  const handleFilterChange = useCallback((key: FilterType) => setFilterType(key), []);
 
  const chapters = useMemo(() => {
@@ -210,7 +209,7 @@ export const OutlinePanel = React.memo(function OutlinePanel({
     chapter={chapter}
     isExpanded={expandedChapters.has(chapter.chapterIndex)}
     onToggle={toggleChapter}
-    onScrollToAnnotation={stableScrollTo}
+    onScrollToAnnotation={onScrollToAnnotation}
     noItemsLabel={t('outline_no_items')}
     />
    ))}

@@ -11,15 +11,22 @@ interface SelectionHintProps {
 export const SelectionHint = React.memo(function SelectionHint({ onDismiss }: SelectionHintProps) {
  const t = useTranslations('reader');
  const [isReturningUser, setIsReturningUser] = useState(false);
+ const [tourComplete, setTourComplete] = useState(false);
 
  useEffect(() => {
  const returning = safeGetItem('read-pal-selection-used') === 'true';
+ const tourDone = safeGetItem('read-pal-tour-complete') === 'true';
  setIsReturningUser(returning);
+ setTourComplete(tourDone);
+ // Returning users who already know how to select don't need this hint at all
  if (returning) {
   const timer = setTimeout(onDismiss, 3000);
   return () => clearTimeout(timer);
  }
  }, [onDismiss]);
+
+ // Defer to FeatureTour when it's still running — tour step 2 already teaches selection
+ if (!tourComplete) return null;
 
  return (
  <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-20 animate-fade-in" role="status" aria-live="polite" style={{ animation: 'fade-in 0.5s 1.5s forwards' }}>
