@@ -21,6 +21,10 @@ export interface BookClub {
  maxMembers: number;
  currentBookId?: string;
  currentUserRole: string;
+ // The dashboard list endpoint returns `memberCount` (a number) — not the
+ // member rows. Detail endpoints may include `clubMembers`, so fall back to
+ // its length when present (e.g. on the club detail page).
+ memberCount?: number;
  clubMembers?: ClubMember[];
  currentBook?: {
  id: string;
@@ -33,6 +37,9 @@ export interface BookClub {
 
 export const BookClubCard = React.memo(function BookClubCard({ club }: { club: BookClub }) {
  const t = useTranslations('bookClubs');
+ // Prefer the API's aggregate `memberCount` (returned by the list endpoint);
+ // fall back to the member rows when present (detail page).
+ const memberCount = club.memberCount ?? (club.clubMembers?.length ?? 0);
 
  return (
  <Link
@@ -63,8 +70,8 @@ export const BookClubCard = React.memo(function BookClubCard({ club }: { club: B
   </div>
   <div className="flex items-center gap-3 mt-0.5">
    <span className="text-xs text-gray-500 dark:text-gray-400">
-   {(club.clubMembers || []).length !== 1
-     ? t('memberCountPlural', { count: (club.clubMembers || []).length })
+   {memberCount !== 1
+     ? t('memberCountPlural', { count: memberCount })
      : t('memberCount', { count: 1 })}
    </span>
    {club.currentBookId && (
