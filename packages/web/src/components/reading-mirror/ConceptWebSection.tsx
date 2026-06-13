@@ -100,8 +100,8 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
             {t('hub_concepts')}
           </h4>
           <div className="grid gap-3 sm:grid-cols-2">
-            {hubs.map((hub, i) => (
-              <HubConceptCard key={i} hub={hub} />
+            {hubs.map((hub) => (
+              <HubConceptCard key={hub.name} hub={hub} />
             ))}
           </div>
         </div>
@@ -114,8 +114,8 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
             {t('surprising_connections')}
           </h4>
           <div className="space-y-2">
-            {connections.map((conn, i) => (
-              <ConnectionCard key={i} connection={conn} />
+            {connections.map((conn) => (
+              <ConnectionCard key={`${conn.from}-${conn.to}`} connection={conn} />
             ))}
           </div>
         </div>
@@ -128,8 +128,8 @@ export default React.memo(function ConceptWebSection({ data }: ConceptWebSection
             {t('peripheral_concepts')}
           </h4>
           <div className="flex flex-wrap gap-2">
-            {peripheral.map((concept, i) => (
-              <PeripheralChip key={i} concept={concept} />
+            {peripheral.map((concept) => (
+              <PeripheralChip key={concept} concept={concept} />
             ))}
           </div>
         </div>

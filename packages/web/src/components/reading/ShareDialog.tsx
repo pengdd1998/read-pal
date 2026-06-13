@@ -74,13 +74,24 @@ export const ShareDialog = React.memo(function ShareDialog({
   </div>
 
   {/* Tabs */}
-  <div role="tablist" className="flex border-b border-surface-3 px-2">
+  <div role="tablist" className="flex border-b border-surface-3 px-2" onKeyDown={(e) => {
+   const idx = TABS.findIndex((t) => t.key === activeTab);
+   let next = -1;
+   if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+   else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+   if (next >= 0) {
+    e.preventDefault();
+    setActiveTab(TABS[next].key);
+    (e.currentTarget.children[next] as HTMLElement)?.focus();
+   }
+  }}>
    {TABS.map((tab) => (
    <button type="button"
     key={tab.key}
     role="tab"
     aria-selected={activeTab === tab.key}
     onClick={() => setActiveTab(tab.key)}
+    tabIndex={activeTab === tab.key ? 0 : -1}
     className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
     activeTab === tab.key
      ? 'text-amber-600 dark:text-amber-400'

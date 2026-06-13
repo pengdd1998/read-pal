@@ -130,7 +130,18 @@ export default function BookClubsPage() {
    </div>
 
    {/* Tabs */}
-   <div className="flex gap-1 p-1 bg-surface-2 rounded-xl mb-6" role="tablist" aria-label={t('clubs_tabs_label')}>
+   <div className="flex gap-1 p-1 bg-surface-2 rounded-xl mb-6" role="tablist" aria-label={t('clubs_tabs_label')} onKeyDown={(e) => {
+    const tabKeys = ['my', 'discover'] as const;
+    const idx = tabKeys.indexOf(tab);
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (idx + 1) % tabKeys.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + tabKeys.length) % tabKeys.length;
+    if (next >= 0) {
+     e.preventDefault();
+     setTab(tabKeys[next]);
+     (e.currentTarget.children[next] as HTMLElement)?.focus();
+    }
+   }}>
     {(['my', 'discover'] as const).map((tabKey) => (
     <button type="button"
      key={tabKey}
@@ -139,6 +150,7 @@ export default function BookClubsPage() {
      aria-selected={tab === tabKey}
      aria-controls={`club-panel-${tabKey}`}
      onClick={() => setTab(tabKey)}
+     tabIndex={tab === tabKey ? 0 : -1}
      className={`flex-1 py-3 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
      tab === tabKey
       ? 'bg-surface-0 text-gray-900 dark:text-gray-100 shadow-sm'
@@ -189,7 +201,7 @@ export default function BookClubsPage() {
    )}
 
    {!loading && !error && displayClubs.length > 0 && (
-    <div className="space-y-3">
+    <div className="space-y-3 animate-fade-in">
     {displayClubs.map((club) => (
      <ClubDiscoveryCard
      key={club.id}

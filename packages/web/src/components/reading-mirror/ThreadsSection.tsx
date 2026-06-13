@@ -68,8 +68,8 @@ export default React.memo(function ThreadsSection({ data }: ThreadsSectionProps)
       )}
 
       <div className="space-y-4">
-        {threads.map((thread, i) => (
-          <ThreadCard key={i} thread={thread} />
+        {threads.map((thread) => (
+          <ThreadCard key={thread.theme} thread={thread} />
         ))}
       </div>
 

@@ -193,7 +193,8 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
     </button>
    </div>
    ) : (
-   Array.from({ length: totalChapters }, (_, i) => (
+   <div className="animate-fade-in">
+   {Array.from({ length: totalChapters }, (_, i) => (
     <TimelineChapterRow
      key={`chapter-${i}`}
      chapterIndex={i}
@@ -204,10 +205,11 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
      onSelect={onChapterSelect}
      t={t}
     />
-   ))
+   ))}
+   </div>
    )}
-  </div>
-  </div>
+   </div>
+   </div>
 
   <style jsx>{`
   @keyframes slide-in-right {

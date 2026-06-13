@@ -189,7 +189,19 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
   )}
 
   {/* Tabs */}
-	  <div role="tablist" aria-label={t('synthesis_tab_label')} className="flex border-b border-surface-3 px-1 overflow-x-auto">
+	  <div role="tablist" aria-label={t('synthesis_tab_label')} className="flex border-b border-surface-3 px-1 overflow-x-auto" onKeyDown={(e) => {
+	   const idx = TABS.findIndex((tb) => tb.key === activeTab);
+	   let next = -1;
+	   if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+	   else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+	   if (next >= 0) {
+	    e.preventDefault();
+	    setActiveTab(TABS[next].key);
+	    setResult(null);
+	    setError(null);
+	    (e.currentTarget.children[next] as HTMLElement)?.focus();
+	   }
+	  }}>
 	   {TABS.map((tab) => (
 	   <SynthesisTab
 	    key={tab.key}
@@ -216,7 +228,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
     <span className="text-sm text-gray-500 dark:text-gray-400">{t('synthesis_analyzing')}</span>
    </div>
    )}
-   {!loading && result && <AnalysisResultView result={result} />}
+   {!loading && result && <div className="animate-fade-in"><AnalysisResultView result={result} /></div>}
    {!loading && !result && !error && (
    <div className="text-center py-8">
     <svg aria-hidden="true" className="w-10 h-10 mx-auto text-amber-400 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

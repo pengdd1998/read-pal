@@ -241,6 +241,7 @@ export default function FlashcardsPage() {
  return (
   <>
   {toastEl}
+  <div className="animate-fade-in">
   <FlashcardDeck
    decks={decks}
    totalCards={deckTotalCards}
@@ -248,6 +249,7 @@ export default function FlashcardsPage() {
    totalReviewed={deckTotalReviewed}
    onStartReview={startReview}
   />
+  </div>
   </>
  );
  }

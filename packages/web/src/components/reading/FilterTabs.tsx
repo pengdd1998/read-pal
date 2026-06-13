@@ -23,14 +23,27 @@ interface FilterTabsProps {
 export const FilterTabs = React.memo(function FilterTabs({ activeTab, counts, onTabChange }: FilterTabsProps) {
  const t = useTranslations('reader');
 
+ const handleKeyDown = (e: React.KeyboardEvent) => {
+  const idx = TAB_KEYS.indexOf(activeTab);
+  let next = -1;
+  if (e.key === 'ArrowRight') next = (idx + 1) % TAB_KEYS.length;
+  else if (e.key === 'ArrowLeft') next = (idx - 1 + TAB_KEYS.length) % TAB_KEYS.length;
+  if (next >= 0) {
+   e.preventDefault();
+   onTabChange(TAB_KEYS[next]);
+   (e.currentTarget.children[next] as HTMLElement)?.focus();
+  }
+ };
+
  return (
- <div role="tablist" aria-label={t('sidebar_annotations')} className="flex border-b border-surface-3 px-2">
+ <div role="tablist" aria-label={t('sidebar_annotations')} className="flex border-b border-surface-3 px-2" onKeyDown={handleKeyDown}>
   {TAB_KEYS.map((tab) => (
   <button type="button"
    key={tab}
    onClick={() => onTabChange(tab)}
    role="tab"
    aria-selected={activeTab === tab}
+   tabIndex={activeTab === tab ? 0 : -1}
    className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors relative focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
    activeTab === tab
     ? 'text-primary-600 dark:text-primary-400'
