@@ -6,7 +6,7 @@
  */
 
 import { getAuthToken } from './auth-fetch';
-import { clearQueue } from './offline-queue';
+import { clearQueue, type QueuedMutation } from './offline-queue';
 import { warn } from './logger';
 
 export interface SyncResult {
@@ -61,7 +61,7 @@ export async function purgeStaleQueue(): Promise<number> {
     const db = await openDB();
     const tx = db.transaction('mutations', 'readwrite');
     const store = tx.objectStore('mutations');
-    const items = await new Promise<any[]>((resolve, reject) => {
+    const items = await new Promise<QueuedMutation[]>((resolve, reject) => {
       const req = store.getAll();
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -73,6 +73,12 @@ export async function purgeStaleQueue(): Promise<number> {
         purged++;
       }
     }
+    // Await transaction completion so callers see the purged state
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
     return purged;
   } catch (err) {
     warn('OfflineSync: failed to purge stale queue items', err);
@@ -97,7 +103,7 @@ export async function syncQueuedMutations(): Promise<SyncResult | null> {
   const db = await openDB();
   const tx = db.transaction('mutations', 'readonly');
   const store = tx.objectStore('mutations');
-  const items = await new Promise<any[]>((resolve, reject) => {
+  const items = await new Promise<QueuedMutation[]>((resolve, reject) => {
     const req = store.getAll();
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);

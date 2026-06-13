@@ -6,7 +6,7 @@
  * and components to gracefully handle offline state.
  */
 
-interface QueuedMutation {
+export interface QueuedMutation {
   url: string;
   method: string;
   body: string;
