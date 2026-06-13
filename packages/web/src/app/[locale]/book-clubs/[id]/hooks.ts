@@ -24,8 +24,11 @@ export function useBookClubDetail(clubId: string) {
       setError(null);
       try {
         const res = await api.get<ClubDetail>(`/api/book-clubs/${clubId}`);
-        if (!cancelled && res.success && res.data) {
+        if (cancelled) return;
+        if (res.success && res.data) {
           setClub(res.data);
+        } else {
+          setError(tRef.current('failedToLoad'));
         }
       } catch (err) {
         warn('useBookClubDetail: fetch failed', err);
@@ -61,8 +64,11 @@ export function useBookClubProgress(clubId: string, currentBookId?: string) {
     api
       .get<{ hasBook: boolean; progress: MemberProgress[] }>(`/api/book-clubs/${clubId}/progress`)
       .then((res) => {
-        if (!cancelled && res.success && res.data?.progress) {
+        if (cancelled) return;
+        if (res.success && res.data?.progress) {
           setProgress(res.data.progress);
+        } else {
+          setError(tRef.current('progress_failed_load'));
         }
       })
       .catch((err) => {
@@ -102,8 +108,11 @@ export function useBookClubDiscussion(clubId: string) {
     api
       .get<{ data: DiscussionMessage[] }>(`/api/book-clubs/${clubId}/discussions?limit=50`)
       .then((res) => {
-        if (!cancelled && res.success && res.data) {
+        if (cancelled) return;
+        if (res.success && res.data) {
           setMessages(Array.isArray(res.data) ? res.data : []);
+        } else {
+          setError(tRef.current('discussions_failed_load'));
         }
       })
       .catch((err) => {

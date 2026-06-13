@@ -41,6 +41,8 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
   if (!mountedRef.current) return;
   if (res.success && res.data?.summary) {
    setAiSummary(res.data.summary);
+  } else if (!res.success) {
+   setSummaryError(true);
   }
   })
   .catch((err) => {

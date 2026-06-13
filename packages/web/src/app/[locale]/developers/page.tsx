@@ -37,9 +37,10 @@ export default function DevelopersPage() {
  api.get<Array<{ keyPrefix: string }>>('/api/api-keys')
   .then((res) => {
   if (stale) return;
-  const keys = res.data;
-  if (keys && keys.length > 0) {
-   setApiKeyHint(keys[0].keyPrefix + '...');
+  if (res.success && res.data && res.data.length > 0) {
+   setApiKeyHint(res.data[0].keyPrefix + '...');
+  } else if (!res.success) {
+   setApiKeyError(tRef.current('api_key_fetch_error'));
   }
   })
   .catch((err) => {

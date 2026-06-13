@@ -56,6 +56,8 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
      if (res.success && res.data) {
        const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
        setCollections(items);
+     } else {
+       setLoadError(true);
      }
    }).catch((err) => { warn("CollectionPicker: failed to load collections", err); if (!stale) setLoadError(true); }).finally(() => { if (!stale) setLoading(false); });
    return () => { stale = true; };

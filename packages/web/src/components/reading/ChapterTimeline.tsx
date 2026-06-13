@@ -125,7 +125,11 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   api.get<ChapterStat[]>(`/api/annotations/stats/chapters?book_id=${bookId}`)
   .then((res) => {
   if (!mountedRef.current || reqId !== reqIdRef.current) return;
-  if (res.success && res.data) setStats(res.data);
+  if (res.success && res.data) {
+    setStats(res.data);
+  } else {
+    setError(true);
+  }
   })
   .catch((err) => {
   warn('ChapterTimeline: failed to load stats', err);
