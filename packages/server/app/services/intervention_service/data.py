@@ -8,7 +8,7 @@ from sqlalchemy.sql.selectable import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reading_session import ReadingSession
-from app.utils import utcnow
+from app.utils.time import utcnow_aware
 
 
 def _build_session_query(
@@ -32,7 +32,8 @@ async def fetch_recent_sessions(
     book_id: UUID | None,
 ) -> tuple[list, list]:
     """Return (weekly_sessions, today_sessions) for the given user/book."""
-    now = utcnow()
+    # tz-aware UTC — see app.utils.time for why naive datetimes shift the filter.
+    now = utcnow_aware()
     week_ago = now - timedelta(days=7)
     day_ago = now - timedelta(days=1)
 
@@ -50,6 +51,6 @@ async def fetch_extended_sessions(
     book_id: UUID | None,
 ) -> list:
     """Fetch sessions from the last 14 days for timing analysis."""
-    two_weeks_ago = utcnow() - timedelta(days=14)
+    two_weeks_ago = utcnow_aware() - timedelta(days=14)
     q = _build_session_query(user_id, two_weeks_ago, book_id)
     return (await db.execute(q)).scalars().all()

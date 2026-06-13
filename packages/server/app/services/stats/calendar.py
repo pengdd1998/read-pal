@@ -1,7 +1,7 @@
 """Reading calendar and weekly summary stats."""
 
 import asyncio
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
@@ -14,6 +14,7 @@ import logging
 from app.services.stats.streaks import compute_streaks
 from app.services.stats import STATS_LOOKBACK_DELTA
 from app.utils.db import db_error_guard
+from app.utils.time import utcnow_aware
 
 logger = logging.getLogger('read-pal.stats.calendar')
 
@@ -23,22 +24,36 @@ def _build_date_range(
     year: int | None,
     month: int | None,
 ) -> tuple[datetime, datetime]:
-    """Compute (start, end) datetime range for calendar queries."""
+    """Compute (start, end) datetime range for calendar queries.
+
+    Returns tz-aware UTC datetimes — required for correct filtering because
+    SQLAlchemy binds naive datetimes against DateTime(timezone=True) columns
+    as ``$1::TIMESTAMP WITH TIME ZONE``, and asyncpg interprets naive values
+    using the client process TZ.
+    """
     if months is not None:
-        today = date.today()
-        end = datetime.combine(today + timedelta(days=1), datetime.min.time())
+        today = utcnow_aware().date()
+        end = datetime.combine(today + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
         m = min(months, 12)
-        start = (
-            datetime(today.year, today.month - m, 1)
+        start_date = (
+            today.replace(month=today.month - m)
             if today.month > m
-            else datetime(today.year - 1, 12 + today.month - m, 1)
+            else today.replace(year=today.year - 1, month=12 + today.month - m)
         )
+        start = datetime(start_date.year, start_date.month, 1, tzinfo=timezone.utc)
     elif month is not None and year is not None:
-        start = datetime(year, month, 1)
-        end = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+        start = datetime(year, month, 1, tzinfo=timezone.utc)
+        end = (
+            datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+            if month == 12
+            else datetime(year, month + 1, 1, tzinfo=timezone.utc)
+        )
     else:
-        y = year or date.today().year
-        start, end = datetime(y, 1, 1), datetime(y + 1, 1, 1)
+        y = year or utcnow_aware().date().year
+        start, end = (
+            datetime(y, 1, 1, tzinfo=timezone.utc),
+            datetime(y + 1, 1, 1, tzinfo=timezone.utc),
+        )
     return start, end
 
 
@@ -107,11 +122,12 @@ async def _get_streak_data(
 ) -> tuple[int, int]:
     """Compute current and longest streaks from a cutoff date."""
     day_col = func.date(ReadingSession.started_at).label('day')
+    cutoff_dt = datetime.combine(cutoff, datetime.min.time(), tzinfo=timezone.utc)
     async with db_error_guard('calendar._get_streak_data'):
         rows = await db.execute(
             select(day_col).where(
                 ReadingSession.user_id == uid,
-                ReadingSession.started_at >= datetime.combine(cutoff, datetime.min.time()),
+                ReadingSession.started_at >= cutoff_dt,
             ).group_by(day_col),
         )
         active_dates = {
@@ -213,12 +229,15 @@ def _build_daily_breakdown(
 
 
 async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
-    """Return weekly reading summary (Mon-Sun of the current week)."""
-    today = date.today()
+    """Return weekly reading summary (Mon-Sun of the current UTC week)."""
+    today = utcnow_aware().date()
     week_start = today - timedelta(days=today.weekday())
     week_end = week_start + timedelta(days=6)
-    dt_start = datetime.combine(week_start, datetime.min.time())
-    dt_end = datetime.combine(week_end + timedelta(days=1), datetime.min.time())
+    # tz-aware UTC bounds — see _build_date_range for why.
+    dt_start = datetime.combine(week_start, datetime.min.time(), tzinfo=timezone.utc)
+    dt_end = datetime.combine(
+        week_end + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc,
+    )
 
     (
         (daily_map, (hl_count, note_count), active_books, (current_streak, longest_streak)),

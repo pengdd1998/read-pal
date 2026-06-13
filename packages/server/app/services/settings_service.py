@@ -11,6 +11,7 @@ from app.models.user import User
 from app.utils import utcnow
 from app.utils.db import db_error_guard
 from app.utils.i18n import DEFAULT_LANGUAGE
+from app.utils.time import utc_start_of_day, utc_start_of_week
 
 logger = logging.getLogger('read-pal.settings')
 
@@ -44,10 +45,9 @@ async def _get_today_reading_minutes(
     from app.models.reading_session import ReadingSession
 
     async with db_error_guard('_get_today_reading_minutes', user_id=str(user_id)):
-        # Use UTC consistently — started_at is stored as naive UTC.
-        # Combining date.today() would mix local date with UTC timestamps.
-        now_utc = utcnow()
-        today_start = datetime.combine(now_utc.date(), datetime.min.time())
+        # tz-aware UTC midnight — asyncpg/SQLAlchemy interprets naive datetimes
+        # using the client process TZ, which silently shifts the bound value.
+        today_start = utc_start_of_day()
         today_seconds = await db.scalar(
             select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
                 and_(
@@ -66,14 +66,11 @@ async def _get_weekly_completed_books(
     db: AsyncSession,
     user_id: UUID,
 ) -> int:
-    """Return number of books the user completed this week."""
+    """Return number of books the user completed this week (UTC week, Mon-Sun)."""
     from app.models.book import Book, BookStatus
 
     async with db_error_guard('_get_weekly_completed_books', user_id=str(user_id)):
-        week_start = datetime.combine(
-            date.today() - timedelta(days=date.today().weekday()),
-            datetime.min.time(),
-        )
+        week_start = utc_start_of_week()
         completed_this_week = await db.scalar(
             select(func.count(Book.id)).where(
                 and_(

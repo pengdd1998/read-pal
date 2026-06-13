@@ -19,6 +19,7 @@ from app.models.reading_session import ReadingSession
 logger = logging.getLogger('read-pal.challenges')
 from app.utils import utcnow
 from app.utils.db import db_error_guard
+from app.utils.time import utcnow_aware
 from app.utils.limits import CHALLENGE_MIN_DUE
 
 
@@ -205,7 +206,7 @@ async def get_book_completion(
 async def get_flashcard_review(
     db: AsyncSession, user_id: UUID,
 ) -> dict:
-    now = _utc_now()
+    now = utcnow_aware()
     async with db_error_guard('get_flashcard_review', user_id=str(user_id)):
         result = await db.execute(
             select(func.count()).select_from(Flashcard).where(

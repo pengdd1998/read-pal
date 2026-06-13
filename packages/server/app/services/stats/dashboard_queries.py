@@ -1,7 +1,7 @@
 """Database query helpers for dashboard stats."""
 
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
@@ -14,6 +14,7 @@ from app.models.chat_message import ChatMessage
 from app.models.memory_book import MemoryBook
 from app.models.reading_session import ReadingSession
 from app.services.stats.streaks import compute_streaks
+from app.utils.time import utcnow_aware
 
 logger = logging.getLogger(__name__)
 
@@ -64,10 +65,12 @@ async def get_reading_minutes(db: AsyncSession, uid: UUID) -> int:
 async def compute_current_streak(db: AsyncSession, uid: UUID) -> int:
     """Current reading streak (consecutive days ending today)."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    cutoff = date.today() - timedelta(days=365)
+    # Use UTC consistently — started_at is stored as naive UTC.
+    cutoff = utcnow_aware().date() - timedelta(days=365)
+    cutoff_dt = datetime.combine(cutoff, datetime.min.time(), tzinfo=timezone.utc)
     rows = await db.execute(
         select(day_col)
-        .where(ReadingSession.user_id == uid, ReadingSession.started_at >= cutoff)
+        .where(ReadingSession.user_id == uid, ReadingSession.started_at >= cutoff_dt)
         .group_by(day_col),
     )
     active = {
@@ -139,9 +142,11 @@ async def get_recent_books(db: AsyncSession, uid: UUID, limit: int = 10) -> list
 
 
 async def get_weekly_activity(db: AsyncSession, uid: UUID) -> list[dict]:
-    """Pages read per day for the last 7 days."""
-    today = date.today()
+    """Pages read per day for the last 7 days (UTC day boundaries)."""
+    today = utcnow_aware().date()
     week_start = today - timedelta(days=6)
+    # tz-aware UTC midnight — naive datetimes are interpreted in client TZ.
+    week_start_dt = datetime.combine(week_start, datetime.min.time(), tzinfo=timezone.utc)
     day_col = func.date(ReadingSession.started_at).label('day')
     rows = await db.execute(
         select(
@@ -151,7 +156,7 @@ async def get_weekly_activity(db: AsyncSession, uid: UUID) -> list[dict]:
         .where(
             and_(
                 ReadingSession.user_id == uid,
-                ReadingSession.started_at >= datetime.combine(week_start, datetime.min.time()),
+                ReadingSession.started_at >= week_start_dt,
             ),
         )
         .group_by(day_col)

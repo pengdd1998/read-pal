@@ -12,6 +12,7 @@ from app.models.flashcard import Flashcard
 from app.schemas.flashcard import FlashcardCreate
 from app.utils import utcnow
 from app.utils.db import db_error_guard
+from app.utils.time import utcnow_aware
 
 logger = structlog.get_logger('read-pal.flashcards')
 
@@ -118,7 +119,7 @@ async def get_due_cards(
 ) -> list[Flashcard]:
     """Get flashcards due for review (capped at `limit`)."""
     async with db_error_guard('get_due_cards', user_id=str(user_id)):
-        now = utcnow()
+        now = utcnow_aware()
         query = (
             select(Flashcard)
             .where(
@@ -189,7 +190,7 @@ async def count_reviewed(db: AsyncSession, user_id: UUID) -> int:
 async def list_decks(db: AsyncSession, user_id: UUID) -> dict:
     """List flashcard decks grouped by book."""
     async with db_error_guard('list_decks', user_id=str(user_id)):
-        now = utcnow()
+        now = utcnow_aware()
         result = await db.execute(
             select(
                 Flashcard.book_id,

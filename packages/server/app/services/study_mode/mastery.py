@@ -18,6 +18,7 @@ from app.models.document import Document
 from app.models.flashcard import Flashcard
 from app.utils import utcnow
 from app.utils.db import db_error_guard
+from app.utils.time import utcnow_aware
 
 logger = structlog.get_logger('read-pal.study_mode')
 
@@ -232,7 +233,7 @@ async def _count_cards_due(
     book_id: UUID,
 ) -> int:
     """Count flashcards due for review."""
-    now = utcnow()
+    now = utcnow_aware()
     async with db_error_guard('_count_cards_due', book_id=str(book_id), user_id=str(user_id)):
         return await db.scalar(
             select(func.count(Flashcard.id)).where(
