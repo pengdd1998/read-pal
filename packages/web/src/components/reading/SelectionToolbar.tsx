@@ -11,7 +11,6 @@ import { DesktopSelectionToolbar } from './DesktopSelectionToolbar';
 interface SelectionToolbarProps {
   text: string;
   rect: DOMRect | null;
-  range: Range | null;
   bookTitle?: string;
   author?: string;
   onHighlight: (text: string, color: string, tags?: string[]) => void;

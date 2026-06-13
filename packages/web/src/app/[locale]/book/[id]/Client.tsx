@@ -184,7 +184,7 @@ export default function BookDetailPage() {
         onError={setError}
       />
 
-      <FlashcardCard bookId={bookId} totalAnnotations={totalAnnotations} flashcardCount={flashcardCount} t={t} onError={setError} />
+      <FlashcardCard bookId={bookId} totalAnnotations={totalAnnotations} t={t} onError={setError} />
 
       <ReadingInsights readingLog={readingLog} t={t} locale={locale} />
 

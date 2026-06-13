@@ -7,7 +7,6 @@ interface BulkActionBarProps {
  selectedCount: number;
  totalCount: number;
  confirmDelete: boolean;
- deleting?: boolean;
  onBulkDelete: () => void;
  onConfirmBulkDelete: () => void;
  onCancelBulkDelete: () => void;

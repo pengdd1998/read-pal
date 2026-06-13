@@ -5,16 +5,9 @@ import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from '@/components/icons';
 import { progressBg, progressFill, type ReaderTheme } from '@/lib/reader-theme';
 
-interface ChapterItem {
- title: string;
-}
-
 interface ReaderFooterProps {
  currentPage: number;
  totalPages: number;
- currentSegment: number;
- totalSegments: number;
- chapters: ChapterItem[];
  theme: ReaderTheme;
  overallProgress: number;
  showControls: boolean;

@@ -90,7 +90,6 @@ export default function DashboardPage() {
         hasData={hasData}
         firstName={firstName}
         streak={streak}
-        greetingKey={greetingKey}
         greeting={t(greetingKey) || ''}
         welcomeBackName={t('welcome_back_name', { name: firstName || t('welcome_back') })}
         welcomeBack={t('welcome_back')}

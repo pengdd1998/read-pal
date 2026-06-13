@@ -9,7 +9,6 @@ interface DashboardHeaderProps {
   hasData: boolean;
   firstName: string;
   streak: number;
-  greetingKey: string;
   greeting: string;
   welcomeBack: string;
   welcomeBackName: string;

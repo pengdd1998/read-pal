@@ -37,8 +37,6 @@ interface ReaderViewProps {
   externalTocOpen?: boolean;
   onTocClose?: () => void;
   highlightMode?: boolean;
-  highlightCount?: number;
-  bookmarkCount?: number;
   onScrollProgress?: (progress: number) => void;
   onPauseAutoHide?: () => void;
   onResumeAutoHide?: () => void;
@@ -160,9 +158,6 @@ export const ReaderView = React.memo(function ReaderView({
       <ReaderFooter
         currentPage={currentPage}
         totalPages={totalPages}
-        currentSegment={currentSegment}
-        totalSegments={totalSegments}
-        chapters={chapters}
         theme={theme}
         overallProgress={overallProgress}
         showControls={showControls}

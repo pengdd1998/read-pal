@@ -8,7 +8,6 @@ import { warn } from '@/lib/logger';
 interface FlashcardCardProps {
  bookId: string;
  totalAnnotations: number;
- flashcardCount: number;
  t: (key: string) => string;
  onError: (msg: string) => void;
 }

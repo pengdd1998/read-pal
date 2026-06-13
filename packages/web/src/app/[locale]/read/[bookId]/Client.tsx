@@ -168,8 +168,6 @@ export default function ReadPage() {
             showControls={ui.showControls}
             onToggleControls={ui.handleToggleControls}
             highlightMode={highlightMode}
-            highlightCount={annotationActions.highlightCount}
-            bookmarkCount={annotationActions.bookmarkCount}
             externalTocOpen={ui.tocOpen}
             onTocClose={ui.closeToc}
             onScrollProgress={setChapterScrollProgress}
@@ -188,7 +186,6 @@ export default function ReadPage() {
         <SelectionToolbar
           text={selection.text}
           rect={selection.rect}
-          range={selection.range}
           bookTitle={book?.title}
           author={book?.author}
           onHighlight={annotationActions.handleAddHighlight}
