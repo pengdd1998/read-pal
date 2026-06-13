@@ -37,10 +37,13 @@ export default function SettingsPage() {
   settingsRef.current = settings;
   const tRef = useRef(t);
   tRef.current = t;
+  const mountedRef = useRef(true);
 
   // Flush pending saves and clear timers on unmount
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
         const pending = pendingUpdatesRef.current;
@@ -96,21 +99,23 @@ export default function SettingsPage() {
     setError(null);
     try {
       const res = await api.patch<UserSettings>('/api/settings', updates as Record<string, unknown>);
+      if (!mountedRef.current) return;
       if (res.success && res.data) {
         setSettings(res.data);
         setSaved(true);
         if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
-        savedTimeoutRef.current = setTimeout(() => setSaved(false), 2000);
+        savedTimeoutRef.current = setTimeout(() => { if (mountedRef.current) setSaved(false); }, 2000);
       } else {
         if (previousSettings) setSettings(previousSettings);
         setError(tRef.current('failed_save'));
       }
     } catch (err) {
       warn('Settings: save failed', err);
+      if (!mountedRef.current) return;
       if (previousSettings) setSettings(previousSettings);
       setError(tRef.current('failed_save_retry'));
     }
-    setSaving(false);
+    if (mountedRef.current) setSaving(false);
   }, []);
 
   const debouncedSave = useCallback((updates: Partial<UserSettings>, previousSettings?: UserSettings) => {

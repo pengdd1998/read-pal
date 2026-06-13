@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Link, useRouter } from '@/i18n/navigation';
@@ -25,6 +25,8 @@ export default function BookClubDetailPage() {
  const { messages, loading: discussionLoading, newMessage, setNewMessage, sending, sendMessage, error: discussionError, sendError, clearSendError, refetch: refetchDiscussion } = useBookClubDiscussion(clubId);
  const [joining, setJoining] = useState(false);
  const [leaving, setLeaving] = useState(false);
+ const mountedRef = useRef(true);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const isMember = !!club?.currentUserRole;
 
@@ -32,6 +34,7 @@ export default function BookClubDetailPage() {
    setJoining(true);
    try {
      const res = await api.post<{ id: string; name: string }>(`/api/book-clubs/${clubId}/join`);
+     if (!mountedRef.current) return;
      if (res.success) {
        setClub((prev) => prev ? { ...prev, currentUserRole: 'member', memberCount: (prev.memberCount || 0) + 1 } : prev);
      } else {
@@ -39,9 +42,10 @@ export default function BookClubDetailPage() {
      }
    } catch (err) {
      warn('BookClubDetail: join failed', err);
+     if (!mountedRef.current) return;
      setError(t('failedToJoin'));
    } finally {
-     setJoining(false);
+     if (mountedRef.current) setJoining(false);
    }
  }
 
@@ -50,6 +54,7 @@ export default function BookClubDetailPage() {
  setLeaving(true);
  try {
   const res = await api.post(`/api/book-clubs/${clubId}/leave`);
+  if (!mountedRef.current) return;
   if (res.success) {
    router.push('/book-clubs');
   } else {
@@ -57,9 +62,10 @@ export default function BookClubDetailPage() {
   }
  } catch (err) {
   warn('BookClubDetail: leave failed', err);
+  if (!mountedRef.current) return;
   setError(t('failedToLeave'));
  } finally {
-  setLeaving(false);
+  if (mountedRef.current) setLeaving(false);
  }
  }
 
