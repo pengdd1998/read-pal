@@ -1,10 +1,15 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useReaderSettings, DEFAULT_SETTINGS } from '../useReaderSettings';
 
 describe('useReaderSettings', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('returns default settings initially', () => {
@@ -26,6 +31,11 @@ describe('useReaderSettings', () => {
 
     // Setting should be updated
     expect(result.current.fontSize).toBe(22);
+
+    // Flush the debounced save (300ms timer)
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
 
     // Should be in localStorage
     const stored = JSON.parse(

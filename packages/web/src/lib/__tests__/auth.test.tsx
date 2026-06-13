@@ -2,17 +2,28 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../auth';
 
+// Mock next-intl navigation — avoids loading next/navigation in vitest
+const mockPush = vi.fn();
+vi.mock('@/i18n/navigation', () => ({
+ useRouter: () => ({ push: mockPush, replace: mockPush, back: mockPush }),
+}));
+
 // Mock the api module
 const mockPost = vi.fn();
 vi.mock('../api', () => ({
  api: { post: (...args: unknown[]) => mockPost(...args) },
 }));
 
-// Mock the auth-fetch module
+// Mock the auth-fetch module — keep real storage behavior, only stub sync getter
 const mockGetAuthToken = vi.fn();
-vi.mock('../auth-fetch', () => ({
+vi.mock('../auth-fetch', async (importOriginal) => {
+ const actual = await importOriginal<typeof import('../auth-fetch')>();
+ return {
+ ...actual,
  getAuthToken: () => mockGetAuthToken(),
-}));
+ getAuthTokenAsync: () => Promise.resolve(mockGetAuthToken()),
+ };
+});
 
 // Test component that consumes useAuth
 function AuthConsumer() {
@@ -89,6 +100,7 @@ describe('AuthProvider', () => {
  it('reads stored token from localStorage on mount', async () => {
  const storedUser = { id: 'u1', email: 'stored@test.com', name: 'Stored User' };
  mockGetAuthToken.mockReturnValue('stored-token-123');
+ localStorage.setItem('auth_token', 'stored-token-123');
  localStorage.setItem('user', JSON.stringify(storedUser));
 
  render(
@@ -130,6 +142,7 @@ describe('AuthProvider', () => {
  expect(mockPost).toHaveBeenCalledWith('/api/auth/login', {
   email: 'test@example.com',
   password: 'password123',
+  platform: 'web',
  });
 
  await waitFor(() => {
@@ -198,6 +211,7 @@ describe('AuthProvider', () => {
   name: 'Test User',
   email: 'test@example.com',
   password: 'password123',
+  platform: 'web',
  });
 
  await waitFor(() => {

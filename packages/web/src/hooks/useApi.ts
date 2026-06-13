@@ -70,10 +70,11 @@ export function useApi<T>(
       }
 
       // API returned { success: false }
-      setError('Request failed');
+      const errMsg = res.error?.message || 'Request failed';
+      setError(errMsg);
       setStatus('error');
       if (logErrors) {
-        warn(`[useApi] ${url}: request failed`);
+        warn(`[useApi] ${url}: ${errMsg}`);
       }
       return undefined;
     } catch (err) {

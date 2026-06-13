@@ -1,17 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '../ui';
+
+const messages = {
+  common: {
+    loading: 'Loading...',
+    save: 'Save',
+    cancel: 'Cancel',
+  },
+};
+
+const renderWithI18n = (ui: React.ReactElement) =>
+  render(<NextIntlClientProvider messages={messages} locale="en">{ui}</NextIntlClientProvider>);
 
 describe('LoadingSpinner', () => {
  it('renders an SVG with animate-spin class', () => {
- const { container } = render(<LoadingSpinner />);
+ const { container } = renderWithI18n(<LoadingSpinner />);
  const svg = container.querySelector('svg');
  expect(svg).toBeTruthy();
  expect(svg?.classList.contains('animate-spin')).toBe(true);
  });
 
  it('applies custom className', () => {
- const { container } = render(<LoadingSpinner className="w-8 h-8" />);
+ const { container } = renderWithI18n(<LoadingSpinner className="w-8 h-8" />);
  const svg = container.querySelector('svg');
  expect(svg?.classList.contains('w-8')).toBe(true);
  expect(svg?.classList.contains('h-8')).toBe(true);
@@ -19,7 +31,7 @@ describe('LoadingSpinner', () => {
  });
 
  it('uses default className when none provided', () => {
- const { container } = render(<LoadingSpinner />);
+ const { container } = renderWithI18n(<LoadingSpinner />);
  const svg = container.querySelector('svg');
  expect(svg?.classList.contains('w-4')).toBe(true);
  expect(svg?.classList.contains('h-4')).toBe(true);
@@ -28,14 +40,14 @@ describe('LoadingSpinner', () => {
 
 describe('ErrorAlert', () => {
  it('renders alert with message', () => {
- render(<ErrorAlert message="Something went wrong" />);
+ renderWithI18n(<ErrorAlert message="Something went wrong" />);
  const alert = screen.getByRole('alert');
  expect(alert).toBeTruthy();
  expect(alert).toHaveTextContent('Something went wrong');
  });
 
  it('returns null for empty message', () => {
- const { container } = render(<ErrorAlert message="" />);
+ const { container } = renderWithI18n(<ErrorAlert message="" />);
  expect(container.innerHTML).toBe('');
  });
 });

@@ -20,6 +20,7 @@ vi.mock('axios', () => ({
       post: vi.fn(),
     })),
     isAxiosError: vi.fn(() => false),
+    isCancel: vi.fn(() => false),
   },
 }));
 
