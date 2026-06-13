@@ -36,11 +36,18 @@ export function useChatActions({
     const idx = modes.indexOf(companionMode);
     const newMode = modes[(idx + 1) % modes.length];
     setCompanionMode(newMode);
-    api.patch('/api/settings', { companionMode: newMode }).catch((err) => {
-      warn('useChatActions: companion mode toggle failed', err);
-      setCompanionMode(companionMode);
-      toast(t('companion_mode_error'), 'error');
-    });
+    api.patch('/api/settings', { companionMode: newMode })
+      .then((res) => {
+        if (!res.success) {
+          setCompanionMode(companionMode);
+          toast(t('companion_mode_error'), 'error');
+        }
+      })
+      .catch((err) => {
+        warn('useChatActions: companion mode toggle failed', err);
+        setCompanionMode(companionMode);
+        toast(t('companion_mode_error'), 'error');
+      });
   }, [companionMode, setCompanionMode, toast, t]);
 
   const handleSend = useCallback(() => {

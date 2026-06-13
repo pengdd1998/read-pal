@@ -124,6 +124,9 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
       if (res.success) {
         await fetchPlan();
         toast(t('reading_plan_day_complete'), 'success');
+      } else {
+        setError(t('reading_plan_error'));
+        toast(t('reading_plan_error'), 'error');
       }
     } catch (e) {
       if (!mountedRef.current) return;

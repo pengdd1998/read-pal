@@ -93,6 +93,10 @@ export function useStudyMode(bookId: string) {
       setRevealedAnswers(new Set());
       // Mark chapter loaded only after both calls succeed
       currentChapterRef.current = chapterIndex;
+      // Surface error if both calls failed (data was effectively empty)
+      if (!objRes.success && !checkRes.success) {
+        setError('study_load_error');
+      }
     } catch (err) {
       warn('useStudyMode: loadChapterStudy failed', err);
       if (mountedRef.current) setError('study_load_error');
