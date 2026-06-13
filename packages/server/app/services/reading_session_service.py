@@ -167,6 +167,12 @@ async def end_session(
         _finalize_session_duration(session, now)
 
         update_data, current_page, scroll_progress, current_segment = _extract_client_fields(data)
+        # Defensive clamp: client-reported duration may be inflated due to
+        # stale session timers, cross-tab drift, or paused-but-unmounted state.
+        # Always bound it to the real wall-clock window for this session.
+        if 'duration' in update_data and session.started_at:
+            wall = max(0, int((now - session.started_at).total_seconds()))
+            update_data['duration'] = min(int(update_data['duration'] or 0), wall, _MAX_SESSION_SECONDS)
         _apply_update_fields(session, update_data)
 
         if current_page is not None:

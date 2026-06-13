@@ -419,6 +419,53 @@ class TestEndSession:
         assert book.scroll_progress == Decimal('0.750')
         assert book.current_segment == 42
 
+    @pytest.mark.asyncio
+    async def test_client_duration_capped_to_wall_clock(self):
+        """Regression: client may report inflated duration (e.g., 2h cap from
+        stale session timer). Server must clamp to actual wall-clock window."""
+        db = _make_db_session()
+        user_id = str(uuid4())
+        session_id = uuid4()
+        # Session started 60 seconds ago (10:00:00 → 10:01:00)
+        session = _make_session(
+            session_id=session_id, user_id=user_id,
+            started_at=datetime(2026, 1, 1, 10, 0, 0), is_active=True,
+        )
+        _mock_execute_return(db, session)
+        db.flush = AsyncMock()
+
+        # Client claims 7200 seconds (impossible — only 60s wall-clock)
+        data = _make_session_update(duration=7200)
+
+        with patch('app.services.reading_session_service.utcnow') as mock_now:
+            mock_now.return_value = datetime(2026, 1, 1, 10, 1, 0)
+            result = await reading_session_service.end_session(db, user_id, session_id, data)
+
+        # Must be clamped to wall-clock (60 sec), not 7200
+        assert result.duration == 60
+
+    @pytest.mark.asyncio
+    async def test_client_duration_within_wall_clock_kept(self):
+        """Client reports a valid duration (≤ wall-clock); server should keep it."""
+        db = _make_db_session()
+        user_id = str(uuid4())
+        session_id = uuid4()
+        session = _make_session(
+            session_id=session_id, user_id=user_id,
+            started_at=datetime(2026, 1, 1, 10, 0, 0), is_active=True,
+        )
+        _mock_execute_return(db, session)
+        db.flush = AsyncMock()
+
+        # 30 seconds active reading within a 60-second wall-clock window
+        data = _make_session_update(duration=30)
+
+        with patch('app.services.reading_session_service.utcnow') as mock_now:
+            mock_now.return_value = datetime(2026, 1, 1, 10, 1, 0)
+            result = await reading_session_service.end_session(db, user_id, session_id, data)
+
+        assert result.duration == 30
+
 
 # ---------------------------------------------------------------------------
 # get_active_session

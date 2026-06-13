@@ -8,6 +8,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
+from app.utils import utcnow
 from app.utils.db import db_error_guard
 from app.utils.i18n import DEFAULT_LANGUAGE
 
@@ -39,11 +40,14 @@ async def _get_today_reading_minutes(
     db: AsyncSession,
     user_id: UUID,
 ) -> int:
-    """Return total minutes the user has read today."""
+    """Return total minutes the user has read today (UTC day, capped at 24h)."""
     from app.models.reading_session import ReadingSession
 
     async with db_error_guard('_get_today_reading_minutes', user_id=str(user_id)):
-        today_start = datetime.combine(date.today(), datetime.min.time())
+        # Use UTC consistently — started_at is stored as naive UTC.
+        # Combining date.today() would mix local date with UTC timestamps.
+        now_utc = utcnow()
+        today_start = datetime.combine(now_utc.date(), datetime.min.time())
         today_seconds = await db.scalar(
             select(func.coalesce(func.sum(ReadingSession.duration), 0)).where(
                 and_(
@@ -52,7 +56,10 @@ async def _get_today_reading_minutes(
                 )
             )
         )
-    return int(today_seconds or 0) // 60
+    # Hard upper bound: a single day cannot have more than 24h of reading.
+    # Guards against any future duration-inflation regression.
+    day_cap = 24 * 3600
+    return min(int(today_seconds or 0), day_cap) // 60
 
 
 async def _get_weekly_completed_books(

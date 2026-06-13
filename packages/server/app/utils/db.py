@@ -20,5 +20,5 @@ async def db_error_guard(label: str, **context: object) -> AsyncIterator[None]:
         yield
     except DBAPIError:
         logger = logging.getLogger('read-pal.db')
-        logger.error('%s failed', label, exc_info=True, **context)
+        logger.error('%s failed %s', label, context, exc_info=True)
         raise
