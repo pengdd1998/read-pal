@@ -125,7 +125,7 @@ async def _preflight_check(book_id: UUID, document_id: UUID) -> bool:
                 return False
             if not await _check_record_exists(session, Document, document_id, 'document', book_id):
                 return False
-    except Exception:
+    except (OSError, ValueError):
         logger.error('preflight.fail book_id=%s reason=db_error', book_id, exc_info=True)
         return False
 

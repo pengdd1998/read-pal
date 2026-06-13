@@ -188,7 +188,7 @@ async def change_user_password(
             str(int(datetime.now(timezone.utc).timestamp())),
             ex=86400 * 30,  # 30 days — longer than any token TTL
         )
-    except Exception:
-        logger.warning('Failed to set password-change marker in Redis for user %s', user_id)
+    except (ConnectionError, TimeoutError, OSError):
+        logger.warning('Failed to set password-change marker in Redis for user %s', user_id, exc_info=True)
 
     return t('errors.password_changed', lang)
