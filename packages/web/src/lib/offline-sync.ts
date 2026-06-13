@@ -121,8 +121,12 @@ export async function syncQueuedMutations(): Promise<SyncResult | null> {
       });
 
       if (response.ok) {
-        const deleteTx = db.transaction('mutations', 'readwrite');
-        deleteTx.objectStore('mutations').delete(item.timestamp);
+        await new Promise<void>((resolve, reject) => {
+          const deleteTx = db.transaction('mutations', 'readwrite');
+          deleteTx.objectStore('mutations').delete(item.timestamp);
+          deleteTx.oncomplete = () => resolve();
+          deleteTx.onerror = () => reject(deleteTx.error);
+        });
         succeeded++;
       } else {
         failed++;
