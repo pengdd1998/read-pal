@@ -128,7 +128,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'sepia' ? 'bg-amber-100 border-amber-200/60' : 'bg-white border-gray-100'
     }`}>
     {/* Study mode */}
-    <button type="button" onClick={() => { onToggleStudyMode(); setMoreOpen(false); }} aria-label={t('study_mode_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onToggleStudyMode(); setMoreOpen(false); }} aria-label={t('study_mode_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] ${
      studyModeEnabled ? 'text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -138,7 +138,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     </button>
 
     {/* Synthesis */}
-    <button type="button" onClick={() => { onToggleSynthesis(); setMoreOpen(false); }} aria-label={t('synthesize_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onToggleSynthesis(); setMoreOpen(false); }} aria-label={t('synthesize_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] ${
      synthesisOpen ? 'text-teal-700 dark:text-teal-300 bg-teal-50/50 dark:bg-teal-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -148,7 +148,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     </button>
 
     {/* Reading plan */}
-    <button type="button" onClick={() => { onToggleReadingPlan(); setMoreOpen(false); }} aria-label={t('reading_plan_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onToggleReadingPlan(); setMoreOpen(false); }} aria-label={t('reading_plan_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] ${
      readingPlanOpen ? 'text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -158,7 +158,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     </button>
 
     {/* Chapter timeline */}
-    <button type="button" onClick={() => { onShowTimeline(); setMoreOpen(false); }} aria-label={t('chapter_timeline_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onShowTimeline(); setMoreOpen(false); }} aria-label={t('chapter_timeline_title')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] ${
      timelineOpen ? 'text-violet-700 dark:text-violet-300 bg-violet-50/50 dark:bg-violet-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -172,7 +172,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
     <div className={`my-1 h-px ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
 
     {/* Settings */}
-    <button type="button" onClick={() => { onShowSettings(); setMoreOpen(false); }} aria-label={t('settings_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+    <button type="button" onClick={() => { onShowSettings(); setMoreOpen(false); }} aria-label={t('settings_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] ${
      settingsMenuOpen ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

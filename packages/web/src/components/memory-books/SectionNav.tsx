@@ -38,7 +38,7 @@ export default React.memo(function SectionNav({
  if (sections.length === 0) return (
   <div className="text-center py-12">
    <p className="text-gray-500 dark:text-gray-400 mb-4">{tr('empty_sections')}</p>
-   <Link href="/memory-books" prefetch={false} className="text-sm text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded">
+   <Link href="/memory-books" prefetch={false} className="text-sm text-amber-600 dark:text-amber-400 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none rounded min-h-[44px] inline-flex items-center">
     {t('backToList')}
    </Link>
   </div>
@@ -73,7 +73,7 @@ export default React.memo(function SectionNav({
     key={section.id || i}
     onClick={() => setActiveSection(i)}
     aria-current={activeSection === i ? 'true' : undefined}
-    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 min-h-[44px] ${
      activeSection === i
      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-surface-1'
