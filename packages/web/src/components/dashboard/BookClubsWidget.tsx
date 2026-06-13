@@ -119,11 +119,11 @@ function BookClubsWidgetInner() {
   setNewDesc('');
   } else {
   warn('BookClubsWidget: create returned success=false', res.error);
-  setError(tRef.current('failedToLoad'));
+  setError(tRef.current('create_failed'));
   }
  } catch (err) {
   warn('BookClubsWidget: create failed', err);
-  setError(tRef.current('failedToLoad'));
+  setError(tRef.current('create_failed'));
  } finally {
   setCreating(false);
  }
@@ -152,7 +152,7 @@ function BookClubsWidgetInner() {
   }
  } catch (err) {
   warn('BookClubsWidget: join failed', err);
-  setError(tRef.current('clubNotFound'));
+  setError(tRef.current('join_failed'));
  } finally {
   setJoining(false);
  }

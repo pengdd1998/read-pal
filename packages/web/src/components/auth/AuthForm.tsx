@@ -65,7 +65,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
    });
   } catch (err) {
    warn("AuthForm: sample book seeding failed", err);
-   toast(tc('error'), 'error');
+   toast(t('sample_book_failed'), 'error');
   }
   }
   onSuccess();
