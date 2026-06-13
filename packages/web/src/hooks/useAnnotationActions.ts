@@ -104,6 +104,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         };
         setAnnotations((prev) => [...prev, annotation]);
         analytics.track('annotation_created', { type: 'highlight' });
+      } else {
+        toastError(toast.failed_save_highlight);
       }
     } catch (e) {
       warn('AnnotationActions: failed to save highlight', e);
@@ -145,6 +147,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         };
         setAnnotations((prev) => [...prev, annotation]);
         analytics.track('annotation_created', { type: 'note' });
+      } else {
+        toastError(toast.failed_save_note);
       }
     } catch (e) {
       warn('AnnotationActions: failed to save note', e);
@@ -165,12 +169,18 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
       if (bookmark) {
         // Optimistic delete with functional rollback
         const removedId = bookmark.id;
+        const removedBookmark = bookmark;
         setAnnotations((p) => p.filter((a) => a.id !== removedId));
         try {
-          await api.delete(`/api/annotations/${removedId}`);
+          const res = await api.delete(`/api/annotations/${removedId}`);
+          if (!mountedRef.current) return;
+          if (!res.success) {
+            setAnnotations((p) => [...p, removedBookmark]);
+            toastError(toast.failed_remove_bookmark);
+          }
         } catch (e) {
           warn('AnnotationActions: failed to remove bookmark', e);
-          setAnnotations((p) => [...p, annotations.find((a) => a.id === removedId)!].filter(Boolean));
+          setAnnotations((p) => [...p, removedBookmark]);
           toastError(toast.failed_remove_bookmark);
         }
       }
@@ -197,6 +207,8 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
           };
           setAnnotations((prev) => [...prev, annotation]);
           analytics.track('annotation_created', { type: 'bookmark' });
+        } else {
+          toastError(toast.failed_add_bookmark);
         }
       } catch (e) {
         warn('AnnotationActions: failed to add bookmark', e);
@@ -210,7 +222,12 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     const removed = annotations.find((a) => a.id === id);
     setAnnotations((p) => p.filter((a) => a.id !== id));
     try {
-      await api.delete(`/api/annotations/${id}`);
+      const res = await api.delete(`/api/annotations/${id}`);
+      if (!mountedRef.current) return;
+      if (!res.success) {
+        if (removed) setAnnotations((p) => [...p, removed]);
+        toastError(toast.failed_delete_annotation);
+      }
     } catch (e) {
       warn('AnnotationActions: failed to delete annotation', e);
       if (!mountedRef.current) return;
@@ -243,7 +260,12 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     const prev = annotations;
     setAnnotations((p) => p.map((a) => (a.id === updated.id ? updated : a)));
     try {
-      await api.patch(`/api/annotations/${updated.id}`, updated as unknown as Record<string, unknown>);
+      const res = await api.patch(`/api/annotations/${updated.id}`, updated as unknown as Record<string, unknown>);
+      if (!mountedRef.current) return;
+      if (!res.success) {
+        setAnnotations(prev);
+        toastError(toast.failed_update_annotation);
+      }
     } catch (e) {
       warn('AnnotationActions: failed to update annotation', e);
       if (!mountedRef.current) return;
