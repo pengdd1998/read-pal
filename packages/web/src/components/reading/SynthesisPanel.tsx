@@ -221,7 +221,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
    </p>
    {renderForm()}
    {error && (
-   <div role="alert" className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{error}</span><button type="button" onClick={handleAnalyze} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-400 rounded">{ts("synthesis_retry")}</button></div>
+   <div role="alert" className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{error}</span><button type="button" onClick={handleAnalyze} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-400 rounded min-h-[44px] inline-flex items-center">{ts("synthesis_retry")}</button></div>
    )}
    {loading && (
    <div aria-live="polite" className="flex items-center gap-3 py-8 justify-center">

@@ -238,7 +238,7 @@ export const NotificationBell = memo(function NotificationBell() {
               <button type="button"
                 onClick={markAllRead}
                 disabled={markingAll}
-                className="text-xs text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+                className="text-xs text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] inline-flex items-center px-2"
               >
                 {t('notifications_mark_all_read')}
               </button>
