@@ -144,9 +144,9 @@ export default function SynthesisPage() {
   <div className="mb-6 p-4 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/20">
   <div className="flex items-center justify-between">
    <div>
-   <h3 className="text-sm font-semibold text-teal-800 dark:text-teal-200">
+   <h2 className="text-sm font-semibold text-teal-800 dark:text-teal-200">
     {t('cross_book_title')}
-   </h3>
+   </h2>
    <p className="text-xs text-teal-600 dark:text-teal-400 mt-0.5">
     {t('cross_book_desc')}
    </p>
@@ -178,9 +178,9 @@ export default function SynthesisPage() {
 
   {result && (
   <div className="mb-6 bg-surface-0 rounded-xl border border-surface-3 p-5">
-   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
+   <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
    {t('results_title')}
-   </h3>
+   </h2>
    <ErrorBoundary label="AnalysisResult">
      <AnalysisResultView result={result} />
    </ErrorBoundary>

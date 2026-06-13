@@ -37,9 +37,9 @@ const ClubDiscoveryCard = React.memo(function ClubDiscoveryCard({
    <div className="flex items-start justify-between">
     <div className="flex-1 min-w-0">
     <div className="flex items-center gap-2">
-     <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+     <h2 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
      {club.name}
-     </h3>
+     </h2>
      {club.isPrivate && (
      <svg aria-hidden="true" className="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
