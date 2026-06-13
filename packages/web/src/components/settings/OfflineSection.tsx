@@ -14,6 +14,33 @@ interface CachedBook {
   cachedAt?: number;
 }
 
+const DB_NAME = 'readpal-offline';
+const DB_VERSION = 2;
+const STORE_NAME = 'bookContent';
+
+/** Open IndexedDB and resolve with the cached books (or empty list on failure). */
+function fetchCachedBooks(): Promise<CachedBook[]> {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          resolve([]);
+          return;
+        }
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const getAllReq = tx.objectStore(STORE_NAME).getAll();
+        getAllReq.onsuccess = () => resolve(getAllReq.result || []);
+        getAllReq.onerror = () => resolve([]);
+      };
+      req.onerror = () => resolve([]);
+    } catch {
+      resolve([]);
+    }
+  });
+}
+
 const CachedBookRow = React.memo(function CachedBookRow({ cb, onRemove, removeLabel }: {
   cb: CachedBook;
   onRemove: (bookId: string) => void;
@@ -79,20 +106,9 @@ export const OfflineSection = React.memo(function OfflineSection() {
         if (stale) return;
         setQueueCount(count);
 
-        const dbReq = indexedDB.open('readpal-offline', 2);
-        dbReq.onsuccess = () => {
-          if (stale) return;
-          const db = dbReq.result;
-          if (db.objectStoreNames.contains('bookContent')) {
-            const tx = db.transaction('bookContent', 'readonly');
-            const store = tx.objectStore('bookContent');
-            const getAllReq = store.getAll();
-            getAllReq.onsuccess = () => {
-              if (stale) return;
-              setCachedBooks(getAllReq.result || []);
-            };
-          }
-        };
+        const cached = await fetchCachedBooks();
+        if (stale) return;
+        setCachedBooks(cached);
 
         const res = await api.get<{ books: Array<{ id: string; title: string; author: string }> }>('/api/books?status=reading&pageSize=50');
         if (stale) return;
@@ -122,20 +138,9 @@ export const OfflineSection = React.memo(function OfflineSection() {
       if (!mountedRef.current) return;
       toast(t('offline_cache_success', { count: booksToCache.length }), 'success');
       setSelectedBooks(new Set());
-      const dbReq = indexedDB.open('readpal-offline', 2);
-      dbReq.onsuccess = () => {
-        if (!mountedRef.current) return;
-        const db = dbReq.result;
-        if (db.objectStoreNames.contains('bookContent')) {
-          const tx = db.transaction('bookContent', 'readonly');
-          const store = tx.objectStore('bookContent');
-          const getAllReq = store.getAll();
-          getAllReq.onsuccess = () => {
-            if (!mountedRef.current) return;
-            setCachedBooks(getAllReq.result || []);
-          };
-        }
-      };
+      const cached = await fetchCachedBooks();
+      if (!mountedRef.current) return;
+      setCachedBooks(cached);
     } catch (e) {
       warn('OfflineSection: failed to cache books for offline', e);
       if (!mountedRef.current) return;
@@ -147,18 +152,32 @@ export const OfflineSection = React.memo(function OfflineSection() {
 
   async function handleRemoveCached(bookId: string) {
     try {
-      const dbReq = indexedDB.open('readpal-offline', 2);
-      dbReq.onsuccess = () => {
-        if (!mountedRef.current) return;
-        const db = dbReq.result;
-        const tx = db.transaction('bookContent', 'readwrite');
-        tx.objectStore('bookContent').delete(bookId);
-        tx.oncomplete = () => {
-          if (!mountedRef.current) return;
-          setCachedBooks((prev) => prev.filter((b) => b.bookId !== bookId));
-          toast(t('offline_remove_success'), 'success');
-        };
-      };
+      const success = await new Promise<boolean>((resolve) => {
+        try {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+          req.onsuccess = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              resolve(false);
+              return;
+            }
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).delete(bookId);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          };
+          req.onerror = () => resolve(false);
+        } catch {
+          resolve(false);
+        }
+      });
+      if (!mountedRef.current) return;
+      if (success) {
+        setCachedBooks((prev) => prev.filter((b) => b.bookId !== bookId));
+        toast(t('offline_remove_success'), 'success');
+      } else {
+        toast(t('offline_remove_failed'), 'error');
+      }
     } catch (e) {
       warn('OfflineSection: failed to remove cached book', e);
       if (!mountedRef.current) return;
