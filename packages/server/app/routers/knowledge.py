@@ -37,7 +37,7 @@ async def get_all_graphs(
     return {'success': True, 'data': data}
 
 
-@router.get('/themes', response_model=GenericResponse)
+@router.get('/themes', response_model=GenericResponse, dependencies=[api_limiter])
 async def get_themes(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -80,7 +80,7 @@ async def search(
     return {'success': True, 'data': [r.model_dump() for r in results]}  # ConceptSearchResult has no snake_case fields
 
 
-@router.get('/concepts/{book_id}', response_model=GenericResponse)
+@router.get('/concepts/{book_id}', response_model=GenericResponse, dependencies=[api_limiter])
 async def list_concepts(
     book_id: UUID,
     current_user: dict = Depends(get_current_user),
@@ -91,7 +91,7 @@ async def list_concepts(
     return {'success': True, 'data': concepts}
 
 
-@router.get('/gaps', response_model=GenericResponse)
+@router.get('/gaps', response_model=GenericResponse, dependencies=[api_limiter])
 async def get_knowledge_gaps(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
