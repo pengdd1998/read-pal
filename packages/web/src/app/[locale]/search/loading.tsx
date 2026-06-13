@@ -1,6 +1,6 @@
 export default function SearchLoading() {
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+ <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
   <div className="mb-6 sm:mb-8">
   <div className="h-8 bg-surface-2 rounded-lg w-32 animate-pulse" />
   <div className="h-4 bg-surface-2 rounded-lg w-64 mt-2 animate-pulse" />

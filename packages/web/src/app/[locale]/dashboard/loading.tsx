@@ -1,6 +1,6 @@
 export default function DashboardLoading() {
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+ <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
   {/* Welcome header skeleton */}
   <div className="mb-8 animate-fade-in">
   <div className="h-8 bg-surface-2 rounded-lg w-48 animate-pulse" />

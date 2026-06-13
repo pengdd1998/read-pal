@@ -52,7 +52,7 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, vars?: Rec
   errorMessage.toLowerCase().includes('dynamically imported');
 
   return (
-  <div className="flex items-center justify-center min-h-[200px] p-6">
+  <div className="flex items-center justify-center min-h-[200px] p-6" role="alert">
    <div className="text-center max-w-sm">
    <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
     <svg aria-hidden="true" className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

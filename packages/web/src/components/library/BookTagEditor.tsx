@@ -65,7 +65,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveTag(tag); }}
     disabled={saving}
     aria-label={t('remove_tag', { tag })}
-    className="ml-0.5 text-amber-400 hover:text-red-500 p-1 -m-1 min-w-[20px] min-h-[20px] flex items-center justify-center disabled:opacity-50"
+    className="ml-0.5 text-amber-400 hover:text-red-500 dark:hover:text-red-400 p-1 -m-1 min-w-[20px] min-h-[20px] flex items-center justify-center disabled:opacity-50"
    >
     {saving ? '...' : 'x'}
    </button>

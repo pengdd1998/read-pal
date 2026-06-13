@@ -1,6 +1,6 @@
 export default function AuthLoading() {
  return (
- <div className="min-h-[80vh] flex items-center justify-center px-4">
+ <div aria-busy="true" className="min-h-[80vh] flex items-center justify-center px-4">
   <div className="max-w-sm w-full">
   <div className="animate-pulse space-y-6">
    <div className="flex justify-center">

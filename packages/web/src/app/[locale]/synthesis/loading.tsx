@@ -1,6 +1,6 @@
 export default function SynthesisLoading() {
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
+ <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
   {/* Header */}
   <div className="mb-8">
   <div className="h-8 bg-surface-2 rounded-lg w-48 animate-pulse" />

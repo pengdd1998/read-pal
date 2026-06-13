@@ -1,6 +1,6 @@
 export default function KnowledgeLoading() {
  return (
- <div className="min-h-screen bg-surface-1">
+ <div aria-busy="true" className="min-h-screen bg-surface-1">
   {/* Header skeleton */}
   <div className="border-b border-surface-3 bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">

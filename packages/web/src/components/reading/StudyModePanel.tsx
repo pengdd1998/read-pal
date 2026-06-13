@@ -171,7 +171,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
    </div>
   )}
   {loading && (
-   <div className="flex items-center justify-center py-8">
+   <div className="flex items-center justify-center py-8" aria-live="polite" role="status">
    <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">{t('generating')}</span>
    </div>
@@ -226,7 +226,7 @@ export const StudyModePanel = React.memo(function StudyModePanel({
   )}
 
   {!loading && activeTab === 'mastery' && !mastery && (
-   <div className="text-center py-8">
+   <div className="text-center py-8" aria-live="polite" role="status">
     <div className="w-5 h-5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin mx-auto mb-3" />
     <p className="text-sm text-gray-500 dark:text-gray-400">{t('loading_mastery')}</p>
    </div>

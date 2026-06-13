@@ -6,7 +6,7 @@ const SKELETON_WIDTHS = [
 
 export default function ReadLoading() {
  return (
- <div className="min-h-screen bg-surface-0">
+ <div aria-busy="true" className="min-h-screen bg-surface-0">
   {/* Header bar skeleton */}
   <div className="sticky top-0 z-30 bg-surface-0/90 backdrop-blur-md border-b border-surface-2 px-4 py-3">
   <div className="flex items-center gap-2">

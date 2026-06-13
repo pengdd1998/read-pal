@@ -8,6 +8,18 @@ import { useAuth } from '@/lib/auth';
 import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
+function CallbackFallback() {
+ const t = useTranslations('auth');
+ return (
+ <div className="min-h-[80vh] flex items-center justify-center">
+  <div className="text-center space-y-3">
+   <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" aria-hidden="true" />
+   <p className="text-sm text-gray-500 dark:text-gray-400">{t('loading')}</p>
+  </div>
+ </div>
+ );
+}
+
 function OAuthCallback() {
  const t = useTranslations('auth');
  const tRef = useRef(t);
@@ -56,14 +68,7 @@ function OAuthCallback() {
 
 export default function OAuthCallbackPage() {
  return (
- <Suspense fallback={
-  <div className="min-h-[80vh] flex items-center justify-center">
-  <div className="text-center space-y-3">
-   <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" aria-hidden="true" />
-   <p className="text-sm text-gray-500 dark:text-gray-400 ">Loading...</p>
-  </div>
-  </div>
- }>
+ <Suspense fallback={<CallbackFallback />}>
   <OAuthCallback />
  </Suspense>
  );

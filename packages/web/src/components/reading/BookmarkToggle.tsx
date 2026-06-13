@@ -17,7 +17,7 @@ export const BookmarkToggle = React.memo(function BookmarkToggle({ isBookmarked,
   className={`w-11 h-11 flex items-center justify-center rounded-lg transition-all duration-150 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 ${
   isBookmarked
    ? 'text-amber-500 hover:text-amber-600'
-   : 'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-100/80/60'
+   : 'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-100/60 dark:hover:bg-white/5'
   }`}
   aria-label={isBookmarked ? t('bookmark_remove') : t('bookmark_add')}
   aria-pressed={isBookmarked}

@@ -128,7 +128,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
     #{tag}
     <button type="button"
     onClick={() => removeTag(tag)}
-    className="min-w-[44px] min-h-[44px] flex items-center justify-center -m-2 p-2 hover:text-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+    className="min-w-[44px] min-h-[44px] flex items-center justify-center -m-2 p-2 hover:text-red-500 dark:hover:text-red-400 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     aria-label={t('remove_tag_aria', { tag })}
     >
     <svg aria-hidden="true" className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>

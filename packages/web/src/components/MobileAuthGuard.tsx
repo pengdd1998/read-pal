@@ -47,7 +47,7 @@ export function MobileAuthGuard({ children }: { children: ReactNode }) {
    <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white text-sm font-bold animate-pulse">
    r
    </div>
-   <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" role="status" aria-label="Loading" />
+   <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" role="status" aria-label={t('loading')} />
    <p className="text-xs text-gray-500 dark:text-gray-400">{t('loading')}</p>
   </div>
   </div>

@@ -1,6 +1,6 @@
 export default function Loading() {
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+ <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
   <div className="flex gap-6 mb-8">
   <div className="w-32 h-44 rounded-xl bg-surface-2 animate-pulse flex-shrink-0" />
   <div className="flex-1 space-y-3">

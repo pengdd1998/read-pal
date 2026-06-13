@@ -80,7 +80,7 @@ export const CollectionItem = React.memo(function CollectionItem({
    </button>
    <button type="button"
    onClick={(e) => { e.stopPropagation(); onDelete(); }}
-   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-red-500 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+   className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
    title={t('collections_delete')}
    aria-label={t('collections_delete')}
    >

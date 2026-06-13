@@ -40,7 +40,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
     </button>
     <button type="button"
      onClick={() => submitFeedback(msg.id, false)}
-     className="p-2.5 rounded text-amber-400/50 hover:text-red-500 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+     className="p-2.5 rounded text-amber-400/50 hover:text-red-500 dark:hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
      aria-label={t('companion_aria_unhelpful')}
     >
      <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

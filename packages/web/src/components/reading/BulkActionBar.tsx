@@ -64,7 +64,7 @@ export const BulkActionBar = React.memo(function BulkActionBar({
    </button>
    <button type="button"
     onClick={onCancelBulkDelete}
-    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 dark:text-gray-400 hover:bg-surface-2 min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-surface-2 text-gray-600 dark:text-gray-400 hover:bg-surface-2 min-h-[44px] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
     {tc('cancel')}
    </button>

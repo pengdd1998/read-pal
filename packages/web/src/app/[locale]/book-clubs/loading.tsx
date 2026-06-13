@@ -1,6 +1,6 @@
 export default function BookClubsLoading() {
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+ <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
   {/* Header skeleton */}
   <div className="flex justify-between items-center mb-8">
   <div>
