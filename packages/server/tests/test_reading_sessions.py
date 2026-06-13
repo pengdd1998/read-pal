@@ -331,3 +331,97 @@ async def test_get_session_by_id(client):
     )
     assert resp.status_code == 200
     assert resp.json()['data']['id'] == session['id']
+
+
+# ---------------------------------------------------------------------------
+# Stale session duration: idle tabs must not inflate duration
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_stale_session_duration_capped_to_last_heartbeat(client):
+    """A stale session left open for hours should not accrue hours of duration.
+
+    The user reads for ~1 minute (last heartbeat shortly after start), leaves
+    the tab open for hours, then opens the book again. The first session is
+    closed stale — its duration must reflect ~1 minute of activity, not the
+    5-hour wall-clock window.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.book import Book
+    from app.models.reading_session import ReadingSession
+    from app.models.user import User
+    from app.services.reading_session_service import (
+        STALE_IDLE_GRACE_SECONDS,
+        _close_stale_sessions,
+    )
+    from tests.conftest import _TestSession
+
+    reg = await register_user(client)
+
+    async with _TestSession() as db:
+        # Fetch user and create book directly
+        from sqlalchemy import select
+
+        user = (await db.execute(
+            select(User).where(User.id == reg['user']['id'])
+        )).scalar_one()
+        book = Book(
+            user_id=user.id,
+            title='Stale Test',
+            author='A',
+            file_type='epub',
+            file_size=1024,
+            total_pages=100,
+        )
+        db.add(book)
+        await db.flush()
+
+        # Session: started 5h ago, last heartbeat 4h59m ago (1 min of reading).
+        # Match production datetimes: naive UTC (PostgreSQL TIMESTAMP WITHOUT
+        # TIME ZONE columns return naive values; utcnow() is naive too).
+        started = (datetime.now(timezone.utc) - timedelta(hours=5)).replace(tzinfo=None)
+        last_heartbeat = started + timedelta(seconds=60)
+        stale = ReadingSession(
+            user_id=user.id,
+            book_id=book.id,
+            started_at=started,
+            updated_at=last_heartbeat,
+            is_active=True,
+        )
+        db.add(stale)
+        await db.flush()
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        # Pre-fetch the stale row so we can read mutations after close.
+        pre_close = (
+            await db.execute(
+                select(ReadingSession).where(
+                    ReadingSession.user_id == user.id,
+                    ReadingSession.book_id == book.id,
+                    ReadingSession.is_active.is_(True),
+                )
+            )
+        ).scalars().all()
+        assert len(pre_close) == 1, 'Stale session should be queryable'
+        await _close_stale_sessions(db, str(user.id), book.id, now)
+        # _close_stale_sessions mutates in-place but doesn't flush — read from
+        # the in-memory instance we already had, no refresh.
+        closed = pre_close[0]
+
+        expected_end = last_heartbeat + timedelta(seconds=STALE_IDLE_GRACE_SECONDS)
+        assert closed.ended_at is not None
+        # ended_at should be near last_heartbeat + grace, NOT now (5h later)
+        delta_to_now = abs((now - closed.ended_at).total_seconds())
+        delta_to_expected = abs((closed.ended_at - expected_end).total_seconds())
+        assert delta_to_expected < delta_to_now, (
+            f'Stale end should be near last_heartbeat + grace, not current time. '
+            f'got ended_at={closed.ended_at}, expected~{expected_end}, now={now}'
+        )
+
+        # Duration: ~1 min reading + 5 min grace = ~6 min, NOT 5 hours
+        assert closed.duration <= 600, f'Duration should be bounded, got {closed.duration}s'
+        assert closed.duration > 0
+
+

@@ -5,6 +5,7 @@ Public API is re-exported from sub-modules so existing imports
 """
 
 import logging
+from datetime import timedelta
 from uuid import UUID
 
 from app.utils import utcnow
@@ -69,13 +70,24 @@ async def _verify_book_ownership(
     return book
 
 
+# When closing a stale session (e.g. user re-opened the book or a different
+# tab), we don't know exactly when they stopped reading. Use the last
+# heartbeat timestamp plus this grace window as the effective end — a stale
+# session open for hours with no heartbeat shouldn't accrue hours of duration.
+STALE_IDLE_GRACE_SECONDS = 300  # 5 min — heartbeats are sent far more often
+
+
 async def _close_stale_sessions(
     db: AsyncSession,
     user_id: str,
     book_id,
     now,
 ) -> None:
-    """Close any existing active sessions for this user+book."""
+    """Close any existing active sessions for this user+book.
+
+    Effective end time is capped to last heartbeat + grace so duration
+    reflects actual reading, not idle wall-clock since the last heartbeat.
+    """
     stale = await db.execute(
         select(ReadingSession).where(
             ReadingSession.user_id == user_id,
@@ -85,10 +97,17 @@ async def _close_stale_sessions(
     )
     for old in stale.scalars().all():
         old.is_active = False
-        old.ended_at = now
+        # updated_at tracks the last heartbeat. If the user closed the tab
+        # hours ago, ended_at should reflect that, not the current time.
+        last_activity = old.updated_at or old.started_at or now
+        effective_end = min(
+            now,
+            last_activity + timedelta(seconds=STALE_IDLE_GRACE_SECONDS),
+        )
+        old.ended_at = effective_end
         if not old.duration and old.started_at:
-            raw_dur = int((now - old.started_at).total_seconds())
-            old.duration = min(raw_dur, _MAX_SESSION_SECONDS)
+            raw_dur = int((effective_end - old.started_at).total_seconds())
+            old.duration = max(0, min(raw_dur, _MAX_SESSION_SECONDS))
 
 
 def _mark_book_reading(book: 'Book', now) -> None:
