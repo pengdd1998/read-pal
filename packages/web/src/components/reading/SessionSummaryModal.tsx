@@ -32,21 +32,26 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
  const handleBackdropKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Escape') onKeepReading(); }, [onKeepReading]);
  const handlePanelClick = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
- useEffect(() => {
- if (!sessionId) return;
- let stale = false;
- setSummaryLoading(true);
- api.post<{ summary: string }>(`/api/reading-sessions/${sessionId}/summarize`)
+ const fetchSummary = useCallback(() => {
+  if (!sessionId) return;
+  setSummaryLoading(true);
+  setSummaryError(false);
+  api.post<{ summary: string }>(`/api/reading-sessions/${sessionId}/summarize`)
   .then((res) => {
-  if (stale) return;
+  if (!mountedRef.current) return;
   if (res.success && res.data?.summary) {
    setAiSummary(res.data.summary);
   }
   })
-  .catch((err) => { warn("SessionSummaryModal: AI summary failed", err); setSummaryError(true); })
-  .finally(() => { if (!stale) setSummaryLoading(false); });
-  return () => { stale = true; };
+  .catch((err) => {
+  if (!mountedRef.current) return;
+  warn('SessionSummaryModal: AI summary failed', err);
+  setSummaryError(true);
+  })
+  .finally(() => { if (mountedRef.current) setSummaryLoading(false); });
  }, [sessionId]);
+
+ useEffect(() => { fetchSummary(); }, [fetchSummary]);
 
  return (
  <div
@@ -108,16 +113,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
    {summaryError && !summaryLoading && !aiSummary && (
    <div className="mb-4 px-3 py-2 rounded-xl bg-surface-1 text-left">
     <p className="text-xs text-gray-500 dark:text-gray-400 italic">{t('session_insight_unavailable')}</p>
-    <button type="button" disabled={summaryLoading} onClick={() => {
-     setSummaryError(false);
-     if (sessionId) {
-      setSummaryLoading(true);
-      api.post<{ summary: string }>(`/api/reading-sessions/${sessionId}/summarize`)
-       .then((res) => { if (mountedRef.current && res.success && res.data?.summary) setAiSummary(res.data.summary); })
-       .catch((err) => { warn('SessionSummaryModal: AI summary retry failed', err); if (mountedRef.current) setSummaryError(true); })
-       .finally(() => { if (mountedRef.current) setSummaryLoading(false); });
-     }
-    }} className="mt-1 text-[10px] text-amber-600 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('session_retry_insight')}</button>
+    <button type="button" disabled={summaryLoading} onClick={fetchSummary} className="mt-1 text-[10px] text-amber-600 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('session_retry_insight')}</button>
    </div>
    )}
 
