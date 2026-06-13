@@ -117,6 +117,9 @@ function BookClubsWidgetInner() {
   setShowCreate(false);
   setNewName('');
   setNewDesc('');
+  } else {
+  warn('BookClubsWidget: create returned success=false', res.error);
+  setError(tRef.current('failedToLoad'));
   }
  } catch (err) {
   warn('BookClubsWidget: create failed', err);
@@ -143,6 +146,9 @@ function BookClubsWidgetInner() {
   }
   setShowJoin(false);
   setJoinCode('');
+  } else {
+  warn('BookClubsWidget: join returned success=false', res.error);
+  setError(tRef.current('clubNotFound'));
   }
  } catch (err) {
   warn('BookClubsWidget: join failed', err);
