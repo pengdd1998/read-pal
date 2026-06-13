@@ -216,8 +216,10 @@ export class ApiClient {
     return this._mutation<T>('delete', url);
   }
 
-  /** Check if an error is due to being offline */
+  /** Check if an error is due to being offline (excludes cancellations) */
   private isOfflineError(err: unknown): boolean {
+    // Canceled requests (AbortController) must never be queued — they're intentional
+    if (axios.isCancel(err) || (err as { name?: string })?.name === 'CanceledError') return false;
     if (typeof window !== 'undefined' && !navigator.onLine) return true;
     if (axios.isAxiosError(err)) return !err.response;
     return false;
