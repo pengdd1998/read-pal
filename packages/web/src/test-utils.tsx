@@ -1,5 +1,5 @@
 import { render, type RenderOptions } from '@testing-library/react';
-import React, { type ReactNode } from 'react';
+import type { ReactElement } from 'react';
 
 // --- Mock Auth Context ---
 
@@ -15,18 +15,6 @@ interface MockAuthState {
  isLoading?: boolean;
 }
 
-// Create a simple mock auth provider for tests
-function MockAuthProvider({
- children,
- user = null,
- isAuthenticated = false,
- isLoading = false,
-}: MockAuthState & { children: ReactNode }) {
- // Mock the auth module — components import useAuth from '@/lib/auth'
- // We'll rely on module mocking instead of a full provider
- return <>{children}</>;
-}
-
 // --- Custom render with providers ---
 
 interface CustomRenderOptions extends RenderOptions {
@@ -34,7 +22,7 @@ interface CustomRenderOptions extends RenderOptions {
 }
 
 export function renderWithProviders(
- ui: React.ReactElement,
+ ui: ReactElement,
  options?: CustomRenderOptions,
 ): ReturnType<typeof render> {
  return render(ui, { ...options });

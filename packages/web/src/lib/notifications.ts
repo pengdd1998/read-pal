@@ -14,7 +14,6 @@ const PUSH_TOKEN_KEY = 'push_token';
 interface PushToken { value: string }
 interface PermissionStatus { receive: string }
 interface PushNotification { title?: string; body?: string }
-interface RegistrationError { error: string }
 
 interface PushNotificationsShape {
   requestPermissions: () => Promise<PermissionStatus>;
