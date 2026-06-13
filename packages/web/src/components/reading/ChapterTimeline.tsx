@@ -115,6 +115,8 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState(false);
  const reqIdRef = useRef(0);
+ const mountedRef = useRef(true);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const loadStats = () => {
   const reqId = ++reqIdRef.current;
@@ -122,14 +124,14 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   setError(false);
   api.get<ChapterStat[]>(`/api/annotations/stats/chapters?book_id=${bookId}`)
   .then((res) => {
-  if (reqId !== reqIdRef.current) return;
+  if (!mountedRef.current || reqId !== reqIdRef.current) return;
   if (res.success && res.data) setStats(res.data);
   })
   .catch((err) => {
   warn('ChapterTimeline: failed to load stats', err);
-  if (reqId === reqIdRef.current) setError(true);
+  if (!mountedRef.current || reqId === reqIdRef.current) setError(true);
   })
-  .finally(() => { if (reqId === reqIdRef.current) setLoading(false); });
+  .finally(() => { if (mountedRef.current && reqId === reqIdRef.current) setLoading(false); });
  };
 
  useEffect(() => { loadStats(); }, [bookId]);

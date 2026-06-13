@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -19,6 +19,8 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
  const [editingTags, setEditingTags] = useState(false);
  const [tagInput, setTagInput] = useState('');
  const [saving, setSaving] = useState(false);
+ const mountedRef = useRef(true);
+ useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  const handleAddTag = useCallback(async (e: React.KeyboardEvent) => {
  if (e.key !== 'Enter') return;
@@ -28,13 +30,15 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
  setSaving(true);
  try {
   await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
+  if (!mountedRef.current) return;
   onTagsChange?.(bookId, newTags);
   setTagInput('');
  } catch (error) {
   warn('BookTagEditor: add tag failed', error);
+  if (!mountedRef.current) return;
   toast(tRef.current('tag_update_failed'), 'error');
  } finally {
-  setSaving(false);
+  if (mountedRef.current) setSaving(false);
  }
  }, [tagInput, tags, bookId, onTagsChange, toast]);
 
@@ -43,14 +47,16 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
  setSaving(true);
  try {
   await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
+  if (!mountedRef.current) return;
   onTagsChange?.(bookId, newTags);
  } catch (error) {
   warn('BookTagEditor: remove tag failed', error);
+  if (!mountedRef.current) return;
   toast(t('tag_update_failed'), 'error');
  } finally {
-  setSaving(false);
+  if (mountedRef.current) setSaving(false);
  }
- }, [tags, bookId, onTagsChange]);
+ }, [tags, bookId, onTagsChange, toast]);
 
  return (
  <div className="flex flex-wrap gap-1 mb-2">

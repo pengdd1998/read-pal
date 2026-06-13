@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { useToast } from '@/components/Toast';
@@ -45,6 +45,8 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [questionWarning, setQuestionWarning] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   const highlights = useMemo(() => annotations.filter((a) => a.type === 'highlight'), [annotations]);
   const hasAnnotations = annotations.length > 0;
@@ -60,13 +62,14 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
           annotations: highlights.slice(0, 15).map((a) => ({ content: a.content })),
         },
       );
+      if (!mountedRef.current) return [];
       if (res.success && res.data) {
         return res.data.questions;
       }
       return [];
     } catch (err) {
       warn('ShareDiscussionTab: failed to generate discussion questions', err);
-      setQuestionWarning(true);
+      if (mountedRef.current) setQuestionWarning(true);
       return [];
     }
   }, [highlights, bookTitle, author]);
@@ -75,10 +78,12 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
     setGenerating(true);
     try {
       const generatedQuestions = await generateQuestions();
+      if (!mountedRef.current) return;
       setQuestions(generatedQuestions);
 
       const { generateDiscussionGuideHtml } = await import('@/lib/export-discussion-guide');
 
+      if (!mountedRef.current) return;
       const html = generateDiscussionGuideHtml({
         book: {
           title: bookTitle || tRef.current('share_unknown_book'),
@@ -100,13 +105,15 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
         discussionQuestions: generatedQuestions,
       });
 
+      if (!mountedRef.current) return;
       setGuideHtml(html);
       toast(tRef.current('share_guide_generated'), 'success');
     } catch (err) {
       warn('ShareDiscussionTab: generate failed', err);
+      if (!mountedRef.current) return;
       toast(tRef.current('share_failed_generate'), 'error');
     } finally {
-      setGenerating(false);
+      if (mountedRef.current) setGenerating(false);
     }
   }, [annotations, bookTitle, author, totalPages, currentPage, progress, highlights, generateQuestions, toast]);
 
@@ -142,18 +149,21 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
         '/api/share/export',
         { bookId, format: 'bookclub' },
       );
+      if (!mountedRef.current) return;
       if (res.success && res.data) {
         const baseUrl = window.location.origin;
         const fullUrl = `${baseUrl}/api/share/s/${res.data.token}`;
         setShareLink(fullUrl);
         await navigator.clipboard.writeText(fullUrl);
+        if (!mountedRef.current) return;
         toast(tRef.current('share_link_copied'), 'success');
       }
     } catch (err) {
       warn('ShareDiscussionTab: share link failed', err);
+      if (!mountedRef.current) return;
       toast(tRef.current('share_failed_share_link'), 'error');
     } finally {
-      setSharing(false);
+      if (mountedRef.current) setSharing(false);
     }
   }, [bookId, guideHtml, toast]);
 

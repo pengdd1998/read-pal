@@ -33,21 +33,30 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
  const [loading, setLoading] = useState(false);
  const [copied, setCopied] = useState(false);
  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const mountedRef = useRef(true);
 
- useEffect(() => { return () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); }; }, []);
+ useEffect(() => {
+  mountedRef.current = true;
+  return () => {
+   mountedRef.current = false;
+   if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+  };
+ }, []);
 
  const generateCard = async () => {
  setLoading(true);
  try {
   const res = await api.get<ReadingCardData>('/api/share/reading-card');
+  if (!mountedRef.current) return;
   if (res.success && res.data) {
   setCard(res.data);
   }
  } catch (error) {
   warn('ReadingShareCard: generate failed', error);
+  if (!mountedRef.current) return;
   toast(t('failed_generate'), 'error');
  } finally {
-  setLoading(false);
+  if (mountedRef.current) setLoading(false);
  }
  };
 

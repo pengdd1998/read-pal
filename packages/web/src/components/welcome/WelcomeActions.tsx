@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -57,24 +57,28 @@ function SeedButton() {
   const t = useTranslations('welcome');
   const router = useRouter();
   const { toast } = useToast();
-  const [seeding, setSeeding] = React.useState(false);
-  const [seedError, setSeedError] = React.useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedError, setSeedError] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
   const handleClick = async () => {
     setSeeding(true);
     setSeedError(false);
     try {
       const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
+      if (!mountedRef.current) return;
       if (res.success && res.data) {
         safeSetItem(ONBOARDING_KEY, 'true');
         router.push(`/read/${res.data.book.id}`);
       }
     } catch (err) {
       warn('Welcome: failed to seed sample book', err);
+      if (!mountedRef.current) return;
       setSeedError(true);
       toast(t('seed_error'), 'error');
     } finally {
-      setSeeding(false);
+      if (mountedRef.current) setSeeding(false);
     }
   };
 
