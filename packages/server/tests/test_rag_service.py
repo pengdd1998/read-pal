@@ -310,6 +310,7 @@ class TestSemanticSearch:
     @pytest.mark.asyncio
     async def test_no_query_embedding(self):
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         with patch('app.services.rag.search._get_embedding', return_value=None):
             results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
             assert results == []
@@ -317,6 +318,7 @@ class TestSemanticSearch:
     @pytest.mark.asyncio
     async def test_db_failure_returns_empty(self):
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         mock_db.execute = AsyncMock(side_effect=DBAPIError('stmt', {}, Exception('DB error')))
 
         with patch('app.services.rag.search._get_embedding', return_value=[0.1] * 2048):
@@ -328,6 +330,7 @@ class TestGetBookContext:
     @pytest.mark.asyncio
     async def test_returns_empty_when_no_book(self):
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_db.execute = AsyncMock(return_value=mock_result)
@@ -342,6 +345,7 @@ class TestGetBookContext:
         book_id = uuid4()
 
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         book_row = MagicMock()
         book_row.scalar_one_or_none.return_value = MagicMock()
 
@@ -377,6 +381,7 @@ class TestGetBookContext:
         mock_book.current_page = 0
 
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_book
         mock_db.execute = AsyncMock(return_value=mock_result)
@@ -402,6 +407,7 @@ class TestGetBookContext:
         mock_book.current_page = 999
 
         mock_db = AsyncMock()
+        mock_db.add = MagicMock()
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_book
         mock_db.execute = AsyncMock(return_value=mock_result)

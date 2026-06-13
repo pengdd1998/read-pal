@@ -70,6 +70,7 @@ class TestGeneratePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book()
         mock_llm.return_value = '7-Day Reading Plan for "Test Book"'
@@ -98,6 +99,7 @@ class TestGeneratePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book()
         existing_plan = _make_reading_plan(book_id=book_id, is_active=True)
@@ -120,6 +122,7 @@ class TestGeneratePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book_result = MagicMock()
         book_result.scalar_one_or_none.return_value = None
@@ -135,6 +138,7 @@ class TestGeneratePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book()
         mock_llm.return_value = 'Plan text'
@@ -156,6 +160,7 @@ class TestGeneratePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book()
         mock_llm.return_value = 'Plan text'
@@ -176,6 +181,7 @@ class TestGeneratePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book()
         mock_llm.return_value = 'Plan text'
@@ -197,6 +203,7 @@ class TestGeneratePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book()
         mock_llm.return_value = 'Plan'
@@ -216,6 +223,7 @@ class TestGeneratePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book()
         mock_llm.return_value = 'Plan'
@@ -243,6 +251,7 @@ class TestGetActivePlan:
         book_id = uuid4()
         plan_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan = _make_reading_plan(plan_id=plan_id, book_id=book_id)
         plan_result = MagicMock()
@@ -261,6 +270,7 @@ class TestGetActivePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan_result = MagicMock()
         plan_result.scalar_one_or_none.return_value = None
@@ -274,6 +284,7 @@ class TestGetActivePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan = _make_reading_plan(current_day=4, total_days=7)
         plan_result = MagicMock()
@@ -296,6 +307,7 @@ class TestAdvancePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan = _make_reading_plan(current_day=1, total_days=7, is_active=True)
         plan_result = MagicMock()
@@ -314,6 +326,7 @@ class TestAdvancePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan = _make_reading_plan(current_day=6, total_days=7, is_active=True)
         plan_result = MagicMock()
@@ -330,6 +343,7 @@ class TestAdvancePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan = _make_reading_plan(current_day=7, total_days=7, is_active=True)
         plan_result = MagicMock()
@@ -345,6 +359,7 @@ class TestAdvancePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan_result = MagicMock()
         plan_result.scalar_one_or_none.return_value = None
@@ -360,6 +375,7 @@ class TestAdvancePlan:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan = _make_reading_plan(current_day=3, total_days=7, is_active=True)
         plan_result = MagicMock()
@@ -376,6 +392,7 @@ class TestAdvancePlan:
         book_id = uuid4()
         plan_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         plan = _make_reading_plan(plan_id=plan_id, current_day=1, total_days=7)
         plan_result = MagicMock()
@@ -401,6 +418,7 @@ class TestGeneratePlanText:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book(title='Great Gatsby', total_pages=200, current_page=0, progress=Decimal('0'))
         mock_llm.return_value = None
@@ -422,6 +440,7 @@ class TestGeneratePlanText:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book(total_pages=300, current_page=100, progress=Decimal('33.33'))
         mock_llm.return_value = None
@@ -444,6 +463,7 @@ class TestGeneratePlanText:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book(total_pages=0, current_page=0, progress=Decimal('0'))
         mock_llm.return_value = None
@@ -466,6 +486,7 @@ class TestGeneratePlanText:
         user_id = uuid4()
         book_id = uuid4()
         db = AsyncMock()
+        db.add = MagicMock()
 
         book = _make_book()
         book.total_pages = None

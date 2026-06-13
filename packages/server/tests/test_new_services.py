@@ -35,6 +35,7 @@ class TestGetChatHistory:
         mock_result.scalars.return_value.all.return_value = [msg2, msg1]
 
         db = AsyncMock()
+        db.add = MagicMock()
         db.execute = AsyncMock(return_value=mock_result)
 
         result = await get_chat_history(db, user_id)
@@ -53,6 +54,7 @@ class TestGetChatHistory:
         mock_result.scalars.return_value.all.return_value = []
 
         db = AsyncMock()
+        db.add = MagicMock()
         db.execute = AsyncMock(return_value=mock_result)
 
         result = await get_chat_history(db, user_id, book_id=book_id)
@@ -69,6 +71,7 @@ class TestGetChatHistory:
         mock_result.scalars.return_value.all.return_value = []
 
         db = AsyncMock()
+        db.add = MagicMock()
         db.execute = AsyncMock(return_value=mock_result)
 
         await get_chat_history(db, user_id, limit=10)
@@ -90,6 +93,7 @@ class TestGetChatHistory:
         mock_result.scalars.return_value.all.return_value = [msg]
 
         db = AsyncMock()
+        db.add = MagicMock()
         db.execute = AsyncMock(return_value=mock_result)
 
         result = await get_chat_history(db, user_id)
@@ -190,6 +194,7 @@ class TestSubmitFeedback:
         book_id = uuid4()
 
         db = AsyncMock()
+        db.add = MagicMock()
         # Mock flush to simulate the ID being set
         async def mock_flush():
             pass
@@ -205,6 +210,7 @@ class TestSubmitFeedback:
         book_id = uuid4()
 
         db = AsyncMock()
+        db.add = MagicMock()
         db.flush = AsyncMock()
 
         result = await submit_feedback(db, user_id, book_id, None, False)
@@ -217,6 +223,7 @@ class TestSubmitFeedback:
         book_id = uuid4()
 
         db = AsyncMock()
+        db.add = MagicMock()
         db.flush = AsyncMock()
 
         await submit_feedback(db, user_id, book_id, 'msg-456', True, 'Helpful')
