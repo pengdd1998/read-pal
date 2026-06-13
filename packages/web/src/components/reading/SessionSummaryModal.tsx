@@ -115,7 +115,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
    {summaryError && !summaryLoading && !aiSummary && (
    <div className="mb-4 px-3 py-2 rounded-xl bg-surface-1 text-left">
     <p className="text-xs text-gray-500 dark:text-gray-400 italic">{t('session_insight_unavailable')}</p>
-    <button type="button" disabled={summaryLoading} onClick={fetchSummary} className="mt-1 text-[10px] text-amber-600 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400">{t('session_retry_insight')}</button>
+    <button type="button" disabled={summaryLoading} onClick={fetchSummary} className="mt-1 text-[11px] text-amber-600 hover:underline focus-visible:ring-2 focus-visible:ring-amber-400 min-h-[44px] inline-flex items-center">{t('session_retry_insight')}</button>
    </div>
    )}
 

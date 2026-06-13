@@ -202,7 +202,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
     className="flex-1 px-2 py-1 text-xs bg-surface-1 border border-surface-3 rounded outline-none focus:ring-1 focus:ring-primary-400/50"
     autoFocus
    />
-   <button type="button" onClick={handleCreate} disabled={creating} className="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:opacity-50">{creating ? '...' : t('collection_picker_add')}</button>
+   <button type="button" onClick={handleCreate} disabled={creating} className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 disabled:opacity-50 min-h-[44px] inline-flex items-center">{creating ? '...' : t('collection_picker_add')}</button>
    </div>
   ) : (
    <button type="button"
