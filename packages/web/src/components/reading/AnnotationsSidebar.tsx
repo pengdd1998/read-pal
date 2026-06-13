@@ -190,7 +190,6 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
   {viewMode === 'outline' ? (
    <OutlinePanel
    annotations={filtered}
-   bookTitle={bookTitle}
    onScrollToAnnotation={onScrollToAnnotation}
    />
   ) : (

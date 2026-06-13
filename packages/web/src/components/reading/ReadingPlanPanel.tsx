@@ -14,7 +14,6 @@ import type { PlanData } from './ReadingPlanPanel.subcomponents';
 
 interface ReadingPlanPanelProps {
   bookId: string;
-  bookTitle: string;
   isOpen: boolean;
   onClose: () => void;
 }

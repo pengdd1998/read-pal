@@ -7,7 +7,6 @@ import { OutlineChapterGroup } from './OutlineChapterGroup';
 
 interface OutlinePanelProps {
  annotations: Annotation[];
- bookTitle?: string;
  onScrollToAnnotation: (annotation: Annotation) => void;
 }
 

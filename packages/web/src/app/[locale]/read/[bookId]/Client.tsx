@@ -214,7 +214,7 @@ export default function ReadPage() {
       <ErrorBoundary label="SynthesisPanel">
         <SynthesisPanel bookId={bookId} bookTitle={book?.title} author={book?.author} isOpen={ui.synthesisOpen} onClose={handleCloseSynthesis} />
       </ErrorBoundary>
-      <ReadingPlanPanel bookId={bookId} bookTitle={book?.title || ''} isOpen={ui.readingPlanOpen} onClose={handleCloseReadingPlan} />
+      <ReadingPlanPanel bookId={bookId} isOpen={ui.readingPlanOpen} onClose={handleCloseReadingPlan} />
       <ErrorBoundary label="StudyMode">
         <StudyModeOverlay enabled={studyMode.enabled} closeLabel={t('close_study_mode')} onToggleStudyMode={studyMode.toggleStudyMode}>
           <StudyModePanel
