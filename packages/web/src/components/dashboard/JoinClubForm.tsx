@@ -31,6 +31,10 @@ export const JoinClubForm = React.memo(function JoinClubForm({
   onChange={(e) => onCodeChange(e.target.value.toUpperCase().slice(0, 6))}
   className="w-full px-3 py-2 rounded-lg border border-surface-3 bg-surface-0 text-sm text-gray-900 dark:text-gray-100 tracking-widest text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
   maxLength={6}
+  autoCapitalize="characters"
+  autoCorrect="off"
+  spellCheck={false}
+  enterKeyHint="done"
   />
   <div className="flex items-center gap-2">
   <button type="button"

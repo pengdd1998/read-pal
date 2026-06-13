@@ -57,6 +57,9 @@ export const LibraryFilterBar = React.memo(function LibraryFilterBar({
    placeholder={t('search_title_author')}
    aria-label={t('search_title_author')}
    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-surface-3 bg-surface-0 text-sm placeholder-gray-400 focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all duration-200"
+   inputMode="search"
+   enterKeyHint="search"
+   spellCheck={false}
   />
   {searchQuery && (
    <button type="button"

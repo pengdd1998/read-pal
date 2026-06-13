@@ -127,6 +127,7 @@ function ResetPasswordForm() {
      className="input"
      placeholder={t('password_min_placeholder')}
      autoComplete="new-password"
+     enterKeyHint="next"
     />
     </div>
 
@@ -144,6 +145,7 @@ function ResetPasswordForm() {
      className="input"
      placeholder={t('reset_repeat_placeholder')}
      autoComplete="new-password"
+     enterKeyHint="done"
     />
     {confirmPassword.length > 0 && password !== confirmPassword && (
      <p className="text-xs text-red-500 dark:text-red-400 mt-1" role="alert">{t('passwords_mismatch')}</p>

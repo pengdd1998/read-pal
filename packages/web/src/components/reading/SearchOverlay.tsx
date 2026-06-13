@@ -85,6 +85,9 @@ export const SearchOverlay = React.memo(function SearchOverlay({
     placeholder={t('search_in_book')}
     aria-label={t('search_in_book')}
     className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30"
+    inputMode="search"
+    enterKeyHint="search"
+    spellCheck={false}
     autoFocus
    />
    <span className="text-xs text-gray-500 dark:text-gray-400">

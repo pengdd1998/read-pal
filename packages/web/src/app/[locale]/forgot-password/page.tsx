@@ -87,6 +87,10 @@ export default function ForgotPasswordPage() {
      className="input"
      placeholder={t('email_placeholder')}
      autoComplete="email"
+     inputMode="email"
+     autoCapitalize="none"
+     spellCheck={false}
+     enterKeyHint="send"
     />
     </div>
 

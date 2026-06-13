@@ -69,6 +69,9 @@ export default function LibraryPage() {
     placeholder={t('search_library')}
     aria-label={t('search_library')}
     className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 w-32 sm:w-44 lg:w-48"
+    inputMode="search"
+    enterKeyHint="search"
+    spellCheck={false}
    />
    {searchQuery && (
     <button type="button" onClick={() => setSearchQuery('')} aria-label={t('clear_search')} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1">
@@ -130,6 +133,9 @@ export default function LibraryPage() {
     placeholder={t('search_library')}
     aria-label={t('search_library')}
     className="bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500/30 flex-1"
+    inputMode="search"
+    enterKeyHint="search"
+    spellCheck={false}
    />
   </div>
   </div>

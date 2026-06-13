@@ -145,6 +145,10 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
    aria-invalid={validationError ? true : undefined}
    aria-describedby={validationError ? 'zotero-error' : undefined}
    className="w-full px-3 py-2.5 rounded-lg border border-surface-3 bg-surface-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-h-[44px]"
+   inputMode="numeric"
+   autoCapitalize="none"
+   autoCorrect="off"
+   spellCheck={false}
    />
   </div>
   </div>

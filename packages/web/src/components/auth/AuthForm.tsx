@@ -96,6 +96,9 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
     className="input"
     placeholder={t('name_placeholder')}
     autoComplete="name"
+    autoCapitalize="words"
+    spellCheck={false}
+    enterKeyHint="next"
     autoFocus
    />
    </div>
@@ -114,6 +117,10 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
    className="input"
    placeholder={t('email_placeholder')}
    autoComplete={mode === 'login' ? 'email' : 'email'}
+   inputMode="email"
+   autoCapitalize="none"
+   spellCheck={false}
+   enterKeyHint="next"
    autoFocus={mode === 'login'}
    />
   </div>
@@ -133,6 +140,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
     className="input pr-10"
     placeholder={mode === 'register' ? t('password_min_placeholder') : t('password_placeholder')}
     autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+    enterKeyHint={mode === 'login' ? 'go' : 'next'}
    />
    <button
     type="button"
@@ -193,6 +201,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
     className="input"
     placeholder={t('confirm_password_placeholder')}
     autoComplete="new-password"
+    enterKeyHint="done"
    />
    {confirmPassword.length > 0 && password !== confirmPassword && (
     <p className="text-xs text-red-500 dark:text-red-400 mt-1" role="alert">{t('passwords_mismatch')}</p>
