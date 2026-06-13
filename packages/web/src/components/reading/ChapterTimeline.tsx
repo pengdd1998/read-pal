@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
@@ -114,25 +114,25 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
  const handlePanelClick = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState(false);
+ const reqIdRef = useRef(0);
 
  const loadStats = () => {
+  const reqId = ++reqIdRef.current;
   setLoading(true);
   setError(false);
-  let stale = false;
   api.get<ChapterStat[]>(`/api/annotations/stats/chapters?book_id=${bookId}`)
   .then((res) => {
-  if (stale) return;
+  if (reqId !== reqIdRef.current) return;
   if (res.success && res.data) setStats(res.data);
   })
   .catch((err) => {
   warn('ChapterTimeline: failed to load stats', err);
-  if (!stale) setError(true);
+  if (reqId === reqIdRef.current) setError(true);
   })
-  .finally(() => { if (!stale) setLoading(false); });
-  return () => { stale = true; };
+  .finally(() => { if (reqId === reqIdRef.current) setLoading(false); });
  };
 
- useEffect(() => { return loadStats(); }, [bookId]);
+ useEffect(() => { loadStats(); }, [bookId]);
 
  // Build a map for quick lookup
  const statsMap = useMemo(() => new Map(stats.map((s) => [s.chapterIndex, s])), [stats]);

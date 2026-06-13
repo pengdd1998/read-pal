@@ -94,7 +94,7 @@ export function useStudyMode(bookId: string) {
       currentChapterRef.current = chapterIndex;
     } catch (err) {
       warn('useStudyMode: loadChapterStudy failed', err);
-      if (mountedRef.current) setError('Failed to load study data');
+      if (mountedRef.current) setError('study_load_error');
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -136,7 +136,7 @@ export function useStudyMode(bookId: string) {
       }
     } catch (err) {
       warn('useStudyMode: loadMastery failed', err);
-      setError('Failed to load mastery report');
+      setError('mastery_load_error');
     }
   }, [bookId]);
 

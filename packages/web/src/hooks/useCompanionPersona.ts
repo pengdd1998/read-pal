@@ -43,8 +43,7 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
         }
       } catch (err) {
         warn('useCompanionPersona: load failed', err);
-        const message = err instanceof Error ? err.message : 'Failed to load companion persona';
-        if (!cancelled) setError(message);
+        if (!cancelled) setError('Failed to load companion settings. Please try again.');
       }
     };
     loadPersona();

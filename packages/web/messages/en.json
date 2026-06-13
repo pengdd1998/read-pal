@@ -998,7 +998,9 @@
     "tell_about_character_prompt": "Tell me about {name} — their role, motivations, and how they've developed so far.",
     "readingPage": "Reading",
     "outline_item_aria": "{type} annotation",
-    "companion_ai_degraded": "AI responses may be slow or unavailable. Your messages will be saved."
+    "companion_ai_degraded": "AI responses may be slow or unavailable. Your messages will be saved.",
+    "study_load_error": "Failed to load study data. Please try again.",
+    "mastery_load_error": "Failed to load mastery report. Please try again."
   },
   "stats": {
     "title": "Reading Stats",
