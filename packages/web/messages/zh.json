@@ -381,6 +381,7 @@
     "status_unread": "未读",
     "failed_load_library": "加载书架失败",
     "failed_connect_server": "无法连接到服务器",
+    "failed_delete_book": "删除书籍失败。书籍已恢复到您的书架。",
     "start_reading_journey": "开始你的阅读之旅",
     "empty_state_desc": "上传 EPUB 或 PDF 文件，或尝试示例书籍，探索 AI 聊天、高亮和你的个人阅读书。",
     "loading_sample": "加载示例中...",

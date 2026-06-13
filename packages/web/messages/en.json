@@ -381,6 +381,7 @@
     "status_unread": "Unread",
     "failed_load_library": "Failed to load library",
     "failed_connect_server": "Failed to connect to server",
+    "failed_delete_book": "Failed to delete book. It has been restored to your library.",
     "start_reading_journey": "Start your reading journey",
     "empty_state_desc": "Upload an EPUB or PDF, or try a sample book to explore AI chat, highlights, and your Reading Mirror.",
     "loading_sample": "Loading sample...",

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import type { Book } from '@read-pal/shared';
 import { warn } from '@/lib/logger';
+import { useToast } from '@/components/Toast';
 
 interface UseLibraryBooksReturn {
   books: Book[];
@@ -22,6 +23,7 @@ interface UseLibraryBooksReturn {
 
 export function useLibraryBooks(): UseLibraryBooksReturn {
   const t = useTranslations('library');
+  const { toast } = useToast();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -75,11 +77,13 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
       if (!res.success) {
         warn('LibraryGrid: delete returned success=false', res.error);
         setBooks(prev);
+        toast(t('failed_delete_book'), 'error');
       }
     } catch (err) {
       warn('LibraryGrid: failed to delete book', err);
       if (!mountedRef.current) return;
       setBooks(prev);
+      toast(t('failed_delete_book'), 'error');
     } finally {
       if (mountedRef.current) deletingRef.current.delete(id);
     }
