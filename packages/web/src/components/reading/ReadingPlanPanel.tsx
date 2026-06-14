@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useReducer, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -18,6 +18,46 @@ interface ReadingPlanPanelProps {
   onClose: () => void;
 }
 
+// ---------------------------------------------------------------------------
+// Plan state machine: one status field replaces the three independent booleans
+// (loading/generating/advancing) so concurrent transitions can't leave two
+// flags true at once. Error and plan live alongside so they reset atomically.
+// ---------------------------------------------------------------------------
+
+type PlanStatus = 'idle' | 'loading' | 'generating' | 'advancing';
+
+type PlanState = {
+  status: PlanStatus;
+  plan: PlanData | null;
+  error: string | null;
+};
+
+type PlanAction =
+  | { type: 'fetch_start' }
+  | { type: 'generate_start' }
+  | { type: 'advance_start' }
+  | { type: 'plan_loaded'; plan: PlanData | null; error?: string }
+  | { type: 'fail'; error: string };
+
+const initialPlanState: PlanState = { status: 'idle', plan: null, error: null };
+
+function planReducer(state: PlanState, action: PlanAction): PlanState {
+  switch (action.type) {
+    case 'fetch_start':
+     return { status: 'loading', plan: null, error: null };
+    case 'generate_start':
+     return { ...state, status: 'generating', error: null };
+    case 'advance_start':
+     return { ...state, status: 'advancing', error: null };
+    case 'plan_loaded':
+     return { status: 'idle', plan: action.plan, error: action.error ?? null };
+    case 'fail':
+     return { ...state, status: 'idle', error: action.error };
+    default:
+     return state;
+  }
+}
+
 export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
   bookId,
   isOpen,
@@ -25,13 +65,9 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
 }: ReadingPlanPanelProps) {
   const { toast } = useToast();
   const t = useTranslations('reader');
-  const [plan, setPlan] = useState<PlanData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [advancing, setAdvancing] = useState(false);
+  const [state, dispatch] = useReducer(planReducer, initialPlanState);
   const [totalDays, setTotalDays] = useState(14);
   const [dailyMinutes, setDailyMinutes] = useState(30);
-  const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
@@ -40,23 +76,20 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
 
   const fetchPlan = useCallback(async (signal?: AbortSignal) => {
     if (!bookId) return;
-    setLoading(true);
-    setError(null);
+    dispatch({ type: 'fetch_start' });
     try {
       const res = await api.get<PlanData>('/api/agent/reading-plan', { bookId });
       if (signal?.aborted || !mountedRef.current) return;
       if (res.success && res.data) {
-        setPlan(res.data);
+        dispatch({ type: 'plan_loaded', plan: res.data });
       } else {
-        setPlan(null);
+        dispatch({ type: 'plan_loaded', plan: null });
       }
     } catch (e) {
       if (signal?.aborted || !mountedRef.current) return;
       warn('ReadingPlanPanel: failed to fetch reading plan', e);
-      setPlan(null);
+      dispatch({ type: 'plan_loaded', plan: null });
       toast(t('reading_plan_load_failed'), 'error');
-    } finally {
-      if (!signal?.aborted && mountedRef.current) setLoading(false);
     }
   }, [bookId, toast, t]);
 
@@ -69,8 +102,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
 
   const handleGenerate = async () => {
     if (!bookId) return;
-    setGenerating(true);
-    setError(null);
+    dispatch({ type: 'generate_start' });
     try {
       const res = await api.post<PlanData>('/api/agent/reading-plan', {
         bookId,
@@ -79,43 +111,53 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
       });
       if (!mountedRef.current) return;
       if (res.success && res.data) {
-        setPlan(res.data);
+        dispatch({ type: 'plan_loaded', plan: res.data });
         toast(t('reading_plan_generated'), 'success');
       } else {
-        setError(t('reading_plan_error'));
+        dispatch({ type: 'fail', error: t('reading_plan_error') });
         toast(t('reading_plan_error'), 'error');
       }
     } catch (e) {
       if (!mountedRef.current) return;
       warn('ReadingPlanPanel: failed to generate reading plan', e);
-      setError(t('reading_plan_error'));
+      dispatch({ type: 'fail', error: t('reading_plan_error') });
       toast(t('reading_plan_error'), 'error');
-    } finally {
-      if (mountedRef.current) setGenerating(false);
     }
   };
 
   const handleAdvance = async () => {
-    if (!bookId || advancing) return;
-    setAdvancing(true);
-    setError(null);
+    if (!bookId || state.status === 'advancing') return;
+    dispatch({ type: 'advance_start' });
     try {
       const res = await api.post<{ message: string }>('/api/agent/reading-plan/advance', { bookId });
       if (!mountedRef.current) return;
       if (res.success) {
-        await fetchPlan();
+        // Silent refresh — keep plan visible while we re-fetch so the user
+        // doesn't see a skeleton flash between advance and refetch.
+        try {
+          const planRes = await api.get<PlanData>('/api/agent/reading-plan', { bookId });
+          if (!mountedRef.current) return;
+          if (planRes.success && planRes.data) {
+            dispatch({ type: 'plan_loaded', plan: planRes.data });
+          } else {
+            dispatch({ type: 'plan_loaded', plan: null });
+          }
+        } catch (e) {
+          if (!mountedRef.current) return;
+          warn('ReadingPlanPanel: failed to refetch after advance', e);
+          // Don't dispatch fail — advance succeeded, the refetch is best-effort
+          dispatch({ type: 'plan_loaded', plan: null });
+        }
         toast(t('reading_plan_day_complete'), 'success');
       } else {
-        setError(t('reading_plan_error'));
+        dispatch({ type: 'fail', error: t('reading_plan_error') });
         toast(t('reading_plan_error'), 'error');
       }
     } catch (e) {
       if (!mountedRef.current) return;
       warn('ReadingPlanPanel: failed to advance reading plan day', e);
-      setError(t('reading_plan_error'));
+      dispatch({ type: 'fail', error: t('reading_plan_error') });
       toast(t('reading_plan_error'), 'error');
-    } finally {
-      if (mountedRef.current) setAdvancing(false);
     }
   };
 
@@ -153,14 +195,14 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {loading ? (
+          {state.status === 'loading' ? (
             <PlanLoadingSkeleton />
-          ) : plan ? (
-            <PlanProgressView plan={plan} onAdvance={handleAdvance} advancing={advancing} />
+          ) : state.plan ? (
+            <PlanProgressView plan={state.plan} onAdvance={handleAdvance} advancing={state.status === 'advancing'} />
           ) : (
             <PlanGenerateForm
-              error={error}
-              generating={generating}
+              error={state.error}
+              generating={state.status === 'generating'}
               totalDays={totalDays}
               dailyMinutes={dailyMinutes}
               onTotalDaysChange={setTotalDays}

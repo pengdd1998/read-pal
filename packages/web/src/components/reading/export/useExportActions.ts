@@ -81,11 +81,20 @@ export function useExportActions(bookId: string): ExportActionsReturn {
     setSelectedTag('');
   };
 
-  const handleFormatChange = useCallback((f: ExportFormat) => { setFormat(f); setPreview(null); }, []);
-  const handleToggleType = useCallback((type: string) => { toggleType(type); setPreview(null); }, []);
-  const handleSetSelectedTag = useCallback((tag: string) => { setSelectedTag(tag); setPreview(null); }, []);
+  // Any change to format or filters invalidates the in-flight preview fetch.
+  // Without the abort, the old request resolves and writes its (now stale)
+  // text via setPreview, overwriting the cleared value.
+  const invalidatePreview = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setPreview(null);
+  }, []);
+
+  const handleFormatChange = useCallback((f: ExportFormat) => { setFormat(f); invalidatePreview(); }, [invalidatePreview]);
+  const handleToggleType = useCallback((type: string) => { toggleType(type); invalidatePreview(); }, [invalidatePreview]);
+  const handleSetSelectedTag = useCallback((tag: string) => { setSelectedTag(tag); invalidatePreview(); }, [invalidatePreview]);
   const handleToggleShowFilters = useCallback(() => setShowFilters((v) => !v), []);
-  const handleClearFilters = useCallback(() => { clearFilters(); setPreview(null); }, []);
+  const handleClearFilters = useCallback(() => { clearFilters(); invalidatePreview(); }, [invalidatePreview]);
 
   const handlePreview = async () => {
     abortRef.current?.abort();
