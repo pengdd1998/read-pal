@@ -1934,6 +1934,28 @@
     "social_export": "导出格式",
     "social_export_content": "以多种格式导出你的标注和数据：CSV、Markdown、HTML、APA 7th、MLA 9th、Chicago 和 Zotero RIS。适合研究和学术工作。"
   },
+  "shareCard": {
+    "button_generate": "分享我的阅读进度",
+    "generating": "生成中...",
+    "failed_generate": "生成阅读卡片失败",
+    "share_text_intro": "我在 read-pal 上的阅读之旅：",
+    "share_text_stats": "{books} 本书已读完 | {pages} 页已读 | {highlights} 个标注",
+    "share_text_reading": "正在阅读：《{title}》作者 {author}（{progress}%）",
+    "reading_journey": "{name} 的阅读之旅",
+    "brand": "read-pal",
+    "books": "书籍",
+    "pages": "页数",
+    "highlights_label": "标注",
+    "currently_reading": "正在阅读",
+    "complete": "已完成",
+    "recently_read": "最近阅读",
+    "share": "分享",
+    "copy_clipboard": "复制到剪贴板",
+    "copied": "已复制！",
+    "dismiss": "关闭",
+    "share_failed": "分享失败",
+    "share_title": "我的阅读进度 — read-pal"
+  },
   "terms": {
     "page_title": "服务条款",
     "last_updated": "最后更新：2026 年 4 月",
