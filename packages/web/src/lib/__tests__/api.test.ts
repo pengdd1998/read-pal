@@ -161,6 +161,17 @@ describe('API Client', () => {
         }),
       );
     });
+
+    it('normalizes empty 204 body into a success envelope', async () => {
+      // HTTP 204 No Content carries no body — axios resolves response.data to ''.
+      // Callers must not mistake this for a failure.
+      mockRequest.mockResolvedValue({ data: '' });
+
+      const result = await api.delete('/api/books/1');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeUndefined();
+    });
   });
 
   describe('PATCH requests', () => {

@@ -190,6 +190,14 @@ export class ApiClient {
     try {
       const result = await this.requestWithRetry<ApiResponse<T>>(method, url, { data, ...options });
       invalidateAfterMutation(this.cache, url);
+      // DELETE (and any other 204 No Content) responses carry an empty body —
+      // axios resolves `response.data` to "" here. Normalize it to a success
+      // envelope so callers that check `result.success` don't mistake a real
+      // success for a failure and roll back optimistic UI. Genuine HTTP errors
+      // throw above and never reach this branch.
+      if (!result || typeof result !== 'object' || !('success' in result)) {
+        return { success: true as const, data: undefined as unknown as T };
+      }
       return result;
     } catch (err) {
       if (this.isOfflineError(err)) {
@@ -254,6 +262,10 @@ export class ApiClient {
       try {
         const response = await this.client.post<ApiResponse<T>>(url, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
+          // Uploads are slow: server-side EPUB parsing + cover upload to OSS +
+          // (background) embedding precompute can take well over the default
+          // 15s timeout for real books. Give it a generous ceiling.
+          timeout: 180_000,
           signal,
           onUploadProgress: (e) => {
             if (e.total && onProgress) {

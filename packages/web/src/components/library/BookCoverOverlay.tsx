@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -41,6 +42,15 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  const mountedRef = useRef(true);
 
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+
+ useEffect(() => {
+  if (!showDeleteConfirm) return;
+  const onKey = (e: KeyboardEvent) => {
+   if (e.key === 'Escape') { e.preventDefault(); onDeleteCancel(); }
+  };
+  window.addEventListener('keydown', onKey);
+  return () => window.removeEventListener('keydown', onKey);
+ }, [showDeleteConfirm, onDeleteCancel]);
 
  const STATUS_CONFIG = useMemo(() => ({
  unread: { label: t('card_unread'), dot: 'bg-surface-3', ring: 'bg-surface-1 text-gray-600 dark:text-gray-400' },
@@ -178,29 +188,37 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
     </svg>
    )}
    </button>
-   {showDeleteConfirm && (
-   <div
-    tabIndex={-1}
-    onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onDeleteCancel(); } }}
-    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-36 rounded-lg bg-gray-900 shadow-xl border border-gray-700 p-2 z-50 animate-in fade-in duration-150"
-    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-   >
-    <p className="text-[10px] text-gray-300 text-center mb-2">{t('card_confirm_delete')}</p>
-    <div className="flex gap-1.5">
-    <button type="button"
+   {showDeleteConfirm && typeof document !== 'undefined' && createPortal(
+    <div
+     role="dialog"
+     aria-modal="true"
+     aria-label={t('card_confirm_delete')}
+     className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150"
      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteCancel(); }}
-     className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
     >
-     {t('card_cancel')}
-    </button>
-    <button type="button"
-     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteConfirm(); }}
-     className="flex-1 min-h-[36px] px-2 py-2 rounded text-[11px] font-medium bg-red-600 text-white hover:bg-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
-    >
-     {t('card_delete')}
-    </button>
-    </div>
-   </div>
+     <div
+      className="w-full max-w-xs rounded-xl bg-surface-0 border border-surface-2 p-4 shadow-2xl animate-in zoom-in-95 duration-150"
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+     >
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('card_confirm_delete')}</p>
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 break-words">{title}</p>
+      <div className="mt-4 flex gap-2">
+      <button type="button"
+       onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteCancel(); }}
+       className="flex-1 min-h-[44px] px-3 rounded-lg text-sm font-medium bg-surface-2 text-gray-700 dark:text-gray-200 hover:bg-surface-3 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+      >
+       {t('card_cancel')}
+      </button>
+      <button type="button"
+       onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteConfirm(); }}
+       className="flex-1 min-h-[44px] px-3 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-500 transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+      >
+       {t('card_delete')}
+      </button>
+      </div>
+     </div>
+    </div>,
+    document.body,
    )}
   </div>
   </div>
