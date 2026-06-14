@@ -38,53 +38,34 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
 
   const handleBackdropKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Escape') onClose(); }, [onClose]);
 
-  const fetchPlan = useCallback(async () => {
+  const fetchPlan = useCallback(async (signal?: AbortSignal) => {
     if (!bookId) return;
     setLoading(true);
     setError(null);
     try {
       const res = await api.get<PlanData>('/api/agent/reading-plan', { bookId });
-      if (!mountedRef.current) return;
+      if (signal?.aborted || !mountedRef.current) return;
       if (res.success && res.data) {
         setPlan(res.data);
       } else {
         setPlan(null);
       }
     } catch (e) {
-      if (!mountedRef.current) return;
+      if (signal?.aborted || !mountedRef.current) return;
       warn('ReadingPlanPanel: failed to fetch reading plan', e);
       setPlan(null);
       toast(t('reading_plan_load_failed'), 'error');
     } finally {
-      if (mountedRef.current) setLoading(false);
+      if (!signal?.aborted && mountedRef.current) setLoading(false);
     }
-  }, [bookId]);
+  }, [bookId, toast, t]);
 
   useEffect(() => {
     if (!isOpen || !bookId) return;
-    let stale = false;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get<PlanData>('/api/agent/reading-plan', { bookId });
-        if (stale) return;
-        if (res.success && res.data) {
-          setPlan(res.data);
-        } else {
-          setPlan(null);
-        }
-      } catch (e) {
-        if (stale) return;
-        warn('ReadingPlanPanel: failed to load reading plan on open', e);
-        setPlan(null);
-        toast(t('reading_plan_load_failed'), 'error');
-      } finally {
-        if (!stale) setLoading(false);
-      }
-    };
-    load();
-    return () => { stale = true; };
-  }, [isOpen, bookId]);
+    const ac = new AbortController();
+    fetchPlan(ac.signal);
+    return () => { ac.abort(); };
+  }, [isOpen, bookId, fetchPlan]);
 
   const handleGenerate = async () => {
     if (!bookId) return;
