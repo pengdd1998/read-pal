@@ -7,7 +7,7 @@ module focused on orchestration logic.
 from datetime import datetime
 
 from app.models.reading_session import ReadingSession
-from app.schemas.reading_session import SessionUpdate
+from app.schemas.reading_session import HeartbeatRequest, SessionUpdate
 
 # Maximum reasonable duration for a single reading session (2 hours).
 # Sessions exceeding this are likely idle tabs, not active reading.
@@ -50,9 +50,16 @@ def finalize_session_duration(session: ReadingSession, now: datetime) -> None:
         session.duration = min(raw, MAX_SESSION_SECONDS)
 
 
-def resolve_heartbeat_pages(body: SessionUpdate) -> tuple[int | None, float | None, str | None]:
-    """Extract page/scroll/segment fields from heartbeat body."""
-    pages_read = body.pages_read or body.pagesRead
-    scroll_progress = body.scroll_progress or body.scrollProgress
+def resolve_heartbeat_pages(body: HeartbeatRequest) -> tuple[int | None, float | None, str | None]:
+    """Extract page/scroll/segment fields from heartbeat body.
+
+    Uses `is not None` rather than `or` so an explicit 0 from the client
+    (scroll at top of page, no pages read this heartbeat) is preserved
+    instead of silently falling back to the camelCase alias.
+    """
+    pages_read = body.pages_read if body.pages_read is not None else body.pagesRead
+    scroll_progress = (
+        body.scroll_progress if body.scroll_progress is not None else body.scrollProgress
+    )
     current_segment = body.current_segment
     return pages_read, scroll_progress, current_segment
