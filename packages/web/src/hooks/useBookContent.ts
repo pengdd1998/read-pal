@@ -56,7 +56,7 @@ export function useBookContent(
           api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/upload/books/${bookId}/content`, { _t: Date.now() }),
           api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch((err) => {
             warn('useBookContent: annotations fetch failed', err);
-            setAnnotationsError(true);
+            if (!cancelled) setAnnotationsError(true);
             return null;
           }),
         ]);

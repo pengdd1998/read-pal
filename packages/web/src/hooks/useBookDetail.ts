@@ -89,10 +89,13 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
       if (currentBookIdRef.current === bookId) setter(data);
     };
 
-    bgFetch<Array<{ bookId: string; total: number }>>(
+    bgFetch<{ decks: Array<{ bookId: string; total: number }> }>(
       '/api/flashcards/decks',
       guard((data) => {
-        const deck = data.find((d) => d.bookId === bookId);
+        // Backend returns {decks, totalCards, totalDue, totalReviewed}.
+        // Previously typed as a bare array — calling .find on the wrapper
+        // threw and silently dropped the flashcard count.
+        const deck = data?.decks?.find((d) => d.bookId === bookId);
         if (deck) setFlashcardCount(deck.total);
       }),
     );
