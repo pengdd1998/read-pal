@@ -55,8 +55,10 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
 }: AnnotationsSidebarProps) {
  const t = useTranslations('reader');
  const [activeTab, setActiveTab] = useState<FilterTab>('all');
- const [showExportModal, setShowExportModal] = useState(false);
- const [showShareDialog, setShowShareDialog] = useState(false);
+ // Single modal layer so Escape cascades naturally (top first) and the two
+ // can never be open simultaneously.
+ type ModalLayer = 'none' | 'export' | 'share';
+ const [modal, setModal] = useState<ModalLayer>('none');
  const [searchQuery, setSearchQuery] = useState('');
  const [selectedTags, setSelectedTags] = useState<string[]>([]);
  const [bulkMode, setBulkMode] = useState(false);
@@ -65,28 +67,45 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
  const handleToggleViewMode = useCallback(() => setViewMode((v) => v === 'list' ? 'outline' : 'list'), []);
- const handleToggleBulkMode = useCallback(() => setBulkMode((v) => !v), []);
- const handleShowShareDialog = useCallback(() => setShowShareDialog(true), []);
- const handleShowExportModal = useCallback(() => setShowExportModal(true), []);
+ const handleToggleBulkMode = useCallback(() => {
+  // Turning bulk mode OFF must clear selections + confirm dialog so the
+  // header toggle matches the contextual "Exit" button in BulkActionBar.
+  setBulkMode((v) => {
+   if (v) {
+    setSelectedIds(new Set());
+    setConfirmBulkDelete(false);
+   }
+   return !v;
+  });
+ }, []);
+ const handleShowShareDialog = useCallback(() => setModal('share'), []);
+ const handleShowExportModal = useCallback(() => setModal('export'), []);
  const handleClearTags = useCallback(() => setSelectedTags([]), []);
- const handleCloseExport = useCallback(() => setShowExportModal(false), []);
- const handleCloseShare = useCallback(() => setShowShareDialog(false), []);
+ const handleCloseModal = useCallback(() => setModal('none'), []);
+
+ // Reset bulk-mode state when sidebar closes so reopening doesn't show
+ // stale selections or a dangling confirm-delete dialog.
+ useEffect(() => {
+  if (isOpen) return;
+  setBulkMode(false);
+  setSelectedIds(new Set());
+  setConfirmBulkDelete(false);
+ }, [isOpen]);
 
  useEffect(() => {
  if (!isOpen) return;
  const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-  if (showExportModal) setShowExportModal(false);
-  else if (showShareDialog) setShowShareDialog(false);
+  if (modal !== 'none') setModal('none');
   else onClose();
   }
  };
  window.addEventListener('keydown', handleKeyDown);
  return () => window.removeEventListener('keydown', handleKeyDown);
- }, [isOpen, onClose, showExportModal, showShareDialog]);
+ }, [isOpen, onClose, modal]);
 
  const sidebarRef = useRef<HTMLDivElement>(null);
- useModalFocus(sidebarRef, isOpen && !showExportModal && !showShareDialog);
+ useModalFocus(sidebarRef, isOpen && modal === 'none');
 
  const { filtered, tagCounts, uniqueTags, counts } = useAnnotationFilters({
  annotations,
@@ -216,17 +235,17 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
   </div>
 
   {/* Export modal */}
-  {showExportModal && (
+  {modal === 'export' && (
   <ExportPreviewModal
    bookId={bookId}
    bookTitle={bookTitle}
    availableTags={uniqueTags}
-   onClose={handleCloseExport}
+   onClose={handleCloseModal}
   />
   )}
 
   {/* Share & export dialog */}
-  {showShareDialog && (
+  {modal === 'share' && (
   <ShareDialog
    annotations={annotations}
    bookId={bookId}
@@ -235,7 +254,7 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
    totalPages={totalPages}
    currentPage={currentPage}
    progress={progress}
-   onClose={handleCloseShare}
+   onClose={handleCloseModal}
   />
   )}
  </>
