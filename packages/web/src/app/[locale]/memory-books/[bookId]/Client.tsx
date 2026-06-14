@@ -57,16 +57,20 @@ export default function ReadingMirrorPage() {
  tRef.current = t;
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; if (genTimerRef.current) clearInterval(genTimerRef.current); }; }, []);
 
- // Fetch existing mirror + book metadata
+ // Fetch existing mirror + book metadata.
+ // Abort in-flight requests when the user navigates away or refocuses the
+ // tab (which fires fetchData again) — without this, a slow first fetch can
+ // resolve after a second fetch and overwrite fresh state with stale data.
  const fetchData = useCallback(() => {
  if (!bookId) return;
+ const ac = new AbortController();
  setLoading(true);
  setError(null);
  Promise.all([
-  api.get<ReadingMirror>(`/api/v1/reading-book/${bookId}`),
-  api.get<{ title: string; author: string; coverUrl?: string }>(`/api/books/${bookId}`),
+  api.get<ReadingMirror>(`/api/v1/reading-book/${bookId}`, undefined, { signal: ac.signal }),
+  api.get<{ title: string; author: string; coverUrl?: string }>(`/api/books/${bookId}`, undefined, { signal: ac.signal }),
  ]).then(([mirrorRes, bookRes]) => {
-  if (!mountedRef.current) return;
+  if (ac.signal.aborted || !mountedRef.current) return;
   let anySuccess = false;
   if (mirrorRes.success && mirrorRes.data) {
   setMirror(mirrorRes.data);
@@ -82,13 +86,15 @@ export default function ReadingMirrorPage() {
   setError(tRef.current('failedToLoad'));
   }
  }).catch((err) => {
+  if (ac.signal.aborted || (err as DOMException)?.name === 'AbortError') return;
   warn('MemoryBookDetail: failed to load', err);
   if (mountedRef.current) setError(tRef.current('failedToLoad'));
   })
- .finally(() => { if (mountedRef.current) setLoading(false); });
+ .finally(() => { if (!ac.signal.aborted && mountedRef.current) setLoading(false); });
+ return () => ac.abort();
  }, [bookId]);
 
- useEffect(() => { fetchData(); }, [fetchData]);
+ useEffect(() => { return fetchData(); }, [fetchData]);
 
  // Refetch on tab focus
  useEffect(() => {
