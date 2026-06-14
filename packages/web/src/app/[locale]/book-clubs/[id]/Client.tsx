@@ -36,7 +36,9 @@ export default function BookClubDetailPage() {
      const res = await api.post<{ id: string; name: string }>(`/api/book-clubs/${clubId}/join`);
      if (!mountedRef.current) return;
      if (res.success) {
-       setClub((prev) => prev ? { ...prev, currentUserRole: 'member', memberCount: (prev.memberCount || 0) + 1 } : prev);
+       // Refetch to sync memberCount AND clubMembers list together.
+       // Optimistic increment alone leaves the new member absent from the list.
+       await refetchClub();
      } else {
        setError(t('failedToJoin'));
      }
