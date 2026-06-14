@@ -170,7 +170,15 @@ async def _call_llm_and_persist(
     messages: list,
     sanitized_message: str,
 ) -> str:
-    """Call the LLM, persist both user and assistant messages, return response."""
+    """Persist user message, call the LLM, then persist the assistant reply.
+
+    Order matters: saving the user message BEFORE the LLM call guarantees the
+    user's question is durably logged even if the LLM call or the assistant
+    save fails. Without this ordering, a mid-flight failure could leave no
+    trace of the user's message and the next turn would silently drop it
+    from history.
+    """
+    await _save_message(db, user_id, persona, 'user', sanitized_message, book_id)
     assistant_content = await safe_llm_call(
         messages,
         fallback="I'm having trouble thinking right now. Please try again in a moment.",
@@ -178,10 +186,21 @@ async def _call_llm_and_persist(
         user_id=str(user_id),
         book_id=str(book_id) if book_id else None,
     )
-    await _save_message(db, user_id, persona, 'user', sanitized_message, book_id)
-    await _save_message(
-        db, user_id, persona, 'assistant', assistant_content, book_id,
-    )
+    try:
+        await _save_message(
+            db, user_id, persona, 'assistant', assistant_content, book_id,
+        )
+    except DBAPIError as exc:
+        # LLM cost already incurred but assistant reply couldn't be persisted.
+        # Log loudly so this surface — the conversation history is now
+        # asymmetric (user question without a paired assistant reply).
+        logger.error(
+            'friend.chat.assistant_persist_failed',
+            user_id=str(user_id),
+            persona=persona,
+            error=str(exc)[:500],
+        )
+        raise
     return assistant_content
 
 
