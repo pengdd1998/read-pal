@@ -292,6 +292,104 @@ class TestStreamingErrors:
             assert chunks[-1] == 'data: [DONE]\n\n'
 
     @pytest.mark.asyncio
+    async def test_partial_primary_discarded_before_fallback(self):
+        """When primary streams partial output then fails, fallback must start fresh.
+
+        Without the fix, the partial primary output gets concatenated with the
+        fallback response and persisted as the assistant message — yielding
+        broken text like 'Once upon a time...<error>I understand you're...'.
+        """
+        from app.services.companion_service import stream_chat
+
+        mock_db = AsyncMock()
+        mock_db.add = MagicMock()
+        user_id = uuid4()
+        book_id = uuid4()
+
+        mock_book = MagicMock()
+        mock_book.title = 'Test'
+        mock_book.author = 'Author'
+
+        # Primary: emits partial then blows up mid-stream
+        primary_llm = MagicMock()
+
+        async def primary_astream(messages):
+            chunk = MagicMock()
+            chunk.content = 'PARTIAL_PRIMARY_OUTPUT'
+            yield chunk
+            raise RuntimeError('primary died')
+
+        primary_llm.astream = primary_astream
+
+        # Fallback provider emits clean text
+        fallback_llm = MagicMock()
+
+        async def fallback_astream(messages):
+            chunk = MagicMock()
+            chunk.content = 'CLEAN_FALLBACK'
+            yield chunk
+
+        fallback_llm.astream = fallback_astream
+
+        primary_circuit = AsyncMock()
+        primary_circuit.allow_request = AsyncMock(return_value=True)
+        primary_circuit.record_success = AsyncMock()
+        primary_circuit.record_failure = AsyncMock()
+        primary_circuit.is_open = False
+
+        fallback_circuit = AsyncMock()
+        fallback_circuit.allow_request = AsyncMock(return_value=True)
+        fallback_circuit.record_success = AsyncMock()
+        fallback_circuit.record_failure = AsyncMock()
+        fallback_circuit.is_open = False
+
+        primary_state = MagicMock()
+        primary_state.config.name = 'primary'
+        primary_state.config.default_model = 'p-model'
+        primary_state.circuit = primary_circuit
+
+        fallback_state = MagicMock()
+        fallback_state.config.name = 'fallback'
+        fallback_state.config.default_model = 'f-model'
+        fallback_state.circuit = fallback_circuit
+
+        def get_llm_by_provider(provider=None, **kwargs):
+            return primary_llm if provider == 'primary' else fallback_llm
+
+        mock_registry = MagicMock()
+        mock_registry.get_provider = MagicMock(return_value=primary_state)
+        mock_registry.next_provider_after = MagicMock(return_value=fallback_state)
+        mock_registry.record_latency = MagicMock()
+
+        captured_assistant_text = []
+
+        async def fake_persist(db, user_id_, book_id_, message, messages_, collected_parts, request_id):
+            captured_assistant_text.append(''.join(collected_parts))
+
+        with (
+            patch('app.services.companion.context._load_book', return_value=mock_book),
+            patch('app.services.companion.context._load_history', return_value=[]),
+            patch('app.services.companion.context._load_annotations_context', return_value=''),
+            patch('app.services.companion.context._fetch_rag', return_value=''),
+            patch('app.services.companion.context._fetch_memory', return_value=''),
+            patch('app.services.companion.streaming.get_llm', side_effect=get_llm_by_provider),
+            patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
+            patch('app.services.companion.stream_fallback.get_llm', side_effect=get_llm_by_provider),
+            patch('app.services.companion.stream_fallback.get_registry', return_value=mock_registry),
+            patch('app.services.companion.streaming.persist_stream_result', new=fake_persist),
+        ):
+            chunks_text = ''
+            async for chunk in stream_chat(
+                mock_db, user_id, book_id, 'hi',
+            ):
+                chunks_text += chunk
+
+        # The partial primary output must NOT appear in either the SSE stream
+        # (after the failure point) or the persisted assistant message.
+        assert 'PARTIAL_PRIMARY_OUTPUT' not in captured_assistant_text[0]
+        assert 'CLEAN_FALLBACK' in captured_assistant_text[0]
+
+    @pytest.mark.asyncio
     async def test_empty_stream_skips_save(self):
         """When stream produces no content, neither user nor assistant message is saved."""
         from app.services.companion_service import stream_chat

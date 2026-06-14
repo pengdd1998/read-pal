@@ -158,6 +158,19 @@ async def _stream_from_provider(
             exc, state, provider_name, model_used,
             request_id, start_time, user_id, book_id,
         )
+        # Discard partial primary output before fallback so the user
+        # doesn't see "Once upon a time..." glued to a fresh response
+        # starting with "I understand you're asking...". Without this,
+        # persist_stream_result would save the corrupt concat too.
+        partial_len = sum(len(p) for p in collected_parts)
+        if partial_len:
+            logger.warning(
+                'companion.stream.partial_discarded',
+                request_id=request_id,
+                provider=provider_name,
+                partial_chars=partial_len,
+            )
+            collected_parts.clear()
         async for chunk in stream_fallback(
             messages, collected_parts, request_id, start_time,
             user_id, book_id, lang,
