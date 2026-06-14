@@ -85,11 +85,18 @@ async def review_flashcard(
 ) -> Flashcard:
     """Apply SM-2 algorithm to update flashcard scheduling."""
     async with db_error_guard('review_flashcard', user_id=str(user_id), flashcard_id=str(flashcard_id)):
+        # Lock the row for the duration of this transaction. Without this,
+        # two concurrent reviews of the same card (e.g. user double-clicks
+        # or has multiple tabs open) would both SELECT the same repetition_count
+        # and ease_factor, both compute the same new values, and the second
+        # UPDATE would silently overwrite the first — losing one review.
         result = await db.execute(
-            select(Flashcard).where(
+            select(Flashcard)
+            .where(
                 Flashcard.id == flashcard_id,
                 Flashcard.user_id == user_id,
-            ),
+            )
+            .with_for_update(),
         )
         card = result.scalar_one_or_none()
         if card is None:
