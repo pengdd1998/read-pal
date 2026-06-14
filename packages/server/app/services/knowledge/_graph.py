@@ -188,19 +188,36 @@ def _build_nx_graph(
     return graph
 
 
+_VALID_NODE_TYPES = frozenset({'concept', 'character', 'theme', 'location', 'other'})
+
+
+def _sanitize_node_type(value: Any) -> str:
+    """Coerce a node type to a valid GraphNode.type enum value.
+
+    The extractors (rule-based + LLM) can emit types outside the schema's
+    allowed set (e.g. 'entity', 'person', 'place'); without coercion every
+    GraphNode construction raises ValidationError -> 400 INVALID_INPUT, which
+    is why the knowledge graph was permanently empty.
+    """
+    t = str(value or 'concept').strip().lower()
+    return t if t in _VALID_NODE_TYPES else 'other'
+
+
 def _graph_to_data(graph: nx.Graph) -> GraphData:
     """Convert NetworkX graph to frontend-friendly GraphData."""
     nodes = [
         GraphNode(
-            id=name,
-            label=name,
-            type=data.get('type', 'concept'),
-            size=data.get('size', 1),
+            # Truncate id/label to schema max lengths defensively (LLM concept
+            # names can be long).
+            id=str(name).strip()[:128] or '_',
+            label=str(name).strip()[:256] or str(name),
+            type=_sanitize_node_type(data.get('type')),
+            size=max(1, int(data.get('size', 1) or 1)),
             metadata={},
-            description=data.get('description', ''),
+            description=(data.get('description', '') or '')[:2000],
             source_book_ids=data.get('source_book_ids', []),
-            annotation_count=data.get('annotation_count', 0),
-            freshness=data.get('freshness', 1.0),
+            annotation_count=max(0, int(data.get('annotation_count', 0) or 0)),
+            freshness=min(1.0, max(0.0, float(data.get('freshness', 1.0) or 1.0))),
         )
         for name, data in graph.nodes(data=True)
     ]

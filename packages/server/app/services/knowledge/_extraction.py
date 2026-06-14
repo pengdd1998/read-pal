@@ -82,7 +82,9 @@ def _extract_concepts_from_keywords(
             if name in concepts:
                 concepts[name]['size'] = (concepts[name].get('size', 0) or 0) + 1
             else:
-                concepts[name] = {'name': name, 'type': 'entity', 'related': [], 'size': 1}
+                # 'concept' (not 'entity') — GraphNode.type only allows
+                # concept|character|theme|location|other.
+                concepts[name] = {'name': name, 'type': 'concept', 'related': [], 'size': 1}
 
         # Extract quoted terms as key concepts
         quoted = re.findall(r'"([^"]+)"', text)
