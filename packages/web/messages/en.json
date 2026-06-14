@@ -1502,7 +1502,7 @@
     "filter_notes": "Notes",
     "books_heading": "Books ({count})",
     "passages_heading": "Passages ({count})",
-    "highlights_notes_heading": "Highlights & Notes ({count})",
+    "highlights_notes_heading": "Annotations ({count})",
     "highlights_heading": "Highlights ({count})",
     "notes_heading": "Notes ({count})",
     "match_percent": "{percent}% match",

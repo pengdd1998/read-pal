@@ -1502,7 +1502,7 @@
     "filter_notes": "笔记",
     "books_heading": "书籍 ({count})",
     "passages_heading": "段落 ({count})",
-    "highlights_notes_heading": "高亮与笔记 ({count})",
+    "highlights_notes_heading": "标注 ({count})",
     "highlights_heading": "高亮 ({count})",
     "notes_heading": "笔记 ({count})",
     "match_percent": "{percent}% 匹配",

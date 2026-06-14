@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClub, BookClubMember
+from app.models.user import User
 from app.schemas.book_club import BookClubCreate, BookClubUpdate
 from app.utils.db import db_error_guard
 
@@ -52,7 +53,7 @@ async def get_club(
     club_id: UUID,
     user_id: UUID | None = None,
 ) -> dict | None:
-    """Get club details with computed member count and current user's role."""
+    """Get club details with member rows, member count, and current user's role."""
     async with db_error_guard('get_club', club_id=str(club_id)):
         result = await db.execute(
             select(BookClub).where(BookClub.id == club_id),
@@ -61,12 +62,13 @@ async def get_club(
         if club is None:
             return None
 
-        count_result = await db.execute(
-            select(func.count())
-            .select_from(BookClubMember)
-            .where(BookClubMember.club_id == club_id),
+        members_result = await db.execute(
+            select(BookClubMember, User.name)
+            .join(User, User.id == BookClubMember.user_id)
+            .where(BookClubMember.club_id == club_id)
+            .order_by(BookClubMember.joined_at.asc()),
         )
-        member_count = count_result.scalar() or 0
+        member_rows = members_result.all()
 
         current_user_role = None
         if user_id is not None:
@@ -78,6 +80,18 @@ async def get_club(
             )
             current_user_role = role_result.scalar_one_or_none()
 
+    club_members = [
+        {
+            'id': str(member.id),
+            'clubId': str(member.club_id),
+            'userId': str(member.user_id),
+            'role': member.role,
+            'joinedAt': member.joined_at.isoformat() if member.joined_at else None,
+            'user': {'id': str(member.user_id), 'name': user_name},
+        }
+        for member, user_name in member_rows
+    ]
+
     return {
         'id': str(club.id),
         'name': club.name,
@@ -88,7 +102,8 @@ async def get_club(
         'isPrivate': club.is_private,
         'inviteCode': club.invite_code,
         'maxMembers': club.max_members,
-        'memberCount': member_count,
+        'memberCount': len(club_members),
+        'clubMembers': club_members,
         'createdAt': club.created_at.isoformat() if club.created_at else None,
         'updatedAt': club.updated_at.isoformat() if club.updated_at else None,
         'currentUserRole': current_user_role,
