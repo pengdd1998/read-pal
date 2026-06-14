@@ -178,6 +178,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     # Mock Redis so token blacklist / rate limiting doesn't need a real instance
     mock_redis = AsyncMock()
     mock_redis.get.return_value = None
+    mock_redis.getdel.return_value = None
     mock_redis.exists.return_value = 0
     mock_redis.setex.return_value = True
     mock_redis.set.return_value = True

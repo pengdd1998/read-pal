@@ -69,16 +69,22 @@ async def send_reset_email(email: str, token: str) -> bool:
 
 
 async def _validate_reset_token(token: str) -> dict:
-    """Look up a reset token in Redis and return its payload.
+    """Atomically consume a reset token and return its payload.
+
+    Uses Redis GETDEL so the token is consumed in the same step as the
+    read — closes a TOCTOU race where two concurrent reset requests
+    both validated the same token before either deleted it, then both
+    proceeded to set different passwords (last writer wins, attacker
+    wins if their request lands last).
 
     Raises ValueError if token is missing or payload is malformed.
     Raises RuntimeError if Redis is unavailable.
     """
     try:
         redis = get_redis()
-        data = await redis.get(f'{_TOKEN_PREFIX}{token}')
+        data = await redis.getdel(f'{_TOKEN_PREFIX}{token}')
     except redis.exceptions.RedisError as exc:
-        logger.error('password_reset.redis_get_failed error=%s', exc)
+        logger.error('password_reset.redis_getdel_failed error=%s', exc)
         raise RuntimeError('Service temporarily unavailable') from exc
 
     if not data:
@@ -113,8 +119,13 @@ async def _update_user_password(
     return user
 
 
-async def _invalidate_sessions(token: str, user_id: str) -> None:
-    """Invalidate all active sessions and consume the reset token."""
+async def _invalidate_sessions(user_id: str) -> None:
+    """Invalidate all active sessions for the user.
+
+    The reset token itself is already consumed atomically by
+    _validate_reset_token's GETDEL, so we no longer need a separate
+    DEL call here.
+    """
     try:
         redis = get_redis()
         await redis.set(
@@ -124,12 +135,6 @@ async def _invalidate_sessions(token: str, user_id: str) -> None:
         )
     except redis.exceptions.RedisError as exc:
         logger.warning('password_reset.invalidate_sessions_failed user=%s error=%s', user_id, exc)
-
-    try:
-        redis = get_redis()
-        await redis.delete(f'{_TOKEN_PREFIX}{token}')
-    except redis.exceptions.RedisError as exc:
-        logger.warning('password_reset.redis_delete_failed user=%s error=%s', user_id, exc)
 
 
 async def validate_and_reset(
@@ -146,7 +151,7 @@ async def validate_and_reset(
     user_id = payload['userId']
 
     user = await _update_user_password(db, user_id, new_password)
-    await _invalidate_sessions(token, user_id)
+    await _invalidate_sessions(user_id)
 
     logger.info('Password reset successful for user %s', user_id)
     return user

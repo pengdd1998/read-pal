@@ -73,7 +73,7 @@ async def test_reset_password_valid_token(client):
     payload = json.dumps({'userId': user_id, 'email': 'reset@test.com'})
 
     fake_redis = AsyncMock()
-    fake_redis.get.return_value = payload
+    fake_redis.getdel.return_value = payload
     fake_redis.delete.return_value = 1
 
     with (
@@ -86,8 +86,9 @@ async def test_reset_password_valid_token(client):
         )
         assert resp.status_code == 200
         assert 'reset successfully' in resp.json()['data']['message'].lower()
-        # Verify token was consumed
-        fake_redis.delete.assert_called_once_with(f'password-reset:{token}')
+        # Verify token was consumed atomically by GETDEL (not a separate DELETE)
+        fake_redis.getdel.assert_called_once_with(f'password-reset:{token}')
+        fake_redis.delete.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -100,7 +101,7 @@ async def test_reset_password_then_login(client):
     payload = json.dumps({'userId': user_id, 'email': 'loginreset@test.com'})
 
     fake_redis = AsyncMock()
-    fake_redis.get.return_value = payload
+    fake_redis.getdel.return_value = payload
     fake_redis.delete.return_value = 1
 
     with (
@@ -136,3 +137,43 @@ async def test_reset_password_short_password(client):
         json={'token': 'some-token', 'password': 'short'},
     )
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_reset_password_token_consumed_atomically(client):
+    """Second reset with the same token must fail because GETDEL consumed it.
+
+    Pre-fix, the code did GET then DEL in separate steps — two concurrent
+    requests could both GET the same payload before either DELeted it.
+    Now GETDEL consumes atomically: only the first request sees the
+    payload, the second gets None and 400s.
+    """
+    reg = await register_user(client, email='race@test.com', password='OldPass123!')
+    user_id = reg['user']['id']
+
+    token = 'race-token'
+    payload = json.dumps({'userId': user_id, 'email': 'race@test.com'})
+
+    # First call returns the payload; second call (atomic consume already done)
+    # returns None — simulating the realistic concurrent case where the second
+    # request's GETDEL runs after the first's already consumed the key.
+    fake_redis = AsyncMock()
+    fake_redis.getdel.side_effect = [payload, None]
+    fake_redis.delete.return_value = 1
+
+    with (
+        patch('app.services.password_reset_service.get_redis', return_value=fake_redis),
+        patch('app.db.async_session', _TestSession),
+    ):
+        first = await client.post(
+            '/api/v1/auth/reset-password',
+            json={'token': token, 'password': 'FirstNew456!'},
+        )
+        second = await client.post(
+            '/api/v1/auth/reset-password',
+            json={'token': token, 'password': 'SecondNew789!'},
+        )
+
+    assert first.status_code == 200
+    assert second.status_code == 400
+    assert second.json()['detail']['code'] == 'INVALID_TOKEN'
