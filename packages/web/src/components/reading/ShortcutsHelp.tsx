@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 interface ShortcutsHelpProps {
  onClose: () => void;
@@ -9,6 +10,8 @@ interface ShortcutsHelpProps {
 
 export const ShortcutsHelp = React.memo(function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
  const t = useTranslations('reader');
+ const dialogRef = useRef<HTMLDivElement>(null);
+ useModalFocus(dialogRef);
  const shortcuts = [
  { keys: ['←', '→'], label: t('shortcut_prev_next') },
  { keys: ['H'], label: t('shortcut_highlight') },
@@ -18,7 +21,7 @@ export const ShortcutsHelp = React.memo(function ShortcutsHelp({ onClose }: Shor
  ];
 
  return (
- <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t('close_dialog')}>
+ <div ref={dialogRef} className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t('close_dialog')}>
   <div className="bg-surface-0 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm p-5 animate-scale-in" onClick={(e) => e.stopPropagation()}>
   <div className="flex items-center justify-between mb-4">
    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">{t('keyboard_shortcuts_title')}</h3>

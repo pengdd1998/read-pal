@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 interface ChapterStat {
  chapterIndex: number;
@@ -116,7 +117,9 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
  const [error, setError] = useState(false);
  const reqIdRef = useRef(0);
  const mountedRef = useRef(true);
+ const dialogRef = useRef<HTMLDivElement>(null);
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+ useModalFocus(dialogRef);
 
  const loadStats = () => {
   const reqId = ++reqIdRef.current;
@@ -149,7 +152,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
  );
 
  return (
- <div className="fixed inset-0 z-40 bg-black/30 animate-fade-in" onClick={onClose} onKeyDown={handleBackdropKey} role="dialog" aria-modal="true" aria-label={t('timeline_title')} tabIndex={-1}>
+ <div ref={dialogRef} className="fixed inset-0 z-40 bg-black/30 animate-fade-in" onClick={onClose} onKeyDown={handleBackdropKey} role="dialog" aria-modal="true" aria-label={t('timeline_title')} tabIndex={-1}>
   <div
   className="absolute right-0 top-[61px] bottom-0 w-full max-w-sm bg-surface-0 shadow-2xl animate-slide-in-right overflow-y-auto"
   onClick={handlePanelClick}

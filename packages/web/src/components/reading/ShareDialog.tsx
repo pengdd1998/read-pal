@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Annotation } from '@read-pal/shared';
 import { ShareDiscussionTab } from './ShareDiscussionTab';
 import { ShareQuoteTab } from './ShareQuoteTab';
 import { ShareCitationTab } from './ShareCitationTab';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 type ShareTab = 'quote' | 'discussion' | 'citation';
 
@@ -42,7 +43,7 @@ export const ShareDialog = React.memo(function ShareDialog({
  const [activeTab, setActiveTab] = useState<ShareTab>('discussion');
  const backdropRef = useRef<HTMLDivElement>(null);
  const dialogRef = useRef<HTMLDivElement>(null);
- useEffect(() => { dialogRef.current?.focus(); }, []);
+ useModalFocus(dialogRef);
 
  return (
  <div

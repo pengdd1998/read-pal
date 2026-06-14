@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import type { Annotation } from '@read-pal/shared';
@@ -13,6 +13,7 @@ import { TagFilterChips } from './TagFilterChips';
 import { FilterTabs, type FilterTab } from './FilterTabs';
 import { BulkActionBar } from './BulkActionBar';
 import { useAnnotationFilters } from './useAnnotationFilters';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 const ShareDialog = dynamic(() => import('./ShareDialog').then((m) => ({ default: m.ShareDialog })), {
  ssr: false,
@@ -84,6 +85,9 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
  return () => window.removeEventListener('keydown', handleKeyDown);
  }, [isOpen, onClose, showExportModal, showShareDialog]);
 
+ const sidebarRef = useRef<HTMLDivElement>(null);
+ useModalFocus(sidebarRef, isOpen && !showExportModal && !showShareDialog);
+
  const { filtered, tagCounts, uniqueTags, counts } = useAnnotationFilters({
  annotations,
  activeTab,
@@ -134,6 +138,7 @@ export const AnnotationsSidebar = React.memo(function AnnotationsSidebar({
 
   {/* Sidebar */}
   <div
+  ref={sidebarRef}
   role="dialog"
   aria-modal="true"
   aria-label={t("sidebar_annotations")}

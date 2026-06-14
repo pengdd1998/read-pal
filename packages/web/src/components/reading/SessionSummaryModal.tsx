@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 interface SessionSummaryModalProps {
  duration: number;
@@ -29,7 +30,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
  const mountedRef = useRef(true);
  const dialogRef = useRef<HTMLDivElement>(null);
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
- useEffect(() => { dialogRef.current?.focus(); }, []);
+ useModalFocus(dialogRef);
 
  const handleBackdropKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Escape') onKeepReading(); }, [onKeepReading]);
  const handlePanelClick = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);

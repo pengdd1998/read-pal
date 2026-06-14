@@ -5,6 +5,7 @@ import { ChatPanelHeader } from './ChatPanelHeader';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { type SanitizedMessage } from './useSanitizedMessages';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 type CompanionMode = 'casual' | 'scholar' | 'socratic';
 type TranslateFn = (key: string, params?: Record<string, unknown>) => string;
@@ -55,7 +56,7 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
  const messagesEndRef = useRef<HTMLDivElement>(null);
  const chatContainerRef = useRef<HTMLDivElement>(null);
  const dialogRef = useRef<HTMLDivElement>(null);
- useEffect(() => { dialogRef.current?.focus(); }, []);
+ useModalFocus(dialogRef);
 
  // Auto-scroll
  const scrollToBottom = useCallback(() => {

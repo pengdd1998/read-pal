@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 interface BookCompletionModalProps {
  bookId: string;
@@ -30,7 +31,7 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
  const mountedRef = useRef(true);
  const dialogRef = useRef<HTMLDivElement>(null);
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
- useEffect(() => { dialogRef.current?.focus(); }, []);
+ useModalFocus(dialogRef);
 
  const handleGeneratePersonalBook = async () => {
  setGenerating(true);

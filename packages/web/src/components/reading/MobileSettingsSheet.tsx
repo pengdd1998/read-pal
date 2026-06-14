@@ -1,7 +1,8 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 interface MobileSettingsSheetProps {
  fontSize: number;
@@ -38,8 +39,11 @@ export const MobileSettingsSheet = memo(function MobileSettingsSheet({
  onClose,
 }: MobileSettingsSheetProps) {
  const t = useTranslations('reader');
+ const dialogRef = useRef<HTMLDivElement>(null);
+ useModalFocus(dialogRef);
  return (
  <div
+  ref={dialogRef}
   role="dialog"
   aria-modal="true"
   aria-label={t('settings_title')}

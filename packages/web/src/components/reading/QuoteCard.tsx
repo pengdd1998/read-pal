@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { THEMES } from './QuoteCardCanvas';
 import { useQuoteCardActions } from './useQuoteCardActions';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 export type CardTheme = 'warm' | 'dark';
 
@@ -21,6 +22,8 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
  const [downloading, setDownloading] = useState(false);
  const [copied, setCopied] = useState(false);
  const canvasRef = useRef<HTMLCanvasElement>(null);
+ const dialogRef = useRef<HTMLDivElement>(null);
+ useModalFocus(dialogRef);
  const t = THEMES[theme];
  const tc = useTranslations('common');
  const tr = useTranslations('reader');
@@ -47,6 +50,7 @@ export const QuoteCard = memo(function QuoteCard({ text, bookTitle, author, onCl
 
  return (
  <div
+  ref={dialogRef}
   className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in"
   onClick={handleBackdropClick}
   role="dialog"

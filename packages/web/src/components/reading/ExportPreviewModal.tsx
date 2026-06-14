@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { ExportFilterPanel } from './ExportFilterPanel';
 import { useExportShareLink } from './useExportShareLink';
@@ -9,6 +9,7 @@ import { ExportFormatSelector } from './export/ExportFormatSelector';
 import { ExportPreviewPanel } from './export/ExportPreviewPanel';
 import { ExportActionFooter } from './export/ExportActionFooter';
 import { useExportActions } from './export/useExportActions';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 interface ExportPreviewModalProps {
   bookId: string;
@@ -50,7 +51,7 @@ export const ExportPreviewModal = React.memo(function ExportPreviewModal({ bookI
   const dialogRef = useRef<HTMLDivElement>(null);
   const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => { if (e.target === backdropRef.current) onClose(); }, [onClose]);
   const handleBackdropKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => { if (e.key === 'Escape') onClose(); }, [onClose]);
-  useEffect(() => { dialogRef.current?.focus(); }, []);
+  useModalFocus(dialogRef);
 
   return (
     <div

@@ -61,8 +61,18 @@ export default function OfflinePage() {
   const [cachedBooks, setCachedBooks] = useState<CachedBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // mountedRef guards against setState-after-unmount.
+  // loadSeqRef guards against stale loads: each call increments the seq,
+  // and only the latest in-flight load is allowed to write state.
+  // This replaces the prior pattern where the network-change handler
+  // created its own staleRef but never tracked it for cleanup, so rapid
+  // online/offline toggling could leak stale state writes.
+  const mountedRef = useRef(true);
+  const loadSeqRef = useRef(0);
 
-  const loadCachedBooks = useCallback(async (staleRef: { current: boolean }) => {
+  const loadCachedBooks = useCallback(async () => {
+    const mySeq = ++loadSeqRef.current;
+    const isLatest = () => mountedRef.current && mySeq === loadSeqRef.current;
     setError(null);
     try {
       const db = await openOfflineDB();
@@ -96,13 +106,13 @@ export default function OfflinePage() {
           totalChapters: item.totalChapters ?? 0,
         });
       }
-      if (!staleRef.current) {
+      if (isLatest()) {
         setCachedBooks(books);
         setLoading(false);
       }
     } catch (err) {
       warn('OfflinePage: IndexedDB not available', err);
-      if (!staleRef.current) {
+      if (isLatest()) {
         setError(tRef.current('load_error'));
         setLoading(false);
       }
@@ -111,9 +121,13 @@ export default function OfflinePage() {
 
   // Load cached books on mount
   useEffect(() => {
-    const staleRef = { current: false };
-    loadCachedBooks(staleRef);
-    return () => { staleRef.current = true; };
+    mountedRef.current = true;
+    loadCachedBooks();
+    return () => {
+      mountedRef.current = false;
+      // Invalidate any in-flight load so it doesn't write state after unmount.
+      loadSeqRef.current++;
+    };
   }, [loadCachedBooks]);
 
   useEffect(() => {
@@ -123,8 +137,7 @@ export default function OfflinePage() {
       const nowOnline = navigator.onLine;
       setIsOnline(nowOnline);
       // Reload cached books when network state changes
-      const staleRef = { current: false };
-      loadCachedBooks(staleRef);
+      loadCachedBooks();
     };
     window.addEventListener('online', handleNetworkChange);
     window.addEventListener('offline', handleNetworkChange);
@@ -148,7 +161,7 @@ export default function OfflinePage() {
             <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400 flex items-center justify-between" role="alert">
               <span>{error}</span>
               <button type="button"
-                onClick={() => { const staleRef = { current: false }; loadCachedBooks(staleRef); }}
+                onClick={() => loadCachedBooks()}
                 className="ml-3 px-3 py-1 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-red-400"
               >
                 {t('tryAgain')}

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api';
 import { authFetch } from '@/lib/auth-fetch';
 import { safeGetItem, safeRemoveItem } from '@/lib/safe-storage';
 import { warn } from '@/lib/logger';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 export const AccountSection = React.memo(function AccountSection() {
  const t = useTranslations('settings_page');
@@ -18,8 +19,8 @@ export const AccountSection = React.memo(function AccountSection() {
  const [deleteError, setDeleteError] = useState('');
  const deleteDialogRef = useRef<HTMLDivElement>(null);
  const signOutDialogRef = useRef<HTMLDivElement>(null);
- useEffect(() => { if (showDeleteModal) deleteDialogRef.current?.focus(); }, [showDeleteModal]);
- useEffect(() => { if (showSignOutConfirm) signOutDialogRef.current?.focus(); }, [showSignOutConfirm]);
+ useModalFocus(deleteDialogRef, showDeleteModal);
+ useModalFocus(signOutDialogRef, showSignOutConfirm);
 
  const router = useRouter();
  async function handleDeleteAccount() {

@@ -11,6 +11,7 @@ import { CompanionStep } from '@/components/onboarding/CompanionStep';
 import { ReadyStep } from '@/components/onboarding/ReadyStep';
 import { StepIndicator } from '@/components/onboarding/StepIndicator';
 import { warn } from '@/lib/logger';
+import { useModalFocus } from '@/hooks/useModalFocus';
 
 const STORAGE_KEY = 'read-pal-onboarding-complete';
 
@@ -69,6 +70,8 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
   const [saving, setSaving] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  useModalFocus(cardRef);
 
   useEffect(() => {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
@@ -175,6 +178,8 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
 
       {/* Card */}
       <div
+        ref={cardRef}
+        tabIndex={-1}
         className={`relative w-full max-w-lg mx-4 bg-surface-0 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ease-out ${
           overlayVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
