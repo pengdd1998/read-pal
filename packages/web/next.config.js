@@ -34,6 +34,15 @@ const nextConfig = {
     return config;
   },
   poweredByHeader: false,
+  // Dev server proxy timeout — AI-heavy endpoints (reading-book generation,
+  // cross-book synthesis, flashcard generation) can take several minutes.
+  // Default Node.js proxy is 30s which surfaces as opaque "Internal Server
+  // Error" well before the backend finishes. 5 min matches the longest LLM
+  // pipeline plus retry budget. Production uses nginx (see proxy.conf) so this
+  // only applies to `next dev`.
+  experimental: {
+    proxyTimeout: 300_000,
+  },
   async headers() {
     return [
       {
