@@ -78,6 +78,11 @@ export class ApiClient {
         return response.data;
       } catch (err: unknown) {
         lastError = err;
+        // Cancellations (AbortController) are not transient failures — never
+        // retry them. Retrying an aborted signal just burns 3 doomed attempts.
+        if (axios.isCancel(err)) {
+          break;
+        }
         const axiosErr = axios.isAxiosError(err) ? err : null;
 
         const isNetworkError = axiosErr ? !axiosErr.response : true;
@@ -124,8 +129,14 @@ export class ApiClient {
       }
     }
 
-    // Deduplicate concurrent identical requests
-    const inFlight = this.inFlightRequests.get(cacheKey) as Promise<ApiResponse<T>> | undefined;
+    // Deduplicate concurrent identical requests — but only when the caller is
+    // NOT managing its own lifecycle via AbortController. A signaled request
+    // (e.g. Strict Mode mount→cleanup→remount) must not be reused, or the
+    // remount picks up the stale aborting promise and never fires a fresh call.
+    const hasSignal = Boolean(options?.signal);
+    const inFlight = hasSignal
+      ? undefined
+      : (this.inFlightRequests.get(cacheKey) as Promise<ApiResponse<T>> | undefined);
     if (inFlight) return inFlight;
 
     const bookContentMatch = url.match(/\/api\/upload\/books\/([^/]+)\/content/);
@@ -138,6 +149,12 @@ export class ApiClient {
         return data;
       })
       .catch(async (err: unknown) => {
+        // A cancellation is not a failure — propagate it as AbortError so
+        // callers with an AbortController can ignore it (matches the get()
+        // contract: "only throws on truly unexpected errors, e.g. cancellation").
+        if (axios.isCancel(err)) {
+          throw new DOMException('Request aborted', 'AbortError');
+        }
         if (isCapacitor() && bookContentMatch && typeof window !== 'undefined' && !navigator.onLine) {
           const cachedBook = await getCachedContent(bookContentMatch[1]);
           if (cachedBook) {
@@ -161,7 +178,9 @@ export class ApiClient {
         this.inFlightRequests.delete(cacheKey);
       });
 
-    this.inFlightRequests.set(cacheKey, requestPromise);
+    if (!hasSignal) {
+      this.inFlightRequests.set(cacheKey, requestPromise);
+    }
     return requestPromise;
   }
 
