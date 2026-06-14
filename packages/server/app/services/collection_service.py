@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.book import Book
 from app.models.collection import Collection
 from app.schemas.collection import CollectionCreate, CollectionUpdate
 from app.utils.db import db_error_guard
@@ -160,6 +161,40 @@ async def _get_owned_collection(
     return collection
 
 
+async def _verify_owned_books(
+    db: AsyncSession,
+    user_id: UUID,
+    book_ids: list[UUID],
+) -> None:
+    """Raise ValueError if any of book_ids is not owned by user_id.
+
+    Prevents collection pollution with arbitrary UUIDs (e.g., other users'
+    book IDs or non-existent IDs) which would otherwise be stashed silently.
+    """
+    if not book_ids:
+        return
+    unique_ids = list({bid for bid in book_ids if bid is not None})
+    if not unique_ids:
+        return
+    expected = {str(bid) for bid in unique_ids}
+    try:
+        async with db_error_guard('_verify_owned_books', user_id=str(user_id)):
+            result = await db.execute(
+                select(Book.id).where(
+                    Book.user_id == user_id,
+                    Book.id.in_(unique_ids),
+                ),
+            )
+            # Normalize to strings — SQLite TypeDecorator returns strings, PostgreSQL returns UUIDs
+            found_ids = {str(row[0]) for row in result.all()}
+    except DBAPIError as exc:
+        logger.warning('book ownership query failed', exc_info=True)
+        raise ValueError('Failed to verify book ownership') from exc
+    missing = expected - found_ids
+    if missing:
+        raise ValueError('Book not found')
+
+
 async def add_book_to_collection(
     db: AsyncSession,
     user_id: UUID,
@@ -168,6 +203,7 @@ async def add_book_to_collection(
 ) -> Collection:
     """Add a book to a collection."""
     collection = await _get_owned_collection(db, user_id, collection_id)
+    await _verify_owned_books(db, user_id, [book_id])
 
     existing_ids = set(collection.book_ids or [])
     existing_ids.add(book_id)
@@ -187,6 +223,7 @@ async def add_books_batch(
 ) -> Collection:
     """Add multiple books to a collection in a single DB round-trip."""
     collection = await _get_owned_collection(db, user_id, collection_id)
+    await _verify_owned_books(db, user_id, book_ids)
 
     existing_ids = set(collection.book_ids or [])
     existing_ids.update(book_ids)

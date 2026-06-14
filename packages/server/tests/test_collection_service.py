@@ -51,6 +51,21 @@ def _mock_execute_return(db, value):
     return result_mock
 
 
+def _mock_execute_collection_then_books(db, collection, book_ids):
+    """Wire db.execute to handle the ownership-check + collection fetch sequence.
+
+    The first call (collection fetch) returns via scalar_one_or_none.
+    The second call (book ownership check) returns rows via .all().
+    """
+    coll_result = MagicMock()
+    coll_result.scalar_one_or_none.return_value = collection
+
+    book_result = MagicMock()
+    book_result.all.return_value = [(bid,) for bid in book_ids]
+
+    db.execute = AsyncMock(side_effect=[coll_result, book_result])
+
+
 def _mock_execute_scalars_all(db, items):
     """Wire db.execute to return a result whose scalars().all() returns items."""
     result_mock = MagicMock()
@@ -338,7 +353,7 @@ class TestAddBookToCollection:
             collection_id=collection_id, user_id=user_id, book_ids=[],
         )
 
-        _mock_execute_return(db, existing)
+        _mock_execute_collection_then_books(db, existing, [book_id])
         db.flush = AsyncMock()
         db.refresh = AsyncMock()
 
@@ -358,7 +373,7 @@ class TestAddBookToCollection:
             collection_id=collection_id, user_id=user_id, book_ids=[book_id],
         )
 
-        _mock_execute_return(db, existing)
+        _mock_execute_collection_then_books(db, existing, [book_id])
         db.flush = AsyncMock()
         db.refresh = AsyncMock()
 
@@ -387,7 +402,7 @@ class TestAddBookToCollection:
             collection_id=collection_id, user_id=user_id, book_ids=None,
         )
 
-        _mock_execute_return(db, existing)
+        _mock_execute_collection_then_books(db, existing, [book_id])
         db.flush = AsyncMock()
         db.refresh = AsyncMock()
 
@@ -414,7 +429,7 @@ class TestAddBooksBatch:
             collection_id=collection_id, user_id=user_id, book_ids=[],
         )
 
-        _mock_execute_return(db, existing)
+        _mock_execute_collection_then_books(db, existing, book_ids)
         db.flush = AsyncMock()
         db.refresh = AsyncMock()
 
@@ -436,7 +451,7 @@ class TestAddBooksBatch:
             collection_id=collection_id, user_id=user_id, book_ids=[existing_book],
         )
 
-        _mock_execute_return(db, existing)
+        _mock_execute_collection_then_books(db, existing, [existing_book, new_book])
         db.flush = AsyncMock()
         db.refresh = AsyncMock()
 

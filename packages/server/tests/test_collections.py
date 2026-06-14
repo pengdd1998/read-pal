@@ -9,6 +9,30 @@ BOOK_ID_2 = '00000000-0000-0000-0000-000000000002'
 FAKE_UUID = '99999999-9999-9999-9999-999999999999'
 
 
+async def _create_book_for_user(reg: dict, book_id: str, title: str = 'Test Book') -> None:
+    """Insert a Book row owned by the registered user with a fixed ID."""
+    from uuid import UUID
+
+    from app.models.book import Book
+    from sqlalchemy import select
+    from tests.conftest import _TestSession
+
+    async with _TestSession() as db:
+        user_id = UUID(reg['user']['id']) if isinstance(reg['user']['id'], str) else reg['user']['id']
+        book = Book(
+            id=UUID(book_id),
+            user_id=user_id,
+            title=title,
+            author='A',
+            file_type='epub',
+            file_size=1024,
+            total_pages=10,
+        )
+        db.add(book)
+        await db.commit()
+
+
+
 # ---------------------------------------------------------------------------
 # POST /api/v1/collections/ — create
 # ---------------------------------------------------------------------------
@@ -213,6 +237,8 @@ async def test_get_collection_books_returns_404(client):
 async def test_add_books_batch(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    await _create_book_for_user(reg, BOOK_ID, 'Book 1')
+    await _create_book_for_user(reg, BOOK_ID_2, 'Book 2')
 
     create = await client.post(
         '/api/v1/collections/', headers=headers, json={'name': 'Batch'},
@@ -243,6 +269,25 @@ async def test_add_books_batch_returns_404(client):
     assert resp.status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_add_books_batch_rejects_unowned_book(client):
+    """Adding a book the user doesn't own must 404, not silently stash the ID."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    create = await client.post(
+        '/api/v1/collections/', headers=headers, json={'name': 'Auth'},
+    )
+    col_id = create.json()['data']['id']
+
+    resp = await client.post(
+        f'/api/v1/collections/{col_id}/books',
+        headers=headers,
+        json={'bookIds': [FAKE_UUID]},
+    )
+    assert resp.status_code == 404
+
+
 # ---------------------------------------------------------------------------
 # POST /api/v1/collections/{id}/books/{book_id} — add single book
 # ---------------------------------------------------------------------------
@@ -252,6 +297,7 @@ async def test_add_books_batch_returns_404(client):
 async def test_add_single_book(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    await _create_book_for_user(reg, BOOK_ID, 'Single Book')
 
     create = await client.post(
         '/api/v1/collections/', headers=headers, json={'name': 'Single'},
@@ -292,6 +338,7 @@ async def test_remove_single_book(client):
         '/api/v1/collections/', headers=headers, json={'name': 'Remove'},
     )
     col_id = create.json()['data']['id']
+    await _create_book_for_user(reg, BOOK_ID, 'Remove Me')
 
     # Add first
     await client.post(
@@ -328,6 +375,8 @@ async def test_remove_single_book_returns_404(client):
 async def test_remove_books_batch(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
+    await _create_book_for_user(reg, BOOK_ID, 'Book 1')
+    await _create_book_for_user(reg, BOOK_ID_2, 'Book 2')
 
     create = await client.post(
         '/api/v1/collections/', headers=headers, json={'name': 'BatchRm'},
