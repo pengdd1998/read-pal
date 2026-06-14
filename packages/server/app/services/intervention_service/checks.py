@@ -209,7 +209,7 @@ def check_low_engagement(sessions: list) -> dict | None:
     )
     if (
         older_engagement <= LOW_ENGAGEMENT_THRESHOLD
-        or recent_engagement >= older_engagement * _ENGAGEMENT_DROP_RATIO
+        or recent_engagement >= older_engagement * (1 - _ENGAGEMENT_DROP_RATIO)
     ):
         return None
     return {
