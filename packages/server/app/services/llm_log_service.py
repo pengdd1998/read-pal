@@ -19,6 +19,9 @@ from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.llm_log')
 
+# Strong refs for in-flight fire-and-forget log tasks so CPython doesn't GC them.
+_PENDING_LOGS: set[Any] = set()
+
 
 def fire_and_forget_log(
     *,
@@ -66,7 +69,11 @@ def fire_and_forget_log(
                     await session.commit()
 
         loop = asyncio.get_running_loop()
-        loop.create_task(_write())
+        # Keep a strong reference so the task isn't garbage-collected mid-flight
+        # (CPython may GC tasks with no refs before they complete — Python docs warn).
+        task = loop.create_task(_write())
+        _PENDING_LOGS.add(task)
+        task.add_done_callback(_PENDING_LOGS.discard)
     except (DBAPIError, OSError):
         logger.warning('fire_and_forget_log failed (non-critical)', exc_info=True)
 

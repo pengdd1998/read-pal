@@ -7,7 +7,7 @@ from uuid import UUID
 
 from app.utils import utcnow
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.shared_export import SharedExport
@@ -84,9 +84,16 @@ async def get_share(
             return None
 
     async with db_error_guard('share_service.get_share', token=token):
-        share.view_count = (share.view_count or 0) + 1
-        await db.flush()
-        await db.refresh(share)
+        # Atomic increment — concurrent GETs no longer lose updates
+        # (read-modify-write via ORM attributes races under load).
+        result = await db.execute(
+            update(SharedExport)
+            .where(SharedExport.id == share.id)
+            .values(view_count=(SharedExport.view_count or 0) + 1)
+            .returning(SharedExport.view_count)
+        )
+        new_count = result.scalar_one()
+        share.view_count = new_count
 
     logger.info('Share accessed: id=%s views=%d', share.id, share.view_count)
     return share

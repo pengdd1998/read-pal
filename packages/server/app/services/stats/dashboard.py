@@ -67,7 +67,7 @@ async def _gather_raw_data(db: AsyncSession, uid: UUID) -> dict:
 
     def _val(idx: int, default: object = 0) -> object:
         r = results[idx]
-        return _safe_default(r) if isinstance(r, Exception) else r
+        return _safe_default(r, default) if isinstance(r, Exception) else r
 
     status_counts = _val(0, {'total': 0, 'reading': 0, 'completed': 0, 'unread': 0})
     pages_read = int(_val(1))
