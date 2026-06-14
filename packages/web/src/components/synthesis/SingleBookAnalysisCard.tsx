@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
+import { normalizeSynthesisResult } from '@/components/synthesis/mapping';
 import { warn } from '@/lib/logger';
 
 interface BookOption {
@@ -53,11 +54,13 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
   }, { timeout: 120_000 });
   if (!mountedRef.current) return;
   if (res.success && res.data) {
-  // Backend returns success=true even on LLM failure, embedding the error in data.error
-  if (res.data.error) {
-   setError(res.data.error);
+  // Backend returns success=true even on LLM failure, embedding the error in data.error.
+  // Normalize theme confidence -> strength so chips don't render "NaN%".
+  const raw = res.data as Record<string, unknown>;
+  if (raw.error) {
+   setError(String(raw.error));
   } else {
-   setResult(res.data);
+   setResult(normalizeSynthesisResult(raw));
   }
   } else {
   setError(res.error?.message || tRef.current('analysis_failed'));

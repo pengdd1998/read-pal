@@ -9,11 +9,16 @@ from pydantic.alias_generators import to_camel
 
 
 class SynthesisRequest(BaseModel):
-    """Request body for running a synthesis analysis."""
+    """Request body for running a synthesis analysis.
+
+    ``book_id`` is optional here because the route takes it from the URL path;
+    the body only carries the include_* flags. (The frontend's query/mode UI
+    fields are accepted but not yet wired to query-specific synthesis.)
+    """
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
-    book_id: UUID
+    book_id: UUID | None = None
     include_highlights: bool = True
     include_notes: bool = True
     include_conversations: bool = True

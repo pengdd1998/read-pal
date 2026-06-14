@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
+import { mapCrossBookResult } from '@/components/synthesis/mapping';
 import { warn } from '@/lib/logger';
 
 interface BookOption {
@@ -40,11 +41,13 @@ export const BookComparisonCard = React.memo(function BookComparisonCard({ books
   }, { timeout: 120_000 });
   if (!mountedRef.current) return;
   if (res.success && res.data) {
-  // Backend returns success=true even on LLM failure, embedding the error in data.error
-  if (res.data.error) {
-   setCompareError(res.data.error);
+  // Backend returns success=true even on LLM failure, embedding the error in data.error.
+  // Compare returns CrossBookComparison-shaped data — map to AnalysisResult.
+  const raw = res.data as Record<string, unknown>;
+  if (raw.error) {
+   setCompareError(String(raw.error));
   } else {
-   setCompareResult(res.data);
+   setCompareResult(mapCrossBookResult(raw));
   }
   } else {
   setCompareError(res.error?.message || tRef.current('analysis_failed'));

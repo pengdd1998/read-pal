@@ -9,6 +9,7 @@ import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { AnalysisResult } from '@/components/synthesis/types';
+import { mapCrossBookResult } from '@/components/synthesis/mapping';
 
 const BookComparisonCard = dynamic(
   () => import('@/components/synthesis/BookComparisonCard').then((m) => m.BookComparisonCard),
@@ -73,11 +74,14 @@ export default function SynthesisPage() {
   const res = await api.get<AnalysisResult>('/api/synthesis/cross-book', undefined, { timeout: 120_000 });
   if (controller.signal.aborted) return;
   if (res.success && res.data) {
-  // Backend returns success=true even on LLM failure, embedding the error in data.error
-  if (res.data.error) {
-   setError(res.data.error);
+  // Backend returns success=true even on LLM failure, embedding the error in data.error.
+  // Cross-book returns CrossBookComparison-shaped data (common_themes /
+  // unique_perspectives / recommended_connections); map into AnalysisResult.
+  const raw = res.data as Record<string, unknown>;
+  if (raw.error) {
+   setError(String(raw.error));
   } else {
-   setResult(res.data);
+   setResult(mapCrossBookResult(raw));
   }
   } else {
   setError(res.error?.message || tRef.current('analysis_failed'));
