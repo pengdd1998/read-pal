@@ -55,8 +55,11 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
  } catch (error) {
   warn('AnnotationEditForm: save failed', error);
   toast(t('card_failed_save'), 'error');
+ } finally {
+  // finally — not a bare trailing line — so the early `return`
+  // above doesn't leave the Save button permanently disabled.
+  if (mountedRef.current) setSaving(false);
  }
- if (mountedRef.current) setSaving(false);
  };
 
  const addTag = (tag: string) => {
