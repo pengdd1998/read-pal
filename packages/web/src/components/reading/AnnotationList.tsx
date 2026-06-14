@@ -98,9 +98,28 @@ export const AnnotationList = React.memo(function AnnotationList({
  if (annotations.length === 0) {
  return (
   <div className="text-center py-12">
-  <div className="text-4xl opacity-30 mb-3">
-   {activeTab === 'bookmark' ? '\u{1F516}' : activeTab === 'note' ? '\u{1F4DD}' : activeTab === 'highlight' ? '\u{1F58D}' : '\u{1F4CB}'}
-  </div>
+  <svg aria-hidden="true" className="w-10 h-10 mx-auto mb-3 text-surface-4 dark:text-surface-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
+   {activeTab === 'bookmark' ? (
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+   ) : activeTab === 'note' ? (
+    <>
+     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+     <path d="M14 2v6h6" />
+     <path d="M8 13h8M8 17h5" />
+    </>
+   ) : activeTab === 'highlight' ? (
+    <>
+     <path d="m9 11-6 6v3h3l6-6" />
+     <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" />
+    </>
+   ) : (
+    <>
+     <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+     <path d="M9 12h6M9 16h6" />
+    </>
+   )}
+  </svg>
   <p className="text-sm text-amber-700/50 dark:text-amber-400/40">
    {activeTab === 'all'
    ? t('sidebar_empty_all')
