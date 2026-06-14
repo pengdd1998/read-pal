@@ -537,3 +537,83 @@ async def test_get_club_returns_401_without_auth(client):
         '/api/v1/book-clubs/00000000-0000-0000-0000-000000000000',
     )
     assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# XSS sanitization on user-text fields (esp. discussions — user-to-user content)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_create_club_strips_html(client):
+    """POST /book-clubs/ must sanitize name/description/coverImage."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    resp = await client.post(
+        '/api/v1/book-clubs/',
+        headers=headers,
+        json={
+            'name': '<script>alert(1)</script>Book Club',
+            'description': '<b>desc</b>',
+            'coverImage': '<img src=x>cover.png',
+        },
+    )
+    assert resp.status_code == 201
+    # The POST response only returns id/name/inviteCode; re-fetch to verify description.
+    club_id = resp.json()['data']['id']
+    assert '<' not in resp.json()['data']['name']
+    assert 'Book Club' in resp.json()['data']['name']
+
+    detail = await client.get(
+        f'/api/v1/book-clubs/{club_id}', headers=headers,
+    )
+    data = detail.json()['data']
+    assert '<' not in data['name'] and '>' not in data['name']
+    assert data['description'] is None or '<' not in data['description']
+
+
+@pytest.mark.asyncio
+async def test_update_club_strips_html(client):
+    """PATCH /book-clubs/{id} must sanitize like POST does."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    create = await client.post(
+        '/api/v1/book-clubs/', headers=headers, json={'name': 'Old'},
+    )
+    club_id = create.json()['data']['id']
+
+    resp = await client.patch(
+        f'/api/v1/book-clubs/{club_id}',
+        headers=headers,
+        json={
+            'name': '<script>x</script>New',
+            'description': '<i>desc</i>',
+            'coverImage': '<svg/onload=alert(1)>x',
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()['data']
+    assert '<' not in data['name'] and '>' not in data['name']
+    assert 'New' in data['name']
+    assert data['description'] is None or '<' not in data['description']
+
+
+@pytest.mark.asyncio
+async def test_add_discussion_strips_html(client):
+    """POST /book-clubs/{id}/discussions must sanitize content (user-to-user XSS vector)."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    create = await client.post(
+        '/api/v1/book-clubs/', headers=headers, json={'name': 'Disc Club'},
+    )
+    club_id = create.json()['data']['id']
+
+    resp = await client.post(
+        f'/api/v1/book-clubs/{club_id}/discussions',
+        headers=headers,
+        json={'content': '<script>alert("XSS")</script>Hello members!'},
+    )
+    assert resp.status_code == 201
+    data = resp.json()['data']
+    assert '<' not in data['content'] and '>' not in data['content']
+    assert 'Hello members' in data['content']

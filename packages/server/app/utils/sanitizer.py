@@ -161,3 +161,16 @@ def sanitize_annotation_fields(data: dict) -> dict:
     if 'tags' in data and isinstance(data['tags'], list):
         data['tags'] = [strip_html(t) for t in data['tags'] if isinstance(t, str)]
     return data
+
+
+def sanitize_string_fields(data: dict, fields: list[str]) -> dict:
+    """Strip HTML from a generic list of string fields.
+
+    Generic version of ``sanitize_book_fields``/``sanitize_annotation_fields``
+    for routers whose user-text fields don't fit either existing profile
+    (collections, book clubs, shares, etc.).
+    """
+    for field in fields:
+        if field in data and isinstance(data[field], str):
+            data[field] = strip_html(data[field])
+    return data

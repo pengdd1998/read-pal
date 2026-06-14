@@ -402,3 +402,61 @@ async def test_update_returns_401_without_auth(client):
 async def test_delete_returns_401_without_auth(client):
     resp = await client.delete(f'/api/v1/collections/{FAKE_UUID}')
     assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# XSS sanitization on user-text fields
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_create_collection_strips_html(client):
+    """POST /collections/ must sanitize name/description/icon/color."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    resp = await client.post(
+        '/api/v1/collections/',
+        headers=headers,
+        json={
+            'name': '<script>alert(1)</script>My List',
+            'description': '<b>desc</b>',
+            'icon': '<img>x',
+            'color': '<b>red',
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.json()['data']
+    assert '<' not in data['name'] and '>' not in data['name']
+    assert 'My List' in data['name']
+    assert '<' not in data['description']
+    assert '<' not in data['icon']
+    assert '<' not in data['color']
+
+
+@pytest.mark.asyncio
+async def test_update_collection_strips_html(client):
+    """PATCH /collections/{id} must sanitize like POST does."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    create = await client.post(
+        '/api/v1/collections/', headers=headers, json={'name': 'Old'},
+    )
+    col_id = create.json()['data']['id']
+
+    resp = await client.patch(
+        f'/api/v1/collections/{col_id}',
+        headers=headers,
+        json={
+            'name': '<script>x</script>New',
+            'description': '<i>desc</i>',
+            'icon': '<b>icon</b>',
+            'color': '<a>red',
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()['data']
+    assert '<' not in data['name'] and '>' not in data['name']
+    assert 'New' in data['name']
+    assert '<' not in data['description']
+    assert '<' not in data['icon']
+    assert '<' not in data['color']

@@ -20,6 +20,7 @@ from app.schemas.collection import (
 from app.schemas.common import GenericResponse
 from app.services import collection_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
+from app.utils.sanitizer import sanitize_string_fields
 
 logger = logging.getLogger('read-pal.collections')
 
@@ -44,6 +45,10 @@ async def create_collection(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Create a new collection."""
+    # XSS prevention: strip HTML from user-supplied text fields.
+    body_dict = body.model_dump()
+    sanitize_string_fields(body_dict, ['name', 'description', 'icon', 'color'])
+    body = CollectionCreate(**body_dict)
     col = await collection_service.create_collection(db, UUID(user['id']), body)
     return {'success': True, 'data': _dump(col)}
 
@@ -83,6 +88,10 @@ async def update_collection(
 ) -> dict:
     """Update a collection."""
     lang = await _get_user_lang(db, UUID(user['id']))
+    # XSS prevention: strip HTML from user-supplied text fields (mirror create_collection).
+    body_dict = body.model_dump(exclude_unset=True)
+    sanitize_string_fields(body_dict, ['name', 'description', 'icon', 'color'])
+    body = CollectionUpdate(**body_dict)
     try:
         col = await collection_service.update_collection(
             db, UUID(user['id']), collection_id, body,

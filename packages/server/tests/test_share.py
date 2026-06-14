@@ -278,3 +278,46 @@ async def test_export_returns_401_without_auth(client):
 async def test_reading_card_returns_401_without_auth(client):
     resp = await client.get('/api/v1/share/reading-card')
     assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# XSS sanitization — title is served publicly via GET /s/{token}
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_create_share_strips_html(client):
+    """POST /share/ must sanitize title (served via unauthenticated GET /s/{token})."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
+
+    payload = _share_payload(book['id'])
+    payload['title'] = '<script>alert(1)</script>My Export'
+    resp = await client.post('/api/v1/share/', headers=headers, json=payload)
+    assert resp.status_code == 201
+    data = resp.json()['data']
+    assert '<' not in data['title'] and '>' not in data['title']
+    assert 'My Export' in data['title']
+
+    # The public unauthenticated endpoint must also return the sanitized title.
+    public = await client.get(f"/api/v1/share/s/{data['token']}")
+    assert public.status_code == 200
+    assert '<' not in public.json()['data']['title']
+    assert 'My Export' in public.json()['data']['title']
+
+
+@pytest.mark.asyncio
+async def test_export_share_strips_html(client):
+    """POST /share/export must sanitize title like POST /share/."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    book = await _create_book(client, reg['token'])
+
+    payload = _share_payload(book['id'])
+    payload['title'] = '<svg/onload=alert(1)>Export'
+    resp = await client.post('/api/v1/share/export', headers=headers, json=payload)
+    assert resp.status_code == 201
+    data = resp.json()['data']
+    assert '<' not in data['title']
+    assert 'Export' in data['title']

@@ -21,6 +21,7 @@ from app.schemas.book_club import (
 from app.schemas.common import GenericResponse
 from app.services import book_club_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
+from app.utils.sanitizer import sanitize_string_fields, strip_html
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.book_clubs')
@@ -35,6 +36,10 @@ async def create_club(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Create a new book club."""
+    # XSS prevention: strip HTML from user-supplied text fields.
+    body_dict = body.model_dump()
+    sanitize_string_fields(body_dict, ['name', 'description', 'cover_image'])
+    body = BookClubCreate(**body_dict)
     club = await book_club_service.create_club(db, UUID(user['id']), body)
     return {
         'success': True,
@@ -113,6 +118,10 @@ async def update_club(
 ) -> dict:
     """Update club details. Admin or moderator only."""
     lang = await _get_user_lang(db, UUID(user['id']))
+    # XSS prevention: strip HTML from user-supplied text fields (mirror create_club).
+    body_dict = body.model_dump(exclude_unset=True)
+    sanitize_string_fields(body_dict, ['name', 'description', 'cover_image'])
+    body = BookClubUpdate(**body_dict)
     try:
         club = await book_club_service.update_club(
             db, UUID(user['id']), club_id, body,
@@ -305,9 +314,11 @@ async def add_discussion(
 ) -> dict:
     """Add a discussion post to a club."""
     lang = await _get_user_lang(db, UUID(user['id']))
+    # XSS prevention: discussion posts are user-to-user content shown to every member.
+    content = strip_html(body.content)
     try:
         discussion = await book_club_service.add_discussion(
-            db, UUID(user['id']), club_id, body.content,
+            db, UUID(user['id']), club_id, content,
         )
     except ValueError as exc:
         logger.debug('validation error in book_clubs')

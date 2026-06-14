@@ -15,6 +15,7 @@ from app.schemas.common import GenericResponse
 from app.schemas.share import ShareCreate, ShareResponse
 from app.services import share_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
+from app.utils.sanitizer import sanitize_string_fields
 
 logger = logging.getLogger('read-pal.share')
 
@@ -37,6 +38,10 @@ async def create_share(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Create a new shared export."""
+    # XSS prevention: title is served publicly via GET /s/{token} — no auth required.
+    body_dict = body.model_dump()
+    sanitize_string_fields(body_dict, ['title'])
+    body = ShareCreate(**body_dict)
     share = await share_service.create_share(db, UUID(user['id']), body)
     return {'success': True, 'data': _dump(share, include_url=True)}
 
@@ -100,6 +105,10 @@ async def export_share(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Share an export — alias for POST /."""
+    # XSS prevention: mirror create_share.
+    body_dict = body.model_dump()
+    sanitize_string_fields(body_dict, ['title'])
+    body = ShareCreate(**body_dict)
     share = await share_service.create_share(db, UUID(user['id']), body)
     return {'success': True, 'data': _dump(share, include_url=True)}
 
