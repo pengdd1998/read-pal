@@ -5,6 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { warn } from '@/lib/logger';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { openOfflineDB } from '@/lib/offline-queue';
 
 interface CachedBook {
   bookId: string;
@@ -64,7 +65,7 @@ export default function OfflinePage() {
   const loadCachedBooks = useCallback(async (staleRef: { current: boolean }) => {
     setError(null);
     try {
-      const db = await openDB();
+      const db = await openOfflineDB();
       const tx = db.transaction('bookContent', 'readonly');
       const store = tx.objectStore('bookContent');
       const items = await new Promise<IndexedBookRow[]>((resolve, reject) => {
@@ -132,23 +133,6 @@ export default function OfflinePage() {
       window.removeEventListener('offline', handleNetworkChange);
     };
   }, [loadCachedBooks]);
-
-  function openDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open('readpal-offline', 2);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains('mutations')) {
-          db.createObjectStore('mutations', { keyPath: 'timestamp' });
-        }
-        if (!db.objectStoreNames.contains('bookContent')) {
-          db.createObjectStore('bookContent', { keyPath: 'bookId' });
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-0 px-6 py-12">

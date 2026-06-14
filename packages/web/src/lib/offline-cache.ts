@@ -1,21 +1,8 @@
 import { isCapacitor } from '@/lib/capacitor';
 import { cacheBook, isCached } from '@/lib/mobile-cache';
-import { cacheBookForOffline } from '@/lib/offline-queue';
+import { cacheBookForOffline, openOfflineDB } from '@/lib/offline-queue';
 import { api } from '@/lib/api';
 import { warn } from './logger';
-
-function openOfflineDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('readpal-offline', 2);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('mutations')) db.createObjectStore('mutations', { keyPath: 'timestamp' });
-      if (!db.objectStoreNames.contains('bookContent')) db.createObjectStore('bookContent', { keyPath: 'bookId' });
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
 
 export async function checkOfflineCache(bookId: string): Promise<boolean> {
   try {

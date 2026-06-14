@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { isDisplayableAuthor } from '@/lib/book-cover';
 import { useToast } from '@/components/Toast';
-import { getQueueCount, clearQueue, cacheBookForOffline } from '@/lib/offline-queue';
+import { getQueueCount, clearQueue, cacheBookForOffline, openOfflineDB } from '@/lib/offline-queue';
 import { warn } from '@/lib/logger';
 
 interface CachedBook {
@@ -14,31 +14,22 @@ interface CachedBook {
   cachedAt?: number;
 }
 
-const DB_NAME = 'readpal-offline';
-const DB_VERSION = 2;
 const STORE_NAME = 'bookContent';
 
 /** Open IndexedDB and resolve with the cached books (or empty list on failure). */
-function fetchCachedBooks(): Promise<CachedBook[]> {
-  return new Promise((resolve) => {
-    try {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onsuccess = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          resolve([]);
-          return;
-        }
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const getAllReq = tx.objectStore(STORE_NAME).getAll();
-        getAllReq.onsuccess = () => resolve(getAllReq.result || []);
-        getAllReq.onerror = () => resolve([]);
-      };
-      req.onerror = () => resolve([]);
-    } catch {
-      resolve([]);
-    }
-  });
+async function fetchCachedBooks(): Promise<CachedBook[]> {
+  try {
+    const db = await openOfflineDB();
+    if (!db.objectStoreNames.contains(STORE_NAME)) return [];
+    return await new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const getAllReq = tx.objectStore(STORE_NAME).getAll();
+      getAllReq.onsuccess = () => resolve(getAllReq.result || []);
+      getAllReq.onerror = () => resolve([]);
+    });
+  } catch {
+    return [];
+  }
 }
 
 const CachedBookRow = React.memo(function CachedBookRow({ cb, onRemove, removeLabel }: {
@@ -152,25 +143,20 @@ export const OfflineSection = React.memo(function OfflineSection() {
 
   async function handleRemoveCached(bookId: string) {
     try {
-      const success = await new Promise<boolean>((resolve) => {
+      const success = await (async () => {
         try {
-          const req = indexedDB.open(DB_NAME, DB_VERSION);
-          req.onsuccess = () => {
-            const db = req.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-              resolve(false);
-              return;
-            }
+          const db = await openOfflineDB();
+          if (!db.objectStoreNames.contains(STORE_NAME)) return false;
+          return await new Promise<boolean>((resolve) => {
             const tx = db.transaction(STORE_NAME, 'readwrite');
             tx.objectStore(STORE_NAME).delete(bookId);
             tx.oncomplete = () => resolve(true);
             tx.onerror = () => resolve(false);
-          };
-          req.onerror = () => resolve(false);
+          });
         } catch {
-          resolve(false);
+          return false;
         }
-      });
+      })();
       if (!mountedRef.current) return;
       if (success) {
         setCachedBooks((prev) => prev.filter((b) => b.bookId !== bookId));

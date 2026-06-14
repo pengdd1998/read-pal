@@ -6,7 +6,7 @@
  */
 
 import { getAuthToken } from './auth-fetch';
-import { clearQueue, type QueuedMutation } from './offline-queue';
+import { clearQueue, openOfflineDB, type QueuedMutation } from './offline-queue';
 import { warn } from './logger';
 
 export interface SyncResult {
@@ -17,30 +17,10 @@ export interface SyncResult {
 
 const QUEUE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-const DB_NAME = 'readpal-offline';
-const DB_VERSION = 2;
-
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('mutations')) {
-        db.createObjectStore('mutations', { keyPath: 'timestamp' });
-      }
-      if (!db.objectStoreNames.contains('bookContent')) {
-        db.createObjectStore('bookContent', { keyPath: 'bookId' });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
 /** Count queued mutations in IndexedDB. */
 export async function countQueuedMutations(): Promise<number> {
   try {
-    const db = await openDB();
+    const db = await openOfflineDB();
     const tx = db.transaction('mutations', 'readonly');
     const store = tx.objectStore('mutations');
     return new Promise((resolve) => {
@@ -58,7 +38,7 @@ export async function countQueuedMutations(): Promise<number> {
 export async function purgeStaleQueue(): Promise<number> {
   const cutoff = Date.now() - QUEUE_MAX_AGE_MS;
   try {
-    const db = await openDB();
+    const db = await openOfflineDB();
     const tx = db.transaction('mutations', 'readwrite');
     const store = tx.objectStore('mutations');
     const items = await new Promise<QueuedMutation[]>((resolve, reject) => {
@@ -69,7 +49,7 @@ export async function purgeStaleQueue(): Promise<number> {
     let purged = 0;
     for (const item of items) {
       if (item.timestamp < cutoff) {
-        store.delete(item.timestamp);
+        store.delete(item.id);
         purged++;
       }
     }
@@ -100,7 +80,7 @@ export async function initQueue(): Promise<number> {
 export async function syncQueuedMutations(): Promise<SyncResult | null> {
   if (!navigator.onLine) return null;
 
-  const db = await openDB();
+  const db = await openOfflineDB();
   const tx = db.transaction('mutations', 'readonly');
   const store = tx.objectStore('mutations');
   const items = await new Promise<QueuedMutation[]>((resolve, reject) => {
@@ -129,7 +109,7 @@ export async function syncQueuedMutations(): Promise<SyncResult | null> {
       if (response.ok) {
         await new Promise<void>((resolve, reject) => {
           const deleteTx = db.transaction('mutations', 'readwrite');
-          deleteTx.objectStore('mutations').delete(item.timestamp);
+          deleteTx.objectStore('mutations').delete(item.id);
           deleteTx.oncomplete = () => resolve();
           deleteTx.onerror = () => reject(deleteTx.error);
         });

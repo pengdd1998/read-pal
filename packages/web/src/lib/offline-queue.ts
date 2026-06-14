@@ -7,6 +7,7 @@
  */
 
 export interface QueuedMutation {
+  id: string;
   url: string;
   method: string;
   body: string;
@@ -18,16 +19,26 @@ export interface QueuedMutation {
 import { warn } from './logger';
 
 const DB_NAME = 'readpal-offline';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_NAME = 'mutations';
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
+    req.onupgradeneeded = (event) => {
       const db = req.result;
+      // v3: switch primary key from timestamp to a UUID. The timestamp
+      // key was fragile — two mutations in the same millisecond (e.g.,
+      // a saveProgress PATCH racing with an annotation POST) collided
+      // and store.add silently dropped the second one. Lost data with
+      // no visible error. Migration drops any v2 queue; pending items
+      // get re-queued on next mutation.
+      if (event.oldVersion < 3 && db.objectStoreNames.contains(STORE_NAME)) {
+        db.deleteObjectStore(STORE_NAME);
+      }
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'timestamp' });
+        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        store.createIndex('by_timestamp', 'timestamp');
       }
       if (!db.objectStoreNames.contains('bookContent')) {
         db.createObjectStore('bookContent', { keyPath: 'bookId' });
@@ -36,6 +47,18 @@ function openDB(): Promise<IDBDatabase> {
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+}
+
+/**
+ * Shared DB opener for the `readpal-offline` database.
+ *
+ * Other modules (mobile-cache, offline-sync, settings page) need access
+ * to the same database and must use the SAME version — IndexedDB rejects
+ * opens below the current version. Re-exporting this avoids the version
+ * drift that previously left the schema fragmented across files.
+ */
+export function openOfflineDB(): Promise<IDBDatabase> {
+  return openDB();
 }
 
 /**
@@ -55,6 +78,9 @@ export async function queueMutation(
     const store = tx.objectStore(STORE_NAME);
 
     const item: QueuedMutation = {
+      id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       url,
       method,
       body: typeof body === 'string' ? body : JSON.stringify(body),

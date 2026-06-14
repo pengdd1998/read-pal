@@ -11,9 +11,8 @@
 import { isCapacitor } from './capacitor';
 import { api } from './api';
 import { warn } from './logger';
+import { openOfflineDB } from './offline-queue';
 
-const DB_NAME = 'readpal-offline';
-const DB_VERSION = 2;
 const CONTENT_STORE = 'bookContent';
 
 interface CachedBook {
@@ -31,28 +30,11 @@ interface CachedChapter {
   rawContent?: string;
 }
 
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('mutations')) {
-        db.createObjectStore('mutations', { keyPath: 'timestamp' });
-      }
-      if (!db.objectStoreNames.contains(CONTENT_STORE)) {
-        db.createObjectStore(CONTENT_STORE, { keyPath: 'bookId' });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
 function withStore<T>(
   mode: IDBTransactionMode,
   fn: (store: IDBObjectStore) => IDBRequest<T>,
 ): Promise<T> {
-  return openDB().then(
+  return openOfflineDB().then(
     (db) =>
       new Promise<T>((resolve, reject) => {
         const tx = db.transaction(CONTENT_STORE, mode);
@@ -180,7 +162,7 @@ export async function getCachedBookIds(): Promise<string[]> {
   if (!isCapacitor()) return [];
 
   try {
-    const db = await openDB();
+    const db = await openOfflineDB();
     return new Promise((resolve) => {
       const tx = db.transaction(CONTENT_STORE, 'readonly');
       const store = tx.objectStore(CONTENT_STORE);
