@@ -20,7 +20,10 @@ export type { CacheEntry };
 
 /** Return per-endpoint cache TTL in ms (0 = not cacheable) */
 export function getCacheTTL(url: string): number {
-  if (url.match(/\/api\/books\/[^?]/) && !url.includes('?')) return 300_000;
+  // Book detail: match /api/books/{uuid} exactly (anchored, UUID-shaped).
+  // Must not match nested paths like /api/books/{id}/content (TTL=0),
+  // or non-book routes under /api/books/ like /api/books/stats (TTL=30s).
+  if (url.match(/\/api\/books\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(\?.*)?$/)) return 300_000;
   if (url.includes('/content')) return 0;
   if (url.includes('/api/settings')) return 60_000;
   if (url.includes('/api/stats/dashboard')) return 30_000;
