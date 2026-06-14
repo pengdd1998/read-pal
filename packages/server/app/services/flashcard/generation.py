@@ -1,7 +1,7 @@
 """LLM-based flashcard generation from book annotations."""
 
 import hashlib
-import json
+from typing import Any
 from uuid import UUID
 
 import structlog
@@ -13,7 +13,8 @@ from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.flashcard import Flashcard
 from app.prompts import FLASHCARD_GENERATION_HUMAN, FLASHCARD_GENERATION_SYSTEM
-from app.services.llm import safe_llm_call
+from app.schemas.llm_outputs import FlashcardList
+from app.services.llm import safe_llm_invoke
 from app.utils import utcnow
 from app.utils.db import db_error_guard
 from app.utils.i18n import t
@@ -71,58 +72,59 @@ async def _call_flashcard_llm(
     count: int,
     user_id: UUID,
     book_id: UUID,
-) -> str:
-    """Call the LLM to generate flashcard JSON."""
+) -> dict[str, Any]:
+    """Call the LLM to generate flashcards, validated against FlashcardList.
+
+    Uses safe_llm_invoke (fence-stripping, JSON parsing, schema validation,
+    caching, circuit breaker) instead of raw safe_llm_call + bare json.loads,
+    which silently returned [] whenever GLM wrapped output in prose/fences.
+    """
     system_prompt = FLASHCARD_GENERATION_SYSTEM.template.format(count=count)
     human_prompt = FLASHCARD_GENERATION_HUMAN.template.format(
         title=book.title,
         author=book.author or 'Unknown',
         annotation_text=annotation_text,
     )
-    return await safe_llm_call(
+    return await safe_llm_invoke(
         [
             SystemMessage(content=system_prompt),
             HumanMessage(content=human_prompt),
         ],
-        fallback='[]',
+        fallback=FlashcardList().model_dump(),
         log_label='Flashcard generation',
+        schema_class=FlashcardList,
         user_id=str(user_id),
         book_id=str(book_id),
     )
 
 
-def _parse_and_create_cards(
+def _create_cards(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
-    llm_result: str,
+    result: dict[str, Any],
     count: int,
 ) -> list[Flashcard]:
-    """Parse LLM JSON output and create Flashcard ORM objects."""
+    """Create Flashcard ORM objects from the validated structured output."""
     cards: list[Flashcard] = []
-    try:
-        parsed = json.loads(llm_result or '[]')
-        if not isinstance(parsed, list):
-            return cards
-        for item in parsed[:count]:
-            q = item.get('question', '').strip()
-            a = item.get('answer', '').strip()
-            if not q or not a:
-                continue
-            card = Flashcard(
-                user_id=user_id,
-                book_id=book_id,
-                question=q[:2000],
-                answer=a[:5000],
-                ease_factor=DEFAULT_EASE_FACTOR,
-                interval=0,
-                repetition_count=0,
-                next_review_at=utcnow(),
-            )
-            db.add(card)
-            cards.append(card)
-    except (json.JSONDecodeError, AttributeError) as exc:
-        logger.warning('flashcard.parse_failed', error=str(exc)[:200])
+    items = result.get('cards', []) if isinstance(result, dict) else []
+    for item in items[:count]:
+        q = str(item.get('question', '')).strip()
+        a = str(item.get('answer', '')).strip()
+        if not q or not a:
+            continue
+        card = Flashcard(
+            user_id=user_id,
+            book_id=book_id,
+            question=q[:2000],
+            answer=a[:5000],
+            ease_factor=DEFAULT_EASE_FACTOR,
+            interval=0,
+            repetition_count=0,
+            next_review_at=utcnow(),
+        )
+        db.add(card)
+        cards.append(card)
     return cards
 
 
@@ -177,7 +179,7 @@ async def generate_flashcards(
         book, annotation_text, count, user_id, book_id,
     )
 
-    cards = _parse_and_create_cards(db, user_id, book_id, llm_result, count)
+    cards = _create_cards(db, user_id, book_id, llm_result, count)
     if cards:
         async with db_error_guard(
             'generation.generate_flashcards.flush',

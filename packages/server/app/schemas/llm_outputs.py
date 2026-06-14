@@ -11,6 +11,29 @@ from pydantic import BaseModel, Field
 
 
 # ---------------------------------------------------------------------------
+# Flashcards
+# ---------------------------------------------------------------------------
+
+class FlashcardItem(BaseModel):
+    """A single generated flashcard.
+
+    Fields are intentionally lenient (no min/max length): the LLM may emit
+    empty or over-long values, and ``_create_cards`` filters empties and
+    truncates to the DB column limits. A strict schema here would reject the
+    whole batch on one bad card.
+    """
+
+    question: str = ''
+    answer: str = ''
+
+
+class FlashcardList(BaseModel):
+    """Wrapper for the LLM's flashcard output."""
+
+    cards: list[FlashcardItem] = Field(default_factory=list, max_length=20)
+
+
+# ---------------------------------------------------------------------------
 # Study mode
 # ---------------------------------------------------------------------------
 

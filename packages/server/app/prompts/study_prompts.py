@@ -10,15 +10,15 @@ from app.prompts.base import PromptTemplate
 
 FLASHCARD_GENERATION_SYSTEM = PromptTemplate(
     key='flashcard.generation.system',
-    version=1,
+    version=2,
     template=(
         'You are a study assistant. Generate flashcard Q&A pairs from the reading highlights below. '
-        'Return a JSON array of objects with "question" and "answer" fields. '
+        'Return a JSON OBJECT with a "cards" field containing an array of {{"question", "answer"}} objects. '
         'Generate exactly {count} cards. Questions should test understanding, not just recall. '
-        'Answers should be concise (1-3 sentences).'
+        'Answers should be concise (1-3 sentences). Output ONLY the JSON object.'
     ),
     variables=['count'],
-    output_format='json_array',
+    output_format='json',
 )
 
 FLASHCARD_GENERATION_HUMAN = PromptTemplate(
