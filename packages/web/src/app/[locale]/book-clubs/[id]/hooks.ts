@@ -106,11 +106,15 @@ export function useBookClubDiscussion(clubId: string) {
     setLoading(true);
 
     api
-      .get<{ data: DiscussionMessage[] }>(`/api/book-clubs/${clubId}/discussions?limit=50`)
+      .get<{ items: DiscussionMessage[] } | DiscussionMessage[]>(`/api/book-clubs/${clubId}/discussions?limit=50`)
       .then((res) => {
         if (cancelled) return;
         if (res.success && res.data) {
-          setMessages(Array.isArray(res.data) ? res.data : []);
+          // Backend returns { items: [...], total, page, perPage }. Older
+          // paths may return a bare array — handle both so a shape change
+          // on either side doesn't silently wipe the message list.
+          const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
+          setMessages(list);
         } else {
           setError(tRef.current('discussions_failed_load'));
         }
