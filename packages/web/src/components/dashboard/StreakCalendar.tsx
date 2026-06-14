@@ -115,7 +115,11 @@ function StreakCalendarInner() {
  }, [data, monthLabels]);
 
  const todayStr = todayISO();
- const totalDays = 180;
+ // Use the actual number of days rendered so the "X active / Y total"
+ // caption matches what the user sees in the heatmap. Hardcoding 180 was
+ // misleading for new accounts whose history only spans, say, 30 days —
+ // the caption would say "5 of 180" while only ~30 cells were visible.
+ const totalDays = weeks.reduce((sum, week) => sum + week.filter(Boolean).length, 0) || 180;
 
  return (
  <div className="rounded-2xl border border-surface-2 bg-surface-0 p-5 sm:p-6 shadow-sm">
