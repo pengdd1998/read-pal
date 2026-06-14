@@ -107,9 +107,14 @@ async def _close_stale_sessions(
             last_activity + timedelta(seconds=STALE_IDLE_GRACE_SECONDS),
         )
         old.ended_at = effective_end
-        if not old.duration and old.started_at:
-            raw_dur = int((effective_end - old.started_at).total_seconds())
-            old.duration = max(0, min(raw_dur, _MAX_SESSION_SECONDS))
+        # Always clamp the duration (whether pre-existing from a client
+        # report or freshly computed) so a stale session can't retain an
+        # inflated value. The helper applies the same effective_end bound
+        # used above plus the absolute MAX_SESSION_SECONDS cap.
+        if old.started_at:
+            raw_dur = max(0, int((effective_end - old.started_at).total_seconds()))
+            realistic_ceiling = min(raw_dur, _MAX_SESSION_SECONDS)
+            old.duration = min(int(old.duration or 0), realistic_ceiling) if old.duration else realistic_ceiling
 
 
 def _mark_book_reading(book: 'Book', now) -> None:

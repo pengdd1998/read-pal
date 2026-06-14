@@ -242,6 +242,83 @@ class TestCreateSession:
 
 
 # ---------------------------------------------------------------------------
+# _close_stale_sessions
+# ---------------------------------------------------------------------------
+
+
+class TestCloseStaleSessions:
+    """Verify duration clamping when stale sessions are closed."""
+
+    @pytest.mark.asyncio
+    async def test_idle_session_with_no_duration_gets_grace_only(self):
+        """No prior duration, no heartbeats → duration = grace window."""
+        from app.services.reading_session_service import _close_stale_sessions
+
+        db = _make_db_session()
+        user_id = str(uuid4())
+        book_id = uuid4()
+        started = datetime(2026, 1, 1, 10, 0, 0)
+        stale_session = _make_session(
+            user_id=user_id, book_id=book_id,
+            started_at=started, is_active=True,
+        )
+        stale_session.updated_at = None  # No heartbeats ever sent
+
+        stale_result = MagicMock()
+        stale_scalars = MagicMock()
+        stale_scalars.all.return_value = [stale_session]
+        stale_result.scalars.return_value = stale_scalars
+        # Second call: book query
+        book = _make_book(book_id=book_id, user_id=user_id)
+        book_result = MagicMock()
+        book_result.scalar_one_or_none.return_value = book
+        db.execute = AsyncMock(side_effect=[stale_result, book_result])
+        db.flush = AsyncMock()
+
+        now = datetime(2026, 1, 1, 15, 0, 0)  # 5 hours later
+        await _close_stale_sessions(db, user_id, book_id, now)
+
+        # updated_at was None → last_activity = started_at = 10:00
+        # effective_end = min(15:00, 10:00 + 5min) = 10:05
+        # duration = 5min = 300s
+        assert stale_session.is_active is False
+        assert stale_session.duration == 300
+        assert stale_session.ended_at == datetime(2026, 1, 1, 10, 5, 0)
+
+    @pytest.mark.asyncio
+    async def test_idle_session_with_inflated_duration_gets_clamped(self):
+        """Pre-existing duration from a stale client report must also be clamped."""
+        from app.services.reading_session_service import _close_stale_sessions
+
+        db = _make_db_session()
+        user_id = str(uuid4())
+        book_id = uuid4()
+        started = datetime(2026, 1, 1, 10, 0, 0)
+        stale_session = _make_session(
+            user_id=user_id, book_id=book_id,
+            started_at=started, is_active=True,
+        )
+        # Client previously reported 4h of "reading" via heartbeats,
+        # but the tab has been idle since 10:30.
+        stale_session.updated_at = datetime(2026, 1, 1, 10, 30, 0)
+        stale_session.duration = 14400  # 4h — clearly inflated
+
+        stale_result = MagicMock()
+        stale_scalars = MagicMock()
+        stale_scalars.all.return_value = [stale_session]
+        stale_result.scalars.return_value = stale_scalars
+        db.execute = AsyncMock(side_effect=[stale_result])
+        db.flush = AsyncMock()
+
+        now = datetime(2026, 1, 1, 15, 0, 0)
+        await _close_stale_sessions(db, user_id, book_id, now)
+
+        # last_activity = 10:30, effective_end = 10:35
+        # raw_dur = 35min = 2100s; reported 14400s → min(14400, 2100) = 2100
+        assert stale_session.duration == 2100
+
+
+# ---------------------------------------------------------------------------
 # end_session
 # ---------------------------------------------------------------------------
 
