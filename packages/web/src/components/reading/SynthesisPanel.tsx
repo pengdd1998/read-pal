@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useReducer, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
@@ -15,6 +15,44 @@ import {
 } from '@/components/synthesis';
 import type { SynthesisAction, AnalysisResult, SynthesisPanelProps } from '@/components/synthesis';
 import { warn } from '@/lib/logger';
+
+// ---------------------------------------------------------------------------
+// State machine for analysis: idle → loading → success/error, reset on tab switch.
+// Consolidated so tab switches can't forget to clear a state, and so the
+// "loading + result" combination (which previously let a stale request from
+// tab A land in tab B) is structurally impossible.
+// ---------------------------------------------------------------------------
+
+type AnalysisStatus = 'idle' | 'loading' | 'success' | 'error';
+
+type AnalysisState = {
+ status: AnalysisStatus;
+ result: AnalysisResult | null;
+ error: string | null;
+};
+
+type AnalysisAction =
+ | { type: 'reset' }
+ | { type: 'start' }
+ | { type: 'success'; result: AnalysisResult }
+ | { type: 'fail'; error: string };
+
+const initialAnalysis: AnalysisState = { status: 'idle', result: null, error: null };
+
+function analysisReducer(state: AnalysisState, action: AnalysisAction): AnalysisState {
+ switch (action.type) {
+  case 'reset':
+   return initialAnalysis;
+  case 'start':
+   return { status: 'loading', result: null, error: null };
+  case 'success':
+   return { status: 'success', result: action.result, error: null };
+  case 'fail':
+   return { status: 'error', result: null, error: action.error };
+  default:
+   return state;
+ }
+}
 
 interface SynthesisTabProps {
  tab: { key: SynthesisAction; icon: React.ReactNode; label: string };
@@ -52,9 +90,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
  const ts = useTranslations('synthesis');
  const tRef = useRef(t); tRef.current = t;
  const [activeTab, setActiveTab] = useState<SynthesisAction>('cross_reference');
- const [loading, setLoading] = useState(false);
- const [result, setResult] = useState<AnalysisResult | null>(null);
- const [error, setError] = useState<string | null>(null);
+ const [analysis, dispatch] = useReducer(analysisReducer, initialAnalysis);
  const abortRef = useRef<AbortController | null>(null);
 
  // Form state for each action
@@ -83,62 +119,69 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
  return () => window.removeEventListener('keydown', handleKeyDown);
  }, [isOpen, onClose]);
 
- const buildInput = useCallback((): Record<string, unknown> | null => {
+ const buildInput = useCallback((): { input: Record<string, unknown> } | { error: string } => {
  switch (activeTab) {
   case 'cross_reference':
-  if (!concept.trim()) { setError(tRef.current('synthesis_enter_concept')); return null; }
-  return { concept: concept.trim(), sourceBookId: bookId, analysisType };
+  if (!concept.trim()) return { error: tRef.current('synthesis_enter_concept') };
+  return { input: { concept: concept.trim(), sourceBookId: bookId, analysisType } };
   case 'concept_map':
-  if (!topic.trim()) { setError(tRef.current('synthesis_enter_topic_map')); return null; }
-  return { topic: topic.trim(), maxNodes: 20 };
+  if (!topic.trim()) return { error: tRef.current('synthesis_enter_topic_map') };
+  return { input: { topic: topic.trim(), maxNodes: 20 } };
   case 'find_contradictions':
-  return { ...(topic.trim() ? { topic: topic.trim() } : {}), minSeverity, bookIds: [bookId] };
+  return { input: { ...(topic.trim() ? { topic: topic.trim() } : {}), minSeverity, bookIds: [bookId] } };
   case 'summary_report':
-  return { bookIds: [bookId], ...(focus.trim() ? { focus: focus.trim() } : {}), format: reportFormat };
+  return { input: { bookIds: [bookId], ...(focus.trim() ? { focus: focus.trim() } : {}), format: reportFormat } };
   case 'synthesize':
-  if (!query.trim()) { setError(tRef.current('synthesis_enter_query')); return null; }
-  return { query: query.trim(), bookIds: [bookId], depth };
-  default: return null;
+  if (!query.trim()) return { error: tRef.current('synthesis_enter_query') };
+  return { input: { query: query.trim(), bookIds: [bookId], depth } };
+  default:
+  return { error: tRef.current('synthesis_analysis_failed') };
  }
  }, [activeTab, bookId, concept, topic, query, focus, depth, analysisType, minSeverity, reportFormat]);
 
  const handleAnalyze = useCallback(async () => {
- setLoading(true);
- setError(null);
- setResult(null);
-
  abortRef.current?.abort();
  const controller = new AbortController();
  abortRef.current = controller;
 
- try {
-  const input = buildInput();
-  if (!input) {
-  setLoading(false);
+ const built = buildInput();
+ if ('error' in built) {
+  // Validation failed — surface error without entering loading state.
+  dispatch({ type: 'fail', error: built.error });
   return;
-  }
+ }
 
+ dispatch({ type: 'start' });
+
+ try {
   const response = await api.post<AnalysisResult>(`/api/synthesis/${bookId}`, {
   includeHighlights: true,
   includeNotes: true,
   includeConversations: true,
-  ...input,
+  ...built.input,
   }, { signal: controller.signal, timeout: 120_000 });
 
+  if (controller.signal.aborted) return;
   if (response.success && response.data) {
-  setResult(response.data as AnalysisResult);
+  dispatch({ type: 'success', result: response.data as AnalysisResult });
   } else {
-  setError(tRef.current('synthesis_analysis_failed'));
+  dispatch({ type: 'fail', error: tRef.current('synthesis_analysis_failed') });
   }
  } catch (err) {
   if ((err as Error).name === 'AbortError' || (err as Error).name === 'CanceledError') return;
   warn('SynthesisPanel: analysis failed', err);
-  setError(tRef.current('synthesis_network_error'));
+  dispatch({ type: 'fail', error: tRef.current('synthesis_network_error') });
   toast(tRef.current('synthesis_analysis_failed'), 'error');
- } finally {
-  if (!controller.signal.aborted) setLoading(false);
  }
  }, [activeTab, bookId, buildInput, toast]);
+
+ const selectTab = useCallback((next: SynthesisAction) => {
+  if (next === activeTab) return;
+  // Abort any in-flight analysis so its result can't land in the new tab.
+  abortRef.current?.abort();
+  setActiveTab(next);
+  dispatch({ type: 'reset' });
+ }, [activeTab]);
 
  const renderForm = () => {
  switch (activeTab) {
@@ -197,9 +240,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
 	   else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
 	   if (next >= 0) {
 	    e.preventDefault();
-	    setActiveTab(TABS[next].key);
-	    setResult(null);
-	    setError(null);
+	    selectTab(TABS[next].key);
 	    (e.currentTarget.children[next] as HTMLElement)?.focus();
 	   }
 	  }}>
@@ -208,7 +249,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
 	    key={tab.key}
 	    tab={tab}
 	    isActive={activeTab === tab.key}
-	    onClick={() => { setActiveTab(tab.key); setResult(null); setError(null); }}
+	    onClick={() => selectTab(tab.key)}
 	    label={t(tab.label)}
 	   />
 	   ))}
@@ -220,17 +261,17 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
    {t(TABS.find((t) => t.key === activeTab)?.description ?? '')}
    </p>
    {renderForm()}
-   {error && (
-   <div role="alert" className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{error}</span><button type="button" onClick={handleAnalyze} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-400 rounded min-h-[44px] inline-flex items-center">{ts("synthesis_retry")}</button></div>
+   {analysis.status === 'error' && analysis.error && (
+   <div role="alert" className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"><span>{analysis.error}</span><button type="button" onClick={handleAnalyze} className="ml-2 font-medium underline hover:no-underline whitespace-nowrap focus-visible:ring-2 focus-visible:ring-amber-400 rounded min-h-[44px] inline-flex items-center">{ts("synthesis_retry")}</button></div>
    )}
-   {loading && (
+   {analysis.status === 'loading' && (
    <div aria-live="polite" className="flex items-center gap-3 py-8 justify-center">
     <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-600 border-t-transparent" aria-hidden="true" />
     <span className="text-sm text-gray-500 dark:text-gray-400">{t('synthesis_analyzing')}</span>
    </div>
    )}
-   {!loading && result && <div className="animate-fade-in"><AnalysisResultView result={result} /></div>}
-   {!loading && !result && !error && (
+   {analysis.status === 'success' && analysis.result && <div className="animate-fade-in"><AnalysisResultView result={analysis.result} /></div>}
+   {analysis.status === 'idle' && (
    <div className="text-center py-8">
     <svg aria-hidden="true" className="w-10 h-10 mx-auto text-amber-400 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
@@ -242,8 +283,8 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
 
   {/* Run button */}
   <div className="px-4 py-3 border-t border-surface-3">
-   <button type="button" onClick={handleAnalyze} disabled={loading} className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
-   {loading ? (
+   <button type="button" onClick={handleAnalyze} disabled={analysis.status === 'loading'} className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2">
+   {analysis.status === 'loading' ? (
     <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" aria-hidden="true" />{t('synthesis_analyzing_btn')}</>
    ) : (
     <>
