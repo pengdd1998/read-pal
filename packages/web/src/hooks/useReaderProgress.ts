@@ -68,22 +68,24 @@ export function useReaderProgress({
     };
   }, [bookId, loading]);
 
-  // Reading speed (fetch once)
+  // Reading speed (fetch once per book). The guard lives outside the
+  // effect so it isn't reset when `loading` toggles — without that, a
+  // chapter-change loading blip would clear wpmFetchedRef and re-fetch.
   const [readingWpm, setReadingWpm] = useState<number | null>(null);
   const wpmFetchedRef = useRef(false);
   useEffect(() => {
     if (loading || wpmFetchedRef.current) return;
+    wpmFetchedRef.current = true;
     let cancelled = false;
     api.get<{ currentWpm: number; trend: string }>('/api/stats/reading-speed')
       .then((res) => {
         if (cancelled) return;
         if (res.success && res.data && res.data.currentWpm > 0) {
-          wpmFetchedRef.current = true;
           setReadingWpm(res.data.currentWpm);
         }
       })
       .catch((err) => { if (!cancelled) warn('Reader: reading speed fetch failed', err); });
-    return () => { cancelled = true; wpmFetchedRef.current = false; };
+    return () => { cancelled = true; };
   }, [loading]);
 
   return { readingWpm };
