@@ -13,7 +13,7 @@ interface UseLibraryBooksReturn {
   error: string;
   seeding: boolean;
   mountedRef: React.MutableRefObject<boolean>;
-  handleRetry: () => () => void;
+  handleRetry: () => void;
   handleUploadComplete: (newBook: Book) => void;
   handleDeleteBook: (id: string) => Promise<void>;
   handleSeedSample: () => Promise<void>;
@@ -58,7 +58,10 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
   useEffect(() => { return fetchBooks(); }, [fetchBooks]);
 
   const handleRetry = useCallback(() => {
-    return fetchBooks();
+    // fetchBooks returns an effect cleanup, but a retry button's onClick
+    // doesn't need one — it just kicks off the fetch. Drop the return
+    // so the typed signature matches `() => void`.
+    fetchBooks();
   }, [fetchBooks]);
 
   const handleUploadComplete = (newBook: Book) => {
