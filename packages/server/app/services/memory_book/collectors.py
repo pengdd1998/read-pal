@@ -204,6 +204,6 @@ def _build_stats(
         'total_notes': len(notes),
         'total_conversations': len(conversations),
         'total_sessions': len(sessions),
-        'total_reading_minutes': sum(s.duration for s in sessions) // 60,
-        'total_pages_read': sum(s.pages_read for s in sessions),
+        'total_reading_minutes': sum((s.duration or 0) for s in sessions) // 60,
+        'total_pages_read': sum((s.pages_read or 0) for s in sessions),
     }
