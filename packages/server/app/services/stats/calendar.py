@@ -1,6 +1,5 @@
 """Reading calendar and weekly summary stats."""
 
-import asyncio
 from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
@@ -239,25 +238,23 @@ async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
         week_end + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc,
     )
 
-    (
-        (daily_map, (hl_count, note_count), active_books, (current_streak, longest_streak)),
-    ) = await asyncio.gather(
-        asyncio.gather(
-            _aggregate_sessions(db, uid, dt_start, dt_end),
-            _count_annotations(db, uid, dt_start, dt_end),
-            db.scalar(
-                select(func.count(func.distinct(ReadingSession.book_id))).where(and_(
-                    ReadingSession.user_id == uid,
-                    ReadingSession.started_at >= dt_start,
-                    ReadingSession.started_at < dt_end,
-                ))
-            ),
-            _get_streak_data(db, uid, today - STATS_LOOKBACK_DELTA),
-        ),
+    # Run queries SEQUENTIALLY — AsyncSession is a single-connection proxy
+    # and is not safe for concurrent use. The prior asyncio.gather over
+    # four session calls could interleave BEGIN/COMMIT/FETCH on the same
+    # connection and produce "this session is already executing" errors
+    # or, worse, corrupt result rows. See SQLAlchemy AsyncSession docs.
+    daily_map = await _aggregate_sessions(db, uid, dt_start, dt_end)
+    hl_count, note_count = await _count_annotations(db, uid, dt_start, dt_end)
+    active_books = await db.scalar(
+        select(func.count(func.distinct(ReadingSession.book_id))).where(and_(
+            ReadingSession.user_id == uid,
+            ReadingSession.started_at >= dt_start,
+            ReadingSession.started_at < dt_end,
+        ))
     )
-
-    # Wrap the raw db.scalar result — errors from the parallel gather
-    # are already caught inside each helper.
+    current_streak, longest_streak = await _get_streak_data(
+        db, uid, today - STATS_LOOKBACK_DELTA,
+    )
 
     daily_breakdown, total_minutes, total_pages, streak_days = _build_daily_breakdown(
         week_start, daily_map,
