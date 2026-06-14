@@ -58,6 +58,15 @@ export function useReaderMilestones({
     if (highestMilestone !== null) {
       setMilestone(`${highestMilestone}%`);
     }
-    return () => { timers.forEach(clearTimeout); };
+    // Clear any in-flight timeout AND the visible toast on re-run so a
+    // user who navigates backward before the 3s timer fires doesn't
+    // see the milestone toast stuck on screen. The next render's body
+    // re-sets the toast if a new milestone is hit; otherwise it stays
+    // cleared. Without this, navigating back from chapter 25% → 0%
+    // would clear the timer but never call setMilestone(null).
+    return () => {
+      timers.forEach(clearTimeout);
+      setMilestone(null);
+    };
   }, [currentChapter, chaptersLength, loading, setMilestone]);
 }
