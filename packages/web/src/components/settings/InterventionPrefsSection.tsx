@@ -80,7 +80,10 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  const [saved, setSaved] = useState(false);
  const [error, setError] = useState<string | null>(null);
  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const inFlightSaveRef = useRef<AbortController | null>(null);
  const mountedRef = useRef(true);
+ const prefsRef = useRef<InterventionPrefs>(DEFAULT_PREFS);
+ const syncPrefsRef = (next: InterventionPrefs) => { prefsRef.current = next; setPrefs(next); };
 
  const loadPrefs = useCallback(async (signal?: AbortSignal) => {
  try {
@@ -89,7 +92,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
   );
   if (signal?.aborted || !mountedRef.current) return;
   if (res.success && res.data) {
-  setPrefs({ ...DEFAULT_PREFS, ...res.data });
+  syncPrefsRef({ ...DEFAULT_PREFS, ...res.data });
   } else {
   warn('InterventionPrefsSection: load returned success=false', res.error);
   setError(tRef.current('failed_load_retry'));
@@ -107,37 +110,48 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  mountedRef.current = true;
  const ac = new AbortController();
  loadPrefs(ac.signal);
- return () => { mountedRef.current = false; ac.abort(); if (savedTimerRef.current) clearTimeout(savedTimerRef.current); };
+ return () => { mountedRef.current = false; ac.abort(); if (savedTimerRef.current) clearTimeout(savedTimerRef.current); if (inFlightSaveRef.current) inFlightSaveRef.current.abort(); };
  }, [loadPrefs]);
 
  async function savePrefs(updated: InterventionPrefs) {
+ // Cancel any in-flight save: last writer wins, and we don't want a stale
+ // PUT to land after this one and revert the user's latest toggle.
+ if (inFlightSaveRef.current) inFlightSaveRef.current.abort();
+ const ac = new AbortController();
+ inFlightSaveRef.current = ac;
  setSaving(true);
  setSaved(false);
  setError(null);
  try {
   const res = await api.put<InterventionPrefs>(
   '/api/v1/interventions/preferences',
-  updated as unknown as Record<string, unknown>
+  updated as unknown as Record<string, unknown>,
+  { signal: ac.signal }
   );
-  if (!mountedRef.current) return;
+  if (ac.signal.aborted || !mountedRef.current) return;
   if (res.success && res.data) {
-  setPrefs(res.data);
+  syncPrefsRef(res.data);
   setSaved(true);
   { if (savedTimerRef.current) clearTimeout(savedTimerRef.current); savedTimerRef.current = setTimeout(() => { if (mountedRef.current) setSaved(false); }, 2000); }
   } else {
-  setError(t('failed_save'));
+  setError(tRef.current('failed_save'));
   }
  } catch (err) {
+  if (ac.signal.aborted || !mountedRef.current) return;
   warn('InterventionPrefsSection: save failed', err);
-  if (!mountedRef.current) return;
-  setError(t('failed_save_retry'));
+  setError(tRef.current('failed_save_retry'));
+ } finally {
+  if (inFlightSaveRef.current === ac) inFlightSaveRef.current = null;
+  if (!ac.signal.aborted && mountedRef.current) setSaving(false);
  }
- if (mountedRef.current) setSaving(false);
  }
 
  function handleToggle(key: keyof InterventionPrefs) {
- const updated = { ...prefs, [key]: !prefs[key] };
- setPrefs(updated);
+ // Read latest prefs from ref so rapid toggles don't compute `updated`
+ // from a stale closure value of `prefs`. Each toggle now flips the
+ // most recent state, even if a previous save hasn't completed yet.
+ const updated = { ...prefsRef.current, [key]: !prefsRef.current[key] };
+ syncPrefsRef(updated);
  savePrefs(updated);
  }
 
@@ -146,10 +160,10 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  value: string
  ) {
  const updated = {
-  ...prefs,
+  ...prefsRef.current,
   [field]: value === '' ? null : parseInt(value, 10),
  };
- setPrefs(updated);
+ syncPrefsRef(updated);
  savePrefs(updated);
  }
 

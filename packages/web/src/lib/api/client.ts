@@ -204,8 +204,8 @@ export class ApiClient {
     return this._mutation<T>('post', url, data, options);
   }
 
-  async put<T>(url: string, data?: Record<string, unknown>): Promise<ApiResponse<T>> {
-    return this._mutation<T>('put', url, data);
+  async put<T>(url: string, data?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    return this._mutation<T>('put', url, data, options);
   }
 
   async patch<T>(url: string, data?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
