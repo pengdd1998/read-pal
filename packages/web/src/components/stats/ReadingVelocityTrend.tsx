@@ -35,7 +35,13 @@ export const ReadingVelocityTrend = React.memo(function ReadingVelocityTrend({ s
  });
  const dur = durPts.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ');
 
- const avg = (sessions.reduce((a, s) => a + (s.pagesRead || 0), 0) / sessions.length).toFixed(1);
+ // Average pages only over sessions where actual reading happened — sessions
+ // with 0 pages are usually idle tabs or accidental opens, which would drag
+ // the "avg pages/session" headline down and mislead users.
+ const activeSessions = sessions.filter((s) => (s.pagesRead || 0) > 0);
+ const avg = activeSessions.length > 0
+   ? (activeSessions.reduce((a, s) => a + (s.pagesRead || 0), 0) / activeSessions.length).toFixed(1)
+   : '0.0';
 
  return { points: pts, areaPath: area, durLine: dur, avgPages: avg };
  }, [sessions]);

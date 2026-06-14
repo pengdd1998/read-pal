@@ -1046,6 +1046,7 @@
     "legend_duration": "Duration",
     "recent_sessions": "Recent Sessions",
     "session_pages": "{count} pages",
+    "idle_session_hint": "Idle session (no pages read)",
     "books_progress": "Books Progress",
     "heatmap_less": "Less",
     "heatmap_more": "More",

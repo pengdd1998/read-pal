@@ -1046,6 +1046,7 @@
     "legend_duration": "时长",
     "recent_sessions": "最近阅读记录",
     "session_pages": "{count} 页",
+    "idle_session_hint": "空闲会话（未阅读页面）",
     "books_progress": "书籍进度",
     "heatmap_less": "少",
     "heatmap_more": "多",
