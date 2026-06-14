@@ -163,7 +163,7 @@ async def advance_plan(
         user_id=str(user_id),
     )
 
-    plan = await _get_active_plan(db, user_id, book_id)
+    plan = await _get_active_plan(db, user_id, book_id, for_update=True)
     if not plan:
         logger.info('reading_plan.advance.completed', plan_found=False)
         return None
@@ -203,10 +203,12 @@ async def _get_active_plan(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
+    *,
+    for_update: bool = False,
 ) -> ReadingPlan | None:
     try:
         async with db_error_guard('_get_active_plan', book_id=str(book_id), user_id=str(user_id)):
-            result = await db.execute(
+            stmt = (
                 select(ReadingPlan)
                 .where(
                     ReadingPlan.user_id == user_id,
@@ -216,6 +218,9 @@ async def _get_active_plan(
                 .order_by(ReadingPlan.created_at.desc())
                 .limit(1)
             )
+            if for_update:
+                stmt = stmt.with_for_update()
+            result = await db.execute(stmt)
             return result.scalar_one_or_none()
     except (DBAPIError, OSError):
         logger.debug('reading plan query failed', exc_info=True)

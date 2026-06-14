@@ -142,16 +142,25 @@ async def _get_owned_collection(
     db: AsyncSession,
     user_id: UUID,
     collection_id: UUID,
+    *,
+    for_update: bool = False,
 ) -> Collection:
-    """Fetch a collection verifying ownership. Raises ValueError if missing."""
+    """Fetch a collection verifying ownership. Raises ValueError if missing.
+
+    Pass for_update=True from mutators that read-modify-write the
+    `book_ids` JSONB column — without the row lock two concurrent
+    edits to the same collection each load the same list and the
+    last writer silently drops the other's book.
+    """
     try:
         async with db_error_guard('_get_owned_collection', user_id=str(user_id), collection_id=str(collection_id)):
-            result = await db.execute(
-                select(Collection).where(
-                    Collection.id == collection_id,
-                    Collection.user_id == user_id,
-                ),
+            stmt = select(Collection).where(
+                Collection.id == collection_id,
+                Collection.user_id == user_id,
             )
+            if for_update:
+                stmt = stmt.with_for_update()
+            result = await db.execute(stmt)
             collection = result.scalar_one_or_none()
     except DBAPIError as exc:
         logger.warning('collection query failed', exc_info=True)
@@ -202,7 +211,7 @@ async def add_book_to_collection(
     book_id: UUID,
 ) -> Collection:
     """Add a book to a collection."""
-    collection = await _get_owned_collection(db, user_id, collection_id)
+    collection = await _get_owned_collection(db, user_id, collection_id, for_update=True)
     await _verify_owned_books(db, user_id, [book_id])
 
     existing_ids = set(collection.book_ids or [])
@@ -222,7 +231,7 @@ async def add_books_batch(
     book_ids: list[UUID],
 ) -> Collection:
     """Add multiple books to a collection in a single DB round-trip."""
-    collection = await _get_owned_collection(db, user_id, collection_id)
+    collection = await _get_owned_collection(db, user_id, collection_id, for_update=True)
     await _verify_owned_books(db, user_id, book_ids)
 
     existing_ids = set(collection.book_ids or [])
@@ -245,7 +254,7 @@ async def remove_book_from_collection(
     book_id: UUID,
 ) -> Collection:
     """Remove a book from a collection."""
-    collection = await _get_owned_collection(db, user_id, collection_id)
+    collection = await _get_owned_collection(db, user_id, collection_id, for_update=True)
 
     existing_ids = set(collection.book_ids or [])
     existing_ids.discard(book_id)
@@ -264,7 +273,7 @@ async def remove_books_batch(
     book_ids: list[UUID],
 ) -> Collection:
     """Remove multiple books from a collection in a single DB round-trip."""
-    collection = await _get_owned_collection(db, user_id, collection_id)
+    collection = await _get_owned_collection(db, user_id, collection_id, for_update=True)
 
     existing_ids = set(collection.book_ids or [])
     existing_ids -= set(book_ids)

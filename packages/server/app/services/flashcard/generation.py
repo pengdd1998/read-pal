@@ -1,11 +1,12 @@
 """LLM-based flashcard generation from book annotations."""
 
+import hashlib
 import json
 from uuid import UUID
 
 import structlog
 from langchain_core.messages import HumanMessage, SystemMessage
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
@@ -125,6 +126,16 @@ def _parse_and_create_cards(
     return cards
 
 
+def _advisory_lock_key(user_id: UUID, book_id: UUID) -> int:
+    """Stable int64 lock key for (user_id, book_id) pair.
+
+    Uses first 8 bytes of SHA-256, masked to 63 bits so the result fits
+    in PostgreSQL's signed int8 (pg_advisory_xact_lock requires bigint).
+    """
+    digest = hashlib.sha256(f'{user_id}:{book_id}'.encode()).digest()
+    return int.from_bytes(digest[:8], 'big', signed=False) & ((1 << 63) - 1)
+
+
 async def generate_flashcards(
     db: AsyncSession,
     user_id: UUID,
@@ -133,6 +144,17 @@ async def generate_flashcards(
 ) -> list[Flashcard]:
     """Generate flashcards from a book's annotations via LLM."""
     count = max(1, min(count, 10))
+
+    # Acquire a transaction-scoped advisory lock so two concurrent
+    # generate requests for the same (user, book) serialize across
+    # workers. Without this, both pass the dedup check below, both
+    # call the LLM (~2x cost), and both insert duplicate cards.
+    # pg_advisory_xact_lock auto-releases at COMMIT/ROLLBACK.
+    lock_key = _advisory_lock_key(user_id, book_id)
+    async with db_error_guard('generation.generate_flashcards.advisory_lock'):
+        await db.execute(
+            text('SELECT pg_advisory_xact_lock(:k)'), {'k': lock_key},
+        )
 
     # Skip if cards already exist for this book (dedup guard)
     async with db_error_guard(

@@ -23,8 +23,14 @@ async def join_club(
     from app.models.book_club import BookClub
 
     async with db_error_guard('members.join_club'):
+        # SELECT … FOR UPDATE on the club row so concurrent joiners
+        # serialize against each other. Without this, two users with the
+        # same invite code could both pass the capacity check when the
+        # club is at max_members − 1, leaving the club over capacity.
         result = await db.execute(
-            select(BookClub).where(BookClub.invite_code == invite_code),
+            select(BookClub)
+            .where(BookClub.invite_code == invite_code)
+            .with_for_update(),
         )
         club = result.scalar_one_or_none()
         if club is None:
@@ -73,8 +79,12 @@ async def join_club_by_id(
     from app.models.book_club import BookClub
 
     async with db_error_guard('members.join_club_by_id'):
+        # SELECT … FOR UPDATE on the club row to serialize concurrent
+        # joiners (same reason as join_club).
         result = await db.execute(
-            select(BookClub).where(BookClub.id == club_id),
+            select(BookClub)
+            .where(BookClub.id == club_id)
+            .with_for_update(),
         )
         club = result.scalar_one_or_none()
         if club is None:
@@ -122,7 +132,16 @@ async def leave_club(
     club_id: UUID,
 ) -> None:
     """Leave a club. Admin cannot leave if they are the last admin."""
+    from app.models.book_club import BookClub
+
     async with db_error_guard('members.leave_club'):
+        # Lock the parent club row first so two admins leaving
+        # concurrently can't both pass the last-admin check.
+        await db.execute(
+            select(BookClub)
+            .where(BookClub.id == club_id)
+            .with_for_update(),
+        )
         result = await db.execute(
             select(BookClubMember).where(
                 BookClubMember.club_id == club_id,
