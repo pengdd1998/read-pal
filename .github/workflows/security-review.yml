@@ -1,0 +1,57 @@
+name: Security Review
+
+# AI-powered security review on every PR using Claude.
+# Uses anthropics/claude-code-security-review — diff-aware, posts comments on PRs.
+#
+# Setup (one-time): add repository secret `ANTHROPIC_API_KEY` (Anthropic API key
+# enabled for Claude API + Claude Code usage). Until added, this workflow will
+# skip with a clear message.
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  security:
+    name: Claude Security Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Skip cleanly if secret is not configured yet
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - name: Check API key
+        id: check
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::notice::ANTHROPIC_API_KEY secret not set — skipping security review. Add it in Settings → Secrets and variables → Actions."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.skip != 'true'
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
+
+      - name: Run Claude Security Review
+        if: steps.check.outputs.skip != 'true'
+        uses: anthropics/claude-code-security-review@main
+        with:
+          claude-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Latest Opus for strongest reasoning. Adjust if cost becomes a concern.
+          claude-model: claude-opus-4-7-20251022
+          comment-pr: true
+          upload-results: true
+          # Skip noise dirs
+          exclude-directories: node_modules,dist,build,.next,packages/web/.next,docs
+          claudecode-timeout: '20'
