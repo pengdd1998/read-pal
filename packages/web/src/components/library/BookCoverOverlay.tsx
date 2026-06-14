@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { isCapacitor } from '@/lib/capacitor';
 import { getBookCoverColors, getBookInitials } from '@/lib/book-cover';
-import { checkOfflineCache, cacheBookOffline } from '@/lib/offline-cache';
 import { CollectionPicker } from './CollectionPicker';
-import { warn } from '@/lib/logger';
 
 interface BookCoverOverlayProps {
  bookId: string;
@@ -36,12 +33,7 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
 }: BookCoverOverlayProps) {
  const t = useTranslations('library');
  const router = useRouter();
- const [cachingOffline, setCachingOffline] = useState(false);
- const [cachedOffline, setCachedOffline] = useState(false);
  const [showCollectionPicker, setShowCollectionPicker] = useState(false);
- const mountedRef = useRef(true);
-
- useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
  useEffect(() => {
   if (!showDeleteConfirm) return;
@@ -59,25 +51,6 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
  } as const), [t]);
 
  const cfg = STATUS_CONFIG[status];
-
- React.useEffect(() => {
- let stale = false;
- checkOfflineCache(bookId).then((result) => {
-  if (!stale) setCachedOffline(result);
- }).catch((err) => { warn('BookCoverOverlay: offline cache check failed', err); });
- return () => { stale = true; };
- }, [bookId]);
-
- const handleCacheOffline = useCallback(async (e: React.MouseEvent) => {
- e.preventDefault();
- e.stopPropagation();
- if (cachingOffline || cachedOffline) return;
- setCachingOffline(true);
- const success = await cacheBookOffline(bookId);
- if (!mountedRef.current) return;
- setCachedOffline(success);
- setCachingOffline(false);
- }, [bookId, cachingOffline, cachedOffline]);
 
  const coverColors = useMemo(() => getBookCoverColors(title), [title]);
  const initials = useMemo(() => getBookInitials(title), [title]);
@@ -102,16 +75,6 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
   {/* Status dot */}
   <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full border-2 border-white" style={{ backgroundColor: cfg.dot }} aria-label={cfg.label} title={cfg.label} />
 
-  {/* Offline badge (Capacitor only) */}
-  {cachedOffline && isCapacitor() && (
-  <div className="absolute top-2.5 left-2.5 flex items-center gap-0.5 px-1 py-0.5 rounded bg-emerald-500/90 text-white text-[8px] font-semibold">
-   <svg aria-hidden="true" className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-   </svg>
-   {t('card_offline_badge')}
-  </div>
-  )}
-
   {/* Bottom action bar */}
   <div className="absolute bottom-0 left-0 right-0 flex items-center justify-around bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-200 py-1 z-10">
   {/* Info */}
@@ -124,29 +87,6 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
    </svg>
-  </button>
-
-  {/* Offline cache */}
-  <button type="button"
-   onClick={handleCacheOffline}
-   aria-label={cachedOffline ? t('card_available_offline') : t('card_save_offline')}
-   className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
-   cachedOffline
-    ? 'text-emerald-400'
-    : cachingOffline
-    ? 'text-amber-400 animate-pulse'
-    : 'text-white/80 hover:text-white hover:bg-white/20'
-   }`}
-  >
-   {cachedOffline ? (
-   <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-   </svg>
-   ) : (
-   <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-   </svg>
-   )}
   </button>
 
   {/* Collection picker */}
