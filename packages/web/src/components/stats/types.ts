@@ -47,6 +47,7 @@ export interface BookSpeed {
   title: string;
   author: string;
   wpm: number;
+  averagePagesPerHour: number;
   totalSessions: number;
   totalPagesRead: number;
   totalMinutes: number;

@@ -14,21 +14,21 @@ export const ReadingSpeed = React.memo(function ReadingSpeed({ speedData, bookSp
 
  if (!speedData && (!bookSpeeds || bookSpeeds.length === 0)) return null;
 
- const showNoData = (!speedData || speedData.averageWordsPerMinute === 0) && (!bookSpeeds || bookSpeeds.length === 0);
+ const showNoData = (!speedData || speedData.averagePagesPerHour === 0) && (!bookSpeeds || bookSpeeds.length === 0);
 
  return (
  <div className="bg-surface-0 rounded-xl border border-surface-3 p-6">
   <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('speed_title')}</h2>
 
-  {/* Average WPM metric */}
+  {/* Average pages-per-hour metric */}
   {speedData && (
   <div className="flex items-center gap-4 mb-5">
    <div className="bg-teal-50 dark:bg-teal-900/10 rounded-xl p-4 text-center min-w-[120px]">
    <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
-    {Math.round(speedData.averageWordsPerMinute)}
+    {speedData.averagePagesPerHour.toFixed(1)}
    </div>
-   <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('speed_average_wpm')}</div>
-   <div className="text-[10px] text-teal-500 dark:text-teal-400 mt-0.5">{t('speed_wpm_unit')}</div>
+   <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('speed_average_pph')}</div>
+   <div className="text-[10px] text-teal-500 dark:text-teal-400 mt-0.5">{t('speed_pph_unit')}</div>
    </div>
   </div>
   )}
@@ -55,15 +55,16 @@ const WpmTrend = React.memo(function WpmTrend({ data }: { data: SpeedData }) {
  const t = useTranslations('stats');
 
  const trendData = data.speedOverTime;
- const wpmValues = trendData.map((d) => d.pagesPerHour * 250 / 60);
- const maxWpm = Math.max(...wpmValues, 1);
+ // Plot pages-per-hour directly — what we actually measure.
+ const pphValues = trendData.map((d) => d.pagesPerHour);
+ const maxPph = Math.max(...pphValues, 1);
  const w = 300;
  const h = 60;
  const padY = 5;
 
- const points = wpmValues.map((wpm, i) => {
- const x = (i / Math.max(wpmValues.length - 1, 1)) * w;
- const y = h - padY - ((wpm / maxWpm) * (h - padY * 2));
+ const points = pphValues.map((pph, i) => {
+ const x = (i / Math.max(pphValues.length - 1, 1)) * w;
+ const y = h - padY - ((pph / maxPph) * (h - padY * 2));
  return { x, y };
  });
 
@@ -96,14 +97,14 @@ const WpmTrend = React.memo(function WpmTrend({ data }: { data: SpeedData }) {
 
 const BookSpeedChart = React.memo(function BookSpeedChart({ bookSpeeds }: { bookSpeeds: BookSpeed[] }) {
  const t = useTranslations('stats');
- const maxWpm = Math.max(...bookSpeeds.map((b) => b.wpm), 1);
+ const maxPph = Math.max(...bookSpeeds.map((b) => b.averagePagesPerHour || 0), 1);
 
  return (
  <div>
   <span className="text-sm text-gray-600 dark:text-gray-300 mb-3 block">{t('speed_by_book')}</span>
   <div className="space-y-2.5">
   {bookSpeeds.slice(0, 6).map((book) => (
-   <BookSpeedBar key={book.bookId} book={book} maxWpm={maxWpm} t={t} />
+   <BookSpeedBar key={book.bookId} book={book} maxPph={maxPph} t={t} />
   ))}
   </div>
  </div>
@@ -112,12 +113,13 @@ const BookSpeedChart = React.memo(function BookSpeedChart({ bookSpeeds }: { book
 
 interface BookSpeedBarProps {
  book: BookSpeed;
- maxWpm: number;
+ maxPph: number;
  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-const BookSpeedBar = React.memo(function BookSpeedBar({ book, maxWpm, t }: BookSpeedBarProps) {
- const pct = Math.max(3, (book.wpm / maxWpm) * 100);
+const BookSpeedBar = React.memo(function BookSpeedBar({ book, maxPph, t }: BookSpeedBarProps) {
+ const pph = book.averagePagesPerHour || 0;
+ const pct = Math.max(3, (pph / maxPph) * 100);
  return (
  <div className="flex items-center gap-3">
   <span className="text-xs text-gray-600 dark:text-gray-400 w-28 truncate" title={book.title}>
@@ -130,7 +132,7 @@ const BookSpeedBar = React.memo(function BookSpeedBar({ book, maxWpm, t }: BookS
   />
   </div>
   <span className="text-xs font-semibold text-teal-600 dark:text-teal-400 w-16 text-right">
-  {Math.round(book.wpm)} {t('speed_wpm_unit')}
+  {pph.toFixed(1)} {t('speed_pph_unit')}
   </span>
  </div>
  );

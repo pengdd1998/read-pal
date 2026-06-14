@@ -11,6 +11,7 @@ interface ReadingSpeedBook {
  title: string;
  author: string;
  wpm: number;
+ averagePagesPerHour: number;
  totalMinutes: number;
 }
 
@@ -39,13 +40,17 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
 
  useEffect(() => { return fetchData(); }, [fetchData]);
 
- const { activeBooks, maxWpm, avgWpm } = useMemo(() => {
-   const filtered = books.filter((b) => b.wpm > 0);
-   const max = Math.max(...filtered.map((b) => b.wpm), 1);
+ const { activeBooks, maxPph, avgPph } = useMemo(() => {
+   // Use pages-per-hour rather than the derived wpm: the backend's
+   // wpm = pph * 250 / 60 assumes 250 words/page, which is wildly off
+   // for EPUBs (where "page" is a chapter index) and only approximate
+   // for PDFs. pagesPerHour is what we actually measure.
+   const filtered = books.filter((b) => (b.averagePagesPerHour || 0) > 0);
+   const max = Math.max(...filtered.map((b) => b.averagePagesPerHour || 0), 1);
    const avg = filtered.length > 0
-     ? Math.round(filtered.reduce((sum, b) => sum + b.wpm, 0) / filtered.length)
+     ? Math.round((filtered.reduce((sum, b) => sum + (b.averagePagesPerHour || 0), 0) / filtered.length) * 10) / 10
      : 0;
-   return { activeBooks: filtered, maxWpm: max, avgWpm: avg };
+   return { activeBooks: filtered, maxPph: max, avgPph: avg };
  }, [books]);
 
  if (loading) {
@@ -80,24 +85,26 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
   <div className="flex items-center justify-between mb-3">
   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('reading_speed_title')}</h3>
   <span className="text-[10px] text-gray-600 dark:text-gray-400">
-   {avgWpm > 0 ? `${avgWpm} ${t('words_min')}` : t('words_min')}
+   {avgPph > 0 ? `${avgPph} ${t('pages_hour')}` : t('pages_hour')}
   </span>
   </div>
   <div className="space-y-2.5">
-  {activeBooks.slice(0, 6).map((b) => (
+  {activeBooks.slice(0, 6).map((b) => {
+   const pph = b.averagePagesPerHour || 0;
+   return (
    <div key={b.bookId}>
    <div className="flex items-center justify-between mb-1">
     <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[60%]">{b.title}</span>
-    <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400">{b.wpm} {t('words_min')}</span>
+    <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400">{pph.toFixed(1)} {t('pages_hour')}</span>
    </div>
-   <div className="w-full bg-surface-1 rounded-full h-2" role="progressbar" aria-valuenow={Math.round(Math.min(100, Math.max(5, (b.wpm / maxWpm) * 100)))} aria-valuemin={0} aria-valuemax={100}>
+   <div className="w-full bg-surface-1 rounded-full h-2" role="progressbar" aria-valuenow={Math.round(Math.min(100, Math.max(5, (pph / maxPph) * 100)))} aria-valuemin={0} aria-valuemax={100}>
     <div
     className="rounded-full h-2 transition-all duration-500 bg-gradient-to-r from-amber-400 to-orange-400"
-    style={{ width: `${Math.min(100, Math.max(5, (b.wpm / maxWpm) * 100))}%` }}
+    style={{ width: `${Math.min(100, Math.max(5, (pph / maxPph) * 100))}%` }}
     />
    </div>
    </div>
-  ))}
+  );})}
   </div>
  </div>
  );

@@ -36,16 +36,15 @@ async def _query_daily_speed(
     db: AsyncSession,
     uid: UUID,
 ) -> list[tuple]:
-    """Query average reading speed grouped by day."""
+    """Query average reading speed grouped by day (duration-weighted)."""
     try:
         day_col = func.date(ReadingSession.started_at).label('day')
         result = await db.execute(
             select(
                 day_col,
-                func.avg(
-                    ReadingSession.pages_read
-                    * 3600.0
-                    / func.nullif(ReadingSession.duration, 0)
+                (
+                    func.sum(ReadingSession.pages_read) * 3600.0
+                    / func.nullif(func.sum(ReadingSession.duration), 0)
                 ).label('pph'),
             )
             .where(
@@ -69,14 +68,16 @@ async def get_reading_speed(
 ) -> dict:
     """Return reading speed stats aggregated from sessions."""
     try:
-        # Overall average pages per hour
-        # Only consider sessions with meaningful duration
+        # Overall pages-per-hour — duration-weighted (total pages / total time).
+        # A naive AVG(pages_read * 3600 / duration) is biased by short sessions
+        # where a single 30-second session with high pages_read inflates the
+        # mean. Using SUM/SUM gives a stable weighted average.
         avg_pph_row = await db.execute(
             select(
-                func.avg(
-                    ReadingSession.pages_read
-                    * 3600.0
-                    / func.nullif(ReadingSession.duration, 0)
+                func.coalesce(
+                    func.sum(ReadingSession.pages_read) * 3600.0
+                    / func.nullif(func.sum(ReadingSession.duration), 0),
+                    0,
                 )
             ).where(
                 and_(
@@ -113,7 +114,12 @@ async def _query_speed_by_book(
     db: AsyncSession,
     uid: UUID,
 ) -> list[tuple]:
-    """Query reading speed stats grouped by book."""
+    """Query reading speed stats grouped by book.
+
+    Uses duration-weighted pages-per-hour (SUM(pages)/SUM(duration)*3600)
+    instead of AVG(per-session pph) to avoid bias from short sessions where
+    a 30-second session at high pages_read would otherwise dominate the mean.
+    """
     rows = await db.execute(
         select(
             ReadingSession.book_id,
@@ -126,10 +132,9 @@ async def _query_speed_by_book(
             func.coalesce(func.sum(ReadingSession.duration), 0).label(
                 'total_seconds'
             ),
-            func.avg(
-                ReadingSession.pages_read
-                * 3600.0
-                / func.nullif(ReadingSession.duration, 0)
+            (
+                func.sum(ReadingSession.pages_read) * 3600.0
+                / func.nullif(func.sum(ReadingSession.duration), 0)
             ).label('avg_pph'),
         )
         .join(Book, Book.id == ReadingSession.book_id)

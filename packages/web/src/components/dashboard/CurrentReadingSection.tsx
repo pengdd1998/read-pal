@@ -179,8 +179,8 @@ const StatsGrid = React.memo(function StatsGrid({ stats }: { stats: DashboardSta
         { label: t('stat_books_read'), value: stats.booksRead, icon: 'books' },
         { label: t('stat_pages_read'), value: stats.pagesRead, icon: 'ruler' },
         { label: t('stat_total_time'), value: stats.totalTime, icon: 'clock' },
-        { label: t('stat_concepts'), value: stats.conceptsLearned, icon: 'brain' },
-        { label: t('stat_connections'), value: stats.connections, icon: 'link' },
+        { label: t('stat_annotations'), value: stats.conceptsLearned, icon: 'highlight' },
+        { label: t('stat_tags'), value: stats.connections, icon: 'tag' },
       ].map((s) => (
         <StatItem key={s.label} icon={s.icon} value={s.value} label={s.label} />
       ))}
