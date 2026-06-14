@@ -237,7 +237,29 @@ async def get_chapter_stats(
                 'types': {'highlight': 0, 'note': 0, 'bookmark': 0},
             }
         chapters[chapter_name]['count'] += row.count
-        ann_type = row.type if row.type in chapters[chapter_name]['types'] else 'highlight'
-        chapters[chapter_name]['types'][ann_type] += row.count
+        # Normalize the type so unknown values (None, future enum members,
+        # enum-instance-not-string) don't get bucketed as 'highlight' and
+        # silently inflate the highlight count. Unknowns are still counted
+        # in the chapter total above; we just don't attribute them to a
+        # type bucket they don't belong to.
+        ann_type = _normalize_annotation_type(row.type)
+        if ann_type is not None:
+            chapters[chapter_name]['types'][ann_type] += row.count
 
     return list(chapters.values())
+
+
+def _normalize_annotation_type(raw) -> str | None:
+    """Coerce a SQL enum result to a known annotation type string.
+
+    Handles three cases defensively:
+    - The column is `Mapped[str]`, so the typical case is a plain string.
+    - Some dialects return the enum member instead of its value.
+    - Legacy rows may carry NULL or values outside the current enum.
+    """
+    if raw is None:
+        return None
+    if hasattr(raw, 'value'):
+        raw = raw.value
+    raw = str(raw)
+    return raw if raw in {'highlight', 'note', 'bookmark'} else None

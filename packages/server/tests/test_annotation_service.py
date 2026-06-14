@@ -622,6 +622,61 @@ async def test_get_chapter_stats_all_types():
     assert stats[0]['types'] == {'highlight': 1, 'note': 1, 'bookmark': 1}
 
 
+@pytest.mark.asyncio
+async def test_get_chapter_stats_enum_instances_not_miscounted_as_highlight():
+    """When the dialect returns enum members (not strings), each type must
+    still land in its own bucket — not silently fall back to 'highlight'."""
+    from app.models.annotation import AnnotationType
+
+    db = _make_db_session()
+    user_id = str(uuid4())
+    book_id = uuid4()
+
+    rows = [
+        MagicMock(chapter='C1', type=AnnotationType.highlight, count=2),
+        MagicMock(chapter='C1', type=AnnotationType.note, count=3),
+        MagicMock(chapter='C1', type=AnnotationType.bookmark, count=4),
+    ]
+
+    result_mock = MagicMock()
+    result_mock.all.return_value = rows
+    db.execute = AsyncMock(return_value=result_mock)
+
+    stats = await annotation_service.get_chapter_stats(db, user_id, book_id)
+
+    assert len(stats) == 1
+    # Pre-fix: types would be {'highlight': 9, 'note': 0, 'bookmark': 0}
+    # because AnnotationType.bookmark is not a key in {str:str}.
+    assert stats[0]['types'] == {'highlight': 2, 'note': 3, 'bookmark': 4}
+    assert stats[0]['count'] == 9
+
+
+@pytest.mark.asyncio
+async def test_get_chapter_stats_unknown_type_excluded_from_breakdown():
+    """Unknown types are still counted in the chapter total but not bucketed."""
+    db = _make_db_session()
+    user_id = str(uuid4())
+    book_id = uuid4()
+
+    rows = [
+        MagicMock(chapter='C1', type='highlight', count=2),
+        # Legacy/future type not in the current enum
+        MagicMock(chapter='C1', type='underline', count=5),
+        MagicMock(chapter='C1', type=None, count=1),
+    ]
+
+    result_mock = MagicMock()
+    result_mock.all.return_value = rows
+    db.execute = AsyncMock(return_value=result_mock)
+
+    stats = await annotation_service.get_chapter_stats(db, user_id, book_id)
+
+    assert len(stats) == 1
+    # Total includes everything; type breakdown only attributes the highlight.
+    assert stats[0]['count'] == 8
+    assert stats[0]['types'] == {'highlight': 2, 'note': 0, 'bookmark': 0}
+
+
 # ---------------------------------------------------------------------------
 # get_tags
 # ---------------------------------------------------------------------------
