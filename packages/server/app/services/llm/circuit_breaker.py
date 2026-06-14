@@ -79,8 +79,19 @@ class CircuitBreaker:
 
     @property
     def is_open(self) -> bool:
-        """Whether the circuit is currently open."""
-        return self.state == CircuitState.OPEN
+        """Whether the circuit is open AND not yet eligible for a recovery probe.
+
+        Returns False once the reset timeout has elapsed, so callers that filter
+        on this (provider selection via ``_available_providers``) re-include the
+        provider — which lets it be selected and triggers the OPEN→HALF_OPEN
+        transition through ``allow_request()``. Without this, an opened provider
+        could stay excluded past its reset timeout because selection itself
+        never called ``allow_request()`` on it.
+        """
+        if self.state != CircuitState.OPEN:
+            return False
+        settings = get_settings()
+        return (time.monotonic() - self._opened_at) < settings.circuit_reset_timeout_seconds
 
 
 # Singleton instance

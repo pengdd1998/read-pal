@@ -319,10 +319,26 @@ class TestCircuitBreaker:
     async def test_opens_after_threshold(self, cb):
         with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
             mock_settings.return_value.circuit_failure_threshold = 3
+            mock_settings.return_value.circuit_reset_timeout_seconds = 300
             for _ in range(3):
                 await cb.record_failure()
             assert cb.state == CircuitState.OPEN
             assert cb.is_open is True
+
+    @pytest.mark.asyncio
+    async def test_is_open_false_after_reset_timeout(self, cb):
+        # is_open must return False once the reset timeout has elapsed, so
+        # provider selection re-includes the provider and allow_request() can
+        # transition OPEN -> HALF_OPEN (otherwise an opened provider can be
+        # stuck-excluded past its reset window).
+        import time as _time
+        with patch('app.services.llm.circuit_breaker.get_settings') as mock_settings:
+            mock_settings.return_value.circuit_failure_threshold = 1
+            mock_settings.return_value.circuit_reset_timeout_seconds = 300
+            await cb.record_failure()
+            assert cb.is_open is True  # fresh open
+            cb._opened_at = _time.monotonic() - 301
+            assert cb.is_open is False  # eligible for a probe now
 
     @pytest.mark.asyncio
     async def test_blocks_requests_when_open(self, cb):
