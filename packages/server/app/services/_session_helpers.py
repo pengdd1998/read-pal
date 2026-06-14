@@ -4,7 +4,7 @@ Pure functions extracted from reading_session_service to keep the main
 module focused on orchestration logic.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import HeartbeatRequest, SessionUpdate
@@ -12,6 +12,12 @@ from app.schemas.reading_session import HeartbeatRequest, SessionUpdate
 # Maximum reasonable duration for a single reading session (2 hours).
 # Sessions exceeding this are likely idle tabs, not active reading.
 MAX_SESSION_SECONDS = 7200
+
+# Heartbeats are sent far more often than this, so a session whose
+# updated_at (last heartbeat) is older than this grace window almost
+# certainly represents an idle tab. Closing/end paths cap effective_end
+# to last_heartbeat + grace so idle time isn't counted as reading.
+STALE_IDLE_GRACE_SECONDS = 300  # 5 min
 
 
 def extract_client_fields(
@@ -44,10 +50,41 @@ def finalize_session_duration(session: ReadingSession, now: datetime) -> None:
     Prefers client-reported duration (which excludes paused time) over
     wall-clock computation from timestamps. Caps wall-clock fallback
     to avoid inflated durations from idle tabs.
+
+    The effective end is bounded by `updated_at + STALE_IDLE_GRACE_SECONDS`
+    so a session whose last heartbeat was hours ago doesn't accrue idle
+    wall-clock time. This mirrors the logic in `_close_stale_sessions`.
     """
     if not session.duration and session.started_at:
-        raw = int((now - session.started_at).total_seconds())
-        session.duration = min(raw, MAX_SESSION_SECONDS)
+        last_activity = session.updated_at or session.started_at
+        effective_end = min(
+            now,
+            last_activity + timedelta(seconds=STALE_IDLE_GRACE_SECONDS),
+        )
+        raw = int((effective_end - session.started_at).total_seconds())
+        session.duration = max(0, min(raw, MAX_SESSION_SECONDS))
+
+
+def clamp_client_duration(
+    session: ReadingSession,
+    reported_duration: int,
+    now: datetime,
+) -> int:
+    """Clamp a client-reported duration to the realistic wall-clock window.
+
+    Uses the same last-heartbeat + grace bound as finalize_session_duration,
+    plus the absolute MAX_SESSION_SECONDS cap. Defensive against stale
+    session timers, cross-tab drift, and paused-but-unmounted state.
+    """
+    if not session.started_at:
+        return min(int(reported_duration or 0), MAX_SESSION_SECONDS)
+    last_activity = session.updated_at or session.started_at
+    effective_end = min(
+        now,
+        last_activity + timedelta(seconds=STALE_IDLE_GRACE_SECONDS),
+    )
+    wall = max(0, int((effective_end - session.started_at).total_seconds()))
+    return min(int(reported_duration or 0), wall, MAX_SESSION_SECONDS)
 
 
 def resolve_heartbeat_pages(body: HeartbeatRequest) -> tuple[int | None, float | None, str | None]:

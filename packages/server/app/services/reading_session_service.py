@@ -27,7 +27,9 @@ from app.services._session_book_progress import (  # noqa: F401
 )
 from app.services._session_helpers import (
     MAX_SESSION_SECONDS as _MAX_SESSION_SECONDS,
+    STALE_IDLE_GRACE_SECONDS as _STALE_IDLE_GRACE_SECONDS,
     apply_update_fields as _apply_update_fields,
+    clamp_client_duration as _clamp_client_duration,
     extract_client_fields as _extract_client_fields,
     finalize_session_duration as _finalize_session_duration,
     resolve_heartbeat_pages as _resolve_heartbeat_pages,
@@ -74,7 +76,7 @@ async def _verify_book_ownership(
 # tab), we don't know exactly when they stopped reading. Use the last
 # heartbeat timestamp plus this grace window as the effective end — a stale
 # session open for hours with no heartbeat shouldn't accrue hours of duration.
-STALE_IDLE_GRACE_SECONDS = 300  # 5 min — heartbeats are sent far more often
+STALE_IDLE_GRACE_SECONDS = _STALE_IDLE_GRACE_SECONDS  # re-export for callers
 
 
 async def _close_stale_sessions(
@@ -188,10 +190,12 @@ async def end_session(
         update_data, current_page, scroll_progress, current_segment = _extract_client_fields(data)
         # Defensive clamp: client-reported duration may be inflated due to
         # stale session timers, cross-tab drift, or paused-but-unmounted state.
-        # Always bound it to the real wall-clock window for this session.
-        if 'duration' in update_data and session.started_at:
-            wall = max(0, int((now - session.started_at).total_seconds()))
-            update_data['duration'] = min(int(update_data['duration'] or 0), wall, _MAX_SESSION_SECONDS)
+        # Bound it to the realistic wall-clock window (last heartbeat + grace),
+        # matching the logic in finalize_session_duration / _close_stale_sessions.
+        if 'duration' in update_data:
+            update_data['duration'] = _clamp_client_duration(
+                session, int(update_data['duration'] or 0), now,
+            )
         _apply_update_fields(session, update_data)
 
         if current_page is not None:

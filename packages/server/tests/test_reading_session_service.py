@@ -258,6 +258,9 @@ class TestEndSession:
             session_id=session_id, user_id=user_id, book_id=book_id,
             started_at=started, is_active=True,
         )
+        # Active session has had a heartbeat near the end time — duration
+        # reflects the full hour instead of being capped to the idle grace.
+        session.updated_at = datetime(2026, 1, 1, 10, 55, 0)
 
         _mock_execute_return(db, session)
         db.flush = AsyncMock()
@@ -269,8 +272,37 @@ class TestEndSession:
         assert result is session
         assert result.is_active is False
         assert result.ended_at is not None
-        # Duration should be computed from started_at to now
+        # Duration should be computed from started_at to (updated_at + grace)
+        # = 10:00 → 10:55+5min = 11:00 → 3600s
         assert result.duration == 3600
+
+    @pytest.mark.asyncio
+    async def test_ends_active_session_caps_idle_duration(self):
+        """Idle session (no recent heartbeat) is capped to grace, not wall-clock."""
+        db = _make_db_session()
+        user_id = str(uuid4())
+        session_id = uuid4()
+        book_id = uuid4()
+        started = datetime(2026, 1, 1, 10, 0, 0)
+        session = _make_session(
+            session_id=session_id, user_id=user_id, book_id=book_id,
+            started_at=started, is_active=True,
+        )
+        # Last heartbeat was an hour after start, but the user has been
+        # idle since then — effective_end = 11:00 + 5min = 11:05
+        session.updated_at = datetime(2026, 1, 1, 11, 0, 0)
+
+        _mock_execute_return(db, session)
+        db.flush = AsyncMock()
+
+        with patch('app.services.reading_session_service.utcnow') as mock_now:
+            # User comes back 4 hours later to close the tab
+            mock_now.return_value = datetime(2026, 1, 1, 15, 0, 0)
+            result = await reading_session_service.end_session(db, user_id, session_id)
+
+        # Pre-fix: duration would be 5h (18000s), or capped at MAX (7200s).
+        # Post-fix: capped to last_heartbeat + grace = 11:00+5min - 10:00 = 3900s
+        assert result.duration == 3900
 
     @pytest.mark.asyncio
     async def test_returns_none_when_session_not_found(self):
@@ -376,6 +408,8 @@ class TestEndSession:
             session_id=session_id, user_id=user_id,
             started_at=started, is_active=True,
         )
+        # Active heartbeat near end so duration isn't capped to idle grace
+        session.updated_at = datetime(2026, 1, 1, 10, 28, 0)
 
         _mock_execute_return(db, session)
         db.flush = AsyncMock()
@@ -387,6 +421,8 @@ class TestEndSession:
             )
 
         assert result.is_active is False
+        # updated_at + grace = 10:28 + 5min = 10:33, clamped to now=10:30
+        # effective_end = 10:30 → duration = 30min = 1800s
         assert result.duration == 1800
 
     @pytest.mark.asyncio
