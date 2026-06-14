@@ -106,3 +106,23 @@ async def test_delete_account_unauthenticated(client):
     """DELETE /account returns 401 without auth."""
     resp = await client.delete('/api/v1/auth/account')
     assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# XSS sanitization on name
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_update_me_strips_html(client):
+    """PATCH /me must sanitize the display name."""
+    reg = await register_user(client)
+    resp = await client.patch(
+        '/api/v1/auth/me',
+        headers=auth_headers(reg['token']),
+        json={'name': '<script>alert(1)</script>My Name'},
+    )
+    assert resp.status_code == 200
+    name = resp.json()['data']['name']
+    assert '<' not in name and '>' not in name
+    assert 'My Name' in name

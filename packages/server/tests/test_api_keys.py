@@ -159,3 +159,24 @@ async def test_api_keys_scoped_to_user(client):
     # User A's key still exists
     list_a = await client.get('/api/v1/api-keys/', headers=headers_a)
     assert len(list_a.json()['data']) == 1
+
+
+# ---------------------------------------------------------------------------
+# XSS sanitization on name
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_create_api_key_strips_html(client):
+    """POST /api-keys/ must sanitize the key name."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    resp = await client.post(
+        '/api/v1/api-keys/',
+        headers=headers,
+        json={'name': '<script>alert(1)</script>My Key'},
+    )
+    assert resp.status_code == 201
+    name = resp.json()['data']['name']
+    assert '<' not in name and '>' not in name
+    assert 'My Key' in name

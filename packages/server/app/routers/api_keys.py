@@ -12,6 +12,7 @@ from app.schemas.api_key import ApiKeyCreateRequest
 from app.schemas.common import GenericResponse
 from app.services import api_key_service
 from app.utils.i18n import not_found_error, t
+from app.utils.sanitizer import strip_html
 
 router = APIRouter(
     prefix='/api/v1/api-keys',
@@ -47,7 +48,7 @@ async def create_api_key(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={'code': 'LIMIT_REACHED', 'message': t('errors.api_key_limit_reached')},
         )
-    data = await api_key_service.create_key(db, uid, body.name)
+    data = await api_key_service.create_key(db, uid, strip_html(body.name))
     return {'success': True, 'data': data}
 
 

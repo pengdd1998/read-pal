@@ -22,6 +22,7 @@ from app.services.upload_service import (
     validate_file,
 )
 from app.utils.i18n import _get_user_lang, not_found_error, t
+from app.utils.sanitizer import strip_html
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.upload')
@@ -103,9 +104,9 @@ async def _process_upload(
     """Stream file to temp, create book, return (tmp_path, response_dict)."""
     tmp_path, file_size = await _stream_and_validate(file, file.filename, lang)
 
-    book_title = title or html.escape(Path(file.filename).stem)
-    book_author = author or ''
-    tag_list = tags.split(',') if tags else []
+    book_title = strip_html(title) or html.escape(Path(file.filename).stem)
+    book_author = strip_html(author) or ''
+    tag_list = [strip_html(t) for t in tags.split(',')] if tags else []
 
     book = await create_book_with_content(
         db=db,

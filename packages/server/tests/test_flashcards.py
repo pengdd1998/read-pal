@@ -236,3 +236,30 @@ async def test_review_alias(client):
     body = resp.json()
     assert body['success'] is True
     assert 'flashcards' in body['data']
+
+
+# ---------------------------------------------------------------------------
+# XSS sanitization on question/answer
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_create_flashcard_strips_html(client):
+    """POST /flashcards must sanitize question/answer."""
+    reg = await register_user(client)
+    book = await _create_book(client, reg['token'])
+    resp = await client.post(
+        '/api/v1/flashcards',
+        headers=auth_headers(reg['token']),
+        json={
+            'bookId': book['id'],
+            'question': '<script>alert(1)</script>What is XSS?',
+            'answer': '<svg/onload=alert(1)>Cross-site scripting',
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.json()['data']
+    assert '<' not in data['question'] and '>' not in data['question']
+    assert 'What is XSS' in data['question']
+    assert '<' not in data['answer'] and '>' not in data['answer']
+    assert 'Cross-site scripting' in data['answer']

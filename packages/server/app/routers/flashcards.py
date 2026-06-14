@@ -11,10 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
+from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.flashcard import FlashcardCreate, FlashcardGenerateRequest, FlashcardResponse, FlashcardReview
 from app.schemas.common import GenericResponse
 from app.services import flashcard_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
+from app.utils.sanitizer import sanitize_string_fields
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.flashcards')
@@ -80,6 +82,10 @@ async def create_flashcard(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Create a new flashcard."""
+    # XSS prevention: question/answer are user-text shown during reviews.
+    body_dict = body.model_dump()
+    sanitize_string_fields(body_dict, ['question', 'answer'])
+    body = FlashcardCreate(**body_dict)
     card = await flashcard_service.create_flashcard(db, UUID(user['id']), body)
     return {'success': True, 'data': _serialize_card(card)}
 
@@ -140,7 +146,7 @@ async def review_alias(
     }
 
 
-@router.post('/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def generate_flashcards(
     body: FlashcardGenerateRequest,
     db: AsyncSession = Depends(get_db),

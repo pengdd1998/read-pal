@@ -12,6 +12,7 @@ from app.schemas.auth import DeleteAccountRequest, UpdateProfileRequest
 from app.schemas.common import GenericResponse
 from app.services import account_service
 from app.utils.i18n import not_found_error, t
+from app.utils.sanitizer import strip_html
 from app.middleware.rate_limiter import api_limiter
 
 logger = logging.getLogger('read-pal.account')
@@ -30,6 +31,9 @@ async def update_me(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Update the authenticated user's profile."""
+    # XSS prevention: name is shown in book clubs, discussions, shares, etc.
+    if body.name is not None:
+        body.name = strip_html(body.name)
     try:
         profile = await account_service.update_profile(
             db,
