@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter, api_limiter
+from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.common import GenericResponse
 from app.services.knowledge_service import (
     build_graph,
@@ -47,7 +48,7 @@ async def get_themes(
     return {'success': True, 'data': themes}
 
 
-@router.get('/graph/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.get('/graph/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter, daily_ai_budget])
 async def get_graph(
     book_id: UUID,
     force_rebuild: bool = Query(False, description='Force regeneration via LLM'),
@@ -68,7 +69,7 @@ async def get_graph(
     return {'success': True, 'data': graph_data.model_dump(by_alias=True, mode='json')}
 
 
-@router.get('/search', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.get('/search', response_model=GenericResponse, dependencies=[ai_heavy_limiter, daily_ai_budget])
 async def search(
     q: str = Query(..., min_length=1, description='Search query'),
     book_id: UUID = Query(..., description='Book ID to search within'),

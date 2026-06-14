@@ -60,12 +60,21 @@ async def _check_json_cache(
         return _MISS
     try:
         parsed = json.loads(cached)
-        if schema_class is not None:
-            parsed = _validate_parsed(parsed, schema_class, log_label)
-        return parsed
     except json.JSONDecodeError:
         logger.debug('safe_invoke.cache_corrupt_json', key=key[:16] if key else None)
         return _MISS
+    if schema_class is not None:
+        # Treat a cached-but-schema-invalid entry as a miss so the next call
+        # re-fetches fresh output instead of serving a structurally-wrong value.
+        try:
+            parsed = schema_class.model_validate(parsed).model_dump()
+        except (ValueError, TypeError) as exc:
+            logger.warning(
+                'safe_invoke.cache_schema_invalid',
+                label=log_label, error=str(exc)[:200],
+            )
+            return _MISS
+    return parsed
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +122,7 @@ async def safe_llm_invoke(
         return fallback
 
     if schema_class is not None:
-        parsed = _validate_parsed(parsed, schema_class, log_label)
+        parsed = _validate_parsed(parsed, schema_class, log_label, fallback)
     return parsed
 
 

@@ -33,10 +33,34 @@ _LLM_SECTIONS = frozenset({
     'threads', 'reader_became',
 })
 
-# Sections that require annotations to avoid hallucination
-_ANNOTATION_DEPENDENT = frozenset({
-    'highlights', 'annotations_woven',
-})
+# Sections that require specific source data before invoking the LLM, to avoid
+# hallucinating content from empty inputs. Maps section type ->
+# (predicate, placeholder_title, message_key). When the predicate is falsy the
+# section renders a placeholder instead of calling the LLM.
+def _has_annotations(d: dict[str, Any]) -> bool:
+    return bool(d.get('highlights') or d.get('notes'))
+
+
+_SECTION_DATA_REQUIRED: dict[str, tuple[Any, str, str]] = {
+    'highlights': (_has_annotations, 'No Annotations Yet', 'memory_book.no_annotations_message'),
+    'annotations_woven': (_has_annotations, 'No Annotations Yet', 'memory_book.no_annotations_message'),
+    'conversations': (
+        lambda d: bool(d.get('conversations')),
+        'No Conversations Yet', 'memory_book.placeholder_message',
+    ),
+    'what_stuck': (
+        lambda d: bool(d.get('flashcards')),
+        'No Flashcards Yet', 'memory_book.placeholder_message',
+    ),
+    'concept_web': (
+        lambda d: bool(d.get('concepts') or d.get('concept_edges')),
+        'No Concepts Yet', 'memory_book.placeholder_message',
+    ),
+    'threads': (
+        lambda d: bool(d.get('other_books')),
+        'No Other Books Yet', 'memory_book.placeholder_message',
+    ),
+}
 
 
 async def _collect_and_validate(
@@ -65,18 +89,18 @@ async def _generate_all_sections(
     book_id: UUID,
 ) -> list[dict[str, Any]]:
     """Generate all sections in parallel and add metadata."""
-    stats = enriched_data.get('stats', {})
-    total_annotations = stats.get('total_highlights', 0) + stats.get('total_notes', 0)
-    skip_annotation_sections = total_annotations == 0
 
     async def _gen_section(section_type: str) -> dict[str, Any]:
         try:
-            if skip_annotation_sections and section_type in _ANNOTATION_DEPENDENT:
-                return {
-                    'type': section_type,
-                    'title': 'No Annotations Yet',
-                    'message': t('memory_book.no_annotations_message'),
-                }
+            requirement = _SECTION_DATA_REQUIRED.get(section_type)
+            if requirement is not None:
+                predicate, placeholder_title, message_key = requirement
+                if not predicate(enriched_data):
+                    return {
+                        'type': section_type,
+                        'title': placeholder_title,
+                        'message': t(message_key),
+                    }
             if section_type in _LLM_SECTIONS:
                 return await _generate_section(
                     section_type, enriched_data,

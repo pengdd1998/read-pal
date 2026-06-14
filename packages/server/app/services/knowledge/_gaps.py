@@ -113,22 +113,24 @@ def _merge_sub_graph_into(merged: nx.Graph, sub_graph: nx.Graph) -> None:
             node_kwargs.update(data)
             merged.add_node(**node_kwargs)
         else:
+            # Capture pre-merge values BEFORE mutating annotation_count, otherwise
+            # old_count would include new_count and the weighted freshness below
+            # would double-count the incoming sub-graph.
+            old_count = merged.nodes[name].get('annotation_count', 0)
+            old_fresh = merged.nodes[name].get('freshness', 1.0)
+            new_count = data.get('annotation_count', 0)
+            new_fresh = data.get('freshness', 1.0)
+
             merged.nodes[name]['size'] = (
                 merged.nodes[name].get('size', 0) + data.get('size', 0)
             )
-            merged.nodes[name]['annotation_count'] = (
-                merged.nodes[name].get('annotation_count', 0)
-                + data.get('annotation_count', 0)
-            )
+            merged.nodes[name]['annotation_count'] = old_count + new_count
             existing = merged.nodes[name].get('source_book_ids', [])
             for sbid in data.get('source_book_ids', []):
                 if sbid not in existing:
                     existing.append(sbid)
             merged.nodes[name]['source_book_ids'] = existing
-            old_count = merged.nodes[name].get('annotation_count', 0)
-            old_fresh = merged.nodes[name].get('freshness', 1.0)
-            new_count = data.get('annotation_count', 0)
-            new_fresh = data.get('freshness', 1.0)
+
             total = old_count + new_count
             if total > 0:
                 merged.nodes[name]['freshness'] = (

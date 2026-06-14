@@ -118,13 +118,16 @@ def build_system_prompt(
         if extra_parts:
             prompt += '\n\n' + '\n\n'.join(extra_parts)
 
-    # Apply persona personality if provided
-    if persona and persona in FRIEND_PERSONAS:
-        prompt += '\n\n' + FRIEND_PERSONAS[persona].template
-
-    # Enforce token budget
+    # Enforce token budget on the assembled context BEFORE appending the persona,
+    # so the (small, essential) persona is never the part truncated away. Genre
+    # and base prompt sit at the start of the string, so end-truncation preserves
+    # them too; only the tail of the heaviest late section is at risk.
     if budget:
         prompt = budget.add(prompt, 'system_prompt')
+
+    # Apply persona personality if provided (kept out of budget truncation)
+    if persona and persona in FRIEND_PERSONAS:
+        prompt += '\n\n' + FRIEND_PERSONAS[persona].template
 
     return prompt
 

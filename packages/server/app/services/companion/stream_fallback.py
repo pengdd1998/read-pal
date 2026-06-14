@@ -19,10 +19,20 @@ logger = structlog.get_logger('read-pal.companion')
 _STREAM_TIMEOUT_SECONDS = 120
 
 
-def resolve_fallback_provider(lang: str) -> Any | None:
-    """Find the next available fallback provider, or None."""
+def resolve_fallback_provider(
+    lang: str,
+    failed_provider_name: str | None = None,
+) -> Any | None:
+    """Find the next available fallback provider, or None.
+
+    ``failed_provider_name`` is the provider that just failed; the fallback
+    should skip it and use a *different* provider when one is available. Without
+    it the registry could re-select the same provider that just failed.
+    """
     registry = get_registry()
-    next_state = registry.next_provider_after('primary')
+    next_state: Any | None = None
+    if failed_provider_name:
+        next_state = registry.next_provider_after(failed_provider_name)
     if next_state is None:
         next_state = registry.get_provider(feature='companion_stream')
     return next_state
@@ -57,6 +67,12 @@ async def _stream_from_fallback_llm(
     async with asyncio.timeout(_STREAM_TIMEOUT_SECONDS):
         async for chunk in llm_fb.astream(messages):
             token = chunk.content
+            # Tool-call / vision chunks emit content as a list of dicts; coerce
+            # to text so ''.join below doesn't raise TypeError mid-stream.
+            if isinstance(token, list):
+                token = ''.join(
+                    part.get('text', '') for part in token if isinstance(part, dict)
+                )
             if token:
                 collected_parts.append(token)
                 fb_chunk_buffer.append(token)
@@ -88,9 +104,10 @@ async def stream_fallback(
     user_id: UUID,
     book_id: UUID,
     lang: str,
+    failed_provider_name: str | None = None,
 ) -> AsyncGenerator[str, None]:
     """Try streaming from the next available provider."""
-    next_state = resolve_fallback_provider(lang)
+    next_state = resolve_fallback_provider(lang, failed_provider_name)
     if next_state is None:
         yield sse_chunk(t('companion.fallback_error', lang))
         return

@@ -34,11 +34,17 @@ logger = structlog.get_logger('read-pal.synthesis')
 
 
 def _is_synthesis_fallback(data: dict[str, Any]) -> bool:
-  """Detect if synthesis LLM returned the empty fallback (all fields empty)."""
-  themes = data.get('themes', [])
-  connections = data.get('connections', [])
-  insights = data.get('insights', [])
-  return len(themes) == 0 and len(connections) == 0 and len(insights) == 0
+  """Detect if synthesis LLM returned the empty fallback (all fields empty).
+
+  ``run_synthesis_llm`` validates against the ``CrossBookComparison`` schema, so
+  the populated keys are ``common_themes`` / ``unique_perspectives`` /
+  ``recommended_connections`` — not ``themes`` / ``connections`` / ``insights``.
+  """
+  return (
+    len(data.get('common_themes', [])) == 0
+    and len(data.get('unique_perspectives', [])) == 0
+    and len(data.get('recommended_connections', [])) == 0
+  )
 
 
 def _is_comparison_fallback(data: dict[str, Any]) -> bool:
@@ -88,8 +94,8 @@ async def cross_book_synthesize(
   if is_fallback:
     synthesis_data['error'] = 'AI analysis unavailable - showing partial results'
 
-  themes_count = len(synthesis_data.get('themes', []))
-  connections_count = len(synthesis_data.get('connections', []))
+  themes_count = len(synthesis_data.get('common_themes', []))
+  connections_count = len(synthesis_data.get('unique_perspectives', []))
   elapsed = (time.monotonic() - t0) * 1000
   logger.info(
     'synthesis.cross_book.completed',

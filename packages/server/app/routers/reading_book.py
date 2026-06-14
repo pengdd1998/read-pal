@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
+from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.common import GenericResponse
 from app.schemas.memory_book import MemoryBookGenerateRequest
 from app.services import reading_book_service
@@ -23,7 +24,7 @@ logger = logging.getLogger('read-pal.reading_book')
 router = APIRouter(prefix='/api/v1/reading-book', tags=['reading-book'], dependencies=[api_limiter])
 
 
-@router.post('/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def generate_memory_book_query(
     book_id: UUID | None = None,
     body: MemoryBookGenerateRequest | None = None,
@@ -54,7 +55,7 @@ async def generate_memory_book_query(
         raise not_found_error(translate_error(exc)) from exc
 
 
-@router.post('/{book_id}/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/{book_id}/generate', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def generate_memory_book_path(
     book_id: UUID,
     body: MemoryBookGenerateRequest | None = None,

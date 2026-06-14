@@ -38,6 +38,7 @@ async def _count_messages(
             select(func.count(ChatMessage.id)).where(
                 ChatMessage.user_id == user_id,
                 ChatMessage.book_id == book_id,
+                ChatMessage.deleted_at.is_(None),
             )
         )
         return count_result.scalar() or 0
@@ -140,6 +141,7 @@ async def _load_older_messages(
             .where(
                 ChatMessage.user_id == user_id,
                 ChatMessage.book_id == book_id,
+                ChatMessage.deleted_at.is_(None),
             )
             .order_by(ChatMessage.created_at)
             .limit(CONVERSATION_MEMORY_LIMIT)

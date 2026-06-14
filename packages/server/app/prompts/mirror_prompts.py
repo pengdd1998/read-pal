@@ -278,7 +278,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'They spent {total_time} reading over {session_count} sessions. '
             'They made {highlight_count} highlights and {note_count} notes. '
             'Knowledge concepts: {concept_list}. Themes: {theme_list}. '
-            'Reading archetype: {reading_archetype}. Mastery: {mastery_score}%. '
+            'Mastery: {mastery_score}%. '
             'Write a 200-word reflective essay in second person about who they became as a reader '
             'through this book. How did their thinking evolve? What questions did they learn to ask? '
             'What did they discover about themselves? '

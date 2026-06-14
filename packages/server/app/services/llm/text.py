@@ -2,34 +2,44 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import structlog
 
 logger = structlog.get_logger('read-pal.llm')
 
+# Matches a fenced block: opening ``` (optionally with a language tag like json),
+# content (incl. newlines), closing ```. Tolerates leading/trailing prose around
+# the fence (e.g. "Here is the JSON:\n```json\n{...}\n```\nLet me know!").
+_FENCE_RE = re.compile(r'```(?:[a-zA-Z0-9_+-]*)?\s*\n?(.*?)```', re.DOTALL)
+
 
 def _strip_markdown_fences(content: str) -> str:
-    """Strip ```json ... ``` and ``` ... ``` wrappers from LLM output."""
+    """Strip ```json ... ``` (and variants) wrappers from LLM output.
+
+    Tolerates leading prose before the fence, trailing prose after it, and a
+    language tag on the opening fence. If no fence is present the content is
+    returned unchanged (stripped of surrounding whitespace).
+    """
     stripped = content.strip()
-    if not stripped.startswith('```'):
-        return content
-    lines = stripped.split('\n')
-    # First line is ```json or ``` — skip it
-    # Last line is ``` — skip it
-    if len(lines) >= 2 and lines[-1].strip() == '```':
-        return '\n'.join(lines[1:-1])
-    return content
+    match = _FENCE_RE.search(stripped)
+    if match:
+        return match.group(1).strip()
+    return stripped
 
 
 def _validate_parsed(
     data: Any,
     schema_class: type,
     log_label: str,
+    fallback: Any = None,
 ) -> Any:
     """Validate parsed JSON against a Pydantic schema.
 
-    Returns validated data on success, raw data on validation failure.
+    Returns the validated, model-dumped data on success; returns ``fallback`` on
+    validation failure so callers never receive a raw dict that violates the
+    schema (which would pollute downstream consumers expecting the schema shape).
     """
     try:
         result = schema_class.model_validate(data)
@@ -40,4 +50,4 @@ def _validate_parsed(
             label=log_label,
             error=str(exc),
         )
-        return data
+        return fallback

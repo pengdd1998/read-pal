@@ -10,6 +10,12 @@ from langchain_core.messages import BaseMessage
 from langchain_core.exceptions import OutputParserException
 from langchain_openai import ChatOpenAI
 
+# openai is a hard dependency of langchain_openai; its connection/timeout
+# errors are what langchain actually raises on network failures (the builtin
+# ConnectionError/TimeoutError are NOT raised by the SDK, so without these the
+# "retry once on network error" branch below was dead).
+from openai import APIConnectionError, APITimeoutError
+
 logger = structlog.get_logger('read-pal.llm')
 
 # ---------------------------------------------------------------------------
@@ -18,6 +24,17 @@ logger = structlog.get_logger('read-pal.llm')
 
 _RATE_LIMIT_BACKOFFS = [2, 4, 8]  # seconds to wait between 429 retries
 _NETWORK_RETRY_DELAY = 2  # seconds to wait before retrying network errors
+
+# Transient errors that warrant a single retry: stdlib socket-level errors,
+# asyncio timeouts, and the openai SDK's connection/timeout errors (which do
+# not subclass the stdlib types).
+_NETWORK_ERRORS = (
+    ConnectionError,
+    TimeoutError,
+    asyncio.TimeoutError,
+    APIConnectionError,
+    APITimeoutError,
+)
 
 
 def _is_rate_limited(exc: Exception) -> bool:
@@ -37,7 +54,7 @@ async def _invoke_with_retry(
     for attempt in range(max_attempts):
         try:
             return await llm.ainvoke(messages)
-        except (ConnectionError, TimeoutError, asyncio.TimeoutError) as exc:
+        except _NETWORK_ERRORS as exc:
             # Network-level errors: retry once
             last_exc = exc
             if attempt < 1:

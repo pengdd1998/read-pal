@@ -56,7 +56,10 @@ def _compute_freshness(
 
     oldest = min(relevant_dates)
     days_since = (now - oldest).days
-    return max(0.0, 1.0 - days_since / _KNOWLEDGE_FRESHNESS_DAYS)
+    # Clamp to [0, 1]: a future-dated annotation (clock skew or naive/aware tz
+    # mismatch) would otherwise yield >1.0, violating GraphNode.freshness(le=1.0)
+    # and raising a ValidationError that 500s the /graph endpoint.
+    return min(1.0, max(0.0, 1.0 - days_since / _KNOWLEDGE_FRESHNESS_DAYS))
 
 
 def _resolve_edge_label(

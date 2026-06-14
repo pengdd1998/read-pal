@@ -13,11 +13,15 @@ from app.utils.output_filter import filter_output
 logger = structlog.get_logger('read-pal.companion')
 
 
-async def try_stream_cache(messages: list) -> str | None:
-    """Check LLM cache for a matching stream response. Returns cached text or None."""
+async def try_stream_cache(messages: list, user_id: str | None = None) -> str | None:
+    """Check LLM cache for a matching stream response. Returns cached text or None.
+
+    ``user_id`` is required to scope the cache key per-user — without it two users
+    with identical prompts would share a cached streamed reply (privacy leak).
+    """
     try:
         from app.services.llm import _cache_key, _cache_get
-        cache_key = _cache_key(messages, 'companion_stream')
+        cache_key = _cache_key(messages, 'companion_stream', user_id=user_id)
         return await _cache_get(cache_key)
     except (ValueError, ConnectionError, RuntimeError) as exc:
         logger.warning('companion.streaming.cache_check_failed', error=str(exc)[:200])
@@ -57,7 +61,7 @@ async def try_emit_cached(
     messages: list[dict],
 ) -> AsyncGenerator[str, None]:
     """Try cache lookup and emit cached response. Yields nothing on miss."""
-    cached_response = await try_stream_cache(messages)
+    cached_response = await try_stream_cache(messages, str(user_id))
     if not cached_response:
         return
     async for chunk in emit_cached_response(
@@ -83,7 +87,7 @@ async def persist_stream_result(
     if assistant_content:
         try:
             from app.services.llm import _cache_key, _cache_set
-            cache_key = _cache_key(messages, 'companion_stream')
+            cache_key = _cache_key(messages, 'companion_stream', user_id=str(user_id))
             await _cache_set(cache_key, assistant_content)
         except (ValueError, ConnectionError, RuntimeError) as exc:
             logger.warning('companion.streaming.cache_write_failed', error=str(exc)[:200])

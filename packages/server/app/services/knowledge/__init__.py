@@ -288,8 +288,16 @@ async def _merge_cached_graphs_for_books(
     book_ids: list[UUID],
     ann_by_book: dict[UUID, list],
 ) -> dict[str, list[dict]]:
-    """Load cached graphs per book and merge nodes/edges into flat lists."""
-    all_nodes: list[dict] = []
+    """Load cached graphs per book and merge nodes/edges into flat lists.
+
+    Nodes are merged by ``id`` (the concept label) so the same concept extracted
+    across multiple books becomes a single node with accumulated ``size`` /
+    ``annotationCount`` / ``sourceBookIds``. Edges are deduped by
+    ``(source, target)``. Without this, duplicate node ids break the frontend's
+    React keys and node-lookup map.
+    """
+    nodes_by_id: dict[str, dict] = {}
+    seen_edges: set[tuple[str, str]] = set()
     all_edges: list[dict] = []
 
     for bid in book_ids:
@@ -298,16 +306,38 @@ async def _merge_cached_graphs_for_books(
             texts = [a.content for a in annotations if a.content.strip()]
             current_hash = _content_hash(texts)
             cached = await _load_cached_graph(user_id, bid, current_hash)
-            if cached is not None:
-                for node in cached.nodes:
-                    all_nodes.append(node.model_dump(by_alias=True, mode='json'))
-                for edge in cached.edges:
-                    all_edges.append(edge.model_dump(by_alias=True, mode='json'))
+            if cached is None:
+                continue
+            for node in cached.nodes:
+                nd = node.model_dump(by_alias=True, mode='json')
+                nid = nd.get('id')
+                if not nid:
+                    continue
+                existing = nodes_by_id.get(nid)
+                if existing is None:
+                    nodes_by_id[nid] = nd
+                    continue
+                existing['size'] = existing.get('size', 1) + nd.get('size', 1)
+                existing['annotationCount'] = (
+                    existing.get('annotationCount', 0) + nd.get('annotationCount', 0)
+                )
+                sbids = existing.get('sourceBookIds', [])
+                for sbid in nd.get('sourceBookIds', []):
+                    if sbid not in sbids:
+                        sbids.append(sbid)
+                existing['sourceBookIds'] = sbids
+            for edge in cached.edges:
+                ed = edge.model_dump(by_alias=True, mode='json')
+                key = (ed.get('source', ''), ed.get('target', ''))
+                if key in seen_edges:
+                    continue
+                seen_edges.add(key)
+                all_edges.append(ed)
         except (ValueError, RuntimeError) as exc:
             logger.warning('Failed to load cached graph for book %s', bid, exc_info=True)
             continue
 
-    return {'nodes': all_nodes, 'edges': all_edges}
+    return {'nodes': list(nodes_by_id.values()), 'edges': all_edges}
 
 
 async def get_all_cached_graphs(

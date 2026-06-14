@@ -50,6 +50,12 @@ async def _stream_with_llm(
     async with asyncio.timeout(_STREAM_TIMEOUT_SECONDS):
         async for chunk in llm.astream(messages):
             token = chunk.content
+            # Tool-call / vision chunks emit content as a list of dicts; coerce
+            # to text so ''.join below (and PII redaction) doesn't raise TypeError.
+            if isinstance(token, list):
+                token = ''.join(
+                    part.get('text', '') for part in token if isinstance(part, dict)
+                )
             if token:
                 collected_parts.append(token)
                 chunk_buffer.append(token)
@@ -142,7 +148,7 @@ async def _stream_from_provider(
         )
         async for chunk in stream_fallback(
             messages, collected_parts, request_id, start_time,
-            user_id, book_id, lang,
+            user_id, book_id, lang, failed_provider_name=provider_name,
         ):
             yield chunk
         return
@@ -174,7 +180,7 @@ async def _stream_from_provider(
             collected_parts.clear()
         async for chunk in stream_fallback(
             messages, collected_parts, request_id, start_time,
-            user_id, book_id, lang,
+            user_id, book_id, lang, failed_provider_name=provider_name,
         ):
             yield chunk
 
@@ -362,7 +368,10 @@ async def stream_chat(
             book_id=str(book_id),
         )
 
-    # Try cached response first
+    # Try cached response first (honor cancellation even on the cache-hit path,
+    # otherwise a cached reply ignores /chat/cancel and still persists).
+    if cancelled is not None and cancelled.is_set():
+        return
     cache_used = False
     async for chunk in try_emit_cached(
         db, user_id, book_id, message, messages,

@@ -84,7 +84,6 @@ def _prepare_reflection_section(
             'note_count': stats.get('total_notes', 0),
             'concept_list': concepts,
             'theme_list': themes,
-            'reading_archetype': enriched_data.get('encounter_archetype', 'The Explorer'),
             'mastery_score': enriched_data.get('mastery', {}).get('overallMastery', 0),
         }
 

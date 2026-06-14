@@ -3,6 +3,8 @@
 import asyncio
 import time
 
+import httpx
+
 from app.services.rag._constants import _get_http_client, logger
 from app.config import get_settings
 
@@ -39,7 +41,10 @@ async def _get_embedding(text: str) -> list[float] | None:
                 logger.warning('Embedding API returned unexpected shape: %s', str(data)[:200])
                 return None
             return embedding
-        except (ConnectionError, TimeoutError, KeyError, ValueError) as exc:
+        except (ConnectionError, TimeoutError, KeyError, ValueError, httpx.HTTPError) as exc:
+            # httpx.HTTPError covers HTTPStatusError (429 rate-limit / 5xx) so the
+            # 3-tier RAG fallback (semantic -> keyword) degrades gracefully instead
+            # of crashing the whole chat when GLM rate-limits the embeddings endpoint.
             if attempt < MAX_RETRIES:
                 logger.debug('Embedding attempt %d failed, retrying: %s', attempt + 1, exc)
                 await asyncio.sleep(RETRY_DELAY * (attempt + 1))
