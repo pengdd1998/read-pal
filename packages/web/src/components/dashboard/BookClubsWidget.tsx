@@ -140,9 +140,14 @@ function BookClubsWidgetInner() {
   );
   if (!mountedRef.current) return;
   if (res.success && res.data) {
-  const listRes = await api.get<BookClub[]>('/api/book-clubs');
+  // Backend returns { items: BookClub[], total, page, perPage }, not a bare
+  // array. Match the shape used in the initial load to avoid setting clubs
+  // to an object — which would silently break the render because clubs.map
+  // would no longer exist.
+  const listRes = await api.get<{ items: BookClub[] }>('/api/book-clubs');
   if (listRes.success && listRes.data) {
-   setClubs(listRes.data);
+   const list = Array.isArray(listRes.data) ? listRes.data : (listRes.data.items ?? []);
+   setClubs(list);
   }
   setShowJoin(false);
   setJoinCode('');
