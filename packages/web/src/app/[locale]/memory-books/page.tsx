@@ -47,11 +47,10 @@ interface Book {
   status: string;
 }
 
-const MemoryBookCard = React.memo(function MemoryBookCard({ mb, dateLabel, chaptersLabel, momentsLabel, highlightsLabel, notesLabel, durationStr }: {
+const MemoryBookCard = React.memo(function MemoryBookCard({ mb, dateLabel, chaptersLabel, highlightsLabel, notesLabel, durationStr }: {
   mb: MemoryBook;
   dateLabel: string;
   chaptersLabel: string;
-  momentsLabel: string;
   highlightsLabel: string;
   notesLabel: string;
   durationStr: string;
@@ -75,7 +74,7 @@ const MemoryBookCard = React.memo(function MemoryBookCard({ mb, dateLabel, chapt
             {mb.book?.title || mb.title}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {isPersonalBook ? chaptersLabel : momentsLabel}
+            {chaptersLabel}
             {' · '}
             {dateLabel}
           </p>
@@ -254,7 +253,6 @@ export default function MemoryBooksPage() {
                 mb={mb}
                 dateLabel={mb.generatedAt ? new Date(mb.generatedAt).toLocaleDateString(locale) : t('unknownDate')}
                 chaptersLabel={t('chapters', { count: mb.sections?.length || 0 })}
-                momentsLabel={t('moments', { count: mb.moments?.length || 0 })}
                 highlightsLabel={t('highlights', { count: mb.stats?.totalHighlights ?? 0 })}
                 notesLabel={t('notes', { count: mb.stats?.totalNotes ?? 0 })}
                 durationStr={mb.stats?.readingDuration && mb.stats.readingDuration > 0 ? formatDuration(mb.stats.readingDuration) : ''}
