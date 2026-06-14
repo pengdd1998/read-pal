@@ -74,12 +74,16 @@ export function useChatHistory({
     };
   }, [isOpen, bookId, historyLoaded, toast, genreTemplate, friendName, bookTitle, t]);
 
-  // Reset on book change
-  if (prevBookIdRef.current !== bookId) {
+  // Reset history when the book changes. Doing this in an effect (rather
+  // than during render) keeps the component pure under React Strict Mode
+  // and avoids setState-during-render warnings. The first effect's
+  // `historyLoaded` guard then re-opens the fetch on the new bookId.
+  useEffect(() => {
+    if (prevBookIdRef.current === bookId) return;
     prevBookIdRef.current = bookId;
     setHistoryLoaded(false);
     setMessages([]);
-  }
+  }, [bookId]);
 
   return { messages, setMessages, historyLoaded };
 }
