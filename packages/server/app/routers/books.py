@@ -121,6 +121,10 @@ async def update_book(
 ) -> dict:
     """Partially update a book."""
     lang = await _get_user_lang(db, UUID(current_user['id']))
+    # XSS prevention: strip HTML from user-supplied fields (mirror create_book).
+    body_dict = body.model_dump(exclude_unset=True)
+    sanitize_book_fields(body_dict)
+    body = BookUpdate(**body_dict)
     book = await book_service.update_book(db, UUID(current_user['id']), book_id, body)
     if book is None:
         raise not_found_error(t('errors.book_not_found', lang))

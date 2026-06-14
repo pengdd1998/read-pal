@@ -117,6 +117,33 @@ async def test_update_book(client):
     assert resp.json()['data']['title'] == 'Updated Title'
 
 
+@pytest.mark.asyncio
+async def test_update_book_strips_html(client):
+    """PATCH /books/{id} must sanitize title/author/tags like POST does."""
+    reg = await register_user(client)
+    book = await _create_book(client, reg['token'])
+    resp = await client.patch(
+        f"/api/v1/books/{book['id']}",
+        json={
+            'title': '<script>alert(1)</script>Safe Title',
+            'author': '<b>Author</b>',
+            'tags': ['<img src=x>fiction', 'sci-fi'],
+        },
+        headers=auth_headers(reg['token']),
+    )
+    assert resp.status_code == 200
+    data = resp.json()['data']
+    # strip_html removes the tags themselves; inner text remains, but the
+    # XSS vector (the <script>/<img>/etc. tag) is gone — that's what matters.
+    assert '<' not in data['title']
+    assert '>' not in data['title']
+    assert 'Safe Title' in data['title']
+    assert '<' not in data['author']
+    assert 'Author' in data['author']
+    assert all('<' not in t and '>' not in t for t in data['tags'])
+    assert 'fiction' in data['tags'] and 'sci-fi' in data['tags']
+
+
 # ---------------------------------------------------------------------------
 # DELETE /api/v1/books/{id}
 # ---------------------------------------------------------------------------
