@@ -88,8 +88,12 @@ def _prepare_annotation_section(
     if section_type == 'highlights':
         raw_highlights = enriched_data.get('highlights', [])[:30]
         budgeted = _budget_list(raw_highlights, budget, 'highlights')
+        # Report the count the LLM actually sees (budgeted), not the full DB
+        # count. Otherwise the LLM is told "you have 247 highlights" while only
+        # seeing 30, producing inflated cluster claims.
         return {
-            'count': len(enriched_data.get('highlights', [])),
+            'count': len(budgeted),
+            'total_in_book': len(enriched_data.get('highlights', [])),
             'book_title': book_title,
             'concept_list': ', '.join(enriched_data.get('concepts', [])[:10]),
             'theme_list': ', '.join(enriched_data.get('synthesis_themes', [])[:5]),

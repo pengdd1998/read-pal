@@ -88,7 +88,7 @@ async def safe_llm_invoke(
     from app.services.llm.cache import _cache_key, _cache_set
 
     effective_feature = feature or log_label
-    key = _cache_key(messages, log_label) if use_cache else ''
+    key = _cache_key(messages, log_label, user_id=user_id) if use_cache else ''
 
     cached = await _check_json_cache(key, schema_class, log_label)
     if not isinstance(cached, _MissingSentinel):
@@ -131,7 +131,7 @@ async def safe_llm_call(
     from app.services.llm.cache import _cache_get, _cache_key, _cache_set
 
     effective_feature = feature or log_label
-    key = _cache_key(messages, log_label) if use_cache else ''
+    key = _cache_key(messages, log_label, user_id=user_id) if use_cache else ''
 
     # Try cache first
     if key:

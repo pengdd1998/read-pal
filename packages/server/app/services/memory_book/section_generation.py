@@ -25,6 +25,7 @@ from app.schemas.llm_outputs import (
 from app.services.llm import safe_llm_invoke
 from app.services.memory_book.section_data_dispatch import prepare_section_data
 from app.utils.i18n import t
+from app.utils.sanitizer import sanitize_user_input
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.memory_book')
@@ -68,8 +69,14 @@ async def _generate_section(
     if section_template is None:
         return _placeholder_section(section_type)
 
-    book_title = enriched_data.get('book', {}).get('title', 'Unknown')
-    book_author = enriched_data.get('book', {}).get('author', 'Unknown')
+    book_title = sanitize_user_input(
+        enriched_data.get('book', {}).get('title', 'Unknown'),
+        context='mirror_book_title',
+    ) or 'Unknown'
+    book_author = sanitize_user_input(
+        enriched_data.get('book', {}).get('author', 'Unknown'),
+        context='mirror_book_author',
+    ) or 'Unknown'
 
     budget = TokenBudget(model='glm-4.7-flash', response_reserve=4_000)
     section_data = prepare_section_data(section_type, enriched_data, budget)

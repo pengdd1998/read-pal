@@ -171,12 +171,20 @@ async def _upsert_memory_book(
     enriched_data: dict[str, Any],
     book_format: str,
 ) -> MemoryBook:
-    """Insert or update the MemoryBook row and return the ORM object."""
+    """Insert or update the MemoryBook row and return the ORM object.
+
+    Uses ``SELECT ... FOR UPDATE`` so concurrent generate requests for the
+    same (user_id, book_id) serialize. Without this, two parallel POSTs could
+    both see "no existing row", both INSERT, and one would 500 on the unique
+    constraint ``uq_memory_books_user_book``.
+    """
     result = await db.execute(
-        select(MemoryBook).where(
+        select(MemoryBook)
+        .where(
             MemoryBook.user_id == user_id,
             MemoryBook.book_id == book_id,
-        ),
+        )
+        .with_for_update(),
     )
     existing = result.scalar_one_or_none()
 

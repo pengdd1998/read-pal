@@ -53,6 +53,9 @@ export default function ReadingMirrorPage() {
  const [error, setError] = useState<string | null>(null);
  const genTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
  const mountedRef = useRef(true);
+ // Synchronous flag for double-click dedup — `generating` state is async so
+ // two rapid clicks can both see false and both fire POSTs in parallel.
+ const generatingRef = useRef(false);
  const tRef = useRef(t);
  tRef.current = t;
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; if (genTimerRef.current) clearInterval(genTimerRef.current); }; }, []);
@@ -105,6 +108,11 @@ export default function ReadingMirrorPage() {
 
  // Generate reading mirror
  const handleGenerate = useCallback(async () => {
+ // Dedup double-clicks: a second click while the first POST is in flight
+ // would fire a parallel generate request, racing the backend upsert and
+ // confusing the step timer.
+ if (generatingRef.current) return;
+ generatingRef.current = true;
  setGenerating(true);
  setError(null);
 
@@ -140,6 +148,7 @@ export default function ReadingMirrorPage() {
   setError(tRef.current('generationFailedError'));
   setGenStep('error');
  } finally {
+  generatingRef.current = false;
   if (mountedRef.current) setGenerating(false);
  }
  }, [bookId]);

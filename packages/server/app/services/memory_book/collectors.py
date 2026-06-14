@@ -199,11 +199,15 @@ def _build_stats(
     sessions: list,
 ) -> dict[str, int]:
     """Compute aggregate stats from collected data."""
+    # Use round() instead of integer floor division so short sessions don't
+    # get truncated away. Floor: 10 sessions of 90s each = 10 min (actual 15).
+    # round(): 10 sessions of 90s each = 15 min.
+    total_seconds = sum((s.duration or 0) for s in sessions)
     return {
         'total_highlights': len(highlights),
         'total_notes': len(notes),
         'total_conversations': len(conversations),
         'total_sessions': len(sessions),
-        'total_reading_minutes': sum((s.duration or 0) for s in sessions) // 60,
+        'total_reading_minutes': round(total_seconds / 60),
         'total_pages_read': sum((s.pages_read or 0) for s in sessions),
     }

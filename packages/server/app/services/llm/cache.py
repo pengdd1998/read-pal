@@ -29,10 +29,21 @@ def _max_in_memory() -> int:
     return get_settings().cache_llm_max_entries
 
 
-def _cache_key(messages: list[BaseMessage], label: str, model: str | None = None) -> str:
-    """Deterministic cache key from messages + label + model."""
+def _cache_key(
+    messages: list[BaseMessage],
+    label: str,
+    model: str | None = None,
+    user_id: str | None = None,
+) -> str:
+    """Deterministic cache key from messages + label + model + user_id.
+
+    ``user_id`` is included to prevent cross-user cache collisions: without it,
+    two users with identical prompts (e.g., the same fallback path, empty-data
+    case, or a chapter-summary request on a shared book) would share a cached
+    LLM response — a privacy leak.
+    """
     model_name = model or get_settings().default_model
-    parts = [label, model_name]
+    parts = [label, model_name, f'user:{user_id or "anon"}']
     for msg in messages:
         parts.append(msg.content)
     digest = hashlib.sha256('|'.join(parts).encode()).hexdigest()[:16]
