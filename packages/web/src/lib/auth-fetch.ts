@@ -17,6 +17,35 @@ export function getAuthToken(): string | null {
   return typeof window !== 'undefined' ? safeGetItem('auth_token') : null;
 }
 
+/**
+ * Decode a JWT's `exp` (seconds since epoch) without verifying the signature.
+ * Returns null if the token isn't a parseable JWT.
+ */
+function decodeJwtExp(token: string): number | null {
+  const part = token.split('.')[1];
+  if (!part) return null;
+  try {
+    const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    const json = atob(base64);
+    const payload = JSON.parse(json) as { exp?: unknown };
+    return typeof payload.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * True if the access token is expired or about to expire within `leewayMs`.
+ * Used to proactively refresh before a request instead of eating a 401 +
+ * refresh-and-retry round-trip on every cold load.
+ */
+export function isTokenExpiring(token: string | null, leewayMs = 30_000): boolean {
+  if (!token) return false;
+  const exp = decodeJwtExp(token);
+  if (exp === null) return false; // unparseable — let the request ride
+  return Date.now() + leewayMs >= exp * 1000;
+}
+
 /** Get the auth token from native storage when in Capacitor (async). */
 export async function getAuthTokenAsync(): Promise<string | null> {
   if (isCapacitor()) return getItem('auth_token');

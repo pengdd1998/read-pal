@@ -10,6 +10,7 @@ import type { ApiResponse } from '@read-pal/shared';
 import {
   getAuthToken,
   getAuthTokenAsync,
+  isTokenExpiring,
   tryFetchRefresh,
   clearAuthTokens,
 } from '@/lib/auth-fetch';
@@ -28,9 +29,21 @@ const REFRESH_URL = '/api/auth/refresh';
 export function installRequestInterceptor(client: AxiosInstance): void {
   client.interceptors.request.use(
     async (config) => {
-      const token = isCapacitor()
+      let token = isCapacitor()
         ? await getAuthTokenAsync()
         : getAuthToken();
+      // Proactively refresh an expired/near-expiry access token BEFORE sending,
+      // so a cold load doesn't fire N parallel requests that all 401 (each
+      // then triggering the response-interceptor refresh-and-retry). The
+      // shared _refreshPromise dedupes concurrent refreshes. Best-effort: if
+      // refresh fails, fall through with the stale token and let the response
+      // interceptor's 401 handling take over.
+      if (token && isTokenExpiring(token) && config.url !== REFRESH_URL) {
+        const refreshed = await tryFetchRefresh();
+        if (refreshed) {
+          token = isCapacitor() ? await getAuthTokenAsync() : getAuthToken();
+        }
+      }
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
