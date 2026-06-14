@@ -11,7 +11,6 @@ import { ProfileSection } from '@/components/settings/ProfileSection';
 import { ReadingPrefsSection } from '@/components/settings/ReadingPrefsSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { InterventionPrefsSection } from '@/components/settings/InterventionPrefsSection';
-import { DeveloperSection } from '@/components/settings/DeveloperSection';
 import { AccountSection } from '@/components/settings/AccountSection';
 import { LanguageSection } from '@/components/settings/LanguageSection';
 import { SavingIndicator } from '@/components/settings/SavingIndicator';
@@ -190,7 +189,6 @@ export default function SettingsPage() {
       <NotificationsSection settings={settings} saving={saving} onSave={handleSettingsUpdate} />
       <InterventionPrefsSection />
       <LanguageSection onLanguageChange={handleLanguageChange} />
-      <DeveloperSection settings={settings} />
       <AccountSection />
 
       {/* Back link */}

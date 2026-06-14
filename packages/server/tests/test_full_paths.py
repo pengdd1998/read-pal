@@ -396,14 +396,6 @@ r = client.get(f'{BASE}/webhooks', headers=headers)
 report('webhooks.list', r.status_code == 200, f'status={r.status_code}')
 
 
-# ── Phase 14: API Keys ────────────────────────────────────────────────────
-
-print('\n=== Phase 14: API Keys ===')
-
-r = client.get(f'{BASE}/api-keys', headers=headers)
-report('api_keys.list', r.status_code == 200, f'status={r.status_code}')
-
-
 # ── Phase 15: LLM Logs ────────────────────────────────────────────────────
 
 print('\n=== Phase 15: LLM Logs ===')

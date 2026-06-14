@@ -9,7 +9,6 @@ const PATHS = [
   '/login',
   '/forgot-password',
   '/memory-books',
-  '/developers',
   '/flashcards',
   '/stats',
 ];

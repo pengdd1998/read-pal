@@ -2,7 +2,6 @@
 
 Mirrors the Node.js auth system exactly:
   - JWT (HS256) with jti-based Redis blacklist
-  - API key support (rpk_ prefix, SHA-256 hash lookup)
   - bcrypt password hashing (12 rounds)
   - Fail-closed token revocation when Redis is unavailable
 """
@@ -25,7 +24,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.core.redis import get_redis as _get_redis
 from app.db import get_db
-from app.models.api_key import ApiKey, hash_api_key, is_api_key_format
 from app.models.user import User
 from app.utils.i18n import t
 
@@ -236,26 +234,6 @@ def _raise_401(code: str, message: str) -> None:
     )
 
 
-async def _authenticate_api_key(token: str, db: AsyncSession) -> dict[str, Any]:
-    """Validate an API key and return the user dict."""
-    key_hash = hash_api_key(token)
-    result = await db.execute(select(ApiKey).where(ApiKey.key_hash == key_hash))
-    api_key = result.scalar_one_or_none()
-
-    if api_key is None:
-        _raise_401('INVALID_API_KEY', t('errors.invalid_api_key'))
-
-    result = await db.execute(select(User).where(User.id == api_key.user_id))
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        _raise_401('USER_NOT_FOUND', t('errors.api_key_owner_not_found'))
-
-    api_key.last_used_at = datetime.now(timezone.utc)
-    await db.flush()
-    return _user_dict(user)
-
-
 async def _authenticate_jwt(token: str, db: AsyncSession) -> dict[str, Any]:
     """Validate a JWT token and return the user dict."""
     settings = get_settings()
@@ -293,11 +271,8 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Validate Bearer token (JWT or API key) and return the user dict."""
+    """Validate Bearer JWT and return the user dict."""
     if credentials is None:
         _raise_401('UNAUTHORIZED', t('errors.missing_auth'))
 
-    token = credentials.credentials
-    if is_api_key_format(token):
-        return await _authenticate_api_key(token, db)
-    return await _authenticate_jwt(token, db)
+    return await _authenticate_jwt(credentials.credentials, db)

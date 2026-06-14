@@ -15,7 +15,6 @@ from app.db import Base
 if TYPE_CHECKING:
     from app.models.ai_feedback import AIFeedback
     from app.models.annotation import Annotation
-    from app.models.api_key import ApiKey
     from app.models.book import Book
     from app.models.book_club import BookClub, BookClubMember
     from app.models.chat_message import ChatMessage
@@ -122,11 +121,6 @@ class User(Base):
     )
     notifications: Mapped[list['Notification']] = relationship(
         'Notification',
-        back_populates='user',
-        cascade='all, delete-orphan',
-    )
-    api_keys: Mapped[list['ApiKey']] = relationship(
-        'ApiKey',
         back_populates='user',
         cascade='all, delete-orphan',
     )

@@ -14,7 +14,6 @@ from app.models.notification import Notification
 from app.models.shared_export import SharedExport
 from app.models.intervention_feedback import InterventionFeedback
 from app.models.book_club import BookClub, BookClubMember, ClubDiscussion
-from app.models.api_key import ApiKey
 from app.models.webhook import Webhook, WebhookDeliveryLog
 from app.models.conversation_summary import ConversationSummary
 from app.models.ai_feedback import AIFeedback
@@ -41,7 +40,6 @@ __all__ = [
     'BookClub',
     'BookClubMember',
     'ClubDiscussion',
-    'ApiKey',
     'Webhook',
     'WebhookDeliveryLog',
     'ConversationSummary',

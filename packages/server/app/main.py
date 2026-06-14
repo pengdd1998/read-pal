@@ -221,7 +221,7 @@ async def health_check() -> dict[str, object]:
 
 # --- Router includes ---
 from app.routers import (  # noqa: E402
-    account, agent, api_keys, annotations, auth, book_clubs, books,
+    account, agent, annotations, auth, book_clubs, books,
     challenges, collections, discovery, export, flashcards, friend,
     interventions, knowledge, logs, notifications, password_reset,
     reading_book, reading_sessions, recommendations,
@@ -231,7 +231,7 @@ from app.routers import (  # noqa: E402
 
 for r in [
     auth.router, password_reset.router, account.router, agent.router,
-    api_keys.router, friend.router, books.router, annotations.router,
+    friend.router, books.router, annotations.router,
     reading_sessions.router, settings_router.router, knowledge.router,
     logs.router, synthesis.router, reading_book.router, export.router,
     book_clubs.router, collections.router, flashcards.router,

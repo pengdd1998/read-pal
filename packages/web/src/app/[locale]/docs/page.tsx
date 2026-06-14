@@ -133,25 +133,6 @@ export default async function DocsPage({
   },
   ],
  },
- {
-  id: 'developer',
-  title: t('section_developer'),
-  icon: '💻',
-  items: [
-  {
-   title: t('dev_rest_api'),
-   content: t('dev_rest_api_content'),
-  },
-  {
-   title: t('dev_webhooks'),
-   content: t('dev_webhooks_content'),
-  },
-  {
-   title: t('dev_api_keys'),
-   content: t('dev_api_keys_content'),
-  },
-  ],
- },
  ];
 
  return (
@@ -185,13 +166,6 @@ export default async function DocsPage({
     {s.title}
     </a>
    ))}
-   <div className="border-t border-surface-3 my-3" />
-   <Link
-    href="/developers"
-    className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-   >
-    {t('api_reference')}
-   </Link>
    </nav>
 
    {/* Content */}

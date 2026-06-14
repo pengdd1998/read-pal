@@ -183,12 +183,6 @@ async def test_notifications():
     return ok
 
 
-async def test_api_keys():
-    """Test API keys."""
-    r, ok = await test_api('get', '/api/api-keys', 'List API keys')
-    return ok
-
-
 async def test_reading_book():
     """Test reading book (personal reading book)."""
     r, ok = await test_api('get', '/api/reading-book', 'List reading books')
@@ -351,7 +345,6 @@ async def run_tests():
             ('Collections', test_collections),
             ('Book Clubs', test_book_clubs),
             ('Notifications', test_notifications),
-            ('API Keys', test_api_keys),
             ('Reading Book', test_reading_book),
             ('Export', test_export),
             ('Recommendations', test_recommendations),
