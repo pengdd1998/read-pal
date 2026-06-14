@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.schemas.book import BookResponse
 from app.schemas.common import GenericResponse
 from app.middleware.rate_limiter import upload_limiter, write_limiter
 from app.services.upload_service import (
@@ -43,20 +44,14 @@ def _validate_upload_file(
 
 
 def _build_book_response(book: object) -> dict:
-    """Build the success response dict from a book ORM object."""
-    return {
-        'success': True,
-        'data': {
-            'book': {
-                'id': str(book.id),
-                'title': book.title,
-                'author': book.author,
-                'fileType': book.file_type.value,
-                'totalPages': book.total_pages,
-                'status': book.status.value,
-            },
-        },
-    }
+    """Build the success response dict from a book ORM object.
+
+    Returns the full BookResponse shape (coverUrl, progress, tags, dates, …)
+    so the freshly-uploaded card renders immediately — including its cover —
+    instead of showing the gradient placeholder until the library re-fetches.
+    """
+    book_data = BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')
+    return {'success': True, 'data': {'book': book_data}}
 
 
 async def _stream_and_validate(
