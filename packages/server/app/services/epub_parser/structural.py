@@ -1,11 +1,18 @@
 """EPUB structural parsers: container.xml, OPF manifest/spine, NCX/NAV TOC.
 
 Uses only stdlib xml.etree — no ebooklib dependency.
+
+Security: parse entry-points use ``defusedxml.ElementTree.fromstring`` to block
+XML entity expansion (billion laughs / quadratic blowup) attacks from untrusted
+EPUBs. Type hints and ParseError still come from stdlib ET.
 """
 
 import logging
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa: ICN001 — stdlib types/ParseError only
 import zipfile
+from xml.etree.ElementTree import ParseError as ETParseError
+
+from defusedxml import ElementTree as DefusedET
 
 from app.services.epub_parser.constants import NS_DC, NS_EPUB, NS_NCX
 
@@ -25,8 +32,8 @@ def parse_epub_container(zf: zipfile.ZipFile) -> str | None:
         return _scan_for_opf(zf)
 
     try:
-        root = ET.fromstring(xml_bytes)
-    except ET.ParseError:
+        root = DefusedET.fromstring(xml_bytes)
+    except ETParseError:
         logger.debug('container.xml parse failed, scanning for OPF')
         return _scan_for_opf(zf)
     for rf in root.iter():
@@ -53,8 +60,8 @@ def _scan_for_opf(zf: zipfile.ZipFile) -> str | None:
 def parse_opf(opf_xml: str, opf_path: str) -> dict:
     """Parse OPF package document for manifest, spine, metadata."""
     try:
-        root = ET.fromstring(opf_xml)
-    except ET.ParseError:
+        root = DefusedET.fromstring(opf_xml)
+    except ETParseError:
         logger.debug('OPF XML parse failed for %s', opf_path)
         return {'manifest': {}, 'spine': [], 'metadata': {}, 'cover_id': None, 'ncx_href': None, 'nav_href': None, 'opf_path': opf_path}
 
@@ -168,8 +175,8 @@ def _find_toc_refs(manifest: dict[str, dict]) -> tuple[str | None, str | None]:
 def parse_ncx(ncx_xml: str) -> list[tuple[str, str, int]]:
     """Parse NCX (EPUB 2) table of contents."""
     try:
-        root = ET.fromstring(ncx_xml)
-    except ET.ParseError:
+        root = DefusedET.fromstring(ncx_xml)
+    except ETParseError:
         logger.debug('NCX XML parse failed')
         return []
     results: list[tuple[str, str, int]] = []
@@ -210,8 +217,8 @@ def parse_ncx(ncx_xml: str) -> list[tuple[str, str, int]]:
 def parse_nav(nav_xml: str) -> list[tuple[str, str, int]]:
     """Parse EPUB 3 nav document for table of contents."""
     try:
-        root = ET.fromstring(nav_xml)
-    except ET.ParseError:
+        root = DefusedET.fromstring(nav_xml)
+    except ETParseError:
         logger.debug('NAV XML parse failed')
         return []
     results: list[tuple[str, str, int]] = []

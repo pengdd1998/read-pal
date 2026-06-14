@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
+from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.reading_session import (
     HeartbeatRequest,
     SessionCreate,
@@ -188,7 +189,7 @@ async def heartbeat_session(
     return {'success': True, 'data': {'message': t('errors.heartbeat_received')}}
 
 
-@router.post('/{session_id}/summarize', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/{session_id}/summarize', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def summarize_session(
     session_id: UUID,
     current_user: dict = Depends(get_current_user),

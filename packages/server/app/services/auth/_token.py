@@ -115,13 +115,45 @@ async def _validate_refresh_payload(db: AsyncSession, payload: dict) -> User:
 
 
 async def refresh_tokens(db: AsyncSession, refresh_token: str) -> dict:
-    """Exchange a valid refresh token for a new token pair."""
-    payload = _decode_refresh_token(refresh_token)
-    user = await _validate_refresh_payload(db, payload)
+    """Exchange a valid refresh token for a new token pair.
 
-    # Revoke the old refresh token (rotation)
+    Replay detection: each refresh jti can only be redeemed once. A second
+    attempt to use the same jti is treated as token theft — we revoke the
+    chain and force re-authentication.
+    """
+    from fastapi import HTTPException, status
+
+    payload = _decode_refresh_token(refresh_token)
+
+    # Atomic replay check BEFORE issuing new tokens. If the jti is already in
+    # the "used" ledger, this is a replay — refuse and invalidate the chain.
     jti = payload.get('jti')
     exp = payload.get('exp')
+    if jti and exp:
+        from app.middleware.auth import mark_refresh_used
+        is_fresh = await mark_refresh_used(jti, exp)
+        if not is_fresh:
+            logger.warning(
+                'auth.refresh_replay_detected user_id=%s jti_prefix=%s',
+                payload.get('sub') or payload.get('userId'),
+                jti[:8],
+            )
+            # Revoke the replayed jti so even this attempt fails next time.
+            await revoke_token(jti, exp)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={
+                    'code': 'TOKEN_REPLAYED',
+                    'message': t('errors.refresh_token_replayed')
+                    if __has_i18n_key('errors.refresh_token_replayed')
+                    else 'Refresh token replay detected — please sign in again.',
+                },
+            )
+
+    user = await _validate_refresh_payload(db, payload)
+
+    # Revoke the old refresh token (rotation — defense in depth even though
+    # the ledger above already prevents reuse).
     if jti and exp:
         await revoke_token(jti, exp)
 
@@ -130,3 +162,14 @@ async def refresh_tokens(db: AsyncSession, refresh_token: str) -> dict:
         'token': access_token,
         'refreshToken': new_refresh_token,
     }
+
+
+def __has_i18n_key(key: str) -> bool:
+    """Lightweight existence check so we don't break if the i18n key is missing."""
+    try:
+        from app.utils.i18n import t as _t
+        value = _t(key)
+        # i18n helpers often return the key itself when missing.
+        return value != key and bool(value)
+    except Exception:
+        return False

@@ -46,6 +46,9 @@ _redis_ever_connected: bool = False
 _MAX_IN_MEMORY_BLACKLIST = 10_000
 
 TOKEN_BLACKLIST_PREFIX = 'auth:blacklist:'
+# Refresh-token replay ledger: marks a refresh jti as "already rotated".
+# Atomic SET NX detects concurrent replay (stolen token used twice).
+REFRESH_USED_PREFIX = 'auth:refresh-used:'
 
 
 # ---------------------------------------------------------------------------
@@ -163,9 +166,16 @@ async def is_token_revoked(jti: str) -> bool:
             return True
         return False
     except (redis.exceptions.RedisError, ConnectionError):
-        logger.warning('auth.redis_blacklist_failed', jti=jti[:8] if jti else None)
+        logger.warning('auth.redis_blacklist_failed jti=%s', jti[:8] if jti else None)
         if jti in _in_memory_blacklist:
             _in_memory_blacklist.move_to_end(jti)
+            return True
+        # Fail closed once we've ever successfully talked to Redis: revocation
+        # is a security-critical check, and an outage (possibly attacker-induced)
+        # must not silently revalidate stolen+revoked tokens. The cold-start
+        # window (Redis never reachable) stays fail-open to tolerate dev setups
+        # without Redis.
+        if _redis_ever_connected:
             return True
         return False
 
@@ -180,6 +190,33 @@ async def _was_password_reset(user_id: str, token_issued_at: float) -> bool:
     except (redis.exceptions.RedisError, ConnectionError):
         logger.warning('auth.pwd_reset_check_failed', user_id=user_id)
         return False
+
+
+async def mark_refresh_used(jti: str, exp: int) -> bool:
+    """Atomically mark a refresh-token jti as already rotated.
+
+    Returns True if this is the first time the jti has been seen (legitimate
+    rotation), False if the jti was already marked (replay — the same refresh
+    token is being used a second time, indicating theft).
+
+    Fail-open: if Redis is unreachable, returns True (allows the rotation).
+    We prefer occasional missed replay detection over blocking all refreshes
+    during a Redis outage; the existing rotation revoke still invalidates the
+    old token.
+    """
+    global _redis_ever_connected
+    try:
+        r = _get_redis()
+        ttl = max(exp - int(datetime.now(timezone.utc).timestamp()), 1)
+        # SET NX = only set if not exists. Returns True if set, None if exists.
+        result = await r.set(
+            f'{REFRESH_USED_PREFIX}{jti}', '1', ex=ttl, nx=True,
+        )
+        _redis_ever_connected = True
+        return bool(result)
+    except (redis.exceptions.RedisError, ConnectionError):
+        logger.warning('auth.refresh_ledger_failed jti=%s', jti[:8] if jti else None)
+        return True
 
 
 # ---------------------------------------------------------------------------

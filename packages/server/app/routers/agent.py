@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter, chat_limiter, stream_limiter, write_limiter
+from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.agent import (
     AdvancePlanRequest,
     AIFeedbackRequest,
@@ -54,7 +55,7 @@ async def llm_health() -> dict:
         return {'success': True, 'data': {'healthy': False, 'error': 'Health check failed'}}
 
 
-@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter, write_limiter])
+@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter, write_limiter, daily_ai_budget])
 async def chat(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -75,8 +76,8 @@ async def chat(
     return ChatResponse(data=result)
 
 
-@router.post('/stream', dependencies=[stream_limiter, write_limiter])
-@router.post('/chat/stream', dependencies=[stream_limiter, write_limiter])
+@router.post('/stream', dependencies=[stream_limiter, write_limiter, daily_ai_budget])
+@router.post('/chat/stream', dependencies=[stream_limiter, write_limiter, daily_ai_budget])
 async def stream(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -99,7 +100,7 @@ async def stream(
     )
 
 
-@router.post('/summarize', response_model=ChatResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/summarize', response_model=ChatResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def summarize(
     body: SummarizeRequest,
     current_user: dict = Depends(get_current_user),
@@ -119,7 +120,7 @@ async def summarize(
     return ChatResponse(data=result)
 
 
-@router.post('/explain', response_model=ChatResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/explain', response_model=ChatResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def explain(
     body: ExplainRequest,
     current_user: dict = Depends(get_current_user),
@@ -153,7 +154,7 @@ async def get_chat_history_endpoint(
     return {'success': True, 'data': messages}
 
 
-@router.post('/discussion-questions', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/discussion-questions', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def discussion_questions(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -180,7 +181,7 @@ async def discussion_questions(
     return {'success': True, 'data': result}
 
 
-@router.post('/mood/scene', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/mood/scene', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def mood_scene(
     body: MoodSceneRequest,
     current_user: dict = Depends(get_current_user),
@@ -217,7 +218,7 @@ async def submit_feedback(
     return {'success': True, 'data': data}
 
 
-@router.post('/reading-plan', response_model=ReadingPlanResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/reading-plan', response_model=ReadingPlanResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def create_reading_plan(
     body: ReadingPlanRequest,
     current_user: dict = Depends(get_current_user),

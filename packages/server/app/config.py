@@ -1,6 +1,8 @@
 import json
 import logging
+import math
 import re
+from collections import Counter
 from functools import lru_cache
 from typing import Any
 
@@ -8,6 +10,30 @@ from pydantic import BaseModel, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger('read-pal.config')
+
+
+def _shannon_entropy(text: str) -> float:
+    """Bits-per-char entropy. 'aaaa...' ≈ 0; random 32-char string ≈ 4.5+."""
+    if not text:
+        return 0.0
+    counts = Counter(text)
+    n = len(text)
+    return -sum((c / n) * math.log2(c / n) for c in counts.values())
+
+
+def _is_low_entropy_secret(secret: str) -> bool:
+    """Detect low-entropy JWT secrets that pass length checks.
+
+    Catches: repeated chars ('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+    dictionary words padded to length, and other low-entropy patterns that
+    a length>=32 check alone misses. Threshold: < 2.5 bits/char OR a single
+    char repeating >50% of the string.
+    """
+    if _shannon_entropy(secret) < 2.5:
+        return True
+    counts = Counter(secret)
+    most_common_count = counts.most_common(1)[0][1]
+    return most_common_count / len(secret) > 0.5
 
 
 class ProviderConfig(BaseModel):
@@ -113,6 +139,12 @@ class Settings(BaseSettings):
     cache_data_ttl: str = '5m'
     cache_recommendation_ttl: str = '10m'
     cache_llm_max_entries: int = 500
+
+    # Daily LLM cost cap — Redis-backed per-user counter, resets at UTC midnight.
+    # Applies to chat, agent, flashcard generation, knowledge graph, reading book.
+    # 0 = unlimited (budget enforcement skipped entirely).
+    # Production recommendation: 500 (free tier), 5000 (premium).
+    llm_daily_budget: int = 0
 
     # SMTP (optional — console fallback when unset)
     smtp_host: str | None = None
@@ -229,6 +261,11 @@ class Settings(BaseSettings):
             if 'change' in self.jwt_secret.lower() or len(self.jwt_secret) < 32:
                 errors.append(
                     'JWT_SECRET must be a strong secret (>= 32 chars) in production'
+                )
+            elif _is_low_entropy_secret(self.jwt_secret):
+                errors.append(
+                    'JWT_SECRET has low entropy (< 2.5 bits/char or > 50% repeated chars). '
+                    'Use a randomly generated secret, e.g. `python -c "import secrets; print(secrets.token_urlsafe(48))"`.'
                 )
             if self.db_password in ('readpal_dev', 'changeme', 'password'):
                 errors.append(

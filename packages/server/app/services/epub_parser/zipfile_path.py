@@ -28,6 +28,11 @@ from app.services.epub_parser.constants import OUTER_DOC_WRAPPER
 
 logger = logging.getLogger('read-pal')
 
+# Zip-bomb defense: cap total uncompressed bytes parsed from the archive.
+# A 100 MB upload of highly compressible content can decompress to ~10 GB;
+# reject archives whose declared uncompressed size exceeds this cap.
+_MAX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024  # 200 MB
+
 
 async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]:
     """Process EPUB using zipfile (no ebooklib dependency)."""
@@ -37,6 +42,17 @@ async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]
     opf_path = ''
 
     with zipfile.ZipFile(file_path, 'r') as zf:
+        # Reject zip bombs before any extraction: sum of declared uncompressed
+        # sizes must stay under the cap. A small compressed archive can declare
+        # huge uncompressed sizes; we refuse to even start parsing in that case.
+        total_uncompressed = sum(info.file_size for info in zf.infolist())
+        if total_uncompressed > _MAX_UNCOMPRESSED_BYTES:
+            logger.warning(
+                'epub.zip_too_large uncompressed=%d cap=%d path=%s',
+                total_uncompressed, _MAX_UNCOMPRESSED_BYTES, file_path,
+            )
+            return [], [], 1
+
         opf_data, toc_map, image_map, css_str, metadata, opf_path = (
             _parse_structure(zf)
         )
@@ -237,6 +253,11 @@ _DANGEROUS_URL_RE = re.compile(
 
 def _strip_dangerous_html(html: str) -> str:
     """Remove script tags, event handlers, and dangerous URLs from HTML."""
+    # Strip NULL bytes and other control chars that browsers ignore when
+    # resolving URL schemes. Without this, `java\x00script:alert(1)` bypasses
+    # _DANGEROUS_URL_RE because the regex doesn't see `javascript:` contiguously.
+    # Keep tab/newline/CR (\x09, \x0A, \x0D) since they're structural in HTML.
+    html = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', html)
     html = _DANGEROUS_TAG_RE.sub('', html)
     html = _EVENT_HANDLER_RE.sub('', html)
     html = _DANGEROUS_URL_RE.sub(r'\1=""', html)

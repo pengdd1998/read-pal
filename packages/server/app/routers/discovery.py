@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter, api_limiter
+from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.common import GenericResponse
 from app.services.discovery_service import (
     get_free_books,
@@ -41,7 +42,7 @@ async def search(
     }
 
 
-@router.get('/semantic', response_model=GenericResponse, dependencies=[ai_heavy_limiter])
+@router.get('/semantic', response_model=GenericResponse, dependencies=[ai_heavy_limiter, daily_ai_budget])
 async def semantic_search(
     q: str = Query('', max_length=200),
     page: int = Query(1, ge=1),

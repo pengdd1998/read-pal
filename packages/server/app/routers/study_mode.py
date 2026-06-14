@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
+from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.common import GenericResponse
 from app.schemas.study_mode import (
     ConceptCheckRequest,
@@ -31,7 +32,7 @@ logger = logging.getLogger('read-pal.study')
 router = APIRouter(prefix='/api/v1/study-mode', tags=['study-mode'], dependencies=[api_limiter])
 
 
-@router.post('/objectives', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/objectives', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def generate_objectives(
     body: StudyObjectivesRequest,
     current_user: dict = Depends(get_current_user),
@@ -57,7 +58,7 @@ async def generate_objectives(
     return {'success': True, 'data': data}
 
 
-@router.post('/concept-checks', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter])
+@router.post('/concept-checks', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
 async def generate_concept_checks(
     body: ConceptCheckRequest,
     current_user: dict = Depends(get_current_user),

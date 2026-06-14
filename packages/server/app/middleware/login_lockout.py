@@ -12,6 +12,7 @@ import logging
 import time
 
 import redis.asyncio as aioredis
+import redis.exceptions
 
 from app.core.redis import get_redis
 
@@ -27,14 +28,23 @@ class LoginLockout:
 
     def __init__(self) -> None:
         self.redis: aioredis.Redis = get_redis()
+        # Track whether we've ever successfully reached Redis. Drives the
+        # fail-closed behavior in check_lockout — see comment there.
+        self._ever_connected: bool = False
 
     async def check_lockout(self, email: str) -> tuple[bool, int | None]:
         """Check whether an email is currently locked out.
 
         Returns ``(is_locked, minutes_remaining)``.
+
+        Fail-closed: if Redis was previously reachable but now errors, return
+        ``(True, LOCKOUT_DURATION // 60)`` rather than silently letting a
+        possibly-locked account through. The cold-start window (Redis never
+        connected) stays fail-open to tolerate dev setups without Redis.
         """
         try:
             data = await self.redis.get(f'{LOCKOUT_PREFIX}{email}')
+            self._ever_connected = True
             if not data:
                 return False, None
 
@@ -52,6 +62,9 @@ class LoginLockout:
 
         except (redis.exceptions.RedisError, json.JSONDecodeError, ConnectionError):
             logger.warning('Redis unavailable — cannot check lockout for %s', email)
+            if self._ever_connected:
+                # Treat as locked — refuse the login rather than permit brute force.
+                return True, LOCKOUT_DURATION // 60
             return False, None
 
     async def record_failed_login(self, email: str) -> None:
@@ -59,6 +72,7 @@ class LoginLockout:
         try:
             key = f'{LOCKOUT_PREFIX}{email}'
             data = await self.redis.get(key)
+            self._ever_connected = True
 
             if data:
                 entry = json.loads(data)
@@ -84,6 +98,7 @@ class LoginLockout:
         """Delete the lockout key on successful login."""
         try:
             await self.redis.delete(f'{LOCKOUT_PREFIX}{email}')
+            self._ever_connected = True
         except (redis.exceptions.RedisError, ConnectionError):
             logger.warning('Redis unavailable — cannot clear lockout for %s', email)
 
