@@ -57,12 +57,12 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
   onTagsChange?.(bookId, newTags);
   } else {
   warn('BookTagEditor: remove tag returned success=false', res.error);
-  toast(t('tag_update_failed'), 'error');
+  toast(tRef.current('tag_update_failed'), 'error');
   }
  } catch (error) {
   warn('BookTagEditor: remove tag failed', error);
   if (!mountedRef.current) return;
-  toast(t('tag_update_failed'), 'error');
+  toast(tRef.current('tag_update_failed'), 'error');
  } finally {
   if (mountedRef.current) setSaving(false);
  }

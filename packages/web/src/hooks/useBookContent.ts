@@ -102,10 +102,17 @@ export function useBookContent(
   );
   const totalSegments = segments.length;
 
+  // Synchronous clamp: when chapter changes or savedSegment is restored from
+  // the server, currentSegment may exceed the new chapter's segment count for
+  // one render before the useEffect below runs. Reading segments[oob] returns
+  // undefined and the page renders blank for a frame. Compute the safe index
+  // inline so the user never sees an empty page.
+  const safeSegmentIdx = Math.min(currentSegment, Math.max(0, totalSegments - 1));
+
   // Current page content (single segment)
   const pageContent = useMemo(
-    () => segments[currentSegment]?.html || '',
-    [segments, currentSegment],
+    () => segments[safeSegmentIdx]?.html || '',
+    [segments, safeSegmentIdx],
   );
 
   // Reset segment when chapter changes
@@ -114,12 +121,12 @@ export function useBookContent(
     setCurrentSegment(0);
   }, []);
 
-  // Clamp segment index when segments change (e.g. after chapter switch)
+  // Clamp segment state so it stays in sync with the synchronous clamp above.
   useEffect(() => {
-    if (currentSegment >= totalSegments) {
-      setCurrentSegment(Math.max(0, totalSegments - 1));
+    if (currentSegment !== safeSegmentIdx) {
+      setCurrentSegment(safeSegmentIdx);
     }
-  }, [totalSegments, currentSegment]);
+  }, [safeSegmentIdx, currentSegment]);
 
   return {
     book,
