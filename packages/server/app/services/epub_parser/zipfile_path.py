@@ -245,8 +245,15 @@ _EVENT_HANDLER_RE = re.compile(
     r'\bon\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)',
     re.IGNORECASE,
 )
-_DANGEROUS_URL_RE = re.compile(
-    r'(href|src|xlink:href)\s*=\s*["\']?\s*(javascript|vbscript|data)\s*:[^"\'">\s]*',
+_SCRIPT_URL_RE = re.compile(
+    r'(href|src|xlink:href)\s*=\s*["\']?\s*(?:javascript|vbscript)\s*:[^"\'">\s]*',
+    re.IGNORECASE,
+)
+# Block `data:` URIs EXCEPT `data:image/...`. Embedded illustrations are stored
+# as base64 data URIs and are legitimate; the frontend DOMPurify pass
+# re-sanitizes them. Other data schemes (e.g. data:text/html) stay blocked.
+_DATA_URL_RE = re.compile(
+    r'(href|src|xlink:href)\s*=\s*["\']?\s*data:(?!image/)[^"\'">\s]*',
     re.IGNORECASE,
 )
 
@@ -255,12 +262,13 @@ def _strip_dangerous_html(html: str) -> str:
     """Remove script tags, event handlers, and dangerous URLs from HTML."""
     # Strip NULL bytes and other control chars that browsers ignore when
     # resolving URL schemes. Without this, `java\x00script:alert(1)` bypasses
-    # _DANGEROUS_URL_RE because the regex doesn't see `javascript:` contiguously.
+    # the URL regexes because they don't see `javascript:` contiguously.
     # Keep tab/newline/CR (\x09, \x0A, \x0D) since they're structural in HTML.
     html = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', html)
     html = _DANGEROUS_TAG_RE.sub('', html)
     html = _EVENT_HANDLER_RE.sub('', html)
-    html = _DANGEROUS_URL_RE.sub(r'\1=""', html)
+    html = _SCRIPT_URL_RE.sub(r'\1=""', html)
+    html = _DATA_URL_RE.sub(r'\1=""', html)
     return html
 
 

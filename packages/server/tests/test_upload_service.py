@@ -29,8 +29,11 @@ class TestValidateFile:
     def test_valid_epub(self):
         assert validate_file('book.epub', 1024) is None
 
-    def test_valid_pdf(self):
-        assert validate_file('paper.pdf', 1024) is None
+    def test_pdf_rejected(self):
+        # EPUB-only uploads (PDF to be re-supported later).
+        result = validate_file('paper.pdf', 1024)
+        assert result is not None
+        assert '.pdf' in result
 
     def test_invalid_extension(self):
         result = validate_file('photo.jpg', 1024)
@@ -42,7 +45,7 @@ class TestValidateFile:
         assert result is not None
 
     def test_file_too_large(self):
-        result = validate_file('big.pdf', MAX_FILE_SIZE + 1)
+        result = validate_file('big.epub', MAX_FILE_SIZE + 1)
         assert result is not None
         assert '100' in result  # 100 MB in message
 
@@ -54,11 +57,12 @@ class TestValidateFile:
 
     def test_case_insensitive_extension(self):
         assert validate_file('BOOK.EPUB', 1024) is None
-        assert validate_file('Paper.PDF', 1024) is None
+        # PDF is rejected regardless of case (EPUB-only).
+        assert validate_file('Paper.PDF', 1024) is not None
 
     def test_double_extension(self):
-        # Path('.epub.pdf').suffix == '.pdf'
-        assert validate_file('archive.epub.pdf', 1024) is None
+        # Path('archive.epub.pdf').suffix == '.pdf' → rejected (EPUB-only).
+        assert validate_file('archive.epub.pdf', 1024) is not None
 
 
 # ---------------------------------------------------------------------------
@@ -310,16 +314,17 @@ class TestCreateBookWithContent:
             book = await create_book_with_content(
                 db=db,
                 user_id=user_id,
-                title='file-stem-name',
-                author='Unknown',
+                title=None,
+                author=None,
                 file_type='epub',
                 file_size=2048,
-                file_path='/tmp/file-stem-name.epub',
+                file_path='/tmp/tmpXXXXrandom.epub',
                 cover_url='https://example.com/cover.jpg',
                 tags=['fiction'],
+                original_filename='file-stem-name.epub',
             )
 
-            # Title/author overridden from metadata
+            # No explicit title/author → EPUB metadata wins over the filename stem
             assert book.title == 'Real Title'
             assert book.author == 'Real Author'
             db.add.assert_called()

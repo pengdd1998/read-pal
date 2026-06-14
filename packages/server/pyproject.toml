@@ -20,6 +20,7 @@ dependencies = [
     # "ebooklib>=0.18",  # blocked on Python 3.13 (lxml)
     "pypdf>=5.1.0",
     "defusedxml>=0.7.1",
+    "minio>=7.2.0",
     "networkx>=3.4.0",
     "langchain>=0.3.0",
     "langchain-openai>=0.2.0",

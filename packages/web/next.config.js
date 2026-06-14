@@ -7,7 +7,10 @@ const isDockerBuild = process.env.DOCKER_BUILD === '1';
 const nextConfig = {
   reactStrictMode: true,
   output: isStaticExport ? 'export' : isDockerBuild ? 'standalone' : undefined,
-  images: { unoptimized: isStaticExport },
+  // Covers are served from object storage (MinIO/S3) over direct URLs the
+  // browser fetches. Disable next/image optimization so any host works without
+  // remotePatterns config (optimization isn't needed for small cover thumbnails).
+  images: { unoptimized: true },
   trailingSlash: isStaticExport ? true : undefined,
   transpilePackages: ['@read-pal/shared'],
   compiler: {

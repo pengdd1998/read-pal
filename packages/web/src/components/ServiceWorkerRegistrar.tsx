@@ -20,6 +20,14 @@ export function ServiceWorkerRegistrar() {
  useEffect(() => {
  // Skip service worker in Capacitor — native handles caching
  if (isCapacitor()) return;
+ // Skip in development. The SW caches app chunks (_next/static/chunks/*)
+ // with a stale-while-revalidate strategy, so after editing source the
+ // browser keeps serving the previously-cached chunk on the next load
+ // while fetching the new one in the background. In `next dev` this
+ // surfaces as "it worked before, now it's broken with no console error"
+ // because the tab is running stale JS. Offline/PWA caching is only
+ // valuable in production.
+ if (process.env.NODE_ENV !== 'production') return;
  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
  let mounted = true;
 

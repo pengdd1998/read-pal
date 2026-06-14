@@ -10,7 +10,7 @@ interface BookUploaderProps {
  onUploadComplete: (book: Book) => void;
 }
 
-const VALID_MIME_TYPES = ['application/epub+zip', 'application/pdf', 'application/octet-stream'];
+const VALID_MIME_TYPES = ['application/epub+zip', 'application/octet-stream'];
 
 export const BookUploader = React.memo(function BookUploader({ onUploadComplete }: BookUploaderProps) {
  const t = useTranslations('library');
@@ -104,8 +104,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  const ext = file.name.split('.').pop()?.toLowerCase();
  const isValid =
   VALID_MIME_TYPES.includes(file.type) ||
-  ext === 'epub' ||
-  ext === 'pdf';
+  ext === 'epub';
 
  if (!isValid) {
   setLastFile(null);
@@ -164,11 +163,15 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   <input
   ref={fileInputRef}
   type="file"
-  accept=".epub,.pdf,application/epub+zip,application/pdf"
+  accept=".epub,application/epub+zip"
   onChange={handleFileSelect}
   disabled={uploading || success}
   aria-label={t('upload_aria_label')}
-  className="hidden"
+  // sr-only (not `hidden`/display:none): a display:none file input can have its
+  // programmatic .click() suppressed by some browsers as a non-user gesture.
+  // sr-only keeps the input rendered (clipped to 1px) so the synthetic click
+  // reliably opens the native picker across browsers.
+  className="sr-only"
   />
 
   {/* Success state */}

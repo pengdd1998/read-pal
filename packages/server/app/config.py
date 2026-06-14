@@ -153,6 +153,16 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from: str | None = None
 
+    # Object storage — MinIO / S3-compatible. Optional: when configured, book
+    # covers are uploaded here and book.cover_url holds the public URL; when
+    # unset, covers fall back to the generated gradient placeholder.
+    oss_endpoint: str | None = None          # host:port, e.g. minio.example.com:9000
+    oss_access_key: str | None = None
+    oss_secret_key: str | None = None
+    oss_bucket: str = 'read-pal'
+    oss_public_base_url: str | None = None   # public URL prefix, e.g. https://cdn.example.com/read-pal
+    oss_secure: bool = True
+
     @computed_field
     @property
     def database_url(self) -> str:
@@ -253,6 +263,16 @@ class Settings(BaseSettings):
     @property
     def cache_recommendation_ttl_seconds(self) -> int:
         return _parse_duration(self.cache_recommendation_ttl)
+
+    @property
+    def oss_enabled(self) -> bool:
+        """Whether object storage is configured for cover uploads."""
+        return bool(
+            self.oss_endpoint
+            and self.oss_access_key
+            and self.oss_secret_key
+            and self.oss_public_base_url
+        )
 
     def validate_production(self) -> list[str]:
         """Validate settings for production — raises on insecure secrets."""

@@ -112,6 +112,40 @@ class TestNullByteBypass:
         assert 'https://example.com' in sanitized
         assert '<p>Hello' in sanitized
 
+    def test_preserves_embedded_data_image_uris(self):
+        # Inline illustrations are embedded as data:image/... URIs and must
+        # survive sanitization. Regression: the old single _DANGEROUS_URL_RE
+        # matched `data:` indiscriminately and blanked every embedded image.
+        for src in (
+            'data:image/png;base64,iVBORw0KGgo=',
+            'data:image/jpeg;base64,/9j/4AAQ',
+            'data:image/gif;base64,R0lGODlh==',
+            'data:image/svg+xml;base64,PHN2Zz4=',
+        ):
+            html = f'<p><img src="{src}" alt="fig"></p>'
+            sanitized = _strip_dangerous_html(html)
+            assert src in sanitized, f'image data URI was stripped: {src}'
+
+    def test_neutralizes_non_image_data_and_script_uris(self):
+        html = (
+            '<a href="javascript:alert(1)">x</a>'
+            '<a href="vbscript:msgbox(1)">y</a>'
+            '<a href="data:text/html,<b>hi</b>">z</a>'
+            '<img src="data:image/png;base64,iVBORw0KGgo=">w</img>'
+        )
+        sanitized = _strip_dangerous_html(html)
+        assert 'javascript' not in sanitized.lower() or 'alert' not in sanitized
+        assert 'vbscript' not in sanitized.lower() or 'msgbox' not in sanitized
+        assert 'data:text/html' not in sanitized
+        # while the legitimate embedded image survives
+        assert 'data:image/png;base64,iVBORw0KGgo=' in sanitized
+
+    def test_both_versions_preserve_data_image_uris(self):
+        # ebooklib_path.py and zipfile_path.py must keep parity on images.
+        html = '<img src="data:image/png;base64,iVBORw0KGgo=" alt="f">'
+        assert _strip_dangerous_html(html) == _strip_dangerous_html_v2(html)
+        assert 'data:image/png;base64,iVBORw0KGgo=' in _strip_dangerous_html(html)
+
 
 # ---------------------------------------------------------------------------
 # F-10: JWT secret entropy check

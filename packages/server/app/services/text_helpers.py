@@ -12,6 +12,13 @@ _BLOCK_ELEMENTS = re.compile(
     re.IGNORECASE,
 )
 _INLINE_BREAKS = re.compile(r'<br\s*/?\s*>', re.IGNORECASE)
+# Strip <style>/<script> blocks WITH their content before text extraction —
+# otherwise the EPUB's CSS leaks into the plain-text `content` field (used for
+# full-text search + embeddings) as garbage like "@page { margin... }".
+_STYLE_SCRIPT_BLOCK = re.compile(
+    r'<(script|style)\b[^>]*>.*?</\1>',
+    re.IGNORECASE | re.DOTALL,
+)
 _HTML_TAG = re.compile(r'<[^>]+>')
 _HORIZONTAL_WS = re.compile(r'[^\S\n]+')
 _EXCESS_NEWLINES = re.compile(r'\n{3,}')
@@ -43,7 +50,8 @@ def fix_garbled_cjk(text: str) -> str:
 
 def html_to_structured_text(html_content: str) -> str:
     """Extract text from HTML preserving paragraph breaks."""
-    text = _INLINE_BREAKS.sub('\n', html_content)
+    text = _STYLE_SCRIPT_BLOCK.sub('', html_content)
+    text = _INLINE_BREAKS.sub('\n', text)
     text = _BLOCK_ELEMENTS.sub('\n\n', text)
     text = _HTML_TAG.sub('', text)
     text = html_module.unescape(text)

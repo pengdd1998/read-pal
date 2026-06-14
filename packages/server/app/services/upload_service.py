@@ -1,8 +1,10 @@
 """File upload and content processing service."""
 
 import asyncio
+import base64
 import logging
 import os
+import re
 import tempfile
 from pathlib import Path
 from uuid import UUID
@@ -14,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.book import Book, BookFileType
 from app.models.document import Document
 from app.services.epub_parser import process_epub
+from app.services.object_storage import upload_cover
 from app.services.pdf_parser import process_pdf
 from app.services.text_helpers import (
     text_to_html_paragraphs as _text_to_html_paragraphs,
@@ -23,7 +26,7 @@ from app.utils.i18n import t, DEFAULT_LANGUAGE
 
 logger = logging.getLogger('read-pal')
 
-ALLOWED_EXTENSIONS = {'.epub', '.pdf'}
+ALLOWED_EXTENSIONS = {'.epub'}
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 
 
@@ -91,19 +94,69 @@ async def _parse_file_content(file_type: str, file_path: str) -> dict:
 
 def _resolve_metadata(
     result: dict,
-    file_path: str,
-    title: str,
-    author: str,
+    original_filename: str | None,
+    title: str | None,
+    author: str | None,
 ) -> tuple[str, str]:
-    """Resolve book title/author, preferring extracted metadata over defaults."""
+    """Resolve book title/author.
+
+    Priority: an explicitly-supplied title/author → EPUB metadata → the
+    uploaded filename stem (→ ``'Unknown'`` for author). The parser extracts
+    dc:title/dc:creator, so when the caller passes no explicit value we prefer
+    the real metadata over the bare filename. (Previously this compared the
+    title against ``Path(file_path).stem`` — but ``file_path`` is the *temp*
+    path, whose stem never matches, so metadata overrides silently never fired.)
+    """
     meta = result.get('metadata', {})
-    book_title = title
-    book_author = author
-    if meta.get('title') and title == Path(file_path).stem:
-        book_title = meta['title']
-    if meta.get('author') and author == 'Unknown':
-        book_author = meta['author']
+    stem = Path(original_filename).stem if original_filename else ''
+    book_title = title or meta.get('title') or stem or 'Untitled'
+    book_author = author or meta.get('author') or 'Unknown'
     return book_title, book_author
+
+
+_COVER_DATA_URI_RE = re.compile(r'^data:(?P<mime>[-\w/+.]+);base64,(?P<b64>.+)$', re.DOTALL)
+_COVER_MIME_TO_EXT = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/svg+xml': 'svg',
+}
+
+
+def _decode_cover_data_uri(uri: str) -> tuple[bytes, str, str] | None:
+    """Decode a `data:{mime};base64,{...}` cover URI into (bytes, ext, mime)."""
+    match = _COVER_DATA_URI_RE.match(uri)
+    if not match:
+        return None
+    mime = match.group('mime')
+    try:
+        data = base64.b64decode(match.group('b64'), validate=True)
+    except ValueError:
+        # binascii.Error (invalid base64) is a ValueError subclass.
+        return None
+    if not data:
+        return None
+    return data, _COVER_MIME_TO_EXT.get(mime, 'jpg'), mime
+
+
+async def _resolve_cover_url(book_id: UUID, meta: dict) -> str | None:
+    """Upload the EPUB-extracted cover to object storage; return its URL.
+
+    The parser leaves the cover as a base64 data URI in ``meta['cover_data_uri']``.
+    We decode it and push the bytes to OSS so ``cover_url`` is a short public
+    URL the frontend can render. Returns ``None`` when storage is unconfigured,
+    the cover is missing, or the upload fails — caller falls back to the
+    gradient placeholder.
+    """
+    uri = meta.get('cover_data_uri')
+    if not uri:
+        return None
+    decoded = _decode_cover_data_uri(uri)
+    if not decoded:
+        return None
+    data, ext, mime = decoded
+    return await upload_cover(book_id, data, ext, mime)
 
 
 async def _persist_book_and_document(
@@ -137,6 +190,12 @@ async def _persist_book_and_document(
         db.add(book)
         await db.flush()
 
+        # Upload the extracted cover to object storage so book.cover_url points
+        # at a renderable public URL. Respects an explicitly-supplied cover_url;
+        # any failure silently falls back to the gradient placeholder.
+        if not book.cover_url:
+            book.cover_url = await _resolve_cover_url(book.id, meta)
+
         document = Document(
             book_id=book.id,
             user_id=user_id,
@@ -152,13 +211,14 @@ async def _persist_book_and_document(
 async def create_book_with_content(
     db: AsyncSession,
     user_id: UUID,
-    title: str,
-    author: str,
+    title: str | None,
+    author: str | None,
     file_type: str,
     file_size: int,
     file_path: str,
     cover_url: str | None = None,
     tags: list[str] | None = None,
+    original_filename: str | None = None,
 ) -> Book:
     """Create a book record and process its content."""
     async with db_error_guard(
@@ -167,7 +227,7 @@ async def create_book_with_content(
         result = await _parse_file_content(file_type, file_path)
         meta = result.get('metadata', {})
         book_title, book_author = _resolve_metadata(
-            result, file_path, title, author,
+            result, original_filename, title, author,
         )
 
         book, document_id = await _persist_book_and_document(

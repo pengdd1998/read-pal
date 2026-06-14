@@ -1,9 +1,7 @@
 """File upload router."""
 
-import html
 import logging
 import os
-from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
@@ -104,19 +102,23 @@ async def _process_upload(
     """Stream file to temp, create book, return (tmp_path, response_dict)."""
     tmp_path, file_size = await _stream_and_validate(file, file.filename, lang)
 
-    book_title = strip_html(title) or html.escape(Path(file.filename).stem)
-    book_author = strip_html(author) or ''
+    # Pass through only explicitly-supplied title/author (None when absent) plus
+    # the original filename; _resolve_metadata then prefers EPUB metadata over
+    # the filename stem — see upload_service._resolve_metadata.
+    provided_title = strip_html(title) if title else None
+    provided_author = strip_html(author) if author else None
     tag_list = [strip_html(t) for t in tags.split(',')] if tags else []
 
     book = await create_book_with_content(
         db=db,
         user_id=user_id,
-        title=book_title,
-        author=book_author,
+        title=provided_title,
+        author=provided_author,
         file_type=file_type,
         file_size=file_size,
         file_path=tmp_path,
         tags=tag_list,
+        original_filename=file.filename,
     )
     return tmp_path, _build_book_response(book)
 

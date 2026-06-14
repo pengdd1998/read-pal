@@ -169,23 +169,21 @@
     .reading-mode { padding: 4rem 2rem 6rem; }
   }
 
+  /* Book-style paragraphs: 2em first-line indent on EVERY paragraph and no
+     inter-paragraph gap (matches the Mac "Books" reference). Selector targets
+     descendant <p> (not .prose > p) so EPUB HTML wrapped in <div> still indents. */
   .reading-mode p {
-    margin-bottom: 1.4rem;
+    margin-bottom: 0;
     text-align: left;
+    text-indent: 2em;
     -webkit-hyphens: auto;
     hyphens: auto;
-    text-indent: 0;
   }
 
   @media (min-width: 640px) {
     .reading-mode p {
       text-align: justify;
     }
-  }
-
-  .reading-mode .prose > p + p {
-    text-indent: 1.5em;
-    margin-bottom: 0.8rem;
   }
 
   .reading-mode h1,
@@ -202,19 +200,6 @@
   .reading-mode h1 { font-size: 1.667em; }
   .reading-mode h2 { font-size: 1.333em; }
   .reading-mode h3 { font-size: 1.111em; }
-
-  /* Drop cap */
-  .reading-mode .prose > p:first-of-type::first-letter {
-    float: left;
-    font-size: 3.2em;
-    line-height: 0.8;
-    margin-right: 0.06em;
-    margin-top: 0.04em;
-    font-weight: 700;
-    color: #b45309;
-    font-family: 'Crimson Pro', Georgia, serif;
-  }
-  .dark .reading-mode .prose > p:first-of-type::first-letter { color: #f59e0b; }
 
   /* Blockquotes */
   .reading-mode blockquote {
