@@ -416,6 +416,7 @@
     "select_icon": "选择 {label} 图标",
     "select_color": "选择 {color} 颜色",
     "card_pages": "{current} / {total} 页",
+    "card_chapters": "{current} / {total} 章",
     "card_cover_of": "{title} 的封面",
     "collections_title": "收藏夹",
     "collections_new": "新建收藏夹",

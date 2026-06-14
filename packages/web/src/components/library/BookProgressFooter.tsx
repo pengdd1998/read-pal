@@ -9,6 +9,7 @@ interface BookProgressFooterProps {
  progress: number;
  currentPage: number;
  totalPages: number;
+ fileType?: 'epub' | 'pdf';
  lastReadAt?: Date | string;
 }
 
@@ -17,6 +18,7 @@ export const BookProgressFooter = React.memo(function BookProgressFooter({
  progress,
  currentPage,
  totalPages,
+ fileType,
  lastReadAt,
 }: BookProgressFooterProps) {
  const t = useTranslations('library');
@@ -54,7 +56,7 @@ export const BookProgressFooter = React.memo(function BookProgressFooter({
    </div>
    <div className="flex items-center justify-between mt-1.5">
    <p className="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums">
-    {t('card_pages', { current: currentPage, total: totalPages })}
+    {t(fileType === 'epub' ? 'card_chapters' : 'card_pages', { current: currentPage, total: totalPages })}
    </p>
    <p className="text-[10px] text-primary-500 font-semibold tabular-nums">
     {progress}%

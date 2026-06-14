@@ -416,6 +416,7 @@
     "select_icon": "Select {label} icon",
     "select_color": "Select {color} color",
     "card_pages": "{current} / {total} pages",
+    "card_chapters": "{current} / {total} chapters",
     "card_cover_of": "Cover of {title}",
     "collections_title": "Collections",
     "collections_new": "New collection",

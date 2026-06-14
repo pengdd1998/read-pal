@@ -146,6 +146,7 @@ export const LibraryGrid = React.memo(function LibraryGrid({ viewMode = 'grid', 
                     status={book.status}
                     currentPage={book.currentPage || 0}
                     totalPages={book.totalPages || 0}
+                    fileType={book.fileType}
                     tags={book.tags}
                     lastReadAt={book.lastReadAt}
                     onDelete={handleDeleteBook}

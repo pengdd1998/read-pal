@@ -16,6 +16,7 @@ interface BookCardProps {
  status: 'unread' | 'reading' | 'completed';
  currentPage: number;
  totalPages: number;
+ fileType?: 'epub' | 'pdf';
  tags?: string[];
  lastReadAt?: Date | string;
  onDelete?: (id: string) => void;
@@ -31,6 +32,7 @@ function BookCardInner({
  status,
  currentPage,
  totalPages,
+ fileType,
  tags = [],
  lastReadAt,
  onDelete,
@@ -87,6 +89,7 @@ function BookCardInner({
    progress={progress}
    currentPage={currentPage}
    totalPages={totalPages}
+   fileType={fileType}
    lastReadAt={lastReadAt}
   />
   </div>
