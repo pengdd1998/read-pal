@@ -42,6 +42,14 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  };
 
  const uploadFile = async (file: File) => {
+ // Cancel any pending success-state timer from a prior upload so its
+ // delayed onUploadComplete(book) call doesn't fire after we've already
+ // moved on to a new file. Without this, two rapid uploads would cause
+ // the first book's callback to fire while the second is still in flight.
+ if (uploadTimerRef.current) {
+  clearTimeout(uploadTimerRef.current);
+  uploadTimerRef.current = null;
+ }
  setUploading(true);
  setUploadProgress(0);
  setError('');
