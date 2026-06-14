@@ -55,6 +55,11 @@ export default function FlashcardsPage() {
  const [toast, setToast] = useState<string | null>(null);
  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
  const mountedRef = useRef(true);
+ // Monotonic request id — only the most-recent fetchCards call gets to write
+ // cards/stats. Without this, clicking deck A then deck B can let deck A's
+ // slower response overwrite deck B's data, landing the user in a study
+ // session for the wrong book.
+ const fetchCardsReqId = useRef(0);
 
  useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
@@ -78,26 +83,28 @@ export default function FlashcardsPage() {
  }, []);
 
  const fetchCards = useCallback(async (bookId?: string | null) => {
+ const myReqId = ++fetchCardsReqId.current;
  setLoading(true);
  try {
   const url = bookId
   ? `/api/flashcards/review?limit=20&bookId=${bookId}`
   : '/api/flashcards/review?limit=20';
   const res = await api.get<{ flashcards: FlashcardData[]; stats: ReviewStats }>(url);
-  if (!mountedRef.current) return;
+  // Stale if a newer fetchCards started, or if the component unmounted.
+  if (!mountedRef.current || myReqId !== fetchCardsReqId.current) return;
   if (res.success && res.data) {
   setCards(res.data.flashcards);
   setStats(res.data.stats);
   if (res.data.flashcards.length === 0) setCompleted(true);
   }
  } catch (err) {
-  if (!mountedRef.current) return;
+  if (!mountedRef.current || myReqId !== fetchCardsReqId.current) return;
   warn('FlashcardsPage: fetchCards failed', err);
   setToast(tRef.current('toast_load_cards'));
   { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); toastTimerRef.current = setTimeout(() => setToast(null), 3000); }
  }
  finally {
-  if (mountedRef.current) setLoading(false);
+  if (mountedRef.current && myReqId === fetchCardsReqId.current) setLoading(false);
  }
  }, []);
 
