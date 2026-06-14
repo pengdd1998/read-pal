@@ -41,7 +41,14 @@ async def update_book_with_page(
     scroll_progress: float | None,
     current_segment: str | None,
 ) -> None:
-    """Update book progress when client sends an explicit current_page."""
+    """Update book progress when client sends an explicit current_page.
+
+    Never rewinds progress: a user who finished the book and is now
+    flipping back through earlier pages should keep their 100% / completed
+    status. Skip the page/progress update if the incoming page is behind
+    the recorded one, but still refresh last_read_at and scroll/segment
+    so the reader's position within the page is tracked.
+    """
     async with db_error_guard(
         'update_book_with_page',
         book_id=str(book_id),
@@ -53,11 +60,15 @@ async def update_book_with_page(
         if not book or book.total_pages <= 0:
             return
         book.last_read_at = now
-        book.current_page = min(max(current_page, 0), book.total_pages)
         sp = scroll_progress if scroll_progress is not None else float(book.scroll_progress or 0)
         book.scroll_progress = Decimal(str(round(sp, 3)))
         if current_segment is not None:
             book.current_segment = current_segment
+        # Clamp incoming page; skip the progress write if it would rewind.
+        clamped_page = min(max(current_page, 0), book.total_pages)
+        if clamped_page < book.current_page:
+            return
+        book.current_page = clamped_page
         book.progress = cap_progress(
             Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
         )
