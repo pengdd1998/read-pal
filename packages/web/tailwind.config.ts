@@ -5,6 +5,11 @@ const config: Config = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    // lib/ holds class maps consumed by components (e.g. reader-theme.ts:
+    // bg-gray-950 / bg-[#f8f4ec] / text-[#5c4b37]). Without scanning it,
+    // Tailwind never generates those classes and the dark/sepia reader themes
+    // render with transparent backgrounds.
+    './src/lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {

@@ -146,7 +146,7 @@ export const ReaderView = React.memo(function ReaderView({
                   (contentRef as React.MutableRefObject<HTMLElement | null>).current = el;
                 }
               }}
-              className="prose prose-lg max-w-none dark:prose-invert reader-content"
+              className={`prose prose-lg max-w-none reader-content ${theme === 'dark' ? 'prose-invert' : ''}`}
               suppressHydrationWarning
             />
           )}

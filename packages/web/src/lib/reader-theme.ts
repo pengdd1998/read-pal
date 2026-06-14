@@ -8,8 +8,13 @@
 export type ReaderTheme = 'light' | 'dark' | 'sepia';
 
 export const themeClasses: Record<ReaderTheme, string> = {
-  light: 'bg-white text-gray-800',
-  dark: 'bg-gray-950 text-gray-200',
+  // Literal (non-var) colors so the reader theme is independent of the app's
+  // dark-mode gray inversion: bg-gray-* / text-gray-* are mapped to CSS vars
+  // that FLIP in dark mode, which made the dark reader theme render a light
+  // background with light text (invisible). Use the `reading` palette + raw
+  // hex for both bg and text so each reader theme is self-consistent.
+  light: 'bg-white text-[#374151]',
+  dark: 'bg-reading-dark text-[#e5e7eb]',
   sepia: 'bg-[#f8f4ec] text-[#5c4b37]',
 };
 
