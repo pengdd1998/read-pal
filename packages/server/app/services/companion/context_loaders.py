@@ -38,13 +38,18 @@ async def load_history(
     user_id: UUID,
     book_id: UUID,
 ) -> list[HumanMessage | AIMessage]:
-    """Load recent chat history as langchain messages."""
+    """Load recent chat history as langchain messages.
+
+    Filters out soft-deleted rows (deleted_at IS NULL) so the regenerate
+    flow (P1-6) cleanly hides the discarded assistant message.
+    """
     async with db_error_guard('load_history', book_id=str(book_id), user_id=str(user_id)):
         result = await db.execute(
             select(ChatMessage)
             .where(
                 ChatMessage.user_id == user_id,
                 ChatMessage.book_id == book_id,
+                ChatMessage.deleted_at.is_(None),
             )
             .order_by(ChatMessage.created_at.desc())
             .limit(HISTORY_LIMIT),

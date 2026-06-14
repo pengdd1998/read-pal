@@ -36,6 +36,15 @@ class ChatMessage(Base):
             'book_id',
             'created_at',
         ),
+        # Partial index so history queries (which filter deleted_at IS NULL)
+        # don't have to scan soft-deleted rows.
+        Index(
+            'ix_chat_messages_user_book_active_created',
+            'user_id',
+            'book_id',
+            'created_at',
+            postgresql_where=text('deleted_at IS NULL'),
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -65,6 +74,15 @@ class ChatMessage(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+    )
+    # Soft-delete timestamp. Used by regenerate (P1-6) to drop the last
+    # assistant message before re-streaming. Kept in the table so the
+    # Personal Reading Book pipeline and audit logs can still see them
+    # via unfiltered queries if needed.
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        default=None,
     )
 
     # relationships

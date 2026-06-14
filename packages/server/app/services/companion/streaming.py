@@ -1,6 +1,7 @@
 """SSE streaming for companion chat — per-provider circuit breaker, multi-provider fallback."""
 
 import asyncio
+import json
 import time
 import uuid
 from collections.abc import AsyncGenerator
@@ -178,6 +179,71 @@ async def _stream_from_provider(
             yield chunk
 
 
+async def _persist_with_retry(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    message: str,
+    messages: list[Any],
+    collected_parts: list[str],
+    request_id: str,
+) -> bool:
+    """Persist streaming result with one retry. Returns True on success.
+
+    On DBAPIError the SQLAlchemy async session enters a broken state; we
+    must rollback before the next attempt (or before ``get_db`` returns the
+    connection to the pool) — otherwise every subsequent statement on this
+    session raises ``PendingRollbackError``.
+    """
+    last_exc: Exception | None = None
+    for attempt in (0, 1):
+        try:
+            async with db_error_guard(
+                'companion.stream.persist_result',
+                request_id=request_id, attempt=attempt,
+                user_id=str(user_id), book_id=str(book_id),
+            ):
+                await persist_stream_result(
+                    db, user_id, book_id, message, messages,
+                    collected_parts, request_id,
+                )
+            return True
+        except DBAPIError as exc:
+            last_exc = exc
+            logger.warning(
+                'companion.stream.persist_dbapi_error',
+                request_id=request_id, attempt=attempt,
+                error=str(exc)[:200],
+            )
+            try:
+                await db.rollback()
+            except Exception:  # noqa: BLE001 — best-effort rollback
+                logger.warning(
+                    'companion.stream.persist_rollback_failed',
+                    request_id=request_id, attempt=attempt,
+                )
+        except OSError as exc:
+            last_exc = exc
+            logger.warning(
+                'companion.stream.persist_oserror',
+                request_id=request_id, attempt=attempt,
+                error=str(exc)[:200],
+            )
+            try:
+                await db.rollback()
+            except Exception:  # noqa: BLE001 — best-effort rollback
+                pass
+
+    logger.error(
+        'companion.stream.persist_failed_final',
+        request_id=request_id,
+        user_id=str(user_id),
+        book_id=str(book_id),
+        error=str(last_exc)[:200] if last_exc else 'unknown',
+    )
+    return False
+
+
 async def _stream_via_provider(
     db: AsyncSession,
     user_id: UUID,
@@ -185,14 +251,35 @@ async def _stream_via_provider(
     message: str,
     messages: list[Any],
     lang: str,
+    request_id: str | None = None,
+    cancelled: asyncio.Event | None = None,
 ) -> AsyncGenerator[str, None]:
-    """Resolve provider, stream response, and persist result."""
+    """Resolve provider, stream response, and persist result.
+
+    Emits ``data: {"error": "persist_failed"}`` if DB persistence fails after
+    one retry so the client can warn the user. ``[DONE]`` is yielded AFTER
+    persistence so the client doesn't terminate early and miss the signal.
+    """
     collected_parts: list[str] = []
-    request_id = uuid.uuid4().hex[:12]
+    actual_request_id = request_id or uuid.uuid4().hex[:12]
     start_time = time.monotonic()
     registry = get_registry()
 
-    provider_info = _get_stream_provider(registry, request_id)
+    # Always echo the request id as the first frame so the client can issue
+    # a /chat/cancel against it later in the same connection.
+    yield f'data: {json.dumps({"request_id": actual_request_id})}\n\n'
+
+    if cancelled is not None and cancelled.is_set():
+        logger.info(
+            'companion.stream.cancelled_before_start',
+            request_id=actual_request_id,
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
+        yield 'data: [DONE]\n\n'
+        return
+
+    provider_info = _get_stream_provider(registry, actual_request_id)
     if provider_info is None:
         yield sse_chunk(t('companion.fallback_error', lang))
         yield 'data: [DONE]\n\n'
@@ -200,28 +287,51 @@ async def _stream_via_provider(
 
     state, provider_name, model_used = provider_info
 
+    stream_failed = False
     try:
         async for chunk in _stream_from_provider(
             state, provider_name, model_used, messages,
-            collected_parts, request_id, start_time,
+            collected_parts, actual_request_id, start_time,
             user_id, book_id, lang,
         ):
-            yield chunk
-        yield 'data: [DONE]\n\n'
-    finally:
-        try:
-            async with db_error_guard(
-                'companion.stream.persist_result',
-                request_id=request_id,
-                user_id=str(user_id),
-                book_id=str(book_id),
-            ):
-                await persist_stream_result(
-                    db, user_id, book_id, message, messages,
-                    collected_parts, request_id,
+            if cancelled is not None and cancelled.is_set():
+                logger.info(
+                    'companion.stream.cancelled_mid_stream',
+                    request_id=actual_request_id,
+                    user_id=str(user_id),
+                    book_id=str(book_id),
                 )
-        except (DBAPIError, OSError):
-            logger.debug('stream cleanup failed', exc_info=True)
+                break
+            yield chunk
+    except BaseException:  # noqa: BLE001 — also catches CancelledError on disconnect
+        stream_failed = True
+        raise
+    finally:
+        # Skip persistence on cancellation or stream-level error. For
+        # cancellation the user already opted out of the response; for a
+        # stream error the fallback inside _stream_from_provider already
+        # ran and we have no reliable partial to save.
+        is_cancelled = cancelled is not None and cancelled.is_set()
+        if stream_failed or is_cancelled:
+            if is_cancelled:
+                logger.info(
+                    'companion.stream.persist_skipped_cancelled',
+                    request_id=actual_request_id,
+                )
+            return
+
+        persist_ok = await _persist_with_retry(
+            db, user_id, book_id, message, messages,
+            collected_parts, actual_request_id,
+        )
+        if not persist_ok:
+            # Tell the client the streamed response couldn't be saved.
+            # Client should keep visible text (user already read it) but
+            # warn that reload will lose the message.
+            yield f'data: {json.dumps({"error": "persist_failed"})}\n\n'
+
+    if not stream_failed:
+        yield 'data: [DONE]\n\n'
 
 
 async def stream_chat(
@@ -234,6 +344,8 @@ async def stream_chat(
     persona: str | None = None,
     genre: str | None = None,
     lang: str = DEFAULT_LANGUAGE,
+    request_id: str | None = None,
+    cancelled: asyncio.Event | None = None,
 ) -> AsyncGenerator[str, None]:
     """Stream companion chat as SSE chunks with per-provider circuit breaker."""
     _, history, system_text, budget = await _prepare_context(
@@ -263,5 +375,6 @@ async def stream_chat(
     # Stream from provider
     async for chunk in _stream_via_provider(
         db, user_id, book_id, message, messages, lang,
+        request_id=request_id, cancelled=cancelled,
     ):
         yield chunk

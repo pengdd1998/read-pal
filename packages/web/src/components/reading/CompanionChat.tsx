@@ -6,6 +6,7 @@ import { preloadDOMPurify } from '@/lib/dompurify';
 import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
 import { useToast } from '@/components/Toast';
 import { generateId } from '@read-pal/shared';
+import { ROLLBACK_EVENT, type RollbackDetail } from '@/hooks/useStreamingChat';
 import {
  detectGenre,
  getGenreTemplate,
@@ -87,7 +88,7 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
  );
 
  // Chat history (loads from API, resets on book change)
- const { messages, setMessages } = useChatHistory({
+ const { messages, setMessages, hasMore, loadingMore, loadMore } = useChatHistory({
  isOpen,
  bookId,
  friendName,
@@ -120,6 +121,7 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
  const createAssistantMessage = useCallback(() => generateId(), []);
  const {
  sendStreamMessage,
+ regenerate,
  loading,
  connecting,
  stopStreaming,
@@ -175,6 +177,22 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
  }, []);
 
  const handleClose = useCallback(() => setIsOpen(false), [setIsOpen]);
+
+ // Listen for rollback events (stream failure / persist_failed): pre-fill
+ // the input with the user's original text so they can retry with one
+ // keystroke. Also re-open the panel in case it was closed.
+ useEffect(() => {
+ if (typeof window === 'undefined') return;
+ const onRollback = (e: Event) => {
+  const detail = (e as CustomEvent<RollbackDetail>).detail;
+  if (detail?.text) {
+  setInput(detail.text);
+  setIsOpen(true);
+  }
+ };
+ window.addEventListener(ROLLBACK_EVENT, onRollback);
+ return () => window.removeEventListener(ROLLBACK_EVENT, onRollback);
+ }, [setIsOpen]);
 
  // Action handlers
  const {
@@ -242,6 +260,10 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
    onKeyDown={handleKeyPress}
    onSend={handleSend}
    onStop={stopStreaming}
+   onRegenerate={regenerate}
+   hasMoreHistory={hasMore}
+   loadingMoreHistory={loadingMore}
+   onLoadMoreHistory={loadMore}
    submitFeedback={submitFeedback}
    t={t as (key: string, params?: Record<string, unknown>) => string}
   />

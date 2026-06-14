@@ -7,9 +7,11 @@ interface ChatMessageBubbleProps {
  msg: SanitizedMessage;
  t: (key: string, params?: Record<string, unknown>) => string;
  submitFeedback: (messageId: string, rating: boolean) => void;
+ onRegenerate: () => void;
+ showRegenerate: boolean;
 }
 
-export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submitFeedback }: ChatMessageBubbleProps) {
+export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submitFeedback, onRegenerate, showRegenerate }: ChatMessageBubbleProps) {
  return (
  <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
   <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
@@ -47,6 +49,18 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
      <path strokeLinecap="round" strokeLinejoin="round" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
      </svg>
     </button>
+    {showRegenerate && (
+    <button type="button"
+     onClick={onRegenerate}
+     className="p-2.5 rounded text-amber-400/50 hover:text-amber-700 dark:hover:text-amber-300 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+     aria-label={t('companion_regenerate')}
+     title={t('companion_regenerate')}
+    >
+     <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+     <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+     </svg>
+    </button>
+    )}
     </div>
    )}
    </>

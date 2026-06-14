@@ -111,7 +111,12 @@ async def _fetch_conversations(
         async with db_error_guard('fetch_conversations', book_id=str(book_id)):
             result = await db.execute(
                 select(ChatMessage)
-                .where(ChatMessage.user_id == user_id, ChatMessage.book_id == book_id)
+                .where(
+                    ChatMessage.user_id == user_id,
+                    ChatMessage.book_id == book_id,
+                    # Exclude soft-deleted rows (regenerate flow, P1-6).
+                    ChatMessage.deleted_at.is_(None),
+                )
                 .order_by(ChatMessage.created_at)
                 .limit(DATA_COLLECTION_CHAT_LIMIT),
             )

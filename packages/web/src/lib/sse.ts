@@ -6,17 +6,30 @@
  */
 
 /**
- * Consume an SSE stream from the backend, calling `onToken` for each token
- * chunk and `onDone` when the stream completes. Returns an AbortController
- * so the caller can cancel.
+ * Consume an SSE stream from the backend.
+ *
+ * - `onToken` is called for each content chunk.
+ * - `onMeta` is called for non-content metadata frames (e.g. ``request_id``).
+ * - `onDone` is called when the stream completes ([DONE] or clean close).
+ * - `onError` is called on stream errors, with the error string. The string
+ *   ``'persist_failed'`` is special: it means the streamed content was
+ *   produced but DB persistence failed — callers should NOT retry the stream
+ *   in that case (the user already saw the response).
+ *
+ * Returns an AbortController so the caller can cancel.
  */
 import { warn } from './logger';
+
+export type SSEMeta = { request_id?: string };
+export type SSEError = 'persist_failed' | 'internal_error' | (string & {});
+
 export function consumeSSEStream(
   response: Response,
   onToken: (token: string) => void,
   onDone: () => void,
-  onError: (err: string) => void,
+  onError: (err: SSEError) => void,
   parentSignal?: AbortSignal,
+  onMeta?: (meta: SSEMeta) => void,
 ): AbortController {
   const controller = new AbortController();
   const reader = response.body?.getReader();
@@ -32,7 +45,7 @@ export function consumeSSEStream(
 
   let finalized = false;
   const safeDone = () => { if (!finalized) { finalized = true; onDone(); } };
-  const safeError = (err: string) => { if (!finalized) { finalized = true; onError(err); } };
+  const safeError = (err: SSEError) => { if (!finalized) { finalized = true; onError(err); } };
 
   if (!reader) {
     safeError('No response body');
@@ -60,9 +73,19 @@ export function consumeSSEStream(
       }
 
       try {
-        const parsed = JSON.parse(payload) as { token?: string; content?: string; error?: string };
+        const parsed = JSON.parse(payload) as {
+          token?: string;
+          content?: string;
+          error?: string;
+          request_id?: string;
+        };
+        // Meta frame: request_id (and possibly other metadata). Emitted as
+        // the first frame so the client can cancel the stream by id later.
+        if (onMeta && (parsed.request_id !== undefined)) {
+          onMeta({ request_id: parsed.request_id });
+        }
         if (parsed.error) {
-          safeError(parsed.error);
+          safeError(parsed.error as SSEError);
           controller.abort();
           return;
         }

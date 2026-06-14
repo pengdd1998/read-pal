@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { API_BASE_URL } from '@/lib/api';
+import { api } from '@/lib/api';
 import { consumeSSEStream } from '@/lib/sse';
 import { purifySync } from '@/lib/dompurify';
 import { generateId } from '@read-pal/shared';
@@ -14,7 +15,14 @@ export interface Message {
   content: string;
   timestamp: number;
   streaming?: boolean;
+  persistFailed?: boolean;
 }
+
+/** Custom event dispatched when an optimistic turn is rolled back (stream
+ * failure or persist_failed). CompanionChat listens for this to refill the
+ * input box with the user's original text so they can retry with one keystroke. */
+export const ROLLBACK_EVENT = 'companion-rollback';
+export interface RollbackDetail { text: string }
 
 export interface UseStreamingChatOptions {
   bookId: string;
@@ -35,6 +43,7 @@ export interface UseStreamingChatOptions {
 
 export interface UseStreamingChatReturn {
   sendStreamMessage: (msg: string, retryCount?: number) => Promise<void>;
+  regenerate: () => Promise<void>;
   loading: boolean;
   connecting: boolean;
   stopStreaming: () => void;
@@ -71,17 +80,32 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  // Track the current stream's request_id so stopStreaming can issue a
+  // server-side cancel. The id is sent in the first SSE frame from /chat/stream.
+  const currentRequestIdRef = useRef<string | null>(null);
 
-  const sendStreamMessage = useCallback(async (msg: string, retryCount = 0) => {
-    const assistantMsgId = createAssistantMessage();
+  /** Roll back an optimistic user+assistant turn and dispatch a rollback
+   * event with the user's original text so the caller can pre-fill the input. */
+  const rollbackTurn = useCallback((userMsgId: string, assistantMsgId: string, text: string) => {
+    onMessagesUpdate((prev) => prev.filter((m) => m.id !== userMsgId && m.id !== assistantMsgId));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent<RollbackDetail>(ROLLBACK_EVENT, { detail: { text } }));
+    }
+  }, [onMessagesUpdate]);
 
-    onMessagesUpdate((prev) => [
-      ...prev,
-      { id: generateId(), role: 'user' as const, content: msg, timestamp: Date.now() },
-      { id: assistantMsgId, role: 'assistant' as const, content: '', timestamp: Date.now(), streaming: true },
-    ]);
-    setLoading(true);
-    setConnecting(true);
+  /** Shared streaming runner. Posts to `endpoint` with `body`, streams tokens
+   * into the assistant message `assistantMsgId`. On final failure, calls
+   * `onFinalFailure` (for sendStreamMessage: rollback + dispatch event;
+   * for regenerate: just clear the placeholder). */
+  const runStream = useCallback(async (params: {
+    endpoint: string;
+    body: Record<string, unknown>;
+    assistantMsgId: string;
+    userMsgId?: string;
+    rollbackText?: string;
+    startAttempt?: number;
+  }): Promise<void> => {
+    const { endpoint, body, assistantMsgId, userMsgId, rollbackText, startAttempt = 0 } = params;
 
     const attemptStream = async (attempt: number): Promise<void> => {
       if (!mountedRef.current) return;
@@ -91,26 +115,10 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
       abortRef.current = fetchController;
 
       try {
-        const response = await authFetchWithRefresh(`${API_BASE_URL}/api/agents/chat/stream`, {
+        const response = await authFetchWithRefresh(`${API_BASE_URL}${endpoint}`, {
           method: 'POST',
           signal: fetchController.signal,
-          body: JSON.stringify({
-            book_id: bookId,
-            message: msg,
-            context: {
-              bookId,
-              currentPage,
-              totalPages: totalPages ?? 0,
-              bookTitle: bookTitle ?? '',
-              author: author ?? '',
-              chapterContent: chapterContent ? purifySync(chapterContent).slice(0, 8000) : '',
-              nearbyCode: extractCodeBlocks(chapterContent ?? ''),
-              genres: genreMetadata,
-              bookDescription,
-              companionMode,
-              persona,
-            },
-          }),
+          body: JSON.stringify(body),
         });
         if (!response.ok) {
           if ((response.status >= 500 || response.status === 429) && attempt < MAX_RETRIES) {
@@ -132,14 +140,19 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             if (fetchController.signal.aborted) return;
             return attemptStream(attempt + 1);
           }
-          const errorMsg = t('companion_server_error', { status: response.status });
-          onMessagesUpdate((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId
-                ? { ...m, content: t('companion_error_prefix', { message: errorMsg }), streaming: false }
-                : m,
-            ),
-          );
+          // Final HTTP failure.
+          if (attempt >= MAX_RETRIES && userMsgId && rollbackText !== undefined) {
+            rollbackTurn(userMsgId, assistantMsgId, rollbackText);
+          } else {
+            const errorMsg = t('companion_server_error', { status: response.status });
+            onMessagesUpdate((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId
+                  ? { ...m, content: t('companion_error_prefix', { message: errorMsg }), streaming: false }
+                  : m,
+              ),
+            );
+          }
           setLoading(false);
           setConnecting(false);
           return;
@@ -184,6 +197,35 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
           },
           (errMsg: string) => {
             if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
+
+            // persist_failed: stream completed but DB save failed. The user
+            // already saw the response. Don't retry — roll back the whole
+            // turn so reload doesn't show a phantom message, and dispatch
+            // a rollback event so CompanionChat can refill the input.
+            if (errMsg === 'persist_failed') {
+              if (mountedRef.current) {
+                if (userMsgId && rollbackText !== undefined) {
+                  rollbackTurn(userMsgId, assistantMsgId, rollbackText);
+                } else {
+                  // Regenerate path: just remove the placeholder.
+                  onMessagesUpdate((prev) => prev.filter((m) => m.id !== assistantMsgId));
+                }
+                onMessagesUpdate((prev) => [
+                  ...prev,
+                  {
+                    id: `err-${generateId()}`,
+                    role: 'assistant' as const,
+                    content: t('companion_persist_failed'),
+                    timestamp: Date.now(),
+                  },
+                ]);
+              }
+              setLoading(false);
+              setConnecting(false);
+              abortRef.current = null;
+              return;
+            }
+
             if (attempt < MAX_RETRIES) {
               const delay = Math.pow(2, attempt) * 1000;
               onMessagesUpdate((prev) =>
@@ -201,18 +243,33 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
               }, delay);
               return;
             }
-            onMessagesUpdate((prev) =>
-              prev.map((m) =>
-                m.id === assistantMsgId
-                  ? { ...m, content: m.content || t('companion_stream_failed', { message: errMsg }), streaming: false }
-                  : m,
-              ),
-            );
+            // Final failure: roll back the optimistic user bubble and
+            // dispatch a rollback event so the caller can pre-fill the
+            // input with the user's original text.
+            if (userMsgId && rollbackText !== undefined) {
+              rollbackTurn(userMsgId, assistantMsgId, rollbackText);
+            } else {
+              // Regenerate path: clear placeholder.
+              onMessagesUpdate((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId
+                    ? { ...m, content: t('companion_stream_failed', { message: '' }), streaming: false }
+                    : m,
+                ),
+              );
+            }
             setLoading(false);
             setConnecting(false);
             abortRef.current = null;
           },
           fetchController.signal,
+          (meta) => {
+            // First frame from server: the request_id so we can cancel
+            // cooperatively later.
+            if (meta.request_id) {
+              currentRequestIdRef.current = meta.request_id;
+            }
+          },
         );
       } catch (err) {
         warn('useStreamingChat: connection error (attempt %d)', attempt, err);
@@ -235,35 +292,111 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
           if (fetchController.signal.aborted) return;
           return attemptStream(attempt + 1);
         }
-        onMessagesUpdate((prev) =>
-          prev.map((m) =>
-            m.id === assistantMsgId
-              ? { ...m, content: t('companion_connect_failed'), streaming: false }
-              : m,
-          ),
-        );
+        // Final network failure.
+        if (attempt >= MAX_RETRIES && userMsgId && rollbackText !== undefined) {
+          rollbackTurn(userMsgId, assistantMsgId, rollbackText);
+        } else {
+          onMessagesUpdate((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId
+                ? { ...m, content: t('companion_connect_failed'), streaming: false }
+                : m,
+            ),
+          );
+        }
         setLoading(false);
         setConnecting(false);
       }
     };
 
-    await attemptStream(retryCount);
-  }, [
+    await attemptStream(startAttempt);
+  }, [onMessagesUpdate, t, rollbackTurn]);
+
+  const buildContext = useCallback(() => ({
     bookId,
     currentPage,
-    totalPages,
-    bookTitle,
-    author,
-    chapterContent,
-    genreMetadata,
+    totalPages: totalPages ?? 0,
+    bookTitle: bookTitle ?? '',
+    author: author ?? '',
+    chapterContent: chapterContent ? purifySync(chapterContent).slice(0, 8000) : '',
+    nearbyCode: extractCodeBlocks(chapterContent ?? ''),
+    genres: genreMetadata,
     bookDescription,
     companionMode,
     persona,
-    onMessagesUpdate,
-    createAssistantMessage,
+  }), [
+    bookId, currentPage, totalPages, bookTitle, author,
+    chapterContent, genreMetadata, bookDescription, companionMode, persona,
     extractCodeBlocks,
-    t,
   ]);
+
+  const sendStreamMessage = useCallback(async (msg: string, retryCount = 0) => {
+    const assistantMsgId = createAssistantMessage();
+    const userMsgId = `opt-${generateId()}`;
+    currentRequestIdRef.current = null;
+
+    onMessagesUpdate((prev) => [
+      ...prev,
+      { id: userMsgId, role: 'user' as const, content: msg, timestamp: Date.now() },
+      { id: assistantMsgId, role: 'assistant' as const, content: '', timestamp: Date.now(), streaming: true },
+    ]);
+    setLoading(true);
+    setConnecting(true);
+
+    await runStream({
+      endpoint: '/api/agents/chat/stream',
+      body: {
+        book_id: bookId,
+        message: msg,
+        context: buildContext(),
+      },
+      assistantMsgId,
+      userMsgId,
+      rollbackText: msg,
+      startAttempt: retryCount,
+    });
+  }, [bookId, createAssistantMessage, onMessagesUpdate, buildContext, runStream]);
+
+  /** Regenerate the last assistant response. Server soft-deletes the prior
+   * assistant message and re-streams a fresh one using the last user message
+   * as the prompt. Locally, we drop the prior assistant bubble and stream
+   * into a new placeholder. No optimistic user bubble needed. */
+  const regenerate = useCallback(async () => {
+    if (loading) return;
+    const assistantMsgId = createAssistantMessage();
+    currentRequestIdRef.current = null;
+
+    // Drop the prior last assistant message locally (mirrors the server
+    // soft-delete done by /chat/regenerate).
+    onMessagesUpdate((prev) => {
+      const next = [...prev];
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (next[i].role === 'assistant' && !next[i].streaming) {
+          next.splice(i, 1);
+          break;
+        }
+      }
+      next.push({
+        id: assistantMsgId,
+        role: 'assistant' as const,
+        content: '',
+        timestamp: Date.now(),
+        streaming: true,
+      });
+      return next;
+    });
+    setLoading(true);
+    setConnecting(true);
+
+    await runStream({
+      endpoint: '/api/agents/chat/regenerate',
+      body: {
+        book_id: bookId,
+        context: buildContext(),
+      },
+      assistantMsgId,
+    });
+  }, [bookId, loading, createAssistantMessage, onMessagesUpdate, buildContext, runStream]);
 
   const stopStreaming = useCallback(() => {
     if (flushTimerRef.current) { clearTimeout(flushTimerRef.current); flushTimerRef.current = null; }
@@ -273,6 +406,17 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     onMessagesUpdate((prev) => prev.map((m) => (m.streaming ? { ...m, streaming: false } : m)));
     setLoading(false);
     setConnecting(false);
+
+    // Cooperatively cancel the in-flight stream on the server so the LLM
+    // stops producing tokens and persist is skipped. Best-effort: a network
+    // failure here is fine, the local abort above already stops the client.
+    const reqId = currentRequestIdRef.current;
+    if (reqId) {
+      currentRequestIdRef.current = null;
+      api.post('/api/agents/chat/cancel', { request_id: reqId }).catch((err) => {
+        warn('useStreamingChat: cancel request failed (non-fatal)', err);
+      });
+    }
   }, [onMessagesUpdate]);
 
   // Abort stream and clear timer on unmount
@@ -288,6 +432,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
 
   return {
     sendStreamMessage,
+    regenerate,
     loading,
     connecting,
     stopStreaming,

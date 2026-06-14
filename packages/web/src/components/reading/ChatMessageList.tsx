@@ -43,6 +43,11 @@ interface ChatMessageListProps {
  messagesEndRef: React.Ref<HTMLDivElement>;
  chatContainerRef: React.Ref<HTMLDivElement>;
  onPromptClick: (prompt: string) => void;
+ onRegenerate: () => void;
+ canRegenerate: boolean;
+ hasMoreHistory: boolean;
+ loadingMoreHistory: boolean;
+ onLoadMoreHistory: () => void;
  t: (key: string, params?: Record<string, unknown>) => string;
  submitFeedback: (messageId: string, rating: boolean) => void;
 }
@@ -59,9 +64,42 @@ export const ChatMessageList = React.memo(function ChatMessageList({
  messagesEndRef,
  chatContainerRef,
  onPromptClick,
+ onRegenerate,
+ canRegenerate,
+ hasMoreHistory,
+ loadingMoreHistory,
+ onLoadMoreHistory,
  t,
  submitFeedback,
 }: ChatMessageListProps) {
+ // Find id of the last non-streaming assistant message — the only one
+ // that gets the regenerate button.
+ const lastAssistantId = React.useMemo(() => {
+  for (let i = messages.length - 1; i >= 0; i--) {
+   if (messages[i].role === 'assistant' && !messages[i].streaming) {
+    return messages[i].id;
+   }
+  }
+  return null;
+ }, [messages]);
+
+ // Sentinel for infinite-scroll: when it scrolls into view, load more.
+ const topSentinelRef = React.useRef<HTMLDivElement | null>(null);
+ React.useEffect(() => {
+  if (!hasMoreHistory) return;
+  const el = topSentinelRef.current;
+  if (!el) return;
+  const io = new IntersectionObserver((entries) => {
+   for (const entry of entries) {
+    if (entry.isIntersecting && !loadingMoreHistory) {
+     onLoadMoreHistory();
+    }
+   }
+  }, { root: null, rootMargin: '80px', threshold: 0 });
+  io.observe(el);
+  return () => io.disconnect();
+ }, [hasMoreHistory, loadingMoreHistory, onLoadMoreHistory]);
+
  return (
  <div ref={chatContainerRef} role="log" aria-label={t('companion_aria_messages')} aria-live="polite" className="flex-1 overflow-y-auto p-4 space-y-3">
   {messages.length === 0 && !loading ? (
@@ -84,14 +122,34 @@ export const ChatMessageList = React.memo(function ChatMessageList({
    </div>
   </div>
   ) : (
-  messages.map((msg) => (
+  <>
+   {hasMoreHistory && (
+   <div ref={topSentinelRef} className="flex justify-center py-2 min-h-[36px]">
+    {loadingMoreHistory ? (
+    <span className="text-xs text-amber-600/70 dark:text-amber-300/60" role="status">
+     {t('companion_loading_more')}
+    </span>
+    ) : (
+    <button type="button"
+     onClick={onLoadMoreHistory}
+     className="text-xs text-amber-700 dark:text-amber-300 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-amber-500 rounded px-2 py-1"
+    >
+     {t('companion_load_more')}
+    </button>
+    )}
+   </div>
+   )}
+   {messages.map((msg) => (
    <ChatMessageBubble
    key={msg.id}
    msg={msg}
    t={t}
    submitFeedback={submitFeedback}
+   onRegenerate={onRegenerate}
+   showRegenerate={canRegenerate && msg.id === lastAssistantId}
    />
-  ))
+   ))}
+  </>
   )}
   {loading && !hasStreamingMessage && (
   <div className="flex justify-start">

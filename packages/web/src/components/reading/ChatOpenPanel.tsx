@@ -28,6 +28,10 @@ interface ChatOpenPanelProps {
  onKeyDown: (e: React.KeyboardEvent) => void;
  onSend: () => void;
  onStop: () => void;
+ onRegenerate: () => void;
+ hasMoreHistory: boolean;
+ loadingMoreHistory: boolean;
+ onLoadMoreHistory: () => void;
  submitFeedback: (messageId: string, rating: boolean) => void;
  t: TranslateFn;
 }
@@ -50,6 +54,10 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
  onKeyDown,
  onSend,
  onStop,
+ onRegenerate,
+ hasMoreHistory,
+ loadingMoreHistory,
+ onLoadMoreHistory,
  submitFeedback,
  t,
 }: ChatOpenPanelProps) {
@@ -111,6 +119,11 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
    messagesEndRef={messagesEndRef}
    chatContainerRef={chatContainerRef}
    onPromptClick={onInputChange}
+   onRegenerate={onRegenerate}
+   canRegenerate={!loading && !hasStreamingMessage && sanitizedMessages.some((m) => m.role === 'assistant' && !m.streaming)}
+   hasMoreHistory={hasMoreHistory}
+   loadingMoreHistory={loadingMoreHistory}
+   onLoadMoreHistory={onLoadMoreHistory}
    t={t}
    submitFeedback={submitFeedback}
   />

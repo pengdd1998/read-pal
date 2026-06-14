@@ -124,3 +124,46 @@ class AdvancePlanRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
     book_id: UUID
+
+
+class CancelStreamRequest(BaseModel):
+    """Request body for cancelling an in-flight companion stream."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    request_id: str = Field(min_length=4, max_length=64)
+
+
+class RegenerateRequest(BaseModel):
+    """Request body for regenerating the last assistant response."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    book_id: UUID
+    persona: str | None = None
+    genre: Literal['fiction', 'nonfiction', 'technical', 'academic', 'default'] | None = None
+    context: dict | None = None
+
+
+class ChatHistoryPage(BaseModel):
+    """Paginated chat history response."""
+
+    success: bool = True
+    data: list['ChatHistoryItem'] = []
+    next_cursor: str | None = None
+
+
+class ChatHistoryItem(BaseModel):
+    """Single chat history entry."""
+
+    id: str
+    book_id: str = Field(serialization_alias='bookId')
+    role: str
+    content: str
+    created_at: str = Field(serialization_alias='createdAt')
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+ChatHistoryPage.model_rebuild()
+
