@@ -25,7 +25,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [readingLog, setReadingLog] = useState<ReadingLogEntry[]>([]);
-  const [readingWpm, setReadingWpm] = useState<number>(0);
+  const [readingPph, setReadingPph] = useState<number>(0);
   const [flashcardCount, setFlashcardCount] = useState<number>(0);
   const [tags, setTags] = useState<Array<{ name: string; count: number }>>([]);
   const [zoteroConnected, setZoteroConnected] = useState(false);
@@ -46,7 +46,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
     setAllAnnotations([]);
     setHasPersonalBook(false);
     setReadingLog([]);
-    setReadingWpm(0);
+    setReadingPph(0);
     setFlashcardCount(0);
     setTags([]);
 
@@ -114,8 +114,10 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
         if (Array.isArray(data)) setReadingLog(data);
       }),
     );
-    bgFetch<{ currentWpm: number }>('/api/stats/reading-speed', guard((data) => {
-      if (data.currentWpm) setReadingWpm(data.currentWpm);
+    // Pages/hour is the reliable speed metric — the backend's derived wpm
+    // assumes 250 words/page which is wildly off. ETA is computed from pph.
+    bgFetch<{ averagePagesPerHour: number }>('/api/stats/reading-speed', guard((data) => {
+      if (data.averagePagesPerHour) setReadingPph(data.averagePagesPerHour);
     }));
     bgFetch<Record<string, unknown>>('/api/settings', guard((data) => {
       if (data?.['zoteroApiKey'] && data?.['zoteroUserId']) {
@@ -139,7 +141,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
     error,
     setError,
     readingLog,
-    readingWpm,
+    readingPph,
     flashcardCount,
     tags,
     zoteroConnected,

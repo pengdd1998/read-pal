@@ -58,7 +58,7 @@ export default function BookDetailPage() {
     error,
     setError,
     readingLog,
-    readingWpm,
+    readingPph,
     flashcardCount,
     tags,
     zoteroConnected,
@@ -96,9 +96,11 @@ export default function BookDetailPage() {
 
   const progressPct = Math.round(book.progress);
   const remainingChapters = Math.max(0, book.totalPages - book.currentPage);
+  // ETA from pages/hour: remaining_pages / (pages/hour) * 60 = minutes.
+  // Falls back to ~8 min/page when no reliable speed data exists yet.
   const estimatedMinutesLeft = remainingChapters > 0
-    ? readingWpm > 0
-      ? Math.round((remainingChapters * 250 * 25) / readingWpm)
+    ? readingPph > 0
+      ? Math.round((remainingChapters / readingPph) * 60)
       : remainingChapters * 8
     : 0;
   const statusConfig = {
@@ -135,7 +137,7 @@ export default function BookDetailPage() {
         totalPages={book.totalPages}
         isReading={book.status === 'reading'}
         estimatedMinutesLeft={estimatedMinutesLeft}
-        readingWpm={readingWpm}
+        readingPph={readingPph}
         locale={locale}
         t={t}
       />

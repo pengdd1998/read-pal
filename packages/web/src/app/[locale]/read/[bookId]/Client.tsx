@@ -30,7 +30,7 @@ export default function ReadPage() {
     fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode,
     fontFamily, setFontFamily, lineHeight, setLineHeight,
     bgEnabled, setBgEnabled, highlightMode,
-    readingWpm, hasMadeSelection, setHasMadeSelection,
+    readingPph, hasMadeSelection, setHasMadeSelection,
     sessionSummary, setSessionSummary, sessionIdRef,
     setChapterScrollProgress, isFiction, chapterTitles, genreMetadata, bookDescription,
     ui, handleChapterChange, handleBack, handleShowSettings,
@@ -99,7 +99,7 @@ export default function ReadPage() {
         author={book.author}
         currentChapter={currentChapter}
         totalChapters={chapters.length}
-        readingWpm={readingWpm}
+        readingPph={readingPph}
         isPaused={ui.isPaused}
         isBookmarked={annotationActions.isBookmarked}
         annotationsCount={annotations.length}

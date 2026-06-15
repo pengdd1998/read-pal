@@ -16,7 +16,7 @@ interface UseReaderProgressOptions {
 
 /**
  * Tracks reading progress and saves it on page unload using keepalive.
- * Also fetches the user's current reading speed (WPM).
+ * Also fetches the user's current reading speed (pages/hour).
  */
 export function useReaderProgress({
   bookId,
@@ -68,25 +68,27 @@ export function useReaderProgress({
     };
   }, [bookId, loading]);
 
-  // Reading speed (fetch once per book). The guard lives outside the
-  // effect so it isn't reset when `loading` toggles — without that, a
-  // chapter-change loading blip would clear wpmFetchedRef and re-fetch.
-  const [readingWpm, setReadingWpm] = useState<number | null>(null);
-  const wpmFetchedRef = useRef(false);
+  // Reading speed (fetch once per book). Uses pages/hour rather than the
+  // derived wpm: the backend's wpm = pph * 250 / 60 assumes 250 words/page,
+  // which is wildly off for most books. The guard lives outside the effect
+  // so it isn't reset when `loading` toggles — without that, a chapter-change
+  // loading blip would clear pphFetchedRef and re-fetch.
+  const [readingPph, setReadingPph] = useState<number | null>(null);
+  const pphFetchedRef = useRef(false);
   useEffect(() => {
-    if (loading || wpmFetchedRef.current) return;
-    wpmFetchedRef.current = true;
+    if (loading || pphFetchedRef.current) return;
+    pphFetchedRef.current = true;
     let cancelled = false;
-    api.get<{ currentWpm: number; trend: string }>('/api/stats/reading-speed')
+    api.get<{ averagePagesPerHour: number }>('/api/stats/reading-speed')
       .then((res) => {
         if (cancelled) return;
-        if (res.success && res.data && res.data.currentWpm > 0) {
-          setReadingWpm(res.data.currentWpm);
+        if (res.success && res.data && res.data.averagePagesPerHour > 0) {
+          setReadingPph(res.data.averagePagesPerHour);
         }
       })
       .catch((err) => { if (!cancelled) warn('Reader: reading speed fetch failed', err); });
     return () => { cancelled = true; };
   }, [loading]);
 
-  return { readingWpm };
+  return { readingPph };
 }

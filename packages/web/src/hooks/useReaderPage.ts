@@ -86,7 +86,7 @@ export function useReaderPage() {
   const studyMode = useStudyMode(bookId);
 
   // --- Progress & reading speed ---
-  const { readingWpm } = useReaderProgress({ bookId, loading, currentChapter, chapterScrollProgress, currentSegment });
+  const { readingPph } = useReaderProgress({ bookId, loading, currentChapter, chapterScrollProgress, currentSegment });
 
   // --- Annotation actions ---
   const toastMessages = useMemo(() => ({
@@ -205,7 +205,7 @@ export function useReaderPage() {
     fontFamily, setFontFamily, lineHeight, setLineHeight,
     bgEnabled, setBgEnabled,
     highlightMode, setHighlightMode,
-    readingWpm, hasMadeSelection, setHasMadeSelection,
+    readingPph, hasMadeSelection, setHasMadeSelection,
     sessionSummary, setSessionSummary,
     sessionIdRef,
     chapterScrollProgress, setChapterScrollProgress,

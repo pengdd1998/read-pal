@@ -13,7 +13,7 @@ interface ReaderHeaderProps {
  author?: string;
  currentChapter: number;
  totalChapters: number;
- readingWpm: number | null;
+ readingPph: number | null;
  isPaused: boolean;
  isBookmarked: boolean;
  annotationsCount: number;
@@ -58,7 +58,7 @@ function ActiveIconStyle(theme: string, color: 'amber' | 'teal' | 'purple' = 'am
 
 export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeaderProps) {
  const {
- bookId, bookTitle, author, currentChapter, totalChapters, readingWpm, isPaused,
+ bookId, bookTitle, author, currentChapter, totalChapters, readingPph, isPaused,
  isBookmarked, annotationsCount, theme, searchOpen, sidebarOpen, synthesisOpen,
  studyModeEnabled, settingsMenuOpen, timelineOpen, readingPlanOpen, onBack, onToggleBookmark,
  onToggleSearch, onToggleSidebar, onToggleSynthesis, onToggleStudyMode,
@@ -81,7 +81,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate leading-tight mt-px">
    {author && <span>{author} · </span>}
    {t('chapter_abbr')} {currentChapter + 1}/{totalChapters}
-   {readingWpm && <span className="ml-1 text-teal-500/80 dark:text-teal-400/70">· {readingWpm} {t('wpm')}</span>}
+   {readingPph && <span className="ml-1 text-teal-500/80 dark:text-teal-400/70">· {readingPph} {t('pages_hour')}</span>}
    {isPaused && <span className="ml-1 text-amber-500/70">· {t('paused')}</span>}
    </p>
   </div>

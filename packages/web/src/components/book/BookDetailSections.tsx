@@ -100,13 +100,13 @@ interface ProgressSectionProps {
   totalPages: number;
   isReading: boolean;
   estimatedMinutesLeft: number;
-  readingWpm: number;
+  readingPph: number;
   locale: string;
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 export const ProgressSection = memo(function ProgressSection({
-  progressPct, currentPage, totalPages, isReading, estimatedMinutesLeft, readingWpm, locale, t,
+  progressPct, currentPage, totalPages, isReading, estimatedMinutesLeft, readingPph, locale, t,
 }: ProgressSectionProps) {
   return (
     <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 mb-6 animate-slide-up stagger-2">
@@ -130,7 +130,7 @@ export const ProgressSection = memo(function ProgressSection({
           <div className="flex items-center justify-between mt-2">
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('remaining', { time: timeStr })}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('finishBy', { date: finishStr })} {readingWpm > 0 && <span className="text-teal-500">{t('wpm', { wpm: readingWpm })}</span>}
+              {t('finishBy', { date: finishStr })} {readingPph > 0 && <span className="text-teal-500">{t('pph', { pph: readingPph })}</span>}
             </p>
           </div>
         );
