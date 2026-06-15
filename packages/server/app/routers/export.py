@@ -12,7 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import api_limiter
-from app.services.export_service import CITATION_FORMATS, SUPPORTED_FORMATS, export
+from app.services.export_service import (
+    CITATION_FORMATS,
+    DISCUSSION_FORMATS,
+    SUPPORTED_FORMATS,
+    export,
+)
 from app.utils.i18n import not_found_error, t
 
 logger = logging.getLogger('read-pal.export')
@@ -32,12 +37,17 @@ _FILENAME_MAP = {
     'mla': 'citation-{book_id}.txt',
     'chicago': 'citation-{book_id}.txt',
     'bibtex': 'citation-{book_id}.bib',
+    'annotated_bib': 'annotated-bibliography-{book_id}.txt',
+    'json': 'annotations-{book_id}.json',
+    'bookclub': 'book-club-{book_id}.md',
+    'study_guide': 'study-guide-{book_id}.md',
+    'research': 'research-{book_id}.md',
 }
 
 
 def _validate_format(fmt: str) -> None:
     """Raise 400 if format is unsupported."""
-    all_formats = SUPPORTED_FORMATS + CITATION_FORMATS
+    all_formats = SUPPORTED_FORMATS + CITATION_FORMATS + DISCUSSION_FORMATS
     if fmt not in all_formats:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

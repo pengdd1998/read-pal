@@ -112,6 +112,85 @@ async def test_export_unauthenticated(client):
 
 
 # ---------------------------------------------------------------------------
+# Formats that were frontend-only (no backend renderer) until they 400'd.
+# Each now has a deterministic, LLM-free renderer.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('fmt', ['json', 'bookclub', 'study_guide', 'research', 'annotated_bib'])
+async def test_export_extra_formats(client, fmt):
+    reg = await register_user(client)
+    book = await _create_book(client, reg['token'])
+    await _create_annotation(
+        client, reg['token'], book['id'],
+        tags=['symbolism'], note='The green light.',
+    )
+
+    resp = await client.get(
+        f"/api/v1/export/{book['id']}/{fmt}",
+        headers=auth_headers(reg['token']),
+    )
+    assert resp.status_code == 200, (fmt, resp.text)
+    assert resp.text.strip(), f'{fmt} returned empty body'
+
+
+def test_extra_exporters_handle_empty_annotations():
+    """Renderers must not crash on a book with no annotations."""
+    from app.models.annotation import Annotation, AnnotationType
+    from app.models.book import Book
+    from app.services.exporters.extra_exporters import (
+        export_annotated_bibliography,
+        export_book_club,
+        export_json,
+        export_research,
+        export_study_guide,
+    )
+
+    book = Book(
+        title='Empty Book', author='Nobody', progress=0, total_pages=10,
+    )
+    renderers = [
+        export_json, export_book_club, export_study_guide,
+        export_research, export_annotated_bibliography,
+    ]
+    for fn in renderers:
+        out = fn(book, [])
+        assert isinstance(out, str) and out, f'{fn.__name__} returned empty'
+
+
+def test_extra_exporters_serialize_annotations():
+    """Renderers include annotation content/tags and emit valid JSON for json."""
+    import json as _json
+    from app.models.annotation import Annotation, AnnotationType
+    from app.models.book import Book
+    from app.services.exporters.extra_exporters import (
+        export_book_club,
+        export_json,
+        export_study_guide,
+    )
+
+    book = Book(title='Demo', author='Auth', progress=50, total_pages=10)
+    ann = Annotation(
+        type=AnnotationType.highlight,
+        content='A key line.',
+        note='why it matters',
+        tags=['theme'],
+        location={'chapter': 2},
+    )
+    js = export_json(book, [ann])
+    parsed = _json.loads(js)
+    assert parsed['book']['title'] == 'Demo'
+    assert parsed['annotations'][0]['content'] == 'A key line.'
+    assert parsed['annotations'][0]['tags'] == ['theme']
+
+    club = export_book_club(book, [ann])
+    assert 'A key line.' in club and 'theme' in club and 'Chapter 2' in club
+
+    guide = export_study_guide(book, [ann])
+    assert 'A key line.' in guide and 'Theme' in guide
+
+
+# ---------------------------------------------------------------------------
 # GET /api/v1/export/ (query params)
 # ---------------------------------------------------------------------------
 

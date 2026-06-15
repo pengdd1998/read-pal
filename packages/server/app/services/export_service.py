@@ -11,21 +11,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.models.book import Book
 from app.services.exporters import (
+    export_annotated_bibliography,
+    export_book_club,
     export_citation_apa,
     export_citation_bibtex,
     export_citation_chicago,
     export_citation_mla,
     export_csv,
     export_html,
+    export_json,
     export_markdown,
+    export_research,
+    export_study_guide,
     export_zotero_rdf,
 )
 from app.utils.db import db_error_guard
 
 logger = logging.getLogger('read-pal.export')
 
-SUPPORTED_FORMATS = ('csv', 'markdown', 'html', 'zotero')
-CITATION_FORMATS = ('apa', 'mla', 'chicago', 'bibtex')
+SUPPORTED_FORMATS = ('csv', 'markdown', 'html', 'json', 'zotero')
+CITATION_FORMATS = ('apa', 'mla', 'chicago', 'bibtex', 'annotated_bib')
+DISCUSSION_FORMATS = ('bookclub', 'study_guide', 'research')
 
 
 async def _load_book_and_annotations(
@@ -80,6 +86,11 @@ async def export(
         'markdown': (lambda: export_markdown(annotations, book_info), 'text/markdown; charset=utf-8'),
         'html': (lambda: export_html(annotations, book_info), 'text/html; charset=utf-8'),
         'zotero': (lambda: export_zotero_rdf(annotations, book_info), 'application/rdf+xml; charset=utf-8'),
+        'json': (lambda: export_json(book, annotations), 'application/json; charset=utf-8'),
+        'bookclub': (lambda: export_book_club(book, annotations), 'text/markdown; charset=utf-8'),
+        'study_guide': (lambda: export_study_guide(book, annotations), 'text/markdown; charset=utf-8'),
+        'research': (lambda: export_research(book, annotations), 'text/markdown; charset=utf-8'),
+        'annotated_bib': (lambda: export_annotated_bibliography(book, annotations), 'text/plain; charset=utf-8'),
     }
 
     entry = dispatchers.get(format)
