@@ -17,6 +17,30 @@ interface MoodSceneData {
  color: string;
 }
 
+// Module-level cache + failure cooldown so navigating between chapters (or
+// re-mounting) doesn't re-call the GLM mood endpoint for content we already
+// generated a scene for, and so a rate-limited account isn't hammered on
+// every navigation. Without this, every chapter change fires a GLM request;
+// when GLM is returning 429s, that's a thundering herd that deepens the
+// rate limit and shows an endless "Generating scene…" spinner.
+const sceneCache = new Map<string, MoodSceneData>();
+// After a failure, wait this long before allowing another attempt. GLM's
+// account-level rate limit needs time to recover; retrying every chapter
+// navigation (every few seconds) only makes it worse.
+const FAILURE_COOLDOWN_MS = 60_000;
+let lastFailureAt = 0;
+
+// Cheap, dependency-free hash (FNV-1a). Good enough to key a scene cache;
+// not cryptographic.
+function hashText(text: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16);
+}
+
 export const ReadingBackground = React.memo(function ReadingBackground({ content, enabled }: ReadingBackgroundProps) {
  const t = useTranslations('reader');
  const [sceneData, setSceneData] = useState<MoodSceneData | null>(null);
@@ -26,6 +50,19 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
 
  const fetchScene = useCallback(async (text: string) => {
  if (!text || text.length < 50) return;
+
+ const key = hashText(text);
+ const cached = sceneCache.get(key);
+ if (cached) {
+  setSceneData(cached);
+  return;
+ }
+
+ // Skip while in failure cooldown — the account is rate-limited and
+ // retrying immediately won't help.
+ if (lastFailureAt && Date.now() - lastFailureAt < FAILURE_COOLDOWN_MS) {
+  return;
+ }
 
  abortCtrlRef.current?.abort();
  const ctrl = new AbortController();
@@ -44,12 +81,17 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
 
   if (result.data && !ctrl.signal.aborted) {
   setSceneData(result.data);
+  sceneCache.set(key, result.data);
+  lastFailureAt = 0;
   }
  } catch (err) {
   // CanceledError is expected — we abort previous requests before starting new ones
   // and abort on unmount. Don't warn for intentional cancellations.
   if (ctrl.signal.aborted || (err as { name?: string })?.name === 'CanceledError') return;
   warn("ReadingBackground: mood scene fetch failed", err);
+  // Record the failure so repeated navigations don't keep firing requests
+  // at a rate-limited / unavailable AI endpoint.
+  lastFailureAt = Date.now();
  } finally {
   clearTimeout(timeout);
   if (!ctrl.signal.aborted) {
