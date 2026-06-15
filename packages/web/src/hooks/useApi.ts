@@ -112,6 +112,12 @@ export function useBackgroundApi() {
   const cancelledRef = useRef(false);
 
   useEffect(() => {
+    // Reset on every (re)mount so the cancel flag survives React StrictMode's
+    // mount→cleanup→remount cycle in dev. Without this, the cleanup sets the
+    // ref true and the second mount never resets it, leaving every background
+    // fetch permanently cancelled (tags, flashcards, reading-speed, etc. would
+    // never populate on the book-detail page in dev).
+    cancelledRef.current = false;
     return () => {
       cancelledRef.current = true;
     };
