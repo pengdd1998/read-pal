@@ -23,3 +23,28 @@ export function getBookInitials(title: string): string {
   if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
   return title.slice(0, 2).toUpperCase();
 }
+
+/**
+ * Shorten a book title for compact display contexts (dropdowns, selects,
+ * small chips). EPUB dc:title commonly bundles a marketing subtitle, e.g.
+ * '路边野餐（外星人的一次路边野餐…）' where the real title is just '路边野餐'.
+ *
+ * Strips a trailing parenthetical/bracketed suffix only when the part before
+ * it is a plausible standalone title (>=2 chars and under 40% of the total
+ * length — so short qualifiers like ' (2nd Edition)' are kept), then
+ * truncates to maxLen with an ellipsis. The full title always remains
+ * available on the book-detail page and library card.
+ */
+export function truncateTitle(title: string, maxLen = 45): string {
+  if (!title) return '';
+  let base = title;
+  const m = title.match(/^([^（(【\[｛{]+)[（(【\[｛{].+/u);
+  if (m) {
+    const prefix = m[1].trim();
+    if (prefix.length >= 2 && prefix.length < title.length * 0.4) {
+      base = prefix;
+    }
+  }
+  if (base.length <= maxLen) return base;
+  return `${base.slice(0, maxLen - 1).trimEnd()}…`;
+}

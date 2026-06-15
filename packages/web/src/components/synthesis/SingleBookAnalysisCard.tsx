@@ -7,6 +7,7 @@ import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
 import { normalizeSynthesisResult } from '@/components/synthesis/mapping';
 import { warn } from '@/lib/logger';
+import { truncateTitle } from '@/lib/book-cover';
 
 interface BookOption {
  id: string;
@@ -102,7 +103,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
     <option value="">{t('choose_book')}</option>
     {books.map((book) => (
     <option key={book.id} value={book.id}>
-     {book.title}{book.author ? ` — ${book.author}` : ''}
+     {truncateTitle(book.title)}{book.author ? ` — ${book.author}` : ''}
     </option>
     ))}
    </select>
