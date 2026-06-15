@@ -289,6 +289,13 @@ async def _stream_via_provider(
     if provider_info is None:
         yield sse_chunk(t('companion.fallback_error', lang))
         yield 'data: [DONE]\n\n'
+        # No provider available (e.g. circuit breaker open from sustained
+        # rate limiting). Still persist the user's message so it isn't lost —
+        # persist_stream_result saves the user side even with empty content.
+        await _persist_with_retry(
+            db, user_id, book_id, message, messages,
+            [], actual_request_id,
+        )
         return
 
     state, provider_name, model_used = provider_info

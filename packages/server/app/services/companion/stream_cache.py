@@ -92,6 +92,13 @@ async def persist_stream_result(
         except (ValueError, ConnectionError, RuntimeError) as exc:
             logger.warning('companion.streaming.cache_write_failed', error=str(exc)[:200])
 
+    # Always persist the user's message — it's valid input even when the AI
+    # produced nothing (rate-limited, circuit open, provider unavailable).
+    # The companion UI promises "your messages will be saved"; losing the
+    # user's side of the conversation on AI failure breaks that promise and
+    # orphans the chat history.
+    await _save_message(db, user_id, book_id, 'user', message)
+
     if not assistant_content:
         logger.warning(
             'companion.stream.empty_response',
@@ -100,5 +107,4 @@ async def persist_stream_result(
         )
         return
 
-    await _save_message(db, user_id, book_id, 'user', message)
     await _save_message(db, user_id, book_id, 'assistant', assistant_content)

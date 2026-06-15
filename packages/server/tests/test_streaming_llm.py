@@ -444,9 +444,13 @@ class TestStreamingErrors:
             ):
                 chunks.append(chunk)
 
-            # Neither user nor assistant message saved when response is empty
+            # Empty AI response: the user's message is still saved (it's valid
+            # input and the UI promises "your messages will be saved"); only
+            # the empty assistant reply is skipped.
             save_calls = mock_save.call_count
-            assert save_calls == 0  # Empty response: skip both saves
+            assert save_calls == 1  # User message saved, empty assistant skipped
+            saved_role = mock_save.call_args.args[3]
+            assert saved_role == 'user'
 
 
 # ---------------------------------------------------------------------------
