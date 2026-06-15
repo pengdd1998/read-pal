@@ -22,7 +22,12 @@ logger = structlog.get_logger('read-pal.llm')
 # Rate-limit retry
 # ---------------------------------------------------------------------------
 
-_RATE_LIMIT_BACKOFFS = [2, 4, 8]  # seconds to wait between 429 retries
+# On a 429 we retry once after a short backoff. GLM's account-level rate limit
+# (code 1302) is a sustained quota, not a transient blip — retrying many times
+# just multiplies the call volume and deepens the throttle (thundering herd).
+# The circuit breaker (opens after N failures) is the real sustained-failure
+# protection; this single retry only catches genuinely transient 429s.
+_RATE_LIMIT_BACKOFFS = [5]  # seconds to wait before the single 429 retry
 _NETWORK_RETRY_DELAY = 2  # seconds to wait before retrying network errors
 
 # Transient errors that warrant a single retry: stdlib socket-level errors,
