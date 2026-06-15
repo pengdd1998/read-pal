@@ -99,6 +99,10 @@ async def update_book_scroll_only(
             book.scroll_progress = Decimal(str(round(scroll_progress, 3)))
         if current_segment is not None:
             book.current_segment = current_segment
+        # A user on the final chapter who scrolls to the end (no page change)
+        # should still trigger completion — current_page is already at the
+        # last chapter, so update_book_completion marks it done.
+        update_book_completion(book, now)
 
 
 async def update_book_heartbeat(
