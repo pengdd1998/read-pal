@@ -160,6 +160,52 @@ async def test_generate_memory_book_unauthenticated(client):
 
 
 @pytest.mark.asyncio
+async def test_regenerate_reuses_successful_sections():
+    """Regeneration is incremental: a section that already succeeded (no
+    'error') is reused verbatim and NOT re-sent to the LLM; only errored
+    sections are retried. This keeps regeneration monotonic under rate-limiting
+    — a re-run can't lose a section that previously succeeded."""
+    from unittest.mock import MagicMock
+    from app.services.memory_book.pipeline import SECTION_TYPES, _generate_all_sections
+
+    # Prior run: 'encounter' succeeded (real content), 'recommendations' errored.
+    # Both are ungated LLM sections, so the errored one will be retried via the LLM.
+    prior_encounter = {'type': 'encounter', 'prologue': {'text': 'cached narrative'}}
+    prior_recs = {'type': 'recommendations', 'error': 'AI generation failed'}
+    existing = {'encounter': prior_encounter, 'recommendations': prior_recs}
+
+    call_count = 0
+
+    async def fake_gen(section_type, enriched, **_):
+        nonlocal call_count
+        call_count += 1
+        return {'type': section_type, 'fresh': True}
+
+    with patch(
+        'app.services.memory_book.pipeline._generate_section',
+        new=AsyncMock(side_effect=fake_gen),
+    ):
+        sections = await _generate_all_sections(
+            {'book': {'title': 'T'}, 'stats': {}},
+            user_id=MagicMock(),
+            book_id=MagicMock(),
+            existing_by_type=existing,
+        )
+
+    by_type = {s['type']: s for s in sections}
+    # encounter was reused — original content preserved, NOT regenerated
+    assert by_type['encounter'].get('prologue', {}).get('text') == 'cached narrative'
+    assert by_type['encounter'].get('fresh') is None
+    # recommendations errored before — it was regenerated (fresh LLM call)
+    assert by_type['recommendations'].get('fresh') is True
+
+    # Only the errored LLM sections should have hit the LLM; encounter must not have
+    assert call_count > 0, 'errored sections should be retried'
+    # encounter must never have been passed to the LLM
+    assert by_type['encounter'].get('fresh') is None
+
+
+@pytest.mark.asyncio
 async def test_get_reading_mirror(client):
     reg = await register_user(client)
     book = await _create_book(client, reg['token'])

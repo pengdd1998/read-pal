@@ -128,9 +128,15 @@ export default function ReadingMirrorPage() {
  setGenStep(steps[0]);
 
  try {
+  // Generation fans out 10 LLM section calls in parallel. Under GLM
+  // rate-limiting each call retries (429 backoff) then falls back to the
+  // secondary model, and the per-provider circuit breaker can serialize
+  // recovery across sections — observed wall-clock is 170-300s. The previous
+  // 120s timeout aborted the request mid-generation, so the backend (which
+  // kept running) stored a partial/error-stub book and the user saw "failed".
   const res = await api.post<ReadingMirror>(`/api/v1/reading-book/${bookId}/generate`, {
   format: 'reading_mirror',
-  }, { timeout: 120_000 });
+  }, { timeout: 420_000 });
   if (genTimerRef.current) { clearInterval(genTimerRef.current); genTimerRef.current = null; }
   if (!mountedRef.current) return;
   setGenStep('done');

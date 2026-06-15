@@ -87,10 +87,29 @@ async def _generate_all_sections(
     enriched_data: dict[str, Any],
     user_id: UUID,
     book_id: UUID,
+    existing_by_type: dict[str, dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Generate all sections in parallel and add metadata."""
+    """Generate all sections in parallel and add metadata.
+
+    ``existing_by_type`` lets regeneration be incremental: a section that
+    already succeeded on a prior run (no ``error``) is reused as-is instead of
+    burning another LLM call. Under GLM rate-limiting a full 10-section
+    regenerate can take minutes and is likely to fail some sections; re-running
+    then re-attempts ALL of them, so a previously-good section can regress to
+    an error stub. Incremental regeneration is monotonic — each retry only
+    fills in the missing sections, never losing what already succeeded.
+    """
+    existing_by_type = existing_by_type or {}
 
     async def _gen_section(section_type: str) -> dict[str, Any]:
+        # Reuse a previously-successful section verbatim (deep copy so the
+        # stored row isn't aliased). Sections carrying an `error` are the
+        # ones we want to retry.
+        prior = existing_by_type.get(section_type)
+        if prior and not prior.get('error'):
+            reused = {**prior}
+            reused.pop('id', None)  # id is re-assigned by position below
+            return reused
         try:
             requirement = _SECTION_DATA_REQUIRED.get(section_type)
             if requirement is not None:
@@ -185,6 +204,28 @@ async def _create_new_memory_book(
     return memory_book
 
 
+async def _load_existing_sections(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+) -> list[dict[str, Any]]:
+    """Return the sections list of the user's existing mirror, or [] if none.
+
+    Read-only (no FOR UPDATE) so it doesn't contend with the upsert lock.
+    Used to make regeneration incremental — successful sections are reused.
+    """
+    result = await db.execute(
+        select(MemoryBook.sections).where(
+            MemoryBook.user_id == user_id,
+            MemoryBook.book_id == book_id,
+        )
+    )
+    sections = result.scalar_one_or_none()
+    if not sections:
+        return []
+    return [s for s in sections if isinstance(s, dict)]
+
+
 async def _upsert_memory_book(
     db: AsyncSession,
     user_id: UUID,
@@ -248,7 +289,20 @@ async def generate(
     )
 
     enriched_data = await _collect_and_validate(db, user_id, book_id)
-    sections = await _generate_all_sections(enriched_data, user_id, book_id)
+
+    # Load any prior mirror so regeneration is incremental: reuse sections
+    # that already succeeded, only re-call the LLM for ones that errored.
+    existing_by_type: dict[str, dict[str, Any]] = {}
+    try:
+        prior = await _load_existing_sections(db, user_id, book_id)
+        if prior:
+            existing_by_type = {s.get('type'): s for s in prior if s.get('type')}
+    except Exception:
+        logger.warning('memory_book.load_existing_failed', book_id=str(book_id), exc_info=True)
+
+    sections = await _generate_all_sections(
+        enriched_data, user_id, book_id, existing_by_type=existing_by_type,
+    )
     stats = enriched_data.get('stats', {})
     html_content = _render_html(enriched_data, sections, stats)
 
@@ -259,10 +313,18 @@ async def generate(
 
     elapsed = (time.monotonic() - t0) * 1000
     html_size_kb = round(len(html_content.encode('utf-8')) / 1024, 1) if html_content else 0
+    # Count sections actually reused from the prior run (non-error prior that
+    # skipped a fresh LLM call) vs. freshly generated this run.
+    reused = sum(
+        1 for s in sections
+        if s.get('type') in existing_by_type
+        and not existing_by_type[s['type']].get('error')
+    )
     logger.info(
         'memory_book.generate.completed',
         book_id=str(book_id),
         chapter_count=len(sections),
+        reused_sections=reused,
         total_size_kb=html_size_kb,
         latency_ms=round(elapsed, 1),
     )

@@ -37,9 +37,9 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
  setGenerating(true);
  setGenError(null);
  try {
-  const res = await api.post(`/api/memory-books/${bookId}/generate`, {
+  const res = await api.post(`/api/v1/reading-book/${bookId}/generate`, {
   format: 'personal_book',
-  }, { timeout: 120_000 });
+  }, { timeout: 420_000 });
   if (!mountedRef.current) return;
   if (res.success) {
   router.push(`/memory-books/${bookId}`);
