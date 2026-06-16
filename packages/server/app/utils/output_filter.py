@@ -82,6 +82,11 @@ def filter_stream_chunk(text: str, *, context: str = 'stream') -> str | None:
     Returns None if the chunk should be dropped (harmful content).
     Returns the text with PII redacted if safe.
     Intended for per-chunk use during streaming without heavy processing.
+
+    Limitation: PII patterns split across chunks (e.g. ``"555-"`` then
+    ``"123-4567"``) won't match. The STREAM_FLUSH_SIZE buffer (8 chunks
+    before flush) reduces but doesn't eliminate this — for full cross-chunk
+    safety use :class:`StreamPIIRedactor`.
     """
     if not text:
         return text
@@ -91,6 +96,63 @@ def filter_stream_chunk(text: str, *, context: str = 'stream') -> str | None:
         return None
 
     return _redact_pii(text, context=context)
+
+
+class StreamPIIRedactor:
+    """Cross-chunk PII redactor with a rolling overlap buffer.
+
+    Maintains the last ``overlap_chars`` (default 30, longest PII pattern
+    minus 1) of the previous chunk so patterns split across chunks match.
+    The overlap is held back from output; on the next ``feed()`` call the
+    new chunk is concatenated, redacted, and the safe-portion (everything
+    except the new overlap) is returned.
+
+    Usage:
+        redactor = StreamPIIRedactor(context='companion_stream')
+        for chunk in stream:
+            safe = redactor.feed(chunk)
+            if safe is not None:
+                yield sse_chunk(safe)
+        # On stream end:
+        tail = redactor.flush()
+        if tail is not None:
+            yield sse_chunk(tail)
+    """
+
+    def __init__(self, *, context: str = 'stream', overlap_chars: int = 30) -> None:
+        # Longest PII pattern is ~16 chars (credit card). 30 gives margin.
+        self._context = context
+        self._overlap_chars = overlap_chars
+        self._buffer: str = ''
+
+    def feed(self, text: str) -> str | None:
+        """Append text, redact, return the safe-to-emit portion.
+
+        Returns ``None`` if the chunk should be dropped (harmful content).
+        """
+        if not text:
+            return ''
+        if _is_harmful(text):
+            logger.warning('Dropped harmful stream chunk in %s', self._context)
+            return None
+        # Concatenate overlap from last call + new text
+        combined = self._buffer + text
+        redacted = _redact_pii(combined, context=self._context)
+        # Hold back the tail as overlap for next call
+        if len(redacted) > self._overlap_chars:
+            emit = redacted[:-self._overlap_chars]
+            self._buffer = redacted[-self._overlap_chars:]
+        else:
+            # Not enough to safely emit — keep accumulating
+            emit = ''
+            self._buffer = redacted
+        return emit
+
+    def flush(self) -> str:
+        """Emit any remaining overlap. Call once at stream end."""
+        tail = self._buffer
+        self._buffer = ''
+        return tail
 
 
 def validate_schema(

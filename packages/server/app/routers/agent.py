@@ -3,12 +3,13 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.idempotency import idempotent, idempotent_stream
 from app.middleware.rate_limiter import ai_heavy_limiter, chat_limiter, stream_limiter, write_limiter
 from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.agent import (
@@ -63,13 +64,19 @@ async def llm_health() -> dict:
         return {'success': True, 'data': {'healthy': False, 'error': 'Health check failed'}}
 
 
-@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter, write_limiter, daily_ai_budget])
+@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter, write_limiter, daily_ai_budget, idempotent])
 async def chat(
+    request: Request,  # populated by idempotent dependency; used for replay cache
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Reading companion chat endpoint."""
+    from app.middleware.idempotency import check_idempotency_cache, store_idempotency_response
+    cached = await check_idempotency_cache(request)
+    if cached is not None:
+        return ChatResponse(data=cached.get('data'))
+
     uid = UUID(current_user['id'])
     lang = await resolve_lang(db, uid)
     try:
@@ -81,12 +88,15 @@ async def chat(
     except ValueError as exc:
         logger.debug('validation error in agent')
         raise_not_found(exc, lang)
+
+    await store_idempotency_response(request, {'data': result})
     return ChatResponse(data=result)
 
 
-@router.post('/stream', dependencies=[stream_limiter, write_limiter, daily_ai_budget])
-@router.post('/chat/stream', dependencies=[stream_limiter, write_limiter, daily_ai_budget])
+@router.post('/stream', dependencies=[stream_limiter, write_limiter, daily_ai_budget, idempotent_stream])
+@router.post('/chat/stream', dependencies=[stream_limiter, write_limiter, daily_ai_budget, idempotent_stream])
 async def stream(
+    request: Request,
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -96,7 +106,35 @@ async def stream(
     The first SSE frame is ``data: {"request_id": "<id>"}\\n\\n`` so the
     client can later POST ``/chat/cancel`` with that id to cooperatively
     cancel the in-flight stream (P0-3).
+
+    ``request`` is forwarded into the SSE generator so its ``finally`` block
+    can stamp the idempotency completion marker (P0.6) — turning a replay
+    with the same ``Idempotency-Key`` into ``ALREADY_COMPLETED`` instead of
+    the misleading ``RATE_LIMIT_EXCEEDED``.
+
+    D3: when the client reconnects with a ``Last-Event-ID`` header (carrying
+    ``{request_id}:{seq}`` from D1's id-tagged chunks), the buffered replay
+    path emits all chunks after the client's last seen seq + ``[DONE]``. If
+    the Redis replay buffer has expired or never existed, falls through to
+    a fresh stream.
     """
+    # D3 reconnect: short-circuit when a buffered replay is available.
+    last_event_id = request.headers.get('last-event-id')
+    if last_event_id:
+        from app.services.companion.stream_replay import try_buffered_replay
+        buffered = await try_buffered_replay(last_event_id)
+        if buffered is not None:
+            async def _replay_gen():
+                for _, chunk in buffered:
+                    yield chunk.encode('utf-8')
+                yield b'data: [DONE]\n\n'
+
+            return StreamingResponse(
+                _replay_gen(),
+                media_type='text/event-stream',
+                headers=_SSE_HEADERS,
+            )
+
     uid = UUID(current_user['id'])
     lang = await resolve_lang(db, uid)
     companion_mode = body.context.get('companionMode', 'casual') if body.context else 'casual'
@@ -108,7 +146,7 @@ async def stream(
             db, uid, body.book_id, body.message,
             context=body.context, companion_mode=companion_mode,
             persona=persona, genre=genre, lang=lang,
-            request_id=request_id,
+            request_id=request_id, request=request,
         ),
         media_type='text/event-stream',
         headers=_SSE_HEADERS,
@@ -125,14 +163,22 @@ async def cancel_chat_stream(
     The request_id is returned as the first SSE frame of /chat/stream. We
     don't verify ownership beyond the authenticated user because request_ids
     are unguessable (12-byte random hex) and the worst case is a no-op.
+
+    P0.3: response carries a ``reason`` field so the client can distinguish
+    "stream not found" from "owning worker crashed". The latter previously
+    surfaced as ``cancelled: false`` with no explanation, leaving the client
+    to wait the full stream timeout before recovering.
+
     Returns 200 with ``cancelled: false`` if the stream is unknown or done.
     """
-    cancelled = cancel_stream(body.request_id)
-    return {'success': True, 'data': {'cancelled': cancelled}}
+    from app.services.agent_service import cancel_stream_cross_worker
+    result = await cancel_stream_cross_worker(body.request_id)
+    return {'success': True, 'data': result}
 
 
-@router.post('/chat/regenerate', dependencies=[stream_limiter, write_limiter, daily_ai_budget])
+@router.post('/chat/regenerate', dependencies=[stream_limiter, write_limiter, daily_ai_budget, idempotent_stream])
 async def regenerate(
+    request: Request,
     body: RegenerateRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -202,14 +248,14 @@ async def regenerate(
             db, uid, book_id, user_msg.content,
             context=body.context, companion_mode=companion_mode,
             persona=persona, genre=genre, lang=lang,
-            request_id=request_id,
+            request_id=request_id, request=request,
         ),
         media_type='text/event-stream',
         headers=_SSE_HEADERS,
     )
 
 
-@router.post('/summarize', response_model=ChatResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
+@router.post('/summarize', response_model=ChatResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def summarize(
     body: SummarizeRequest,
     current_user: dict = Depends(get_current_user),
@@ -229,7 +275,7 @@ async def summarize(
     return ChatResponse(data=result)
 
 
-@router.post('/explain', response_model=ChatResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
+@router.post('/explain', response_model=ChatResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def explain(
     body: ExplainRequest,
     current_user: dict = Depends(get_current_user),
@@ -283,7 +329,7 @@ async def get_chat_history_endpoint(
     }
 
 
-@router.post('/discussion-questions', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
+@router.post('/discussion-questions', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def discussion_questions(
     body: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -310,7 +356,7 @@ async def discussion_questions(
     return {'success': True, 'data': result}
 
 
-@router.post('/mood/scene', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
+@router.post('/mood/scene', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def mood_scene(
     body: MoodSceneRequest,
     current_user: dict = Depends(get_current_user),
@@ -347,7 +393,7 @@ async def submit_feedback(
     return {'success': True, 'data': data}
 
 
-@router.post('/reading-plan', response_model=ReadingPlanResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
+@router.post('/reading-plan', response_model=ReadingPlanResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def create_reading_plan(
     body: ReadingPlanRequest,
     current_user: dict = Depends(get_current_user),

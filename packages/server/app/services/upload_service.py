@@ -23,6 +23,7 @@ from app.services.text_helpers import (
 )
 from app.utils.db import db_error_guard
 from app.utils.i18n import t, DEFAULT_LANGUAGE
+from app.utils.sanitizer import sanitize_book_field
 
 logger = logging.getLogger('read-pal')
 
@@ -272,10 +273,12 @@ async def get_book_content(
     chapters = _build_chapters(doc, lang)
 
     if not chapters and not content:
-        content = t('errors.sample_content', lang, title=book.title, author=book.author)
+        safe_title = sanitize_book_field(book.title, field='title')
+        safe_author = sanitize_book_field(book.author, field='author')
+        content = t('errors.sample_content', lang, title=safe_title, author=safe_author)
         chapters = [{
             'id': 'sample-0',
-            'title': t('errors.sample_title', lang, title=book.title),
+            'title': t('errors.sample_title', lang, title=safe_title),
             'content': content,
             'rawContent': content,
         }]

@@ -34,19 +34,36 @@ def _cache_key(
     label: str,
     model: str | None = None,
     user_id: str | None = None,
+    lang: str | None = None,
+    prompt_version: str | None = None,
 ) -> str:
-    """Deterministic cache key from messages + label + model + user_id.
+    """Deterministic cache key from messages + label + model + user_id + lang + prompt_version.
 
-    ``user_id`` is included to prevent cross-user cache collisions: without it,
-    two users with identical prompts (e.g., the same fallback path, empty-data
-    case, or a chapter-summary request on a shared book) would share a cached
-    LLM response — a privacy leak.
+    - ``user_id`` prevents cross-user cache collisions: without it, two users
+      with identical prompts would share a cached LLM response — a privacy leak.
+    - ``lang`` prevents cross-language leaks: the system prompt is built per-lang
+      OUTSIDE the cached call site, so without lang in the key, a user who
+      flips language gets the prior language's cached response.
+    - ``prompt_version`` (P0.4) invalidates the cache when a prompt template's
+      declared version bumps. Without it, a hotfix to fix hallucination lands
+      silently inert for any user who hit that key in the last TTL window.
+      When None, the key still includes the slot so future versioned prompts
+      can't collide with pre-version entries.
     """
     model_name = model or get_settings().default_model
-    parts = [label, model_name, f'user:{user_id or "anon"}']
+    parts = [
+        label, model_name,
+        f'user:{user_id or "anon"}',
+        f'lang:{lang or "default"}',
+        f'pv:{prompt_version or "none"}',
+    ]
     for msg in messages:
         parts.append(msg.content)
-    digest = hashlib.sha256('|'.join(parts).encode()).hexdigest()[:16]
+    # Length-prefixed join so a message containing '|' can't collide with
+    # another user's different message structure.
+    digest = hashlib.sha256(
+        ''.join(f'{len(p)}:{p}' for p in parts).encode(),
+    ).hexdigest()[:16]
     return f'{_CACHE_PREFIX}{digest}'
 
 

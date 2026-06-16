@@ -77,8 +77,8 @@ MOCK_RESPONSES: dict[str, dict[str, str]] = {
     'knowledge': {
         'extract_concepts': json.dumps({
             'concepts': [
-                {'name': 'American Dream', 'type': 'symbol', 'related': ['protagonist'], 'description': 'Central theme'},
-                {'name': 'Green Light', 'type': 'symbol', 'related': ['hope'], 'description': 'Symbol of desire'},
+                {'name': 'American Dream', 'type': 'theme', 'related': ['protagonist'], 'description': 'Central theme'},
+                {'name': 'Green Light', 'type': 'theme', 'related': ['hope'], 'description': 'Symbol of desire'},
             ],
         }),
     },

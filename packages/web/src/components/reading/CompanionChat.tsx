@@ -140,6 +140,14 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
  createAssistantMessage,
  extractCodeBlocks,
  t: t as (key: string, params?: Record<string, unknown>) => string,
+ // C3: surface the B3 fallback-used metadata event as a non-blocking
+ // toast. Users seeing the response style change mid-message otherwise
+ // misattribute it to a bug in their book / prompt — the disclosure lets
+ // them attribute it correctly to a silent provider downgrade.
+ onFallbackNotice: useCallback(() => {
+ toast(t('companion_fallback_notice'), 'info', 6000);
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, []),
  });
 
  // Preload DOMPurify on mount

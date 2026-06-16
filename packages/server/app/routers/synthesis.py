@@ -5,11 +5,12 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.idempotency import idempotent
 from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
 from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.common import GenericResponse
@@ -28,14 +29,20 @@ logger = logging.getLogger('read-pal.synthesis')
 router = APIRouter(prefix='/api/v1/synthesis', tags=['synthesis'], dependencies=[api_limiter])
 
 
-@router.post('/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
+@router.post('/{book_id}', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def run_synthesis(
+    request: Request,  # populated by idempotent dependency
     book_id: UUID,
     body: SynthesisRequest | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Run synthesis analysis for a book."""
+    from app.middleware.idempotency import check_idempotency_cache, store_idempotency_response
+    cached = await check_idempotency_cache(request)
+    if cached is not None:
+        return cached
+
     include_highlights = body.include_highlights if body else True
     include_notes = body.include_notes if body else True
     include_conversations = body.include_conversations if body else True
@@ -65,10 +72,12 @@ async def run_synthesis(
     if not response.success and response.error is None:
         raise not_found_error(t('errors.book_not_found'))
 
-    return {
+    payload = {
         'success': True,
         'data': response.data,
     }
+    await store_idempotency_response(request, payload)
+    return payload
 
 
 @router.get('/cross-book', response_model=GenericResponse, dependencies=[ai_heavy_limiter, daily_ai_budget])
@@ -111,7 +120,7 @@ async def run_cross_book_synthesis(
     }
 
 
-@router.post('/cross-book/compare', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget])
+@router.post('/cross-book/compare', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def run_book_comparison(
     body: CompareRequest,
     current_user: dict = Depends(get_current_user),

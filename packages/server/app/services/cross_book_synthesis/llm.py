@@ -18,6 +18,7 @@ from app.prompts import (
 from app.schemas.llm_outputs import CrossBookComparison
 from app.services.llm import safe_llm_invoke
 from app.services.cross_book_synthesis.builders import condense_book
+from app.utils.sanitizer import sanitize_book_field
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.synthesis')
@@ -48,6 +49,7 @@ async def run_synthesis_llm(
     schema_class=CrossBookComparison,
     user_id=str(user_id),
     book_id=None,
+    template=CROSS_BOOK_SYNTHESIS_SYSTEM,
   )
 
 
@@ -68,10 +70,10 @@ async def run_comparison_llm(
   book_1, book_2 = data_1['book'], data_2['book']
   system_prompt = BOOK_COMPARE_SYSTEM.template
   human_prompt = BOOK_COMPARE_HUMAN.template.format(
-    title_1=book_1['title'],
-    author_1=book_1['author'],
-    title_2=book_2['title'],
-    author_2=book_2['author'],
+    title_1=sanitize_book_field(book_1.get('title'), field='title'),
+    author_1=sanitize_book_field(book_1.get('author'), field='author'),
+    title_2=sanitize_book_field(book_2.get('title'), field='title'),
+    author_2=sanitize_book_field(book_2.get('author'), field='author'),
     data_1=condensed_1,
     data_2=condensed_2,
   )
@@ -85,4 +87,5 @@ async def run_comparison_llm(
     schema_class=CrossBookComparison,
     user_id=str(user_id),
     book_id=None,
+    template=BOOK_COMPARE_SYSTEM,
   )

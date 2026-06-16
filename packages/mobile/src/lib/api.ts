@@ -10,12 +10,15 @@
 
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
+import { deterministicIdempotencyKey } from '@read-pal/shared';
 import { getToken, deleteToken, getRefreshToken, saveToken, saveRefreshToken, deleteRefreshToken } from './auth-storage';
 import { API_URL } from './env';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1_000;
 const RETRYABLE_METHODS = new Set(['get', 'head', 'options']);
+
+const IDEMPOTENT_CAPABLE_METHODS = new Set(['post', 'put', 'patch']);
 
 function isRetryableStatus(status?: number): boolean {
   if (!status) return false;
@@ -42,12 +45,23 @@ class ApiClient {
       timeout: 60_000,
     });
 
-    // Attach auth token to every request
+    // Attach auth token to every request, plus deterministic Idempotency-Key
+    // on mutations so a double-click collapses to one server-side operation.
     this.client.interceptors.request.use(
       async (config) => {
         const token = await getToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+        }
+        const method = (config.method || 'get').toLowerCase();
+        const existingKey = (config.headers as Record<string, string> | undefined)?.['Idempotency-Key'];
+        if (IDEMPOTENT_CAPABLE_METHODS.has(method) && !existingKey && config.url) {
+          try {
+            const key = await deterministicIdempotencyKey(method, config.url, config.data);
+            config.headers = { ...(config.headers as Record<string, string> | undefined), 'Idempotency-Key': key };
+          } catch {
+            // Best-effort — never block the request on key generation.
+          }
         }
         return config;
       },

@@ -16,7 +16,11 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     context: dict | None = None
     persona: str | None = None
-    genre: Literal['fiction', 'nonfiction', 'technical', 'academic', 'default'] | None = None
+    genre: Literal[
+        'fiction', 'nonfiction', 'technical', 'academic',
+        'poetry', 'biography', 'history', 'philosophy',
+        'default'
+    ] | None = None
 
 
 class ChatData(BaseModel):
@@ -141,7 +145,11 @@ class RegenerateRequest(BaseModel):
 
     book_id: UUID
     persona: str | None = None
-    genre: Literal['fiction', 'nonfiction', 'technical', 'academic', 'default'] | None = None
+    genre: Literal[
+        'fiction', 'nonfiction', 'technical', 'academic',
+        'poetry', 'biography', 'history', 'philosophy',
+        'default'
+    ] | None = None
     context: dict | None = None
 
 

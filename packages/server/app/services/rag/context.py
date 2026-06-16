@@ -19,8 +19,7 @@ from app.services.rag._constants import (
     logger,
 )
 from app.services.rag.search import (
-    _semantic_chapter_search,
-    _keyword_chunk_search,
+    hybrid_chunk_search,
     _keyword_chapter_search,
 )
 from app.services.rag._helpers import _get_chapters, _load_related_annotations
@@ -81,18 +80,15 @@ async def _search_relevant_chunks(
     top_k: int,
     max_chapter_index: int | None,
 ) -> list[dict]:
-    """Search for relevant chunks using a 3-level fallback strategy.
+    """Search for relevant chunks using hybrid search + chapter-level fallback.
 
-    Tries semantic search first, then keyword chunk search,
-    then keyword chapter search as a last resort.
+    P3.2: prefers ``hybrid_chunk_search`` (semantic + keyword fused via
+    RRF) so exact-term matches (character names, IDs, quoted phrases)
+    aren't buried by mediocre semantic hits. Falls back to legacy
+    keyword-chapter search only when the book has no usable chunks
+    (e.g. older uploads without precomputed embeddings).
     """
-    chunks = await _semantic_chapter_search(
-        db, book_id, query, top_k=top_k, max_chapter_index=max_chapter_index,
-    )
-    if chunks:
-        return chunks
-
-    chunks = await _keyword_chunk_search(
+    chunks = await hybrid_chunk_search(
         db, book_id, query, top_k=top_k, max_chapter_index=max_chapter_index,
     )
     if chunks:

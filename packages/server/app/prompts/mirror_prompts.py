@@ -5,7 +5,10 @@ from __future__ import annotations
 from app.prompts.base import PromptTemplate
 
 # ---------------------------------------------------------------------------
-# Memory book (v1 -- deprecated, kept for backward compat)
+# Memory book (v1) — DEPRECATED: no service consumer. Kept for the
+# ALL_TEMPLATES registry and historical reference. Replace with MIRROR_*
+# in any new code. Restore consumers from git history if Memory Book v3
+# is ever revived.
 # ---------------------------------------------------------------------------
 
 MEMORY_BOOK_SYSTEM = PromptTemplate(
@@ -18,6 +21,7 @@ MEMORY_BOOK_SYSTEM = PromptTemplate(
     ),
     variables=['book_title', 'book_author', 'book_format', 'chapter_prompt'],
     output_format='json',
+    max_tokens=2000,
 )
 
 MEMORY_BOOK_CHAPTERS: dict[int, PromptTemplate] = {
@@ -31,6 +35,7 @@ MEMORY_BOOK_CHAPTERS: dict[int, PromptTemplate] = {
             'Return JSON with keys: title, subtitle, author_note.'
         ),
         output_format='json',
+        max_tokens=800,
     ),
     2: PromptTemplate(
         key='memory_book.chapter.journey',
@@ -42,6 +47,7 @@ MEMORY_BOOK_CHAPTERS: dict[int, PromptTemplate] = {
             'milestones (array of strings).'
         ),
         output_format='json',
+        max_tokens=1500,
     ),
     3: PromptTemplate(
         key='memory_book.chapter.highlights',
@@ -53,6 +59,7 @@ MEMORY_BOOK_CHAPTERS: dict[int, PromptTemplate] = {
             'themes (array of strings).'
         ),
         output_format='json',
+        max_tokens=2000,
     ),
     4: PromptTemplate(
         key='memory_book.chapter.notes',
@@ -63,6 +70,7 @@ MEMORY_BOOK_CHAPTERS: dict[int, PromptTemplate] = {
             'Return JSON with keys: themes (array of {{theme, insights, connections}}).'
         ),
         output_format='json',
+        max_tokens=2000,
     ),
     5: PromptTemplate(
         key='memory_book.chapter.conversations',
@@ -73,6 +81,7 @@ MEMORY_BOOK_CHAPTERS: dict[int, PromptTemplate] = {
             'Return JSON with keys: moments (array of {{topic, insight, exchange}}).'
         ),
         output_format='json',
+        max_tokens=1500,
     ),
     6: PromptTemplate(
         key='memory_book.chapter.looking_forward',
@@ -85,16 +94,32 @@ MEMORY_BOOK_CHAPTERS: dict[int, PromptTemplate] = {
             'next_steps (array of strings).'
         ),
         output_format='json',
+        max_tokens=1500,
     ),
 }
 
 # ---------------------------------------------------------------------------
-# Reading Mirror (v2)
+# Reading Mirror (v3)
 # ---------------------------------------------------------------------------
+
+# Uniform guard clause inserted into every section template to suppress
+# hallucination when reader data is sparse (zero highlights, no sessions,
+# etc.). Kept as a constant so wording stays consistent across sections
+# and any future tweak lands in one place. P2.3: also covers the edge
+# case where ALL reader data is sparse (new user, just started a book) —
+# without this the model tends to pad with generic "this book will be
+# transformative" prose to fill the section.
+SPARSE_DATA_GUARD = (
+    'If any data field above is empty, zero, or "Unknown", do NOT invent details — '
+    'return a 1-sentence acknowledgement in the relevant JSON field instead '
+    '(e.g. "Not enough reading data yet to identify a pattern — keep reading!"). '
+    'If ALL data above is sparse, return ONLY such acknowledgements and do NOT pad '
+    'the section with generic literary-sounding prose.'
+)
 
 MIRROR_SYSTEM = PromptTemplate(
     key='mirror.generation.system',
-    version=2,
+    version=3,
     template=(
         'You are writing a "Reading Mirror" for "{book_title}" by {book_author}. '
         'A Reading Mirror reflects a reader\'s personal intellectual journey through a book. '
@@ -106,12 +131,14 @@ MIRROR_SYSTEM = PromptTemplate(
     ),
     variables=['book_title', 'book_author', 'section_prompt'],
     output_format='json',
+    temperature=0.7,
+    max_tokens=1500,
 )
 
 MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     'encounter': PromptTemplate(
         key='mirror.section.encounter',
-        version=2,
+        version=3,
         template=(
             'Write the ENCOUNTER section -- a 150-word second-person prologue capturing '
             'the reader\'s relationship with this book. '
@@ -123,16 +150,23 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'Also assign a "reading archetype" based on their pattern: '
             'e.g. "The Deep Diver" (long focused sessions), "The Pattern Finder" (many thematic highlights), '
             '"The Questioner" (many notes and chat messages), "The Explorer" (wide-ranging concepts). '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"prologue": {{"text": "...", "reading_archetype": "...", '
             '"archetype_description": "1-sentence explanation"}}, '
             '"stats": {{"total_reading_time": "...", "session_count": N, '
             '"highlight_count": N, "longest_session": "..."}}}}'
         ),
+        variables=[
+            'total_time', 'session_count', 'first_date', 'last_date',
+            'first_highlight', 'concept_list', 'mastery_score',
+        ],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'highlights': PromptTemplate(
         key='mirror.section.highlights',
-        version=2,
+        version=3,
         template=(
             'Write the WHAT YOU MARKED section -- the reader\'s highlights organized into thematic clusters. '
             'Data: {count} highlighted passages from "{book_title}". '
@@ -142,14 +176,18 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'in the reader\'s voice explaining what drew them to these passages. Use phrases like '
             '"You were drawn to..." or "Something about this passage made you pause." '
             'When a highlight connects to a concept, reference it. '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"clusters": [{{"name": "...", "description": "...", '
             '"highlights": [{{"quote": "...", "page_location": "...", "why_it_mattered": "..."}}]}}]}}'
         ),
+        variables=['count', 'book_title', 'concept_list', 'theme_list'],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'recommendations': PromptTemplate(
         key='mirror.section.recommendations',
-        version=2,
+        version=3,
         template=(
             'Write the WHERE THIS LEADS section -- personalized book recommendations. '
             'The reader engaged most deeply with these themes in "{book_title}": {top_themes}. '
@@ -159,14 +197,18 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'reading of "{book_title}" makes it the right next step. Assign urgency: '
             '"now" (direct follow-up), "soon" (related expansion), or "someday" (tangential but relevant). '
             'Do NOT recommend books they\'ve already read. '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"recommendations": [{{"title": "...", "author": "...", "reason": "...", '
             '"connection_to_current": "...", "urgency": "now|soon|someday"}}]}}'
         ),
+        variables=['book_title', 'top_themes', 'concept_list', 'existing_books'],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'conversations': PromptTemplate(
         key='mirror.section.conversations',
-        version=1,
+        version=3,
         template=(
             'Write the CONVERSATIONS THAT SHIFTED YOUR THINKING section. '
             'The reader had {chat_count} AI chat exchanges while reading "{book_title}". '
@@ -174,15 +216,19 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'Identify 2-4 "breakthrough moments" where the reader\'s understanding shifted. '
             'For each, write a short narrative paragraph in second person describing the insight. '
             'Reference specific questions the reader asked and the ideas that clicked. '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"breakthroughs": [{{"title": "...", "narrative": "...", '
             '"reader_question": "...", "insight": "..."}}], '
             '"summary": "2-3 sentence overview of how conversation shaped understanding"}}'
         ),
+        variables=['chat_count', 'book_title', 'chat_excerpts'],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'annotations_woven': PromptTemplate(
         key='mirror.section.annotations_woven',
-        version=1,
+        version=3,
         template=(
             'Write the YOUR ANNOTATIONS, WOVEN section. '
             'The reader made {note_count} notes in "{book_title}". '
@@ -190,15 +236,19 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'Weave the reader\'s notes into a coherent narrative showing their intellectual arc. '
             'Group into phases: "first impressions", "deepening", and "synthesis". '
             'Use phrases like "At first, you wondered..." then "Later, you realized..." '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"phases": [{{"name": "...", "narrative": "...", '
             '"key_notes": ["quote1", "quote2"]}}], '
             '"arc_summary": "1-2 sentences tracing the intellectual journey"}}'
         ),
+        variables=['note_count', 'book_title', 'notes_data'],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'attention_map': PromptTemplate(
         key='mirror.section.attention_map',
-        version=1,
+        version=3,
         template=(
             'Write the MAP OF YOUR ATTENTION section — a narrative analysis of reading engagement patterns. '
             'The reader had {session_count} reading sessions for "{book_title}" '
@@ -209,16 +259,23 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'Identify "peak engagement" sessions (high pages + high annotations) and "slow absorption" '
             'sessions (long duration, few pages — deep thinking). '
             'Write in second person, like a literary coach reflecting their reading rhythm back to them. '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"peaks": [{{"date": "...", "description": "what drew them in"}}], '
             '"pattern_analysis": "2-3 sentences about their overall reading rhythm", '
             '"engagement_score": N (1-10), '
             '"reading_style": "e.g. Sprint Reader, Deep Diver, Steady Cruiser"}}'
         ),
+        variables=[
+            'session_count', 'book_title', 'reading_days', 'total_time',
+            'session_data', 'pace', 'longest_session',
+        ],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'what_stuck': PromptTemplate(
         key='mirror.section.what_stuck',
-        version=1,
+        version=3,
         template=(
             'Write the WHAT STUCK section — analysis of knowledge retention from flashcard review. '
             'The reader created {flashcard_count} flashcards while reading "{book_title}". '
@@ -226,16 +283,23 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'Mastery score: {mastery_score}%. Strong areas: {strong_areas}. Weak areas: {weak_areas}. '
             'Identify the 3-5 concepts that truly stuck (high ratings, many repetitions) and the ones '
             'that kept slipping away (low ratings). Write in second person with warmth and humor. '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"stuck": [{{"concept": "...", "evidence": "why it stuck"}}], '
             '"slipping": [{{"concept": "...", "tip": "how to reinforce it"}}], '
             '"retention_summary": "1-2 sentences about overall retention", '
             '"top_insight": "the single most memorable thing"}}'
         ),
+        variables=[
+            'flashcard_count', 'book_title', 'flashcard_data',
+            'mastery_score', 'strong_areas', 'weak_areas',
+        ],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'concept_web': PromptTemplate(
         key='mirror.section.concept_web',
-        version=1,
+        version=3,
         template=(
             'Write the YOUR CONCEPT WEB section — a narrative map of how ideas connect. '
             'While reading "{book_title}", the reader extracted {concept_count} knowledge concepts. '
@@ -244,16 +308,20 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'Describe the conceptual landscape they built. Which ideas are central hubs? '
             'Which are peripheral? What surprising connections emerged? '
             'Write as a guided tour through their intellectual map. '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"hub_concepts": [{{"name": "...", "why_central": "..."}}], '
             '"surprising_connections": [{{"from": "...", "to": "...", "insight": "..."}}], '
             '"peripheral_concepts": ["name1", "name2"], '
             '"map_narrative": "2-3 sentences describing the overall conceptual architecture"}}'
         ),
+        variables=['book_title', 'concept_count', 'concept_list', 'edge_descriptions', 'theme_list'],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'threads': PromptTemplate(
         key='mirror.section.threads',
-        version=1,
+        version=3,
         template=(
             'Write the THREADS BETWEEN BOOKS section — how "{book_title}" connects to other books the reader has read. '
             'Themes from this book: {theme_list}. Concepts extracted: {concept_list}. '
@@ -262,16 +330,20 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'For each thread, describe how an idea in this book echoes, contrasts with, or deepens '
             'something from another book. Be specific about which themes connect. '
             'Write in second person with literary warmth. '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"threads": [{{"theme": "...", "books": ["title1", "title2"], '
             '"connection": "how they relate"}}], '
             '"reading_pattern": "1-2 sentences about their reading taste pattern", '
             '"suggested_next_theme": "what theme they should explore next"}}'
         ),
+        variables=['book_title', 'theme_list', 'concept_list', 'other_books'],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
     'reader_became': PromptTemplate(
         key='mirror.section.reader_became',
-        version=1,
+        version=3,
         template=(
             'Write THE READER YOU BECAME section — a reflective closing essay for the Reading Mirror. '
             'Book: "{book_title}" by {book_author}. '
@@ -283,9 +355,16 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
             'through this book. How did their thinking evolve? What questions did they learn to ask? '
             'What did they discover about themselves? '
             'Tone: warm, insightful, celebratory without being sycophantic. '
+            + SPARSE_DATA_GUARD +
             'Return JSON: {{"essay": "...", "key_transformation": "1 sentence about their intellectual growth", '
             '"parting_question": "a thought-provoking question to carry forward"}}'
         ),
+        variables=[
+            'book_title', 'book_author', 'total_time', 'session_count',
+            'highlight_count', 'note_count', 'concept_list', 'theme_list', 'mastery_score',
+        ],
         output_format='json',
+        temperature=0.7,
+        max_tokens=1500,
     ),
 }

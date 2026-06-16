@@ -7,6 +7,7 @@
 
 import { AxiosError, AxiosRequestConfig, AxiosInstance } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
+import { deterministicIdempotencyKey } from '@read-pal/shared';
 import {
   getAuthToken,
   getAuthTokenAsync,
@@ -25,6 +26,13 @@ const NON_CRITICAL_PREFIXES = [
 ];
 
 const REFRESH_URL = '/api/auth/refresh';
+
+// Methods that can safely carry a deterministic idempotency key. We exclude
+// GET/HEAD/OPTIONS (no body to hash, and the cache layer handles dedup) and
+// DELETE (semantics usually include "kill whatever is there", where a stale
+// replayed 200 from a prior delete is harmless but could mask a follow-up
+// create-then-delete sequence).
+const IDEMPOTENT_CAPABLE_METHODS = new Set(['post', 'put', 'patch']);
 
 export function installRequestInterceptor(client: AxiosInstance): void {
   client.interceptors.request.use(
@@ -46,6 +54,21 @@ export function installRequestInterceptor(client: AxiosInstance): void {
       }
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      // Auto-attach deterministic Idempotency-Key on mutations so a
+      // double-click collapses to one server-side LLM call. Callers can
+      // override by setting the header explicitly (e.g. streaming uses a
+      // random UUID per click so regenerate can fire fresh after completion).
+      const method = (config.method || 'get').toLowerCase();
+      const existingKey = (config.headers as Record<string, string> | undefined)?.['Idempotency-Key'];
+      if (IDEMPOTENT_CAPABLE_METHODS.has(method) && !existingKey && config.url) {
+        try {
+          const key = await deterministicIdempotencyKey(method, config.url, config.data);
+          config.headers = { ...(config.headers as Record<string, string> | undefined), 'Idempotency-Key': key };
+        } catch {
+          // Best-effort — never block the request on key generation.
+        }
       }
       return config;
     },

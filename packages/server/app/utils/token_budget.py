@@ -69,6 +69,18 @@ class TokenBudget:
     def used(self) -> int:
         return self._used
 
+    def reserve(self, text: str, label: str = '') -> None:
+        """Account for text in the budget without storing or truncating it.
+
+        Use for must-include content (chat history, user message) that should
+        reduce the remaining budget for shrinkable sections (system prompt)
+        but must never itself be dropped. If the reserved text alone exceeds
+        the budget, every subsequent ``add()`` returns ``''`` — which is the
+        correct degraded behavior (better to ship a stub system prompt than
+        to silently drop user input).
+        """
+        self._used += estimate_tokens(text)
+
     def add(self, text: str, label: str = '') -> str:
         """Add text to the budget. Truncates if it would exceed budget.
 

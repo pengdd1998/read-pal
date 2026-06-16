@@ -93,6 +93,17 @@ class CircuitBreaker:
         settings = get_settings()
         return (time.monotonic() - self._opened_at) < settings.circuit_reset_timeout_seconds
 
+    @property
+    def is_probe_in_flight(self) -> bool:
+        """Whether a HALF_OPEN recovery probe is currently running.
+
+        P1.2: a HALF_OPEN provider with probe in flight is NOT available
+        for new requests — ``allow_request()`` will return False. Callers
+        that filter providers should exclude these so requests cascade to
+        the next provider instead of failing on a probe-locked one.
+        """
+        return self.state == CircuitState.HALF_OPEN and self._probe_in_progress
+
 
 # Singleton instance
 circuit = CircuitBreaker()

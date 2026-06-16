@@ -1,0 +1,113 @@
+{
+  "entries": [
+    {
+      "action": "chat",
+      "errors": [],
+      "name": "companion/chat",
+      "passed": true,
+      "service": "companion"
+    },
+    {
+      "action": "chat_injection",
+      "errors": [],
+      "name": "companion/chat_injection",
+      "passed": true,
+      "service": "companion"
+    },
+    {
+      "action": "explain",
+      "errors": [],
+      "name": "companion/explain",
+      "passed": true,
+      "service": "companion"
+    },
+    {
+      "action": "summarize",
+      "errors": [],
+      "name": "companion/summarize",
+      "passed": true,
+      "service": "companion"
+    },
+    {
+      "action": "summarize",
+      "errors": [],
+      "name": "conversation_memory/summarize",
+      "passed": true,
+      "service": "conversation_memory"
+    },
+    {
+      "action": "chat",
+      "errors": [],
+      "name": "friend/chat",
+      "passed": true,
+      "service": "friend"
+    },
+    {
+      "action": "chat_injection",
+      "errors": [],
+      "name": "friend/chat_injection",
+      "passed": true,
+      "service": "friend"
+    },
+    {
+      "action": "extract_concepts",
+      "errors": [],
+      "name": "knowledge/extract_concepts",
+      "passed": true,
+      "service": "knowledge"
+    },
+    {
+      "action": "chapter_1_cover",
+      "errors": [],
+      "name": "memory_book/chapter_1_cover",
+      "passed": true,
+      "service": "memory_book"
+    },
+    {
+      "action": "chapter_2_journey",
+      "errors": [],
+      "name": "memory_book/chapter_2_journey",
+      "passed": true,
+      "service": "memory_book"
+    },
+    {
+      "action": "generate",
+      "errors": [],
+      "name": "reading_plan/generate",
+      "passed": true,
+      "service": "reading_plan"
+    },
+    {
+      "action": "generate_concept_checks",
+      "errors": [],
+      "name": "study_mode/generate_concept_checks",
+      "passed": true,
+      "service": "study_mode"
+    },
+    {
+      "action": "generate_objectives",
+      "errors": [],
+      "name": "study_mode/generate_objectives",
+      "passed": true,
+      "service": "study_mode"
+    },
+    {
+      "action": "cross_book",
+      "errors": [],
+      "name": "synthesis/cross_book",
+      "passed": true,
+      "service": "synthesis"
+    },
+    {
+      "action": "synthesize",
+      "errors": [],
+      "name": "synthesis/synthesize",
+      "passed": true,
+      "service": "synthesis"
+    }
+  ],
+  "metadata": {
+    "note": "initial baseline seeded by P4.1",
+    "seed_run": true
+  }
+}

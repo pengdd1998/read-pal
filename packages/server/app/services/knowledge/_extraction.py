@@ -52,6 +52,7 @@ async def _extract_concepts_via_llm(
         schema_class=ConceptList,
         user_id=str(user_id) if user_id else None,
         book_id=str(book_id) if book_id else None,
+        template=KNOWLEDGE_EXTRACTION_SYSTEM,
     )
 
     if isinstance(result, list):

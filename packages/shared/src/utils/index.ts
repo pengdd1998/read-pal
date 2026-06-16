@@ -2,6 +2,8 @@
 // Utility Functions
 // ============================================================================
 
+export * from './idempotency';
+
 /**
  * Generate a random ID using crypto.randomUUID when available,
  * falling back to timestamp + crypto.getRandomValues.

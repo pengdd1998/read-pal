@@ -40,13 +40,24 @@ def _mock_async_session():
 class TestTraceWriter:
     """Unit tests for the _TraceWriter buffered persistence."""
 
-    def test_add_accumulates_in_buffer(self):
+    # P4.4: ``_TraceWriter.add`` consults ``settings.llm_log_enabled`` before
+    # appending — the gate moved inside the method so call sites don't have
+    # to repeat it. Tests that exercise ``add`` directly must enable the
+    # flag, otherwise the gate no-ops and the buffer stays empty.
+    _ENABLED = patch(
+        'app.services.llm.observability.get_settings',
+        return_value=MagicMock(llm_log_enabled=True),
+    )
+
+    @_ENABLED
+    def test_add_accumulates_in_buffer(self, _mock_settings):
         writer = _TraceWriter()
         writer.add(_make_trace())
         assert len(writer._buf) == 1
 
+    @_ENABLED
     @pytest.mark.asyncio
-    async def test_flush_writes_to_db(self):
+    async def test_flush_writes_to_db(self, _mock_settings):
         writer = _TraceWriter()
         writer.add(_make_trace())
 
@@ -59,8 +70,9 @@ class TestTraceWriter:
         mock_session.add_all.assert_called_once()
         mock_session.commit.assert_called_once()
 
+    @_ENABLED
     @pytest.mark.asyncio
-    async def test_flush_failure_does_not_raise(self):
+    async def test_flush_failure_does_not_raise(self, _mock_settings):
         writer = _TraceWriter()
         writer.add(_make_trace(success=False, error_message='err'))
 
@@ -78,8 +90,9 @@ class TestTraceWriter:
         assert count == 0
         mock_sf.assert_not_called()
 
+    @_ENABLED
     @pytest.mark.asyncio
-    async def test_flush_drains_only_batch_size(self):
+    async def test_flush_drains_only_batch_size(self, _mock_settings):
         writer = _TraceWriter()
         writer.MAX_BUFFER = 3
         for i in range(5):
@@ -91,6 +104,20 @@ class TestTraceWriter:
 
         assert count == 3
         assert len(writer._buf) == 2
+
+    @patch(
+        'app.services.llm.observability.get_settings',
+        return_value=MagicMock(llm_log_enabled=False),
+    )
+    def test_add_skipped_when_feature_disabled(self, _mock_settings):
+        """P4.4: ``add`` must short-circuit when ``llm_log_enabled`` is off.
+
+        Guards against drift if someone removes the gate at the call sites
+        (which used to be the only place it was checked).
+        """
+        writer = _TraceWriter()
+        writer.add(_make_trace())
+        assert writer._buf == []
 
 
 class TestLogCallIntegration:

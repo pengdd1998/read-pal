@@ -15,6 +15,10 @@ from app.services.llm.circuit_breaker import CircuitBreaker
 logger = structlog.get_logger('read-pal.llm')
 
 _RPM_WINDOW_SECONDS = 60.0
+# TPM uses the same 60s window as RPM so the two caps reset together —
+# otherwise a provider could be "RPM-available" but "TPM-saturated" with
+# different reset points, producing confusing routing flapping.
+_TPM_WINDOW_SECONDS = 60.0
 
 
 @dataclass
@@ -27,6 +31,12 @@ class ProviderState:
     call_count: int = 0
     window_start: float = 0.0
     avg_latency_ms: float = 0.0
+    # B2: TPM counter — distinct from call_count because a 500-token and a
+    # 80K-token request both count as 1 against RPM but consume wildly
+    # different provider capacity. Tracked always (for dashboards); only
+    # enforced when Settings.tpm_enforced=True.
+    token_count: int = 0
+    token_window_start: float = 0.0
 
     def _reset_window_if_needed(self) -> None:
         now = time.monotonic()
@@ -43,6 +53,50 @@ class ProviderState:
     def increment_rpm(self) -> None:
         self._reset_window_if_needed()
         self.call_count += 1
+
+    def _reset_token_window_if_needed(self) -> None:
+        now = time.monotonic()
+        if self.token_window_start == 0.0 or now - self.token_window_start >= _TPM_WINDOW_SECONDS:
+            self.token_window_start = now
+            self.token_count = 0
+
+    def tpm_available(self, estimated: int = 0) -> bool:
+        """Return True if the provider has TPM headroom for ``estimated`` tokens.
+
+        ``estimated`` is the pre-charge estimate (chars/4 + reserved output).
+        Callers passing 0 just check whether the current window has any
+        headroom at all — used by ``_available_providers`` filtering, where
+        "at cap" means "no room even for a tiny request".
+        """
+        if self.config.max_tpm <= 0:
+            return True
+        self._reset_token_window_if_needed()
+        # Strict less-than: at-cap means no headroom. With <=, a provider
+        # sitting at exactly the cap would appear "available" forever and
+        # routing would never fall through to the next provider.
+        return self.token_count + estimated < self.config.max_tpm
+
+    def increment_tpm(self, tokens: int) -> None:
+        """Account ``tokens`` against this provider's TPM window.
+
+        ``tokens`` may be negative to refund a pre-charge (when a call
+        failed without consuming vendor tokens) or to true-up the
+        difference between pre-charge and actual usage.
+        """
+        if tokens == 0:
+            return
+        self._reset_token_window_if_needed()
+        # Clamp at 0 — a refund larger than current window count shouldn't
+        # make the counter negative (would imply we're crediting tokens
+        # that were never counted in this window).
+        self.token_count = max(0, self.token_count + tokens)
+
+    def tpm_window_remaining_seconds(self) -> float:
+        """Seconds until the TPM window resets — for Retry-After headers."""
+        if self.token_window_start == 0.0:
+            return _TPM_WINDOW_SECONDS
+        elapsed = time.monotonic() - self.token_window_start
+        return max(0.0, _TPM_WINDOW_SECONDS - elapsed)
 
     def update_latency(self, latency_ms: int, success: bool) -> None:
         alpha = 0.3
@@ -136,12 +190,30 @@ class ProviderRegistry:
             state.update_latency(latency_ms, success)
 
     def _available_providers(self) -> list[ProviderState]:
-        """Filter providers: circuit not open, RPM not exceeded."""
+        """Filter providers: circuit not open, RPM not exceeded, no probe in flight.
+
+        P1.2: a HALF_OPEN provider with probe in flight is excluded so
+        callers cascade to the next provider. Without this exclusion,
+        ``next_provider_after`` could return a probe-locked provider,
+        ``allow_request()`` would reject it, and the recursive cascade in
+        ``_try_next_provider`` would cycle through every provider forever
+        (since each appears "available" by ``is_open`` but rejects on probe).
+
+        B2: when ``tpm_enforced`` is on, providers at their TPM cap are
+        also excluded — the request would 429 at the vendor and waste a
+        fallback slot.
+        """
+        settings = get_settings()
+        tpm_enforced = settings.tpm_enforced
         result: list[ProviderState] = []
         for state in self._providers.values():
             if state.circuit.is_open:
                 continue
+            if state.circuit.is_probe_in_flight:
+                continue
             if not state.rpm_available():
+                continue
+            if tpm_enforced and not state.tpm_available():
                 continue
             result.append(state)
         # Sort by priority for deterministic fallback ordering

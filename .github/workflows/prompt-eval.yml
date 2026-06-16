@@ -1,0 +1,150 @@
+name: Prompt Eval
+
+# Runs whenever a PR touches prompt templates, LLM output schemas, or
+# translations — the surfaces most likely to cause silent format drift,
+# hallucination regressions, or zh/en placeholder mismatch. Catches:
+#   - PromptTemplate variable/placeholder drift (test_prompt_rendering.py)
+#   - Sanitizer regressions (test_book_field_sanitization.py)
+#   - Schema validation regressions (test_llm_output_schemas.py)
+#   - Eval infrastructure (app.eval.eval_runner, mocked mode)
+#
+# Live-mode evals against real LLM providers are intentionally NOT here —
+# they require API budget and a PROMPT_EVAL_API_KEY secret. Run them
+# locally via `uv run python -m app.eval.eval_runner` before merging
+# prompt-content changes (especially Mirror sections).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/server/app/prompts/**'
+      - 'packages/server/app/schemas/llm_outputs.py'
+      - 'packages/server/app/translations/**'
+      - 'packages/server/app/utils/sanitizer.py'
+      - 'packages/server/app/services/llm/safe_invoke.py'
+      - 'packages/server/app/eval/**'
+      - 'packages/server/tests/test_prompt_rendering.py'
+      - 'packages/server/tests/test_book_field_sanitization.py'
+      - 'packages/server/tests/test_llm_output_schemas.py'
+      - '.github/workflows/prompt-eval.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/server/app/prompts/**'
+      - 'packages/server/app/schemas/llm_outputs.py'
+      - 'packages/server/app/translations/**'
+
+concurrency:
+  group: prompt-eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prompt-eval:
+    name: Prompt regression checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install uv
+
+      - run: cd packages/server && uv sync --all-groups --all-extras
+
+      - name: Prompt rendering tests
+        working-directory: packages/server
+        run: uv run pytest tests/test_prompt_rendering.py tests/test_book_field_sanitization.py tests/test_llm_output_schemas.py -v --tb=short
+        env:
+          APP_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: readpal_test
+          DB_USER: test
+          DB_PASSWORD: test
+          REDIS_URL: redis://localhost:6379
+          GLM_API_KEY: test-glm-key
+          GLM_BASE_URL: https://test.example.com
+          DEFAULT_MODEL: glm-4-flash
+          FALLBACK_MODEL: glm-4-flash
+          LLM_TIMEOUT_SECONDS: 30
+          LLM_MAX_RETRIES: 2
+          CIRCUIT_FAILURE_THRESHOLD: 5
+          CIRCUIT_RESET_TIMEOUT_SECONDS: 60
+          MAX_EMBEDDING_CALLS: 100
+          JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+          JWT_EXPIRES_IN: 7d
+          JWT_ACCESS_WEB: 15m
+          JWT_ACCESS_MOBILE: 30m
+          JWT_REFRESH_WEB: 7d
+          JWT_REFRESH_MOBILE: 30d
+          FRONTEND_URL: http://localhost:3000
+          CORS_ORIGINS: http://localhost:3000
+          LOG_LEVEL: WARNING
+          LOG_JSON: false
+          LLM_LOG_ENABLED: true
+          LLM_LOG_RETENTION_DAYS: 7
+
+      - name: Eval infrastructure (mocked)
+        working-directory: packages/server
+        run: uv run python -m app.eval.eval_runner
+        env:
+          APP_ENV: test
+          GLM_API_KEY: test-glm-key
+          GLM_BASE_URL: https://test.example.com
+          DEFAULT_MODEL: glm-4-flash
+          FALLBACK_MODEL: glm-4-flash
+          JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+          LOG_LEVEL: WARNING
+
+      - name: Static check — no raw book.title in services
+        run: |
+          # Every book.title / book.author that flows into a prompt must
+          # route through sanitize_book_field. Catch new call sites that
+          # skip the sanitizer.
+          matches=$(grep -rnE "title=book\.title|author=book\.author" \
+            packages/server/app/services \
+            --include="*.py" | grep -v sanitize_book_field || true)
+          if [ -n "$matches" ]; then
+            echo "::error::Raw book.title/author in services (must use sanitize_book_field):"
+            echo "$matches"
+            exit 1
+          fi
+
+  # Optional live-eval job — runs only when the secret is available.
+  # Skips gracefully for external contributors (no secret → no run).
+  prompt-eval-live:
+    name: Live eval (optional)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install uv
+
+      - run: cd packages/server && uv sync --all-groups --all-extras
+
+      - name: Run live eval
+        working-directory: packages/server
+        run: |
+          if [ -z "$PROMPT_EVAL_API_KEY" ]; then
+            echo "PROMPT_EVAL_API_KEY not set — skipping live eval"
+            exit 0
+          fi
+          # Note: --live flag is not yet implemented in eval_runner; this
+          # job is the wiring for when it lands. Until then it no-ops.
+          echo "Live eval pending eval_runner --live implementation"
+        env:
+          PROMPT_EVAL_API_KEY: ${{ secrets.PROMPT_EVAL_API_KEY }}
+          GLM_API_KEY: ${{ secrets.PROMPT_EVAL_API_KEY }}
+          GLM_BASE_URL: ${{ vars.GLM_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4' }}
+          APP_ENV: test
+          JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+          LOG_LEVEL: INFO

@@ -14,10 +14,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.memory_book import MemoryBook
 from app.schemas.memory_book import MemoryBookResponse
+from app.services.memory_book.checkpoint import (
+    clear_checkpoint,
+    load_checkpoint,
+    save_section,
+)
 from app.services.memory_book.data_collection import _collect_enriched_data
 from app.services.memory_book.renderer import _render_html
 from app.services.memory_book.section_generation import (
     SECTION_TYPES,
+    _generate_reader_became_best_of_n,
     _generate_section,
     _placeholder_section,
 )
@@ -101,6 +107,16 @@ async def _generate_all_sections(
     """
     existing_by_type = existing_by_type or {}
 
+    # P3.3: layer Redis checkpoints under the existing DB-derived
+    # ``existing_by_type``. The DB layer only catches "completed prior
+    # runs"; the checkpoint catches "interrupted prior runs" — sections
+    # that completed in-process but never made it to the DB row because
+    # the worker died (OOM, deploy, restart). DB wins on conflicts
+    # because it represents the user's last fully-persisted mirror.
+    checkpointed = await load_checkpoint(user_id, book_id)
+    for section_type, section_data in checkpointed.items():
+        existing_by_type.setdefault(section_type, section_data)
+
     async def _gen_section(section_type: str) -> dict[str, Any]:
         # Reuse a previously-successful section verbatim (deep copy so the
         # stored row isn't aliased). Sections carrying an `error` are the
@@ -121,11 +137,22 @@ async def _generate_all_sections(
                         'message': t(message_key),
                     }
             if section_type in _LLM_SECTIONS:
-                return await _generate_section(
-                    section_type, enriched_data,
-                    user_id=user_id, book_id=book_id,
-                )
-            return _placeholder_section(section_type)
+                # P2.4: reader_became is the closing reflective essay and
+                # runs once per book completion. Route through Best-of-N to
+                # reduce variance and flag hallucination divergence on the
+                # most prominent section. Other sections stay single-shot
+                # — 3x cost is unjustified for less prominent outputs.
+                if section_type == 'reader_became':
+                    result = await _generate_reader_became_best_of_n(
+                        enriched_data, user_id=user_id, book_id=book_id,
+                    )
+                else:
+                    result = await _generate_section(
+                        section_type, enriched_data,
+                        user_id=user_id, book_id=book_id,
+                    )
+            else:
+                result = _placeholder_section(section_type)
         except Exception as exc:
             logger.warning(
                 'section_generation_failed',
@@ -135,7 +162,13 @@ async def _generate_all_sections(
                 error=str(exc),
                 exc_info=True,
             )
-            return {'type': section_type, 'error': 'Generation failed'}
+            result = {'type': section_type, 'error': 'Generation failed'}
+
+        # P3.3: persist this section the moment it completes so an
+        # interrupted run can resume from here. Errors are checkpointed
+        # too — see checkpoint.save_section docstring for why.
+        await save_section(user_id, book_id, section_type, result)
+        return result
 
     section_results = await asyncio.gather(
         *[_gen_section(st) for st in SECTION_TYPES]
@@ -310,6 +343,12 @@ async def generate(
         db, user_id, book_id, sections, stats, html_content,
         enriched_data, book_format,
     )
+
+    # P3.3: DB row is now the source of truth — drop the Redis checkpoint
+    # so the next run reads fresh state from the DB instead of stale
+    # state from Redis. Failures here are non-fatal (TTL will reclaim
+    # the key eventually); clear_checkpoint logs internally.
+    await clear_checkpoint(user_id, book_id)
 
     elapsed = (time.monotonic() - t0) * 1000
     html_size_kb = round(len(html_content.encode('utf-8')) / 1024, 1) if html_content else 0

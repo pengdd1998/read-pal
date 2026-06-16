@@ -15,8 +15,11 @@ from app.services.rag.chunking import _chunk_text, _split_long_paragraph
 
 # Search strategies (used by tests)
 from app.services.rag.search import (
+    RRF_K,
     _keyword_chapter_search,
     _semantic_chapter_search,
+    hybrid_chunk_search,
+    reciprocal_rank_fuse,
 )
 
 # Embedding (used by tests)
@@ -47,6 +50,9 @@ __all__ = [
     '_keyword_chapter_search',
     '_semantic_chapter_search',
     '_tokenize_query',
+    'hybrid_chunk_search',
+    'reciprocal_rank_fuse',
+    'RRF_K',
     # Embedding
     '_get_embedding',
     # Helpers

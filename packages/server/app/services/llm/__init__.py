@@ -16,9 +16,11 @@ from app.services.llm.observability import (
     _CHARS_PER_TOKEN,
     _COST_PER_1K,
     _TraceWriter,
+    _classify_error,
     _estimate_cost,
     _estimate_tokens_from_chars,
     _extract_usage,
+    _log_cache_hit,
     _log_call,
     _trace_writer,
 )
@@ -55,10 +57,8 @@ from app.services.llm.health import (
 
 # -- Safe invoke (circuit breaker, multi-provider fallback, caching, JSON parsing) --
 from app.services.llm.safe_invoke import (
-    _RATE_LIMIT_BACKOFFS,
     _invoke_with_circuit,
     _invoke_with_retry,
-    _is_rate_limited,
     safe_llm_call,
     safe_llm_invoke,
 )
@@ -94,6 +94,8 @@ __all__ = [
     'reset_registry',
     # Observability
     '_log_call',
+    '_log_cache_hit',
+    '_classify_error',
     '_extract_usage',
     '_estimate_cost',
     '_estimate_tokens_from_chars',
@@ -112,10 +114,8 @@ __all__ = [
     '_max_in_memory',
     '_cache_ttl',
     # Safe invoke internals
-    '_RATE_LIMIT_BACKOFFS',
     '_invoke_with_circuit',
     '_invoke_with_retry',
-    '_is_rate_limited',
     '_strip_markdown_fences',
     '_validate_parsed',
 ]

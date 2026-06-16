@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
 from app.services.companion.context_enrichment import (
-    RAG_PARAMS as _RAG_PARAMS,
     fetch_memory as _fetch_memory,
     fetch_rag as _fetch_rag,
 )
@@ -24,7 +23,6 @@ from app.services.companion.context_loaders import (
     save_message as _save_message,
 )
 from app.services.companion.context_prompts import (
-    GENRE_MODIFIERS as _GENRE_MODIFIERS,
     build_extra_context_parts as _build_extra_context_parts,
     build_messages as _build_messages,
     build_system_prompt as _build_system_prompt,
@@ -63,6 +61,19 @@ async def _prepare_context(
     )
 
     budget = TokenBudget()
+
+    # P1.6: reserve slots for must-include content (history + user message)
+    # BEFORE the system prompt is built. Without this, system_prompt+persona
+    # can fill the entire budget and the appended history+user_message push
+    # the total request past the model's context window — the failure mode
+    # M7 flagged. reserve() (vs add()) never truncates: dropping user input
+    # or chat history is worse than shipping a stub system prompt.
+    for msg in history:
+        # langchain message content can be str or a multimodal list; coerce
+        # to str so estimate_tokens has a stable input shape.
+        budget.reserve(str(msg.content), 'history')
+    budget.reserve(message, 'user_message')
+
     system_text = _build_system_prompt(
         book, annotations_ctx, rag_ctx, memory_summary,
         companion_mode=companion_mode, context=context, persona=persona,

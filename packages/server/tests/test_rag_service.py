@@ -356,8 +356,7 @@ class TestGetBookContext:
 
         with (
             patch('app.services.rag.context.get_redis') as mock_redis,
-            patch('app.services.rag.context._semantic_chapter_search', return_value=[]),
-            patch('app.services.rag.context._keyword_chunk_search', return_value=[]),
+            patch('app.services.rag.context.hybrid_chunk_search', return_value=[]),
             patch('app.services.rag.context._get_chapters', return_value=[
                 {'title': 'ML Basics', 'content': 'Machine learning fundamentals and algorithms'},
             ]),
@@ -423,7 +422,7 @@ class TestGetBookContext:
         with (
             patch('app.services.rag.context.get_redis', return_value=mock_redis),
             patch('app.services.rag.context._get_chapters', return_value=chapters),
-            patch('app.services.rag.context._semantic_chapter_search', return_value=[]),
+            patch('app.services.rag.context.hybrid_chunk_search', return_value=[]),
             patch('app.services.rag.context._keyword_chapter_search', return_value=[
                 {'title': 'Chapter 1', 'content': 'The protagonist discovers a hidden garden. ' * 20},
             ]),

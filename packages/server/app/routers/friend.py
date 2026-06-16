@@ -3,11 +3,12 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.idempotency import idempotent
 from app.middleware.rate_limiter import chat_limiter, write_limiter
 from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.agent import ChatResponse, FriendChatRequest
@@ -21,13 +22,18 @@ logger = logging.getLogger('read-pal.friend')
 router = APIRouter(prefix='/api/v1/friend', tags=['friend'], dependencies=[api_limiter])
 
 
-@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter, write_limiter, daily_ai_budget])
+@router.post('/chat', response_model=ChatResponse, dependencies=[chat_limiter, write_limiter, daily_ai_budget, idempotent])
 async def chat(
+    request: Request,  # populated by idempotent dependency
     body: FriendChatRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Reading friend chat endpoint with persona selection."""
+    from app.middleware.idempotency import check_idempotency_cache, store_idempotency_response
+    cached = await check_idempotency_cache(request)
+    if cached is not None:
+        return ChatResponse(data=cached.get('data'))
     try:
         result = await friend_service.chat(
             db=db,
@@ -64,6 +70,7 @@ async def chat(
             },
         ) from exc
 
+    await store_idempotency_response(request, {'data': result})
     return ChatResponse(data=result)
 
 

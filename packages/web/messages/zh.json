@@ -568,6 +568,7 @@
     "companion_chat_about_reading": "与 {name} 聊聊你正在阅读的内容",
     "companion_retrying": "{seconds} 秒后重试...",
     "companion_server_error": "服务器错误 ({status})",
+    "companion_fallback_notice": "当前回复由备用模型生成，质量可能下降",
     "companion_error_prefix": "错误：{message}",
     "companion_no_response": "抱歉，我无法生成回复。",
     "companion_connection_lost_retry": "连接丢失。{seconds} 秒后重试...",

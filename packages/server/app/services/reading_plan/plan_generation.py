@@ -8,6 +8,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from app.models.book import Book
 from app.prompts import READING_PLAN_HUMAN, READING_PLAN_SYSTEM
 from app.services.llm import safe_llm_call
+from app.utils.sanitizer import sanitize_book_field
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.reading_plan')
@@ -30,8 +31,8 @@ def build_plan_prompts(
     system_prompt = READING_PLAN_SYSTEM.template
     human_prompt = READING_PLAN_HUMAN.template.format(
         total_days=total_days,
-        title=book.title,
-        author=book.author,
+        title=sanitize_book_field(book.title, field='title'),
+        author=sanitize_book_field(book.author, field='author'),
         pages=pages,
         current_page=current,
         remaining=remaining,
@@ -98,5 +99,6 @@ async def generate_plan_text(
         log_label='Reading plan',
         user_id=str(user_id) if user_id else None,
         book_id=str(book_id) if book_id else None,
+        template=READING_PLAN_SYSTEM,
     )
     return result if result else fallback_plan

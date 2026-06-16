@@ -5,7 +5,7 @@ import { API_BASE_URL } from '@/lib/api';
 import { api } from '@/lib/api';
 import { consumeSSEStream } from '@/lib/sse';
 import { purifySync } from '@/lib/dompurify';
-import { generateId } from '@read-pal/shared';
+import { generateId, randomIdempotencyKey } from '@read-pal/shared';
 import { authFetchWithRefresh } from '@/lib/auth-fetch';
 import { warn } from '@/lib/logger';
 
@@ -39,6 +39,15 @@ export interface UseStreamingChatOptions {
   createAssistantMessage: () => string; // returns new message ID
   extractCodeBlocks: (html: string) => string;
   t: (key: string, params?: Record<string, unknown>) => string;
+  /** C3: fired when the server signals a fallback model took over mid-stream.
+   * Caller surfaces this as a non-blocking notice (e.g. toast) so the user
+   * attributes the response style change correctly instead of blaming the
+   * book / their prompt. */
+  onFallbackNotice?: (info: {
+    model: string;
+    primaryModel?: string;
+    primaryProvider?: string;
+  }) => void;
 }
 
 export interface UseStreamingChatReturn {
@@ -72,6 +81,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     createAssistantMessage,
     extractCodeBlocks,
     t,
+    onFallbackNotice,
   } = options;
 
   const [loading, setLoading] = useState(false);
@@ -83,6 +93,12 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
   // Track the current stream's request_id so stopStreaming can issue a
   // server-side cancel. The id is sent in the first SSE frame from /chat/stream.
   const currentRequestIdRef = useRef<string | null>(null);
+  // D4: most recent SSE ``id:`` value seen on the current stream. Sent back
+  // as ``Last-Event-ID`` on retry so the server replays buffered chunks from
+  // the right offset (D1 + D2 + D3). Reset to null at the start of each
+  // fresh logical call (sendStreamMessage / regenerate); preserved across
+  // retries within the same call so reconnect resumes correctly.
+  const lastEventIdRef = useRef<string | null>(null);
 
   /** Roll back an optimistic user+assistant turn and dispatch a rollback
    * event with the user's original text so the caller can pre-fill the input. */
@@ -107,6 +123,18 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
   }): Promise<void> => {
     const { endpoint, body, assistantMsgId, userMsgId, rollbackText, startAttempt = 0 } = params;
 
+    // Generate ONE idempotency key per logical call so network retries
+    // within this runStream invocation share the key (server dedupes them
+    // as the same in-flight stream). A subsequent user click generates a
+    // fresh key — important for regenerate, which must be allowed to fire
+    // fresh even after a prior regenerate on the same body completed.
+    const idempotencyKey = randomIdempotencyKey();
+
+    // D4: reset Last-Event-ID tracking at the start of each logical call.
+    // Retries within this call preserve the ref so reconnect resumes from
+    // the right offset.
+    lastEventIdRef.current = null;
+
     const attemptStream = async (attempt: number): Promise<void> => {
       if (!mountedRef.current) return;
       // Abort any previous stream before retrying
@@ -115,20 +143,34 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
       abortRef.current = fetchController;
 
       try {
+        // D4: on retry (attempt > 0), include Last-Event-ID so the server
+        // replays buffered chunks from the offset we last saw. Attempt 0
+        // is a fresh request — no header.
+        const headers: Record<string, string> = { 'Idempotency-Key': idempotencyKey };
+        if (attempt > 0 && lastEventIdRef.current) {
+          headers['Last-Event-ID'] = lastEventIdRef.current;
+        }
         const response = await authFetchWithRefresh(`${API_BASE_URL}${endpoint}`, {
           method: 'POST',
           signal: fetchController.signal,
           body: JSON.stringify(body),
+          headers,
         });
         if (!response.ok) {
           if ((response.status >= 500 || response.status === 429) && attempt < MAX_RETRIES) {
             const delay = Math.pow(2, attempt) * 1000;
+            // D4: preserve partial content during reconnect. Only show the
+            // "retrying" notice when no chunks were received yet — otherwise
+            // replayed chunks would append to the placeholder, garbling the
+            // rendered response.
             onMessagesUpdate((prev) =>
-              prev.map((m) =>
-                m.id === assistantMsgId
-                  ? { ...m, content: t('companion_retrying', { seconds: delay / 1000 }) }
-                  : m,
-              ),
+              prev.map((m) => {
+                if (m.id !== assistantMsgId) return m;
+                if (!m.content) {
+                  return { ...m, content: t('companion_retrying', { seconds: delay / 1000 }) };
+                }
+                return m;
+              }),
             );
             await new Promise<void>((resolve, reject) => {
               const timer = setTimeout(resolve, delay);
@@ -228,12 +270,16 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
 
             if (attempt < MAX_RETRIES) {
               const delay = Math.pow(2, attempt) * 1000;
+              // D4: preserve partial content during reconnect (see HTTP
+              // retry branch above for rationale).
               onMessagesUpdate((prev) =>
-                prev.map((m) =>
-                  m.id === assistantMsgId
-                    ? { ...m, content: t('companion_connection_lost', { seconds: delay / 1000 }) }
-                    : m,
-                ),
+                prev.map((m) => {
+                  if (m.id !== assistantMsgId) return m;
+                  if (!m.content) {
+                    return { ...m, content: t('companion_connection_lost', { seconds: delay / 1000 }) };
+                  }
+                  return m;
+                }),
               );
               setConnecting(false);
               retryTimerRef.current = setTimeout(() => {
@@ -269,18 +315,38 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             if (meta.request_id) {
               currentRequestIdRef.current = meta.request_id;
             }
+            // C3: B3 quality-disclosure metadata event. Server emitted this
+            // BEFORE the fallback chunks when primary failed mid-stream.
+            // Surface via the caller's notice callback so the user gets a
+            // non-blocking "fallback model took over" explanation.
+            if (meta.type === 'metadata' && meta.fallback_used && onFallbackNotice) {
+              onFallbackNotice({
+                model: meta.model ?? '',
+                primaryModel: meta.primary_model,
+                primaryProvider: meta.primary_provider,
+              });
+            }
+          },
+          // D4: capture each ``id:`` line so reconnect can resume via
+          // Last-Event-ID. The value is the raw ``{request_id}:{seq}``
+          // string emitted by D1.
+          (id: string) => {
+            lastEventIdRef.current = id;
           },
         );
       } catch (err) {
         warn('useStreamingChat: connection error (attempt %d)', attempt, err);
         if (attempt < MAX_RETRIES && !fetchController.signal.aborted) {
           const delay = Math.pow(2, attempt) * 1000;
+          // D4: preserve partial content during reconnect.
           onMessagesUpdate((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId
-                ? { ...m, content: t('companion_network_error', { seconds: delay / 1000 }) }
-                : m,
-            ),
+            prev.map((m) => {
+              if (m.id !== assistantMsgId) return m;
+              if (!m.content) {
+                return { ...m, content: t('companion_network_error', { seconds: delay / 1000 }) };
+              }
+              return m;
+            }),
           );
           await new Promise<void>((resolve, reject) => {
             const timer = setTimeout(resolve, delay);
@@ -310,7 +376,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     };
 
     await attemptStream(startAttempt);
-  }, [onMessagesUpdate, t, rollbackTurn]);
+  }, [onMessagesUpdate, t, rollbackTurn, onFallbackNotice]);
 
   const buildContext = useCallback(() => ({
     bookId,

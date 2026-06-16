@@ -46,6 +46,12 @@ class ProviderConfig(BaseModel):
     priority: int = 1  # lower = preferred
     cost_weight: float = 0.5  # used for "cheapest" routing
     max_rpm: int = 0  # 0 = unlimited
+    # B2: provider-level tokens-per-minute cap. 0 = unlimited. Conservative
+    # defaults for documented free tiers: GLM ~150K, DeepSeek ~60K, GPT-4.1
+    # nano ~200K. Only enforced when Settings.tpm_enforced=True (off by
+    # default — flip after a week of monitoring to verify caps don't false-
+    # positive throttle legit traffic).
+    max_tpm: int = 0
 
     @property
     def default_model(self) -> str:
@@ -145,6 +151,56 @@ class Settings(BaseSettings):
     # 0 = unlimited (budget enforcement skipped entirely).
     # Production recommendation: 500 (free tier), 5000 (premium).
     llm_daily_budget: int = 0
+
+    # Daily TOKEN budget per user (P3.2). 0 = disabled. Distinct from
+    # llm_daily_budget (which counts REQUESTS). A 200-token and a 16K-token
+    # call both consume 1 unit of the requests budget; this counts tokens so
+    # long-context abusers can't game the request cap. Pre-charged before
+    # every LLM call (chars/4 estimate + reserved output), settled post-call
+    # using actual usage from response_metadata.
+    llm_daily_token_budget: int = 0
+
+    # B2: gate TPM (tokens-per-minute) enforcement at the provider level.
+    # ProviderConfig.max_tpm caps are tracked always (so dashboards see the
+    # number); only when this flag is True do we filter at-cap providers out
+    # of routing decisions. Defaults False — flip after observing a week of
+    # real TPM numbers to confirm caps won't false-positive throttle.
+    tpm_enforced: bool = False
+
+    # C1: GLOBAL cap on concurrent LLM streaming requests, enforced via Redis
+    # INCR/DECR. The previous in-process asyncio.Semaphore only bounded per-
+    # worker concurrency — with N uvicorn workers, the true ceiling was N ×
+    # this number. The Redis-backed counter spans all workers on the host.
+    #
+    # Default raised from 10 → 20 because the global cap replaces the per-
+    # worker cap (4 workers × 10 = 40 in the old config; 20 is more
+    # conservative but still roomy for a single-VPS deployment).
+    llm_max_concurrent_streams: int = 20
+
+    # C2: feature-flag native structured output (response_format=json_object).
+    # Default OFF — when ON and a schema_class is passed to safe_llm_invoke,
+    # the pool constructs the ChatOpenAI with model_kwargs=
+    # {'response_format': {'type': 'json_object'}}. This nudges providers
+    # that support it (OpenAI family, GLM, Anthropic-via-passthrough) toward
+    # valid JSON output instead of relying on prompt-only contracts.
+    #
+    # The 3-stage JSON repair ladder in safe_invoke.py stays as a fallback —
+    # providers occasionally violate the contract under load. Off-by-default
+    # lets ops opt in after verifying their provider chain supports the
+    # response_format field (DeepSeek's support is partial; verify before
+    # flipping globally).
+    llm_native_structured_output: bool = False
+
+    # Idempotency enforcement gate. P0.1: defaults ON now that both web and
+    # mobile API clients auto-attach a deterministic Idempotency-Key on
+    # mutations (POST/PUT/PATCH) and streaming calls pass a random UUID per
+    # click. Closes the double-click → duplicate LLM billing class of bugs
+    # (review blocker B1).
+    #
+    # Set to False in dev/test .env if you need to exercise legacy clients
+    # that don't send the header. The middleware silently accepts missing
+    # keys when enforcement is off (see app/middleware/idempotency.py).
+    idempotency_enforce: bool = True
 
     # SMTP (optional — console fallback when unset)
     smtp_host: str | None = None

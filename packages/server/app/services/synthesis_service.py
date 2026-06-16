@@ -114,6 +114,7 @@ async def synthesize(
     schema_class=SynthesisResult,
     user_id=str(user_id),
     book_id=str(book_id),
+    template=SYNTHESIS_SYSTEM,
   )
 
   elapsed_ms = (time.monotonic() - t0) * 1000

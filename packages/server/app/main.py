@@ -105,8 +105,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
-    from app.services.llm import shutdown_llm
+    # P4.1: Flush trace writer on shutdown so up to 50 buffered traces don't
+    # get lost on clean deploys / restarts.
+    from app.services.llm import shutdown_llm, _trace_writer
     from app.core.redis import close_redis
+    try:
+        flushed = await _trace_writer.flush()
+        logger.info('LLM trace writer flushed %d records on shutdown', flushed)
+    except Exception as exc:  # noqa: BLE001 — best-effort flush
+        logger.warning('LLM trace writer flush failed on shutdown: %s', str(exc)[:200])
     await shutdown_llm()
     await close_redis()
 

@@ -11,11 +11,17 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.db import Base
+from app.prompts.companion_prompts import FRIEND_PERSONAS
 
 if TYPE_CHECKING:
     from app.models.user import User
 
-VALID_PERSONAS = ('sage', 'penny', 'alex', 'quinn', 'sam')
+# P2.1: derived from FRIEND_PERSONAS so the canonical persona list lives in
+# exactly one place (companion_prompts.py). Previously this was a separate
+# tuple that could drift out of sync with the prompt templates — adding a
+# persona to FRIEND_PERSONAS without updating VALID_PERSONAS silently broke
+# the model layer's notion of valid personas.
+VALID_PERSONAS: tuple[str, ...] = tuple(FRIEND_PERSONAS.keys())
 
 
 class FriendConversation(Base):

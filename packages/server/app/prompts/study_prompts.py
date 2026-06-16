@@ -19,6 +19,8 @@ FLASHCARD_GENERATION_SYSTEM = PromptTemplate(
     ),
     variables=['count'],
     output_format='json',
+    temperature=0.2,
+    max_tokens=800,
 )
 
 FLASHCARD_GENERATION_HUMAN = PromptTemplate(
@@ -46,6 +48,8 @@ STUDY_OBJECTIVES_SYSTEM = PromptTemplate(
         'Example: [{{"id":"...","text":"...","completed":false}}]'
     ),
     output_format='json_array',
+    temperature=0.2,
+    max_tokens=600,
 )
 
 STUDY_OBJECTIVES_HUMAN = PromptTemplate(
@@ -71,6 +75,8 @@ STUDY_CONCEPT_CHECKS_SYSTEM = PromptTemplate(
         'Example: [{{"id":"...","question":"...","hint":"...","answer":"...","position":"start"}}]'
     ),
     output_format='json_array',
+    temperature=0.2,
+    max_tokens=1500,
 )
 
 STUDY_CONCEPT_CHECKS_HUMAN = PromptTemplate(
@@ -108,6 +114,8 @@ KNOWLEDGE_EXTRACTION_SYSTEM = PromptTemplate(
         '"description":"The ability to recover from adversity"}}]}}'
     ),
     output_format='json',
+    temperature=0.2,
+    max_tokens=1500,
 )
 
 KNOWLEDGE_EXTRACTION_HUMAN = PromptTemplate(

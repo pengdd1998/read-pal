@@ -8,9 +8,21 @@ from app.prompts.base import PromptTemplate
 # Synthesis
 # ---------------------------------------------------------------------------
 
+# Synthesis produces thematic analysis at the book level, so the guard
+# phrasing differs from the per-section mirror guard: instead of asking
+# the model to acknowledge a single sparse field, it asks the model to
+# refuse to invent themes/comparisons when a whole book's data is thin.
+# P3/A3: tied to all three synthesis system templates below.
+SYNTHESIS_SPARSE_GUARD = (
+    'If any book above has minimal reading data (few highlights, no progress, '
+    'sparse annotations), do NOT invent themes or comparisons — return a short '
+    'acknowledgement like "Not enough reading data for [Book] yet." in the '
+    'relevant field. Do NOT pad with generic literary analysis.'
+)
+
 SYNTHESIS_SYSTEM = PromptTemplate(
     key='synthesis.single_book.system',
-    version=1,
+    version=2,
     template=(
         'You are a literary analysis assistant. Analyze the provided reading data '
         'and return a structured synthesis. Return ONLY valid JSON with these keys: '
@@ -18,43 +30,50 @@ SYNTHESIS_SYSTEM = PromptTemplate(
         '"connections" (array of {{from_topic, to_topic, description}}), '
         '"timeline" (array of {{date, event}}), '
         '"insights" (array of strings). '
-        'Be specific and data-driven in your analysis.'
+        'Be specific and data-driven in your analysis. '
+        + SYNTHESIS_SPARSE_GUARD
     ),
     output_format='json',
+    max_tokens=2000,
 )
 
 SYNTHESIS_HUMAN = PromptTemplate(
     key='synthesis.single_book.human',
-    version=1,
-    template='Analyze the reading data for "{title}" by {author}:\n\n{data}',
+    version=2,
+    template=(
+        'Analyze the reading data for "{title}" by {author}:\n\n'
+        '<book_data>\n{data}\n</book_data>'
+    ),
     variables=['title', 'author', 'data'],
     output_format='text',
 )
 
 CROSS_BOOK_SYNTHESIS_SYSTEM = PromptTemplate(
     key='synthesis.cross_book.system',
-    version=1,
+    version=2,
     template=(
         'You are a literary analysis assistant. Compare reading data across multiple '
         'books and find connections. Return ONLY valid JSON with these keys: '
         '"common_themes" (array of {{name, description, confidence}}), '
         '"unique_perspectives" (array of {{book, perspective}}), '
-        '"recommended_connections" (array of strings suggesting further reading connections).'
+        '"recommended_connections" (array of strings suggesting further reading connections). '
+        + SYNTHESIS_SPARSE_GUARD
     ),
     output_format='json',
+    max_tokens=2000,
 )
 
 CROSS_BOOK_SYNTHESIS_HUMAN = PromptTemplate(
     key='synthesis.cross_book.human',
-    version=1,
-    template='Compare these books and find cross-book connections:\n\n{data}',
+    version=2,
+    template='Compare these books and find cross-book connections:\n\n<books>\n{data}\n</books>',
     variables=['data'],
     output_format='text',
 )
 
 BOOK_COMPARE_SYSTEM = PromptTemplate(
     key='synthesis.compare.system',
-    version=1,
+    version=2,
     template=(
         'You are a literary comparison assistant. Compare exactly two books and '
         'provide a focused analysis. Return ONLY valid JSON with these keys: '
@@ -63,18 +82,20 @@ BOOK_COMPARE_SYSTEM = PromptTemplate(
         '"unique_perspectives" (array of {{book, perspective}} objects '
         'describing what each book uniquely contributes), '
         '"recommended_connections" (array of strings suggesting further '
-        'reading connections between the ideas in these two books).'
+        'reading connections between the ideas in these two books). '
+        + SYNTHESIS_SPARSE_GUARD
     ),
     output_format='json',
+    max_tokens=2000,
 )
 
 BOOK_COMPARE_HUMAN = PromptTemplate(
     key='synthesis.compare.human',
-    version=1,
+    version=2,
     template=(
         'Compare "{title_1}" by {author_1} and "{title_2}" by {author_2}.\n\n'
-        'Book 1 data:\n{data_1}\n\n'
-        'Book 2 data:\n{data_2}'
+        '<book index="1">\n{data_1}\n</book>\n\n'
+        '<book index="2">\n{data_2}\n</book>'
     ),
     variables=['title_1', 'author_1', 'title_2', 'author_2', 'data_1', 'data_2'],
     output_format='text',
@@ -96,6 +117,7 @@ READING_PLAN_SYSTEM = PromptTemplate(
         'Keep each day concise (2-3 lines). Be specific about the book content.'
     ),
     output_format='text',
+    max_tokens=1500,
 )
 
 READING_PLAN_HUMAN = PromptTemplate(
@@ -133,11 +155,16 @@ CONVERSATION_SUMMARY_SYSTEM = PromptTemplate(
         'Be concise and factual.'
     ),
     output_format='json',
+    max_tokens=800,
 )
 
 CONVERSATION_SUMMARY_HUMAN = PromptTemplate(
     key='conversation_memory.summary.human',
-    version=1,
-    template='Generate the updated conversation summary.',
+    version=2,
+    template=(
+        'Generate the updated conversation summary.\n\n'
+        '{preamble}\n{conversation_text}'
+    ),
+    variables=['preamble', 'conversation_text'],
     output_format='text',
 )

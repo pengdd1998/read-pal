@@ -17,10 +17,19 @@ def persist_stream_log(
     error_message: str | None = None,
     user_id: UUID | None = None,
     book_id: UUID | None = None,
+    ttft_ms: int | None = None,
 ) -> None:
-    """Persist streaming LLM call to database (fire-and-forget)."""
+    """Persist streaming LLM call to database (fire-and-forget).
+
+    ``ttft_ms`` is stored in the ``extra`` JSONB column (LLMLog has no
+    dedicated column for it). Queryable via ``extra->>'ttft_ms'``.
+    """
     try:
         from app.services.llm_log_service import fire_and_forget_log
+        # Build extra dict — only include keys with values to avoid cluttering the JSON.
+        extra: dict = {}
+        if ttft_ms is not None:
+            extra['ttft_ms'] = ttft_ms
         fire_and_forget_log(
             request_id=request_id,
             model=model,
@@ -30,6 +39,7 @@ def persist_stream_log(
             error_message=error_message,
             user_id=str(user_id) if user_id else None,
             book_id=str(book_id) if book_id else None,
+            extra=extra or None,
         )
     except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('companion.safety.observability_log_failed', error=str(exc)[:200])

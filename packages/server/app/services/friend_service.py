@@ -19,7 +19,7 @@ from app.prompts import FRIEND_BOOK_CONTEXT, FRIEND_PERSONAS
 from app.services.friend_persona import recommend_persona
 from app.services.llm import safe_llm_call
 from app.utils.db import db_error_guard
-from app.utils.sanitizer import sanitize_chat_message
+from app.utils.sanitizer import sanitize_book_field, sanitize_chat_message
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.friend')
@@ -114,7 +114,9 @@ async def _build_system_message(
             book = None
         if book is not None:
             context_str = FRIEND_BOOK_CONTEXT.template.format(
-                title=book.title, author=book.author, progress=book.progress or 0,
+                title=sanitize_book_field(book.title, field='title'),
+                author=sanitize_book_field(book.author, field='author'),
+                progress=book.progress or 0,
             )
             parts.append(context_str)
 

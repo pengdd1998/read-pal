@@ -38,6 +38,23 @@ class LLMCallTrace(Base):
     fallback_used: Mapped[bool] = mapped_column(Boolean, default=False)
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     provider: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    # Added in migration 0019 — finish reason ('stop', 'length', 'content_filter', etc.)
+    finish_reason: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    # Added in migration 0019 — language code ('en', 'zh') for per-lang quality metrics
+    lang: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    # Added in migration 0019 — prompt template version (e.g. 'v3') or MD5 hash
+    prompt_version: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    # P2.1: time-to-first-token in ms. NULL when no tokens emitted (error path,
+    # empty response, or non-streaming call where TTFT == latency).
+    ttft_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # P4.2: cache_hit = TRUE when the call was served from the Redis JSON cache
+    # without contacting the vendor. Lets dashboards compute hit rate and
+    # exclude cache-served requests from cost/latency percentiles.
+    cache_hit: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text('false'))
+    # P4.2: categorical error type ('rate_limit', 'network', 'timeout',
+    # 'auth', 'server_error', 'cancelled', 'unknown'). NULL on success.
+    # Lets dashboards group failures without regex on error_message.
+    error_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=text('now()'),

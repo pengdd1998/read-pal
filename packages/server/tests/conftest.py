@@ -269,5 +269,36 @@ async def register_user(
 
 
 def auth_headers(token: str) -> dict[str, str]:
-    """Return Authorization header dict."""
-    return {'Authorization': f'Bearer {token}'}
+    """Return Authorization header dict.
+
+    P0.1 turned ``idempotency_enforce`` on by default. Tests that hit any
+    idempotent-protected POST route (agent/chat, friend/chat, synthesis,
+    etc.) need a valid ``Idempotency-Key`` or the request fails 422
+    before reaching the handler. Including a fresh UUID per call here
+    means existing tests keep working without each one having to know
+    about idempotency — every call gets a unique key, so no cache
+    collisions across the suite.
+
+    Tests that explicitly want to assert missing-key behavior can build
+    the dict manually without this helper.
+    """
+    import uuid as _uuid
+    return {
+        'Authorization': f'Bearer {token}',
+        'Idempotency-Key': _uuid.uuid4().hex,
+    }
+
+
+def mutation_headers(token: str, *, idempotency_key: str | None = None) -> dict[str, str]:
+    """Auth headers with an explicit (possibly-reused) Idempotency-Key.
+
+    Use this when a test deliberately reuses a key across calls to verify
+    dedup / replay behavior. For ordinary mutations, ``auth_headers`` is
+    enough — it already attaches a fresh key.
+    """
+    import uuid as _uuid
+    key = idempotency_key or _uuid.uuid4().hex
+    return {
+        'Authorization': f'Bearer {token}',
+        'Idempotency-Key': key,
+    }

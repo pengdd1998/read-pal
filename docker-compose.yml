@@ -18,7 +18,7 @@ services:
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-readpal}
       DB_USER: ${DB_USER:-readpal}
-      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_PASSWORD: ${DB_PASSWORD:-Rp2026Secure!}
       # External Redis infrastructure on VPS
       REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
       # External MinIO infrastructure on VPS

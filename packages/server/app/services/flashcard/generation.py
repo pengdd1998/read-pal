@@ -18,6 +18,7 @@ from app.services.llm import safe_llm_invoke
 from app.utils import utcnow
 from app.utils.db import db_error_guard
 from app.utils.i18n import t
+from app.utils.sanitizer import sanitize_book_field
 
 from .sm2 import DEFAULT_EASE_FACTOR
 
@@ -81,8 +82,8 @@ async def _call_flashcard_llm(
     """
     system_prompt = FLASHCARD_GENERATION_SYSTEM.template.format(count=count)
     human_prompt = FLASHCARD_GENERATION_HUMAN.template.format(
-        title=book.title,
-        author=book.author or 'Unknown',
+        title=sanitize_book_field(book.title, field='title'),
+        author=sanitize_book_field(book.author, field='author') or 'Unknown',
         annotation_text=annotation_text,
     )
     return await safe_llm_invoke(
@@ -95,6 +96,7 @@ async def _call_flashcard_llm(
         schema_class=FlashcardList,
         user_id=str(user_id),
         book_id=str(book_id),
+        template=FLASHCARD_GENERATION_SYSTEM,
     )
 
 

@@ -78,6 +78,7 @@ async def _invoke_objectives_llm(
         schema_class=StudyObjectiveList,
         user_id=str(user_id) if user_id else None,
         book_id=str(book_id) if book_id else None,
+        template=STUDY_OBJECTIVES_SYSTEM,
     )
 
     objectives = _extract_items(result, 'objectives')
@@ -175,6 +176,7 @@ async def _invoke_checks_llm(
         schema_class=ConceptCheckList,
         user_id=str(user_id) if user_id else None,
         book_id=str(book_id) if book_id else None,
+        template=STUDY_CONCEPT_CHECKS_SYSTEM,
     )
 
     checks = _extract_items(result, 'checks')

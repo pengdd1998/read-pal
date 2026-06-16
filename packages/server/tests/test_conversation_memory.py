@@ -9,8 +9,10 @@ from uuid import uuid4
 
 import pytest
 
+from app.prompts import CONVERSATION_SUMMARY_SYSTEM
 from app.services.conversation_memory import (
     MAX_RECENT,
+    MEMORY_SCHEMA_VERSION,
     SUMMARY_BATCH,
     SUMMARY_THRESHOLD,
     _format_conversation,
@@ -43,12 +45,27 @@ def _make_chat_message(
 def _make_conversation_summary(
     summary: str = 'Existing summary text.',
     message_count: int = 50,
+    *,
+    metadata: dict | None = None,
 ) -> MagicMock:
-    """Create a lightweight ConversationSummary-like mock."""
+    """Create a lightweight ConversationSummary-like mock.
+
+    P3.1 introduced ``_is_summary_stale`` which checks ``metadata_.prompt_version``
+    and ``metadata_.schema_version``. Defaults to a non-stale block matching the
+    current prompt/schema versions so cache-hit paths fire by default; tests
+    that explicitly want stale behavior can pass ``metadata={}`` or a partial
+    dict.
+    """
     cs = MagicMock()
     cs.summary = summary
     cs.message_count = message_count
     cs.updated_at = datetime.now(timezone.utc)
+    cs.metadata_ = metadata if metadata is not None else {
+        'prompt_version': CONVERSATION_SUMMARY_SYSTEM.version,
+        'schema_version': MEMORY_SCHEMA_VERSION,
+        'model': 'test-model',
+        'generated_at': datetime.now(tz=timezone.utc).isoformat(),
+    }
     return cs
 
 
