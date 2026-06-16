@@ -54,10 +54,17 @@ export const CollectionItem = React.memo(function CollectionItem({
 
  return (
  <div className="group relative">
-  <button type="button"
+  {/* Outer container is a div (role=button), NOT a <button> — the hover
+      actions below are real buttons, and HTML forbids <button> nesting
+      (it caused a React hydration warning + the inner buttons could swallow
+      clicks unpredictably). Keyboard a11y preserved via onKeyDown. */}
+  <div
+	  role="button"
+	  tabIndex={0}
 	  aria-label={col.name}
 	  onClick={onSelect}
-	  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+	  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
+	  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 outline-none ${
    isActive
    ? 'bg-primary-50 dark:bg-primary-900/20 font-medium'
    : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
@@ -90,7 +97,7 @@ export const CollectionItem = React.memo(function CollectionItem({
    </svg>
    </button>
   </div>
-  </button>
+  </div>
  </div>
  );
 });
