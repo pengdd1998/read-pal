@@ -181,3 +181,38 @@ async def test_synthesis_llm_failure_returns_fallback(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body['success'] is True
+
+
+# ---------------------------------------------------------------------------
+# Query-aware single-book synthesis (round 189)
+# ---------------------------------------------------------------------------
+
+
+def test_synthesis_prompt_includes_query_when_provided():
+    """_build_synthesis_prompt appends a focus directive when query is set."""
+    from app.services.synthesis_service import _build_synthesis_prompt
+
+    data = {'book': {'title': 'Demo', 'author': 'A'}, 'highlights': []}
+    without_query = _build_synthesis_prompt(data)
+    with_query = _build_synthesis_prompt(data, query='What does the green light mean?')
+
+    base = without_query[-1].content
+    focused = with_query[-1].content
+
+    # Without query: no focus directive
+    assert 'The reader specifically asked' not in base
+    # With query: the directive + the (sanitized) question appear
+    assert 'The reader specifically asked' in focused
+    assert 'green light' in focused
+    # The base content (title/author/data) is preserved in both
+    assert 'Demo' in focused and 'Demo' in base
+
+
+def test_synthesis_prompt_omits_directive_without_query():
+    """An empty/None query must not append the focus directive."""
+    from app.services.synthesis_service import _build_synthesis_prompt
+
+    data = {'book': {'title': 'Demo', 'author': 'A'}, 'highlights': []}
+    for q in (None, '', '   '):
+        msg = _build_synthesis_prompt(data, query=q)[-1].content
+        assert 'The reader specifically asked' not in msg, f'query={q!r} should not focus'
