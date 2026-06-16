@@ -129,13 +129,23 @@ async def update_book(
 
         # Recalculate progress when currentPage is updated
         if data.current_page is not None and book.total_pages > 0:
-            book.current_page = min(max(book.current_page, 0), book.total_pages)
-            book.progress = cap_progress(
-                Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
-            )
-            if book.progress >= Decimal('100') and book.status != BookStatus.completed:
-                book.status = BookStatus.completed
-                book.completed_at = now
+            incoming_page = min(max(data.current_page, 0), book.total_pages)
+            # Never rewind: the reader saves progress on unload from whatever
+            # chapter it had mounted — including a stale localStorage chapter
+            # for a book the user has since progressed past (or finished). Letting
+            # that lower book.current_page would silently un-finish a completed
+            # book and drop the "Completed" count. Mirrors the guard in
+            # _update_book_with_page (commit 16ec2e31), which only protected the
+            # session path, not this direct PATCH path the reader uses.
+            current_page = book.current_page or 0
+            if incoming_page >= current_page:
+                book.current_page = incoming_page
+                book.progress = cap_progress(
+                    Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
+                )
+                if book.progress >= Decimal('100') and book.status != BookStatus.completed:
+                    book.status = BookStatus.completed
+                    book.completed_at = now
 
         await db.flush()
     return book
