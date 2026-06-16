@@ -152,3 +152,76 @@ async def test_mark_all_read_returns_401_without_auth(client):
 async def test_unread_count_returns_401_without_auth(client):
     resp = await client.get('/api/v1/notifications/unread-count')
     assert resp.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Service-layer: create_notification + daily-goal dedup + book-completion trigger
+# (the notification-creation features wired in round 189)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_create_notification_persists(client):
+    """create_notification adds a row the list endpoint can see."""
+    from uuid import UUID
+    from app.services.notification_service import create_notification
+    from tests.conftest import _TestSession
+
+    reg = await register_user(client)
+    uid = UUID(reg['user']['id'])
+    async with _TestSession() as db:
+        await create_notification(
+            db, uid, 'system', 'Test title', 'Test message body',
+        )
+        await db.commit()
+
+    resp = await client.get('/api/v1/notifications/', headers=auth_headers(reg['token']))
+    body = resp.json()['data']
+    assert body['total'] == 1
+    assert body['items'][0]['title'] == 'Test title'
+    assert body['items'][0]['message'] == 'Test message body'
+
+
+@pytest.mark.asyncio
+async def test_daily_goal_notification_fires_once_per_day(client):
+    """maybe_notify_daily_goal fires when the goal is met, then dedups."""
+    from uuid import UUID
+    from app.services.notification_service import maybe_notify_daily_goal
+    from tests.conftest import _TestSession
+
+    reg = await register_user(client)
+    uid = UUID(reg['user']['id'])
+
+    async with _TestSession() as db:
+        await maybe_notify_daily_goal(db, uid, today_minutes=45, daily_goal_minutes=30)
+        await db.commit()
+    async with _TestSession() as db:
+        await maybe_notify_daily_goal(db, uid, today_minutes=50, daily_goal_minutes=30)
+        await db.commit()
+    # Goal not met → no-op
+    async with _TestSession() as db:
+        await maybe_notify_daily_goal(db, uid, today_minutes=5, daily_goal_minutes=30)
+        await db.commit()
+
+    resp = await client.get('/api/v1/notifications/', headers=auth_headers(reg['token']))
+    items = resp.json()['data']['items']
+    goal_notifs = [n for n in items if n.get('type') == 'goal_achieved']
+    assert len(goal_notifs) == 1, f'expected 1 daily-goal notification, got {len(goal_notifs)}'
+
+
+@pytest.mark.asyncio
+async def test_book_completion_creates_notification(client):
+    """Completing a book via PATCH /books fires a book-completed notification."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    # Create a book with 1 page
+    book = (await client.post('/api/v1/books', json={
+        'title': 'Completion Test', 'author': 'A', 'total_pages': 1, 'file_type': 'epub', 'file_size': 1024,
+    }, headers=headers)).json()['data']
+    # Move to the last page → completes the book
+    resp = await client.patch(f"/api/v1/books/{book['id']}", json={'currentPage': 1}, headers=headers)
+    assert resp.status_code == 200
+
+    notifs = (await client.get('/api/v1/notifications/', headers=headers)).json()['data']['items']
+    completed = [n for n in notifs if 'finished' in n.get('title', '').lower()]
+    assert len(completed) == 1, f'expected a book-completed notification, got {completed}'

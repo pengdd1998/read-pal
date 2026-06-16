@@ -63,24 +63,24 @@ async def maybe_notify_daily_goal(
     """
     if daily_goal_minutes <= 0 or today_minutes < daily_goal_minutes:
         return
+    # Dedup: skip if we already notified for the daily goal today. Filter the
+    # metadata kind in Python rather than via a JSONB query so the check works
+    # on any backend (the PostgreSQL astext access isn't portable to SQLite).
     try:
-        already = await db.scalar(
-            select(func.count())
-            .select_from(Notification)
-            .where(
+        recent = await db.execute(
+            select(Notification).where(
                 and_(
                     Notification.user_id == user_id,
                     Notification.type == 'goal_achieved',
-                    Notification.metadata_['kind'].astext == 'daily_goal',
                     Notification.created_at >= utc_start_of_day(),
                 )
             )
         )
+        for existing in recent.scalars():
+            if (existing.metadata_ or {}).get('kind') == 'daily_goal':
+                return
     except (DBAPIError, OSError):
-        # Dedup query failed — skip rather than risk duplicate notifications.
         logger.warning('daily_goal dedup query failed user=%s', user_id, exc_info=True)
-        return
-    if already:
         return
     await create_notification(
         db,
