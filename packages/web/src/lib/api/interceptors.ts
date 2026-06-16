@@ -65,7 +65,10 @@ export function installRequestInterceptor(client: AxiosInstance): void {
       if (IDEMPOTENT_CAPABLE_METHODS.has(method) && !existingKey && config.url) {
         try {
           const key = await deterministicIdempotencyKey(method, config.url, config.data);
-          config.headers = { ...(config.headers as Record<string, string> | undefined), 'Idempotency-Key': key };
+          // Set the single header directly (same pattern as Authorization above)
+          // rather than reassigning the whole AxiosRequestHeaders object, which
+          // would lose the AxiosHeaders instance methods (set/get/has/delete).
+          config.headers['Idempotency-Key'] = key;
         } catch {
           // Best-effort — never block the request on key generation.
         }
