@@ -2,6 +2,8 @@
 
 from uuid import UUID
 
+import hashlib
+
 import structlog
 from langchain_core.messages import AIMessage, HumanMessage
 from sqlalchemy import select
@@ -92,6 +94,11 @@ async def load_annotations_context(
     return '\n'.join(parts)
 
 
+def _content_hash(content: str) -> str:
+    """md5(content[:500]) — matches migration 0017's dedup hash."""
+    return hashlib.md5(content[:500].encode('utf-8')).hexdigest()
+
+
 async def save_message(
     db: AsyncSession,
     user_id: UUID,
@@ -105,6 +112,7 @@ async def save_message(
         book_id=book_id,
         role=role,
         content=content,
+        content_hash=_content_hash(content),
     )
     db.add(msg)
     async with db_error_guard('save_message', book_id=str(book_id), user_id=str(user_id)):

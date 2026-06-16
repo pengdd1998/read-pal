@@ -9,6 +9,7 @@
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
+import hashlib
 
 import pytest
 from sqlalchemy import select
@@ -48,6 +49,7 @@ async def _seed_message(
             book_id=book_id,
             role=role,
             content=content,
+            content_hash=hashlib.md5(content[:500].encode('utf-8')).hexdigest(),
             deleted_at=deleted_at,
             created_at=created_at or datetime.now(timezone.utc),
         )

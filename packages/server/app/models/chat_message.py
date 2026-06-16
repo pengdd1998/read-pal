@@ -71,6 +71,14 @@ class ChatMessage(Base):
         Text,
         nullable=False,
     )
+    # md5(content[:500]) — populated on insert by save_message for dedup
+    # queries (migration 0017 made this NOT NULL). Kept in the model so the
+    # attribute exists; save_message computes it rather than relying on a DB
+    # default because the hash depends on the sibling `content` value.
+    content_hash: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
