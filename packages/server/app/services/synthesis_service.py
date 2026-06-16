@@ -30,8 +30,14 @@ logger = structlog.get_logger('read-pal.synthesis')
 
 def _build_synthesis_prompt(
   reading_data: dict[str, Any],
+  query: str | None = None,
 ) -> list:
-  """Token-budget the data and build system+human prompt messages."""
+  """Token-budget the data and build system+human prompt messages.
+
+  When ``query`` is provided, append a focus directive so the synthesis
+  answers the reader's specific question rather than producing a generic
+  whole-book analysis.
+  """
   budget = TokenBudget()
   serialized_data = json.dumps(reading_data, default=str)
   budgeted_data = budget.add(serialized_data, 'reading_data')
@@ -48,6 +54,15 @@ def _build_synthesis_prompt(
     author=book_author,
     data=budgeted_data,
   )
+  if query and query.strip():
+    # Sanitize lightly — the query is echoed into the prompt, so strip
+    # control chars / template braces that could break formatting.
+    safe_query = query.strip().replace('{', '').replace('}', '')[:500]
+    human_prompt += (
+      f'\n\nThe reader specifically asked: "{safe_query}". '
+      'Focus your analysis on answering this question, while still '
+      'returning the structured themes/connections/insights schema.'
+    )
   return [
     SystemMessage(content=SYNTHESIS_SYSTEM.template),
     HumanMessage(content=human_prompt),
@@ -78,10 +93,12 @@ async def synthesize(
   include_highlights: bool = True,
   include_notes: bool = True,
   include_conversations: bool = True,
+  query: str | None = None,
 ) -> SynthesisResponse:
   """Run cross-reference analysis across all reading data for a book.
 
   Returns structured synthesis with themes, connections, timeline, and insights.
+  When ``query`` is provided the analysis is focused on answering it.
   """
   t0 = time.monotonic()
   logger.info(
@@ -91,6 +108,7 @@ async def synthesize(
     include_highlights=include_highlights,
     include_notes=include_notes,
     include_conversations=include_conversations,
+    has_query=bool(query),
   )
 
   reading_data = await collect_reading_data(
@@ -104,7 +122,7 @@ async def synthesize(
       data={'error': 'Book not found'},
     )
 
-  messages = _build_synthesis_prompt(reading_data)
+  messages = _build_synthesis_prompt(reading_data, query=query)
 
   empty_synthesis = SynthesisResult().model_dump()
   synthesis_data = await safe_llm_invoke(

@@ -55,6 +55,7 @@ async def run_synthesis(
             include_highlights=include_highlights,
             include_notes=include_notes,
             include_conversations=include_conversations,
+            query=body.query if body else None,
         )
     except ValueError as exc:
         raise not_found_error(str(exc)) from exc

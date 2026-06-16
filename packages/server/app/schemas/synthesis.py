@@ -12,8 +12,8 @@ class SynthesisRequest(BaseModel):
     """Request body for running a synthesis analysis.
 
     ``book_id`` is optional here because the route takes it from the URL path;
-    the body only carries the include_* flags. (The frontend's query/mode UI
-    fields are accepted but not yet wired to query-specific synthesis.)
+    the body only carries the include_* flags plus an optional ``query`` that
+    focuses the analysis on a reader question.
     """
 
     model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
@@ -22,6 +22,9 @@ class SynthesisRequest(BaseModel):
     include_highlights: bool = True
     include_notes: bool = True
     include_conversations: bool = True
+    # Optional reader question — when provided, the synthesis prompt is focused
+    # on answering it (instead of a generic whole-book analysis).
+    query: str | None = None
 
 
 class CompareRequest(BaseModel):
