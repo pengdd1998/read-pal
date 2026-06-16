@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { Book } from '@read-pal/shared';
-import { safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/safe-storage';
 import { warn } from '@/lib/logger';
 
 interface UseReaderMilestonesOptions {
@@ -26,17 +26,23 @@ export function useReaderMilestones({
   setShowCompletion,
   setMilestone,
 }: UseReaderMilestonesOptions) {
-  // Book completion detection
+  // Book completion detection — celebrate ONCE per book. Without the
+  // per-book "shown" guard, re-opening a finished book (last chapter, ≥95%
+  // progress) re-triggers the celebration modal every single time, which is
+  // annoying after the first completion.
   useEffect(() => {
     if (!loading && chaptersLength > 1 && currentChapter === chaptersLength - 1 && (book?.progress ?? 0) >= 0.95) {
+      const seenKey = `read-pal-completion-shown-${book?.id}`;
+      if (safeGetItem(seenKey) === 'true') return;
       try {
         safeSetItem('read-pal-tour-complete', 'true');
         safeRemoveItem('read-pal-tour-step');
+        safeSetItem(seenKey, 'true');
       } catch (err) { warn('useReaderMilestones: localStorage write failed', err); }
       const timer = setTimeout(() => setShowCompletion(true), 3000);
       return () => clearTimeout(timer);
     }
-  }, [currentChapter, chaptersLength, loading, book?.progress, setShowCompletion]);
+  }, [currentChapter, chaptersLength, loading, book?.id, book?.progress, setShowCompletion]);
 
   // Clear milestones when book changes
   const shownMilestones = useRef<Set<number>>(new Set());
