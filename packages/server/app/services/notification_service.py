@@ -4,8 +4,9 @@ import logging
 from uuid import UUID
 
 from app.utils import utcnow
+from app.utils.time import utc_start_of_day
 
-from sqlalchemy import func, select, update
+from sqlalchemy import and_, func, select, update
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -46,6 +47,49 @@ async def create_notification(
             'notification create failed: type=%s user=%s', type, user_id, exc_info=True,
         )
         return None
+
+
+async def maybe_notify_daily_goal(
+    db: AsyncSession,
+    user_id: UUID,
+    today_minutes: int,
+    daily_goal_minutes: int,
+) -> None:
+    """Fire the 'daily reading goal achieved' notification, once per day.
+
+    Called from end_session after recomputing today's minutes. No-op if the
+    goal isn't met or if the user was already notified for it today (dedup via
+    a JSONB metadata kind check). Best-effort: never blocks the session end.
+    """
+    if daily_goal_minutes <= 0 or today_minutes < daily_goal_minutes:
+        return
+    try:
+        already = await db.scalar(
+            select(func.count())
+            .select_from(Notification)
+            .where(
+                and_(
+                    Notification.user_id == user_id,
+                    Notification.type == 'goal_achieved',
+                    Notification.metadata_['kind'].astext == 'daily_goal',
+                    Notification.created_at >= utc_start_of_day(),
+                )
+            )
+        )
+    except (DBAPIError, OSError):
+        # Dedup query failed — skip rather than risk duplicate notifications.
+        logger.warning('daily_goal dedup query failed user=%s', user_id, exc_info=True)
+        return
+    if already:
+        return
+    await create_notification(
+        db,
+        user_id,
+        'goal_achieved',
+        title='Daily reading goal achieved!',
+        message=f"You've read {today_minutes} minutes today — goal reached. Nice work!",
+        metadata={'kind': 'daily_goal', 'minutes': today_minutes, 'goal': daily_goal_minutes},
+    )
 
 
 async def list_notifications(

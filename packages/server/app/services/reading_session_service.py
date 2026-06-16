@@ -215,6 +215,23 @@ async def end_session(
             )
 
         await db.flush()
+
+        # Best-effort gamification: notify when today's reading crosses the
+        # daily-minute goal. Fires at most once per day (dedup in the helper).
+        # Local imports avoid a module-load cycle with notification/settings.
+        try:
+            from app.models.user import User
+            from app.services.notification_service import maybe_notify_daily_goal
+            from app.services.settings_service import _get_today_reading_minutes
+
+            user = await db.scalar(select(User).where(User.id == user_id))
+            if user is not None:
+                goals = (user.settings or {}).get('readingGoals', {})
+                daily_goal = int(goals.get('dailyMinutes', 30) or 30)
+                today_minutes = await _get_today_reading_minutes(db, user_id)
+                await maybe_notify_daily_goal(db, user_id, today_minutes, daily_goal)
+        except Exception:
+            logger.warning('daily_goal notification check failed', exc_info=True)
     return session
 
 
