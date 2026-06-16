@@ -8,7 +8,11 @@ from uuid import UUID
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services._session_book_progress import cap_progress
+from app.services._session_book_progress import (
+    cap_progress,
+    notify_book_completed,
+    update_book_completion,
+)
 
 from app.models.book import Book, BookFileType, BookStatus
 from app.models.collection import Collection
@@ -143,9 +147,8 @@ async def update_book(
                 book.progress = cap_progress(
                     Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
                 )
-                if book.progress >= Decimal('100') and book.status != BookStatus.completed:
-                    book.status = BookStatus.completed
-                    book.completed_at = now
+                if update_book_completion(book, now):
+                    await notify_book_completed(db, book)
 
         await db.flush()
     return book

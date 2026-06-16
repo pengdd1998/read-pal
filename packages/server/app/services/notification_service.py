@@ -14,6 +14,40 @@ from app.models.notification import Notification
 logger = logging.getLogger('read-pal.notifications')
 
 
+async def create_notification(
+    db: AsyncSession,
+    user_id: UUID,
+    type: str,
+    title: str,
+    message: str,
+    metadata: dict | None = None,
+) -> Notification | None:
+    """Create a notification for a user.
+
+    Adds the row to the session but does NOT flush/commit — the caller's
+    transaction (e.g. the book-completion flush) persists it, so the
+    notification is atomic with the event that triggered it and rolls back
+    together if that event fails. Failures constructing the row are swallowed
+    so a flaky notification never breaks the triggering action.
+    """
+    try:
+        notification = Notification(
+            user_id=user_id,
+            type=type,
+            title=title,
+            message=message,
+            metadata_=metadata or {},
+        )
+        db.add(notification)
+        logger.info('Notification created: type=%s user=%s', type, user_id)
+        return notification
+    except (DBAPIError, OSError):
+        logger.warning(
+            'notification create failed: type=%s user=%s', type, user_id, exc_info=True,
+        )
+        return None
+
+
 async def list_notifications(
     db: AsyncSession,
     user_id: UUID,

@@ -24,12 +24,46 @@ def cap_progress(progress: Decimal) -> Decimal:
     return min(progress, Decimal('100'))
 
 
-def update_book_completion(book: Book, now: datetime) -> None:
-    """Mark book completed if all pages read."""
+def update_book_completion(book: Book, now: datetime) -> bool:
+    """Mark book completed if all pages read.
+
+    Returns True iff the book was just flipped to completed on this call
+    (so callers can fire a one-time notification). Already-complete books
+    return False.
+    """
     if book.current_page >= book.total_pages and book.status != BookStatus.completed:
         book.progress = Decimal('100')
         book.status = BookStatus.completed
         book.completed_at = now
+        return True
+    return False
+
+
+async def notify_book_completed(db: AsyncSession, book: Book) -> None:
+    """Fire the 'you finished a book' notification.
+
+    Best-effort: failures are swallowed inside create_notification, so a flaky
+    notification write never rolls back the book-completion that triggered it.
+    Callers only invoke this when ``update_book_completion`` just returned True,
+    so it fires exactly once per book.
+    """
+    # Local import avoids a circular dependency at module load time.
+    from app.services.notification_service import create_notification
+
+    # Truncate the title — EPUB dc:title often bundles a long marketing
+    # subtitle that would overflow the notification bell/dropdown.
+    title = book.title or 'your book'
+    if len(title) > 48:
+        title = f'{title[:47].strip()}…'
+
+    await create_notification(
+        db,
+        book.user_id,
+        'goal_achieved',
+        title=f'You finished {title}!',
+        message='Celebrate this milestone — your Reading Mirror is ready to generate.',
+        metadata={'book_id': str(book.id), 'kind': 'book_completed'},
+    )
 
 
 async def update_book_with_page(
@@ -72,7 +106,8 @@ async def update_book_with_page(
         book.progress = cap_progress(
             Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
         )
-        update_book_completion(book, now)
+        if update_book_completion(book, now):
+            await notify_book_completed(db, book)
 
 
 async def update_book_scroll_only(
@@ -102,7 +137,8 @@ async def update_book_scroll_only(
         # A user on the final chapter who scrolls to the end (no page change)
         # should still trigger completion — current_page is already at the
         # last chapter, so update_book_completion marks it done.
-        update_book_completion(book, now)
+        if update_book_completion(book, now):
+            await notify_book_completed(db, book)
 
 
 async def update_book_heartbeat(
@@ -137,4 +173,5 @@ async def update_book_heartbeat(
         book.progress = cap_progress(
             Decimal(str(round((book.current_page / book.total_pages) * 100, 2))),
         )
-        update_book_completion(book, utcnow())
+        if update_book_completion(book, utcnow()):
+            await notify_book_completed(db, book)
