@@ -91,6 +91,9 @@ export function useReaderUI(): ReaderUIState {
   const sessionStartRef = useRef<number>(Date.now());
   const pausedAtRef = useRef<number | null>(null);
   const totalPausedMsRef = useRef<number>(0);
+  // True while the timer is paused because the tab is hidden (visibilitychange).
+  // Distinguishes a visibility-pause from a user/idle pause so we only resume our own.
+  const hiddenPausedRef = useRef(false);
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -168,6 +171,32 @@ export function useReaderUI(): ReaderUIState {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
   }, [handleUserActivity]);
+
+  // Pause the session timer while the tab is hidden. Browsers throttle
+  // setTimeout/setInterval in background tabs, so the 5-min idle auto-pause
+  // above fires late (or not at all) when the user switches away — without
+  // this, switched-away wall-clock keeps counting as reading time, which is
+  // the main source of reading-time inflation (sessions pegged at the 2h
+  // cap). visibilitychange fires reliably even in background tabs.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) {
+        // Only start a visibility pause if the timer isn't already paused
+        // (by the user or idle) — pausedAtRef is shared with that path.
+        if (pausedAtRef.current === null) {
+          pausedAtRef.current = Date.now();
+          hiddenPausedRef.current = true;
+        }
+      } else if (hiddenPausedRef.current) {
+        // Resume only the pause WE started (not a user/idle pause).
+        totalPausedMsRef.current += Date.now() - (pausedAtRef.current ?? Date.now());
+        pausedAtRef.current = null;
+        hiddenPausedRef.current = false;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   // Auto-hide controls after 3s
   const resetAutoHideTimer = useCallback(() => {
