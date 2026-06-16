@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.book import Book
 from app.models.flashcard import Flashcard
 from app.schemas.flashcard import FlashcardCreate
-from app.utils import utcnow
 from app.utils.db import db_error_guard
 from app.utils.time import utcnow_aware
 
@@ -68,7 +67,7 @@ async def create_flashcard(
             ease_factor=DEFAULT_EASE_FACTOR,
             interval=0,
             repetition_count=0,
-            next_review_at=utcnow(),
+            next_review_at=utcnow_aware(),
         )
         db.add(card)
         await db.flush()
@@ -104,7 +103,11 @@ async def review_flashcard(
 
         new_interval, new_repetition, new_ef = sm2_schedule(card, rating)
 
-        now = utcnow()
+        # Use tz-aware UTC (matching get_due_cards' now) so the written
+        # next_review_at is in the same frame the due-comparison reads — the
+        # naive utcnow() here used to shift the stored value ~8h, making cards
+        # due early/late vs the aware due-check.
+        now = utcnow_aware()
         card.ease_factor = new_ef
         card.interval = new_interval
         card.repetition_count = new_repetition
