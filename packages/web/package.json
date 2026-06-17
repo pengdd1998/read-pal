@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "dev": "next dev",
-    "build": "next build && cp -r .next/static .next/standalone/packages/web/.next/static && cp -r public .next/standalone/packages/web/public 2>/dev/null; true",
+    "build": "next build && (cp -r .next/static .next/standalone/packages/web/.next/static 2>/dev/null; cp -r public .next/standalone/packages/web/public 2>/dev/null; true)",
     "build:mobile": "STATIC_EXPORT=1 NEXT_PUBLIC_API_URL=http://175.178.66.207:8090 next build",
     "start": "next start",
     "lint": "next lint",
