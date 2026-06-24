@@ -92,6 +92,21 @@ jobs:
 
       - run: cd packages/server && uv sync --all-groups --all-extras
 
+      # -----------------------------------------------------------------
+      # Phase 3: AST-level enforcement of AGENTS.md Never rules
+      # -----------------------------------------------------------------
+      - name: Ruff lint (curated rule set)
+        working-directory: packages/server
+        run: uv run ruff check app/
+
+      - name: Custom AST checks (file-length, router-thin, no-raw-book-fields)
+        working-directory: packages/server
+        run: |
+          uv run python scripts/check_file_length.py app/
+          uv run python scripts/check_router_thin.py app/routers/
+          uv run python scripts/check_no_raw_book_fields.py app/services/
+          uv run python scripts/check_inflight_streams_encapsulation.py app/services/agent_service.py
+
       - run: cd packages/server && uv run pytest --tb=short -v --durations=10
         env:
           APP_ENV: test

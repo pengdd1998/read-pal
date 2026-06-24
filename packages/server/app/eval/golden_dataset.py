@@ -17,6 +17,7 @@ from app.eval.golden_companion import (
 )
 from app.eval.golden_services import (
     CONVERSATION_SUMMARY,
+    CONVERSATION_SUMMARY_WITH_PRIOR,
     CROSS_BOOK_SYNTHESIS,
     KNOWLEDGE_EXTRACTION,
     MEMORY_BOOK_COVER,
@@ -47,4 +48,5 @@ ALL_GOLDEN: list[dict[str, Any]] = [
     MEMORY_BOOK_JOURNEY,
     READING_PLAN,
     CONVERSATION_SUMMARY,
+    CONVERSATION_SUMMARY_WITH_PRIOR,
 ]

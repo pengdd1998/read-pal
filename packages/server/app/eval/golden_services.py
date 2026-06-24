@@ -186,3 +186,29 @@ CONVERSATION_SUMMARY: dict[str, Any] = {
         },
     },
 }
+
+# CC-3 (post-rollout review): summary-aware variant. Exercises the path
+# where an EXISTING summary is fed back into the prompt (the production
+# hot path for long conversations). Without this entry, live eval skips
+# the entire context-assembly-with-prior-summary codepath.
+CONVERSATION_SUMMARY_WITH_PRIOR: dict[str, Any] = {
+    'service': 'conversation_memory',
+    'action': 'summarize_with_prior',
+    'description': 'Summary regeneration with existing summary as preamble',
+    'input': {
+        'messages': [
+            {'role': 'user', 'content': 'Tell me about the valley of ashes.'},
+            {'role': 'assistant', 'content': 'It represents moral decay beneath the surface wealth.'},
+            {'role': 'user', 'content': 'And the eyes of T.J. Eckleburg?'},
+            {'role': 'assistant', 'content': 'They symbolize a godlike figure watching over the moral wasteland.'},
+        ],
+        'existing_summary': 'Earlier discussion focused on the green light as a symbol of Gatsby\'s hopes and the American Dream.',
+    },
+    'expected_output': {
+        'type': 'dict',
+        'required_keys': ['key_topics'],
+        'key_types': {
+            'key_topics': 'list',
+        },
+    },
+}

@@ -1,8 +1,11 @@
 """Conversation memory -- rolling summarization for long-term chat context."""
 
+from __future__ import annotations
+
 import json
 import time
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import structlog
@@ -20,12 +23,26 @@ from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
 from app.utils.limits import CONVERSATION_MEMORY_LIMIT
 
+if TYPE_CHECKING:
+    # Forward-reference type only — the actual import is deferred to call
+    # sites to avoid a circular import (ConversationSummary imports from
+    # app.services). Pylance resolves the string annotations via this block.
+    from app.models.conversation_summary import ConversationSummary
+
 logger = structlog.get_logger('read-pal.memory')
 
 # When to trigger summarization
-SUMMARY_THRESHOLD = 30  # summarize when more than this many messages exist
+SUMMARY_THRESHOLD = 30  # hard floor: summarize when more than this many messages exist
 SUMMARY_BATCH = 15       # compress oldest N messages into summary
 MAX_RECENT = 20          # keep this many recent messages verbatim
+# Phase 4B (M5): utilization-based trigger — summarize early when actual
+# token usage of (summary + recent messages) exceeds this fraction of the
+# context window. Catches long-message cases (CJK-heavy, pasted passages)
+# that blow past the window before hitting SUMMARY_THRESHOLD.
+SUMMARY_UTILIZATION_THRESHOLD = 0.6
+# Don't run the utilization check on tiny conversations — the DB query
+# overhead isn't worth it for under this many messages.
+SUMMARY_UTILIZATION_MIN_MESSAGES = 10
 
 # P3.1: Bump when the ConversationSummary JSON shape gains/loses fields or
 # semantics change. Stored alongside the prompt_version so we can detect
@@ -66,6 +83,71 @@ def _is_summary_stale(existing: 'ConversationSummary | None') -> bool:
     if meta.get('schema_version') != MEMORY_SCHEMA_VERSION:
         return True
     return False
+
+
+async def _estimate_context_utilization(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    existing_summary: str | None,
+    model: str = 'glm-4.7-flash',
+) -> tuple[float, str]:
+    """Phase 4B (M5): estimate fraction of context window consumed.
+
+    Returns ``(utilization, family)`` where utilization is 0.0–1.0 representing
+    (system_prompt + existing_summary + recent_message_tokens) divided by the
+    model's context window, and family is the provider family used (e.g. 'glm',
+    'gpt', or 'unknown' when the model fell back to the conservative default).
+
+    Used by ``get_or_create_summary`` to trigger summarization early on
+    long-message conversations that blow past the window before hitting the
+    count threshold.
+
+    CC-1 (post-rollout review): reserves tokens for the system prompt template
+    BEFORE message contents so the estimate matches what the actual prompt
+    will consume. Without this, the 60% trigger fires ~1K tokens late.
+
+    CC-2 (post-rollout review): returns the family so callers can include
+    ``model_family='unknown'`` in their observability — dashboards should
+    flag conservative-default cases for ops review.
+
+    Loads only the MAX_RECENT most recent messages — same query the actual
+    summarizer uses, so no extra DB cost when summarization fires.
+    """
+    from app.utils.token_budget import TokenBudget
+
+    budget = TokenBudget(model=model)
+    # CC-1: system prompt is part of every summarization call. Reserve it
+    # first so utilization matches the real prompt size.
+    budget.reserve(
+        CONVERSATION_SUMMARY_SYSTEM.template, label='summary_system_prompt',
+    )
+    if existing_summary:
+        budget.reserve(existing_summary, label='existing_summary')
+
+    async with db_error_guard(
+        '_estimate_context_utilization',
+        user_id=str(user_id), book_id=str(book_id),
+    ):
+        result = await db.execute(
+            select(ChatMessage.content)
+            .where(
+                ChatMessage.user_id == user_id,
+                ChatMessage.book_id == book_id,
+                ChatMessage.deleted_at.is_(None),
+            )
+            .order_by(ChatMessage.created_at.desc())
+            .limit(MAX_RECENT)
+        )
+        contents = result.scalars().all()
+
+    for content in contents:
+        if content:
+            budget.reserve(content, label='recent_msg')
+
+    if budget._budget <= 0:  # defensive — context_window_for always returns > 0
+        return 1.0, budget.family
+    return min(budget.used / budget._budget, 1.0), budget.family
 
 
 async def _count_messages(
@@ -142,16 +224,51 @@ async def get_or_create_summary(
 
     total = await _count_messages(db, user_id, book_id)
     if total < SUMMARY_THRESHOLD:
-        logger.info(
-            'memory.get_or_create_summary.below_threshold',
-            message_count=total,
-            threshold=SUMMARY_THRESHOLD,
-            user_id=str(user_id),
-            book_id=str(book_id),
-        )
-        return None
-
-    existing = await _load_existing_summary(db, user_id, book_id)
+        # Phase 4B (M5): below the hard count floor, but check utilization
+        # for long-message cases. Only runs the extra DB query when count
+        # is meaningful (>= SUMMARY_UTILIZATION_MIN_MESSAGES) to avoid
+        # overhead on tiny conversations.
+        if total >= SUMMARY_UTILIZATION_MIN_MESSAGES:
+            existing_early = await _load_existing_summary(db, user_id, book_id)
+            existing_summary_text = (
+                existing_early.summary if existing_early and not _is_summary_stale(existing_early) else None
+            )
+            utilization, model_family = await _estimate_context_utilization(
+                db, user_id, book_id, existing_summary_text,
+            )
+            if utilization < SUMMARY_UTILIZATION_THRESHOLD:
+                logger.info(
+                    'memory.get_or_create_summary.below_threshold',
+                    message_count=total,
+                    threshold=SUMMARY_THRESHOLD,
+                    utilization=round(utilization, 3),
+                    model_family=model_family,
+                    user_id=str(user_id),
+                    book_id=str(book_id),
+                )
+                return None
+            # Utilization exceeded — fall through to summarization.
+            logger.info(
+                'memory.get_or_create_summary.utilization_trigger',
+                message_count=total,
+                utilization=round(utilization, 3),
+                threshold=SUMMARY_UTILIZATION_THRESHOLD,
+                model_family=model_family,
+                user_id=str(user_id),
+                book_id=str(book_id),
+            )
+            existing = existing_early
+        else:
+            logger.info(
+                'memory.get_or_create_summary.below_threshold',
+                message_count=total,
+                threshold=SUMMARY_THRESHOLD,
+                user_id=str(user_id),
+                book_id=str(book_id),
+            )
+            return None
+    else:
+        existing = await _load_existing_summary(db, user_id, book_id)
 
     # P3.1: cache hit requires BOTH (a) message-count is still fresh enough
     # AND (b) the stored summary was generated by the current prompt/schema

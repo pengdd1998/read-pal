@@ -1,0 +1,104 @@
+name: Drift Scan
+
+# Weekly drift scanner — runs mock-freshness, template-consistency, and
+# live-eval drift detection. Opens a tracking issue when drift is detected.
+#
+# Triggers:
+#   - Weekly Monday 04:17 UTC (off-peak)
+#   - Manual via workflow_dispatch
+#
+# This workflow depends on Phase 2 (--live eval mode) having run successfully
+# in CI at least once to seed comparable baselines.
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'  # Weekly Monday 04:17 UTC (off-peak, off-:00)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift-scan:
+    name: Weekly drift detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install uv
+
+      - run: cd packages/server && uv sync --all-groups --all-extras
+
+      # -----------------------------------------------------------------
+      # Mode 1: Mock-data freshness — flag entries > 90 days old
+      # -----------------------------------------------------------------
+      - name: Mock freshness scan
+        id: mock-freshness
+        working-directory: packages/server
+        run: uv run python scripts/drift_scan.py --mode=mock-freshness
+        continue-on-error: true
+
+      # -----------------------------------------------------------------
+      # Mode 2: Template consistency — dead exports / undeclared usage
+      # -----------------------------------------------------------------
+      - name: Template consistency scan
+        id: template-consistency
+        working-directory: packages/server
+        run: uv run python scripts/drift_scan.py --mode=template-consistency
+        continue-on-error: true
+
+      # -----------------------------------------------------------------
+      # Mode 3: Live-eval drift — only if PROMPT_EVAL_API_KEY is set
+      # -----------------------------------------------------------------
+      - name: Live eval drift
+        id: live-drift
+        working-directory: packages/server
+        run: uv run python scripts/drift_scan.py --mode=live
+        env:
+          PROMPT_EVAL_API_KEY: ${{ secrets.PROMPT_EVAL_API_KEY }}
+          GLM_API_KEY: ${{ secrets.PROMPT_EVAL_API_KEY }}
+          GLM_BASE_URL: ${{ vars.GLM_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4' }}
+          MAX_LIVE_EVAL_TOKENS: '100000'
+          APP_ENV: test
+          JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+          LOG_LEVEL: INFO
+        continue-on-error: true
+
+      # -----------------------------------------------------------------
+      # Aggregate results and open issue if any drift detected
+      # -----------------------------------------------------------------
+      - name: Open issue on drift
+        if: ${{ steps.mock-freshness.outcome == 'failure' || steps.template-consistency.outcome == 'failure' || steps.live-drift.outcome == 'failure' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toISOString().slice(0, 10);
+            const failures = [];
+            if ('${{ steps.mock-freshness.outcome }}' === 'failure') failures.push('mock-freshness');
+            if ('${{ steps.template-consistency.outcome }}' === 'failure') failures.push('template-consistency');
+            if ('${{ steps.live-drift.outcome }}' === 'failure') failures.push('live-drift');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[drift-scan] ${date}: ${failures.join(', ')} drift detected`,
+              body: [
+                `Weekly drift scan detected issues in: **${failures.join(', ')}**.`,
+                '',
+                'See workflow run: ' + context.runId,
+                '',
+                'Action items:',
+                '- Mock freshness: re-verify stale `# last-verified:` entries against live output',
+                '- Template consistency: remove dead exports or wire them up',
+                '- Live drift: investigate the failing golden entries',
+                '',
+                'Re-run `/harness-review` after fixes.',
+              ].join('\n'),
+              labels: ['drift-scan', 'tech-debt'],
+            });

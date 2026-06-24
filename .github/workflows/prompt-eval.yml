@@ -99,19 +99,14 @@ jobs:
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
           LOG_LEVEL: WARNING
 
-      - name: Static check — no raw book.title in services
-        run: |
-          # Every book.title / book.author that flows into a prompt must
-          # route through sanitize_book_field. Catch new call sites that
-          # skip the sanitizer.
-          matches=$(grep -rnE "title=book\.title|author=book\.author" \
-            packages/server/app/services \
-            --include="*.py" | grep -v sanitize_book_field || true)
-          if [ -n "$matches" ]; then
-            echo "::error::Raw book.title/author in services (must use sanitize_book_field):"
-            echo "$matches"
-            exit 1
-          fi
+      - name: AST check — no raw book.title in services
+        # Phase 3.2: replaces the brittle grep (which had a `grep -v` bypass
+        # letting any line mentioning sanitize_book_field through). The AST
+        # check at scripts/check_no_raw_book_fields.py walks Call nodes and
+        # flags `title=book.title` / `author=book.author` kwargs that aren't
+        # wrapped in sanitize_book_field.
+        working-directory: packages/server
+        run: uv run python scripts/check_no_raw_book_fields.py app/services/
 
   # Optional live-eval job — runs only when the secret is available.
   # Skips gracefully for external contributors (no secret → no run).
@@ -138,13 +133,17 @@ jobs:
             echo "PROMPT_EVAL_API_KEY not set — skipping live eval"
             exit 0
           fi
-          # Note: --live flag is not yet implemented in eval_runner; this
-          # job is the wiring for when it lands. Until then it no-ops.
-          echo "Live eval pending eval_runner --live implementation"
+          # Phase 2 of harness-engineering rollout: live eval now implemented.
+          # Runs only the JSON-schema-validated golden entries (DB-dependent
+          # services like companion/friend/knowledge/memory_book are skipped
+          # via LIVE_SKIP in app/eval/live_runner.py). Cost-capped at 50K
+          # tokens via MAX_LIVE_EVAL_TOKENS.
+          uv run python -m app.eval.eval_runner --live
         env:
           PROMPT_EVAL_API_KEY: ${{ secrets.PROMPT_EVAL_API_KEY }}
           GLM_API_KEY: ${{ secrets.PROMPT_EVAL_API_KEY }}
           GLM_BASE_URL: ${{ vars.GLM_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4' }}
+          MAX_LIVE_EVAL_TOKENS: '50000'
           APP_ENV: test
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
           LOG_LEVEL: INFO

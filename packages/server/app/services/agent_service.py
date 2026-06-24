@@ -38,10 +38,12 @@ _SENTINEL = None  # signals stream end
 
 # P0.3: cross-worker heartbeat. Each worker refreshes
 # ``worker_alive:{WORKER_ID}`` in Redis every interval so other workers can
-# detect when this worker has crashed. TTL is double the interval so we
-# tolerate one missed refresh without falsely declaring the worker dead.
+# detect when this worker has crashed. TTL is 3x the interval (Phase 4C — m1)
+# so we tolerate TWO missed refreshes (GC pause, Redis hiccup, brief stall)
+# without falsely declaring the worker dead. The previous 2x ratio (10s TTL,
+# 5s interval) tolerated only one miss — too tight for production noise.
 _WORKER_HEARTBEAT_INTERVAL = 5  # seconds between refreshes
-_WORKER_HEARTBEAT_TTL = 10  # seconds before the key expires
+_WORKER_HEARTBEAT_TTL = 15  # seconds before the key expires (3x interval)
 
 # Registry of in-flight streams keyed by request_id. The asyncio.Event is
 # set when the user requests cancellation (POST /chat/cancel); the stream

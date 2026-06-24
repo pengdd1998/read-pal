@@ -275,12 +275,22 @@ async def safe_llm_call(
     template: Any = None,
     temperature: float | None = None,
     max_tokens: int | None = None,
+    cache_anon: bool = False,
 ) -> str:
     """Invoke LLM with circuit breaker + multi-provider fallback, returning raw text.
 
     Mirrors :func:`safe_llm_invoke`'s ``template`` / ``temperature`` /
     ``max_tokens`` resolution: explicit kwargs win, then template fields,
     then pool defaults.
+
+    Phase 5.1 (m6): ``cache_anon=True`` opts the call into a user-independent
+    cache tier — the cache key uses ``user_id='anon'`` so all users with the
+    same prompt share a cached response. ONLY safe for calls whose output
+    does NOT depend on user identity or per-user state (genre lookup, mood
+    classification with deterministic quiz input, generic metadata
+    enrichment). Never use for companion chat, flashcard generation, or
+    anything containing user-specific context. Default is False (per-user
+    isolation preserved).
     """
     from app.services.llm.cache import _cache_get, _cache_key, _cache_set
 
@@ -292,10 +302,26 @@ async def safe_llm_call(
         template, temperature, max_tokens,
     )
 
+    # LA-2 (post-rollout review): when cache_anon is opted in, emit an
+    # audit log so privacy reviews can grep for callers using cross-user
+    # cache sharing. If a future PR incorrectly enables this on a
+    # personalized call, this line makes the leak visible.
+    if cache_anon and use_cache:
+        logger.info(
+            'llm.cache_anon_opted_in',
+            label=log_label,
+            prompt_version=prompt_version,
+            actual_user_id=user_id,
+            book_id=book_id,
+        )
+
     # Cache key includes prompt_version so a template bump evicts stale entries.
+    # Phase 5.1: cache_anon overrides the user slot to 'anon' for the cache
+    # key only — observability still records the actual user_id.
+    cache_user_id = 'anon' if cache_anon else user_id
     key = (
         _cache_key(
-            messages, log_label, user_id=user_id, lang=lang,
+            messages, log_label, user_id=cache_user_id, lang=lang,
             prompt_version=prompt_version,
         )
         if use_cache else ''

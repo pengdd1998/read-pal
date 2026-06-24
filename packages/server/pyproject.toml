@@ -37,6 +37,7 @@ dev = [
     "pytest-cov>=6.0.0",
     "pytest-xdist>=3.6.0",
     "httpx>=0.28.0",
+    "ruff>=0.6.0",
 ]
 
 [build-system]
@@ -51,7 +52,38 @@ dev = [
     "aiosqlite>=0.22.1",
     "pytest>=9.0.3",
     "pytest-asyncio>=1.3.0",
+    "ruff>=0.6.0",
 ]
+
+# ---------------------------------------------------------------------------
+# Ruff — AST-level enforcement of rules documented in CONTRIBUTING.md and
+# AGENTS.md. Phase 3 of the harness-engineering rollout. Add new rules
+# incrementally; do not bulk-adopt past rule sets without per-rule review.
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["alembic/versions", ".venv", "tests/fixtures"]
+
+[tool.ruff.lint]
+# Curated rule set — each rule below corresponds to a documented Never rule
+# in AGENTS.md or a CONTRIBUTING.md style requirement.
+select = [
+    "F",        # pyflakes (undefined names, unused imports)
+    "E9",       # runtime errors (syntax, missing __init__)
+    "PLR0915",  # too-many-statements (function-level; threshold in config)
+    "C901",     # function complexity
+    "UP",       # pyupgrade (modern syntax)
+]
+ignore = [
+    "E501",  # line length handled by formatter, not linter
+]
+
+[tool.ruff.lint.pylint]
+max-statements = 50  # matches CONTRIBUTING.md "Keep functions under 50 lines"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12  # double the default of 6 — reasonable for service code
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -60,3 +92,8 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "--ignore=tests/test_full_paths.py"
+# Phase 5.3 (M7): registered custom marks. ``smoke`` runs only when
+# SMOKE_TARGET env var is set — used for pre-deploy validation.
+markers = [
+    "smoke: End-to-end API smoke test (requires SMOKE_TARGET env var)",
+]

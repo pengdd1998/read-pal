@@ -1,21 +1,33 @@
 """Evaluation runner — validates LLM prompt + output quality against golden dataset.
 
-Runs in two modes:
-1. Unit mode (default): Tests infrastructure pipeline with mocked LLM responses.
-   Validates sanitization, token budgeting, schema validation, and output filtering.
-2. Live mode (opt-in): Sends real prompts to the LLM and validates output shapes.
-   Used for manual regression testing, not in CI.
+Two modes:
+
+1. **Unit mode** (default): tests the infrastructure pipeline with mocked LLM
+   responses. Validates sanitization, token budgeting, schema validation, and
+   output filtering — no real API calls. CI-safe.
+
+2. **Live mode** (``--live``): sends real prompts to the LLM via
+   ``app.eval.live_runner`` and validates output shapes against the golden
+   expectations. Requires ``PROMPT_EVAL_API_KEY`` (aliased to ``GLM_API_KEY``
+   in CI). Cost-capped via ``MAX_LIVE_EVAL_TOKENS`` (default 50K).
 
 Usage:
-    # Unit tests (CI-safe, no API calls)
+    # Unit eval (CI-safe, no API calls)
     uv run pytest tests/test_eval_golden.py -v
 
-    # Live regression test (requires GLM_API_KEY)
+    # Same thing via the runner entrypoint
+    uv run python -m app.eval.eval_runner
+
+    # Live eval (requires PROMPT_EVAL_API_KEY)
     uv run python -m app.eval.eval_runner --live
+
+    # Live eval with a label filter (substring match on service/action)
+    uv run python -m app.eval.eval_runner --live --label-filter=study_mode
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import sys
@@ -203,7 +215,42 @@ def run_all() -> bool:
     return print_report(all_results)
 
 
+def _parse_args() -> argparse.Namespace:
+    """Parse CLI args. Live mode is opt-in via ``--live``."""
+    parser = argparse.ArgumentParser(
+        prog='app.eval.eval_runner',
+        description='Run prompt-quality eval (mock or live mode).',
+    )
+    parser.add_argument(
+        '--live',
+        action='store_true',
+        help='Run live eval against real LLM provider (requires PROMPT_EVAL_API_KEY).',
+    )
+    parser.add_argument(
+        '--label-filter',
+        default=None,
+        help='Only run golden entries whose service/action matches this substring.',
+    )
+    parser.add_argument(
+        '--max-tokens',
+        type=int,
+        default=None,
+        help='Token-cost cap for live mode (default: 50000, env: MAX_LIVE_EVAL_TOKENS).',
+    )
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
+    args = _parse_args()
+
+    if args.live:
+        # Lazy import so mock-only CI doesn't pay the live-runner import cost.
+        from app.eval.live_runner import main as live_main
+        sys.exit(live_main(
+            label_filter=args.label_filter,
+            max_tokens=args.max_tokens,
+        ))
+
     success = run_all()
     sys.exit(0 if success else 1)
