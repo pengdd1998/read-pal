@@ -161,8 +161,10 @@ async def generate_flashcards(
             detail={'code': 'INVALID_INPUT', 'message': t('errors.book_id_required', lang)},
         )
     try:
+        # book_id is already a UUID (Pydantic coerced it) — passing it through
+        # UUID() again raises "'UUID' object has no attribute 'replace'".
         cards = await flashcard_service.generate_flashcards(
-            db, UUID(user['id']), UUID(book_id),
+            db, UUID(user['id']), book_id,
         )
     except ValueError as exc:
         logger.debug('validation error in flashcards')
