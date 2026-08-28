@@ -185,7 +185,9 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        # pgvector image — migration 0004 creates the vector extension,
+        # which stock postgres:16 doesn't ship.
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: readpal
           POSTGRES_PASSWORD: readpal_ci
