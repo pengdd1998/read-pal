@@ -1,7 +1,7 @@
 """Flashcard model."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
@@ -64,7 +64,7 @@ class Flashcard(Base):
         nullable=False,
         index=True,
     )
-    annotation_id: Mapped[Optional[UUID]] = mapped_column(
+    annotation_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey('annotations.id', ondelete='SET NULL'),
         nullable=True,
@@ -94,11 +94,11 @@ class Flashcard(Base):
         DateTime(timezone=True),
         server_default=func.now(),
     )
-    last_review_at: Mapped[Optional[datetime]] = mapped_column(
+    last_review_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
-    last_rating: Mapped[Optional[int]] = mapped_column(
+    last_rating: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
     )
@@ -109,7 +109,7 @@ class Flashcard(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     # relationships

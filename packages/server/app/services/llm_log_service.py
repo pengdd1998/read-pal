@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, UTC
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -99,9 +99,9 @@ async def get_llm_logs(
     if success is not None:
         conditions.append(LLMLog.success == success)
     if date_from:
-        conditions.append(LLMLog.created_at >= datetime.combine(date_from, datetime.min.time(), tzinfo=timezone.utc))
+        conditions.append(LLMLog.created_at >= datetime.combine(date_from, datetime.min.time(), tzinfo=UTC))
     if date_to:
-        conditions.append(LLMLog.created_at < datetime.combine(date_to + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc))
+        conditions.append(LLMLog.created_at < datetime.combine(date_to + timedelta(days=1), datetime.min.time(), tzinfo=UTC))
 
     where = and_(*conditions)
     total = await db.scalar(select(func.count(LLMLog.id)).where(where))
@@ -187,7 +187,7 @@ async def get_usage_summary(
     days: int = 30,
 ) -> dict[str, Any]:
     """Return aggregated usage stats over the last N days."""
-    since = datetime.now(tz=timezone.utc) - timedelta(days=days)
+    since = datetime.now(tz=UTC) - timedelta(days=days)
     by_model = await _aggregate_by_model(db, user_id, since)
     by_label = await _aggregate_by_label(db, user_id, since)
     return {
@@ -199,7 +199,7 @@ async def get_usage_summary(
 
 async def cleanup_old_logs(db: AsyncSession, retention_days: int) -> int:
     """Delete LLM logs older than retention_days. Returns count deleted."""
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=retention_days)
+    cutoff = datetime.now(tz=UTC) - timedelta(days=retention_days)
     result = await db.execute(
         delete(LLMLog).where(LLMLog.created_at < cutoff).returning(LLMLog.id)
     )

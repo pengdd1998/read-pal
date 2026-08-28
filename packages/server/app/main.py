@@ -4,10 +4,8 @@ from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 import structlog
-import redis.exceptions
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from starlette.responses import Response as StarletteResponse
 
@@ -18,7 +16,7 @@ from app.config import get_settings
 from app.core.logging import setup_logging
 from app.core.redis import get_redis
 from app.db import async_session, pool_status
-from app.middleware.exception_handlers import NotFoundError, register_exception_handlers
+from app.middleware.exception_handlers import register_exception_handlers
 from app.middleware.request_log import RequestLogMiddleware
 
 logger = structlog.get_logger('read-pal')

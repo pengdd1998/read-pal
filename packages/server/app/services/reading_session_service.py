@@ -4,6 +4,13 @@ Public API is re-exported from sub-modules so existing imports
 (`from app.services import reading_session_service`) continue to work.
 """
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.book import Book
+    from app.schemas.reading_session import HeartbeatRequest
+
 import logging
 from datetime import timedelta
 from uuid import UUID
@@ -55,7 +62,7 @@ async def _verify_book_ownership(
     db: AsyncSession,
     book_id,
     user_id: str,
-) -> 'Book':
+) -> Book:
     """Return the book if it exists and belongs to the user, else raise 404."""
     from fastapi import HTTPException, status as http_status
     from app.models.book import Book
@@ -117,7 +124,7 @@ async def _close_stale_sessions(
             old.duration = min(int(old.duration or 0), realistic_ceiling) if old.duration else realistic_ceiling
 
 
-def _mark_book_reading(book: 'Book', now) -> None:
+def _mark_book_reading(book: Book, now) -> None:
     """Update book status to 'reading' if not already."""
     from app.models.book import BookStatus
 
@@ -239,7 +246,7 @@ async def heartbeat_session(
     db: AsyncSession,
     user_id: UUID,
     session_id: UUID,
-    body: 'HeartbeatRequest | None' = None,
+    body: HeartbeatRequest | None = None,
 ) -> ReadingSession | None:
     """Update session activity timestamp and book progress on heartbeat."""
     async with db_error_guard(

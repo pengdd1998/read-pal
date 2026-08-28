@@ -1,8 +1,8 @@
 """Reading session model."""
 
 import uuid
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime, UTC
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Text, text
@@ -63,10 +63,10 @@ class ReadingSession(Base):
     )
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
     )
-    ended_at: Mapped[Optional[datetime]] = mapped_column(
+    ended_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
@@ -86,7 +86,7 @@ class ReadingSession(Base):
         Integer,
         default=0,
     )
-    summary: Mapped[Optional[str]] = mapped_column(
+    summary: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
@@ -96,14 +96,14 @@ class ReadingSession(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     # relationships

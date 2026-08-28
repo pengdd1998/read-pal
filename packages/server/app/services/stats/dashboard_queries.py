@@ -1,7 +1,7 @@
 """Database query helpers for dashboard stats."""
 
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, UTC
 from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
@@ -67,7 +67,7 @@ async def compute_current_streak(db: AsyncSession, uid: UUID) -> int:
     day_col = func.date(ReadingSession.started_at).label('day')
     # Use UTC consistently — started_at is stored as naive UTC.
     cutoff = utcnow_aware().date() - timedelta(days=365)
-    cutoff_dt = datetime.combine(cutoff, datetime.min.time(), tzinfo=timezone.utc)
+    cutoff_dt = datetime.combine(cutoff, datetime.min.time(), tzinfo=UTC)
     rows = await db.execute(
         select(day_col)
         .where(ReadingSession.user_id == uid, ReadingSession.started_at >= cutoff_dt)
@@ -146,7 +146,7 @@ async def get_weekly_activity(db: AsyncSession, uid: UUID) -> list[dict]:
     today = utcnow_aware().date()
     week_start = today - timedelta(days=6)
     # tz-aware UTC midnight — naive datetimes are interpreted in client TZ.
-    week_start_dt = datetime.combine(week_start, datetime.min.time(), tzinfo=timezone.utc)
+    week_start_dt = datetime.combine(week_start, datetime.min.time(), tzinfo=UTC)
     day_col = func.date(ReadingSession.started_at).label('day')
     rows = await db.execute(
         select(

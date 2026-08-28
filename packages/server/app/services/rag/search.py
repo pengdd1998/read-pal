@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.rag._constants import logger, _tokenize_with_bigrams
 from app.services.rag.embedding import _get_embedding
 from app.models.book_chunk import BookChunk
-from app.utils.db import db_error_guard
 
 # P3.2: Reciprocal Rank Fusion constant. Standard value from the original
 # RRF paper (Cormack et al., 2009). Score for a result at rank r in a

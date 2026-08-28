@@ -1,7 +1,7 @@
 """Collection business logic — CRUD and book management."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -22,7 +22,7 @@ async def create_collection(
     data: CollectionCreate,
 ) -> Collection:
     """Create a new collection."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     collection = Collection(
         user_id=user_id,
         name=data.name,

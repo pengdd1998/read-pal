@@ -23,8 +23,7 @@ logger = logging.getLogger('read-pal')
 def process_epub_ebooklib(file_path: str) -> dict | None:
     """Process EPUB using ebooklib. Returns None if ebooklib unavailable."""
     try:
-        import ebooklib
-        from ebooklib import epub
+        from ebooklib import epub  # noqa: F401 — availability probe for the except
     except ImportError:
         logger.debug('epub.ebooklib_not_available')
         return None
@@ -251,7 +250,7 @@ def _enrich_html(
 
     try:
         enriched = rewrite_image_sources(html, image_map, item_name)
-    except (KeyError, ValueError) as exc:
+    except (KeyError, ValueError):
         logger.debug('Image source rewrite failed for %s', item_name, exc_info=True)
         enriched = html
 

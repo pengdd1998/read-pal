@@ -62,11 +62,11 @@ def _build_note_xml(
     note_html = ''.join(note_html_parts)
 
     return (
-        '<z:Note rdf:about="#ann_%d">' % index
+        f'<z:Note rdf:about="#ann_{index}">'
         + '<z:ItemType>note</z:ItemType>'
-        + '<dc:title>%s</dc:title>' % escape(f'{ann_type} - {book_title}')
-        + '<dc:description><![CDATA[%s]]></dc:description>' % note_html
-        + '<dc:date>%s</dc:date>' % escape(date_str)
+        + '<dc:title>{}</dc:title>'.format(escape(f'{ann_type} - {book_title}'))
+        + f'<dc:description><![CDATA[{note_html}]]></dc:description>'
+        + f'<dc:date>{escape(date_str)}</dc:date>'
         + '<dcterms:isPartOf rdf:resource="#item_0"/>'
         + '</z:Note>'
     )

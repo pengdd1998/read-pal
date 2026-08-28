@@ -58,7 +58,9 @@ class ApiClient {
         if (IDEMPOTENT_CAPABLE_METHODS.has(method) && !existingKey && config.url) {
           try {
             const key = await deterministicIdempotencyKey(method, config.url, config.data);
-            config.headers = { ...(config.headers as Record<string, string> | undefined), 'Idempotency-Key': key };
+            // Set the single header on the existing AxiosHeaders instance —
+            // reassigning a plain object loses the instance methods (TS2322).
+            config.headers.set('Idempotency-Key', key);
           } catch {
             // Best-effort — never block the request on key generation.
           }

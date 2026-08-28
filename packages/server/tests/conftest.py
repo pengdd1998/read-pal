@@ -230,7 +230,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     })()
 
     with (
-        patch('app.middleware.auth._get_redis', return_value=mock_redis),
+        patch('app.middleware._auth_ledger._get_redis', return_value=mock_redis),
         patch('app.services.password_reset_service.get_redis', return_value=mock_redis),
         patch('redis.asyncio.from_url', return_value=mock_redis),
         patch('app.services.llm.get_llm', return_value=mock_llm),

@@ -37,7 +37,7 @@ async def _probe_provider(
             'latency_ms': latency_ms,
             'circuit_open': circuit_open,
         }
-    except (asyncio.TimeoutError, ConnectionError, RuntimeError, ValueError) as exc:
+    except (TimeoutError, ConnectionError, RuntimeError, ValueError) as exc:
         latency_ms = int((time.monotonic() - start) * 1000)
         logger.error('llm_health_check_failed', provider=name, error=str(exc))
         return {

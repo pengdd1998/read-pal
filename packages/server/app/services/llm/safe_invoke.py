@@ -14,19 +14,9 @@ import structlog
 from langchain_core.messages import BaseMessage
 
 from app.services.llm.circuit_fallback import (
-    _handle_invoke_failure,
     _invoke_with_circuit,
-    _select_provider,
 )
 from app.services.llm.observability import _log_cache_hit
-from app.services.llm.provider_fallback import (
-    _invoke_and_record_fallback,
-    _record_failure,
-    _record_success,
-    _try_next_provider,
-    _try_same_provider_fallback,
-)
-from app.services.llm.retry import _invoke_with_retry
 from app.services.llm.text import _repair_json, _strip_markdown_fences, _validate_parsed
 
 logger = structlog.get_logger('read-pal.llm')

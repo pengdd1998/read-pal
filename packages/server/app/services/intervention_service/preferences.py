@@ -4,7 +4,6 @@ import json
 import logging
 from uuid import UUID
 
-import redis.exceptions
 
 from app.core.redis import get_redis
 

@@ -20,11 +20,10 @@ from app.services.companion.context_loaders import (
     load_annotations_context as _load_annotations_context,
     load_book as _load_book,
     load_history as _load_history,
-    save_message as _save_message,
 )
+from app.services.companion.context_loaders import save_message as _save_message  # noqa: F401 — re-exported for orchestrator
 from app.services.companion.context_prompts import (
-    build_extra_context_parts as _build_extra_context_parts,
-    build_messages as _build_messages,
+    build_messages as _build_messages,  # noqa: F401 — re-exported for orchestrator
     build_system_prompt as _build_system_prompt,
 )
 from app.services.companion.query_classifier import classify_query

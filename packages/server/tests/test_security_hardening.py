@@ -184,7 +184,7 @@ class TestTokenRevocationFailClosed:
     @pytest.mark.asyncio
     async def test_fail_closed_after_first_successful_connection(self):
         """When Redis was previously reachable, an error → token treated as revoked."""
-        from app.middleware import auth
+        from app.middleware import _auth_ledger as auth
 
         # Simulate: previously connected successfully, now Redis errors
         with patch.object(auth, '_redis_ever_connected', True):
@@ -196,7 +196,7 @@ class TestTokenRevocationFailClosed:
     @pytest.mark.asyncio
     async def test_fail_open_during_cold_start(self):
         """Cold start (never connected) tolerates Redis error — dev environment."""
-        from app.middleware import auth
+        from app.middleware import _auth_ledger as auth
 
         with patch.object(auth, '_redis_ever_connected', False):
             with patch.object(auth, '_get_redis') as mock_get:
@@ -250,7 +250,7 @@ class TestRefreshReplayDetection:
         mock_redis = AsyncMock()
         # SET NX returns True when key was newly set
         mock_redis.set = AsyncMock(return_value=True)
-        with patch('app.middleware.auth._get_redis', return_value=mock_redis):
+        with patch('app.middleware._auth_ledger._get_redis', return_value=mock_redis):
             result = await mark_refresh_used('fresh-jti', exp=2_000_000_000)
         assert result is True
 
@@ -260,7 +260,7 @@ class TestRefreshReplayDetection:
         mock_redis = AsyncMock()
         # SET NX returns None when key already exists
         mock_redis.set = AsyncMock(return_value=None)
-        with patch('app.middleware.auth._get_redis', return_value=mock_redis):
+        with patch('app.middleware._auth_ledger._get_redis', return_value=mock_redis):
             result = await mark_refresh_used('replayed-jti', exp=2_000_000_000)
         assert result is False, 'Replay should return False so caller can refuse + revoke chain'
 
@@ -273,26 +273,26 @@ class TestRefreshReplayDetection:
         replay a stolen refresh token. Now it follows the same
         fail-closed-after-first-contact pattern as is_token_revoked.
         """
-        from app.middleware import auth as auth_mod
+        from app.middleware import _auth_ledger as auth_mod
 
         mock_redis = AsyncMock()
         import redis.exceptions
         mock_redis.set = AsyncMock(side_effect=redis.exceptions.RedisError('down'))
         with patch.object(auth_mod, '_redis_ever_connected', True):
-            with patch('app.middleware.auth._get_redis', return_value=mock_redis):
+            with patch('app.middleware._auth_ledger._get_redis', return_value=mock_redis):
                 result = await mark_refresh_used('jti', exp=2_000_000_000)
         assert result is False
 
     @pytest.mark.asyncio
     async def test_fail_open_on_redis_error_cold_start(self):
         """Cold start (Redis never reachable) still tolerates outages."""
-        from app.middleware import auth as auth_mod
+        from app.middleware import _auth_ledger as auth_mod
 
         mock_redis = AsyncMock()
         import redis.exceptions
         mock_redis.set = AsyncMock(side_effect=redis.exceptions.RedisError('down'))
         with patch.object(auth_mod, '_redis_ever_connected', False):
-            with patch('app.middleware.auth._get_redis', return_value=mock_redis):
+            with patch('app.middleware._auth_ledger._get_redis', return_value=mock_redis):
                 result = await mark_refresh_used('jti', exp=2_000_000_000)
         assert result is True
 

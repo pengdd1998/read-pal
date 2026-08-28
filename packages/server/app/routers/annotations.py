@@ -6,7 +6,7 @@ All responses follow the shape: ``{"success": true, "data": {...}}``
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db

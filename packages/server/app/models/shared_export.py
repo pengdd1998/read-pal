@@ -1,8 +1,8 @@
 """Shared export model."""
 
 import uuid
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime, UTC
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, text
@@ -56,7 +56,7 @@ class SharedExport(Base):
         default='text/markdown; charset=utf-8',
     )
     view_count: Mapped[int] = mapped_column(Integer, default=0)
-    expires_at: Mapped[Optional[datetime]] = mapped_column(
+    expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
@@ -67,7 +67,7 @@ class SharedExport(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     user: Mapped['User'] = relationship('User', back_populates='shared_exports')

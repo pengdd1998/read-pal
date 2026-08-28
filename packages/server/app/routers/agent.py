@@ -28,7 +28,6 @@ from app.schemas.agent import (
 from app.schemas.common import GenericResponse
 from app.services import companion_service
 from app.services.agent_service import (
-    cancel_stream,
     new_request_id,
     raise_not_found,
     resolve_lang,
@@ -40,6 +39,7 @@ from app.services.mood_service import generate_mood_scene
 from app.services.reading_plan_service import advance_plan, generate_plan, get_active_plan
 from app.utils.i18n import t
 from app.middleware.rate_limiter import api_limiter
+from datetime import UTC
 
 logger = logging.getLogger('read-pal.agent')
 
@@ -189,7 +189,7 @@ async def regenerate(
     response is marked ``deleted_at=NOW()`` (preserved for audit) so the new
     stream sees a clean history. Streams the new response like /chat/stream.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
     from sqlalchemy import select, update
     from app.models.chat_message import ChatMessage
 
@@ -223,7 +223,7 @@ async def regenerate(
         await db.execute(
             update(ChatMessage)
             .where(ChatMessage.id == last_msg.id)
-            .values(deleted_at=datetime.now(timezone.utc))
+            .values(deleted_at=datetime.now(UTC))
         )
         user_msg = last_two[1] if len(last_two) > 1 else None
     else:

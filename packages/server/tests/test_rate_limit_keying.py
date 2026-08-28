@@ -17,7 +17,7 @@ import pytest
 import redis.exceptions
 from fastapi import HTTPException
 
-from app.middleware import auth as auth_mod
+from app.middleware import _auth_ledger as auth_mod
 from app.middleware.auth import create_access_token
 from app.middleware.daily_llm_budget import enforce_daily_llm_budget
 from app.middleware.rate_limiter import _ip_key, _user_key

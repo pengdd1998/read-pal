@@ -1,6 +1,6 @@
 """Shared utility helpers."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def utcnow() -> datetime:
@@ -10,4 +10,4 @@ def utcnow() -> datetime:
     datetimes passed to queries must be timezone-naive to avoid
     asyncpg ``can't subtract offset-naive and offset-aware datetimes`` errors.
     """
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)

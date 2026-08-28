@@ -3,7 +3,6 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, text
@@ -35,7 +34,7 @@ class LLMLog(Base):
         nullable=False,
         index=True,
     )
-    book_id: Mapped[Optional[UUID]] = mapped_column(
+    book_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey('books.id', ondelete='SET NULL'),
         nullable=True,
@@ -47,12 +46,12 @@ class LLMLog(Base):
     prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
     total_tokens: Mapped[int] = mapped_column(Integer, default=0)
-    estimated_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 8), nullable=True)
+    estimated_cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 8), nullable=True)
     latency_ms: Mapped[int] = mapped_column(Integer, default=0)
     success: Mapped[bool] = mapped_column(Boolean, default=True)
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_fallback: Mapped[bool] = mapped_column(Boolean, default=False)
-    extra: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    extra: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

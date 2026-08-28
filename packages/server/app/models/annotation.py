@@ -1,9 +1,9 @@
 """Annotation model."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from enum import Enum as PyEnum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, text
@@ -88,28 +88,28 @@ class Annotation(Base):
         Text,
         nullable=False,
     )
-    color: Mapped[Optional[str]] = mapped_column(
+    color: Mapped[str | None] = mapped_column(
         String(7),
         nullable=True,
     )
-    note: Mapped[Optional[str]] = mapped_column(
+    note: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
-    tags: Mapped[Optional[list[str]]] = mapped_column(
+    tags: Mapped[list[str] | None] = mapped_column(
         ARRAY(String),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     # relationships

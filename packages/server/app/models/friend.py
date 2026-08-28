@@ -1,8 +1,8 @@
 """Friend conversation and relationship models."""
 
 import uuid
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime, UTC
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, text
@@ -45,8 +45,8 @@ class FriendConversation(Base):
     persona: Mapped[str] = mapped_column(String(20), nullable=False)
     role: Mapped[str] = mapped_column(String(10), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    emotion: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
-    context: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    emotion: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    context: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -77,7 +77,7 @@ class FriendRelationship(Base):
     books_read_together: Mapped[int] = mapped_column(Integer, default=0)
     shared_moments: Mapped[list] = mapped_column(JSONB, default=[])
     total_messages: Mapped[int] = mapped_column(Integer, default=0)
-    last_interaction_at: Mapped[Optional[datetime]] = mapped_column(
+    last_interaction_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
@@ -88,7 +88,7 @@ class FriendRelationship(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     user: Mapped['User'] = relationship(

@@ -1,7 +1,7 @@
 """Book club models."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
@@ -30,15 +30,15 @@ class BookClub(Base):
         server_default=text('gen_random_uuid()'),
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    cover_image: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    cover_image: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_by: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey('users.id', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )
-    current_book_id: Mapped[Optional[UUID]] = mapped_column(
+    current_book_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey('books.id', ondelete='SET NULL'),
         nullable=True,
@@ -59,7 +59,7 @@ class BookClub(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     creator: Mapped['User'] = relationship(

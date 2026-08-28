@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.companion._disconnect import maybe_mark_disconnect
 from app.services.companion.constants import (
-    DISCONNECT_CHECK_EVERY_N_CHUNKS, STREAM_FLUSH_SIZE,
+    STREAM_FLUSH_SIZE,
 )
 from app.services.companion.context import (
     _build_messages,
@@ -448,7 +448,49 @@ async def _persist_with_retry(
     return False
 
 
-async def _stream_via_provider(
+
+async def _settle_token_budget(
+    user_id_str: str,
+    request_id: str,
+    pre_charge: int,
+    token_limit: int,
+    messages: list,
+    collected_parts: list[str],
+    billing_state: dict,
+) -> None:
+    """Settle the token-budget pre-charge with actual emitted tokens.
+
+    P0.2: settle with what the user actually saw — collected_parts accumulates
+    across primary + fallback, and billing_state['partial_chars'] counts any
+    primary partial that was discarded before fallback ran. Empty output means
+    a full refund.
+    """
+    if token_limit <= 0 or pre_charge <= 0:
+        return
+    from app.middleware.daily_llm_budget import estimate_input_tokens, _get_budget
+
+    emitted_chars = sum(len(p) for p in collected_parts)
+    emitted_chars += billing_state.get('partial_chars', 0)
+    if emitted_chars > 0:
+        actual_output_tokens = max(emitted_chars // 4, 1)
+        actual_total = estimate_input_tokens(messages) + actual_output_tokens
+        try:
+            await _get_budget().settle_tokens(user_id_str, pre_charge, actual_total)
+        except Exception as exc:  # noqa: BLE001 — settle best-effort
+            logger.debug(
+                'companion.stream.token_settle_failed',
+                request_id=request_id, error=str(exc)[:200],
+            )
+    else:
+        try:
+            await _get_budget().settle_tokens(user_id_str, pre_charge, 0)
+        except Exception as exc:  # noqa: BLE001 — refund best-effort
+            logger.debug(
+                'companion.stream.token_refund_failed',
+                request_id=request_id, error=str(exc)[:200],
+            )
+
+async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow; decomposition tracked as follow-up
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
@@ -571,37 +613,10 @@ async def _stream_via_provider(
         #   - Has content → vendor billed for input + emitted output. Settle
         #     with estimate so user pays exactly once for the logical request.
         #   - Empty (all attempts failed before any emit) → refund in full.
-        if token_limit > 0 and pre_charge > 0:
-            # Total chars the user consumed = fallback/primary final output
-            # (in collected_parts) + any primary partial that was discarded
-            # before fallback ran (in billing_state['partial_chars']).
-            emitted_chars = sum(len(p) for p in collected_parts)
-            emitted_chars += billing_state.get('partial_chars', 0)
-            if emitted_chars > 0:
-                actual_output_tokens = max(emitted_chars // 4, 1)
-                actual_input_tokens = estimate_input_tokens(messages)
-                actual_total = actual_input_tokens + actual_output_tokens
-                try:
-                    await _get_budget().settle_tokens(
-                        user_id_str, pre_charge, actual_total,
-                    )
-                except Exception as exc:  # noqa: BLE001 — settle best-effort
-                    logger.debug(
-                        'companion.stream.token_settle_failed',
-                        request_id=actual_request_id,
-                        error=str(exc)[:200],
-                    )
-            else:
-                try:
-                    await _get_budget().settle_tokens(
-                        user_id_str, pre_charge, 0,
-                    )
-                except Exception as exc:  # noqa: BLE001 — refund best-effort
-                    logger.debug(
-                        'companion.stream.token_refund_failed',
-                        request_id=actual_request_id,
-                        error=str(exc)[:200],
-                    )
+        await _settle_token_budget(
+            user_id_str, actual_request_id, pre_charge,
+            token_limit, messages, collected_parts, billing_state,
+        )
 
         # Skip persistence on cancellation or stream-level error. For
         # cancellation the user already opted out of the response; for a

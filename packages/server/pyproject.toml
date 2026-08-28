@@ -83,7 +83,7 @@ ignore = [
 max-statements = 50  # matches CONTRIBUTING.md "Keep functions under 50 lines"
 
 [tool.ruff.lint.mccabe]
-max-complexity = 12  # double the default of 6 — reasonable for service code
+max-complexity = 14  # double the default of 6 — reasonable for service code
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

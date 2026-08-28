@@ -2,6 +2,12 @@
 
 import json
 import logging
+from typing import TYPE_CHECKING
+from uuid import UUID
+
+if TYPE_CHECKING:
+    from fastapi import HTTPException
+    from sqlalchemy.ext.asyncio import AsyncSession
 from pathlib import Path
 
 logger = logging.getLogger('read-pal.i18n')

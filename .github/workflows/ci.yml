@@ -164,6 +164,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Build shared package
+        # web imports @read-pal/shared (SSE types, constants) — vitest resolves
+        # the built dist, so build it first (test files that import shared
+        # fail resolution without this).
+        run: pnpm --filter @read-pal/shared build
+
       - name: Run frontend tests
         # `test` script is `vitest run` (non-watch) — the bare `vitest` CLI would
         # default to watch mode in CI; `vitest run` is explicit and idempotent.
@@ -203,6 +209,11 @@ jobs:
       GLM_BASE_URL: https://test.example.com
       DEFAULT_MODEL: glm-4-flash
       FALLBACK_MODEL: glm-4-flash
+      LLM_TIMEOUT_SECONDS: '15'
+      LLM_MAX_RETRIES: '3'
+      CIRCUIT_FAILURE_THRESHOLD: '5'
+      CIRCUIT_RESET_TIMEOUT_SECONDS: '30'
+      MAX_EMBEDDING_CALLS: '300'
       JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
 
     steps:

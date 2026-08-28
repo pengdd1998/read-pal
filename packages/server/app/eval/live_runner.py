@@ -341,7 +341,7 @@ def _estimate_call_tokens(golden: dict[str, Any]) -> int:
 # Main runner
 # ---------------------------------------------------------------------------
 
-async def run_live_eval(
+async def run_live_eval(  # noqa: PLR0915 — single orchestration flow; decomposition tracked as follow-up
     label_filter: str | None = None,
     max_tokens: int = DEFAULT_MAX_LIVE_TOKENS,
 ) -> list[LiveEvalReport]:

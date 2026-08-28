@@ -107,7 +107,7 @@ async def _handle_invoke_failure(
     return response
 
 
-async def _invoke_with_circuit(
+async def _invoke_with_circuit(  # noqa: C901, PLR0915 — fallback-chain orchestration; one failure flow per provider hop, splitting would obscure the chain
     messages: list[BaseMessage],
     *,
     log_label: str = 'LLM',

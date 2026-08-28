@@ -229,7 +229,7 @@ async def _build_merged_graph(
                 continue
             sub_graph = _build_sub_graph_from_cached(cached)
             _merge_sub_graph_into(merged, sub_graph)
-        except Exception as exc:
+        except Exception:
             logger.warning('Failed to load graph for book %s', bid, exc_info=True)
             continue
     return merged

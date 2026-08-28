@@ -72,7 +72,7 @@ async def _collect_book_concepts(
                     'node': node,
                     'bookTitle': book_title,
                 }
-        except (ValueError, RuntimeError) as exc:
+        except (ValueError, RuntimeError):
             logger.warning('Failed to load graph for book %s', book_id, exc_info=True)
             continue
     return book_concepts

@@ -13,24 +13,24 @@ below construct such bounds from UTC date components so callers cannot
 accidentally mix local date with UTC timestamps.
 """
 
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, UTC
 
 
 def utcnow_aware() -> datetime:
     """Return tz-aware UTC now (preferred over naive ``utcnow()`` for filters)."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def utc_start_of_day(day: date | None = None) -> datetime:
     """Return tz-aware UTC midnight for the given day (default: today UTC)."""
     day = day or utcnow_aware().date()
-    return datetime.combine(day, time.min, tzinfo=timezone.utc)
+    return datetime.combine(day, time.min, tzinfo=UTC)
 
 
 def utc_end_of_day(day: date | None = None) -> datetime:
     """Return tz-aware UTC midnight of the next day (exclusive upper bound)."""
     day = day or utcnow_aware().date()
-    return datetime.combine(day + timedelta(days=1), time.min, tzinfo=timezone.utc)
+    return datetime.combine(day + timedelta(days=1), time.min, tzinfo=UTC)
 
 
 def utc_start_of_week(day: date | None = None) -> datetime:
@@ -40,10 +40,10 @@ def utc_start_of_week(day: date | None = None) -> datetime:
     """
     day = day or utcnow_aware().date()
     monday = day - timedelta(days=day.weekday())
-    return datetime.combine(monday, time.min, tzinfo=timezone.utc)
+    return datetime.combine(monday, time.min, tzinfo=UTC)
 
 
 def utc_start_of_month(day: date | None = None) -> datetime:
     """Return tz-aware UTC midnight of the 1st for the month containing *day*."""
     day = day or utcnow_aware().date()
-    return datetime.combine(day.replace(day=1), time.min, tzinfo=timezone.utc)
+    return datetime.combine(day.replace(day=1), time.min, tzinfo=UTC)

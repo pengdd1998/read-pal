@@ -4,7 +4,7 @@ import json
 import logging
 import secrets
 import smtplib
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import redis.exceptions
 from sqlalchemy import select
@@ -62,7 +62,7 @@ async def send_reset_email(email: str, token: str) -> bool:
         from app.services.email_service import send_password_reset_email
         await send_password_reset_email(email, token)
         return True
-    except (smtplib.SMTPException, TimeoutError, ConnectionError, OSError) as exc:
+    except (smtplib.SMTPException, TimeoutError, ConnectionError, OSError):
         logger.warning(
             'Password reset email delivery failed for %s — '
             'user will not receive the reset link',
@@ -139,7 +139,7 @@ async def _invalidate_sessions(user_id: str) -> None:
         redis_client = get_redis()
         await redis_client.set(
             f'pwd-reset:{user_id}',
-            str(int(datetime.now(timezone.utc).timestamp())),
+            str(int(datetime.now(UTC).timestamp())),
             ex=86400 * 30,  # 30 days — longer than any token TTL
         )
     except redis.exceptions.RedisError as exc:

@@ -46,7 +46,7 @@ def extract_images(
 
         try:
             data = zf.read(resolved)
-        except (KeyError, zipfile.BadZipFile, OSError) as exc:
+        except (KeyError, zipfile.BadZipFile, OSError):
             logger.debug('Failed to read image from ZIP: %s', resolved, exc_info=True)
             continue
 
@@ -113,7 +113,7 @@ def extract_cover(
         return None
     try:
         data = zf.read(resolved)
-    except (KeyError, zipfile.BadZipFile, OSError) as exc:
+    except (KeyError, zipfile.BadZipFile, OSError):
         logger.debug('Failed to read cover image from ZIP: %s', resolved, exc_info=True)
         return None
     ext = Path(resolved).suffix.lower()

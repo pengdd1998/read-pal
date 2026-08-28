@@ -56,9 +56,9 @@ from app.services.llm.health import (
 )
 
 # -- Safe invoke (circuit breaker, multi-provider fallback, caching, JSON parsing) --
+from app.services.llm.retry import _invoke_with_retry
 from app.services.llm.safe_invoke import (
     _invoke_with_circuit,
-    _invoke_with_retry,
     safe_llm_call,
     safe_llm_invoke,
 )

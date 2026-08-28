@@ -5,7 +5,7 @@ from uuid import UUID
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.companion.query_classifier import classify_query, refine_rag_query
+from app.services.companion.query_classifier import refine_rag_query
 
 logger = structlog.get_logger('read-pal.companion')
 

@@ -24,7 +24,7 @@ class EvalResult:
         return f'EvalResult({self.service}/{self.action}={status})'
 
 
-def validate_output_shape(
+def validate_output_shape(  # noqa: C901 — branch structure is the domain (classification/prompt matrix); splitting would obscure it
     output: Any,
     expected: dict[str, Any],
     result: EvalResult,

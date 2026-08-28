@@ -10,7 +10,7 @@ import re
 import secrets
 import socket
 import time
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse
 from uuid import UUID
 
 import httpx

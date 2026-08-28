@@ -1,6 +1,6 @@
 """Shared streak computation for dashboard and calendar."""
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, UTC
 
 
 def compute_streaks(
@@ -22,7 +22,7 @@ def compute_streaks(
 
     # active_dates are derived from `func.date(started_at)` where started_at is
     # stored as naive UTC, so the dates are UTC dates. Use UTC today to match.
-    today = today or datetime.now(tz=timezone.utc).date()
+    today = today or datetime.now(tz=UTC).date()
 
     # Current streak: count consecutive days ending at today
     current = 0

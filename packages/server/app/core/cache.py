@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Callable, Coroutine, TypeVar
+from typing import Any, TypeVar
+from collections.abc import Callable, Coroutine
 
 from redis.exceptions import RedisError
 
@@ -37,7 +38,7 @@ async def cache_set(key: str, data: Any, ttl: int | None = None) -> None:
         logger.warning('cache_write_failed key=%s: %s', key, str(exc)[:150])
 
 
-async def cache_get_or_compute(
+async def cache_get_or_compute(  # noqa: UP047 — TypeVar pattern kept for py3.9-style callers; PEP 695 migration tracked
     key: str,
     factory: Callable[[], Coroutine[Any, Any, T]],
     ttl: int | None = None,

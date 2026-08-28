@@ -150,7 +150,7 @@ def _repair_json(content: str, log_label: str = 'LLM') -> tuple[Any, str | None]
     return None, None
 
 
-def _close_truncated_json(content: str) -> str | None:
+def _close_truncated_json(content: str) -> str | None:  # noqa: C901 — branch structure is the domain (classification/prompt matrix); splitting would obscure it
     """Best-effort close of a truncated JSON document.
 
     Walks the string tracking string/escape state and an open-bracket stack,

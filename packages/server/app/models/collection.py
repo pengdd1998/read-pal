@@ -1,8 +1,8 @@
 """Collection model."""
 
 import uuid
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime, UTC
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Index, String, text
@@ -35,7 +35,7 @@ class Collection(Base):
         index=True,
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     icon: Mapped[str] = mapped_column(String(255), default='folder')
     color: Mapped[str] = mapped_column(String(255), default='#f59e0b')
     book_ids: Mapped[list[str]] = mapped_column(
@@ -49,7 +49,7 @@ class Collection(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     user: Mapped['User'] = relationship('User', back_populates='collections')

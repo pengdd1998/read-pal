@@ -39,7 +39,7 @@ async def enrich_with_knowledge_graph(
             {'source': e.source, 'target': e.target, 'label': e.label}
             for e in graph.edges if e.label
         ]
-    except (ValueError, RuntimeError) as exc:
+    except (ValueError, RuntimeError):
         logger.warning(
             'Knowledge graph enrichment skipped for book %s', book_id,
             exc_info=True,
@@ -67,7 +67,7 @@ async def enrich_with_synthesis_themes(
                 for t in theme_list
                 if isinstance(t, dict) and t.get('name')
             ]
-    except (ValueError, RuntimeError) as exc:
+    except (ValueError, RuntimeError):
         logger.warning(
             'Synthesis enrichment skipped for book %s', book_id,
             exc_info=True,

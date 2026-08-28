@@ -1,14 +1,12 @@
 """Business logic for user settings: get, update, reading goals."""
 
 import logging
-from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
-from app.utils import utcnow
 from app.utils.db import db_error_guard
 from app.utils.i18n import DEFAULT_LANGUAGE
 from app.utils.time import utc_start_of_day, utc_start_of_week

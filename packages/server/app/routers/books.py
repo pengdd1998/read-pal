@@ -5,7 +5,7 @@ All responses follow the shape: ``{"success": true, "data": {...}}``
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -23,7 +23,7 @@ from app.schemas.book import (
 from app.schemas.common import GenericResponse
 from app.services import book_service
 from app.utils.i18n import _get_user_lang, not_found_error, t
-from app.utils.sanitizer import sanitize_book_fields, sanitize_annotation_fields, strip_html
+from app.utils.sanitizer import sanitize_book_fields, strip_html
 
 router = APIRouter(
     prefix='/api/v1/books',

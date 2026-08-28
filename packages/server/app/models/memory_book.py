@@ -1,8 +1,8 @@
 """Memory book model."""
 
 import uuid
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime, UTC
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, text
@@ -65,7 +65,7 @@ class MemoryBook(Base):
         JSONB,
         server_default=text("'[]'"),
     )
-    html_content: Mapped[Optional[str]] = mapped_column(
+    html_content: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
@@ -76,18 +76,18 @@ class MemoryBook(Base):
     )
     generated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     # relationships

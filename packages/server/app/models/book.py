@@ -1,7 +1,7 @@
 """Book model."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from decimal import Decimal
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING, Optional
@@ -83,7 +83,7 @@ class Book(Base):
         String(255),
         nullable=False,
     )
-    cover_url: Mapped[Optional[str]] = mapped_column(
+    cover_url: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
     )
@@ -130,42 +130,42 @@ class Book(Base):
         default=BookStatus.unread,
         index=True,
     )
-    tags: Mapped[Optional[list[str]]] = mapped_column(
+    tags: Mapped[list[str] | None] = mapped_column(
         ARRAY(String),
         default=[],
     )
     added_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
     )
-    started_at: Mapped[Optional[datetime]] = mapped_column(
+    started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(
+    completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
-    last_read_at: Mapped[Optional[datetime]] = mapped_column(
+    last_read_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
-    metadata_: Mapped[Optional[dict]] = mapped_column(
+    metadata_: Mapped[dict | None] = mapped_column(
         'metadata',
         JSONB,
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc),
+        default=lambda: datetime.now(tz=UTC),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     # relationships

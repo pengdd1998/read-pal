@@ -31,6 +31,7 @@ from app.prompts.templates import (
 )
 
 __all__ = [
+    "PromptTemplate",
     'ALL_TEMPLATES',
     'BOOK_COMPARE_HUMAN',
     'BOOK_COMPARE_SYSTEM',

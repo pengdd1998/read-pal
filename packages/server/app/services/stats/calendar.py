@@ -1,6 +1,6 @@
 """Reading calendar and weekly summary stats."""
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, UTC
 from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
@@ -32,26 +32,26 @@ def _build_date_range(
     """
     if months is not None:
         today = utcnow_aware().date()
-        end = datetime.combine(today + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
+        end = datetime.combine(today + timedelta(days=1), datetime.min.time(), tzinfo=UTC)
         m = min(months, 12)
         start_date = (
             today.replace(month=today.month - m)
             if today.month > m
             else today.replace(year=today.year - 1, month=12 + today.month - m)
         )
-        start = datetime(start_date.year, start_date.month, 1, tzinfo=timezone.utc)
+        start = datetime(start_date.year, start_date.month, 1, tzinfo=UTC)
     elif month is not None and year is not None:
-        start = datetime(year, month, 1, tzinfo=timezone.utc)
+        start = datetime(year, month, 1, tzinfo=UTC)
         end = (
-            datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+            datetime(year + 1, 1, 1, tzinfo=UTC)
             if month == 12
-            else datetime(year, month + 1, 1, tzinfo=timezone.utc)
+            else datetime(year, month + 1, 1, tzinfo=UTC)
         )
     else:
         y = year or utcnow_aware().date().year
         start, end = (
-            datetime(y, 1, 1, tzinfo=timezone.utc),
-            datetime(y + 1, 1, 1, tzinfo=timezone.utc),
+            datetime(y, 1, 1, tzinfo=UTC),
+            datetime(y + 1, 1, 1, tzinfo=UTC),
         )
     return start, end
 
@@ -121,7 +121,7 @@ async def _get_streak_data(
 ) -> tuple[int, int]:
     """Compute current and longest streaks from a cutoff date."""
     day_col = func.date(ReadingSession.started_at).label('day')
-    cutoff_dt = datetime.combine(cutoff, datetime.min.time(), tzinfo=timezone.utc)
+    cutoff_dt = datetime.combine(cutoff, datetime.min.time(), tzinfo=UTC)
     async with db_error_guard('calendar._get_streak_data'):
         rows = await db.execute(
             select(day_col).where(
@@ -233,9 +233,9 @@ async def get_weekly_summary(db: AsyncSession, uid: UUID) -> dict:
     week_start = today - timedelta(days=today.weekday())
     week_end = week_start + timedelta(days=6)
     # tz-aware UTC bounds — see _build_date_range for why.
-    dt_start = datetime.combine(week_start, datetime.min.time(), tzinfo=timezone.utc)
+    dt_start = datetime.combine(week_start, datetime.min.time(), tzinfo=UTC)
     dt_end = datetime.combine(
-        week_end + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc,
+        week_end + timedelta(days=1), datetime.min.time(), tzinfo=UTC,
     )
 
     # Run queries SEQUENTIALLY — AsyncSession is a single-connection proxy

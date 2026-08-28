@@ -16,7 +16,7 @@ burst load.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import redis.asyncio as aioredis
 import redis.exceptions
@@ -43,7 +43,7 @@ def _today_utc() -> str:
     call sites. Keeping the date format in one place means a future change
     (e.g. weekly buckets) is a 1-line edit, not 3.
     """
-    return datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    return datetime.now(UTC).strftime('%Y-%m-%d')
 
 
 class DailyLLMBudget:
@@ -180,7 +180,7 @@ async def enforce_daily_llm_budget(request: Request) -> None:
 
     if not allowed:
         # Reset time = next UTC midnight.
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         tomorrow = (now + timedelta(days=1)).replace(
             hour=0, minute=0, second=0, microsecond=0,
         )

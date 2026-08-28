@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -176,7 +176,7 @@ async def _generate_all_sections(
         *[_gen_section(st) for st in SECTION_TYPES]
     )
 
-    now = datetime.now(tz=timezone.utc).isoformat()
+    now = datetime.now(tz=UTC).isoformat()
     sections: list[dict[str, Any]] = []
     for idx, section_data in enumerate(section_results):
         section_type = SECTION_TYPES[idx]

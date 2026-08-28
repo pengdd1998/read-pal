@@ -333,7 +333,7 @@ async def _merge_cached_graphs_for_books(
                     continue
                 seen_edges.add(key)
                 all_edges.append(ed)
-        except (ValueError, RuntimeError) as exc:
+        except (ValueError, RuntimeError):
             logger.warning('Failed to load cached graph for book %s', bid, exc_info=True)
             continue
 

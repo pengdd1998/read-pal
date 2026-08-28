@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta, timezone as _tz
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 import redis.exceptions
@@ -114,7 +114,7 @@ def _create_sample_annotations(user_id: UUID, book_id: UUID) -> list[Annotation]
 
 def _create_sample_session(user_id: UUID, book_id: UUID) -> ReadingSession:
     """Build a completed reading session for dashboard stats."""
-    session_start = datetime.now(_tz.utc) - timedelta(minutes=20)
+    session_start = datetime.now(UTC) - timedelta(minutes=20)
     return ReadingSession(
         user_id=user_id,
         book_id=book_id,
@@ -177,5 +177,5 @@ async def _seed_graph_cache(user_id: UUID, book_id: UUID) -> None:
             'Seeded knowledge graph cache for book %s (%d nodes, %d edges)',
             book_id, len(nodes), len(edges),
         )
-    except redis.exceptions.RedisError as exc:
+    except redis.exceptions.RedisError:
         logger.warning('Failed to seed knowledge graph cache', exc_info=True)

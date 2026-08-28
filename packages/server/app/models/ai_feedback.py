@@ -46,13 +46,13 @@ class AIFeedback(Base):
     # alongside its target message (e.g., on regenerate soft-delete purge
     # or book deletion). Nullable for legacy rows and for ratings given
     # in flows that don't have a single message anchor.
-    message_id: Mapped[Optional[UUID]] = mapped_column(
+    message_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey('chat_messages.id', ondelete='CASCADE'),
         nullable=True,
     )
     rating: Mapped[bool] = mapped_column(Boolean, nullable=False)  # True=up, False=down
-    comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

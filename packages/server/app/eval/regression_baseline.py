@@ -60,7 +60,7 @@ class RegressionReport:
 
     def summary(self) -> str:
         lines = [
-            f'Eval regression report:',
+            'Eval regression report:',
             f'  passed:        {len(self.passed):4d}',
             f'  failed:        {len(self.failed):4d}  (pre-existing, not regressions)',
             f'  regressions:   {len(self.regressions):4d}  (NEW FAILURES — must fix before merge)',

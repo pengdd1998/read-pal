@@ -8,13 +8,12 @@ within 24 hours.
 import json
 import re
 import time
-from collections.abc import Callable
 from typing import Any
 
 import redis.asyncio as aioredis
 import redis.exceptions
 import structlog
-from fastapi import Depends, HTTPException, Request, Response, status
+from fastapi import Depends, HTTPException, Request, status
 
 from app.core.redis import get_redis
 from app.middleware.auth import get_current_user

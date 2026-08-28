@@ -1,7 +1,7 @@
 """User CRUD — registration, profile lookup, password change, OAuth check."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from uuid import UUID
 
 from sqlalchemy import select
@@ -60,8 +60,8 @@ async def _create_user_with_seed(
         name=name,
         password_hash=password_hash,
         settings=dict(DEFAULT_USER_SETTINGS),
-        created_at=datetime.now(tz=timezone.utc),
-        updated_at=datetime.now(tz=timezone.utc),
+        created_at=datetime.now(tz=UTC),
+        updated_at=datetime.now(tz=UTC),
     )
     db.add(user)
     async with db_error_guard('_create_user_with_seed'):
@@ -185,7 +185,7 @@ async def change_user_password(
         redis = get_redis()
         await redis.set(
             f'pwd-reset:{user_id}',
-            str(int(datetime.now(timezone.utc).timestamp())),
+            str(int(datetime.now(UTC).timestamp())),
             ex=86400 * 30,  # 30 days — longer than any token TTL
         )
     except (ConnectionError, TimeoutError, OSError):

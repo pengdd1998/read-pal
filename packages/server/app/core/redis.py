@@ -7,7 +7,6 @@ specific uvicorn worker that owns the in-flight stream).
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator

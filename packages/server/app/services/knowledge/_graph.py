@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -30,7 +30,7 @@ def _compute_freshness(
     Falls back to 1.0 when no annotation mentions the concept directly
     (uses the overall oldest annotation instead).
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     relevant_dates: list[datetime] = []
 
     name_lower = concept_name.lower()
@@ -39,7 +39,7 @@ def _compute_freshness(
             created = ann.created_at
             # Handle both offset-naive and offset-aware datetimes
             if created.tzinfo is None:
-                created = created.replace(tzinfo=timezone.utc)
+                created = created.replace(tzinfo=UTC)
             relevant_dates.append(created)
 
     # Fallback: use all annotation dates
@@ -48,7 +48,7 @@ def _compute_freshness(
             if ann.created_at:
                 created = ann.created_at
                 if created.tzinfo is None:
-                    created = created.replace(tzinfo=timezone.utc)
+                    created = created.replace(tzinfo=UTC)
                 relevant_dates.append(created)
 
     if not relevant_dates:

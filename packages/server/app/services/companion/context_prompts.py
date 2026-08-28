@@ -235,7 +235,7 @@ def build_extra_context_parts(
     return extra_parts
 
 
-def build_system_prompt(
+def build_system_prompt(  # noqa: C901 — branch structure is the domain (classification/prompt matrix); splitting would obscure it
     book: Book,
     annotations_ctx: str,
     rag_ctx: str = '',

@@ -5,7 +5,6 @@ import logging
 from uuid import UUID
 
 from sqlalchemy import String, cast, func, select, distinct
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql.elements import BooleanClauseList
 from sqlalchemy.ext.asyncio import AsyncSession
 

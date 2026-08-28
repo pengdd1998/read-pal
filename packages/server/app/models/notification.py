@@ -1,8 +1,8 @@
 """Notification model."""
 
 import uuid
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime, UTC
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, text
@@ -48,7 +48,7 @@ class Notification(Base):
     type: Mapped[str] = mapped_column(String(32), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-    metadata_: Mapped[Optional[dict]] = mapped_column(
+    metadata_: Mapped[dict | None] = mapped_column(
         'metadata',
         JSONB,
         nullable=True,
@@ -61,7 +61,7 @@ class Notification(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        onupdate=lambda ctx: datetime.now(tz=timezone.utc),
+        onupdate=lambda ctx: datetime.now(tz=UTC),
     )
 
     user: Mapped['User'] = relationship('User', back_populates='notifications')

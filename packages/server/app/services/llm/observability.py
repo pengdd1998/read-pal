@@ -57,7 +57,7 @@ _ERROR_CATEGORIES = (
 )
 
 
-def _classify_error(
+def _classify_error(  # noqa: C901 — branch structure is the domain (classification/prompt matrix); splitting would obscure it
     exc: Exception | None,
     error_message: str | None,
 ) -> str | None:

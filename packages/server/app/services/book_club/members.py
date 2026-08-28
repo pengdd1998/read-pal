@@ -1,5 +1,11 @@
 """Book club membership operations — join, leave, list members."""
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.book_club import BookClub
+
 import logging
 from uuid import UUID
 
@@ -18,7 +24,7 @@ async def join_club(
     db: AsyncSession,
     user_id: UUID,
     invite_code: str,
-) -> 'BookClub':
+) -> BookClub:
     """Join a club by invite code. Validates capacity and membership."""
     from app.models.book_club import BookClub
 
@@ -74,7 +80,7 @@ async def join_club_by_id(
     db: AsyncSession,
     user_id: UUID,
     club_id: UUID,
-) -> 'BookClub':
+) -> BookClub:
     """Join a public club by ID. Validates capacity and membership."""
     from app.models.book_club import BookClub
 
