@@ -25,6 +25,7 @@ from fastapi import Depends, HTTPException, Request, status
 from app.config import get_settings
 from app.core.redis import get_redis
 from app.utils.i18n import t
+from app.utils.request_identity import jwt_user_id
 
 logger = logging.getLogger('read-pal.daily-budget')
 
@@ -166,8 +167,9 @@ async def enforce_daily_llm_budget(request: Request) -> None:
     if settings.llm_daily_budget <= 0:
         return  # Budget disabled — skip entirely.
 
-    user = getattr(request.state, 'user', None) or {}
-    user_id = user.get('id') or user.get('sub')
+    # ``request.state.user`` is never set (get_current_user does not populate
+    # it and runs after this dependency anyway) — verify the JWT directly.
+    user_id = jwt_user_id(request)
     if not user_id:
         # Anonymous — auth middleware will reject upstream; nothing to budget.
         return

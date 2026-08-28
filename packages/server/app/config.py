@@ -81,6 +81,15 @@ def _parse_duration(value: str) -> int:
     return amount * multipliers[unit]
 
 
+# Known-weak credentials that must never ship to production. Checked
+# verbatim (case-insensitive) against JWT_SECRET and DB_PASSWORD.
+# 'Rp2026Secure!' is a placeholder that leaked into deploy tooling;
+# 'minioadmin' is the MinIO default credential.
+_INSECURE_CREDENTIALS = frozenset({
+    'readpal_dev', 'changeme', 'password', 'rp2026secure!', 'minioadmin',
+})
+
+
 class Settings(BaseSettings):
     """Application settings — all values loaded from .env / environment variables.
 
@@ -338,12 +347,16 @@ class Settings(BaseSettings):
                 errors.append(
                     'JWT_SECRET must be a strong secret (>= 32 chars) in production'
                 )
+            elif self.jwt_secret.lower() in _INSECURE_CREDENTIALS:
+                errors.append(
+                    'JWT_SECRET is a known-weak credential and is denied in production'
+                )
             elif _is_low_entropy_secret(self.jwt_secret):
                 errors.append(
                     'JWT_SECRET has low entropy (< 2.5 bits/char or > 50% repeated chars). '
                     'Use a randomly generated secret, e.g. `python -c "import secrets; print(secrets.token_urlsafe(48))"`.'
                 )
-            if self.db_password in ('readpal_dev', 'changeme', 'password'):
+            if self.db_password.lower() in _INSECURE_CREDENTIALS:
                 errors.append(
                     'DB_PASSWORD must be changed from default in production'
                 )
@@ -358,3 +371,19 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Cached settings instance for dependency injection."""
     return Settings()
+
+
+def reload_settings() -> Settings:
+    """Invalidate the cached settings and re-read from env.
+
+    Hot-plug entry point: after changing LLM_PROVIDERS (or any setting) in
+    the process environment, call this then ``ProviderRegistry.reload_if_changed``
+    to swap providers without a restart. Falls back to the previous cached
+    instance is NOT attempted — a raised ValidationError here means the new
+    env is invalid and the caller should keep the old registry state
+    (``registry.reload_if_changed`` guards its own parse; this function
+    clearing the cache is safe because callers holding the old object are
+    unaffected).
+    """
+    get_settings.cache_clear()
+    return get_settings()

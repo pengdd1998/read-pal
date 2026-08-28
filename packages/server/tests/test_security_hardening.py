@@ -265,13 +265,35 @@ class TestRefreshReplayDetection:
         assert result is False, 'Replay should return False so caller can refuse + revoke chain'
 
     @pytest.mark.asyncio
-    async def test_fail_open_on_redis_error(self):
-        """Redis errors don't block refresh — fail-open to allow rotation."""
+    async def test_fail_closed_on_redis_error_after_first_contact(self):
+        """After Redis has been reachable, an outage must NOT allow rotation.
+
+        Updated by the per-user keying security fix: the ledger used to be
+        fail-open, which let an attacker (or an attacker-induced outage)
+        replay a stolen refresh token. Now it follows the same
+        fail-closed-after-first-contact pattern as is_token_revoked.
+        """
+        from app.middleware import auth as auth_mod
+
         mock_redis = AsyncMock()
         import redis.exceptions
         mock_redis.set = AsyncMock(side_effect=redis.exceptions.RedisError('down'))
-        with patch('app.middleware.auth._get_redis', return_value=mock_redis):
-            result = await mark_refresh_used('jti', exp=2_000_000_000)
+        with patch.object(auth_mod, '_redis_ever_connected', True):
+            with patch('app.middleware.auth._get_redis', return_value=mock_redis):
+                result = await mark_refresh_used('jti', exp=2_000_000_000)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_fail_open_on_redis_error_cold_start(self):
+        """Cold start (Redis never reachable) still tolerates outages."""
+        from app.middleware import auth as auth_mod
+
+        mock_redis = AsyncMock()
+        import redis.exceptions
+        mock_redis.set = AsyncMock(side_effect=redis.exceptions.RedisError('down'))
+        with patch.object(auth_mod, '_redis_ever_connected', False):
+            with patch('app.middleware.auth._get_redis', return_value=mock_redis):
+                result = await mark_refresh_used('jti', exp=2_000_000_000)
         assert result is True
 
 

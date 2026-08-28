@@ -33,4 +33,10 @@ USER app
 
 EXPOSE 8000
 
+# Proxy headers are intentionally NOT enabled here: uvicorn's
+# ProxyHeadersMiddleware trusts the LEFTMOST X-Forwarded-For entry, which a
+# client can spoof. Client-IP derivation instead happens in
+# app/utils/request_identity.py, which trusts only the RIGHTMOST XFF entry
+# (the one our nginx appends). Do not add --proxy-headers without reviewing
+# that module first.
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

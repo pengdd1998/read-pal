@@ -2,8 +2,9 @@
 
 import json
 import logging
+import secrets
 import smtplib
-import uuid
+from datetime import datetime, timezone
 
 import redis.exceptions
 from sqlalchemy import select
@@ -32,10 +33,13 @@ async def create_reset_token(db: AsyncSession, email: str) -> str | None:
     if user is None:
         return None
 
-    token = str(uuid.uuid4())
+    # 256-bit entropy via secrets (CSPRNG) — uuid4 is only 122 bits and comes
+    # from a weaker generator. URL-safe so it survives query-string transport
+    # in the reset link unchanged.
+    token = secrets.token_urlsafe(32)
     try:
-        redis = get_redis()
-        await redis.set(
+        redis_client = get_redis()
+        await redis_client.set(
             f'{_TOKEN_PREFIX}{token}',
             json.dumps({'userId': str(user.id), 'email': user.email}),
             ex=_TOKEN_TTL,
@@ -81,8 +85,8 @@ async def _validate_reset_token(token: str) -> dict:
     Raises RuntimeError if Redis is unavailable.
     """
     try:
-        redis = get_redis()
-        data = await redis.getdel(f'{_TOKEN_PREFIX}{token}')
+        redis_client = get_redis()
+        data = await redis_client.getdel(f'{_TOKEN_PREFIX}{token}')
     except redis.exceptions.RedisError as exc:
         logger.error('password_reset.redis_getdel_failed error=%s', exc)
         raise RuntimeError('Service temporarily unavailable') from exc
@@ -122,15 +126,20 @@ async def _update_user_password(
 async def _invalidate_sessions(user_id: str) -> None:
     """Invalidate all active sessions for the user.
 
+    The marker value is the reset timestamp in unix epoch seconds —
+    auth._was_password_reset compares it against each token's ``iat`` so only
+    tokens issued BEFORE the reset are rejected. Must stay a numeric string
+    for that comparison to work.
+
     The reset token itself is already consumed atomically by
     _validate_reset_token's GETDEL, so we no longer need a separate
     DEL call here.
     """
     try:
-        redis = get_redis()
-        await redis.set(
+        redis_client = get_redis()
+        await redis_client.set(
             f'pwd-reset:{user_id}',
-            str(uuid.uuid4()),
+            str(int(datetime.now(timezone.utc).timestamp())),
             ex=86400 * 30,  # 30 days — longer than any token TTL
         )
     except redis.exceptions.RedisError as exc:

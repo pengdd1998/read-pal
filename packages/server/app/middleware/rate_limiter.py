@@ -16,6 +16,7 @@ from fastapi import Depends, HTTPException, Request, status
 
 from app.core.redis import get_redis
 from app.utils.i18n import t
+from app.utils.request_identity import client_ip, jwt_user_id
 
 logger = logging.getLogger('read-pal.rate-limit')
 
@@ -136,12 +137,23 @@ def _make_rate_limit_dependency(
     limit: int,
     window_seconds: int = 60,
     key_builder: Callable[[Request], str] | None = None,
+    name: str = '',
 ) -> Callable:
-    """Return a FastAPI dependency that enforces rate limiting."""
+    """Return a FastAPI dependency that enforces rate limiting.
+
+    ``name`` namespaces the redis key per limiter class. Without it, all
+    per-user limiters (chat/stream/write/api…) shared ONE bucket per user —
+    a reader page load's ~20 mixed API calls blew the 60/min stream limit
+    and every subsequent stream POST got an instant 429.
+    """
 
     async def _dependency(request: Request) -> None:
         limiter = _get_limiter()
         key = key_builder(request) if key_builder else (request.client.host if request.client else 'unknown')
+        # Namespace per limiter (e.g. 'stream:user:<uid>') — un-named callers
+        # (none in the codebase today) keep the legacy flat key.
+        if name:
+            key = f'{name}:{key}'
         allowed, headers = await limiter.check(key, limit, window_seconds)
 
         # Attach headers to response via state (picked up by middleware or router)
@@ -165,29 +177,34 @@ def _make_rate_limit_dependency(
 # --- Pre-configured limiter dependencies --------------------------------------
 
 def _ip_key(request: Request) -> str:
-    return request.client.host if request.client else 'unknown'
+    """Key by client IP — rightmost XFF entry (nginx-appended), not spoofable."""
+    return client_ip(request)
 
 
-login_limiter = Depends(_make_rate_limit_dependency(10, 60, _ip_key))
-register_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key))
-password_reset_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key))
-refresh_limiter = Depends(_make_rate_limit_dependency(50, 60, _ip_key))
-account_limiter = Depends(_make_rate_limit_dependency(30, 60, _ip_key))
-upload_limiter = Depends(_make_rate_limit_dependency(50, 3600, _ip_key))
+login_limiter = Depends(_make_rate_limit_dependency(10, 60, _ip_key, name='login'))
+register_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key, name='register'))
+password_reset_limiter = Depends(_make_rate_limit_dependency(5, 60, _ip_key, name='pwdreset'))
+refresh_limiter = Depends(_make_rate_limit_dependency(50, 60, _ip_key, name='refresh'))
+account_limiter = Depends(_make_rate_limit_dependency(30, 60, _ip_key, name='account'))
+upload_limiter = Depends(_make_rate_limit_dependency(50, 3600, _ip_key, name='upload'))
 
 
 # --- AI endpoint rate limiters (per-user) ---
 def _user_key(request: Request) -> str:
-    """Rate limit by authenticated user ID, falling back to IP."""
-    user = getattr(request.state, 'user', None) or {}
-    uid = user.get('id') or user.get('sub')
+    """Rate limit by authenticated user ID, falling back to IP.
+
+    ``request.state.user`` is never populated (get_current_user does not set
+    it, and these dependencies run before it anyway), so the JWT is verified
+    directly from the Authorization header.
+    """
+    uid = jwt_user_id(request)
     if uid:
         return f'user:{uid}'
-    return request.client.host if request.client else 'unknown'
+    return client_ip(request)
 
 
-chat_limiter = Depends(_make_rate_limit_dependency(100, 60, _user_key))
-stream_limiter = Depends(_make_rate_limit_dependency(60, 60, _user_key))
-ai_heavy_limiter = Depends(_make_rate_limit_dependency(30, 60, _user_key))
-api_limiter = Depends(_make_rate_limit_dependency(120, 60, _user_key))
-write_limiter = Depends(_make_rate_limit_dependency(60, 60, _user_key))
+chat_limiter = Depends(_make_rate_limit_dependency(100, 60, _user_key, name='chat'))
+stream_limiter = Depends(_make_rate_limit_dependency(60, 60, _user_key, name='stream'))
+ai_heavy_limiter = Depends(_make_rate_limit_dependency(30, 60, _user_key, name='aiheavy'))
+api_limiter = Depends(_make_rate_limit_dependency(120, 60, _user_key, name='api'))
+write_limiter = Depends(_make_rate_limit_dependency(60, 60, _user_key, name='write'))

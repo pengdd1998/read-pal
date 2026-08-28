@@ -179,15 +179,40 @@ async def is_token_revoked(jti: str) -> bool:
 
 
 async def _was_password_reset(user_id: str, token_issued_at: float) -> bool:
-    """Check if a password reset occurred after this token was issued."""
+    """Check if a password reset occurred after this token was issued.
+
+    The marker value is a unix-epoch-seconds timestamp (see
+    ``_invalidate_sessions`` and ``change_user_password``). Only tokens whose
+    ``iat`` predates the marker are rejected — tokens issued after the reset
+    stay valid, so the user is not logged out of their new session.
+    Comparing epoch seconds is timezone-safe by construction. A marker in an
+    unexpected (legacy, non-numeric) format cannot be ordered against ``iat``,
+    so it fails safe and rejects all tokens while it lives.
+    """
     try:
         r = _get_redis()
         reset_marker = await r.get(f'pwd-reset:{user_id}')
-        # If a reset marker exists, all tokens issued before it are invalid
-        return reset_marker is not None
     except (redis.exceptions.RedisError, ConnectionError):
-        logger.warning('auth.pwd_reset_check_failed', user_id=user_id)
+        logger.warning('auth.pwd_reset_check_failed user_id=%s', user_id)
         return False
+
+    if reset_marker is None:
+        return False
+
+    if isinstance(reset_marker, bytes):
+        reset_marker = reset_marker.decode('utf-8', errors='ignore')
+
+    try:
+        reset_at = float(reset_marker)
+    except (TypeError, ValueError):
+        logger.warning(
+            'auth.pwd_reset_marker_unparseable user_id=%s', user_id,
+        )
+        return True
+
+    # ``<=`` rejects tokens minted in the same second as the reset — the
+    # window is 1s and erring toward rejection is the safe direction.
+    return float(token_issued_at or 0) <= reset_at
 
 
 async def mark_refresh_used(jti: str, exp: int) -> bool:
@@ -197,10 +222,14 @@ async def mark_refresh_used(jti: str, exp: int) -> bool:
     rotation), False if the jti was already marked (replay — the same refresh
     token is being used a second time, indicating theft).
 
-    Fail-open: if Redis is unreachable, returns True (allows the rotation).
-    We prefer occasional missed replay detection over blocking all refreshes
-    during a Redis outage; the existing rotation revoke still invalidates the
-    old token.
+    SET NX is both the read and the write of the ledger, so there is no
+    separate read path to harden.
+
+    Fail-closed after first contact: once Redis has been reachable, an outage
+    returns False (refuse the rotation) — otherwise an attacker (or an
+    attacker-induced outage) could replay a stolen refresh token past its
+    rotation. Cold start (Redis never reachable) stays fail-open so dev
+    setups without Redis keep working.
     """
     global _redis_ever_connected
     try:
@@ -214,6 +243,8 @@ async def mark_refresh_used(jti: str, exp: int) -> bool:
         return bool(result)
     except (redis.exceptions.RedisError, ConnectionError):
         logger.warning('auth.refresh_ledger_failed jti=%s', jti[:8] if jti else None)
+        if _redis_ever_connected:
+            return False
         return True
 
 

@@ -7,14 +7,14 @@ from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.common import GenericResponse
-from app.schemas.settings import SettingsUpdate
+from app.schemas.settings import SettingsUpdate, ZoteroValidateRequest
 from app.services import settings_service
 from app.utils.i18n import not_found_error, t
 import logging
@@ -29,18 +29,6 @@ router = APIRouter(
     tags=['settings'],
     dependencies=[api_limiter],
 )
-
-
-class ZoteroValidateRequest(BaseModel):
-    apiKey: str = Field(..., min_length=1, max_length=64)
-    userId: str = Field(..., pattern=r'^\d+$')
-
-    @field_validator('userId')
-    @classmethod
-    def validate_no_traversal(cls, v: str) -> str:
-        if '..' in v or '/' in v:
-            raise ValueError('Invalid user ID')
-        return v
 
 
 class PushTokenRequest(BaseModel):

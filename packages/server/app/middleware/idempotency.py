@@ -5,6 +5,7 @@ timeout auto-retry). Uses Idempotency-Key header to cache and replay responses
 within 24 hours.
 """
 
+import json
 import re
 import time
 from collections.abc import Callable
