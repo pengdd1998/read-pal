@@ -1,7 +1,16 @@
-"""Provider registry — multi-provider routing, per-provider circuit breakers."""
+"""Provider registry — multi-provider routing, per-provider circuit breakers.
+
+Hot-pluggable: provider configs are re-read on every resolution (fingerprint
+compare — no-op when unchanged) and via an explicit admin reload endpoint.
+Providers can be added/removed/key-rotated at runtime without a restart;
+existing providers keep their circuit-breaker and latency state across reloads.
+"""
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
+import json
 import random
 import time
 from dataclasses import dataclass, field
@@ -114,6 +123,8 @@ class ProviderRegistry:
         self._providers: dict[str, ProviderState] = {}
         self._rr_index: int = 0
         self._initialized: bool = False
+        self._config_fingerprint: str = ''
+        self._reload_lock = asyncio.Lock()
 
     def initialize(self) -> None:
         """Build provider states from current settings."""
@@ -129,11 +140,100 @@ class ProviderRegistry:
             else:
                 new_providers[cfg.name] = ProviderState(config=cfg)
         self._providers = new_providers
+        self._config_fingerprint = self._fingerprint(configs)
         self._initialized = True
         logger.info(
             'registry_initialized',
             providers=list(self._providers.keys()),
         )
+
+    @staticmethod
+    def _fingerprint(configs: list[ProviderConfig]) -> str:
+        """Stable fingerprint of provider configs — detects config changes.
+
+        Only fields that change routing behavior are included (name,
+        base_url, api_key, models, priority). Runtime knobs like max_rpm
+        are excluded deliberately: tuning RPM shouldn't force a rebuild,
+        and ProviderState.config is refreshed wholesale on any reload anyway.
+        """
+        material = json.dumps(
+            [
+                {
+                    'name': c.name,
+                    'base_url': c.base_url,
+                    'api_key': c.api_key[-8:] if c.api_key else '',
+                    'models': sorted(c.models.items()),
+                    'priority': c.priority,
+                }
+                for c in configs
+            ],
+            sort_keys=True,
+        )
+        return hashlib.sha256(material.encode()).hexdigest()[:16]
+
+    async def reload_if_changed(self) -> bool:
+        """Re-read settings and rebuild the registry if the provider config changed.
+
+        Hot-plug contract (P1):
+        - unchanged config → no-op (cheap fingerprint compare)
+        - changed config → rebuild states; existing providers keep their
+          circuit breaker + latency history, removed providers are dropped,
+          added providers start fresh
+        - invalid LLM_PROVIDERS JSON → keep the previous provider set and
+          log a warning (never empty the registry due to a bad edit)
+
+        Called before every LLM resolution (cheap) and by the admin reload
+        endpoint (explicit). get_settings() is lru_cache-free pydantic
+        settings re-read — env var changes in the process are picked up,
+        and the admin API can also push configs directly.
+        """
+        async with self._reload_lock:
+            settings = get_settings()
+            try:
+                configs = settings.provider_configs
+            except Exception as exc:  # bad JSON in env — keep serving
+                logger.warning(
+                    'registry_reload_parse_failed keeping_previous error=%s',
+                    str(exc)[:200],
+                )
+                return False
+            fingerprint = self._fingerprint(configs)
+            if fingerprint == self._config_fingerprint and self._initialized:
+                return False
+            self.initialize()
+            logger.info(
+                'registry_hot_reloaded',
+                providers=[s.config.name for s in self._providers.values()],
+            )
+            return True
+
+    def reload_if_changed_sync(self) -> bool:
+        """Synchronous hot-reload check for sync call paths (pool.get_llm).
+
+        Same contract as ``reload_if_changed`` minus the async lock. Safe in
+        a single event loop: the fingerprint compare + rebuild runs without
+        awaits, so concurrent coroutines see either the old or the new
+        provider map — never a partial one. Parse failures keep the
+        previous provider set (never empty the registry on a bad edit).
+        """
+        settings = get_settings()
+        try:
+            configs = settings.provider_configs
+        except Exception as exc:
+            logger.warning(
+                'registry_reload_parse_failed keeping_previous error=%s',
+                str(exc)[:200],
+            )
+            return False
+        fingerprint = self._fingerprint(configs)
+        if fingerprint == self._config_fingerprint and self._initialized:
+            return False
+        self.initialize()
+        logger.info(
+            'registry_hot_reloaded',
+            providers=[s.config.name for s in self._providers.values()],
+        )
+        return True
 
     def _ensure_initialized(self) -> None:
         if not self._initialized:

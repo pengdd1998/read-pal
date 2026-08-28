@@ -17,7 +17,7 @@ from sqlalchemy.exc import DBAPIError
 from app.config import get_settings
 from app.core.logging import setup_logging
 from app.core.redis import get_redis
-from app.db import async_session
+from app.db import async_session, pool_status
 from app.middleware.exception_handlers import NotFoundError, register_exception_handlers
 from app.middleware.request_log import RequestLogMiddleware
 
@@ -223,15 +223,15 @@ async def health_check() -> dict[str, object]:
         checks['redis'] = {'status': 'error'}
 
     overall = 'ok' if all(c['status'] == 'ok' for c in checks.values()) else 'degraded'
-    return {'status': overall, 'version': '0.1.0', 'checks': checks}
+    return {'status': overall, 'version': '0.1.0', 'checks': checks, 'db_pool': pool_status()}
 
 
 # --- Router includes ---
 from app.routers import (  # noqa: E402
     account, agent, annotations, auth, book_clubs, books,
     challenges, collections, discovery, export, flashcards, friend,
-    interventions, knowledge, logs, notifications, password_reset,
-    reading_book, reading_sessions, recommendations,
+    interventions, knowledge, llm_providers, logs, notifications,
+    password_reset, reading_book, reading_sessions, recommendations,
     settings as settings_router, share, stats, study_mode, synthesis,
     upload, webhooks,
 )
@@ -245,6 +245,7 @@ for r in [
     notifications.router, share.router, webhooks.router, upload.router,
     stats.router, discovery.router, challenges.router,
     recommendations.router, interventions.router, study_mode.router,
+    llm_providers.router,
 ]:
     app.include_router(r)
 

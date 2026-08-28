@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from typing import Any
 
 import structlog
@@ -13,6 +15,27 @@ logger = structlog.get_logger('read-pal.llm')
 
 # Legacy pool kept for backward compat when registry is not used
 _pool: dict[tuple[str, float, int], ChatOpenAI] = {}
+
+# Reasoning-capable models (e.g. mimo-v2.5) burn part of max_tokens on
+# chain-of-thought in `reasoning_content` BEFORE any visible answer. A
+# template-tuned cap (e.g. 800) leaves content empty when reasoning eats
+# the whole budget; a big extraction can still truncate mid-JSON even at
+# 3x. Scale explicit caps for these models — env-tunable because the
+# reasoning share is model-dependent.
+_REASONING_MODEL_PREFIXES = ('mimo',)
+_REASONING_TOKEN_SCALE = int(os.environ.get('LLM_REASONING_TOKEN_SCALE', '5'))
+
+
+def _cap_for_model(model_name: str, max_tokens: int) -> int:
+    """Scale explicit max_tokens for reasoning models (answer + reasoning)."""
+    if model_name and model_name.lower().startswith(_REASONING_MODEL_PREFIXES):
+        scaled = max_tokens * _REASONING_TOKEN_SCALE
+        logger.debug(
+            'llm_reasoning_cap_scaled', model=model_name,
+            requested=max_tokens, scaled=scaled,
+        )
+        return scaled
+    return max_tokens
 
 
 def get_llm(
@@ -44,6 +67,9 @@ def get_llm(
     from app.services.llm.registry import get_registry
 
     registry = get_registry()
+    # Hot-plug: cheap fingerprint compare — rebuilds provider states only
+    # when the config changed (no-op on every normal call).
+    registry.reload_if_changed_sync()
     settings = get_settings()
 
     # Determine which provider to use
@@ -59,14 +85,15 @@ def get_llm(
 
     model_name = model or state.config.default_model
     state.increment_rpm()
-    key = (model_name, temperature, max_tokens, structured_output)
+    effective_cap = _cap_for_model(model_name, max_tokens)
+    key = (model_name, temperature, effective_cap, structured_output)
     if key not in state.pool:
         kwargs: dict[str, Any] = {
             'model': model_name,
             'api_key': state.config.api_key,
             'base_url': state.config.base_url,
             'temperature': temperature,
-            'max_tokens': max_tokens,
+            'max_tokens': effective_cap,
             'max_retries': settings.llm_max_retries,
             'request_timeout': settings.llm_timeout_seconds,
         }
@@ -83,7 +110,7 @@ def get_llm(
             provider=state.config.name,
             model=model_name,
             temperature=temperature,
-            max_tokens=max_tokens,
+            max_tokens=effective_cap,
             structured_output=structured_output,
         )
     return state.pool[key]
