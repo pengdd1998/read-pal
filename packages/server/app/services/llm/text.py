@@ -131,12 +131,152 @@ def _repair_json(content: str, log_label: str = 'LLM') -> tuple[Any, str | None]
             except json.JSONDecodeError:
                 pass
 
+    # Stage 4: close truncated JSON. Reasoning models can hit the token cap
+    # mid-answer, leaving e.g. '{"concepts": [{"name": "Hope"'. Appending the
+    # missing closers (inside-out) recovers the complete prefix — a partial
+    # extraction beats an empty fallback.
+    repaired = _close_truncated_json(cleaned)
+    if repaired is not None:
+        try:
+            return json.loads(repaired), 'close_truncated'
+        except json.JSONDecodeError:
+            pass
+
     logger.warning(
         'llm_json_repair_exhausted',
         label=log_label,
         content_preview=cleaned[:200],
     )
     return None, None
+
+
+def _close_truncated_json(content: str) -> str | None:
+    """Best-effort close of a truncated JSON document.
+
+    Walks the string tracking string/escape state and an open-bracket stack,
+    then appends the closers in reverse order. Returns None when nothing was
+    truncated (balanced already) or the structure is too broken to close.
+    """
+    stack: list[str] = []
+    in_string = False
+    escaped = False
+    for ch in content:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == '\\':
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in '{[':
+            stack.append('}' if ch == '{' else ']')
+        elif ch in '}]':
+            if not stack:
+                return None  # unbalanced closer — too broken
+            stack.pop()
+    if in_string:
+        # Truncated mid-string: back up to the last position where a value
+        # boundary existed (comma, '{' or '[' outside any string), discard
+        # the partial tail, strip a dangling comma, then close.
+        idx = _last_value_boundary(content)
+        if idx <= 0:
+            return None
+        trimmed = content[:idx].rstrip()
+        if trimmed.endswith(','):
+            trimmed = trimmed[:-1].rstrip()
+        if _balanced(trimmed):
+            return trimmed
+        return _close_truncated_json(trimmed)
+    if not stack:
+        return None  # already balanced — nothing to repair here
+    # Not in a string but unbalanced (truncated right after a key's colon or
+    # an object opener). Try dropping the trailing partial element by closing
+    # and validating; if invalid, cut at the last boundary and retry.
+    closer = ''.join(reversed(stack))
+    candidate = content + closer
+    if _balanced(candidate):
+        return candidate
+    idx = _last_value_boundary(content)
+    if idx > 0:
+        trimmed = content[:idx].rstrip().rstrip(',').rstrip()
+        retry = trimmed + ''.join(reversed(_stack_for(trimmed)))
+        if _balanced(retry):
+            return retry
+    return candidate
+    if not stack:
+        return None  # already balanced — nothing to repair here
+    closer = ''.join(reversed(stack))
+    candidate = content + closer
+    if _balanced(candidate):
+        return candidate
+    # Dangling comma before the closers (e.g. '{"a":1,')
+    trimmed = content.rstrip().rstrip(',')
+    if trimmed != content:
+        candidate2 = trimmed + closer
+        if _balanced(candidate2):
+            return candidate2
+    return candidate
+
+
+def _stack_for(content: str) -> list[str]:
+    """Recompute the open-bracket stack for a (possibly trimmed) string."""
+    stack: list[str] = []
+    in_string = False
+    escaped = False
+    for ch in content:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == '\\':
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in '{[':
+            stack.append('}' if ch == '{' else ']')
+        elif ch in '}]':
+            if stack:
+                stack.pop()
+    return stack
+
+
+def _last_value_boundary(content: str) -> int:
+    """Index just past the last comma/bracket that sits OUTSIDE any string.
+
+    A plain rfind(',') can land inside a string value (e.g. a truncated
+    sentence containing commas), which would cut at the wrong place. This
+    walk mirrors the parser state so the boundary is always structural.
+    """
+    best = -1
+    in_string = False
+    escaped = False
+    for i, ch in enumerate(content):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == '\\':
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in ',{[':
+            best = i + 1
+    return best
+
+
+def _balanced(content: str) -> bool:
+    try:
+        json.loads(content)
+        return True
+    except (json.JSONDecodeError, ValueError):
+        return False
 
 
 def _validate_parsed(

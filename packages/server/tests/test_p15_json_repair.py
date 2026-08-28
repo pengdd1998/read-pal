@@ -132,11 +132,12 @@ class TestRepairExhausted:
         assert parsed is None
         assert stage is None
 
-    def test_truncated_object_returns_none(self):
-        """Missing closing brace — no balanced structure to extract."""
+    def test_truncated_object_recovers_prefix(self):
+        """Missing closing brace — stage 4 (close_truncated) now recovers
+        the complete prefix instead of returning None (empty fallback)."""
         parsed, stage = _repair_json('{"k": 1, "k2": ')
-        assert parsed is None
-        assert stage is None
+        assert stage == 'close_truncated'
+        assert parsed == {'k': 1}
 
     def test_empty_returns_none(self):
         parsed, stage = _repair_json('')
@@ -193,3 +194,45 @@ class TestSafeLlmInvokeUsesRepair:
             [], log_label='TEST', use_cache=False,
         )
         assert result == {'answer': 42}
+
+
+class TestCloseTruncatedJson:
+    """Stage 4: reasoning models can hit the token cap mid-JSON; recover the
+    complete prefix instead of returning the fallback (empty)."""
+
+    def test_truncated_mid_string_recovers_prefix(self):
+        from app.services.llm.text import _close_truncated_json
+        import json
+        r = _close_truncated_json('{"concepts": [{"name": "Hope", "type": "theme"}, {"name": "Gr')
+        assert r is not None
+        parsed = json.loads(r)
+        assert parsed['concepts'][0]['name'] == 'Hope'
+
+    def test_truncated_key_colon(self):
+        from app.services.llm.text import _close_truncated_json
+        import json
+        r = _close_truncated_json('{"cards": [{"q": "a"}, {"front":')
+        assert r is not None and json.loads(r)['cards'][0]['q'] == 'a'
+
+    def test_truncated_bare_array(self):
+        from app.services.llm.text import _close_truncated_json
+        import json
+        r = _close_truncated_json('[{"n": 1}, {"n":')
+        assert r is not None and json.loads(r)[0]['n'] == 1
+
+    def test_dangling_comma_closed(self):
+        from app.services.llm.text import _close_truncated_json
+        import json
+        r = _close_truncated_json('{"concepts": [{"name": "Hope"}],')
+        assert r is not None
+        assert json.loads(r) == {'concepts': [{'name': 'Hope'}]}
+
+    def test_balanced_input_returns_none(self):
+        from app.services.llm.text import _close_truncated_json
+        assert _close_truncated_json('{"a": 1}') is None
+
+    def test_repair_ladder_uses_close_truncated(self):
+        from app.services.llm.text import _repair_json
+        parsed, stage = _repair_json('{"concepts": [{"name": "Hope"}, {"name":', log_label='T')
+        assert stage == 'close_truncated'
+        assert parsed['concepts'][0]['name'] == 'Hope'
