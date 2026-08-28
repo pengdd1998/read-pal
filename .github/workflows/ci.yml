@@ -222,6 +222,11 @@ jobs:
       JWT_REFRESH_MOBILE: 30d
       FRONTEND_URL: http://localhost:3000
       CORS_ORIGINS: http://localhost:3000
+      APP_ENV: development
+      LOG_LEVEL: INFO
+      LOG_JSON: 'false'
+      LLM_LOG_ENABLED: 'false'
+      LLM_LOG_RETENTION_DAYS: '90'
 
     steps:
       - uses: actions/checkout@v4
