@@ -211,6 +211,11 @@ async def health_check() -> dict[str, object]:
     except DBAPIError as exc:
         logger.error('health_check_database_error', error=str(exc))
         checks['database'] = {'status': 'error'}
+    except (OSError, ConnectionError, ValueError) as exc:
+        # Unreachable DB surfaces as OSError from asyncpg before SQLAlchemy
+        # wraps it — health must degrade, not 500 (CI has no database).
+        logger.error('health_check_database_unreachable', error=str(exc)[:200])
+        checks['database'] = {'status': 'error'}
 
     try:
         redis = get_redis()
