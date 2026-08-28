@@ -1,6 +1,6 @@
 'use client';
 
-import React, { type RefObject } from 'react';
+import React, { useEffect, type RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { themeClasses, type ReaderTheme } from '@/lib/reader-theme';
 import { ChapterDropdown } from '@/components/reading/ChapterDropdown';
@@ -32,6 +32,7 @@ interface ReaderViewProps {
   theme: ReaderTheme;
   fontFamily?: string;
   lineHeight?: number;
+  readingWidth?: 'comfortable' | 'wide';
   showControls?: boolean;
   onToggleControls?: () => void;
   externalTocOpen?: boolean;
@@ -58,6 +59,7 @@ export const ReaderView = React.memo(function ReaderView({
   theme,
   fontFamily,
   lineHeight,
+  readingWidth = 'comfortable',
   showControls = true,
   onToggleControls,
   externalTocOpen,
@@ -83,6 +85,7 @@ export const ReaderView = React.memo(function ReaderView({
     goNextPage,
     goPrevPage,
     overallProgress,
+    chapterMinutesLeft,
   } = useReaderViewLogic({
     bookId,
     chapterContent,
@@ -99,6 +102,13 @@ export const ReaderView = React.memo(function ReaderView({
     totalSegments,
     onSegmentChange,
   });
+
+  // Width transitions only after mount: flag the article as ready so the
+  // first paint never animates max-width, only user toggles do.
+  useEffect(() => {
+    const el = articleRef.current;
+    if (el) el.classList.add('data-width-ready');
+  }, []);
 
   return (
     <div
@@ -130,6 +140,7 @@ export const ReaderView = React.memo(function ReaderView({
           ref={articleRef}
           className="reading-mode select-text animate-chapter-fade"
           data-theme={theme}
+          data-width={readingWidth}
           style={articleStyle}
         >
           {chapterTitle && currentSegment === 0 && (
@@ -151,7 +162,11 @@ export const ReaderView = React.memo(function ReaderView({
             />
           )}
 
-          <ChapterEndMarker />
+          <ChapterEndMarker
+            hasNextChapter={currentPage < totalPages - 1}
+            nextChapterTitle={chapters[currentPage + 1]?.title}
+            onNextChapter={goNextPage}
+          />
         </article>
       </div>
 
@@ -165,6 +180,7 @@ export const ReaderView = React.memo(function ReaderView({
         onResumeAutoHide={onResumeAutoHide}
         onPrevPage={goPrevPage}
         onNextPage={goNextPage}
+        chapterMinutesLeft={chapterMinutesLeft}
         chapterDropdown={
           <ChapterDropdown
             currentPage={currentPage}

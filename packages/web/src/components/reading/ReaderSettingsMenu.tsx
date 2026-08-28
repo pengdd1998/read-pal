@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
+type ReadingWidth = 'comfortable' | 'wide';
+
 interface ReaderSettingsMenuProps {
   show: boolean;
   theme: 'light' | 'dark' | 'sepia';
@@ -11,6 +13,7 @@ interface ReaderSettingsMenuProps {
   fontFamily: string;
   quietMode: boolean;
   bgEnabled: boolean;
+  readingWidth: ReadingWidth;
   onClose: () => void;
   onFontSizeChange: (size: number) => void;
   onLineHeightChange: (height: number) => void;
@@ -18,14 +21,15 @@ interface ReaderSettingsMenuProps {
   onThemeChange: (theme: 'light' | 'dark' | 'sepia') => void;
   onQuietModeChange: (quiet: boolean) => void;
   onBgEnabledChange: (enabled: boolean) => void;
+  onReadingWidthChange: (width: ReadingWidth) => void;
   onShowShortcuts: () => void;
 }
 
 export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: ReaderSettingsMenuProps) {
   const {
-    show, theme, fontSize, lineHeight, fontFamily, quietMode, bgEnabled,
+    show, theme, fontSize, lineHeight, fontFamily, quietMode, bgEnabled, readingWidth,
     onClose, onFontSizeChange, onLineHeightChange, onFontFamilyChange,
-    onThemeChange, onQuietModeChange, onBgEnabledChange, onShowShortcuts,
+    onThemeChange, onQuietModeChange, onBgEnabledChange, onShowShortcuts, onReadingWidthChange,
   } = props;
   const t = useTranslations('reader');
   const menuRef = useRef<HTMLDivElement>(null);
@@ -110,6 +114,27 @@ export const ReaderSettingsMenu = React.memo(function ReaderSettingsMenu(props: 
               }`}
             >
               {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Reading width — Matter/Readwise-style comfort option */}
+      <div>
+        <label className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 block">{t('width_label')}</label>
+        <div className="flex gap-1.5">
+          {(['comfortable', 'wide'] as const).map((w) => (
+            <button type="button"
+              key={w}
+              onClick={() => onReadingWidthChange(w)}
+              aria-pressed={readingWidth === w}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+                readingWidth === w
+                  ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 ring-1 ring-amber-300 dark:ring-amber-700'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+            >
+              {w === 'comfortable' ? t('width_comfortable') : t('width_wide')}
             </button>
           ))}
         </div>

@@ -7,6 +7,7 @@ import { purifySync, preloadDOMPurify } from '@/lib/dompurify';
 import { PURIFY_CONFIG } from '@/lib/dompurify-config';
 import { highlightCodeBlocks, preloadPrism } from '@/lib/syntax-highlight';
 import { useScrollPersistence } from '@/hooks/useScrollPersistence';
+import { useChapterTimeLeft } from '@/hooks/useChapterTimeLeft';
 import { useReaderKeyboardNav } from '@/hooks/useReaderKeyboardNav';
 import { useReaderSwipeNav } from '@/hooks/useReaderSwipeNav';
 import { warn } from '@/lib/logger';
@@ -87,12 +88,38 @@ export const EmptyChapterState = React.memo(function EmptyChapterState() {
 });
 
 // ---------------------------------------------------------------------------
-// ChapterEndMarker — decorative divider at the end of chapter content
+// ChapterEndMarker — divider + next-chapter affordance at chapter end
+// (Readwise-style: a boundary you can act on, not just see)
 // ---------------------------------------------------------------------------
-export const ChapterEndMarker = React.memo(function ChapterEndMarker() {
+interface ChapterEndMarkerProps {
+  hasNextChapter: boolean;
+  nextChapterTitle?: string;
+  onNextChapter: () => void;
+}
+
+export const ChapterEndMarker = React.memo(function ChapterEndMarker({
+  hasNextChapter,
+  nextChapterTitle,
+  onNextChapter,
+}: ChapterEndMarkerProps) {
+  const t = useTranslations('reader');
   return (
     <div className="chapter-end">
       <div className="chapter-end-line" />
+      {hasNextChapter && (
+        <button
+          type="button"
+          onClick={onNextChapter}
+          className="chapter-next-affordance group"
+          aria-label={t('next_chapter_cta', { title: nextChapterTitle || '' })}
+        >
+          <span className="chapter-next-label">
+            {t('next_chapter_label')}
+            {nextChapterTitle ? ` · ${nextChapterTitle}` : ''}
+          </span>
+          <span className="chapter-next-arrow" aria-hidden="true">→</span>
+        </button>
+      )}
     </div>
   );
 });
@@ -254,6 +281,9 @@ export function useReaderViewLogic({
     ? Math.round(((currentPage + scrollProgress) / totalPages) * 100)
     : Math.round(scrollProgress * 100);
 
+  // Kindle-style chapter time-left: words remaining ÷ reading rate.
+  const chapterMinutesLeft = useChapterTimeLeft(chapterContent, scrollProgress);
+
   return {
     scrollProgress,
     selectingRef,
@@ -265,5 +295,6 @@ export function useReaderViewLogic({
     goNextPage,
     goPrevPage,
     overallProgress,
+    chapterMinutesLeft,
   };
 }

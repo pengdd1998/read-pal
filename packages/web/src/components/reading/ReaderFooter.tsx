@@ -16,6 +16,8 @@ interface ReaderFooterProps {
  onPrevPage: () => void;
  onNextPage: () => void;
  chapterDropdown: React.ReactNode;
+ /** Minutes left in the current chapter (Kindle-style comfort cue). */
+ chapterMinutesLeft?: number;
 }
 
 const FOOTER_CLASSES = {
@@ -35,6 +37,7 @@ export const ReaderFooter = React.memo(function ReaderFooter({
  onPrevPage,
  onNextPage,
  chapterDropdown,
+ chapterMinutesLeft,
 }: ReaderFooterProps) {
  const t = useTranslations('reader');
  const clampedProgress = Math.min(100, Math.max(0, overallProgress));
@@ -72,6 +75,20 @@ export const ReaderFooter = React.memo(function ReaderFooter({
 
   <div className="flex-1 min-w-0">
    {chapterDropdown}
+  </div>
+
+  {/* Reading comfort cues: chapter time-left + book % (Kindle-style) */}
+  <div
+   className="hidden sm:flex items-center gap-2 text-[11px] font-medium text-gray-400 dark:text-gray-500 tabular-nums shrink-0 mr-1"
+   aria-live="off"
+  >
+   {typeof chapterMinutesLeft === 'number' && chapterMinutesLeft > 0 && (
+   <span title={t('chapter_time_left_title', { minutes: chapterMinutesLeft })}>
+    {t('chapter_time_left', { minutes: chapterMinutesLeft })}
+   </span>
+   )}
+   <span aria-hidden="true" className="opacity-40">·</span>
+   <span>{Math.round(clampedProgress)}%</span>
   </div>
 
   <button type="button"

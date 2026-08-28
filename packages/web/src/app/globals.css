@@ -109,6 +109,11 @@
     max-width: 68ch;
     margin-inline: auto;
     padding: 2rem 1.25rem 3rem;
+    /* Reading width preference (Matter/Readwise-style): 'wide' opts into
+       a longer line for dense study; comfortable stays in the 50-75ch
+       readability band. Set via data-width on the article. */
+    /* No transition by default — first paint must not animate. The
+       .reading-mode.data-width-ready flag is added client-side after mount. */
     font-family: 'Literata', 'Source Serif 4', Georgia, serif;
     line-height: 1.9;
     font-size: 1.125rem;
@@ -119,6 +124,13 @@
     widows: 3;
     word-spacing: 0.02em;
     hanging-punctuation: first last;
+  }
+  .reading-mode[data-width='wide'] { max-width: 88ch; }
+  /* Animate width changes only after the reader has mounted and settled —
+     data-width-ready is set from the first user interaction onwards. */
+  .reading-mode.data-width-ready { transition: max-width 0.35s ease; }
+  @media (prefers-reduced-motion: reduce) {
+    .reading-mode.data-width-ready { transition: none; }
   }
 
   /* Reading area — subtle custom scrollbar */
@@ -298,6 +310,47 @@
     width: 3rem;
     height: 1px;
     background: currentColor;
+  }
+  /* Next-chapter affordance: quiet until hovered — depth over distraction */
+  .chapter-next-affordance {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    border: 1px solid rgba(139, 123, 104, 0.18);
+    background: transparent;
+    color: #a89580;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.25s ease, border-color 0.25s ease, color 0.25s ease, background-color 0.25s ease;
+  }
+  .chapter-next-affordance:hover,
+  .chapter-next-affordance:focus-visible {
+    opacity: 1;
+    color: #b45309;
+    border-color: rgba(180, 83, 9, 0.35);
+    background: rgba(180, 83, 9, 0.06);
+  }
+  .dark .chapter-next-affordance { color: #8a8078; border-color: rgba(138, 128, 120, 0.2); }
+  .dark .chapter-next-affordance:hover,
+  .dark .chapter-next-affordance:focus-visible { color: #fbbf24; border-color: rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.07); }
+  [data-theme="sepia"] .chapter-next-affordance { color: #8b7355; }
+  [data-theme="sepia"] .chapter-next-affordance:hover { color: #92400e; border-color: rgba(146, 64, 14, 0.35); background: rgba(146, 64, 14, 0.06); }
+  .chapter-next-affordance .chapter-next-label {
+    max-width: 38ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chapter-next-affordance .chapter-next-arrow { transition: transform 0.25s ease; }
+  .chapter-next-affordance:hover .chapter-next-arrow { transform: translateX(3px); }
+  @media (prefers-reduced-motion: reduce) {
+    .chapter-next-affordance, .chapter-next-affordance .chapter-next-arrow { transition: none; }
   }
 
   /* Highlight marks */

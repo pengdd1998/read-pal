@@ -1011,7 +1011,14 @@
     "outline_item_aria": "{type} annotation",
     "companion_ai_degraded": "AI responses may be slow or unavailable. Your messages will be saved.",
     "study_load_error": "Failed to load study data. Please try again.",
-    "mastery_load_error": "Failed to load mastery report. Please try again."
+    "mastery_load_error": "Failed to load mastery report. Please try again.",
+    "chapter_time_left": "{minutes} min left",
+    "chapter_time_left_title": "About {minutes} minute(s) left in this chapter",
+    "width_label": "Reading width",
+    "width_comfortable": "Comfortable",
+    "width_wide": "Wide",
+    "next_chapter_label": "NEXT CHAPTER",
+    "next_chapter_cta": "Continue to next chapter: {title}"
   },
   "stats": {
     "title": "Reading Stats",

@@ -1011,7 +1011,14 @@
     "outline_item_aria": "{type} 批注",
     "companion_ai_degraded": "AI回复可能缓慢或暂时不可用。您的消息将被保存。",
     "study_load_error": "加载学习数据失败，请重试。",
-    "mastery_load_error": "加载掌握报告失败，请重试。"
+    "mastery_load_error": "加载掌握报告失败，请重试。",
+    "chapter_time_left": "还剩 {minutes} 分钟",
+    "chapter_time_left_title": "本章大约还需 {minutes} 分钟",
+    "width_label": "阅读宽度",
+    "width_comfortable": "舒适",
+    "width_wide": "加宽",
+    "next_chapter_label": "下一章",
+    "next_chapter_cta": "继续阅读下一章：{title}"
   },
   "stats": {
     "title": "阅读统计",

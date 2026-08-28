@@ -28,7 +28,7 @@ export default function ReadPage() {
     currentSegment, totalSegments, pageContent,
     contentRef, chatHandleRef,
     fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode,
-    fontFamily, setFontFamily, lineHeight, setLineHeight,
+    fontFamily, setFontFamily, lineHeight, setLineHeight, readingWidth, setReadingWidth,
     bgEnabled, setBgEnabled, highlightMode,
     readingPph, hasMadeSelection, setHasMadeSelection,
     sessionSummary, setSessionSummary, sessionIdRef,
@@ -129,6 +129,7 @@ export default function ReadPage() {
             fontFamily={fontFamily}
             quietMode={quietMode}
             bgEnabled={bgEnabled}
+            readingWidth={readingWidth}
             onClose={handleCloseSettingsMenu}
             onFontSizeChange={setFontSize}
             onLineHeightChange={setLineHeight}
@@ -136,6 +137,7 @@ export default function ReadPage() {
             onThemeChange={setTheme}
             onQuietModeChange={setQuietMode}
             onBgEnabledChange={setBgEnabled}
+            onReadingWidthChange={setReadingWidth}
             onShowShortcuts={handleOpenShortcutsHelp}
           />
         }
@@ -165,6 +167,7 @@ export default function ReadPage() {
             theme={theme}
             fontFamily={fontFamily}
             lineHeight={lineHeight}
+            readingWidth={readingWidth}
             showControls={ui.showControls}
             onToggleControls={ui.handleToggleControls}
             highlightMode={highlightMode}

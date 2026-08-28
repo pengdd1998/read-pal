@@ -80,7 +80,7 @@ export function useReaderPage() {
   }, [chapterContent]);
 
   const selection = useTextSelection(contentRef);
-  const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight } = useReaderSettings(bookId, loading);
+  const { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight, readingWidth, setReadingWidth } = useReaderSettings(bookId, loading);
   const [chapterScrollProgress, setChapterScrollProgress] = useState(0);
   const { sessionIdRef } = useReadingSession({ bookId, loading, currentChapter, chaptersLength: chapters.length, isPaused: ui.isPaused, scrollProgress: chapterScrollProgress, activeSeconds: ui.sessionElapsed });
   const studyMode = useStudyMode(bookId);
@@ -202,7 +202,7 @@ export function useReaderPage() {
     contentRef, chatHandleRef,
     // Settings
     fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode,
-    fontFamily, setFontFamily, lineHeight, setLineHeight,
+    fontFamily, setFontFamily, lineHeight, setLineHeight, readingWidth, setReadingWidth,
     bgEnabled, setBgEnabled,
     highlightMode, setHighlightMode,
     readingPph, hasMadeSelection, setHasMadeSelection,

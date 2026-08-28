@@ -6,12 +6,15 @@ import { warn } from '@/lib/logger';
 
 const SETTINGS_KEY_PREFIX = 'reader-settings';
 
+type ReadingWidth = 'comfortable' | 'wide';
+
 interface ReaderSettings {
   fontSize: number;
   theme: 'light' | 'dark' | 'sepia';
   quietMode: boolean;
   fontFamily: string;
   lineHeight: number;
+  readingWidth: ReadingWidth;
 }
 
 const FONT_FAMILIES = [
@@ -27,6 +30,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   quietMode: false,
   fontFamily: "'Literata', 'Source Serif 4', Georgia, serif",
   lineHeight: 1.9,
+  readingWidth: 'comfortable',
 };
 
 function loadSettings(bookId: string): ReaderSettings | null {
@@ -55,6 +59,7 @@ export function useReaderSettings(bookId: string, loading: boolean) {
   const [quietMode, setQuietMode] = useState(DEFAULT_SETTINGS.quietMode);
   const [fontFamily, setFontFamily] = useState(DEFAULT_SETTINGS.fontFamily);
   const [lineHeight, setLineHeight] = useState(DEFAULT_SETTINGS.lineHeight);
+  const [readingWidth, setReadingWidth] = useState<ReadingWidth>(DEFAULT_SETTINGS.readingWidth);
 
   // Load saved settings on mount
   useEffect(() => {
@@ -67,6 +72,9 @@ export function useReaderSettings(bookId: string, loading: boolean) {
       if (typeof saved.quietMode === 'boolean') setQuietMode(saved.quietMode);
       if (typeof saved.fontFamily === 'string') setFontFamily(saved.fontFamily);
       if (typeof saved.lineHeight === 'number') setLineHeight(saved.lineHeight);
+      if (saved.readingWidth === 'comfortable' || saved.readingWidth === 'wide') {
+        setReadingWidth(saved.readingWidth);
+      }
     }
   }, [bookId]);
 
@@ -76,14 +84,14 @@ export function useReaderSettings(bookId: string, loading: boolean) {
     if (loading) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      saveSettings(bookId, { fontSize, theme, quietMode, fontFamily, lineHeight });
+      saveSettings(bookId, { fontSize, theme, quietMode, fontFamily, lineHeight, readingWidth });
     }, 300);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [bookId, fontSize, theme, quietMode, fontFamily, lineHeight, loading]);
+  }, [bookId, fontSize, theme, quietMode, fontFamily, lineHeight, readingWidth, loading]);
 
-  return { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight };
+  return { fontSize, setFontSize, theme, setTheme, quietMode, setQuietMode, fontFamily, setFontFamily, lineHeight, setLineHeight, readingWidth, setReadingWidth };
 }
 
 export { FONT_FAMILIES, DEFAULT_SETTINGS };
