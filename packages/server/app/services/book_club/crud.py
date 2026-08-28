@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.middleware.exception_handlers import NotFoundError
 from app.models.book_club import BookClub, BookClubMember
 from app.models.user import User
 from app.schemas.book_club import BookClubCreate, BookClubUpdate
@@ -168,14 +169,18 @@ async def update_club(
     club_id: UUID,
     data: BookClubUpdate,
 ) -> BookClub:
-    """Update club details. Only admin or moderator can update."""
+    """Update club details. Only admin or moderator can update.
+
+    Raises NotFoundError for a missing club (router maps it to 404) and
+    PermissionError for non-admin/moderator members (router maps it to 403).
+    """
     async with db_error_guard('update_club', club_id=str(club_id)):
         result = await db.execute(
             select(BookClub).where(BookClub.id == club_id),
         )
         club = result.scalar_one_or_none()
         if club is None:
-            raise ValueError('Club not found')
+            raise NotFoundError('Club not found')
 
         member_result = await db.execute(
             select(BookClubMember).where(
@@ -185,7 +190,7 @@ async def update_club(
         )
         member = member_result.scalar_one_or_none()
         if member is None or member.role not in ('admin', 'moderator'):
-            raise ValueError('Only admin or moderator can update the club')
+            raise PermissionError('Only admin or moderator can update the club')
 
         update_data = data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
@@ -203,14 +208,18 @@ async def delete_club(
     user_id: UUID,
     club_id: UUID,
 ) -> None:
-    """Delete a club. Only admin can delete."""
+    """Delete a club. Only admin can delete.
+
+    Raises NotFoundError for a missing club (router maps it to 404) and
+    PermissionError for non-admin members (router maps it to 403).
+    """
     async with db_error_guard('delete_club', club_id=str(club_id)):
         result = await db.execute(
             select(BookClub).where(BookClub.id == club_id),
         )
         club = result.scalar_one_or_none()
         if club is None:
-            raise ValueError('Club not found')
+            raise NotFoundError('Club not found')
 
         member_result = await db.execute(
             select(BookClubMember).where(
@@ -220,7 +229,7 @@ async def delete_club(
             ),
         )
         if member_result.scalar_one_or_none() is None:
-            raise ValueError('Only admin can delete the club')
+            raise PermissionError('Only admin can delete the club')
 
         await db.delete(club)
         await db.flush()

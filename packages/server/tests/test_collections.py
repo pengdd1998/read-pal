@@ -70,7 +70,8 @@ async def test_list_collections_returns_empty(client):
     resp = await client.get('/api/v1/collections/', headers=headers)
     assert resp.status_code == 200
     body = resp.json()
-    assert body['data']['items'] == []
+    # `data` is now the bare items array (pagination fields are siblings)
+    assert body['data'] == []
 
 
 @pytest.mark.asyncio
@@ -87,8 +88,102 @@ async def test_list_collections_returns_created(client):
 
     resp = await client.get('/api/v1/collections/', headers=headers)
     assert resp.status_code == 200
-    items = resp.json()['data']['items']
+    items = resp.json()['data']
     assert len(items) == 2
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/collections/ — pagination
+# ---------------------------------------------------------------------------
+
+
+async def _create_n_collections(client, headers: dict, n: int) -> None:
+    """Create n collections named 'Collection 1'.. 'Collection N'."""
+    for i in range(1, n + 1):
+        resp = await client.post(
+            '/api/v1/collections/', headers=headers, json={'name': f'Collection {i}'},
+        )
+        assert resp.status_code == 201
+
+
+@pytest.mark.asyncio
+async def test_list_collections_default_pagination_fields(client):
+    """Default request returns page=1, perPage=20, hasMore=False plus totals."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    await _create_n_collections(client, headers, 3)
+
+    resp = await client.get('/api/v1/collections/', headers=headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body['success'] is True
+    # `data` stays the items array — existing frontend consumers depend on it
+    assert isinstance(body['data'], list)
+    assert len(body['data']) == 3
+    assert body['total'] == 3
+    assert body['page'] == 1
+    assert body['perPage'] == 20
+    assert body['hasMore'] is False
+
+
+@pytest.mark.asyncio
+async def test_list_collections_per_page_clamped_to_100(client):
+    """per_page above 100 is rejected by validation, not silently applied."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    resp = await client.get(
+        '/api/v1/collections/', headers=headers, params={'per_page': 500},
+    )
+    assert resp.status_code == 422
+
+    resp = await client.get(
+        '/api/v1/collections/', headers=headers, params={'per_page': 100},
+    )
+    assert resp.status_code == 200
+    assert resp.json()['perPage'] == 100
+
+
+@pytest.mark.asyncio
+async def test_list_collections_has_more_across_page_boundary(client):
+    """hasMore flips correctly at the page boundary and pages don't overlap."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    await _create_n_collections(client, headers, 5)
+
+    page1 = await client.get(
+        '/api/v1/collections/', headers=headers, params={'page': 1, 'per_page': 2},
+    )
+    assert page1.status_code == 200
+    p1 = page1.json()
+    assert len(p1['data']) == 2
+    assert p1['total'] == 5
+    assert p1['hasMore'] is True
+
+    page2 = await client.get(
+        '/api/v1/collections/', headers=headers, params={'page': 2, 'per_page': 2},
+    )
+    assert page2.status_code == 200
+    p2 = page2.json()
+    assert len(p2['data']) == 2
+    assert p2['hasMore'] is True
+
+    page3 = await client.get(
+        '/api/v1/collections/', headers=headers, params={'page': 3, 'per_page': 2},
+    )
+    assert page3.status_code == 200
+    p3 = page3.json()
+    assert len(p3['data']) == 1
+    assert p3['hasMore'] is False
+
+    # No collection appears on two pages
+    ids1 = {c['id'] for c in p1['data']}
+    ids2 = {c['id'] for c in p2['data']}
+    ids3 = {c['id'] for c in p3['data']}
+    assert not (ids1 & ids2) and not (ids1 & ids3) and not (ids2 & ids3)
+
+    # All 5 accounted for across pages
+    assert len(ids1 | ids2 | ids3) == 5
 
 
 # ---------------------------------------------------------------------------

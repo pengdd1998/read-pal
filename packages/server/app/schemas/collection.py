@@ -44,6 +44,20 @@ class CollectionResponse(BaseModel):
     updated_at: datetime
 
 
+class CollectionListResponse(BaseModel):
+    """Paginated collection list. `data` stays the items array so existing
+    frontend consumers reading `res.data.items` keep working."""
+
+    success: bool = True
+    data: list[CollectionResponse]
+    total: int
+    page: int = 1
+    per_page: int = Field(20, alias='perPage')
+    has_more: bool = Field(False, alias='hasMore')
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+
 class CollectionBooksBatchRequest(BaseModel):
     """Request body for batch adding/removing books from a collection."""
 

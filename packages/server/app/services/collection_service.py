@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -63,19 +63,33 @@ async def get_collection(
 async def list_collections(
     db: AsyncSession,
     user_id: UUID,
-) -> list[Collection]:
-    """List all collections for a user."""
+    page: int = 1,
+    per_page: int = 20,
+) -> tuple[list[Collection], int]:
+    """List collections for a user, paginated (newest first).
+
+    Returns (items, total) so the router can compute hasMore.
+    """
     try:
         async with db_error_guard('list_collections', user_id=str(user_id)):
+            count_q = (
+                select(func.count())
+                .select_from(Collection)
+                .where(Collection.user_id == user_id)
+            )
+            total = (await db.execute(count_q)).scalar() or 0
+
             result = await db.execute(
                 select(Collection)
                 .where(Collection.user_id == user_id)
-                .order_by(Collection.created_at.desc()),
+                .order_by(Collection.created_at.desc())
+                .offset((page - 1) * per_page)
+                .limit(per_page),
             )
-            return list(result.scalars().all())
+            return list(result.scalars().all()), total
     except DBAPIError:
         logger.warning('collection_service.list_collections failed', exc_info=True)
-        return []
+        return [], 0
 
 
 async def update_collection(

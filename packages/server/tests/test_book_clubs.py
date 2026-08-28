@@ -185,6 +185,94 @@ async def test_update_club_forbidden_for_non_admin(client):
     assert resp.status_code == 403
 
 
+@pytest.mark.asyncio
+async def test_update_club_invalid_value_returns_400(client):
+    """PATCH whose sanitized name becomes empty returns 400 INVALID_INPUT, not 403.
+
+    The name passes initial schema validation, the router sanitizes HTML,
+    then re-validation fails — the global ValueError handler must map it
+    to 400 INVALID_INPUT (never FORBIDDEN).
+    """
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    create_resp = await client.post(
+        '/api/v1/book-clubs/',
+        headers=headers,
+        json={'name': 'Valid Club'},
+    )
+    club_id = create_resp.json()['data']['id']
+
+    resp = await client.patch(
+        f'/api/v1/book-clubs/{club_id}',
+        headers=headers,
+        json={'name': '<script></script>'},
+    )
+    assert resp.status_code == 400
+    assert resp.json()['detail']['code'] == 'INVALID_INPUT'
+
+
+@pytest.mark.asyncio
+async def test_update_club_not_found_returns_404(client):
+    """PATCH on a non-existent club returns 404, not 403."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    resp = await client.patch(
+        '/api/v1/book-clubs/00000000-0000-0000-0000-000000000000',
+        headers=headers,
+        json={'name': 'Ghost Club'},
+    )
+    assert resp.status_code == 404
+    assert resp.json()['detail']['code'] == 'NOT_FOUND'
+
+
+@pytest.mark.asyncio
+async def test_update_club_invalid_value_not_403(client):
+    """PATCH with an invalid field value is a validation error, never 403.
+
+    Regression: the router used to map ANY ValueError to 403 FORBIDDEN,
+    so a validation failure looked like a permission problem.
+    """
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    create_resp = await client.post(
+        '/api/v1/book-clubs/',
+        headers=headers,
+        json={'name': 'Valid Club'},
+    )
+    club_id = create_resp.json()['data']['id']
+
+    # max_members violates the le=100 schema constraint
+    resp = await client.patch(
+        f'/api/v1/book-clubs/{club_id}',
+        headers=headers,
+        json={'maxMembers': 500},
+    )
+    assert resp.status_code != 403
+    assert resp.status_code == 422
+    assert resp.json()['detail']['code'] == 'VALIDATION_ERROR'
+
+    # The club must be unchanged by the rejected update
+    detail = await client.get(f'/api/v1/book-clubs/{club_id}', headers=headers)
+    assert detail.json()['data']['maxMembers'] != 500
+
+
+@pytest.mark.asyncio
+async def test_delete_club_not_found_returns_404(client):
+    """DELETE on a non-existent club returns 404, not 403."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+
+    resp = await client.delete(
+        '/api/v1/book-clubs/00000000-0000-0000-0000-000000000000',
+        headers=headers,
+    )
+    assert resp.status_code == 404
+    assert resp.json()['detail']['code'] == 'NOT_FOUND'
+
+
 # ---------------------------------------------------------------------------
 # DELETE /api/v1/book-clubs/{club_id} — delete club
 # ---------------------------------------------------------------------------

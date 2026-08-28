@@ -228,21 +228,56 @@ class TestListCollections:
             _make_collection(user_id=user_id, name='B'),
         ]
 
-        _mock_execute_scalars_all(db, collections)
+        _mock_execute_count_then_scalars(db, total=len(collections), items=collections)
 
-        result = await collection_service.list_collections(db, user_id)
+        items, total = await collection_service.list_collections(db, user_id)
 
-        assert len(result) == 2
-        assert result == collections
+        assert total == 2
+        assert items == collections
 
     @pytest.mark.asyncio
     async def test_returns_empty_list_for_no_collections(self):
         db = _make_db_session()
-        _mock_execute_scalars_all(db, [])
+        _mock_execute_count_then_scalars(db, total=0, items=[])
 
-        result = await collection_service.list_collections(db, uuid4())
+        items, total = await collection_service.list_collections(db, uuid4())
 
-        assert result == []
+        assert items == []
+        assert total == 0
+
+    @pytest.mark.asyncio
+    async def test_passes_offset_and_limit(self):
+        """Pagination params must reach the query as offset/limit."""
+        db = _make_db_session()
+        user_id = uuid4()
+        _mock_execute_count_then_scalars(db, total=10, items=[])
+
+        await collection_service.list_collections(db, user_id, page=3, per_page=4)
+
+        stmt = db.execute.await_args_list[1].args[0]
+        compiled = stmt.compile()
+        # offset = (page - 1) * per_page = 8, limit = per_page = 4
+        # (param names/order vary across SQLAlchemy versions — assert values only)
+        assert sorted(v for v in compiled.params.values() if isinstance(v, int)) == [4, 8]
+
+
+# ---------------------------------------------------------------------------
+# Test helpers (pagination) — placed after TestListCollections to stay near use
+# ---------------------------------------------------------------------------
+
+
+def _mock_execute_count_then_scalars(db, *, total: int, items: list):
+    """Wire db.execute for the count + page query sequence of list_collections.
+
+    The first call returns the count scalar; the second returns the page of items.
+    """
+    count_result = MagicMock()
+    count_result.scalar.return_value = total
+
+    items_result = MagicMock()
+    items_result.scalars.return_value.all.return_value = items
+
+    db.execute = AsyncMock(side_effect=[count_result, items_result])
 
 
 # ---------------------------------------------------------------------------

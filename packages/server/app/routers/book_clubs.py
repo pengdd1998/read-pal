@@ -126,11 +126,14 @@ async def update_club(
         club = await book_club_service.update_club(
             db, UUID(user['id']), club_id, body,
         )
-    except ValueError as exc:
-        logger.debug('validation error in book_clubs')
+    except PermissionError as exc:
+        logger.debug('permission error in book_clubs')
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},
+            detail={
+                'code': 'FORBIDDEN',
+                'message': t('errors.only_admin_moderator_update', lang),
+            },
         ) from exc
     return {
         'success': True,
@@ -154,11 +157,14 @@ async def delete_club(
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await book_club_service.delete_club(db, UUID(user['id']), club_id)
-    except ValueError as exc:
-        logger.debug('validation error in book_clubs')
+    except PermissionError as exc:
+        logger.debug('permission error in book_clubs')
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={'code': 'FORBIDDEN', 'message': translate_error(exc, lang)},
+            detail={
+                'code': 'FORBIDDEN',
+                'message': t('errors.only_admin_delete', lang),
+            },
         ) from exc
 
 

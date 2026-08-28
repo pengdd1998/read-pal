@@ -5,7 +5,7 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -14,6 +14,7 @@ from app.middleware.rate_limiter import api_limiter, write_limiter
 from app.schemas.collection import (
     CollectionBooksBatchRequest,
     CollectionCreate,
+    CollectionListResponse,
     CollectionResponse,
     CollectionUpdate,
 )
@@ -53,17 +54,24 @@ async def create_collection(
     return {'success': True, 'data': _dump(col)}
 
 
-@router.get('', response_model=GenericResponse)
+@router.get('', response_model=CollectionListResponse)
 async def list_collections(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
-) -> dict:
-    """List all collections for the authenticated user."""
-    cols = await collection_service.list_collections(db, UUID(user['id']))
-    return {
-        'success': True,
-        'data': {'items': [_dump(c) for c in cols]},
-    }
+) -> CollectionListResponse:
+    """List collections for the authenticated user, paginated."""
+    cols, total = await collection_service.list_collections(
+        db, UUID(user['id']), page, per_page,
+    )
+    return CollectionListResponse(
+        data=[CollectionResponse.model_validate(c) for c in cols],
+        total=total,
+        page=page,
+        per_page=per_page,
+        has_more=(page * per_page) < total,
+    )
 
 
 @router.get('/{collection_id}', response_model=GenericResponse)
