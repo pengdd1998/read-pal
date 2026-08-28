@@ -18,10 +18,16 @@ services:
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-readpal}
       DB_USER: ${DB_USER:-readpal}
-      DB_PASSWORD: ${DB_PASSWORD:-Rp2026Secure!}
+      # No default: an unset DB_PASSWORD must fail fast instead of silently
+      # starting the API against the committed example password.
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       # External Redis infrastructure on VPS
       REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
-      # External MinIO infrastructure on VPS
+      # ⚠ SECURITY: MinIO credentials below default to the factory defaults
+      # (minioadmin/minioadmin). They are kept as optional defaults so local
+      # `docker compose up` still works without a .env, but production MUST set
+      # MINIO_ACCESS_KEY / MINIO_SECRET_KEY in .env on the VPS. The VPS MinIO
+      # was provisioned with its own credentials — verify before exposing :9000.
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-localhost}
       MINIO_PORT: ${MINIO_PORT:-9000}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
@@ -38,6 +44,10 @@ services:
       CIRCUIT_FAILURE_THRESHOLD: ${CIRCUIT_FAILURE_THRESHOLD:-5}
       CIRCUIT_RESET_TIMEOUT_SECONDS: ${CIRCUIT_RESET_TIMEOUT_SECONDS:-30}
       MAX_EMBEDDING_CALLS: ${MAX_EMBEDDING_CALLS:-300}
+      # Per-user daily LLM budgets (0 = disabled). See app/config.py:
+      # llm_daily_budget counts REQUESTS/day, llm_daily_token_budget counts TOKENS/day.
+      LLM_DAILY_BUDGET: ${LLM_DAILY_BUDGET:-200}
+      LLM_DAILY_TOKEN_BUDGET: ${LLM_DAILY_TOKEN_BUDGET:-500000}
       # JWT Configuration
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}

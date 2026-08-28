@@ -7,7 +7,7 @@
 Your AI reading companion — ask questions, explore ideas, and remember every insight.
 
 [![CI](https://github.com/pengdd1998/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd1998/read-pal/actions)
-[![Tests](https://img.shields.io/badge/tests-748%2B%20passing-brightgreen)](packages/server/tests)
+[![Tests](https://img.shields.io/badge/tests-1300%2B%20passing-brightgreen)](packages/server/tests)
 [![Backend](https://img.shields.io/badge/backend-Python%203.12%20%7C%20FastAPI-blue)](packages/server)
 [![Frontend](https://img.shields.io/badge/frontend-Next.js%2014%20%7C%20TypeScript-black)](packages/web)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -33,24 +33,7 @@ Think of it as a friend who's always read the same book and loves talking about 
 
 ## Screenshots
 
-<table>
-  <tr>
-    <td align="center"><b>AI Companion Chat</b></td>
-    <td align="center"><b>EPUB Reader</b></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/companion-chat.png" alt="AI Companion Chat" width="480" /></td>
-    <td><img src="docs/screenshots/reader-view.png" alt="EPUB Reader" width="480" /></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Knowledge Graph</b></td>
-    <td align="center"><b>Library</b></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/knowledge-graph.png" alt="Knowledge Graph" width="480" /></td>
-    <td><img src="docs/screenshots/library-page.png" alt="Library" width="480" /></td>
-  </tr>
-</table>
+Curated screenshots are not yet checked in — see the app live instead:
 
 > Try the [live demo](http://175.178.66.207:8090) to see the full experience.
 

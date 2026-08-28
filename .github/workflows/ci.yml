@@ -144,6 +144,89 @@ jobs:
           LLM_LOG_RETENTION_DAYS: 7
 
   # -------------------------------------------------------------------
+  # Frontend tests (Vitest)
+  # -------------------------------------------------------------------
+  test-web:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run frontend tests
+        # `test` script is `vitest run` (non-watch) — the bare `vitest` CLI would
+        # default to watch mode in CI; `vitest run` is explicit and idempotent.
+        run: pnpm --filter @read-pal/web test
+
+  # -------------------------------------------------------------------
+  # Migration integrity — apply full chain to an empty PostgreSQL 16
+  # -------------------------------------------------------------------
+  migrations:
+    name: Alembic Upgrade/Downgrade
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: readpal
+          POSTGRES_PASSWORD: readpal_ci
+          POSTGRES_DB: readpal_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U readpal"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_NAME: readpal_ci
+      DB_USER: readpal
+      DB_PASSWORD: readpal_ci
+      REDIS_URL: redis://localhost:6379
+      GLM_API_KEY: test-glm-key
+      GLM_BASE_URL: https://test.example.com
+      DEFAULT_MODEL: glm-4-flash
+      FALLBACK_MODEL: glm-4-flash
+      JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install uv
+
+      - name: Install dependencies
+        run: cd packages/server && uv sync --frozen
+
+      - name: Upgrade from empty database to head
+        run: cd packages/server && uv run alembic upgrade head
+
+      - name: Downgrade to base and re-upgrade (reversibility)
+        run: cd packages/server && uv run alembic downgrade base && uv run alembic upgrade head
+
+      - name: Verify schema revision at head
+        run: cd packages/server && uv run alembic current
+
+  # -------------------------------------------------------------------
   # Integration tests (requires external infrastructure - manual only)
   # -------------------------------------------------------------------
   test-backend-integration:
