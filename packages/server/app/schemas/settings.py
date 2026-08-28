@@ -50,7 +50,9 @@ class SettingsUpdate(BaseModel):
     friendPersona: str | None = Field(None, max_length=50)
     friendFrequency: str | None = Field(None, pattern=r'^(minimal|normal|frequent|daily|weekly|monthly)$')
     language: str | None = Field(None, pattern=r'^(en|zh)$')
-    companionMode: str | None = Field(None, pattern=r'^(casual|academic|socratic)$')
+    # 'scholar' is the current frontend label (renamed from 'academic');
+    # both accepted so older clients keep working.
+    companionMode: str | None = Field(None, pattern=r'^(casual|academic|scholar|socratic)$')
     zoteroApiKey: str | None = Field(None, max_length=128)
     zoteroUserId: str | None = Field(None, max_length=32)
     readingGoals: dict | None = None

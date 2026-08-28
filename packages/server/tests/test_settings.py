@@ -113,3 +113,29 @@ async def test_update_settings_returns_401_without_auth(client):
 async def test_reading_goals_returns_401_without_auth(client):
     resp = await client.get('/api/v1/settings/reading-goals')
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_companion_mode_accepts_scholar(client):
+    """Regression: the reader toggles companion mode to 'scholar' (frontend
+    rename of 'academic'); the settings PATCH must accept it, not 422."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    resp = await client.patch(
+        '/api/v1/settings/', headers=headers,
+        json={'companionMode': 'scholar'},
+    )
+    assert resp.status_code == 200, f'scholar mode rejected: {resp.text}'
+    assert resp.json()['data']['companionMode'] == 'scholar'
+
+
+@pytest.mark.asyncio
+async def test_companion_mode_still_accepts_academic(client):
+    """Older clients send 'academic' — stays accepted (backward compat)."""
+    reg = await register_user(client)
+    headers = auth_headers(reg['token'])
+    resp = await client.patch(
+        '/api/v1/settings/', headers=headers,
+        json={'companionMode': 'academic'},
+    )
+    assert resp.status_code == 200
