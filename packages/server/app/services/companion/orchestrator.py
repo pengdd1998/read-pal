@@ -8,6 +8,7 @@ import structlog
 from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db import release_db
 from app.services.companion.context import (
     _build_messages,
     _load_book,
@@ -49,6 +50,10 @@ async def chat(
     messages = _build_messages(system_text, history, message, budget)
 
     fallback_text = t('companion.fallback_error', lang)
+    # LLM round-trip (up to ~120s with retries/failover): release the pooled
+    # connection first — the idle read transaction would otherwise pin a
+    # Postgres backend for the whole wait.
+    await release_db(db)
     assistant_content = await safe_llm_call(
         messages,
         fallback=fallback_text,
@@ -123,6 +128,7 @@ async def summarize(
     )
 
     fallback_text = t('companion.summary_error', lang)
+    await release_db(db)  # release pooled conn during LLM wait
     content = await safe_llm_call(
         messages,
         fallback=fallback_text,
@@ -192,6 +198,7 @@ async def explain(
     ]
 
     fallback_text = t('companion.explain_error', lang)
+    await release_db(db)  # release pooled conn during LLM wait
     content = await safe_llm_call(
         messages,
         fallback=fallback_text,

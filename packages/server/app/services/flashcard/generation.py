@@ -14,6 +14,7 @@ from app.models.book import Book
 from app.models.flashcard import Flashcard
 from app.prompts import FLASHCARD_GENERATION_HUMAN, FLASHCARD_GENERATION_SYSTEM
 from app.schemas.llm_outputs import FlashcardList
+from app.db import release_db
 from app.services.llm import safe_llm_invoke
 from app.utils import utcnow
 from app.utils.db import db_error_guard
@@ -177,6 +178,7 @@ async def generate_flashcards(
     book, annotations = await _fetch_book_and_annotations(db, user_id, book_id)
     annotation_text = _format_annotation_text(annotations)
 
+    await release_db(db)  # release pooled conn during LLM wait
     llm_result = await _call_flashcard_llm(
         book, annotation_text, count, user_id, book_id,
     )

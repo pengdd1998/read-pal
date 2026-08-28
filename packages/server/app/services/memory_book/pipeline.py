@@ -29,6 +29,8 @@ from app.services.memory_book.section_generation import (
 )
 from app.utils.i18n import t
 
+from app.db import release_db
+
 logger = structlog.get_logger('read-pal.memory_book')
 
 # Sections that use LLM generation
@@ -333,6 +335,9 @@ async def generate(
     except Exception:
         logger.warning('memory_book.load_existing_failed', book_id=str(book_id), exc_info=True)
 
+    # Section generation fans out to parallel LLM calls (minutes). Release
+    # the pooled connection + idle read txn — the final upsert re-checkouts.
+    await release_db(db)
     sections = await _generate_all_sections(
         enriched_data, user_id, book_id, existing_by_type=existing_by_type,
     )

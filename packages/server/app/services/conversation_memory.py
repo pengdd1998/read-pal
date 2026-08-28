@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.chat_message import ChatMessage
 from app.prompts import CONVERSATION_SUMMARY_HUMAN, CONVERSATION_SUMMARY_SYSTEM
 from app.schemas.llm_outputs import ConversationSummaryData
+from app.db import release_db
 from app.services.llm import safe_llm_invoke
 from app.utils.db import db_error_guard
 from app.utils.sanitizer import sanitize_chat_message
@@ -399,6 +400,7 @@ async def _generate_summary(
 
     messages = _build_summary_prompt(older, existing_summary)
 
+    await release_db(db)  # release pooled conn during LLM wait
     summary_data = await safe_llm_invoke(
         messages,
         fallback=None,

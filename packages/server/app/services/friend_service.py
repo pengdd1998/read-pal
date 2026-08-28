@@ -17,6 +17,7 @@ from app.models.book import Book
 from app.models.friend import FriendConversation, FriendRelationship
 from app.prompts import FRIEND_BOOK_CONTEXT, FRIEND_PERSONAS
 from app.services.friend_persona import recommend_persona
+from app.db import release_db
 from app.services.llm import safe_llm_call
 from app.utils.db import db_error_guard
 from app.utils.sanitizer import sanitize_book_field, sanitize_chat_message
@@ -181,6 +182,7 @@ async def _call_llm_and_persist(
     from history.
     """
     await _save_message(db, user_id, persona, 'user', sanitized_message, book_id)
+    await release_db(db)  # release pooled conn during LLM wait
     assistant_content = await safe_llm_call(
         messages,
         fallback="I'm having trouble thinking right now. Please try again in a moment.",

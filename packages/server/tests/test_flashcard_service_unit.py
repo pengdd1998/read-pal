@@ -53,7 +53,7 @@ def _make_flashcard(
 
 def _make_db_session():
     """Create a mock AsyncSession."""
-    return AsyncMock(spec=['execute', 'add', 'flush', 'refresh', 'delete'])
+    return AsyncMock(spec=['execute', 'add', 'flush', 'refresh', 'delete', 'commit', 'rollback', 'in_transaction'])
 
 
 # ---------------------------------------------------------------------------

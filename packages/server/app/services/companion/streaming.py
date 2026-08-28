@@ -9,6 +9,8 @@ from typing import Any
 from uuid import UUID
 
 import structlog
+
+from app.db import release_db
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,10 +38,18 @@ from app.utils.output_filter import filter_stream_chunk
 
 logger = structlog.get_logger('read-pal.companion')
 
-# Reserved output tokens for pre-charge when max_tokens isn't passed in.
-# Streaming doesn't pass max_tokens (vendor default applies), so we use a
+# Reserved output tokens for the daily token-budget pre-charge. Streaming
+# calls settle with actual emitted tokens afterwards, so this is a
 # conservative estimate based on observed companion response lengths.
 _STREAM_RESERVED_OUTPUT_TOKENS = 800
+
+# Explicit output cap passed to get_llm on the streaming path. Mirrors the
+# pool default (2000) so the effective behavior is unchanged, but the cap is
+# now deliberate and visible in the pool key instead of silently inheriting
+# whatever default pool.get_llm ships with. Must stay >=
+# _STREAM_RESERVED_OUTPUT_TOKENS so the budget pre-charge never reserves
+# more than the vendor could actually emit.
+_STREAM_MAX_OUTPUT_TOKENS = 2000
 
 _STREAM_TIMEOUT_SECONDS = 120
 
@@ -294,7 +304,7 @@ async def _stream_from_provider(
         return
 
     try:
-        llm = get_llm(provider=provider_name)
+        llm = get_llm(provider=provider_name, max_tokens=_STREAM_MAX_OUTPUT_TOKENS)
         async for chunk in _stream_with_llm(
             llm, messages, collected_parts, request_id,
             start_time, model_used, user_id, book_id,
@@ -525,6 +535,10 @@ async def _stream_via_provider(
             yield sse_chunk(t('errors.daily_llm_budget_exceeded', lang))
             yield 'data: [DONE]\n\n'
             return
+
+    # LLM stream may run for minutes (retries + provider failover). Release
+    # the pooled connection first — persist re-checkouts transparently.
+    await release_db(db)
 
     stream_failed = False
     billing_state: dict = {'partial_chars': 0}

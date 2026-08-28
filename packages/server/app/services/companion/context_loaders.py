@@ -15,6 +15,7 @@ from app.models.chat_message import ChatMessage
 from app.services.companion.constants import ANNOTATION_LIMIT, HISTORY_LIMIT
 from app.utils.db import db_error_guard
 from app.utils.i18n import t
+from app.utils.sanitizer import sanitize_chat_message
 from app.utils.annotation_format import format_annotation_entry
 
 logger = structlog.get_logger('read-pal.companion')
@@ -106,7 +107,17 @@ async def save_message(
     role: str,
     content: str,
 ) -> None:
-    """Persist a single chat message."""
+    """Persist a single chat message.
+
+    P-audit: user messages are sanitized at PERSIST time, not only at
+    prompt-build time. Otherwise an injection that evaded detection in
+    turn 1 is replayed raw into every later turn's history. Assistant
+    messages pass through untouched — the sanitizer's data-wrap markers
+    and input-pattern heuristics are calibrated for user input, and the
+    assistant side is already covered by ``filter_output``.
+    """
+    if role == 'user':
+        content = sanitize_chat_message(content)
     msg = ChatMessage(
         user_id=user_id,
         book_id=book_id,

@@ -7,6 +7,7 @@ from app.models.book import Book
 from app.prompts.templates import FRIEND_PERSONAS
 from app.utils.i18n import DEFAULT_LANGUAGE, t
 from app.utils.sanitizer import (
+    MAX_CHAT_MESSAGE_LENGTH,
     sanitize_annotations,
     sanitize_book_field,
     sanitize_chat_message,
@@ -15,6 +16,34 @@ from app.utils.sanitizer import (
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.companion')
+
+# Prefix of the sanitizer's data-wrap boundary (``[BEGIN USER PROVIDED DATA
+# …]``). ``sanitize_user_input`` wraps suspected-injection text in these
+# markers but does NOT neutralize the pattern itself, so re-sanitizing
+# wrapped text wraps it AGAIN (marker stacking). Callers that sanitize at
+# persist time and again at prompt-build time need ``sanitize_for_llm`` for
+# idempotence.
+_DATA_WRAP_PREFIX = '[BEGIN USER'
+
+
+def sanitize_for_llm(content: str) -> str:
+    """Idempotent wrapper around ``sanitize_chat_message``.
+
+    Returns already-wrapped content unchanged so persist-time sanitization
+    (save_message) followed by prompt-build sanitization doesn't stack data
+    markers on a legitimate message. Oversized wrapped text still falls
+    through so the length truncation can't be bypassed by mimicking the
+    marker prefix.
+    """
+    if not content:
+        return content
+    already_wrapped = (
+        content.lstrip().startswith(_DATA_WRAP_PREFIX)
+        and len(content) <= MAX_CHAT_MESSAGE_LENGTH
+    )
+    if already_wrapped:
+        return content
+    return sanitize_chat_message(content)
 
 
 def _is_book_completed(book: Book) -> bool:
@@ -330,9 +359,19 @@ def build_messages(
     message: str,
     budget: TokenBudget,
 ) -> list[SystemMessage | HumanMessage | AIMessage]:
-    """Build the LLM message list from system prompt, history, and user message."""
-    sanitized_message = sanitize_chat_message(message)
-    messages = [SystemMessage(content=system_text)] + history
+    """Build the LLM message list from system prompt, history, and user message.
+
+    History is sanitized defensively (belt-and-braces): rows persisted before
+    persist-time sanitization existed — or written by any other path — may
+    carry unsanitized injection text that would otherwise be replayed on
+    every later turn. ``sanitize_for_llm`` is idempotent, so double-wrapping
+    already-clean persisted messages is impossible.
+    """
+    sanitized_message = sanitize_for_llm(message)
+    safe_history: list[HumanMessage | AIMessage] = [
+        type(msg)(content=sanitize_for_llm(str(msg.content))) for msg in history
+    ]
+    messages = [SystemMessage(content=system_text)] + safe_history
     messages.append(HumanMessage(content=sanitized_message))
     if budget.truncations:
         logger.warning(

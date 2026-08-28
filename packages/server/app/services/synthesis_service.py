@@ -21,6 +21,7 @@ from app.prompts import (
 )
 from app.schemas.llm_outputs import SynthesisResult
 from app.schemas.synthesis import SynthesisResponse
+from app.db import release_db
 from app.services.llm import safe_llm_invoke
 from app.services.synthesis.data_loaders import collect_reading_data
 from app.utils.token_budget import TokenBudget
@@ -125,6 +126,7 @@ async def synthesize(
   messages = _build_synthesis_prompt(reading_data, query=query)
 
   empty_synthesis = SynthesisResult().model_dump()
+  await release_db(db)  # release pooled conn during LLM wait
   synthesis_data = await safe_llm_invoke(
     messages,
     fallback=empty_synthesis,
