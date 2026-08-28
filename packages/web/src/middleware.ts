@@ -91,6 +91,11 @@ export const config = {
   matcher: [
     '/',
     '/(en|zh)/:path*',
+    // Locale-less app paths: previously 404'd because the matcher excluded
+    // them, so deep links like /dashboard never reached the redirect logic
+    // (or next-intl's locale prefixing). Exclude Next internals + API routes;
+    // static metadata assets stay listed explicitly.
+    '/((?!_next/static|_next/image|api/|.*\\.\\w+$).*)',
     '/icon-maskable.svg',
     '/icon-pwa.svg',
     '/og-image.svg',

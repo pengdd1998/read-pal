@@ -16,6 +16,10 @@ export interface Message {
   timestamp: number;
   streaming?: boolean;
   persistFailed?: boolean;
+  /** B3: set when the server disclosed a mid-stream provider fallback for
+   * this response. Additive quality flag (mirrors persistFailed) so the UI
+   * can badge the message — never mutates content. */
+  fallbackUsed?: boolean;
 }
 
 /** Custom event dispatched when an optimistic turn is rolled back (stream
@@ -99,6 +103,14 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
   // fresh logical call (sendStreamMessage / regenerate); preserved across
   // retries within the same call so reconnect resumes correctly.
   const lastEventIdRef = useRef<string | null>(null);
+  // NOTE (B3 mid-stream fallback): there is intentionally no "fallback active"
+  // token gate here. The server emits the ``fallback_used`` metadata event
+  // BEFORE its first fallback chunk (after clearing its own collected parts),
+  // so SSE frame order alone tells us which provider a chunk belongs to:
+  // chunks before the metadata frame = discarded primary text, chunks after
+  // it = fallback text that must render. The metadata handler below clears
+  // the pending buffer + the already-flushed message content at that point;
+  // everything after appends normally.
 
   /** Roll back an optimistic user+assistant turn and dispatch a rollback
    * event with the user's original text so the caller can pre-fill the input. */
@@ -315,16 +327,37 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             if (meta.request_id) {
               currentRequestIdRef.current = meta.request_id;
             }
-            // C3: B3 quality-disclosure metadata event. Server emitted this
-            // BEFORE the fallback chunks when primary failed mid-stream.
-            // Surface via the caller's notice callback so the user gets a
-            // non-blocking "fallback model took over" explanation.
-            if (meta.type === 'metadata' && meta.fallback_used && onFallbackNotice) {
-              onFallbackNotice({
-                model: meta.model ?? '',
-                primaryModel: meta.primary_model,
-                primaryProvider: meta.primary_provider,
-              });
+            // C3 + B3: quality-disclosure metadata event. Server emitted this
+            // BEFORE its first fallback chunk, AFTER clearing the primary's
+            // partial output — so every chunk the client accumulated before
+            // this frame is orphaned primary text and must go, otherwise it
+            // stays glued to the fallback response (final visible text must
+            // be fallback-only). Mid-stream fallback contract:
+            // 1. Drop the pending (not yet flushed) buffer so a stale 80ms
+            //    flush can't re-append the discarded text.
+            // 2. Strip the already-flushed primary prefix from the message in
+            //    state — the updater form runs against the latest array, so
+            //    it correctly races any flush queued before this event.
+            // 3. Flag the message fallbackUsed (additive quality signal,
+            //    mirrors persistFailed) and fire onFallbackNotice so the
+            //    user gets the non-blocking "fallback model took over"
+            //    explanation. Subsequent fallback chunks append normally.
+            if (meta.type === 'metadata' && meta.fallback_used) {
+              streamBuffer = '';
+              onMessagesUpdate((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId
+                    ? { ...m, content: '', fallbackUsed: true }
+                    : m,
+                ),
+              );
+              if (onFallbackNotice) {
+                onFallbackNotice({
+                  model: meta.model ?? '',
+                  primaryModel: meta.primary_model,
+                  primaryProvider: meta.primary_provider,
+                });
+              }
             }
           },
           // D4: capture each ``id:`` line so reconnect can resume via
