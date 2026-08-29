@@ -421,11 +421,30 @@ async def create_reading_plan(
 
 @router.get('/reading-plan', response_model=GenericResponse)
 async def get_reading_plan(
-    book_id: UUID = Query(...),
+    request: Request,
+    book_id: UUID | None = Query(None),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Get the active reading plan for a book."""
+    """Get the active reading plan for a book.
+
+    Accepts both ``book_id`` and ``bookId`` query keys — the frontend api
+    client sends camelCase params, and this route predates that convention.
+    """
+    if book_id is None:
+        raw = request.query_params.get('bookId')
+        if not raw:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={'code': 'VALIDATION_ERROR', 'message': 'book_id is required'},
+            )
+        try:
+            book_id = UUID(raw)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={'code': 'VALIDATION_ERROR', 'message': 'book_id must be a UUID'},
+            ) from exc
     result = await get_active_plan(
         db=db, user_id=UUID(current_user['id']), book_id=book_id,
     )

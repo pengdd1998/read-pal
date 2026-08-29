@@ -30,6 +30,7 @@ import {
   invalidateCache,
   invalidateAfterMutation,
 } from './cache';
+import { DEFAULT_TIMEOUT_MS, getTimeoutForUrl } from './timeouts';
 
 import {
   installRequestInterceptor,
@@ -47,7 +48,9 @@ export class ApiClient {
   constructor() {
     this.client = axios.create({
       baseURL: API_URL,
-      timeout: 15_000,
+      // Per-endpoint override in request(): AI generation endpoints get
+      // 180s (LLM retries + provider failover far exceed 15s).
+      timeout: DEFAULT_TIMEOUT_MS,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -74,7 +77,14 @@ export class ApiClient {
 
     for (let attempt = 1; attempt <= attempts; attempt++) {
       try {
-        const response = await this.client.request<T>({ ...config, method, url });
+        // Per-endpoint timeout: AI generation endpoints need minutes, not
+        // the 15s default (server does LLM retries + provider failover).
+        const response = await this.client.request<T>({
+          ...config,
+          method,
+          url,
+          timeout: getTimeoutForUrl(url),
+        });
         return response.data;
       } catch (err: unknown) {
         lastError = err;
