@@ -34,11 +34,13 @@ def _build_date_range(
         today = utcnow_aware().date()
         end = datetime.combine(today + timedelta(days=1), datetime.min.time(), tzinfo=UTC)
         m = min(months, 12)
-        start_date = (
-            today.replace(month=today.month - m)
-            if today.month > m
-            else today.replace(year=today.year - 1, month=12 + today.month - m)
-        )
+        # Roll back m months from the FIRST of the current month. Naive
+        # ``today.replace(month=...)`` crashed with "day is out of range
+        # for month" whenever the rollback landed on a shorter month that
+        # has no today.day (e.g. Aug 29 → Feb 29 in a non-leap year).
+        first_of_month = today.replace(day=1)
+        total = first_of_month.year * 12 + (first_of_month.month - 1) - m
+        start_date = date(total // 12, total % 12 + 1, 1)
         start = datetime(start_date.year, start_date.month, 1, tzinfo=UTC)
     elif month is not None and year is not None:
         start = datetime(year, month, 1, tzinfo=UTC)

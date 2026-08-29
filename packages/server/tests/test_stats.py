@@ -142,3 +142,37 @@ async def test_reading_speed_returns_401_without_auth(client):
 async def test_reading_speed_by_book_returns_401_without_auth(client):
     resp = await client.get('/api/v1/stats/reading-speed/by-book')
     assert resp.status_code == 401
+
+
+class TestBuildDateRangeMonthRollback:
+    """Regression: today.replace(month=...) crashed with
+    'day is out of range for month' when the N-month rollback landed on a
+    shorter month (e.g. Aug 29 → Feb 29 in a non-leap year)."""
+
+    def test_aug29_months6_reaches_feb1(self):
+        from app.services.stats.calendar import _build_date_range
+        start, _ = _build_date_range(6, None, None)
+        assert (start.year, start.month, start.day) == (2026, 2, 1)
+
+    def test_may31_months3_rolls_to_feb1(self):
+        """May 31 − 3 months crosses a 29/30-day month — must not raise."""
+        from unittest.mock import patch
+        import datetime as dt
+        from app.services.stats.calendar import _build_date_range
+        from app.services.stats import calendar as cal
+
+        fake_now = dt.datetime(2026, 5, 31, 12, 0, tzinfo=dt.timezone.utc)
+        with patch.object(cal, 'utcnow_aware', return_value=fake_now):
+            start, _ = _build_date_range(3, None, None)
+        assert (start.year, start.month, start.day) == (2026, 2, 1)
+
+    def test_may31_months1_rolls_to_apr1(self):
+        from unittest.mock import patch
+        import datetime as dt
+        from app.services.stats.calendar import _build_date_range
+        from app.services.stats import calendar as cal
+
+        fake_now = dt.datetime(2026, 5, 31, 12, 0, tzinfo=dt.timezone.utc)
+        with patch.object(cal, 'utcnow_aware', return_value=fake_now):
+            start, _ = _build_date_range(1, None, None)
+        assert (start.year, start.month, start.day) == (2026, 4, 1)
