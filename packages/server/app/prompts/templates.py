@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from app.prompts.base import PromptTemplate  # noqa: F401 — re-exported
 from app.prompts.companion_prompts import (
+    DISCUSSION_QUESTIONS_HUMAN,
+    DISCUSSION_QUESTIONS_SYSTEM,
     FRIEND_BOOK_CONTEXT,
     FRIEND_PERSONAS,
 )
@@ -90,6 +92,8 @@ def _build_registry() -> None:
     ]
     singles: list[PromptTemplate] = [
         FRIEND_BOOK_CONTEXT,
+        DISCUSSION_QUESTIONS_SYSTEM,
+        DISCUSSION_QUESTIONS_HUMAN,
         FLASHCARD_GENERATION_SYSTEM,
         FLASHCARD_GENERATION_HUMAN,
         STUDY_OBJECTIVES_SYSTEM,

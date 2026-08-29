@@ -98,3 +98,34 @@ FRIEND_BOOK_CONTEXT = PromptTemplate(
     variables=['title', 'author', 'progress'],
     output_format='text',
 )
+
+DISCUSSION_QUESTIONS_SYSTEM = PromptTemplate(
+    key='discussion.questions.system',
+    version=1,
+    template=(
+        'You are a book-club facilitator preparing a discussion guide. '
+        'Based on the reader\'s highlighted passages below, generate exactly '
+        '5 open-ended discussion questions. '
+        'Each question must reference a specific idea, image, or tension from '
+        'the highlights — never generic ("What did you think of the book?"). '
+        'Return ONLY a JSON object: {"questions": ["...", "..."]} with exactly '
+        '5 string questions, no numbering, no extra fields.'
+    ),
+    variables=[],
+    output_format='json',
+    temperature=0.6,
+    max_tokens=1200,
+)
+
+DISCUSSION_QUESTIONS_HUMAN = PromptTemplate(
+    key='discussion.questions.human',
+    version=1,
+    template=(
+        'Book: "{title}" by {author}\n\n'
+        'The reader highlighted these passages:\n{annotations}\n\n'
+        'Generate the 5 discussion questions now.'
+    ),
+    variables=['title', 'author', 'annotations'],
+    output_format='json',
+    max_tokens=1200,  # gate: all json templates declare a cap (system params win at call time)
+)

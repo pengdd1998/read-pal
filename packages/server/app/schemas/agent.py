@@ -1,6 +1,6 @@
 """Pydantic schemas for agent and friend endpoints."""
 
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -175,3 +175,32 @@ class ChatHistoryItem(BaseModel):
 
 ChatHistoryPage.model_rebuild()
 
+
+
+class DiscussionQuestionItem(BaseModel):
+    """One annotation to seed discussion-question generation."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    content: str = Field(min_length=1, max_length=4000)
+
+
+class DiscussionQuestionsRequest(BaseModel):
+    """Request body for POST /agents/discussion-questions.
+
+    Matches the frontend contract (ShareDiscussionTab): the caller sends
+    bookTitle/author/annotations in camelCase — NOT a chat message.
+    """
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    book_title: str = Field(min_length=1, max_length=300)
+    author: str | None = Field(None, max_length=200)
+    annotations: list[DiscussionQuestionItem] = Field(default_factory=list, max_length=15)
+
+
+class DiscussionQuestionsResponse(BaseModel):
+    """Response: generated discussion questions."""
+
+    success: bool = True
+    data: dict[str, Any] = Field(default_factory=lambda: {'questions': []})

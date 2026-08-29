@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
+from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -12,12 +13,18 @@ from app.middleware.auth import get_current_user
 from app.middleware.idempotency import idempotent, idempotent_stream
 from app.middleware.rate_limiter import ai_heavy_limiter, chat_limiter, stream_limiter, write_limiter
 from app.middleware.daily_llm_budget import daily_ai_budget
+from app.prompts import (
+    DISCUSSION_QUESTIONS_HUMAN,
+    DISCUSSION_QUESTIONS_SYSTEM,
+)
 from app.schemas.agent import (
     AdvancePlanRequest,
     AIFeedbackRequest,
     CancelStreamRequest,
     ChatRequest,
     ChatResponse,
+    DiscussionQuestionsRequest,
+    DiscussionQuestionsResponse,
     ExplainRequest,
     MoodSceneRequest,
     ReadingPlanRequest,
@@ -36,7 +43,9 @@ from app.services.agent_service import (
 from app.services.chat_service import get_chat_history, get_chat_history_page
 from app.services.feedback_service import submit_feedback as submit_feedback_svc
 from app.services.mood_service import generate_mood_scene
+from app.services.llm import safe_llm_invoke
 from app.services.reading_plan_service import advance_plan, generate_plan, get_active_plan
+from app.utils.sanitizer import sanitize_book_field
 from app.utils.i18n import t
 from app.middleware.rate_limiter import api_limiter
 from datetime import UTC
@@ -329,31 +338,40 @@ async def get_chat_history_endpoint(
     }
 
 
-@router.post('/discussion-questions', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
+@router.post('/discussion-questions', response_model=DiscussionQuestionsResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def discussion_questions(
-    body: ChatRequest,
+    body: DiscussionQuestionsRequest,
     current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Generate discussion questions for a book."""
-    uid = UUID(current_user['id'])
-    lang = await resolve_lang(db, uid)
-    try:
-        result = await companion_service.chat(
-            db=db, user_id=uid, book_id=body.book_id,
-            message=body.message or 'Generate discussion questions for this book',
-            context=body.context, persona=body.persona, lang=lang,
-        )
-    except ValueError as exc:
-        logger.debug('validation error in agent')
-        raise_not_found(exc, lang)
-    except (ConnectionError, TimeoutError) as exc:
-        logger.error('Discussion questions failed: %s', exc)
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable', lang)},
-        ) from exc
-    return {'success': True, 'data': result}
+    """Generate book-club discussion questions from the reader's highlights.
+
+    Frontend contract (ShareDiscussionTab): send bookTitle/author/annotations,
+    receive {"questions": [...]}. The pre-fix handler reused ChatRequest and
+    required bookId+message — the endpoint 422'd on every call, silently
+    degrading the guide to "no AI questions".
+    """
+    annotation_block = '\n'.join(
+        f'- {item.content.strip()}' for item in body.annotations
+    )
+    messages = [
+        SystemMessage(content=DISCUSSION_QUESTIONS_SYSTEM.template),
+        HumanMessage(content=DISCUSSION_QUESTIONS_HUMAN.template.format(
+            title=sanitize_book_field(body.book_title, field='title'),
+            author=sanitize_book_field(body.author or '', field='author') or 'Unknown',
+            annotations=annotation_block or '(no highlights provided)',
+        )),
+    ]
+    parsed = await safe_llm_invoke(
+        messages,
+        fallback={'questions': []},
+        log_label='Discussion questions',
+        schema_class=None,
+        user_id=current_user['id'],
+        template=DISCUSSION_QUESTIONS_SYSTEM,
+    )
+    questions = parsed.get('questions', []) if isinstance(parsed, dict) else []
+    questions = [str(q).strip() for q in questions if str(q).strip()][:5]
+    return {'success': True, 'data': {'questions': questions}}
 
 
 @router.post('/mood/scene', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
