@@ -83,7 +83,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
   <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
    {icon} {label}
   </span>
-  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+  <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
    {canShareAsImage && (
    <button type="button"
     onClick={handleShareClick}
