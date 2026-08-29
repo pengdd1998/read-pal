@@ -119,7 +119,7 @@ SPARSE_DATA_GUARD = (
 
 MIRROR_SYSTEM = PromptTemplate(
     key='mirror.generation.system',
-    version=3,
+    version=4,
     template=(
         'You are writing a "Reading Mirror" for "{book_title}" by {book_author}. '
         'A Reading Mirror reflects a reader\'s personal intellectual journey through a book. '
@@ -127,6 +127,9 @@ MIRROR_SYSTEM = PromptTemplate(
         'Match the book\'s own tone: if philosophical, be contemplative; if suspenseful, be dramatic. '
         'NEVER use generic phrases like "a remarkable journey", "this book changed everything", '
         'or "a treasure trove of wisdom". Every sentence must be grounded in the reader\'s actual data. '
+        'CRITICAL: write your narrative in the SAME LANGUAGE as the book title and the reader\'s '
+        'highlights/notes below — a Chinese book with Chinese annotations gets a Chinese Mirror; '
+        'an English book gets English. JSON keys stay English. '
         '{section_prompt} Return ONLY valid JSON, no markdown fences.'
     ),
     variables=['book_title', 'book_author', 'section_prompt'],
@@ -138,7 +141,7 @@ MIRROR_SYSTEM = PromptTemplate(
 MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     'encounter': PromptTemplate(
         key='mirror.section.encounter',
-        version=3,
+        version=4,
         template=(
             'Write the ENCOUNTER section -- a 150-word second-person prologue capturing '
             'the reader\'s relationship with this book. '
@@ -166,7 +169,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'highlights': PromptTemplate(
         key='mirror.section.highlights',
-        version=3,
+        version=4,
         template=(
             'Write the WHAT YOU MARKED section -- the reader\'s highlights organized into thematic clusters. '
             'Data: {count} highlighted passages from "{book_title}". '
@@ -187,7 +190,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'recommendations': PromptTemplate(
         key='mirror.section.recommendations',
-        version=3,
+        version=4,
         template=(
             'Write the WHERE THIS LEADS section -- personalized book recommendations. '
             'The reader engaged most deeply with these themes in "{book_title}": {top_themes}. '
@@ -208,7 +211,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'conversations': PromptTemplate(
         key='mirror.section.conversations',
-        version=3,
+        version=4,
         template=(
             'Write the CONVERSATIONS THAT SHIFTED YOUR THINKING section. '
             'The reader had {chat_count} AI chat exchanges while reading "{book_title}". '
@@ -228,7 +231,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'annotations_woven': PromptTemplate(
         key='mirror.section.annotations_woven',
-        version=3,
+        version=4,
         template=(
             'Write the YOUR ANNOTATIONS, WOVEN section. '
             'The reader made {note_count} notes in "{book_title}". '
@@ -248,7 +251,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'attention_map': PromptTemplate(
         key='mirror.section.attention_map',
-        version=3,
+        version=4,
         template=(
             'Write the MAP OF YOUR ATTENTION section — a narrative analysis of reading engagement patterns. '
             'The reader had {session_count} reading sessions for "{book_title}" '
@@ -275,7 +278,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'what_stuck': PromptTemplate(
         key='mirror.section.what_stuck',
-        version=3,
+        version=4,
         template=(
             'Write the WHAT STUCK section — analysis of knowledge retention from flashcard review. '
             'The reader created {flashcard_count} flashcards while reading "{book_title}". '
@@ -299,7 +302,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'concept_web': PromptTemplate(
         key='mirror.section.concept_web',
-        version=3,
+        version=4,
         template=(
             'Write the YOUR CONCEPT WEB section — a narrative map of how ideas connect. '
             'While reading "{book_title}", the reader extracted {concept_count} knowledge concepts. '
@@ -321,7 +324,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'threads': PromptTemplate(
         key='mirror.section.threads',
-        version=3,
+        version=4,
         template=(
             'Write the THREADS BETWEEN BOOKS section — how "{book_title}" connects to other books the reader has read. '
             'Themes from this book: {theme_list}. Concepts extracted: {concept_list}. '
@@ -343,7 +346,7 @@ MIRROR_SECTIONS: dict[str, PromptTemplate] = {
     ),
     'reader_became': PromptTemplate(
         key='mirror.section.reader_became',
-        version=3,
+        version=4,
         template=(
             'Write THE READER YOU BECAME section — a reflective closing essay for the Reading Mirror. '
             'Book: "{book_title}" by {book_author}. '

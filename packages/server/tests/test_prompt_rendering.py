@@ -277,13 +277,14 @@ def test_all_mirror_templates_have_temperature_and_max_tokens() -> None:
     assert MIRROR_SYSTEM.max_tokens is not None
 
 
-def test_all_mirror_sections_share_version_3() -> None:
-    """P1.4: all Mirror sections on a single current version."""
-    from app.prompts.mirror_prompts import MIRROR_SECTIONS
+def test_all_mirror_sections_share_current_version() -> None:
+    """P1.4: all Mirror templates on v4 — system gained language-matching and
+    every section bumped so the shared LLM cache key evicts stale entries."""
+    from app.prompts.mirror_prompts import MIRROR_SECTIONS, MIRROR_SYSTEM
 
-    versions = {t.version for t in MIRROR_SECTIONS.values()}
-    assert versions == {3}, f'Mixed versions: {versions}'
-    assert MIRROR_SYSTEM.version == 3
+    section_versions = {t.version for t in MIRROR_SECTIONS.values()}
+    assert section_versions == {4}, f'Mixed section versions: {section_versions}'
+    assert MIRROR_SYSTEM.version == 4, 'system prompt must be v4 (language matching)'
 
 
 # ---------------------------------------------------------------------------
