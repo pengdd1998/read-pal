@@ -101,7 +101,7 @@ FRIEND_BOOK_CONTEXT = PromptTemplate(
 
 DISCUSSION_QUESTIONS_SYSTEM = PromptTemplate(
     key='discussion.questions.system',
-    version=1,
+    version=2,
     template=(
         'You are a book-club facilitator preparing a discussion guide. '
         'Based on the reader\'s highlighted passages below, generate exactly '
@@ -109,7 +109,8 @@ DISCUSSION_QUESTIONS_SYSTEM = PromptTemplate(
         'Each question must reference a specific idea, image, or tension from '
         'the highlights — never generic ("What did you think of the book?"). '
         'Return ONLY a JSON object: {"questions": ["...", "..."]} with exactly '
-        '5 string questions, no numbering, no extra fields.'
+        '5 string questions, no numbering, no extra fields. '
+        'Write the questions in the SAME LANGUAGE as the highlighted passages.'
     ),
     variables=[],
     output_format='json',

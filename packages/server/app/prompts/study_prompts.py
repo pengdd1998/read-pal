@@ -10,12 +10,15 @@ from app.prompts.base import PromptTemplate
 
 FLASHCARD_GENERATION_SYSTEM = PromptTemplate(
     key='flashcard.generation.system',
-    version=2,
+    version=3,
     template=(
         'You are a study assistant. Generate flashcard Q&A pairs from the reading highlights below. '
         'Return a JSON OBJECT with a "cards" field containing an array of {{"question", "answer"}} objects. '
         'Generate exactly {count} cards. Questions should test understanding, not just recall. '
-        'Answers should be concise (1-3 sentences). Output ONLY the JSON object.'
+        'Answers should be concise (1-3 sentences). '
+        'CRITICAL: write questions and answers in the SAME LANGUAGE as the highlights — '
+        'Chinese highlights get Chinese cards; English highlights get English. JSON keys stay English. '
+        'Output ONLY the JSON object.'
     ),
     variables=['count'],
     output_format='json',
@@ -43,7 +46,8 @@ STUDY_OBJECTIVES_SYSTEM = PromptTemplate(
     version=1,
     template=(
         'You are a study assistant. Generate 3-5 concise learning objectives '
-        'for the given chapter. Return ONLY a JSON array of objects with '
+        'for the given chapter, in the SAME LANGUAGE as the chapter content. '
+        'Return ONLY a JSON array of objects with '
         '"id" (uuid string), "text" (the objective), and "completed" (false). '
         'Example: [{{"id":"...","text":"...","completed":false}}]'
     ),
@@ -69,7 +73,8 @@ STUDY_CONCEPT_CHECKS_SYSTEM = PromptTemplate(
     version=1,
     template=(
         'You are a study assistant. Generate 3-5 concept check questions for '
-        'the given chapter. Return ONLY a JSON array of objects, each with: '
+        'the given chapter, in the SAME LANGUAGE as the chapter content. '
+        'Return ONLY a JSON array of objects, each with: '
         '"id" (uuid string), "question", "hint", "answer", and "position" '
         '(one of "start", "middle", "end"). '
         'Example: [{{"id":"...","question":"...","hint":"...","answer":"...","position":"start"}}]'
@@ -96,10 +101,12 @@ STUDY_CONCEPT_CHECKS_HUMAN = PromptTemplate(
 
 KNOWLEDGE_EXTRACTION_SYSTEM = PromptTemplate(
     key='knowledge.extraction.system',
-    version=2,
+    version=3,
     template=(
         'You are a knowledge extraction assistant. Analyze reader annotations '
-        'and extract key concepts as structured data. Return ONLY a JSON object '
+        'and extract key concepts as structured data. Concept NAMES and descriptions '
+        'must use the SAME LANGUAGE as the annotations (Chinese annotations → Chinese '
+        'concept names; English → English). Return ONLY a JSON object '
         'with a "concepts" array. Each concept should have: '
         '"name" (string), "type" (one of: concept, character, theme, location), '
         '"related" (array of related concept names), '

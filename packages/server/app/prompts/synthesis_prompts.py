@@ -22,7 +22,7 @@ SYNTHESIS_SPARSE_GUARD = (
 
 SYNTHESIS_SYSTEM = PromptTemplate(
     key='synthesis.single_book.system',
-    version=2,
+    version=3,
     template=(
         'You are a literary analysis assistant. Analyze the provided reading data '
         'and return a structured synthesis. Return ONLY valid JSON with these keys: '
@@ -31,6 +31,8 @@ SYNTHESIS_SYSTEM = PromptTemplate(
         '"timeline" (array of {{date, event}}), '
         '"insights" (array of strings). '
         'Be specific and data-driven in your analysis. '
+        'CRITICAL: write all names/descriptions/insights in the SAME LANGUAGE '
+        'as the book and its annotations. JSON keys stay English. '
         + SYNTHESIS_SPARSE_GUARD
     ),
     output_format='json',
