@@ -74,7 +74,9 @@ export const LibraryFilterBar = React.memo(function LibraryFilterBar({
   )}
   </div>
 
-  <div className="flex items-center gap-2">
+  {/* status chips + sort select: wrap on narrow screens so the select
+       never pushes past the viewport (38px overflow at 375px before) */}
+  <div className="flex flex-wrap items-center gap-2">
   <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-surface-3">
    {STATUS_OPTIONS.map(([value, label]) => (
    <button type="button"

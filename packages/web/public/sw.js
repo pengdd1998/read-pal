@@ -16,7 +16,7 @@
  * - Book content pre-caching for offline reading
  */
 
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const CACHE_NAME = `readpal-${CACHE_VERSION}`;
 const STATIC_CACHE = `readpal-static-${CACHE_VERSION}`;
 const API_CACHE = `readpal-api-${CACHE_VERSION}`;
@@ -130,6 +130,15 @@ async function staleWhileRevalidate(request, cacheName) {
 
 /** Cache-first with TTL check — serves from cache if fresh, refreshes in background */
 async function cacheFirstWithTTL(request, cacheName, maxAgeSeconds) {
+  // Strip the `_t` cache-buster from the cache key: the reader appends
+  // ?_t=Date.now() to content fetches, making every request a unique URL —
+  // uncacheable, so offline reading silently broke (503 OFFLINE despite
+  // the book having been opened before).
+  const cacheUrl = new URL(request.url);
+  if (cacheUrl.searchParams.has('_t')) {
+    cacheUrl.searchParams.delete('_t');
+    request = new Request(cacheUrl.toString(), request);
+  }
   const cached = await caches.match(request);
   if (cached) {
     // Check age
