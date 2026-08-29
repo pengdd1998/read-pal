@@ -43,7 +43,13 @@ export const AccountSection = React.memo(function AccountSection() {
    router.push('/');
    } else {
     let detail = '';
-    try { const data = await res.json(); detail = data?.detail || ''; } catch { /* non-JSON response */ }
+    try {
+     const data = await res.json();
+     // detail is the standardized error shape {code, message} (or a string
+     // from legacy endpoints) — extract the message, never render the object.
+     const d = data?.detail;
+     detail = typeof d === 'string' ? d : (d?.message || '');
+    } catch { /* non-JSON response */ }
     setDeleteError(detail || t('account_delete_failed'));
    }
   } catch (err) {
