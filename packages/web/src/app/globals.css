@@ -114,7 +114,11 @@
        readability band. Set via data-width on the article. */
     /* No transition by default — first paint must not animate. The
        .reading-mode.data-width-ready flag is added client-side after mount. */
-    font-family: 'Literata', 'Source Serif 4', Georgia, serif;
+    /* Latin glyphs from Literata; hanzi from Noto Serif SC (var), system
+       宋体 fallback. Order matters — Latin font MUST come first. */
+    font-family: var(--font-reading), 'Literata', 'Source Serif 4', Georgia,
+      var(--font-cjk-serif, 'Noto Serif SC'), 'Noto Serif CJK SC', 'Songti SC',
+      SimSun, serif;
     line-height: 1.9;
     font-size: 1.125rem;
     color: inherit;
@@ -124,6 +128,19 @@
     widows: 3;
     word-spacing: 0.02em;
     hanging-punctuation: first last;
+    /* CJK typography (W3C CLREQ):
+       - justified text is native to Chinese books; hanzi grid stays even
+       - line-break: strict = 禁则处理 (kinsoku) — 行首禁排标点
+       - auto-raminfying punctuation spacing via text-autospace where supported */
+    text-align: justify;
+    text-justify: inter-ideograph;
+    line-break: strict;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+  /* Latin runs inside CJK text shouldn't justify-stretch — keep natural spacing */
+  .reading-mode :is(p, li) > :is(a, code, em, strong) {
+    text-align: left;
   }
   .reading-mode[data-width='wide'] { max-width: 88ch; }
   /* Animate width changes only after the reader has mounted and settled —

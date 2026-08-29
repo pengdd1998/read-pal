@@ -1,7 +1,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata, Fira_Code } from 'next/font/google';
+import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata, Fira_Code, Noto_Serif_SC } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -40,6 +40,17 @@ const firaCode = Fira_Code({
  display: 'swap',
 });
 
+// CJK reading face: 宋体-style serif for long-form Chinese. Latin glyphs
+// resolve from the earlier Latin font in the stack (W3C/Noto guidance);
+// Noto Serif SC covers hanzi. Swap display so text renders immediately in
+// the system fallback, then upgrades when the font arrives.
+const notoSerifSC = Noto_Serif_SC({
+ weight: ['400', '500', '700'],
+ preload: false, // huge font (65k glyphs) — no preload, swap on demand
+ variable: '--font-cjk-serif',
+ display: 'swap',
+});
+
 export function generateStaticParams() {
  return routing.locales.map((locale) => ({ locale }));
 }
@@ -61,7 +72,7 @@ export default async function LocaleLayout({
  const messages = await getMessages({ locale });
 
  return (
- <html lang={locale} suppressHydrationWarning className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable} ${firaCode.variable}`}>
+ <html lang={locale} suppressHydrationWarning className={`${dmSans.variable} ${crimsonPro.variable} ${sourceSerif.variable} ${literata.variable} ${firaCode.variable} ${notoSerifSC.variable}`}>
   <head>
   <script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}" }} />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />

@@ -220,14 +220,34 @@ export function useReaderUI(): ReaderUIState {
     return () => { if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current); };
   }, [resetAutoHideTimer]);
 
+  // Scroll-direction-aware chrome (Brave/Kindle/Readwise pattern):
+  // scrolling down hides controls immediately; scrolling up reveals them.
+  // The 3s idle timer stays as a fallback for trackpads that emit tiny
+  // jitters, but the direction signal does the real work.
   useEffect(() => {
     let rafId = 0;
-    const handleScroll = () => {
-      if (!showControls) return;
+    let lastY: number | null = null;
+    const DIRECTION_THRESHOLD = 8; // px — ignore micro-jitter
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement | Document;
+      // Only react to the reading container's scroll, not inner panels
+      if (!(target instanceof HTMLElement) || !target.classList?.contains('reading-scroll-container')) return;
       if (rafId) return;
       rafId = requestAnimationFrame(() => {
         rafId = 0;
-        resetAutoHideTimer();
+        const y = target.scrollTop;
+        if (lastY === null) { lastY = y; return; }
+        const delta = y - lastY;
+        if (Math.abs(delta) < DIRECTION_THRESHOLD) return;
+        lastY = y;
+        if (delta > 0) {
+          // scrolling down — immerse
+          setShowControls(false);
+        } else {
+          // scrolling up — reveal and restart the idle hide
+          setShowControls(true);
+          resetAutoHideTimer();
+        }
       });
     };
     window.addEventListener('scroll', handleScroll, true);
@@ -235,7 +255,7 @@ export function useReaderUI(): ReaderUIState {
       window.removeEventListener('scroll', handleScroll, true);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [showControls, resetAutoHideTimer]);
+  }, [resetAutoHideTimer]);
 
   const handleToggleControls = useCallback(() => {
     setShowControls((v) => {
