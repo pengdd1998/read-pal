@@ -18,6 +18,7 @@ const RecommendationCard = memo(function RecommendationCard({ r, genreLabel }: {
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{r.title}</p>
         {isDisplayableAuthor(r.author) && <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{r.author}</p>}
+        {r.reason && <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate" title={r.reason}>{r.reason}</p>}
       </div>
       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-1 text-gray-500 dark:text-gray-400 whitespace-nowrap">{genreLabel}</span>
     </div>

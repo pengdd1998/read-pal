@@ -1358,7 +1358,12 @@
     "retry": "重试",
     "goals_failed_save": "保存目标失败",
     "goals_decrease_aria": "减少目标",
-    "goals_increase_aria": "增加目标"
+    "goals_increase_aria": "增加目标",
+    "genre_sci_fi": "科幻",
+    "genre_literary": "文学",
+    "genre_magical_realism": "魔幻现实主义",
+    "genre_philosophical": "哲思",
+    "genre_gothic": "哥特"
   },
   "settings_page": {
     "page_title": "设置",

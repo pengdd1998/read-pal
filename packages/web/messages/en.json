@@ -1358,7 +1358,12 @@
     "retry": "Try again",
     "goals_failed_save": "Failed to save goal",
     "goals_decrease_aria": "Decrease goal",
-    "goals_increase_aria": "Increase goal"
+    "goals_increase_aria": "Increase goal",
+    "genre_sci_fi": "Sci-Fi",
+    "genre_literary": "Literary",
+    "genre_magical_realism": "Magical Realism",
+    "genre_philosophical": "Philosophical",
+    "genre_gothic": "Gothic"
   },
   "settings_page": {
     "page_title": "Settings",
