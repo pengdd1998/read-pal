@@ -160,6 +160,70 @@ async def _setup_db() -> AsyncGenerator[None, None]:
         await conn.run_sync(Base.metadata.drop_all)
 
 
+@pytest.fixture(autouse=True)
+def _hermetic_redis():
+    """Patch ``redis.asyncio.from_url`` for EVERY test — never a real client.
+
+    P5.1: the developer ``.env`` may point ``REDIS_URL`` at a live server (it
+    has pointed at production before). Service-level tests that call
+    ``get_redis()`` outside the ``client`` fixture used to build a REAL
+    client and silently read/write that server: rate-limit counters, the
+    refresh-replay ledger (a fixed-jti test burned ``auth:refresh-used:
+    unique-jti-123`` with a 260-year TTL into prod), budget keys, caches.
+    Patching the constructor here makes real Redis unreachable from the
+    suite by construction; Redis-unreachable fallback paths are still
+    testable by patching ``get_redis``/``_get_redis`` to raise (existing
+    tests do this).
+    """
+    mock_redis = AsyncMock()
+    mock_redis.get.return_value = None
+    mock_redis.getdel.return_value = None
+    mock_redis.exists.return_value = 0
+    mock_redis.setex.return_value = True
+    mock_redis.set.return_value = True
+    mock_redis.delete.return_value = 1
+    mock_redis.incr.return_value = 1
+    mock_redis.expire.return_value = True
+    mock_redis.ttl.return_value = 60
+
+    with patch('redis.asyncio.from_url', return_value=mock_redis):
+        yield mock_redis
+
+
+@pytest.fixture(autouse=True)
+def _reset_inprocess_state():
+    """Reset module-level mutable state between tests.
+
+    Without this, tests contaminate each other across files in one process:
+    - ``app.core.redis._client`` is a lazy singleton. A service-level test
+      (no ``client`` fixture) that built a real client left it bound to
+      that test's event loop; a later test on a fresh loop got "attached
+      to a different loop" / "Event loop is closed". Resetting forces
+      re-creation inside the current test's patch context.
+    - ``rate_limiter._memory_store`` accumulates per-IP buckets when Redis
+      is unreachable (CI) — all tests share the testclient IP, so one file
+      registering >10 users exhausts the register limiter for later files.
+    - ``rag._constants._http_client`` pools connections bound to the
+      creating test's event loop.
+    - ``_auth_ledger._in_memory_blacklist`` is a process-global fallback.
+
+    Tests that verify limiting/blocking behavior exercise it WITHIN a single
+    test, so per-test reset preserves what those tests assert.
+    """
+    from app.core import redis as core_redis
+    from app.middleware import rate_limiter
+    from app.middleware import _auth_ledger
+    from app.services.rag import _constants as rag_constants
+
+    core_redis._client = None
+    core_redis._pubsub_client = None
+    rate_limiter._memory_store.clear()
+    _auth_ledger._in_memory_blacklist.clear()
+    _auth_ledger._redis_ever_connected = False
+    rag_constants._http_client = None
+    yield
+
+
 @pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """HTTP test client with fresh DB session per request and Redis mocked."""

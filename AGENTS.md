@@ -24,9 +24,11 @@ store.
 - `packages/server/app/services/llm/provider_fallback.py:1` — multi-provider chain
 
 **Streaming + cancellation**:
-- `packages/server/app/services/agent_service.py:43` — heartbeat constants
-- `packages/server/app/services/agent_service.py:188` — `register_stream`
-- `packages/server/app/services/companion/streaming.py:64` — chunk loop + cancel
+- `packages/server/app/services/agent/stream_registry.py:34` — heartbeat constants (P0.3)
+- `packages/server/app/services/agent/stream_registry.py:173` — `register_stream`
+- `packages/server/app/services/agent_service.py:1` — SSE producer/consumer + keepalive (re-exports registry API)
+- `packages/server/app/services/companion/stream_pump.py:28` — chunk loop + cancel
+- `packages/server/app/services/companion/streaming.py:1` — request-level orchestration (budget pre-charge, fallback, persist)
 
 **Prompts + eval**:
 - `packages/server/app/prompts/base.py:27` — `PromptTemplate` dataclass
@@ -60,6 +62,9 @@ store.
    (CI catches `book.title` / `book.author` only).
 6. **Never add a new P-tag inline without an entry in `docs/incidents/`.**
    Documentation-only constraints are forbidden.
+7. **Never let a test reach a real Redis** (dev `.env` has pointed at prod).
+   Enforced: `tests/conftest.py` `_hermetic_redis` autouse patch of
+   `redis.asyncio.from_url` (P5.1).
 
 ## Past incidents (required reading before editing these areas)
 
@@ -72,6 +77,7 @@ See `docs/incidents/`. Specifically, read before touching:
 - **Conversation summary** → `docs/incidents/p3-incident-cluster.md` (P3.1)
 - **RAG search** → `docs/incidents/p3-incident-cluster.md` (P3.2)
 - **Memory-book pipeline** → `docs/incidents/p3-incident-cluster.md` (P3.3)
+- **Test fixtures / Redis mocking** → `docs/incidents/p5-test-hygiene.md` (P5.1)
 
 ## When prompts change
 

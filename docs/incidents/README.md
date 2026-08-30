@@ -50,3 +50,6 @@ high-level navigation map at `/home/ubuntu/projects/read-pal/AGENTS.md`.
    are forbidden — every entry must cite working code.
 3. **Re-run `/harness-review`** when a new P-tag is added (per
    `AGENTS.md#when-to-run-harness-review`).
+
+### Test hygiene (`p5-test-hygiene.md`)
+- **P5.1** — Local tests were reading/writing the production Redis (fixed by constructor-level autouse patch)
