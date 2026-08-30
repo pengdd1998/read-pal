@@ -7,7 +7,7 @@
 Your AI reading companion — ask questions, explore ideas, and remember every insight.
 
 [![CI](https://github.com/pengdd1998/read-pal/actions/workflows/ci.yml/badge.svg)](https://github.com/pengdd1998/read-pal/actions)
-[![Tests](https://img.shields.io/badge/tests-1300%2B%20passing-brightgreen)](packages/server/tests)
+[![Tests](https://img.shields.io/badge/tests-1500%2B%20passing-brightgreen)](packages/server/tests)
 [![Backend](https://img.shields.io/badge/backend-Python%203.12%20%7C%20FastAPI-blue)](packages/server)
 [![Frontend](https://img.shields.io/badge/frontend-Next.js%2014%20%7C%20TypeScript-black)](packages/web)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -84,7 +84,7 @@ read-pal/
 │   │   │   ├── schemas/       # Pydantic request/response
 │   │   │   └── middleware/    # Auth, rate limiting
 │   │   ├── alembic/           # Database migrations
-│   │   └── tests/             # 748+ pytest tests
+│   │   └── tests/             # 1500+ pytest tests
 │   └── web/           # Next.js 14 / TypeScript frontend
 │       └── src/
 │           ├── app/           # 30+ pages (App Router)
@@ -101,10 +101,10 @@ read-pal/
 | AI Engine | GLM (Zhipu AI) via LangChain, OpenAI-compatible API |
 | Frontend | Next.js 14, TypeScript, TailwindCSS |
 | Database | PostgreSQL 16, Redis 7 |
-| Search | Vector-ready (Pinecone configured) |
+| Search | pgVector hybrid (semantic + keyword, RRF fusion) |
 | File Processing | ebooklib (EPUB), pypdf (PDF) |
 | Knowledge | NetworkX graph engine |
-| Testing | pytest (748+ tests), Vitest (24 tests) |
+| Testing | pytest (1500+ tests), Vitest (134 tests) |
 
 ## Quickstart
 
@@ -173,7 +173,7 @@ Open http://localhost:3000 and start reading!
 ### 5. Run Tests
 
 ```bash
-# Backend (748+ tests)
+# Backend (1500+ tests)
 cd packages/server
 uv run pytest tests/ -v
 
@@ -255,8 +255,8 @@ Areas where we'd love help:
 - [x] Memory books
 - [x] Book clubs and sharing
 - [x] Internationalization (English + Chinese)
+- [x] Mobile app (Expo `packages/mobile` + PWA offline reading)
 - [ ] 100 beta users
-- [ ] Mobile app (Capacitor)
 
 ### Phase 2 — Multi-Agent
 - [ ] Research agent (web search, cross-document)
