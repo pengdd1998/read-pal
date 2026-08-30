@@ -56,7 +56,7 @@ const ChapterItemRow = React.memo(function ChapterItemRow({
     {index + 1}
    </span>
    <span className={`truncate ${isCurrent ? 'font-semibold' : ''}`}>
-    {chapter.title || chapterLabel}
+    {chapter.title?.trim() || chapterLabel}
    </span>
    {isCurrent && (
     <span className="flex-shrink-0 ml-auto">

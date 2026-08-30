@@ -1018,9 +1018,7 @@
     "width_comfortable": "Comfortable",
     "width_wide": "Wide",
     "next_chapter_label": "NEXT CHAPTER",
-    "next_chapter_cta": "Continue to next chapter: {title}",
-    "preface_label": "Preface",
-    "afterword_label": "Afterword"
+    "next_chapter_cta": "Continue to next chapter: {title}"
   },
   "stats": {
     "title": "Reading Stats",
