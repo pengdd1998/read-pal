@@ -12,6 +12,7 @@ from app.models.book import Book
 from app.models.collection import Collection
 from app.schemas.collection import CollectionCreate, CollectionUpdate
 from app.utils.db import db_error_guard
+from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.collections')
 
@@ -108,12 +109,12 @@ async def update_collection(
                 ),
             )
             collection = result.scalar_one_or_none()
-    except DBAPIError as exc:
+    except DBAPIError:
         logger.warning('collection query failed', exc_info=True)
-        raise ValueError('Failed to query collection') from exc
+        raise  # DB failure — sanitized 500 via the global handler
 
     if collection is None:
-        raise ValueError('Collection not found')
+        raise NotFoundError('Collection not found')
 
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -140,12 +141,12 @@ async def delete_collection(
                 ),
             )
             collection = result.scalar_one_or_none()
-    except DBAPIError as exc:
+    except DBAPIError:
         logger.warning('collection query failed', exc_info=True)
-        raise ValueError('Failed to query collection') from exc
+        raise  # DB failure — sanitized 500 via the global handler
 
     if collection is None:
-        raise ValueError('Collection not found')
+        raise NotFoundError('Collection not found')
 
     await db.delete(collection)
     await db.flush()
@@ -176,11 +177,11 @@ async def _get_owned_collection(
                 stmt = stmt.with_for_update()
             result = await db.execute(stmt)
             collection = result.scalar_one_or_none()
-    except DBAPIError as exc:
+    except DBAPIError:
         logger.warning('collection query failed', exc_info=True)
-        raise ValueError('Failed to query collection') from exc
+        raise  # DB failure — sanitized 500 via the global handler
     if collection is None:
-        raise ValueError('Collection not found')
+        raise NotFoundError('Collection not found')
     return collection
 
 
@@ -210,12 +211,12 @@ async def _verify_owned_books(
             )
             # Normalize to strings — SQLite TypeDecorator returns strings, PostgreSQL returns UUIDs
             found_ids = {str(row[0]) for row in result.all()}
-    except DBAPIError as exc:
+    except DBAPIError:
         logger.warning('book ownership query failed', exc_info=True)
-        raise ValueError('Failed to verify book ownership') from exc
+        raise  # DB failure — sanitized 500 via the global handler
     missing = expected - found_ids
     if missing:
-        raise ValueError('Book not found')
+        raise NotFoundError('Book not found')
 
 
 async def add_book_to_collection(

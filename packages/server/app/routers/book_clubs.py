@@ -23,6 +23,7 @@ from app.services import book_club_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.utils.sanitizer import sanitize_string_fields, strip_html
 from app.middleware.rate_limiter import api_limiter
+from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.book_clubs')
 
@@ -181,6 +182,11 @@ async def join_club(
         club = await book_club_service.join_club(
             db, UUID(user['id']), body.invite_code,
         )
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
+        ) from exc
     except ValueError as exc:
         logger.debug('validation error in book_clubs')
         raise HTTPException(
@@ -232,6 +238,11 @@ async def leave_club(
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await book_club_service.leave_club(db, UUID(user['id']), club_id)
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={'code': 'NOT_FOUND', 'message': translate_error(exc, lang)},
+        ) from exc
     except ValueError as exc:
         logger.debug('validation error in book_clubs')
         raise HTTPException(

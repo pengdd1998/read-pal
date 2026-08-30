@@ -16,6 +16,7 @@ from app.schemas.share import ShareCreate, ShareResponse
 from app.services import share_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.utils.sanitizer import sanitize_string_fields
+from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.share')
 
@@ -93,7 +94,7 @@ async def delete_share(
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await share_service.delete_share(db, UUID(user['id']), share_id)
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in share')
         raise not_found_error(translate_error(exc, lang)) from exc
 

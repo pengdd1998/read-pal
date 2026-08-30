@@ -27,7 +27,7 @@ async def add_discussion(
             ),
         )
         if member_result.scalar_one_or_none() is None:
-            raise ValueError('Must be a member to post discussions')
+            raise PermissionError('Must be a member to post discussions')
 
         discussion = ClubDiscussion(
             club_id=club_id,

@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.book import Book
+from app.middleware.exception_handlers import NotFoundError
 from app.models.flashcard import Flashcard
 from app.prompts import FLASHCARD_GENERATION_HUMAN, FLASHCARD_GENERATION_SYSTEM
 from app.schemas.llm_outputs import FlashcardList
@@ -40,7 +41,7 @@ async def _fetch_book_and_annotations(
         )
         book = book_result.scalar_one_or_none()
         if not book:
-            raise ValueError(t('errors.book_not_found_user', book_id=str(book_id), user_id=str(user_id)))
+            raise NotFoundError(t('errors.book_not_found_user', book_id=str(book_id), user_id=str(user_id)))
 
         ann_result = await db.execute(
             select(Annotation)

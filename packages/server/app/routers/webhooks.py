@@ -23,6 +23,7 @@ from app.schemas.webhook import (
 from app.services import webhook_service
 from app.utils.i18n import not_found_error, translate_error
 from app.middleware.rate_limiter import api_limiter
+from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.webhooks')
 
@@ -61,7 +62,7 @@ async def test_webhook(
     """Test a webhook by sending a test payload."""
     try:
         wh = await webhook_service.get_webhook(db, UUID(user['id']), webhook_id)
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in webhooks')
         raise not_found_error(translate_error(exc)) from exc
     # Actually deliver the test webhook
@@ -116,7 +117,7 @@ async def update_webhook(
         webhook = await webhook_service.update_webhook(
             db, UUID(user['id']), webhook_id, body,
         )
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in webhooks')
         raise not_found_error(translate_error(exc)) from exc
     data = WebhookResponse.model_validate(webhook).model_dump(by_alias=True, mode='json')
@@ -132,7 +133,7 @@ async def delete_webhook(
     """Delete a webhook."""
     try:
         await webhook_service.delete_webhook(db, UUID(user['id']), webhook_id)
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in webhooks')
         raise not_found_error(translate_error(exc)) from exc
 
@@ -150,7 +151,7 @@ async def get_delivery_logs(
         logs, total = await webhook_service.get_delivery_logs(
             db, UUID(user['id']), webhook_id, page, per_page,
         )
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in webhooks')
         raise not_found_error(translate_error(exc)) from exc
     items = [

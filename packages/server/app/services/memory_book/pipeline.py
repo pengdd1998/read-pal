@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.memory_book import MemoryBook
 from app.schemas.memory_book import MemoryBookResponse
+from app.middleware.exception_handlers import NotFoundError
 from app.services.memory_book.checkpoint import (
     clear_checkpoint,
     load_checkpoint,
@@ -79,7 +80,7 @@ async def _collect_and_validate(
     """Collect enriched data and raise if the book is missing."""
     enriched_data = await _collect_enriched_data(db, user_id, book_id)
     if not enriched_data.get('book'):
-        raise ValueError('Book not found')
+        raise NotFoundError('Book not found')
     stats = enriched_data.get('stats', {})
     logger.info(
         'memory_book.generate.data_collected',

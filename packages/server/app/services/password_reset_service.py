@@ -14,6 +14,7 @@ from app.core.redis import get_redis
 from app.middleware.auth import hash_password
 from app.models.user import User
 from app.utils.db import db_error_guard
+from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.password_reset')
 
@@ -115,7 +116,7 @@ async def _update_user_password(
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
     if user is None:
-        raise ValueError('User not found')
+        raise NotFoundError('User not found')
 
     user.password_hash = hash_password(new_password)
     async with db_error_guard('_update_user_password.commit', user_id=user_id):

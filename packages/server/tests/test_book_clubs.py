@@ -378,6 +378,28 @@ async def test_join_club_invalid_code(client):
 
 
 @pytest.mark.asyncio
+async def test_leave_club_not_a_member_returns_403(client):
+    """Leaving a club you never joined is a permission problem (403), not
+    a validation error — pinned after the ValueError/PermissionError split."""
+    reg_a = await register_user(client, email='owner2@test.com', name='Owner')
+    headers_a = auth_headers(reg_a['token'])
+    create_resp = await client.post(
+        '/api/v1/book-clubs/',
+        headers=headers_a,
+        json={'name': 'Not Yours'},
+    )
+    club_id = create_resp.json()['data']['id']
+
+    reg_b = await register_user(client, email='stranger@test.com', name='Stranger')
+    headers_b = auth_headers(reg_b['token'])
+
+    resp = await client.post(f'/api/v1/book-clubs/{club_id}/leave', headers=headers_b)
+    assert resp.status_code == 403
+    assert resp.json()['detail']['code'] == 'FORBIDDEN'
+
+
+
+@pytest.mark.asyncio
 async def test_leave_club(client):
     """POST /{club_id}/leave lets a member leave the club."""
     reg_a = await register_user(client, email='owner@test.com', name='Owner')

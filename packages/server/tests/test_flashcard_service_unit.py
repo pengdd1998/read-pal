@@ -243,7 +243,10 @@ async def test_review_flashcard_not_found_raises():
     result_mock.scalar_one_or_none.return_value = None
     db.execute = AsyncMock(return_value=result_mock)
 
-    with pytest.raises(ValueError, match='Flashcard not found'):
+    # NotFoundError (a ValueError subclass) — pins the 404 semantics
+    # instead of the old conflated 400.
+    from app.middleware.exception_handlers import NotFoundError
+    with pytest.raises(NotFoundError, match='Flashcard not found'):
         await flashcard_service.review_flashcard(db, user_id, card_id, rating=3)
 
 
@@ -980,3 +983,35 @@ async def test_generate_flashcards_llm_returns_non_list(mock_llm):
     cards = await flashcard_service.generate_flashcards(db, user_id, book_id)
 
     assert cards == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_book_and_annotations_error_semantics():
+    """Book missing -> NotFoundError (404); no highlights -> ValueError (400).
+
+    Pins the split introduced when flashcard generation stopped conflating
+    both cases into the router's blanket 404 translation.
+    """
+    from app.middleware.exception_handlers import NotFoundError
+    from app.services.flashcard.generation import _fetch_book_and_annotations
+
+    user_id, book_id = uuid4(), uuid4()
+
+    # Book not found
+    db = _make_db_session()
+    book_result = MagicMock()
+    book_result.scalar_one_or_none.return_value = None
+    db.execute = AsyncMock(return_value=book_result)
+    with pytest.raises(NotFoundError):
+        await _fetch_book_and_annotations(db, user_id, book_id)
+
+    # Book exists but no highlights/notes
+    db = _make_db_session()
+    book_result = MagicMock()
+    book_result.scalar_one_or_none.return_value = MagicMock()
+    ann_result = MagicMock()
+    ann_result.scalars.return_value.all.return_value = []
+    db.execute = AsyncMock(side_effect=[book_result, ann_result])
+    with pytest.raises(ValueError, match='No highlights or notes') as exc_info:
+        await _fetch_book_and_annotations(db, user_id, book_id)
+    assert not isinstance(exc_info.value, NotFoundError)

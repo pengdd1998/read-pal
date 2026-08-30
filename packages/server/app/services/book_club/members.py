@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClubMember
+from app.middleware.exception_handlers import NotFoundError
 from app.models.user import User
 from app.utils.db import db_error_guard
 
@@ -94,7 +95,7 @@ async def join_club_by_id(
         )
         club = result.scalar_one_or_none()
         if club is None:
-            raise ValueError('Club not found')
+            raise NotFoundError('Club not found')
         if club.is_private:
             raise ValueError('Cannot join a private club without an invite code')
 
@@ -156,7 +157,7 @@ async def leave_club(
         )
         member = result.scalar_one_or_none()
         if member is None:
-            raise ValueError('Not a member of this club')
+            raise PermissionError('Not a member of this club')
 
         if member.role == 'admin':
             admin_count = (

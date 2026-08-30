@@ -22,6 +22,7 @@ from app.schemas.common import GenericResponse
 from app.services import collection_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.utils.sanitizer import sanitize_string_fields
+from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.collections')
 
@@ -104,7 +105,7 @@ async def update_collection(
         col = await collection_service.update_collection(
             db, UUID(user['id']), collection_id, body,
         )
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in collections')
         raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _dump(col)}
@@ -120,7 +121,7 @@ async def delete_collection(
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
         await collection_service.delete_collection(db, UUID(user['id']), collection_id)
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in collections')
         raise not_found_error(translate_error(exc, lang)) from exc
 
@@ -156,7 +157,7 @@ async def add_books_batch(
         col = await collection_service.add_books_batch(
             db, UUID(user['id']), collection_id, parsed_ids,
         )
-    except ValueError:
+    except NotFoundError:
         logger.debug('validation error in collections')
         raise not_found_error(t('errors.collection_not_found'))
     return {'success': True, 'data': _dump(col)}
@@ -175,7 +176,7 @@ async def remove_books_batch(
         col = await collection_service.remove_books_batch(
             db, UUID(user['id']), collection_id, parsed_ids,
         )
-    except ValueError:
+    except NotFoundError:
         logger.debug('validation error in collections')
         raise not_found_error(t('errors.collection_not_found'))
     return {'success': True, 'data': _dump(col)}
@@ -194,7 +195,7 @@ async def add_book(
         col = await collection_service.add_book_to_collection(
             db, UUID(user['id']), collection_id, book_id,
         )
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in collections')
         raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _dump(col)}
@@ -213,6 +214,6 @@ async def remove_book(
         await collection_service.remove_book_from_collection(
             db, UUID(user['id']), collection_id, book_id,
         )
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in collections')
         raise not_found_error(translate_error(exc, lang)) from exc

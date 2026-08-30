@@ -12,6 +12,7 @@ import socket
 import time
 from urllib.parse import urlparse
 from uuid import UUID
+from app.middleware.exception_handlers import NotFoundError
 
 import httpx
 from sqlalchemy import func, select
@@ -124,11 +125,11 @@ async def get_webhook(
                 ),
             )
             webhook = result.scalar_one_or_none()
-    except DBAPIError as exc:
+    except DBAPIError:
         logger.warning('webhook query failed', exc_info=True)
-        raise ValueError('Failed to query webhook') from exc
+        raise  # DB failure — sanitized 500 via the global handler
     if webhook is None:
-        raise ValueError('Webhook not found')
+        raise NotFoundError('Webhook not found')
     return webhook
 
 
@@ -148,11 +149,11 @@ async def update_webhook(
                 ),
             )
             webhook = result.scalar_one_or_none()
-    except DBAPIError as exc:
+    except DBAPIError:
         logger.warning('webhook query failed', exc_info=True)
-        raise ValueError('Failed to query webhook') from exc
+        raise  # DB failure — sanitized 500 via the global handler
     if webhook is None:
-        raise ValueError('Webhook not found')
+        raise NotFoundError('Webhook not found')
 
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -182,11 +183,11 @@ async def delete_webhook(
                 ),
             )
             webhook = result.scalar_one_or_none()
-    except DBAPIError as exc:
+    except DBAPIError:
         logger.warning('webhook query failed', exc_info=True)
-        raise ValueError('Failed to query webhook') from exc
+        raise  # DB failure — sanitized 500 via the global handler
     if webhook is None:
-        raise ValueError('Webhook not found')
+        raise NotFoundError('Webhook not found')
 
     await db.delete(webhook)
     await db.flush()
@@ -211,7 +212,7 @@ async def get_delivery_logs(
                 ),
             )
             if wh_result.scalar_one_or_none() is None:
-                raise ValueError('Webhook not found')
+                raise NotFoundError('Webhook not found')
 
             count_result = await db.execute(
                 select(func.count())

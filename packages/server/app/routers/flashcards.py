@@ -18,6 +18,7 @@ from app.services import flashcard_service
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.utils.sanitizer import sanitize_string_fields
 from app.middleware.rate_limiter import api_limiter
+from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.flashcards')
 
@@ -103,7 +104,7 @@ async def review_flashcard(
         card = await flashcard_service.review_flashcard(
             db, UUID(user['id']), flashcard_id, body.rating,
         )
-    except ValueError as exc:
+    except NotFoundError as exc:
         logger.debug('validation error in flashcards')
         raise not_found_error(translate_error(exc, lang)) from exc
     return {'success': True, 'data': _serialize_card(card)}
@@ -166,9 +167,15 @@ async def generate_flashcards(
         cards = await flashcard_service.generate_flashcards(
             db, UUID(user['id']), book_id,
         )
+    except NotFoundError as exc:
+        logger.debug('book not found in flashcards')
+        raise not_found_error(translate_error(exc, lang)) from exc
     except ValueError as exc:
         logger.debug('validation error in flashcards')
-        raise not_found_error(translate_error(exc, lang)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={'code': 'BAD_REQUEST', 'message': translate_error(exc, lang)},
+        ) from exc
     except Exception as exc:
         logger.warning('flashcard generation failed user=%s book=%s', user['id'], book_id, exc_info=True)
         raise HTTPException(

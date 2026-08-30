@@ -14,6 +14,7 @@ from app.models.shared_export import SharedExport
 from app.schemas.share import ShareCreate
 from app.services.export_service import export
 from app.utils.db import db_error_guard
+from app.middleware.exception_handlers import NotFoundError
 from app.utils.limits import SHARE_QUERY_LIMIT
 
 logger = logging.getLogger('read-pal.share')
@@ -131,7 +132,7 @@ async def delete_share(
     )
     share = result.scalar_one_or_none()
     if share is None:
-        raise ValueError('Share not found')
+        raise NotFoundError('Share not found')
 
     await db.delete(share)
     await db.flush()

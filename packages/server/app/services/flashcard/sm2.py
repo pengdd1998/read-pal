@@ -12,6 +12,7 @@ from app.models.flashcard import Flashcard
 from app.schemas.flashcard import FlashcardCreate
 from app.utils.db import db_error_guard
 from app.utils.time import utcnow_aware
+from app.middleware.exception_handlers import NotFoundError
 
 logger = structlog.get_logger('read-pal.flashcards')
 
@@ -99,7 +100,7 @@ async def review_flashcard(
         )
         card = result.scalar_one_or_none()
         if card is None:
-            raise ValueError('Flashcard not found')
+            raise NotFoundError('Flashcard not found')
 
         new_interval, new_repetition, new_ef = sm2_schedule(card, rating)
 
