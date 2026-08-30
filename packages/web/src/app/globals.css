@@ -370,6 +370,20 @@
     .chapter-next-affordance, .chapter-next-affordance .chapter-next-arrow { transition: none; }
   }
 
+  /* Smooth chat typing indicator: soft opacity + slight rise, staggered.
+     Gentler than animate-bounce (which travels full element height). */
+  .chat-typing-dot {
+    animation: chat-typing-wave 1.2s ease-in-out infinite;
+  }
+  @keyframes chat-typing-wave {
+    0%, 100% { opacity: 0.35; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-3px); }
+    60% { opacity: 0.85; transform: translateY(-2px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chat-typing-dot { animation: none; opacity: 0.6; }
+  }
+
   /* Highlight marks */
   mark.highlight-mark {
     border-radius: 3px;

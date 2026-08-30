@@ -41,7 +41,17 @@ function parseTimestamp(raw: RawHistoryItem): number {
   return Date.now();
 }
 
-/** Convert raw API items to Message shape, sorted oldest-first. */
+/**
+ * Convert raw API items to Message shape, oldest-first.
+ *
+ * The API returns messages newest-first (created_at DESC). Within a
+ * user/assistant pair the two rows are written in the same millisecond
+ * burst, so a timestamp sort leaves the pair's internal order unstable
+ * (ties compare 0) — history rendered with replies above their prompts.
+ * Reversing the DESC array restores chronological order AND keeps each
+ * pair's write order (user before assistant). Timestamp sort alone
+ * cannot do this; array position is the tie-breaker that works.
+ */
 function toMessages(raw: RawHistoryItem[]): Message[] {
   return raw
     .map((m) => ({
@@ -50,7 +60,11 @@ function toMessages(raw: RawHistoryItem[]): Message[] {
       content: m.content,
       timestamp: parseTimestamp(m),
     }))
-    .sort((a, b) => a.timestamp - b.timestamp);
+    .reverse()
+    // Safety net for mixed-page loads: sort ONLY when timestamps are
+    // strictly out of order across second boundaries (pair ties stay
+    // as-reversed via the stable sort's equal-compare no-op).
+    .sort((a, b) => (a.timestamp === b.timestamp ? 0 : a.timestamp - b.timestamp));
 }
 
 export function useChatHistory({

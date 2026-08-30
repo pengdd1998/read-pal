@@ -3,10 +3,6 @@
 import React from 'react';
 import { ChatMessageBubble } from './ChatMessageBubble';
 
-const BOUNCE_DOT_1 = { animationDuration: '0.6s' } as const;
-const BOUNCE_DOT_2 = { animationDelay: '120ms', animationDuration: '0.6s' } as const;
-const BOUNCE_DOT_3 = { animationDelay: '240ms', animationDuration: '0.6s' } as const;
-
 interface SuggestedPromptButtonProps {
  prompt: string;
  onPromptClick: (prompt: string) => void;
@@ -154,10 +150,17 @@ export const ChatMessageList = React.memo(function ChatMessageList({
   {loading && !hasStreamingMessage && (
   <div className="flex justify-start">
    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 rounded-2xl rounded-bl-md px-4 py-3">
-   <div className="flex gap-1.5 items-center">
-    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={BOUNCE_DOT_1} />
-    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={BOUNCE_DOT_2} />
-    <div className="w-1.5 h-1.5 bg-amber-500/60 rounded-full animate-bounce" style={BOUNCE_DOT_3} />
+   {/* Smooth typing wave: soft opacity+rise pulse instead of tailwind's
+       full-height bounce (which reads as jumpy at 1.5px dot size). Stagger
+       160ms over 1.2s cycles; honors prefers-reduced-motion. */}
+   <div className="flex gap-1.5 items-center" role="status" aria-label={connecting ? t('companion_connecting') : t('companion_thinking')}>
+    {[0, 1, 2].map(i => (
+    <span
+    key={i}
+    className="block w-1.5 h-1.5 rounded-full bg-amber-500/70 chat-typing-dot"
+    style={{ animationDelay: `${i * 160}ms` }}
+    />
+    ))}
     <span className="text-[10px] text-amber-500/80 ml-1">{connecting ? t('companion_connecting') : t('companion_thinking')}</span>
    </div>
    </div>
