@@ -35,8 +35,10 @@ const AppearanceCard = React.memo(function AppearanceCard({ settings, saving, on
     aria-pressed={settings.theme === v}
     className="min-h-[44px] py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 active:scale-[0.98] border focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
     style={{
-    backgroundColor: settings.theme === v ? undefined : '',
-    borderColor: 'var(--surface-3)',
+    // Selected: brand amber fill + ring; unselected: surface border only.
+    // (Both branches were previously empty strings — no selected state.)
+    backgroundColor: settings.theme === v ? 'rgba(217, 119, 6, 0.12)' : 'transparent',
+    borderColor: settings.theme === v ? 'rgba(217, 119, 6, 0.55)' : 'var(--surface-3)',
     }}
     >
     {v === 'system' ? t('theme_system') : v === 'light' ? t('theme_light') : t('theme_dark')}

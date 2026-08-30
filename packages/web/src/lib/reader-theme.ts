@@ -13,7 +13,7 @@ export const themeClasses: Record<ReaderTheme, string> = {
   // that FLIP in dark mode, which made the dark reader theme render a light
   // background with light text (invisible). Use the `reading` palette + raw
   // hex for both bg and text so each reader theme is self-consistent.
-  light: 'bg-white text-[#374151]',
+  light: 'bg-[#fefdfb] text-[#374151]', // warm paper — pure white is banned (DESIGN.md)
   dark: 'bg-reading-dark text-[#e5e7eb]',
   sepia: 'bg-[#f8f4ec] text-[#5c4b37]',
 };
@@ -25,8 +25,8 @@ export const progressBg: Record<ReaderTheme, string> = {
 };
 
 export const progressFill: Record<ReaderTheme, string> = {
-  light: 'bg-gradient-to-r from-teal-500 to-amber-400',
-  dark: 'bg-gradient-to-r from-teal-400 to-amber-400',
+  light: 'bg-gradient-to-r from-amber-600 to-amber-400',
+  dark: 'bg-gradient-to-r from-amber-500 to-amber-300',
   sepia: 'bg-gradient-to-r from-amber-600 to-amber-400',
 };
 

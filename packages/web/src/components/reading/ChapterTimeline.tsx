@@ -54,7 +54,7 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
    isCurrent
    ? 'bg-amber-500'
    : isRead
-   ? 'bg-teal-400'
+   ? 'bg-amber-400'
    : 'bg-gray-300 dark:bg-gray-600'
   }`} />
   <span className={`text-xs font-medium truncate ${
@@ -76,7 +76,7 @@ const TimelineChapterRow = React.memo(function TimelineChapterRow({
   <div className="flex items-center gap-2 mt-1.5">
    <div className="flex-1 h-1.5 bg-surface-1 rounded-full overflow-hidden">
    <div
-    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-400 transition-all duration-300"
+    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-300"
     style={{ width: `${barWidth}%` }}
    />
    </div>

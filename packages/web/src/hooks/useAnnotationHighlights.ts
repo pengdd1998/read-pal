@@ -51,7 +51,7 @@ export function useAnnotationHighlights(
 
   const applyMarkStyle = useCallback<ApplyStyleFn>(
     (mark, annotation, currentTheme) => {
-      const color = annotation.color || '#FFEB3B';
+      const color = annotation.color || '#fde68a';
       mark.style.backgroundColor = hexToRgba(
         color,
         currentTheme === 'dark' ? 0.35 : 0.45,
@@ -83,7 +83,7 @@ export function useAnnotationHighlights(
 
     const alpha = theme === 'dark' ? 0.35 : 0.45;
     marksMapRef.current.forEach((entry) => {
-      const color = entry.annotation.color || '#FFEB3B';
+      const color = entry.annotation.color || '#fde68a';
       entry.element.style.backgroundColor = hexToRgba(color, alpha);
     });
 

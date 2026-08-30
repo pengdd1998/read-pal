@@ -226,7 +226,7 @@ export const KnowledgeGraphCard = memo(function KnowledgeGraphCard({ t }: {
   t: (key: string) => string;
 }) {
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/10 dark:to-purple-900/10 rounded-2xl border border-violet-200/50 dark:border-violet-800/30 p-5 mb-6 animate-slide-up stagger-4">
+    <div className="bg-surface-1 rounded-2xl border border-amber-200/60 dark:border-amber-800/30 p-5 mb-6 animate-slide-up stagger-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl" aria-hidden="true">{'🗣️'}</span>

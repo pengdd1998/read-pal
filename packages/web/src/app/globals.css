@@ -271,7 +271,10 @@
     border-radius: 999px;
     border: 1px solid rgba(139, 123, 104, 0.15);
   }
-  .dark .chapter-number {
+  /* Scoped to the READER's theme (data-theme on the reader wrapper), not
+     the app-level .dark — a dark app with a light reader paper must keep
+     dark-on-light headings (was light-on-light ≈0.8:1). */
+  [data-theme="dark"] .chapter-number {
     color: #8a8078;
     border-color: rgba(138, 128, 120, 0.15);
   }
@@ -289,7 +292,7 @@
     color: #1a1a1a;
     letter-spacing: -0.01em;
   }
-  .dark .chapter-title { color: #e8e2d8; }
+  [data-theme="dark"] .chapter-title { color: #e8e2d8; }
   [data-theme="sepia"] .chapter-title { color: #3d2e1e; }
 
   @media (min-width: 640px) {

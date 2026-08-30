@@ -7,7 +7,7 @@ import { AnnotationEditForm } from './AnnotationEditForm';
 import { useShareAsImage } from '@/hooks/useShareAsImage';
 
 const TYPE_ICONS: Record<string, string> = { highlight: '\u{1F58D}', note: '\u{1F4DD}', bookmark: '\u{1F516}' };
-const TYPE_COLORS: Record<string, string> = { highlight: '#FFEB3B', note: '#2196F3', bookmark: '#9C27B0' };
+const TYPE_COLORS: Record<string, string> = { highlight: '#fde68a', note: '#2196F3', bookmark: '#9C27B0' };
 
 interface AnnotationCardProps {
  annotation: Annotation;
@@ -88,7 +88,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
    <button type="button"
     onClick={handleShareClick}
     disabled={sharing}
-    className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
+    className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-amber-400"
     aria-label={tc('share_as_image')}
     title={tc('share_as_quote')}
    >
@@ -138,7 +138,7 @@ export const AnnotationCard = memo(function AnnotationCard({ annotation, bookTit
     key={tag}
     className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
     tag === 'discuss'
-     ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
      : tag === 'important'
      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
      : tag === 'question'

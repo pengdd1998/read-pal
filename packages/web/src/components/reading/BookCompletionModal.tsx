@@ -80,8 +80,8 @@ export const BookCompletionModal = React.memo(function BookCompletionModal({
    <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalHighlights}</div>
    <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('completion_highlights')}</div>
    </div>
-   <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
-   <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{totalNotes}</div>
+   <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
+   <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalNotes}</div>
    <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('completion_notes')}</div>
    </div>
    <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3">

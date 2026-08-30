@@ -79,7 +79,7 @@ export function mockAnnotation(overrides?: Record<string, unknown>) {
  type: 'highlight',
  content: 'So we beat on, boats against the current...',
  note: null,
- color: '#ffeb3b',
+ color: '#fde68a',
  tags: [],
  location: { page: 180, chapter: 9 },
  ...overrides,
