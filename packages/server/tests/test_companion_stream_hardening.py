@@ -54,7 +54,7 @@ async def test_streaming_get_llm_receives_explicit_max_tokens():
     mock_state.circuit = mock_circuit
 
     with patch(
-        'app.services.companion.streaming.get_llm', return_value=mock_llm,
+        'app.services.companion.stream_provider.get_llm', return_value=mock_llm,
     ) as mock_get_llm:
         collected: list[str] = []
         async for _ in _run_primary_stream(collected, mock_state):

@@ -45,8 +45,6 @@ EXEMPT: set[str] = {
     'app/eval/live_runner.py',
     # observability module is one cohesive unit; splitting hurts more than helps
     'app/services/llm/observability.py',
-    # companion streaming is a state machine that doesn't decompose cleanly
-    'app/services/companion/streaming.py',
     # cross-book synthesis LLM helpers are tightly coupled
     'app/services/llm/safe_invoke.py',
     'app/services/llm/circuit_fallback.py',
@@ -61,7 +59,6 @@ EXEMPT: set[str] = {
     'app/routers/collections.py',             # 10 lines over cap, scheduled for thin-out
     'app/routers/reading_sessions.py',        # 5 lines over cap
     'app/schemas/llm_outputs.py',             # 30+ Pydantic models in one module
-    'app/services/agent_service.py',          # P0.3 — cancel plumbing
     'app/services/conversation_memory.py',    # Phase 4B — utilization logic added
 }
 

@@ -278,7 +278,7 @@ class TestStreamingErrors:
             patch('app.services.companion.context._load_annotations_context', return_value=''),
             patch('app.services.companion.context._fetch_rag', return_value=''),
             patch('app.services.companion.context._fetch_memory', return_value=''),
-            patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
+            patch('app.services.companion.stream_provider.get_llm', return_value=mock_llm),
             patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
         ):
 
@@ -372,11 +372,11 @@ class TestStreamingErrors:
             patch('app.services.companion.context._load_annotations_context', return_value=''),
             patch('app.services.companion.context._fetch_rag', return_value=''),
             patch('app.services.companion.context._fetch_memory', return_value=''),
-            patch('app.services.companion.streaming.get_llm', side_effect=get_llm_by_provider),
+            patch('app.services.companion.stream_provider.get_llm', side_effect=get_llm_by_provider),
             patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
             patch('app.services.companion.stream_fallback.get_llm', side_effect=get_llm_by_provider),
             patch('app.services.companion.stream_fallback.get_registry', return_value=mock_registry),
-            patch('app.services.companion.streaming.persist_stream_result', new=fake_persist),
+            patch('app.services.companion.stream_persist.persist_stream_result', new=fake_persist),
         ):
             chunks_text = ''
             async for chunk in stream_chat(
@@ -433,7 +433,7 @@ class TestStreamingErrors:
             patch('app.services.companion.context._load_annotations_context', return_value=''),
             patch('app.services.companion.context._fetch_rag', return_value=''),
             patch('app.services.companion.context._fetch_memory', return_value=''),
-            patch('app.services.companion.streaming.get_llm', return_value=mock_llm),
+            patch('app.services.companion.stream_provider.get_llm', return_value=mock_llm),
             patch('app.services.companion.streaming.get_registry', return_value=mock_registry),
             patch('app.services.companion.stream_cache._save_message', new_callable=AsyncMock) as mock_save,
         ):

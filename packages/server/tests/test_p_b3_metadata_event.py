@@ -104,7 +104,7 @@ async def test_metadata_event_emitted_before_fallback_chunks_on_primary_failure(
     """
     import asyncio
     from unittest.mock import MagicMock, patch, AsyncMock
-    from app.services.companion import streaming
+    from app.services.companion import stream_provider as streaming
 
     # Fake primary LLM that raises immediately (no chunks emitted).
     class FailingLLM:
@@ -187,7 +187,7 @@ async def test_no_metadata_event_when_no_fallback_available():
     """
     import asyncio
     from unittest.mock import MagicMock, patch, AsyncMock
-    from app.services.companion import streaming
+    from app.services.companion import stream_provider as streaming
 
     class FailingLLM:
         async def astream(self, messages):
