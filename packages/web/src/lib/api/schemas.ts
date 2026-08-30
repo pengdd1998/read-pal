@@ -59,7 +59,11 @@ export const bookListItemSchema = z.object({
   totalPages: z.number(),
   currentPage: z.number(),
   currentSegment: z.number().optional(),
-  progress: z.number(),
+  // The backend serializes progress as a formatted percentage string
+  // ("40.00") — coerce, and normalize: 0–1 fraction in the shared type vs
+  // 0–100 from the wire is resolved by consumers, validation only checks
+  // numeric-ness here.
+  progress: z.coerce.number(),
   status: z.enum(['unread', 'reading', 'completed']),
   tags: z.array(z.string()),
   addedAt: z.union([z.string(), z.date()]),

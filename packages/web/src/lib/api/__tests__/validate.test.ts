@@ -116,6 +116,35 @@ describe('API boundary schema validation', () => {
     expect(chatHistoryResponseSchema.safeParse(page).success).toBe(true);
   });
 
+  it('accepts the real backend book-list shape (progress as string)', () => {
+    // Fixture captured from a live /api/books response — guards against
+    // schema drift from idealized test data (progress arrives as "40.00").
+    const real = [{
+      id: '3a049b72-9b74-46d5-b202-34dad2861c8b',
+      userId: '19f4cd19-3fdb-46a2-8e1d-44e9c8d255a9',
+      title: 'The Great Gatsby',
+      author: 'F. Scott Fitzgerald',
+      coverUrl: null,
+      fileType: 'epub',
+      fileSize: 2048,
+      totalPages: 5,
+      currentPage: 2,
+      currentSegment: 0,
+      progress: '40.00',
+      status: 'reading',
+      tags: ['sample', 'classic', 'fiction'],
+      addedAt: '2026-08-30T11:46:43.927653',
+      startedAt: null,
+      completedAt: null,
+      lastReadAt: '2026-08-30T14:22:05.489708',
+      createdAt: '2026-08-30T11:46:43.927657',
+      updatedAt: '2026-08-30T14:22:06.017763',
+    }];
+    const res = bookListResponseSchema.safeParse(real);
+    expect(res.success).toBe(true);
+    expect(res.success && res.data[0].progress).toBe(40);
+  });
+
   it('rejects chat-history payloads with a broken role enum', () => {
     const bad = [{ id: '1', role: 'system', content: 'hi' }];
     expect(chatHistoryResponseSchema.safeParse(bad).success).toBe(false);
