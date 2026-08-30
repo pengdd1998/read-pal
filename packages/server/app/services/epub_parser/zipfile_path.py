@@ -188,6 +188,42 @@ def _resolve_spine(
     return spine_hrefs
 
 
+def _is_toc_page(raw_html: str, text: str) -> bool:
+    """Detect a dedicated table-of-contents page.
+
+    Publishers put the TOC in the spine as its own file; parsing it as a
+    "chapter" yields a dead 20-char chapter of link labels between the
+    preface and chapter 1. A TOC page is: short text, dominated by
+    internal links, and the links point at OTHER spine files (not
+    footnotes/anchors within itself).
+    """
+    stripped = text.strip()
+    if len(stripped) > 400:
+        return False
+    links = re.findall(r'<a\s[^>]*href="([^"#]+#[^"]*|[^"#]+)"[^>]*>', raw_html)
+    if not links:
+        return False
+    # Every link target a distinct file (TOC pattern); self-referencing
+    # footnote links disqualify.
+    targets = {h.split('#')[0] for h in links if h.split('#')[0]}
+    if len(targets) < 2:
+        return False
+    # A TOC page's visible words are almost entirely link labels.
+    # Links + the page heading should cover most of the non-whitespace
+    # text (structured-text output pads with blank lines; real chapters
+    # exceed the 400-char gate long before reaching this check).
+    link_chars = sum(
+        len(re.sub(r'\s+', '', re.sub(r'<[^>]+>', '', m)))
+        for m in re.findall(r'<a\s[^>]*>.*?</a>', raw_html, re.DOTALL)
+    )
+    heading_chars = sum(
+        len(re.sub(r'\s+', '', re.sub(r'<[^>]+>', '', m)))
+        for m in re.findall(r'<h[1-3][^>]*>.*?</h[1-3]>', raw_html, re.DOTALL)
+    )
+    non_ws = len(re.sub(r'\s+', '', stripped))
+    return link_chars + heading_chars >= non_ws * 0.5
+
+
 def _build_chapters(
     zf: zipfile.ZipFile,
     spine_hrefs: list[tuple[str, str]],
@@ -215,6 +251,9 @@ def _build_chapters(
 
         text = html_to_structured_text(enriched)
         if not text.strip() or len(text.strip()) < 20:
+            continue
+        if _is_toc_page(raw_html, text):
+            logger.debug('Skipping TOC page as chapter: %s', resolved)
             continue
 
         full_text_parts.append(text)

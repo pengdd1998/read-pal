@@ -163,6 +163,12 @@ def _process_chapter_item(
     text = html_to_structured_text(enriched_html)
     if not text.strip():
         return None, None
+    # Skip dedicated TOC pages — they parse as dead 20-char "chapters"
+    # of link labels between the preface and chapter 1.
+    from app.services.epub_parser.zipfile_path import _is_toc_page
+    if _is_toc_page(raw_html, text):
+        logger.debug('Skipping TOC page as chapter: %s', item_name)
+        return None, None
 
     title = _resolve_chapter_title(item_name, raw_html, toc_map)
     chapter = {
