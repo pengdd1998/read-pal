@@ -34,6 +34,10 @@ export const ChapterProgressBar = React.memo(function ChapterProgressBar({
   );
 });
 
+interface ChapterItem {
+  title: string;
+}
+
 // ---------------------------------------------------------------------------
 // ChapterHeader — chapter number + title + ornament divider
 // ---------------------------------------------------------------------------
@@ -42,15 +46,43 @@ interface ChapterHeaderProps {
   chapterTitle: string;
 }
 
+/**
+ * Front/back-matter chapter titles (序, 后记, 前言, Preface…) are real
+ * reading units but not NUMBERED chapters — labeling them "第 2 章" made
+ * the book's own Chapter 1 show as Chapter 2. These show their title as
+ * the label instead of a number; numbered chapters keep 第 N 章.
+ */
+const FRONT_BACK_MATTER_RE = /^(序|序言|前言|引言|導言|导言|后记|後記|跋|附录|附錄|foreword|preface|introduction|prologue|afterword|epilogue|conclusion|acknowledgments?|appendix)([：:\s].*)?$/i;
+
+function isFrontBackMatter(title: string): boolean {
+  return FRONT_BACK_MATTER_RE.test(title.trim());
+}
+
 export const ChapterHeader = React.memo(function ChapterHeader({
   currentPage,
   chapterTitle,
-}: ChapterHeaderProps) {
+  chapters,
+  onPageChange,
+}: ChapterHeaderProps & { chapters?: ChapterItem[]; onPageChange?: (p: number) => void }) {
   const t = useTranslations('reader');
+  // Display number counts ONLY numbered chapters — a front-matter 序 at
+  // index 0 must not shift the book's Chapter 1 to "第 2 章".
+  const displayNum = useMemo(() => {
+    if (!chapters?.length) return currentPage + 1;
+    let n = 0;
+    for (let i = 0; i <= currentPage && i < chapters.length; i++) {
+      if (!isFrontBackMatter(chapters[i].title)) n += 1;
+    }
+    return Math.max(n, 1);
+  }, [chapters, currentPage]);
 
   return (
     <div className="chapter-header">
-      <span className="chapter-number">{t('reader_chapter', { num: currentPage + 1 })}</span>
+      <span className="chapter-number">
+        {isFrontBackMatter(chapterTitle)
+          ? t('front_matter_label')
+          : t('reader_chapter', { num: displayNum })}
+      </span>
       <h2 className="chapter-title">{chapterTitle}</h2>
       <div className="chapter-divider">
         <span className="chapter-ornament" />

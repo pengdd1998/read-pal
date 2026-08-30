@@ -171,6 +171,7 @@ def _process_chapter_item(
         return None, None
 
     title = _resolve_chapter_title(item_name, raw_html, toc_map)
+    text, enriched_html = _strip_duplicate_heading(title, text, enriched_html)
     chapter = {
         'id': item.get_id(),
         'title': title,
@@ -183,6 +184,35 @@ def _process_chapter_item(
         'wordCount': len(text.split()),
     }
     return chapter, text
+
+
+def _strip_duplicate_heading(
+    title: str, text: str, enriched_html: str,
+) -> tuple[str, str]:
+    """Remove a leading heading line that duplicates the chapter title.
+
+    The reader's ChapterHeader renders the title; when the document's own
+    first heading is the same text (the near-universal pattern), the body
+    used to start with a repeated "序\n\n..." / "1\n\n..." line.
+    """
+    if not title:
+        return text, enriched_html
+    stripped = text.lstrip()
+    title_norm = title.strip()
+    if not stripped.startswith(title_norm):
+        return text, enriched_html
+    # Only consume the heading itself — not prose that happens to open
+    # with the same characters (guard: next char must be whitespace/newline).
+    rest = stripped[len(title_norm):]
+    if rest and not rest[0] in '\n\r \t':
+        return text, enriched_html
+    text = rest.lstrip('\n').lstrip()
+    # Strip the first heading tag from the html counterpart too
+    enriched_html = re.sub(
+        r'<h[1-3][^>]*>\s*' + re.escape(title_norm) + r'\s*</h[1-3]>',
+        '', enriched_html, count=1,
+    )
+    return text, enriched_html
 
 
 def _build_chapters(

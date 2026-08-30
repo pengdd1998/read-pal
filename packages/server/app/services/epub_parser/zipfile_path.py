@@ -259,6 +259,8 @@ def _build_chapters(
         full_text_parts.append(text)
 
         title = _resolve_title(resolved, raw_html, toc_map)
+        from app.services.epub_parser.ebooklib_path import _strip_duplicate_heading
+        text, enriched = _strip_duplicate_heading(title, text, enriched)
 
         chapters.append({
             'id': item_id,

@@ -144,7 +144,7 @@ export const ReaderView = React.memo(function ReaderView({
           style={articleStyle}
         >
           {chapterTitle && currentSegment === 0 && (
-            <ChapterHeader currentPage={currentPage} chapterTitle={chapterTitle} />
+            <ChapterHeader currentPage={currentPage} chapterTitle={chapterTitle} chapters={chapters} />
           )}
 
           {!chapterContent?.trim() ? (

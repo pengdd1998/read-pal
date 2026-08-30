@@ -1018,7 +1018,8 @@
     "width_comfortable": "Comfortable",
     "width_wide": "Wide",
     "next_chapter_label": "NEXT CHAPTER",
-    "next_chapter_cta": "Continue to next chapter: {title}"
+    "next_chapter_cta": "Continue to next chapter: {title}",
+    "front_matter_label": "Front matter"
   },
   "stats": {
     "title": "Reading Stats",
