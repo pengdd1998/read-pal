@@ -1,6 +1,7 @@
 """Tests for discovery endpoints — search, semantic, free-books."""
 
 import pytest
+from unittest.mock import patch
 
 from tests.conftest import auth_headers, register_user
 
@@ -136,6 +137,13 @@ async def test_semantic_search_returns_books(client):
 
 @pytest.mark.asyncio
 async def test_semantic_search_finds_via_annotations(client):
+    # Vector path calls the real embedding API — stub it (keyword path is
+    # what this test exercises).
+    with patch('app.services.discovery_service._vector_matched_book_ids', return_value=set()):
+        await _semantic_via_annotations_inner(client)
+
+
+async def _semantic_via_annotations_inner(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
 

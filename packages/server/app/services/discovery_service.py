@@ -4,7 +4,8 @@ import asyncio
 import logging
 from uuid import UUID
 
-from sqlalchemy import String, cast, func, select, distinct
+from sqlalchemy import String, cast, func, select, distinct, text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql.elements import BooleanClauseList
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -167,12 +168,65 @@ async def semantic_search_books(
         base_filter = None
     else:
         pattern = f'%{_escape_like(q.strip())}%'
-        base_filter = _build_semantic_filter(user_id, pattern)
+        # Vector path: conceptual queries (no literal substring anywhere)
+        # still surface the right books via chunk embeddings.
+        vector_ids = await _vector_matched_book_ids(db, user_id, q.strip())
+        annotation_ids = select(Annotation.book_id).where(
+            Annotation.user_id == user_id,
+            Annotation.content.ilike(pattern),
+        )
+        semantic_clause = (
+            Book.title.ilike(pattern)
+            | Book.author.ilike(pattern)
+            | _tags_search(pattern)
+            | Book.id.in_(annotation_ids)
+        )
+        if vector_ids:
+            semantic_clause = semantic_clause | Book.id.in_(vector_ids)
+        base_filter = (Book.user_id == user_id, semantic_clause)
 
     books, total = await _fetch_books_page(
         db, user_id, page, limit, base_filter,
     )
     return [_book_to_dict(b) for b in books], total
+
+
+async def _vector_matched_book_ids(
+    db: AsyncSession,
+    user_id: UUID,
+    query: str,
+    top_books: int = 5,
+) -> set[UUID]:
+    """True semantic book matching via pgVector chunk embeddings.
+
+    The LIKE-based filter can only find literal substrings — a conceptual
+    query like "Soviet sci-fi" matched nothing even when the reader's chunks
+    are full of Soviet sci-fi. This embeds the query and finds the books
+    whose chunks are cosine-close, regardless of exact wording.
+    """
+    from app.services.rag.embedding import _get_embedding
+
+    query_emb = await _get_embedding(query)
+    if not query_emb:
+        return set()
+
+    emb_str = '[' + ','.join(f'{x:.6f}' for x in query_emb) + ']'
+    sql = text(
+        'SELECT bc.book_id, MIN(1 - (bc.embedding <=> CAST(:emb AS vector))) AS best_sim '
+        'FROM book_chunks bc '
+        'JOIN books b ON b.id = bc.book_id '
+        'WHERE b.user_id = :uid AND bc.embedding IS NOT NULL '
+        'GROUP BY bc.book_id '
+        'HAVING MIN(1 - (bc.embedding <=> CAST(:emb AS vector))) > 0.25 '
+        'ORDER BY best_sim DESC '
+        'LIMIT :k'
+    )
+    try:
+        rows = await db.execute(sql, {'emb': emb_str, 'uid': str(user_id), 'k': top_books})
+        return {UUID(str(r[0])) for r in rows.fetchall()}
+    except DBAPIError as exc:
+        logger.warning('vector semantic book match failed: %s', exc)
+        return set()
 
 
 async def get_free_books(db: AsyncSession) -> list[dict]:
