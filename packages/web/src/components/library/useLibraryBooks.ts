@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
+import { bookListResponseSchema } from '@/lib/api/schemas';
 import type { Book } from '@read-pal/shared';
 import { warn } from '@/lib/logger';
 import { useToast } from '@/components/Toast';
@@ -37,7 +38,10 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
     let stale = false;
     setLoading(true);
     setError('');
-    api.get<Book[]>('/api/books')
+    // Schema output types dates as string|Date (JSON transport reality vs
+    // the shared type's Date) — cast once here; runtime validation is the
+    // value, not the type-level refinement.
+    api.get<Book[]>('/api/books', undefined, undefined, bookListResponseSchema as unknown as Parameters<typeof api.get<Book[]>>[3])
       .then((response) => {
         if (stale) return;
         if (response.success && response.data) {

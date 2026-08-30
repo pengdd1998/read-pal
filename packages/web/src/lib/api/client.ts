@@ -8,6 +8,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
+import type { ZodType } from 'zod';
 import type { ApiResponse } from '@read-pal/shared';
 import { queueMutation } from '@/lib/offline-queue';
 import { getAuthToken } from '@/lib/auth-fetch';
@@ -36,6 +37,7 @@ import {
   installRequestInterceptor,
   installResponseInterceptor,
 } from './interceptors';
+import { validateData } from './validate';
 import { warn } from '../logger';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -121,8 +123,18 @@ export class ApiClient {
   /**
    * GET request — returns { success: false } for HTTP errors instead of throwing.
    * Only throws on truly unexpected errors (e.g., request cancellation).
+   *
+   * `schema` (optional, zod) validates the response payload at the boundary.
+   * A mismatch logs the offending field paths and degrades to
+   * `{ success: false, error: { code: 'API_CONTRACT_MISMATCH' } }` — the
+   * Round-189 failure class becomes diagnosable instead of a silent blank.
    */
-  async get<T>(url: string, params?: Record<string, unknown>, options?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async get<T>(
+    url: string,
+    params?: Record<string, unknown>,
+    options?: AxiosRequestConfig,
+    schema?: ZodType<T>,
+  ): Promise<ApiResponse<T>> {
     const ttl = getCacheTTL(url);
     pruneStaleEntries(this.cache);
     const cacheKey = `${url}:${JSON.stringify(params ?? {})}`;
@@ -134,7 +146,7 @@ export class ApiClient {
         return cached.data as ApiResponse<T>;
       }
       if (cached.expiry + STALE_TTL > now) {
-        this.refreshInBackground(cacheKey, url, params, ttl);
+        this.refreshInBackground(cacheKey, url, params, ttl, schema);
         return cached.data as ApiResponse<T>;
       }
     }
@@ -153,10 +165,14 @@ export class ApiClient {
 
     const requestPromise = this.requestWithRetry<ApiResponse<T>>('get', url, { params, ...options })
       .then((data) => {
-        if (data.success && ttl > 0) {
-          this.cache.set(cacheKey, { data, expiry: Date.now() + ttl });
+        if (!data.success) return data;
+        const validated = schema ? validateData(url, data.data, schema) : data;
+        // Only cache what passed validation — a shape-drifted payload must
+        // not pin the bad shape in the TTL cache.
+        if (validated.success && ttl > 0) {
+          this.cache.set(cacheKey, { data: validated, expiry: Date.now() + ttl });
         }
-        return data;
+        return validated;
       })
       .catch(async (err: unknown) => {
         // A cancellation is not a failure — propagate it as AbortError so
@@ -195,12 +211,20 @@ export class ApiClient {
   }
 
   /** Background revalidation — updates cache without blocking UI */
-  private refreshInBackground<T>(cacheKey: string, url: string, params?: Record<string, unknown>, ttl?: number): void {
+  private refreshInBackground<T>(
+    cacheKey: string,
+    url: string,
+    params?: Record<string, unknown>,
+    ttl?: number,
+    schema?: ZodType<T>,
+  ): void {
     this.requestWithRetry<ApiResponse<T>>('get', url, { params })
       .then((data) => {
-        if (data.success) {
+        if (!data.success) return;
+        const validated = schema ? validateData(url, data.data, schema) : data;
+        if (validated.success) {
           const cacheTtl = ttl ?? getCacheTTL(url);
-          this.cache.set(cacheKey, { data, expiry: Date.now() + cacheTtl });
+          this.cache.set(cacheKey, { data: validated, expiry: Date.now() + cacheTtl });
         }
       })
       .catch(() => {

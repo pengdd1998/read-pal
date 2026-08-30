@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '@/lib/api';
+import { chatHistoryResponseSchema, type ChatHistoryResponse } from '@/lib/api/schemas';
 import { warn } from '@/lib/logger';
 import { generateId } from '@read-pal/shared';
 import type { Message } from '@/hooks/useStreamingChat';
@@ -92,7 +93,12 @@ export function useChatHistory({
     let greetTimer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
       try {
-        const result = await api.get<Message[]>('/api/agents/history', { book_id: bookId, limit: 50 });
+        const result = await api.get<ChatHistoryResponse>(
+          '/api/agents/history',
+          { book_id: bookId, limit: 50 },
+          undefined,
+          chatHistoryResponseSchema,
+        );
         if (!cancelled && result.success && result.data) {
           const raw = result.data;
           if (Array.isArray(raw) && raw.length > 0) {
@@ -141,11 +147,11 @@ export function useChatHistory({
     if (!hasMore || loadingMore || !cursorRef.current) return;
     setLoadingMore(true);
     try {
-      const result = await api.get<CursorPage>('/api/agents/history', {
+      const result = await api.get<ChatHistoryResponse>('/api/agents/history', {
         book_id: bookId,
         limit: 50,
         before: cursorRef.current,
-      });
+      }, undefined, chatHistoryResponseSchema);
       if (result.success && result.data) {
         const page = result.data as CursorPage;
         const olderMessages = toMessages(page.items || []);
