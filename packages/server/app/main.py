@@ -168,6 +168,11 @@ app.add_middleware(RequestLogMiddleware)
 
 # --- Body size limit (M6) ----------------------------------------------------
 _MAX_BODY_BYTES = 10 * 1024 * 1024  # 10 MB
+# Book uploads contract up to 100MB (upload_service.MAX_FILE_SIZE enforces
+# that with a proper 413); the 10MB global guard protects JSON endpoints and
+# must not shadow the upload contract — found by the E2E real-book matrix
+# (a 24MB book was rejected before the app-level check could run).
+_MAX_UPLOAD_BODY_BYTES = 100 * 1024 * 1024  # 100 MB
 
 
 class BodySizeLimitMiddleware:
@@ -183,7 +188,13 @@ class BodySizeLimitMiddleware:
 
         headers = dict((k.decode().lower(), v.decode()) for k, v in scope.get('headers', []))
         content_length = int(headers.get('content-length', 0))
-        if content_length > _MAX_BODY_BYTES:
+        limit = (
+            _MAX_UPLOAD_BODY_BYTES
+            # Routers are mounted both with and without the v1 prefix.
+            if scope.get('path', '').startswith(('/api/upload', '/api/v1/upload'))
+            else _MAX_BODY_BYTES
+        )
+        if content_length > limit:
             await send({
                 'type': 'http.response.start',
                 'status': 413,
