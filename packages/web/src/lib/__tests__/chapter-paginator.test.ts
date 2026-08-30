@@ -103,3 +103,17 @@ describe('invisible metadata blocks', () => {
     expect(pages[0].html).toContain('visible text');
   });
 });
+
+describe('plain-text chapters (no HTML tags)', () => {
+  it('segments a long tag-less chapter at blank lines', () => {
+    const paras = Array.from({ length: 60 }, (_, i) => `第${i}章的内容。` + '道可道非常道。'.repeat(20));
+    const text = paras.join('\n\n'); // ~13k chars, no tags
+    const pages = splitChapterIntoPages(text, 4000);
+    expect(pages.length).toBeGreaterThan(2);
+    for (const p of pages) {
+      expect(p.html.length).toBeLessThanOrEqual(4000);
+    }
+    // Content round-trips
+    expect(pages.map((p) => p.html).join('\n\n').replace(/\n\n/g, '\n\n').length).toBeGreaterThan(text.length - 100);
+  });
+});

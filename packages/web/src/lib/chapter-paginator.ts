@@ -71,10 +71,47 @@ function extractBlocks(html: string): string[] {
   // Trailing content after the last top-level close (e.g. loose text)
   const tail = html.slice(lastIndex).trim();
   if (tail) {
+    if (!/<[a-z]/i.test(tail)) {
+      // Tag-less plain text (Gutenberg text-lineage parsers): no block
+      // boundaries exist, so one tail block would become a single
+      // over-long page. Soft-wrap on blank lines into <=maxChars groups.
+      return [...blocks, ...wrapPlainText(tail)];
+    }
     blocks.push(tail);
   }
 
   return blocks;
+}
+
+/** Group plain text into chunks at blank-line boundaries, ≤maxChars each. */
+function wrapPlainText(text: string, maxChars: number = DEFAULT_MAX_CHARS_PER_PAGE): string[] {
+  const parts = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length <= 1) {
+    // No blank lines at all — hard-split at line breaks near the cap.
+    if (text.length <= maxChars) return [text];
+    const out: string[] = [];
+    let rest = text;
+    while (rest.length > maxChars) {
+      let cut = rest.lastIndexOf('\n', maxChars);
+      if (cut <= 0) cut = maxChars;
+      out.push(rest.slice(0, cut).trim());
+      rest = rest.slice(cut).trim();
+    }
+    if (rest) out.push(rest);
+    return out;
+  }
+  const out: string[] = [];
+  let cur = '';
+  for (const p of parts) {
+    if (cur && cur.length + p.length + 2 > maxChars) {
+      out.push(cur);
+      cur = p;
+    } else {
+      cur = cur ? cur + '\n\n' + p : p;
+    }
+  }
+  if (cur) out.push(cur);
+  return out;
 }
 
 /**
