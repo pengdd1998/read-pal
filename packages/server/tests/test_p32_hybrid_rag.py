@@ -17,8 +17,13 @@ Verifies:
 
 from __future__ import annotations
 
+from uuid import uuid4
+
+import pytest
+
 from app.services.rag.search import (
     RRF_K,
+    _keyword_chunk_search,
     reciprocal_rank_fuse,
 )
 
@@ -264,3 +269,94 @@ def test_different_title_prevents_dedup_collision():
     assert len(fused) == 2, (
         'different-title chunks must not dedup'
     )
+
+
+# ---------------------------------------------------------------------------
+# _keyword_chunk_search integration: candidate pre-filter
+# ---------------------------------------------------------------------------
+
+# Filler text chosen to share zero tokens with _NEEDLE_QUERY below —
+# otherwise the pre-filter legitimately pulls fillers into the candidate
+# window and the test asserts the wrong thing.
+_NEEDLE_QUERY = '唯一检索词xyz'
+_FILLER_TEXT = '第{i}段普通正文内容样例'
+
+
+async def _seed_chunks(session, book_id: UUID, filler_count: int, needle_at: int):
+    from app.models.book_chunk import BookChunk
+
+    chunks = [
+        BookChunk(
+            book_id=book_id,
+            document_id=uuid4(),
+            chapter_index=i,
+            chunk_index=0,
+            content=_FILLER_TEXT.format(i=i),
+        )
+        for i in range(filler_count)
+    ]
+    chunks.append(
+        BookChunk(
+            book_id=book_id,
+            document_id=uuid4(),
+            chapter_index=needle_at,
+            chunk_index=0,
+            content=f'这里是{_NEEDLE_QUERY}出现的段落',
+        )
+    )
+    session.add_all(chunks)
+    await session.commit()
+
+
+class TestKeywordChunkSearchPrefilter:
+    """Regression: keyword search must reach chunks past index #200.
+
+    The old implementation scanned ``ORDER BY chapter_index LIMIT 200``
+    and scored in Python — on any book with >200 chunks, matches in later
+    chapters were invisible to keyword retrieval (and thus to hybrid RRF).
+    The fix pre-filters by token in SQL, so the cap applies to *matching*
+    candidates, not to a blind chapter scan.
+    """
+
+    @pytest.mark.asyncio
+    async def test_finds_needle_beyond_chunk_200(self):
+        from tests.conftest import _TestSession
+
+        book_id = uuid4()
+        async with _TestSession() as session:
+            await _seed_chunks(session, book_id, filler_count=300, needle_at=300)
+            results = await _keyword_chunk_search(
+                session, book_id, _NEEDLE_QUERY, top_k=3,
+            )
+
+        assert len(results) == 1
+        assert _NEEDLE_QUERY in results[0]['content']
+        assert results[0]['title'] == 'Chapter 301'
+
+    @pytest.mark.asyncio
+    async def test_chapter_cap_still_excludes_future_chapters(self):
+        from tests.conftest import _TestSession
+
+        book_id = uuid4()
+        async with _TestSession() as session:
+            await _seed_chunks(session, book_id, filler_count=5, needle_at=10)
+            results = await _keyword_chunk_search(
+                session, book_id, _NEEDLE_QUERY, top_k=3, max_chapter_index=8,
+            )
+
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_like_wildcards_in_query_match_literally(self):
+        from tests.conftest import _TestSession
+
+        book_id = uuid4()
+        async with _TestSession() as session:
+            await _seed_chunks(session, book_id, filler_count=2, needle_at=3)
+            # '%' and '_' are LIKE wildcards — unescaped they would turn the
+            # pre-filter into match-anything. 'xyz' still matches the needle.
+            results = await _keyword_chunk_search(
+                session, book_id, 'xyz%_', top_k=3,
+            )
+
+        assert len(results) == 1

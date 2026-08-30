@@ -4,7 +4,7 @@ import asyncio
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import text, select
+from sqlalchemy import text, select, or_
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -121,6 +121,26 @@ def _keyword_score(tokens: set[str], text: str) -> int:
     return score
 
 
+# Cap the DB-side pre-filter's OR clause. Long CJK queries tokenize into
+# bigrams + singles; 64 bind params is well under SQLite's variable limit
+# and keeps the IN/OR list cheap on Postgres. Longest tokens first — they
+# are the most selective, so dropping the tail only widens the net, never
+# hides a hit the scorer would have ranked.
+_PREFILTER_TOKEN_CAP = 64
+
+# Candidate cap applied AFTER the token pre-filter (was previously applied
+# to a blind chapter_index scan, hiding every chunk past #200 on large
+# books). 200 matching chunks is far beyond any top_k the caller requests.
+_MAX_CANDIDATE_CHUNKS = 200
+
+
+def _escape_like(token: str) -> str:
+    """Escape SQL LIKE wildcards inside a token so they match literally."""
+    return (
+        token.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    )
+
+
 async def _keyword_chunk_search(
     db: AsyncSession,
     book_id: UUID,
@@ -133,16 +153,26 @@ async def _keyword_chunk_search(
     if not tokens:
         return []
 
-    # Limit to avoid loading excessive chunks for very large books
-    _MAX_CHUNKS = 200
+    prefilter_tokens = sorted(tokens, key=len, reverse=True)[:_PREFILTER_TOKEN_CAP]
+    conditions = [
+        BookChunk.book_id == book_id,
+        BookChunk.content.isnot(None),
+        or_(
+            *(
+                BookChunk.content.ilike(f'%{_escape_like(t)}%', escape='\\')
+                for t in prefilter_tokens
+            )
+        ),
+    ]
+    if max_chapter_index is not None:
+        conditions.append(BookChunk.chapter_index <= max_chapter_index)
+
     stmt = (
         select(BookChunk)
-        .where(BookChunk.book_id == book_id)
+        .where(*conditions)
         .order_by(BookChunk.chapter_index)
-        .limit(_MAX_CHUNKS)
+        .limit(_MAX_CANDIDATE_CHUNKS)
     )
-    if max_chapter_index is not None:
-        stmt = stmt.where(BookChunk.chapter_index <= max_chapter_index)
     try:
         result = await db.execute(stmt)
         chunks = result.scalars().all()
