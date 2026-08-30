@@ -52,10 +52,12 @@ interface ChapterHeaderProps {
  * the book's own Chapter 1 show as Chapter 2. These show their title as
  * the label instead of a number; numbered chapters keep 第 N 章.
  */
-const FRONT_BACK_MATTER_RE = /^(序|序言|前言|引言|導言|导言|后记|後記|跋|附录|附錄|foreword|preface|introduction|prologue|afterword|epilogue|conclusion|acknowledgments?|appendix)([：:\s].*)?$/i;
+const PREFACE_RE = /^(序|序言|前言|引言|導言|导言|foreword|preface|introduction|prologue)([：:\s].*)?$/i;
+const AFTERWORD_RE = /^(后记|後記|跋|附录|附錄|afterword|epilogue|conclusion|acknowledgments?|appendix)([：:\s].*)?$/i;
 
 function isFrontBackMatter(title: string): boolean {
-  return FRONT_BACK_MATTER_RE.test(title.trim());
+  const t = title.trim();
+  return PREFACE_RE.test(t) || AFTERWORD_RE.test(t);
 }
 
 export const ChapterHeader = React.memo(function ChapterHeader({
@@ -79,9 +81,11 @@ export const ChapterHeader = React.memo(function ChapterHeader({
   return (
     <div className="chapter-header">
       <span className="chapter-number">
-        {isFrontBackMatter(chapterTitle)
-          ? t('front_matter_label')
-          : t('reader_chapter', { num: displayNum })}
+        {PREFACE_RE.test(chapterTitle.trim())
+          ? t('preface_label')
+          : AFTERWORD_RE.test(chapterTitle.trim())
+            ? t('afterword_label')
+            : t('reader_chapter', { num: displayNum })}
       </span>
       <h2 className="chapter-title">{chapterTitle}</h2>
       <div className="chapter-divider">

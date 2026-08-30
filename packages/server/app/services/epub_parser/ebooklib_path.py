@@ -208,8 +208,11 @@ def _strip_duplicate_heading(
         return text, enriched_html
     text = rest.lstrip('\n').lstrip()
     # Strip the first heading tag from the html counterpart too
+    # Real-world headings wrap the text in anchors/spans:
+    # <h1 class="sequence" id="…"><a id="…"></a>序</h1> — allow inline
+    # tags around the title text.
     enriched_html = re.sub(
-        r'<h[1-3][^>]*>\s*' + re.escape(title_norm) + r'\s*</h[1-3]>',
+        r'<h[1-3][^>]*>(?:<[^>]+>)*\s*' + re.escape(title_norm) + r'\s*(?:<[^>]+>)*</h[1-3]>',
         '', enriched_html, count=1,
     )
     return text, enriched_html

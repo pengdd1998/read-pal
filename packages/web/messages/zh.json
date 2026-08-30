@@ -1019,7 +1019,8 @@
     "width_wide": "加宽",
     "next_chapter_label": "下一章",
     "next_chapter_cta": "继续阅读下一章：{title}",
-    "front_matter_label": "前言/后记"
+    "preface_label": "序言",
+    "afterword_label": "后记"
   },
   "stats": {
     "title": "阅读统计",
