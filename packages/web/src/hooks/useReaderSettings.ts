@@ -28,7 +28,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   fontSize: 18,
   theme: 'light',
   quietMode: false,
-  fontFamily: "'Literata', 'Source Serif 4', Georgia, serif",
+  fontFamily: "var(--font-reading), 'Source Serif 4', Georgia, serif",
   lineHeight: 1.9,
   readingWidth: 'comfortable',
 };

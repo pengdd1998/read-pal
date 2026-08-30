@@ -77,11 +77,15 @@ const config: Config = {
         forest: '#2d5a4a',
       },
       fontFamily: {
-        sans: ['DM Sans', 'system-ui', 'sans-serif'],
-        display: ['Crimson Pro', 'Georgia', 'serif'],
-        reading: ['Literata', 'Georgia', 'serif'],
-        serif: ['Source Serif 4', 'Georgia', 'serif'],
-        mono: ['Fira Code', 'monospace'],
+        // next/font exposes hashed family names via these CSS variables —
+        // the literal names ('DM Sans' etc.) never matched, so the entire
+        // app silently rendered system fallbacks. Variables are set on
+        // <html> by [locale]/layout.tsx; literals stay as offline fallbacks.
+        sans: ['var(--font-sans)', 'DM Sans', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Crimson Pro', 'Georgia', 'serif'],
+        reading: ['var(--font-reading)', 'Literata', 'Georgia', 'serif'],
+        serif: ['var(--font-serif)', 'Source Serif 4', 'Georgia', 'serif'],
+        mono: ['var(--font-mono)', 'Fira Code', 'monospace'],
       },
       borderRadius: {
         '2xl': '1rem',

@@ -10,25 +10,50 @@ export interface PageSegment {
 
 export const DEFAULT_MAX_CHARS_PER_PAGE = 4000;
 
-// Block-level closing tags that mark safe split points
-const BLOCK_CLOSE_RE = /<\/(?:p|div|pre|blockquote|figure|table|ul|ol|li|section|article|dl|dt|dd|h[1-6]|hr|thead|tbody|tfoot|tr)>/gi;
+// Any tag (open / close / self-closing), captured for depth tracking.
+const ANY_TAG_RE = /<(\/)?([a-zA-Z][a-zA-Z0-9]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/)?>/g;
 
 // Elements that should never be split (treated as atomic)
 const ATOMIC_OPEN_RE = /^<(pre|figure|table|img)\b/i;
 
+// Void elements — never open a nesting level.
+const VOID_ELEMENTS = new Set([
+  'br', 'img', 'hr', 'area', 'base', 'col', 'embed', 'source',
+  'track', 'wbr', 'input', 'link', 'meta',
+]);
+
 /**
- * Split raw HTML into top-level blocks at block-level closing tags.
- * Each block is a self-contained HTML fragment ending at a closing tag.
+ * Split raw HTML into TOP-LEVEL blocks.
+ *
+ * Depth-aware: a closing tag only ends a block when it returns the stack
+ * to the top level. The previous implementation matched any block-level
+ * closing tag, so nested structures like `<div><p>a</p><p>b</p></div>`
+ * split into `<div><p>a</p>` / `<p>b</p>` / `</div>` — three fragments
+ * whose per-page HTML was unbalanced, dropping the wrapper's styling
+ * context on the first page and rendering a stray closer on the last.
  */
 function extractBlocks(html: string): string[] {
   const blocks: string[] = [];
+  let depth = 0;
   let lastIndex = 0;
 
-  BLOCK_CLOSE_RE.lastIndex = 0;
-  let match: RegExpExecArray | null;
+  for (const match of html.matchAll(ANY_TAG_RE)) {
+    const isClosing = match[1] === '/';
+    const isSelfClosing = match[4] === '/';
+    const name = match[2].toLowerCase();
 
-  while ((match = BLOCK_CLOSE_RE.exec(html)) !== null) {
-    const end = match.index + match[0].length;
+    if (isSelfClosing || VOID_ELEMENTS.has(name)) continue;
+
+    if (!isClosing) {
+      depth += 1;
+      continue;
+    }
+
+    depth -= 1;
+    if (depth > 0) continue;
+    depth = 0; // tolerate stray closers at top level
+
+    const end = (match.index ?? 0) + match[0].length;
     const block = html.slice(lastIndex, end).trim();
     if (block) {
       blocks.push(block);
@@ -36,7 +61,7 @@ function extractBlocks(html: string): string[] {
     lastIndex = end;
   }
 
-  // Trailing content after the last closing tag (e.g. loose text)
+  // Trailing content after the last top-level close (e.g. loose text)
   const tail = html.slice(lastIndex).trim();
   if (tail) {
     blocks.push(tail);
@@ -86,7 +111,10 @@ export function splitChapterIntoPages(
     if (currentParts.length === 0) return;
     const pageHtml = currentParts.join('\n');
     pages.push({ html: pageHtml, charOffset: offset });
-    offset += currentLen;
+    // Track the emitted page length (incl. join newlines) so offsets map
+    // into the concatenation of page htmls — currentLen alone drifts by
+    // (parts - 1) newlines per page.
+    offset += pageHtml.length;
     currentParts = [];
     currentLen = 0;
   };
