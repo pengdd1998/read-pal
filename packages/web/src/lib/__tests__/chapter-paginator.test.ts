@@ -82,3 +82,24 @@ describe('splitChapterIntoPages', () => {
     expect(splitChapterIntoPages('')).toEqual([{ html: '', charOffset: 0 }]);
   });
 });
+
+describe('invisible metadata blocks', () => {
+  it('drops leading <style>/<head> blocks so page 1 has visible text', () => {
+    // Shape seen on Gutenberg TEI books: multi-KB CSS then real content.
+    const raw = '<style>body { color: black; }</style>\n<head><title>x</title></head>\n'
+      + '<p>It is a truth universally acknowledged, that a single man in possession'
+      + ' of a good fortune, must be in want of a wife.</p>';
+    // Small maxChars so the whole chapter doesn't take the single-page shortcut.
+    const pages = splitChapterIntoPages(raw, 80);
+    expect(pages).toHaveLength(1);
+    expect(pages[0].html).not.toContain('<style>');
+    expect(pages[0].html).toContain('truth universally acknowledged');
+  });
+
+  it('keeps style tags nested inside visible containers', () => {
+    const raw = '<div class="sect"><style>.x{}</style><p>visible text</p></div>';
+    const pages = splitChapterIntoPages(raw, 4000);
+    expect(pages[0].html).toContain('<div');
+    expect(pages[0].html).toContain('visible text');
+  });
+});

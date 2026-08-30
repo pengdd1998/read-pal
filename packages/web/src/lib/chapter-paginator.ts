@@ -16,6 +16,13 @@ const ANY_TAG_RE = /<(\/)?([a-zA-Z][a-zA-Z0-9]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\
 // Elements that should never be split (treated as atomic)
 const ATOMIC_OPEN_RE = /^<(pre|figure|table|img)\b/i;
 
+// Top-level blocks that carry no visible reading content. Gutenberg TEI
+// ebooks open with a multi-KB <style> block (plus <head> remnants); kept
+// as blocks they become a first page that renders blank after sanitization
+// (found by the real-book E2E matrix: Pride & Prejudice ch.1 showed only
+// the chapter heading). Dropped at extraction so pages start at real text.
+const INVISIBLE_BLOCK_RE = /^<(style|head|link|title|meta|script)\b/i;
+
 // Void elements — never open a nesting level.
 const VOID_ELEMENTS = new Set([
   'br', 'img', 'hr', 'area', 'base', 'col', 'embed', 'source',
@@ -55,7 +62,7 @@ function extractBlocks(html: string): string[] {
 
     const end = (match.index ?? 0) + match[0].length;
     const block = html.slice(lastIndex, end).trim();
-    if (block) {
+    if (block && !INVISIBLE_BLOCK_RE.test(block)) {
       blocks.push(block);
     }
     lastIndex = end;
