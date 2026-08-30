@@ -78,10 +78,10 @@ re-entering prompts was an indirect prompt-injection vector.
 ## P0.3 — Cross-worker stream cancellation + heartbeat crash detection
 
 **Locations**
-- `packages/server/app/services/agent_service.py:39` — heartbeat constants
-- `packages/server/app/services/agent_service.py:116` — owner-key format
-- `packages/server/app/services/agent_service.py:228` — cancel probe
-- `packages/server/app/services/agent_service.py:252` — reason field
+- `packages/server/app/services/agent/stream_registry.py:34` — heartbeat constants (moved out of agent_service.py in the Aug-30 split)
+- `packages/server/app/services/agent/stream_registry.py:64` — owner-key format
+- `packages/server/app/services/agent/stream_registry.py:240` — cancel probe
+- `packages/server/app/services/agent/stream_registry.py:235` — reason field
 - `packages/server/app/routers/agent.py:167` — `reason` in response
 
 **What went wrong**
