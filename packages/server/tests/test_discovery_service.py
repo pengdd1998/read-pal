@@ -247,6 +247,26 @@ class TestSearchBooks:
 # ---------------------------------------------------------------------------
 
 
+def _vector_result(book_ids=()):
+    """Mock result for the pgVector book-match SQL (fetchall → id tuples)."""
+    result = MagicMock()
+    result.fetchall.return_value = [(str(b),) for b in book_ids]
+    return result
+
+
+def _patch_embedding(vector=None):
+    """Patch the embedding call so tests stay hermetic.
+
+    Without this, a developer machine holding a real GLM key makes a live
+    HTTP call from inside the test, and the vector SQL consumes a
+    db.execute side_effect slot the test didn't provide.
+    """
+    return patch(
+        'app.services.rag.embedding._get_embedding',
+        new=AsyncMock(return_value=vector),
+    )
+
+
 class TestSemanticSearchBooks:
     @pytest.mark.asyncio
     async def test_search_with_query(self):
@@ -254,19 +274,70 @@ class TestSemanticSearchBooks:
         user_id = uuid4()
         books = [_make_book(title='Deep Learning', user_id=user_id)]
 
+        vector_result = _vector_result()
         count_result = MagicMock()
         count_result.scalar_one.return_value = 1
         data_result = MagicMock()
         data_result.scalars.return_value.all.return_value = books
-        db.execute = AsyncMock(side_effect=[count_result, data_result])
-
-        result, total = await discovery_service.semantic_search_books(
-            db, user_id, 'Learning', page=1, limit=10,
+        # Execute order: vector-match SQL → count → data page
+        db.execute = AsyncMock(
+            side_effect=[vector_result, count_result, data_result],
         )
+
+        with _patch_embedding(vector=[0.1] * 8):
+            result, total = await discovery_service.semantic_search_books(
+                db, user_id, 'Learning', page=1, limit=10,
+            )
 
         assert total == 1
         assert len(result) == 1
         assert result[0]['title'] == 'Deep Learning'
+
+    @pytest.mark.asyncio
+    async def test_no_embedding_skips_vector_query(self):
+        """Embedding unavailable (no key / API down) → pure SQL path, 2 executes."""
+        db = _make_db_session()
+        user_id = uuid4()
+
+        count_result = MagicMock()
+        count_result.scalar_one.return_value = 0
+        data_result = MagicMock()
+        data_result.scalars.return_value.all.return_value = []
+        db.execute = AsyncMock(side_effect=[count_result, data_result])
+
+        with _patch_embedding(vector=None):
+            result, total = await discovery_service.semantic_search_books(
+                db, user_id, 'conceptual query', page=1, limit=10,
+            )
+
+        assert total == 0
+        assert result == []
+        assert db.execute.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_vector_matched_books_included(self):
+        """Books found via chunk embeddings enter the OR clause (vector_ids)."""
+        db = _make_db_session()
+        user_id = uuid4()
+        matched_id = uuid4()
+        books = [_make_book(book_id=matched_id, title='Roadside Picnic', user_id=user_id)]
+
+        vector_result = _vector_result(book_ids=[matched_id])
+        count_result = MagicMock()
+        count_result.scalar_one.return_value = 1
+        data_result = MagicMock()
+        data_result.scalars.return_value.all.return_value = books
+        db.execute = AsyncMock(
+            side_effect=[vector_result, count_result, data_result],
+        )
+
+        with _patch_embedding(vector=[0.2] * 8):
+            result, total = await discovery_service.semantic_search_books(
+                db, user_id, 'soviet sci-fi', page=1, limit=10,
+            )
+
+        assert total == 1
+        assert result[0]['title'] == 'Roadside Picnic'
 
     @pytest.mark.asyncio
     async def test_empty_query_returns_recent(self):
@@ -292,33 +363,41 @@ class TestSemanticSearchBooks:
         user_id = uuid4()
         books = [_make_book(title='Math Basics', user_id=user_id)]
 
+        vector_result = _vector_result()
         count_result = MagicMock()
         count_result.scalar_one.return_value = 1
         data_result = MagicMock()
         data_result.scalars.return_value.all.return_value = books
-        db.execute = AsyncMock(side_effect=[count_result, data_result])
-
-        # The query uses a subquery on annotations — we just verify it runs
-        result, total = await discovery_service.semantic_search_books(
-            db, user_id, 'calculus', page=1, limit=10,
+        db.execute = AsyncMock(
+            side_effect=[vector_result, count_result, data_result],
         )
 
-        assert db.execute.call_count == 2
+        # The query uses a subquery on annotations — we just verify it runs
+        with _patch_embedding(vector=[0.1] * 8):
+            await discovery_service.semantic_search_books(
+                db, user_id, 'calculus', page=1, limit=10,
+            )
+
+        assert db.execute.call_count == 3
 
     @pytest.mark.asyncio
     async def test_pagination(self):
         db = _make_db_session()
         user_id = uuid4()
 
+        vector_result = _vector_result()
         count_result = MagicMock()
         count_result.scalar_one.return_value = 100
         data_result = MagicMock()
         data_result.scalars.return_value.all.return_value = [_make_book()]
-        db.execute = AsyncMock(side_effect=[count_result, data_result])
-
-        result, total = await discovery_service.semantic_search_books(
-            db, user_id, 'test', page=5, limit=20,
+        db.execute = AsyncMock(
+            side_effect=[vector_result, count_result, data_result],
         )
+
+        with _patch_embedding(vector=[0.1] * 8):
+            result, total = await discovery_service.semantic_search_books(
+                db, user_id, 'test', page=5, limit=20,
+            )
 
         assert total == 100
 

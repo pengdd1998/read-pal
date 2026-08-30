@@ -127,7 +127,12 @@ async def test_semantic_search_returns_books(client):
 
     await _create_book(client, headers, title='Python Programming', author='Guido')
 
-    resp = await client.get('/api/v1/discovery/semantic?q=python', headers=headers)
+    # Vector path calls the real embedding API — stub it (title LIKE is what
+    # this test exercises; also keeps the suite hermetic on machines holding
+    # a real GLM key, whose pooled httpx connection would otherwise leak
+    # across event loops and crash later tests with "Event loop is closed").
+    with patch('app.services.discovery_service._vector_matched_book_ids', return_value=set()):
+        resp = await client.get('/api/v1/discovery/semantic?q=python', headers=headers)
     assert resp.status_code == 200
 
     body = resp.json()
