@@ -57,6 +57,12 @@
     --background-rgb: 26, 20, 16;
   }
 
+  /* Width ladder (design review stage 1): every page fits one of three
+     canvases so content stops stretching to viewport width on large
+     monitors. Pages keep their own horizontal padding. */
+  .container-shell { max-width: 1600px; margin-inline: auto; }
+  .container-content { max-width: 1040px; margin-inline: auto; }
+
   body {
     color: rgb(var(--foreground-rgb));
     background-color: var(--surface-0);

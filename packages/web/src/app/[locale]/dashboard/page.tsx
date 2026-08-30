@@ -83,7 +83,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <section aria-label={t('page_title')} className="container-shell px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       <DashboardHeader
         loading={loading}
         mounted={mounted}

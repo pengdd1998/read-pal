@@ -65,17 +65,17 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
   className="block card group hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200"
  >
   <div className="flex items-center gap-4">
-  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30 flex items-center justify-center flex-shrink-0">
+  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 flex items-center justify-center flex-shrink-0">
    <span className="text-2xl">{'\uD83D\uDCC7'}</span>
   </div>
   <div className="flex-1">
-   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
    {t('flashcard_review_title')}
    </h3>
    <div className="flex items-center gap-3 mt-1">
    {stats.due > 0 ? (
     <>
-    <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{t('due_now', { count: stats.due })}</span>
+    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{t('due_now', { count: stats.due })}</span>
     <span className="text-xs text-gray-500 dark:text-gray-400">{t('reviewed', { count: stats.reviewed })}</span>
     </>
    ) : (

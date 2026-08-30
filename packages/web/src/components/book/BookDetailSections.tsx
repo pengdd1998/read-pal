@@ -112,7 +112,7 @@ export const ProgressSection = memo(function ProgressSection({
     <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 mb-6 animate-slide-up stagger-2">
       <h2 className="font-semibold mb-4">{t('progress')}</h2>
       <div className="w-full bg-surface-1 rounded-full h-3 overflow-hidden mb-3" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100} aria-label={t('progressAriaLabel', { pct: progressPct })}>
-        <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-teal-500 transition-all duration-500" style={{ width: `${progressPct}%` }} />
+        <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-500" style={{ width: `${progressPct}%` }} />
       </div>
       <div className="flex items-center justify-between text-sm">
         <span className="text-gray-500 dark:text-gray-400">{t('chaptersOf', { current: currentPage, total: totalPages })}</span>
@@ -130,7 +130,7 @@ export const ProgressSection = memo(function ProgressSection({
           <div className="flex items-center justify-between mt-2">
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('remaining', { time: timeStr })}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('finishBy', { date: finishStr })} {readingPph > 0 && <span className="text-teal-500">{t('pph', { pph: readingPph })}</span>}
+              {t('finishBy', { date: finishStr })} {readingPph > 0 && <span className="text-amber-600 dark:text-amber-400">{t('pph', { pph: readingPph })}</span>}
             </p>
           </div>
         );
@@ -190,7 +190,7 @@ export const PersonalReadingBookSection = memo(function PersonalReadingBookSecti
   t: (key: string) => string;
 }) {
   return (
-    <div className="bg-gradient-to-r from-amber-50 to-teal-50 dark:from-amber-900/10 dark:to-teal-900/10 rounded-2xl border border-amber-200/50 dark:border-amber-800/30 p-5 mb-6 animate-slide-up stagger-4">
+    <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-2xl border border-amber-200/50 dark:border-amber-800/30 p-5 mb-6 animate-slide-up stagger-4">
       <div className="flex items-center gap-3 mb-3">
         <svg aria-hidden="true" className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />

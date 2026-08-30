@@ -123,7 +123,7 @@ export default function KnowledgePage() {
     <div className="min-h-screen bg-surface-1">
       {/* Header */}
       <div className="border-b border-surface-3 bg-surface-0">
-        <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div className="container-shell px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('header_title')}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -140,7 +140,7 @@ export default function KnowledgePage() {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
+      <div className="container-shell px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Graph visualization */}
           <ErrorBoundary label="KnowledgeGraph">

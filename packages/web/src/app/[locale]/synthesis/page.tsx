@@ -97,7 +97,7 @@ export default function SynthesisPage() {
 
  if (booksLoading) {
  return (
-  <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
+  <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in container-content">
   <div className="mb-8">
    <div className="h-8 bg-surface-2 rounded-lg w-48 animate-pulse" />
    <div className="h-4 bg-surface-2 rounded-lg w-72 mt-2 animate-pulse" />
@@ -113,7 +113,7 @@ export default function SynthesisPage() {
 
  if (!booksLoading && books.length === 0 && !booksError) {
  return (
-  <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
+  <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in container-content">
   <div className="mb-8">
    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('page_title')}</h1>
    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('page_subtitle')}</p>
@@ -133,7 +133,7 @@ export default function SynthesisPage() {
  }
 
  return (
- <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in max-w-4xl mx-auto">
+ <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in container-content">
   {/* Header */}
   <div className="mb-8">
   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">

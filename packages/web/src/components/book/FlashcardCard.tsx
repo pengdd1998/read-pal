@@ -51,7 +51,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
  };
 
  return (
- <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/10 dark:to-emerald-900/10 rounded-2xl border border-teal-200/50 dark:border-teal-800/30 p-5 mb-6 animate-slide-up stagger-4">
+ <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-2xl border border-amber-200/50 dark:border-amber-800/30 p-5 mb-6 animate-slide-up stagger-4">
   <div className="flex items-center gap-3 mb-3">
   <span className="text-2xl">{'📇'}</span>
   <div>

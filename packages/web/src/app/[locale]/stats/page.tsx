@@ -51,7 +51,7 @@ export default function StatsPage() {
  const statusCounts = data?.booksByStatus || { unread: 0, reading: 0, completed: 0 };
 
  return (
- <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
+ <section aria-label={t('page_title')} className="container-content px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
   {/* Back */}
   <div className="mb-6">
   <Link href="/dashboard" prefetch={false} className="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none" aria-label={t('dashboard')}>

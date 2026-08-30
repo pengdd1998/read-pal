@@ -21,7 +21,7 @@ export const WelcomeSection = React.memo(function WelcomeSection({ onSeedSample,
  return (
  <div className="animate-fade-in">
   <div className="card text-center py-12 sm:py-16 mb-6">
-  <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center">
+  <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 flex items-center justify-center">
    <span className="text-4xl">{'\uD83D\uDCDA'}</span>
   </div>
   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">

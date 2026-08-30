@@ -116,7 +116,7 @@ export default function BookDetailPage() {
   const highlights = allAnnotations.filter((a) => a.type === 'highlight');
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
+    <div className="container-content px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
       {error && <ErrorBanner error={error} onDismiss={() => setError('')} dismissLabel={t('dismiss')} />}
       {exportSuccess && <SuccessBanner message={exportSuccess} onDismiss={() => setExportSuccess('')} dismissLabel={t('dismiss')} />}
 
