@@ -498,3 +498,26 @@ class TestCreateBookWithContent:
 
             # tags=None => tags=[] in the Book constructor
             assert book.tags == []
+
+
+# ---------------------------------------------------------------------------
+# _parse_file_content — corrupt archive handling (UPLD-10)
+# ---------------------------------------------------------------------------
+
+class TestParseFileContent:
+    def test_bad_zip_translated_to_value_error(self, tmp_path):
+        """Corrupt .epub (zip magic + garbage) must surface as ValueError so
+        the router's 422 PARSE_ERROR branch handles it — BadZipFile previously
+        escaped as a bare 500."""
+        import asyncio
+        import zipfile as zf
+
+        from app.services.upload_service import _parse_file_content
+
+        broken = tmp_path / 'broken.epub'
+        broken.write_bytes(b'PK\x03\x04' + b'\x00' * 64)
+        with pytest.raises(zf.BadZipFile):
+            zf.ZipFile(broken)  # precondition: this IS a corrupt archive
+
+        with pytest.raises(ValueError, match='not a valid EPUB'):
+            asyncio.run(_parse_file_content('epub', str(broken)))

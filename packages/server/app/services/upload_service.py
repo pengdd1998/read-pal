@@ -1,6 +1,7 @@
 """File upload and content processing service."""
 
 import asyncio
+import hashlib
 import base64
 import logging
 import os
@@ -21,6 +22,7 @@ from app.services.pdf_parser import process_pdf
 from app.services.text_helpers import (
     text_to_html_paragraphs as _text_to_html_paragraphs,
 )
+from app.core.cache import cache_delete, cache_get, cache_set
 from app.utils.db import db_error_guard
 from app.utils.i18n import t, DEFAULT_LANGUAGE
 from app.utils.sanitizer import sanitize_book_field
@@ -58,18 +60,22 @@ def get_file_type(filename: str) -> str:
 async def stream_upload_to_tempfile(
     file: UploadFile,
     max_size: int = MAX_FILE_SIZE,
-) -> tuple[str, int]:
-    """Stream uploaded file to a temp file.
+) -> tuple[str, int, str]:
+    """Stream uploaded file to a temp file, hashing as it lands.
 
-    Returns (tmp_path, file_size).
+    Returns (tmp_path, file_size, sha256_hex) — the hash feeds per-user
+    upload dedup, so it is computed on the single streaming pass rather
+    than a second read.
     Raises ValueError if the file exceeds *max_size*.
     """
     file_type = get_file_type(file.filename or '')
     file_size = 0
+    hasher = hashlib.sha256()
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_type}') as tmp:
         tmp_path = tmp.name
         while chunk := await file.read(1024 * 1024):
+            hasher.update(chunk)
             file_size += len(chunk)
             if file_size > max_size:
                 tmp.close()
@@ -79,7 +85,7 @@ async def stream_upload_to_tempfile(
                 )
             tmp.write(chunk)
 
-    return tmp_path, file_size
+    return tmp_path, file_size, hasher.hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -171,6 +177,7 @@ async def _persist_book_and_document(
     tags: list[str] | None,
     result: dict,
     meta: dict,
+    content_hash: str | None = None,
 ) -> tuple[Book, UUID]:
     """Create Book and Document records; return (book, document_id)."""
     async with db_error_guard(
@@ -182,6 +189,7 @@ async def _persist_book_and_document(
             author=book_author,
             file_type=BookFileType(file_type),
             file_size=file_size,
+            content_hash=content_hash,
             total_pages=result.get('total_pages', 0),
             cover_url=cover_url,
             tags=tags or [],
@@ -209,6 +217,29 @@ async def _persist_book_and_document(
     return book, document.id
 
 
+async def find_existing_book_by_hash(
+    db: AsyncSession,
+    user_id: UUID,
+    content_hash: str,
+    file_size: int,
+) -> Book | None:
+    """Find this user's earlier upload of the exact same file bytes.
+
+    Hash alone is a 2^-256 collision story; pairing it with file_size
+    makes accidental false positives effectively impossible. Books
+    uploaded before 0026 have NULL hashes and never match.
+    """
+    async with db_error_guard('upload_service.find_existing_book_by_hash'):
+        result = await db.execute(
+            select(Book).where(
+                Book.user_id == user_id,
+                Book.content_hash == content_hash,
+                Book.file_size == file_size,
+            ).limit(1),
+        )
+        return result.scalar_one_or_none()
+
+
 async def create_book_with_content(
     db: AsyncSession,
     user_id: UUID,
@@ -220,6 +251,7 @@ async def create_book_with_content(
     cover_url: str | None = None,
     tags: list[str] | None = None,
     original_filename: str | None = None,
+    content_hash: str | None = None,
 ) -> Book:
     """Create a book record and process its content."""
     async with db_error_guard(
@@ -234,6 +266,7 @@ async def create_book_with_content(
         book, document_id = await _persist_book_and_document(
             db, user_id, book_title, book_author,
             file_type, file_size, cover_url, tags, result, meta,
+            content_hash=content_hash,
         )
 
     logger.info(
@@ -249,13 +282,44 @@ async def create_book_with_content(
     return book
 
 
+async def _get_cached_chapters(book_id: UUID) -> list[dict] | None:
+    """Return the cached assembled chapters for a book, if any.
+
+    Chapter content is immutable after upload (the Document row is written
+    once), so the assembled chapters array is safe to cache long. Cache
+    helpers are best-effort: any Redis failure is a miss (P-style — the
+    cache must never turn into an outage).
+    """
+    return await cache_get(f'book-content:{book_id}')
+
+
+async def _put_cached_chapters(book_id: UUID, chapters: list[dict]) -> None:
+    if not chapters:
+        return
+    await cache_set(f'book-content:{book_id}', chapters, ttl=7 * 24 * 3600)
+
+
+async def invalidate_cached_chapters(book_id: UUID) -> None:
+    """Drop the cached chapter payload (call on book delete)."""
+    await cache_delete(f'book-content:{book_id}')
+
+
 async def get_book_content(
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
     lang: str = DEFAULT_LANGUAGE,
+    slim: bool = False,
 ) -> dict | None:
-    """Fetch book content and chapters. Returns None if book not found."""
+    """Fetch book content and chapters. Returns None if book not found.
+
+    ``slim=True`` omits the top-level plain-text ``content`` copy: it
+    duplicates every chapter's ``content`` and no client reads it (the
+    reader renders ``chapters[].rawContent``; in-book search uses
+    ``chapters[].content``). For multi-MB books this cuts the payload by
+    roughly a third. Non-slim responses stay byte-compatible for existing
+    clients (mobile).
+    """
     async with db_error_guard('upload_service.get_book_content'):
         result = await db.execute(
             select(Book).where(Book.id == book_id, Book.user_id == user_id),
@@ -264,13 +328,24 @@ async def get_book_content(
         if book is None:
             return None
 
-        doc_result = await db.execute(
-            select(Document).where(Document.book_id == book_id),
-        )
-        doc = doc_result.scalar_one_or_none()
+        # Heavy part first from cache — the Document row is multi-MB and the
+        # DB is often remote; a hit skips the widest query entirely.
+        chapters = await _get_cached_chapters(book_id)
+        cache_hit = chapters is not None
+        if not cache_hit:
+            doc_result = await db.execute(
+                select(Document).where(Document.book_id == book_id),
+            )
+            doc = doc_result.scalar_one_or_none()
 
-    content = _extract_content(doc)
-    chapters = _build_chapters(doc, lang)
+    if cache_hit:
+        content = '\n'.join(
+            ch.get('content', '') for ch in chapters if isinstance(ch, dict)
+        )
+    else:
+        content = _extract_content(doc)
+        chapters = _build_chapters(doc, lang)
+        await _put_cached_chapters(book_id, chapters)
 
     if not chapters and not content:
         safe_title = sanitize_book_field(book.title, field='title')
@@ -299,7 +374,7 @@ async def get_book_content(
             'metadata': book.metadata_,
         },
         'chapters': chapters,
-        'content': content,
+        **({} if slim else {'content': content}),
     }
 
 

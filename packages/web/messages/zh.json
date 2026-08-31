@@ -450,6 +450,7 @@
     "upload_aria_label": "上传书籍文件",
     "upload_success": "书籍已上传！",
     "upload_adding": "正在添加到你的书架...",
+    "upload_duplicate": "这本书已经在你的书架上了，已为你直接打开",
     "upload_drag_here": "点击或拖拽书籍到此处上传",
     "upload_format_hint": "EPUB，最大 100MB",
     "upload_processing": "正在处理你的书籍...",

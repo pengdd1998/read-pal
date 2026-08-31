@@ -15,6 +15,7 @@ from app.middleware.rate_limiter import upload_limiter, write_limiter
 from app.services.upload_service import (
     MAX_FILE_SIZE,
     create_book_with_content,
+    find_existing_book_by_hash,
     get_book_content as svc_get_book_content,
     get_file_type,
     stream_upload_to_tempfile,
@@ -58,10 +59,13 @@ async def _stream_and_validate(
     file: UploadFile,
     filename: str | None,
     lang: str,
-) -> tuple[str, int]:
-    """Stream upload to temp file and validate; return (tmp_path, file_size)."""
+) -> tuple[str, int, str]:
+    """Stream upload to temp file and validate.
+
+    Returns (tmp_path, file_size, content_hash).
+    """
     try:
-        tmp_path, file_size = await stream_upload_to_tempfile(file)
+        tmp_path, file_size, content_hash = await stream_upload_to_tempfile(file)
     except ValueError:
         logger.debug('validation error in upload')
         raise HTTPException(
@@ -81,7 +85,7 @@ async def _stream_and_validate(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={'code': 'VALIDATION_ERROR', 'message': error},
         )
-    return tmp_path, file_size
+    return tmp_path, file_size, content_hash
 
 
 async def _process_upload(
@@ -95,7 +99,20 @@ async def _process_upload(
     lang: str,
 ) -> tuple[str | None, dict]:
     """Stream file to temp, create book, return (tmp_path, response_dict)."""
-    tmp_path, file_size = await _stream_and_validate(file, file.filename, lang)
+    tmp_path, file_size, content_hash = await _stream_and_validate(file, file.filename, lang)
+
+    # Per-user dedup: identical bytes already on this user's shelf → return
+    # the existing book. Skips parsing, DB rows, cover upload, and the
+    # embedding precompute entirely (no repeated vendor cost).
+    existing = await find_existing_book_by_hash(db, user_id, content_hash, file_size)
+    if existing is not None:
+        logger.info(
+            'upload.duplicate_short_circuit user=%s existing_book=%s',
+            user_id, existing.id,
+        )
+        response = _build_book_response(existing)
+        response['data']['duplicate'] = True
+        return tmp_path, response
 
     # Pass through only explicitly-supplied title/author (None when absent) plus
     # the original filename; _resolve_metadata then prefers EPUB metadata over
@@ -114,6 +131,7 @@ async def _process_upload(
         file_path=tmp_path,
         tags=tag_list,
         original_filename=file.filename,
+        content_hash=content_hash,
     )
     return tmp_path, _build_book_response(book)
 
@@ -161,12 +179,15 @@ async def upload_book(
 @router.get('/books/{book_id}/content', response_model=GenericResponse)
 async def get_book_content(
     book_id: UUID,
+    slim: bool = False,
     user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Get book content (raw text/chapters)."""
+    """Get book content (raw text/chapters). ``?slim=1`` omits the unused
+    top-level plain-text copy (reader clients pass it to shrink large
+    payloads)."""
     lang = await _get_user_lang(db, UUID(user['id']))
-    data = await svc_get_book_content(db, UUID(user['id']), book_id, lang)
+    data = await svc_get_book_content(db, UUID(user['id']), book_id, lang, slim=slim)
     if data is None:
         raise not_found_error(t('errors.book_not_found', lang))
     return {'success': True, 'data': data}

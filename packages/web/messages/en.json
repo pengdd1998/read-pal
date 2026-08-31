@@ -450,6 +450,7 @@
     "upload_aria_label": "Upload book file",
     "upload_success": "Book uploaded!",
     "upload_adding": "Adding to your library...",
+    "upload_duplicate": "This book is already on your shelf — opened it for you",
     "upload_drag_here": "Click or drag your book here to upload",
     "upload_format_hint": "EPUB, max 100MB",
     "upload_processing": "Processing your book...",

@@ -139,6 +139,14 @@ app.add_middleware(
     allow_headers=['Authorization', 'Content-Type'],
 )
 
+# GZip for large responses — book content endpoints ship MB-scale Chinese
+# text that compresses ~4:1; when the API is deployed away from the client
+# (E2/E3) this dominates perceived latency. SSE streams are excluded by
+# Starlette (only non-streaming JSON above min_size is compressed).
+from fastapi.middleware.gzip import GZipMiddleware  # noqa: E402
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 
 # Security headers
 @app.middleware('http')

@@ -100,6 +100,12 @@ class Book(Base):
         BigInteger,
         nullable=False,
     )
+    # SHA-256 of the uploaded file — per-user upload dedup key. NULL for
+    # books created before 0026 (never matched, never deduped).
+    content_hash: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+    )
     total_pages: Mapped[int] = mapped_column(
         Integer,
         default=0,

@@ -38,6 +38,14 @@ async def cache_set(key: str, data: Any, ttl: int | None = None) -> None:
         logger.warning('cache_write_failed key=%s: %s', key, str(exc)[:150])
 
 
+async def cache_delete(key: str) -> None:
+    """Drop a cache entry. Silently ignores errors (invalidation is best-effort)."""
+    try:
+        await get_redis().delete(key)
+    except RedisError as exc:
+        logger.warning('cache_delete_failed key=%s: %s', key, str(exc)[:150])
+
+
 async def cache_get_or_compute(  # noqa: UP047 — TypeVar pattern kept for py3.9-style callers; PEP 695 migration tracked
     key: str,
     factory: Callable[[], Coroutine[Any, Any, T]],

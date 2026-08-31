@@ -17,6 +17,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  const [uploading, setUploading] = useState(false);
  const [uploadProgress, setUploadProgress] = useState(0);
  const [success, setSuccess] = useState(false);
+ const [duplicate, setDuplicate] = useState(false);
  const [error, setError] = useState('');
  const [dragOver, setDragOver] = useState(false);
  const [lastFile, setLastFile] = useState<File | null>(null);
@@ -54,6 +55,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  setUploadProgress(0);
  setError('');
  setSuccess(false);
+ setDuplicate(false);
  setLastFile(file);
 
  const controller = new AbortController();
@@ -73,8 +75,10 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
 
   if (result.success && result.data?.book) {
   const { book } = result.data;
+  const duplicate = Boolean((result.data as { duplicate?: boolean }).duplicate);
   setUploadProgress(100);
   setSuccess(true);
+  setDuplicate(duplicate);
   setLastFile(null);
   uploadTimerRef.current = setTimeout(() => {
    if (!mountedRef.current) return;
@@ -183,7 +187,9 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
    </svg>
    </div>
    <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-300">{t('upload_success')}</h3>
-   <p className="text-teal-600 dark:text-teal-400 text-sm mt-1">{t('upload_adding')}</p>
+   <p className="text-teal-600 dark:text-teal-400 text-sm mt-1">
+   {duplicate ? t('upload_duplicate') : t('upload_adding')}
+   </p>
   </div>
   ) : (
   <>
