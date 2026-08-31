@@ -1,16 +1,12 @@
 """File upload and content processing service."""
 
 import asyncio
-import hashlib
 import base64
 import logging
-import os
 import re
-import tempfile
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +19,11 @@ from app.services.text_helpers import (
     text_to_html_paragraphs as _text_to_html_paragraphs,
 )
 from app.core.cache import cache_delete, cache_get, cache_set
+from app.services.upload_stream import (  # noqa: F401 — re-exported API
+    find_existing_book_by_hash,
+    get_file_type,
+    stream_upload_to_tempfile,
+)
 from app.utils.db import db_error_guard
 from app.utils.i18n import t, DEFAULT_LANGUAGE
 from app.utils.sanitizer import sanitize_book_field
@@ -47,50 +48,10 @@ def validate_file(filename: str, file_size: int, lang: str = DEFAULT_LANGUAGE) -
     return None
 
 
-def get_file_type(filename: str) -> str:
-    """Extract file type from filename."""
-    return Path(filename).suffix.lower().lstrip('.')
-
-
 # ---------------------------------------------------------------------------
 # Tempfile streaming
 # ---------------------------------------------------------------------------
 
-
-async def stream_upload_to_tempfile(
-    file: UploadFile,
-    max_size: int = MAX_FILE_SIZE,
-) -> tuple[str, int, str]:
-    """Stream uploaded file to a temp file, hashing as it lands.
-
-    Returns (tmp_path, file_size, sha256_hex) — the hash feeds per-user
-    upload dedup, so it is computed on the single streaming pass rather
-    than a second read.
-    Raises ValueError if the file exceeds *max_size*.
-    """
-    file_type = get_file_type(file.filename or '')
-    file_size = 0
-    hasher = hashlib.sha256()
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_type}') as tmp:
-        tmp_path = tmp.name
-        while chunk := await file.read(1024 * 1024):
-            hasher.update(chunk)
-            file_size += len(chunk)
-            if file_size > max_size:
-                tmp.close()
-                os.unlink(tmp_path)
-                raise ValueError(
-                    f'File exceeds {max_size // (1024 * 1024)} MB limit'
-                )
-            tmp.write(chunk)
-
-    return tmp_path, file_size, hasher.hexdigest()
-
-
-# ---------------------------------------------------------------------------
-# Book creation orchestrator
-# ---------------------------------------------------------------------------
 
 async def _parse_file_content(file_type: str, file_path: str) -> dict:
     """Parse an uploaded file and return the extraction result."""
@@ -215,29 +176,6 @@ async def _persist_book_and_document(
         await db.flush()
         await db.refresh(book)
     return book, document.id
-
-
-async def find_existing_book_by_hash(
-    db: AsyncSession,
-    user_id: UUID,
-    content_hash: str,
-    file_size: int,
-) -> Book | None:
-    """Find this user's earlier upload of the exact same file bytes.
-
-    Hash alone is a 2^-256 collision story; pairing it with file_size
-    makes accidental false positives effectively impossible. Books
-    uploaded before 0026 have NULL hashes and never match.
-    """
-    async with db_error_guard('upload_service.find_existing_book_by_hash'):
-        result = await db.execute(
-            select(Book).where(
-                Book.user_id == user_id,
-                Book.content_hash == content_hash,
-                Book.file_size == file_size,
-            ).limit(1),
-        )
-        return result.scalar_one_or_none()
 
 
 async def create_book_with_content(
