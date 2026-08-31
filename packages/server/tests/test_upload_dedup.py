@@ -59,7 +59,8 @@ class TestStreamHash:
                 return b''
 
         import os
-        with patch.object(upload_service, 'tempfile') as tf:
+        import app.services.upload_stream as upload_stream
+        with patch.object(upload_stream, 'tempfile') as tf:
             f = tmp_path / 'x.epub'
             f.write_bytes(b'hello world')
             tf.NamedTemporaryFile.return_value.__enter__.return_value.name = str(f)
