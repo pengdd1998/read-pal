@@ -22,22 +22,30 @@ async def submit_feedback(
 ) -> dict:
     """Create and persist an AIFeedback record."""
     # Upsert semantics: re-rating the same message updates the existing row
-    # (ordinary CRUD) instead of stacking duplicates.
+    # (ordinary CRUD) instead of stacking duplicates. Legacy rows may contain
+    # MULTIPLE feedback rows per message (pre-upsert duplicates) — collapse
+    # them: update the newest, delete the rest. scalar_one_or_none() would
+    # 500 on that history (found live, 2026-09-01).
     if message_id:
         existing = await db.execute(
-            select(AIFeedback).where(
+            select(AIFeedback)
+            .where(
                 AIFeedback.user_id == user_id,
                 AIFeedback.message_id == message_id,
             )
+            .order_by(AIFeedback.created_at.desc())
         )
-        row = existing.scalar_one_or_none()
-        if row is not None:
-            row.rating = rating
+        rows = list(existing.scalars().all())
+        if rows:
+            primary = rows[0]
+            primary.rating = rating
             if comment is not None:
-                row.comment = comment
+                primary.comment = comment
+            for dup in rows[1:]:
+                await db.delete(dup)
             async with db_error_guard('feedback_service.submit_feedback'):
                 await db.flush()
-            return {'id': str(row.id), 'rating': rating, 'updated': True}
+            return {'id': str(primary.id), 'rating': rating, 'updated': True}
 
     feedback = AIFeedback(
         user_id=user_id,
