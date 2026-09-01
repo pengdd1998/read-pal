@@ -166,7 +166,7 @@ def test_chain_is_acyclic_and_fully_connected() -> None:
 
 @pytest.mark.parametrize(
     'known_good_head',
-    ['0026'],
+    ['0027'],
 )
 def test_head_is_the_expected_revision(known_good_head: str) -> None:
     """Guards against an accidental new branch: bump this constant in the

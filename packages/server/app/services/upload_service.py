@@ -178,6 +178,48 @@ async def _persist_book_and_document(
     return book, document.id
 
 
+async def upsert_book_content(
+    db: AsyncSession,
+    *,
+    content_hash: str,
+    file_size: int,
+    file_type: str,
+    title: str,
+    author: str,
+    chapters: list | None,
+    raw_chapters: list | None,
+    total_pages: int,
+    meta: dict | None,
+    cover_url: str | None,
+    created_by: UUID,
+) -> None:
+    """Idempotently record the shared, content-addressed parse payload.
+
+    INSERT ... ON CONFLICT DO NOTHING: the first uploader's parse is the
+    canonical copy; identical later uploads do not touch it (r2: content
+    is kept long-term — no update, no expiry).
+    """
+    from app.models.book_content import BookContent
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+    async with db_error_guard('upload_service.upsert_book_content'):
+        stmt = pg_insert(BookContent).values(
+            content_hash=content_hash,
+            file_size=file_size,
+            file_type=file_type,
+            title=title,
+            author=author,
+            chapters=chapters,
+            raw_chapters=raw_chapters,
+            total_pages=total_pages or 0,
+            metadata_=meta or None,
+            cover_object_key=cover_url,
+            created_by=created_by,
+        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=['content_hash'])
+        await db.execute(stmt)
+
+
 async def create_book_with_content(
     db: AsyncSession,
     user_id: UUID,
@@ -206,6 +248,29 @@ async def create_book_with_content(
             file_type, file_size, cover_url, tags, result, meta,
             content_hash=content_hash,
         )
+
+        # Shared-content dual-write (design r2 step 1): store the immutable
+        # parse payload once per distinct file bytes. Idempotent — the first
+        # uploader's parse wins; later identical uploads keep their own
+        # Book/Document until step 2 switches reads. No behavior change yet.
+        if content_hash:
+            await upsert_book_content(
+                db,
+                content_hash=content_hash,
+                file_size=file_size,
+                file_type=file_type,
+                title=book_title,
+                author=book_author,
+                chapters=[
+                    {k: v for k, v in ch.items() if k != 'rawContent'}
+                    for ch in result.get('chapters', [])
+                ],
+                raw_chapters=result.get('chapters'),
+                total_pages=result.get('total_pages', 0),
+                meta=meta,
+                cover_url=cover_url,
+                created_by=user_id,
+            )
 
     logger.info(
         'Book created: %s (%s, %d pages, %d chapters, %d images)',
