@@ -34,7 +34,10 @@ _db_pool_size, _db_max_overflow, _db_pool_recycle, _db_pool_timeout = _pool_conf
 
 engine = create_async_engine(
     settings.database_url,
-    echo=settings.is_dev,
+    # DEV NOTE: SQL echo is off by default — enable temporarily with
+    # DB_ECHO=true when debugging queries (monitoring found 73k log lines
+    # in a few hours of dev use, burying real signals).
+    echo=settings.db_echo,
     pool_size=_db_pool_size,
     max_overflow=_db_max_overflow,
     # Remote DB behind NAT — idle connections get silently dropped by

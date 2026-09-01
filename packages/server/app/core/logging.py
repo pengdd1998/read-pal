@@ -66,6 +66,18 @@ def _configure_app_logger(
     app_logger.propagate = False
 
 
+def _silence_known_noise() -> None:
+    """Suppress known-benign library noise.
+
+    passlib 1.7.4 probes bcrypt.__version__ via the removed `__about__`
+    attribute on bcrypt>=4 — every login logs a (trapped) warning with a
+    traceback. It's cosmetic, passlib falls back correctly, but it drowns
+    real signals (seen on every /auth/login during monitoring).
+    """
+    import logging
+    logging.getLogger('passlib.handlers.bcrypt').setLevel(logging.ERROR)
+
+
 def setup_logging(*, level: str = 'INFO', json_output: bool = False) -> None:
     """Configure structlog with stdlib as output backend.
 
@@ -73,6 +85,7 @@ def setup_logging(*, level: str = 'INFO', json_output: bool = False) -> None:
         level: Log level string (DEBUG, INFO, WARNING, ERROR).
         json_output: Use JSON renderer when True (for production).
     """
+    _silence_known_noise()
     numeric_level = getattr(logging, level.upper(), logging.INFO)
     shared_processors = _build_shared_processors()
     renderer = _choose_renderer(json_output)

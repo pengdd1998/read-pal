@@ -97,16 +97,17 @@ export const NotificationBell = memo(function NotificationBell() {
     loadingRef.current = true;
     setLoadingNotifs(true);
     try {
-      const [notifRes, countRes] = await Promise.all([
-        api.get<{ items: Notification[] }>('/api/notifications?per_page=20'),
-        api.get<number>('/api/notifications/unread-count'),
-      ]);
+      // One request: the list response carries `unread` (merged server-side)
+      // — halves the poller's request volume.
+      const notifRes = await api.get<{ items: Notification[]; unread?: number }>(
+        '/api/notifications?per_page=20',
+      );
       if (staleRef.current) return;
       if (notifRes.success && notifRes.data?.items) {
         setNotifications(notifRes.data.items);
       }
-      if (countRes.success && typeof countRes.data === 'number') {
-        setUnreadCount(countRes.data);
+      if (notifRes.success && typeof notifRes.data?.unread === 'number') {
+        setUnreadCount(notifRes.data.unread);
       }
     } catch (err) {
       if (staleRef.current) return;
@@ -125,11 +126,21 @@ export const NotificationBell = memo(function NotificationBell() {
     const timer = setTimeout(() => {
       loadNotifications();
     }, 500);
-    const interval = setInterval(loadNotifications, 60000); // Poll every minute
+    // Poll only while the tab is visible — a backgrounded tab generated
+    // thousands of idle requests during monitoring. Becoming visible again
+    // refreshes immediately so the bell never shows stale data.
+    const interval = setInterval(() => {
+      if (!document.hidden) loadNotifications();
+    }, 60000);
+    const onVisible = () => {
+      if (!document.hidden) loadNotifications();
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       staleRef.current = true;
       clearTimeout(timer);
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [loadNotifications]);
 

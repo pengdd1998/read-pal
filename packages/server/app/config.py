@@ -110,6 +110,9 @@ class Settings(BaseSettings):
     db_password: str
 
     # Redis
+    # SQL echo for engine logging — default False; monitoring found echo-on
+    # produced 73k log lines in hours (buried real signal). Opt-in only.
+    db_echo: bool = False
     redis_url: str
 
     # GLM AI

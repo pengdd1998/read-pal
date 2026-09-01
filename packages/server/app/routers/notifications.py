@@ -39,11 +39,16 @@ async def list_notifications(
     notifications, total = await notification_service.list_notifications(
         db, UUID(user['id']), unread_only, page, per_page,
     )
+    # Unread count rides along so the bell's poll needs ONE request instead
+    # of two — the poller was the single largest source of idle traffic
+    # (96% of sampled requests during monitoring).
+    unread = await notification_service.unread_count(db, UUID(user['id']))
     return {
         'success': True,
         'data': {
             'items': [_dump(n) for n in notifications],
             'total': total,
+            'unread': unread,
             'page': page,
             'perPage': per_page,
         },
