@@ -196,15 +196,23 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
                 )
             return
 
-        persist_ok = await _persist_with_retry(
+        assistant_db_id = await _persist_with_retry(
             db, user_id, book_id, message, messages,
             collected_parts, actual_request_id, lang=lang,
         )
-        if not persist_ok:
+        if assistant_db_id is None:
             # Tell the client the streamed response couldn't be saved.
             # Client should keep visible text (user already read it) but
             # warn that reload will lose the message.
             yield f'data: {json.dumps({"error": "persist_failed"})}\n\n'
+        else:
+            # Hand the client the assistant message's real DB id — feedback
+            # ratings FK against chat_messages.id, and the client's local
+            # id is a random UUID that would violate it.
+            await _emit_with_seq(
+                json.dumps({"type": "message_id", "id": str(assistant_db_id)}),
+                actual_request_id, seq_state,
+            )
 
     if not stream_failed:
         yield 'data: [DONE]\n\n'

@@ -106,8 +106,8 @@ async def save_message(
     book_id: UUID,
     role: str,
     content: str,
-) -> None:
-    """Persist a single chat message.
+) -> UUID:
+    """Persist a single chat message and return its id.
 
     P-audit: user messages are sanitized at PERSIST time, not only at
     prompt-build time. Otherwise an injection that evaded detection in
@@ -128,3 +128,4 @@ async def save_message(
     db.add(msg)
     async with db_error_guard('save_message', book_id=str(book_id), user_id=str(user_id)):
         await db.flush()
+    return msg.id

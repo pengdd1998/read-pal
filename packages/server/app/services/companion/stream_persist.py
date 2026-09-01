@@ -44,11 +44,10 @@ async def _persist_with_retry(
                 request_id=request_id, attempt=attempt,
                 user_id=str(user_id), book_id=str(book_id),
             ):
-                await persist_stream_result(
+                return await persist_stream_result(
                     db, user_id, book_id, message, messages,
                     collected_parts, request_id, lang=lang,
                 )
-            return True
         except DBAPIError as exc:
             last_exc = exc
             logger.warning(

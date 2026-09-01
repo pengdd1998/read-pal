@@ -133,7 +133,10 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     rollbackText?: string;
     startAttempt?: number;
   }): Promise<void> => {
-    const { endpoint, body, assistantMsgId, userMsgId, rollbackText, startAttempt = 0 } = params;
+    const { endpoint, body, assistantMsgId: initialAssistantId, userMsgId, rollbackText, startAttempt = 0 } = params;
+    // Mutable: swapped to the server's real DB id when the message_id
+    // frame lands, so every later reference (flush, done, feedback) uses it.
+    let assistantMsgId = initialAssistantId;
 
     // Generate ONE idempotency key per logical call so network retries
     // within this runStream invocation share the key (server dedupes them
@@ -342,6 +345,18 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             //    mirrors persistFailed) and fire onFallbackNotice so the
             //    user gets the non-blocking "fallback model took over"
             //    explanation. Subsequent fallback chunks append normally.
+            // Server hands back the persisted assistant message's real DB
+            // id — swap it into the local placeholder so feedback ratings
+            // reference an id that actually exists in chat_messages (the
+            // local generateId() would violate the FK and 500).
+            if (meta.type === 'message_id' && meta.message_id) {
+              const realId = meta.message_id;
+              onMessagesUpdate((prev) =>
+                prev.map((m) => (m.id === assistantMsgId ? { ...m, id: realId } : m)),
+              );
+              assistantMsgId = realId;
+              return;
+            }
             if (meta.type === 'metadata' && meta.fallback_used) {
               streamBuffer = '';
               onMessagesUpdate((prev) =>
@@ -430,7 +445,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
   ]);
 
   const sendStreamMessage = useCallback(async (msg: string, retryCount = 0) => {
-    const assistantMsgId = createAssistantMessage();
+    let assistantMsgId = createAssistantMessage();
     const userMsgId = `opt-${generateId()}`;
     currentRequestIdRef.current = null;
 
@@ -462,7 +477,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
    * into a new placeholder. No optimistic user bubble needed. */
   const regenerate = useCallback(async () => {
     if (loading) return;
-    const assistantMsgId = createAssistantMessage();
+    let assistantMsgId = createAssistantMessage();
     currentRequestIdRef.current = null;
 
     // Drop the prior last assistant message locally (mirrors the server

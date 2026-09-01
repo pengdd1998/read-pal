@@ -174,8 +174,10 @@ async def persist_stream_result(
     collected_parts: list[str],
     request_id: str,
     lang: str | None = None,
-) -> None:
-    """Filter, cache, and persist the streaming result to the database."""
+) -> UUID | None:
+    """Filter, cache, persist the streaming result; return the assistant
+    message's DB id (None when nothing was persisted) so the caller can
+    hand the real id back to the client — feedback ratings FK against it."""
     assistant_content = ''.join(collected_parts)
     if assistant_content:
         assistant_content = filter_output(assistant_content, context='companion_stream')
@@ -203,6 +205,6 @@ async def persist_stream_result(
             request_id=request_id,
             book_id=str(book_id),
         )
-        return
+        return None
 
-    await _save_message(db, user_id, book_id, 'assistant', assistant_content)
+    return await _save_message(db, user_id, book_id, 'assistant', assistant_content)

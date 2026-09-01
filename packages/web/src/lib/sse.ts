@@ -34,7 +34,8 @@ import { warn } from './logger';
  */
 export type SSEMeta = {
   request_id?: string;
-  type?: 'metadata';
+  type?: 'metadata' | 'message_id';
+  message_id?: string;
   model?: string;
   fallback_used?: boolean;
   primary_model?: string;
@@ -108,6 +109,7 @@ export function consumeSSEStream(
           content?: string;
           error?: string;
           request_id?: string;
+          id?: string;
           type?: string;
           model?: string;
           fallback_used?: boolean;
@@ -118,6 +120,11 @@ export function consumeSSEStream(
         // chunks when primary provider failed mid-stream — surfaces the
         // model downgrade so the client can warn the user that response
         // style change is intentional, not a bug.
+        // Server hands back the assistant message's real DB id after
+        // persist — feedback ratings FK against chat_messages.id.
+        if (parsed.type === 'message_id' && onMeta) {
+          onMeta({ type: 'message_id', message_id: parsed.id });
+        }
         if (parsed.type === 'metadata' && onMeta) {
           onMeta({
             type: 'metadata',
