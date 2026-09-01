@@ -7,6 +7,7 @@ For integration tests against external infrastructure (PostgreSQL, Redis, MinIO 
 """
 
 import json
+import os
 import re
 import sqlite3
 from collections.abc import AsyncGenerator
@@ -62,17 +63,27 @@ class _UuidSafeJSON(TypeDecorator):
 # SQLite in-memory engine with PostgreSQL-type compatibility
 # ---------------------------------------------------------------------------
 
-# Shared-cache in-memory DB so all sessions see the same data
-TEST_DATABASE_URL = 'sqlite+aiosqlite:///file:readpal_test?mode=memory&cache=shared&uri=true'
-
-# Register UUID adapter so sqlite3 can persist Python UUID objects
-sqlite3.register_adapter(UUID, lambda u: str(u))
-
-_engine = create_async_engine(
-    TEST_DATABASE_URL,
-    echo=False,
-    connect_args={'check_same_thread': False},
+# Shared-cache in-memory DB so all sessions see the same data.
+# TEST_DATABASE_URL env override runs the same suite against a real
+# PostgreSQL (CI job `postgres-tests`, pgvector image) — SQLite cannot
+# catch PG-only bug classes (the proven 8h timezone-drift incident, and
+# the connection-loss behaviors seen during the Aug-31 outage).
+TEST_DATABASE_URL = os.environ.get(
+    'TEST_DATABASE_URL',
+    'sqlite+aiosqlite:///file:readpal_test?mode=memory&cache=shared&uri=true',
 )
+IS_SQLITE_TEST_DB = TEST_DATABASE_URL.startswith('sqlite')
+
+if IS_SQLITE_TEST_DB:
+    # Register UUID adapter so sqlite3 can persist Python UUID objects
+    sqlite3.register_adapter(UUID, lambda u: str(u))
+    _engine = create_async_engine(
+        TEST_DATABASE_URL,
+        echo=False,
+        connect_args={'check_same_thread': False},
+    )
+else:
+    _engine = create_async_engine(TEST_DATABASE_URL, echo=False, pool_pre_ping=True)
 _TestSession = async_sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -146,18 +157,56 @@ def _patch_metadata_for_sqlite():
 # ---------------------------------------------------------------------------
 
 
+_pg_schema_ready = False
+
+
+async def _truncate_all_pg_tables() -> None:
+    """Fast per-test reset on PostgreSQL: one TRUNCATE over all tables.
+
+    Creating/dropping 30+ tables per test (the SQLite strategy) would make
+    a 1500-test PG run take tens of minutes; truncation keeps the reset to
+    a single round-trip.
+    """
+    from sqlalchemy import text
+
+    async with _engine.begin() as conn:
+        rows = await conn.execute(
+            text(
+                "SELECT tablename FROM pg_tables "
+                "WHERE schemaname = 'public' AND tablename != 'alembic_version'"
+            )
+        )
+        tables = [r[0] for r in rows]
+        if tables:
+            await conn.execute(
+                text(f'TRUNCATE {", ".join(tables)} RESTART IDENTITY CASCADE')
+            )
+
+
 @pytest_asyncio.fixture(autouse=True)
 async def _setup_db() -> AsyncGenerator[None, None]:
-    """Create all tables before each test, drop after."""
+    """Fresh schema per test (SQLite) / truncate per test (PostgreSQL)."""
+    global _pg_schema_ready
     import app.models  # noqa: F401
 
-    _patch_metadata_for_sqlite()
+    if IS_SQLITE_TEST_DB:
+        _patch_metadata_for_sqlite()
+        async with _engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        yield
+        async with _engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        return
 
-    async with _engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # PostgreSQL: create_all is idempotent; truncation isolates data.
+    if not _pg_schema_ready:
+        async with _engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        _pg_schema_ready = True
+    else:
+        await _truncate_all_pg_tables()
     yield
-    async with _engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    await _truncate_all_pg_tables()
 
 
 @pytest.fixture(autouse=True)

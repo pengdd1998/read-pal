@@ -178,6 +178,81 @@ jobs:
   # -------------------------------------------------------------------
   # Migration integrity — apply full chain to an empty PostgreSQL 16
   # -------------------------------------------------------------------
+
+  postgres-tests:
+    name: Python Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Ratchet: first iterations run non-blocking while PG-only failures
+    # are triaged; flip to a hard gate once green (tracked in the plan doc).
+    continue-on-error: true
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: readpal
+          POSTGRES_PASSWORD: readpal_ci
+          POSTGRES_DB: readpal_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U readpal"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://readpal:readpal_ci@localhost:5432/readpal_ci
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_NAME: readpal_ci
+      DB_USER: readpal
+      DB_PASSWORD: readpal_ci
+      REDIS_URL: redis://localhost:6379
+      GLM_API_KEY: test-glm-key
+      GLM_BASE_URL: https://test.example.com
+      DEFAULT_MODEL: glm-4-flash
+      FALLBACK_MODEL: glm-4-flash
+      LLM_TIMEOUT_SECONDS: '15'
+      LLM_MAX_RETRIES: '3'
+      CIRCUIT_FAILURE_THRESHOLD: '5'
+      CIRCUIT_RESET_TIMEOUT_SECONDS: '30'
+      MAX_EMBEDDING_CALLS: '300'
+      JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+      JWT_EXPIRES_IN: 7d
+      JWT_ACCESS_WEB: 30m
+      JWT_ACCESS_MOBILE: 2h
+      JWT_REFRESH_WEB: 7d
+      JWT_REFRESH_MOBILE: 30d
+      FRONTEND_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000
+      APP_ENV: development
+      LOG_LEVEL: INFO
+      LOG_JSON: 'false'
+      LLM_LOG_ENABLED: 'false'
+      LLM_LOG_RETENTION_DAYS: '90'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install uv
+
+      - name: Install dependencies
+        run: cd packages/server && uv sync --frozen
+
+      - name: Enable pgvector extension
+        run: |
+          docker exec ${{ job.services.postgres.id }} psql -U readpal -d readpal_ci             -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+
+      - name: Run test suite against PostgreSQL
+        working-directory: packages/server
+        run: uv run pytest tests -q --tb=line
+
   migrations:
     name: Alembic Upgrade/Downgrade
     runs-on: ubuntu-latest
