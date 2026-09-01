@@ -150,8 +150,18 @@ class TestBuildDateRangeMonthRollback:
     shorter month (e.g. Aug 29 → Feb 29 in a non-leap year)."""
 
     def test_aug29_months6_reaches_feb1(self):
+        # Aug 29 − 6 months lands on the nonexistent Feb 29 — the rollback
+        # must reach Feb 1 without raising. The fake clock is REQUIRED:
+        # unpatched, the assertion is date-dependent and broke the moment
+        # the calendar rolled past August (CI failed on Sep 1 UTC).
+        from unittest.mock import patch
+        import datetime as dt
         from app.services.stats.calendar import _build_date_range
-        start, _ = _build_date_range(6, None, None)
+        from app.services.stats import calendar as cal
+
+        fake_now = dt.datetime(2026, 8, 29, 12, 0, tzinfo=dt.UTC)
+        with patch.object(cal, 'utcnow_aware', return_value=fake_now):
+            start, _ = _build_date_range(6, None, None)
         assert (start.year, start.month, start.day) == (2026, 2, 1)
 
     def test_may31_months3_rolls_to_feb1(self):
