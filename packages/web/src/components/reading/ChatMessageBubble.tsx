@@ -1,17 +1,24 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import type { SanitizedMessage } from './ChatMessageList';
 
 interface ChatMessageBubbleProps {
  msg: SanitizedMessage;
  t: (key: string, params?: Record<string, unknown>) => string;
- submitFeedback: (messageId: string, rating: boolean) => void;
+ submitFeedback: (messageId: string, rating: boolean, onFail?: () => void) => void;
  onRegenerate: () => void;
  showRegenerate: boolean;
 }
 
 export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submitFeedback, onRegenerate, showRegenerate }: ChatMessageBubbleProps) {
+ // Optimistic rating state: the clicked thumb locks in visually immediately;
+ // rolls back if the request fails. null = not rated yet.
+ const [myRating, setMyRating] = useState<boolean | null>(null);
+ const rate = (rating: boolean) => {
+  setMyRating(rating);
+  submitFeedback(msg.id, rating, () => setMyRating(null));
+ };
  return (
  <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
   <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
@@ -32,8 +39,15 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
    {!msg.streaming && (
     <div className="flex gap-1 mt-1.5">
     <button type="button"
-     onClick={() => submitFeedback(msg.id, true)}
-     className="p-2.5 rounded text-amber-400/50 hover:text-green-500 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+     onClick={() => rate(true)}
+     aria-pressed={myRating === true}
+     className={`p-2.5 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+      myRating === true
+       ? 'text-green-600 bg-green-500/10 dark:text-green-400'
+       : myRating === false
+        ? 'text-amber-400/30'
+        : 'text-amber-400/50 hover:text-green-500'
+     }`}
      aria-label={t('companion_aria_helpful')}
     >
      <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -41,8 +55,15 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
      </svg>
     </button>
     <button type="button"
-     onClick={() => submitFeedback(msg.id, false)}
-     className="p-2.5 rounded text-amber-400/50 hover:text-red-500 dark:hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+     onClick={() => rate(false)}
+     aria-pressed={myRating === false}
+     className={`p-2.5 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
+      myRating === false
+       ? 'text-red-600 bg-red-500/10 dark:text-red-400'
+       : myRating === true
+        ? 'text-amber-400/30'
+        : 'text-amber-400/50 hover:text-red-500 dark:hover:text-red-400'
+     }`}
      aria-label={t('companion_aria_unhelpful')}
     >
      <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -249,6 +249,10 @@ class TestSubmitFeedback:
 
         db = AsyncMock()
         db.add = MagicMock()
+        # Upsert path: the existing-row lookup must miss for a fresh message
+        lookup = MagicMock()
+        lookup.scalar_one_or_none.return_value = None
+        db.execute = AsyncMock(return_value=lookup)
         # Mock flush to simulate the ID being set
         async def mock_flush():
             pass
@@ -279,6 +283,10 @@ class TestSubmitFeedback:
         db = AsyncMock()
         db.add = MagicMock()
         db.flush = AsyncMock()
+        # Upsert lookup must miss so the insert path runs
+        lookup = MagicMock()
+        lookup.scalar_one_or_none.return_value = None
+        db.execute = AsyncMock(return_value=lookup)
 
         await submit_feedback(db, user_id, book_id, 'msg-456', True, 'Helpful')
 

@@ -62,7 +62,7 @@ export function useChatActions({
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   }, [handleSend]);
 
-  const submitFeedback = useCallback(async (messageId: string, rating: boolean) => {
+  const submitFeedback = useCallback(async (messageId: string, rating: boolean, onFail?: () => void) => {
     try {
       await api.post('/api/agents/feedback', {
         book_id: bookId,
@@ -71,6 +71,7 @@ export function useChatActions({
       });
     } catch (err) {
       warn('ChatActions: failed to submit feedback', err);
+      onFail?.(); // roll back the optimistic thumb state
       toast(t('feedback_submit_error'), 'error');
     }
   }, [bookId, toast, t]);
