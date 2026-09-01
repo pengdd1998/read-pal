@@ -23,7 +23,6 @@ interface UseCompanionEffectsParams {
   genre: BookGenre;
   isOpen: boolean;
   loading: boolean;
-  sendStreamMessage: (msg: string) => void;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setInput: (value: string) => void;
   setIsOpen: (value: boolean) => void;
@@ -40,7 +39,6 @@ export function useCompanionEffects({
   genre,
   isOpen,
   loading,
-  sendStreamMessage,
   setMessages,
   setInput,
   setIsOpen,
@@ -85,16 +83,17 @@ export function useCompanionEffects({
     return () => clearTimeout(timer);
   }, [isFirstChat, bookId, bookTitle, friendName, genre, genreTemplate, setIsOpen, setMessages]);
 
-  // Auto-send pending message after chat opens
+  // Prefill-only: pending messages (Ask-AI quote, character question) fill
+  // the input as an EDITABLE draft — the user reviews/edits and sends
+  // manually. Auto-sending took away the chance to tweak the prompt before
+  // the vendor call was already burning tokens.
   useEffect(() => {
     if (isOpen && pendingMessageRef.current && !loading) {
       const msg = pendingMessageRef.current;
       pendingMessageRef.current = null;
       setInput(msg);
-      const timer = setTimeout(() => sendStreamMessage(msg), 100);
-      return () => clearTimeout(timer);
     }
-  }, [isOpen, loading, sendStreamMessage]);
+  }, [isOpen, setInput]);
 
   return { pendingMessageRef };
 }

@@ -171,7 +171,6 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
  genre,
  isOpen,
  loading,
- sendStreamMessage,
  setMessages,
  setInput,
  setIsOpen,
