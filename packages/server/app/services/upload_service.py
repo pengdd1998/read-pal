@@ -26,6 +26,7 @@ from app.services.upload_content_store import (  # noqa: F401 — re-exported
     invalidate_cached_chapters,
     upsert_book_content,
 )
+from app.models.book_content import BookContent
 from app.services.upload_stream import (  # noqa: F401 — re-exported API
     find_existing_book_by_hash,
     get_file_type,
@@ -278,7 +279,15 @@ async def get_book_content(
         # DB is often remote; a hit skips the widest query entirely.
         chapters = await _get_cached_chapters(book_id)
         cache_hit = chapters is not None
-        if not cache_hit:
+        shared = None
+        if not cache_hit and book.content_hash:
+            # Shared-content read (design r2 step 2): one book_contents row
+            # serves every user's copy of the same bytes. Fallback to the
+            # legacy Document below keeps pre-0026 books working.
+            shared = await _get_shared_content(db, book.content_hash)
+            if shared is not None:
+                chapters = _chapters_from_shared(shared)
+        if not cache_hit and shared is None:
             doc_result = await db.execute(
                 select(Document).where(Document.book_id == book_id),
             )
@@ -288,6 +297,11 @@ async def get_book_content(
         content = '\n'.join(
             ch.get('content', '') for ch in chapters if isinstance(ch, dict)
         )
+    elif shared is not None:
+        content = '\n'.join(
+            ch.get('content', '') for ch in chapters if isinstance(ch, dict)
+        )
+        await _put_cached_chapters(book_id, chapters)
     else:
         content = _extract_content(doc)
         chapters = _build_chapters(doc, lang)
@@ -322,6 +336,32 @@ async def get_book_content(
         'chapters': chapters,
         **({} if slim else {'content': content}),
     }
+
+
+async def _get_shared_content(db: AsyncSession, content_hash: str) -> BookContent | None:
+    """Fetch the shared book_contents row for a hash (read path, step 2)."""
+    from app.models.book_content import BookContent
+    async with db_error_guard('upload_service.get_shared_content'):
+        result = await db.execute(
+            select(BookContent).where(BookContent.content_hash == content_hash),
+        )
+        return result.scalar_one_or_none()
+
+
+def _chapters_from_shared(shared: BookContent) -> list[dict]:
+    """Chapters from a shared row; rawContent regenerated when absent."""
+    raw = shared.raw_chapters or []
+    if raw:
+        return [
+            {**ch, 'rawContent': ch.get('rawContent') or ch.get('content', '')}
+            for ch in raw if isinstance(ch, dict)
+        ]
+    return [
+        {'id': str(i), 'title': ch.get('title', f'Chapter {i+1}'),
+         'content': ch.get('content', ''),
+         'rawContent': ch.get('content', '')}
+        for i, ch in enumerate(shared.chapters or []) if isinstance(ch, dict)
+    ]
 
 
 def _extract_content(doc: Document | None) -> str:

@@ -219,6 +219,7 @@ class TestGetBookContent:
         book.status = MagicMock(value='reading')
         book.tags = ['fiction']
         book.metadata_ = {'key': 'val'}
+        book.content_hash = None  # legacy book — Document read path
 
         doc = MagicMock()
         doc.content = 'Some text'

@@ -48,6 +48,12 @@ GATSBY_CONCEPTS = [
 ]
 
 
+# Stable content identity for the seeded sample — every user's copy shares
+# one book_contents row, so seeding costs one Book insert instead of a
+# full Document parse+store per registration.
+SEED_GATSBY_CONTENT_HASH = 'seed-gatsby-v1-' + '0' * 49  # exactly 64 chars
+
+
 async def _create_sample_book(db: AsyncSession, user_id: UUID) -> Book:
     """Create the sample Great Gatsby book with its Document."""
     sample = Book(
@@ -61,6 +67,7 @@ async def _create_sample_book(db: AsyncSession, user_id: UUID) -> Book:
         status=BookStatus.reading,
         progress=20,
         tags=['sample', 'classic', 'fiction'],
+        content_hash=SEED_GATSBY_CONTENT_HASH,
         metadata_={
             'year': 1925,
             'publisher': "Charles Scribner's Sons",
@@ -82,6 +89,28 @@ async def _create_sample_book(db: AsyncSession, user_id: UUID) -> Book:
         chapters=GATSBY_CHAPTERS,
     )
     db.add(doc)
+
+    # Shared-content dual-write (design r2): first seed inserts the canonical
+    # book_contents row; every later registration's seed references it.
+    try:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        from app.models.book_content import BookContent
+        stmt = pg_insert(BookContent).values(
+            content_hash=SEED_GATSBY_CONTENT_HASH,
+            file_size=2048,
+            file_type='epub',
+            title='The Great Gatsby',
+            author='F. Scott Fitzgerald',
+            chapters=list(GATSBY_CHAPTERS),
+            raw_chapters=list(GATSBY_CHAPTERS),
+            total_pages=len(GATSBY_CHAPTERS),
+            metadata_=sample.metadata_,
+            created_by=user_id,
+        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=['content_hash'])
+        await db.execute(stmt)
+    except Exception:
+        logger.warning('seed book_contents upsert failed (non-fatal)', exc_info=True)
     return sample
 
 
