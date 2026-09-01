@@ -41,7 +41,10 @@ from app.services.agent_service import (
     sse_bytes_stream,
 )
 from app.services.chat_service import get_chat_history, get_chat_history_page
-from app.services.feedback_service import submit_feedback as submit_feedback_svc
+from app.services.feedback_service import (
+    delete_feedback as delete_feedback_svc,
+    submit_feedback as submit_feedback_svc,
+)
 from app.services.mood_service import generate_mood_scene
 from app.services.llm import safe_llm_invoke
 from app.services.reading_plan_service import advance_plan, generate_plan, get_active_plan
@@ -394,6 +397,17 @@ async def mood_scene(
             detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_unavailable', lang)},
         ) from exc
     return {'success': True, 'data': data}
+
+
+@router.delete('/feedback', response_model=GenericResponse, dependencies=[write_limiter])
+async def delete_feedback(
+    message_id: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Remove the user's rating for a message (toggle-off on the thumb)."""
+    removed = await delete_feedback_svc(db, UUID(user['id']), message_id)
+    return {'success': True, 'data': {'removed': removed}}
 
 
 @router.post('/feedback', response_model=GenericResponse, dependencies=[write_limiter])

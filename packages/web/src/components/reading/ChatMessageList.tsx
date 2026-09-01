@@ -45,7 +45,7 @@ interface ChatMessageListProps {
  loadingMoreHistory: boolean;
  onLoadMoreHistory: () => void;
  t: (key: string, params?: Record<string, unknown>) => string;
- submitFeedback: (messageId: string, rating: boolean) => void;
+ submitFeedback: (messageId: string, rating: boolean | null, onFail?: () => void) => void;
 }
 
 export const ChatMessageList = React.memo(function ChatMessageList({

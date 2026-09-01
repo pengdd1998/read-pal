@@ -32,7 +32,7 @@ interface ChatOpenPanelProps {
  hasMoreHistory: boolean;
  loadingMoreHistory: boolean;
  onLoadMoreHistory: () => void;
- submitFeedback: (messageId: string, rating: boolean) => void;
+ submitFeedback: (messageId: string, rating: boolean | null, onFail?: () => void) => void;
  t: TranslateFn;
 }
 

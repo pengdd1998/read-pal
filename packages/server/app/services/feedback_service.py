@@ -61,3 +61,23 @@ async def submit_feedback(
         'id': str(feedback.id),
         'rating': rating,
     }
+
+
+async def delete_feedback(
+    db: AsyncSession,
+    user_id: UUID,
+    message_id: str,
+) -> int:
+    """Remove the user's rating for a message (toggle-off). Returns rows removed."""
+    async with db_error_guard('feedback_service.delete_feedback'):
+        result = await db.execute(
+            select(AIFeedback).where(
+                AIFeedback.user_id == user_id,
+                AIFeedback.message_id == message_id,
+            )
+        )
+        rows = list(result.scalars().all())
+        for row in rows:
+            await db.delete(row)
+        await db.flush()
+    return len(rows)

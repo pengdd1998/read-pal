@@ -6,18 +6,25 @@ import type { SanitizedMessage } from './ChatMessageList';
 interface ChatMessageBubbleProps {
  msg: SanitizedMessage;
  t: (key: string, params?: Record<string, unknown>) => string;
- submitFeedback: (messageId: string, rating: boolean, onFail?: () => void) => void;
+ submitFeedback: (messageId: string, rating: boolean | null, onFail?: () => void) => void;
  onRegenerate: () => void;
  showRegenerate: boolean;
 }
 
 export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submitFeedback, onRegenerate, showRegenerate }: ChatMessageBubbleProps) {
  // Optimistic rating state: the clicked thumb locks in visually immediately;
- // rolls back if the request fails. null = not rated yet.
+ // clicking it AGAIN cancels (toggle, like ChatGPT); rolls back if the
+ // request fails. null = not rated.
  const [myRating, setMyRating] = useState<boolean | null>(null);
+ const [celebrate, setCelebrate] = useState(false);
  const rate = (rating: boolean) => {
-  setMyRating(rating);
-  submitFeedback(msg.id, rating, () => setMyRating(null));
+  const next = myRating === rating ? null : rating; // toggle-off on re-click
+  setMyRating(next);
+  if (next !== null) {
+   setCelebrate(true);
+   setTimeout(() => setCelebrate(false), 1100);
+  }
+  submitFeedback(msg.id, next, () => setMyRating(myRating));
  };
  return (
  <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -43,7 +50,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
      aria-pressed={myRating === true}
      className={`p-2.5 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
       myRating === true
-       ? 'text-green-600 bg-green-500/10 dark:text-green-400'
+       ? 'text-green-600 bg-green-500/10 dark:text-green-400 rating-pop rating-pulse'
        : myRating === false
         ? 'text-amber-400/30'
         : 'text-amber-400/50 hover:text-green-500'
@@ -59,7 +66,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
      aria-pressed={myRating === false}
      className={`p-2.5 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${
       myRating === false
-       ? 'text-red-600 bg-red-500/10 dark:text-red-400'
+       ? 'text-red-600 bg-red-500/10 dark:text-red-400 rating-pop rating-pulse'
        : myRating === true
         ? 'text-amber-400/30'
         : 'text-amber-400/50 hover:text-red-500 dark:hover:text-red-400'
@@ -70,6 +77,17 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
      <path strokeLinecap="round" strokeLinejoin="round" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
      </svg>
     </button>
+    {celebrate && (
+    <span
+     aria-live="polite"
+     className="rating-chip inline-flex items-center gap-1 ml-1 self-center text-[11px] font-medium text-green-600 dark:text-green-400"
+    >
+     <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      <polyline points="20 6 9 17 4 12" />
+     </svg>
+     {t('feedback_saved')}
+    </span>
+    )}
     {showRegenerate && (
     <button type="button"
      onClick={onRegenerate}

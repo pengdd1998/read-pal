@@ -62,13 +62,18 @@ export function useChatActions({
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   }, [handleSend]);
 
-  const submitFeedback = useCallback(async (messageId: string, rating: boolean, onFail?: () => void) => {
+  const submitFeedback = useCallback(async (messageId: string, rating: boolean | null, onFail?: () => void) => {
     try {
-      await api.post('/api/agents/feedback', {
-        book_id: bookId,
-        message_id: messageId,
-        rating,
-      });
+      if (rating === null) {
+        // Toggle-off: remove the rating entirely (ordinary CRUD delete).
+        await api.delete(`/api/agents/feedback?message_id=${encodeURIComponent(messageId)}`);
+      } else {
+        await api.post('/api/agents/feedback', {
+          book_id: bookId,
+          message_id: messageId,
+          rating,
+        });
+      }
     } catch (err) {
       warn('ChatActions: failed to submit feedback', err);
       onFail?.(); // roll back the optimistic thumb state

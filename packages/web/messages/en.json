@@ -1006,6 +1006,7 @@
     "book_not_found_hint": "This book may have been removed or is temporarily unavailable.",
     "chapter_announcement": "Chapter {num}: {title}",
     "feedback_submit_error": "Failed to submit feedback. Please try again.",
+    "feedback_saved": "Saved, thanks!",
     "explain_passage_prompt": "Can you explain this passage: “{text}”",
     "tell_about_character_prompt": "Tell me about {name} — their role, motivations, and how they've developed so far.",
     "readingPage": "Reading",
