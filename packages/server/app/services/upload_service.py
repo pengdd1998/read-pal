@@ -15,18 +15,15 @@ from app.models.document import Document
 from app.services.epub_parser import process_epub
 from app.services.object_storage import upload_cover
 from app.services.pdf_parser import process_pdf
-from app.services.text_helpers import (
-    text_to_html_paragraphs as _text_to_html_paragraphs,
-)
 from app.services.upload_content_store import (
+    _build_chapters,  # noqa: F401 — re-exported (Document chapter shaping)
+    _chapters_from_shared,
     _get_cached_chapters,
+    _get_shared_content,
     _put_cached_chapters,
-)
-from app.services.upload_content_store import (  # noqa: F401 — re-exported
-    invalidate_cached_chapters,
+    invalidate_cached_chapters,  # noqa: F401 — re-exported (book_service)
     upsert_book_content,
 )
-from app.models.book_content import BookContent
 from app.services.upload_stream import (  # noqa: F401 — re-exported API
     find_existing_book_by_hash,
     get_file_type,
@@ -338,32 +335,6 @@ async def get_book_content(
     }
 
 
-async def _get_shared_content(db: AsyncSession, content_hash: str) -> BookContent | None:
-    """Fetch the shared book_contents row for a hash (read path, step 2)."""
-    from app.models.book_content import BookContent
-    async with db_error_guard('upload_service.get_shared_content'):
-        result = await db.execute(
-            select(BookContent).where(BookContent.content_hash == content_hash),
-        )
-        return result.scalar_one_or_none()
-
-
-def _chapters_from_shared(shared: BookContent) -> list[dict]:
-    """Chapters from a shared row; rawContent regenerated when absent."""
-    raw = shared.raw_chapters or []
-    if raw:
-        return [
-            {**ch, 'rawContent': ch.get('rawContent') or ch.get('content', '')}
-            for ch in raw if isinstance(ch, dict)
-        ]
-    return [
-        {'id': str(i), 'title': ch.get('title', f'Chapter {i+1}'),
-         'content': ch.get('content', ''),
-         'rawContent': ch.get('content', '')}
-        for i, ch in enumerate(shared.chapters or []) if isinstance(ch, dict)
-    ]
-
-
 def _extract_content(doc: Document | None) -> str:
     """Extract plain text content from a Document."""
     if not doc:
@@ -375,32 +346,6 @@ def _extract_content(doc: Document | None) -> str:
             ch.get('content', '') for ch in doc.chapters if isinstance(ch, dict)
         )
     return ''
-
-
-def _build_chapters(doc: Document | None, lang: str) -> list[dict]:
-    """Build chapters array from a Document."""
-    if not doc or not hasattr(doc, 'chapters') or not doc.chapters:
-        return []
-    chapters = []
-    for i, ch in enumerate(doc.chapters):
-        if isinstance(ch, dict):
-            raw = ch.get('rawContent', '')
-            content = ch.get('content', '')
-            if not raw and content:
-                # Use content directly if it's already HTML, otherwise wrap in <p>
-                if '<' in content and '>' in content:
-                    raw = content
-                else:
-                    raw = _text_to_html_paragraphs(content)
-            elif not raw:
-                raw = ''
-            chapters.append({
-                'id': ch.get('id', str(i)),
-                'title': ch.get('title', t('errors.chapter_title', lang, index=i + 1)),
-                'content': content,
-                'rawContent': raw,
-            })
-    return chapters
 
 
 async def _safe_precompute(

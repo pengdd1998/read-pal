@@ -7,12 +7,18 @@ see docs/design/cross-user-content-sharing.md (r2).
 
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_content import BookContent
+from app.models.document import Document
+from app.services.text_helpers import (
+    text_to_html_paragraphs as _text_to_html_paragraphs,
+)
 from app.core.cache import cache_delete, cache_get, cache_set
 from app.utils.db import db_error_guard
+from app.utils.i18n import t
 
 
 async def upsert_book_content(
@@ -77,3 +83,52 @@ async def invalidate_cached_chapters(book_id: UUID) -> None:
     await cache_delete(f'book-content:{book_id}')
 
 
+async def _get_shared_content(db: AsyncSession, content_hash: str) -> BookContent | None:
+    """Fetch the shared book_contents row for a hash (read path, step 2)."""
+    async with db_error_guard('upload_service.get_shared_content'):
+        result = await db.execute(
+            select(BookContent).where(BookContent.content_hash == content_hash),
+        )
+        return result.scalar_one_or_none()
+
+
+def _chapters_from_shared(shared: BookContent) -> list[dict]:
+    """Chapters from a shared row; rawContent regenerated when absent."""
+    raw = shared.raw_chapters or []
+    if raw:
+        return [
+            {**ch, 'rawContent': ch.get('rawContent') or ch.get('content', '')}
+            for ch in raw if isinstance(ch, dict)
+        ]
+    return [
+        {'id': str(i), 'title': ch.get('title', f'Chapter {i+1}'),
+         'content': ch.get('content', ''),
+         'rawContent': ch.get('content', '')}
+        for i, ch in enumerate(shared.chapters or []) if isinstance(ch, dict)
+    ]
+
+
+def _build_chapters(doc: Document | None, lang: str) -> list[dict]:
+    """Build chapters array from a Document."""
+    if not doc or not hasattr(doc, 'chapters') or not doc.chapters:
+        return []
+    chapters = []
+    for i, ch in enumerate(doc.chapters):
+        if isinstance(ch, dict):
+            raw = ch.get('rawContent', '')
+            content = ch.get('content', '')
+            if not raw and content:
+                # Use content directly if it's already HTML, otherwise wrap in <p>
+                if '<' in content and '>' in content:
+                    raw = content
+                else:
+                    raw = _text_to_html_paragraphs(content)
+            elif not raw:
+                raw = ''
+            chapters.append({
+                'id': ch.get('id', str(i)),
+                'title': ch.get('title', t('errors.chapter_title', lang, index=i + 1)),
+                'content': content,
+                'rawContent': raw,
+            })
+    return chapters
