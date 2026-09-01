@@ -173,46 +173,48 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
         stream_failed = True
         raise
     finally:
-        # P0.2: settle the pre-charge based on what the user actually saw.
-        # collected_parts accumulates across primary + fallback, so:
-        #   - Has content → vendor billed for input + emitted output. Settle
-        #     with estimate so user pays exactly once for the logical request.
-        #   - Empty (all attempts failed before any emit) → refund in full.
+        # Settlement runs in finally so it also covers the failure paths —
+        # but nothing is YIELDED here. Yields inside finally are silently
+        # dropped once the consumer closes the generator (the client stops
+        # reading at [DONE]), which is exactly how the message_id frame
+        # vanished while persist still ran.
         await _settle_token_budget(
             user_id_str, actual_request_id, pre_charge,
             token_limit, messages, collected_parts, billing_state,
         )
 
-        # Skip persistence on cancellation or stream-level error. For
-        # cancellation the user already opted out of the response; for a
-        # stream error the fallback inside _stream_from_provider already
-        # ran and we have no reliable partial to save.
-        is_cancelled = cancelled is not None and cancelled.is_set()
-        if stream_failed or is_cancelled:
-            if is_cancelled:
-                logger.info(
-                    'companion.stream.persist_skipped_cancelled',
-                    request_id=actual_request_id,
-                )
-            return
-
-        assistant_db_id = await _persist_with_retry(
-            db, user_id, book_id, message, messages,
-            collected_parts, actual_request_id, lang=lang,
-        )
-        if assistant_db_id is None:
-            # Tell the client the streamed response couldn't be saved.
-            # Client should keep visible text (user already read it) but
-            # warn that reload will lose the message.
-            yield f'data: {json.dumps({"error": "persist_failed"})}\n\n'
-        else:
-            # Hand the client the assistant message's real DB id — feedback
-            # ratings FK against chat_messages.id, and the client's local
-            # id is a random UUID that would violate it.
-            await _emit_with_seq(
-                json.dumps({"type": "message_id", "id": str(assistant_db_id)}),
-                actual_request_id, seq_state,
+    # Skip persistence on cancellation or stream-level error. For
+    # cancellation the user already opted out of the response; for a
+    # stream error the fallback inside _stream_from_provider already
+    # ran and we have no reliable partial to save.
+    is_cancelled = cancelled is not None and cancelled.is_set()
+    if stream_failed or is_cancelled:
+        if is_cancelled:
+            logger.info(
+                'companion.stream.persist_skipped_cancelled',
+                request_id=actual_request_id,
             )
+        return
+
+    assistant_db_id = await _persist_with_retry(
+        db, user_id, book_id, message, messages,
+        collected_parts, actual_request_id, lang=lang,
+    )
+    if assistant_db_id is None:
+        # Tell the client the streamed response couldn't be saved.
+        # Client should keep visible text (user already read it) but
+        # warn that reload will lose the message.
+        yield f'data: {json.dumps({"error": "persist_failed"})}\n\n'
+    else:
+        # Hand the client the assistant message's real DB id — feedback
+        # ratings FK against chat_messages.id, and the client's local
+        # id is a random UUID that would violate it. NOTE: _emit_with_seq
+        # RETURNS the frame — it must be yielded, or it never reaches the
+        # client (the silent loss that broke feedback on fresh replies).
+        yield await _emit_with_seq(
+            json.dumps({"type": "message_id", "id": str(assistant_db_id)}),
+            actual_request_id, seq_state,
+        )
 
     if not stream_failed:
         yield 'data: [DONE]\n\n'
