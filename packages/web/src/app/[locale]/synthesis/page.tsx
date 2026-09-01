@@ -99,13 +99,13 @@ export default function SynthesisPage() {
  return (
   <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in container-content">
   <div className="mb-8">
-   <div className="h-8 bg-surface-2 rounded-lg w-48 animate-pulse" />
-   <div className="h-4 bg-surface-2 rounded-lg w-72 mt-2 animate-pulse" />
+   <div className="h-8 skeleton rounded-lg w-48 animate-pulse" />
+   <div className="h-4 skeleton rounded-lg w-72 mt-2 animate-pulse" />
   </div>
   <div className="space-y-4">
-   <div className="h-24 rounded-xl bg-surface-1 animate-pulse" />
-   <div className="h-48 rounded-xl bg-surface-1 animate-pulse" />
-   <div className="h-64 rounded-xl bg-surface-1 animate-pulse" />
+   <div className="h-24 rounded-xl skeleton animate-pulse" />
+   <div className="h-48 rounded-xl skeleton animate-pulse" />
+   <div className="h-64 rounded-xl skeleton animate-pulse" />
   </div>
   </div>
  );
@@ -115,7 +115,7 @@ export default function SynthesisPage() {
  return (
   <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in container-content">
   <div className="mb-8">
-   <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('page_title')}</h1>
+   <h1 className="text-[28px] font-bold text-gray-900 dark:text-gray-100">{t('page_title')}</h1>
    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('page_subtitle')}</p>
   </div>
   <div className="flex flex-col items-center justify-center py-16">
@@ -136,7 +136,7 @@ export default function SynthesisPage() {
  <section aria-label={t('page_title')} className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in container-content">
   {/* Header */}
   <div className="mb-8">
-  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+  <h1 className="text-[28px] font-bold text-gray-900 dark:text-gray-100">
    {t('page_title')}
   </h1>
   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -145,13 +145,13 @@ export default function SynthesisPage() {
   </div>
 
   {/* Cross-book analysis button */}
-  <div className="mb-6 p-4 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/20">
+  <div className="mb-6 p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
   <div className="flex items-center justify-between">
    <div>
-   <h2 className="text-sm font-semibold text-teal-800 dark:text-teal-200">
+   <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-200">
     {t('cross_book_title')}
    </h2>
-   <p className="text-xs text-teal-600 dark:text-teal-400 mt-0.5">
+   <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
     {t('cross_book_desc')}
    </p>
    </div>
@@ -159,7 +159,7 @@ export default function SynthesisPage() {
    type="button"
    onClick={handleCrossBook}
    disabled={loading}
-   className="px-4 py-2.5 text-sm font-medium rounded-xl bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 min-h-[44px]"
+   className="px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 min-h-[44px]"
    >
    {loading ? (
     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" aria-hidden="true" />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { BookOpen } from '@/components/icons';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { api } from '@/lib/api';
@@ -12,8 +13,8 @@ import { warn } from '@/lib/logger';
 const RecommendationCard = memo(function RecommendationCard({ r, genreLabel }: { r: RecommendationItem; genreLabel: string }) {
   return (
     <div className="flex items-start gap-2 p-2 rounded-lg hover:bg-surface-1 transition-colors">
-      <div className="w-8 h-10 rounded bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center flex-shrink-0">
-        <span className="text-xs">{'📖'}</span>
+      <div className="w-8 h-10 rounded bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/30 flex items-center justify-center flex-shrink-0">
+        <BookOpen className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{r.title}</p>

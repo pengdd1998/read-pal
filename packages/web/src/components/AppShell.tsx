@@ -41,7 +41,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
  const tc = useTranslations('common');
  const notificationsInitialized = useRef(false);
 
- const NAV_FULL_THRESHOLD = 1360;
+ // UI-R-14: labels stay until 1100px (critique: 700–1360 icon-only hurt recognition)
+const NAV_FULL_THRESHOLD = 1100;
  const NAV_ICONS_THRESHOLD = 700;
  const [navMode, setNavMode] = useState<'full' | 'icons' | 'mobile'>('mobile');
 
@@ -94,7 +95,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
      {NAV_ITEMS.map((item) => {
      const active = isActive(item.href);
      return (
-      <Link key={item.href} href={item.href} prefetch={false} title={t(item.labelKey)} aria-current={active ? 'page' : undefined}
+      <Link key={item.href} href={item.href} prefetch={false} title={t(item.labelKey)} aria-label={t(item.labelKey)} aria-current={active ? 'page' : undefined}
       className={`nav-link relative px-2 py-2 rounded-lg text-sm font-sans font-medium transition-all duration-200 ease-out shrink-0 ${
        active
        ? 'nav-link-active text-primary-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40'

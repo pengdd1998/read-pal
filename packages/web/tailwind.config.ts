@@ -87,9 +87,17 @@ const config: Config = {
         serif: ['var(--font-serif)', 'Source Serif 4', 'Georgia', 'serif'],
         mono: ['var(--font-mono)', 'Fira Code', 'monospace'],
       },
+      // Radius policy (design review 阶段1): 8px controls / 16px cards / pill.
+      // Remapping the whole scale to the policy set — one source of truth,
+      // zero className churn. Do NOT add intermediate steps (2/4/6/12/24px).
       borderRadius: {
+        'sm': '0.5rem',
+        'DEFAULT': '0.5rem',
+        'md': '0.5rem',
+        'lg': '0.5rem',
+        'xl': '1rem',
         '2xl': '1rem',
-        '3xl': '1.5rem',
+        '3xl': '1rem',
       },
       boxShadow: {
         'xs': '0 1px 2px rgba(30, 42, 56, 0.04)',

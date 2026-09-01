@@ -21,10 +21,10 @@ export const KnowledgeNotConfigured = React.memo(function KnowledgeNotConfigured
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-surface-1 flex items-center justify-center">
+    <div className="min-h-screen bg-surface-1 flex items-center justify-center container-content px-4 sm:px-6 lg:px-8">
       <div className="text-center max-w-md px-6">
         <div className="text-5xl mb-4" aria-hidden="true">{'🧠'}</div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{setupTitle}</h1>
+        <h1 className="text-[28px] font-bold text-gray-900 dark:text-gray-100 mb-3">{setupTitle}</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">{setupDesc}</p>
         <div className="bg-surface-0 rounded-xl border border-surface-3 p-4 text-sm text-gray-500 dark:text-gray-400">
           <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">{setupRequired}</p>
@@ -32,7 +32,7 @@ export const KnowledgeNotConfigured = React.memo(function KnowledgeNotConfigured
         </div>
         <button type="button"
           onClick={() => router.push('/library')}
-          className="mt-6 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+          className="mt-6 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         >
           {backToLibraryLabel}
         </button>

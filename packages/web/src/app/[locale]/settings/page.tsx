@@ -163,7 +163,7 @@ export default function SettingsPage() {
     <section aria-label={t('page_title')} className="container-content px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
       {/* Header */}
       <div className="mb-6 sm:mb-8 animate-slide-up">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('page_title')}</h1>
+        <h1 className="text-[28px] font-bold tracking-tight">{t('page_title')}</h1>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">{t('customize_experience')}</p>
       </div>
 

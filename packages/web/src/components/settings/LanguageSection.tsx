@@ -54,9 +54,9 @@ const LanguageButton = React.memo(function LanguageButton({ label, isActive, onC
     <button type="button"
       onClick={onClick}
       aria-pressed={isActive}
-      className={`flex-1 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+      className={`flex-1 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
         isActive
-          ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-2 border-violet-300 dark:border-violet-700'
+          ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border-2 border-amber-300 dark:border-amber-700'
           : 'bg-surface-2 text-gray-700 dark:text-gray-300 border-2 border-transparent hover:bg-surface-2'
       }`}
     >

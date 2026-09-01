@@ -23,7 +23,7 @@ export const KnowledgeEmptyState = React.memo(function KnowledgeEmptyState({
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-surface-1 flex items-center justify-center">
+    <div className="min-h-screen bg-surface-1 flex items-center justify-center container-content px-4 sm:px-6 lg:px-8">
       <div className="text-center max-w-lg px-6">
         {/* Decorative mini-graph preview */}
         <div className="mx-auto mb-6 w-48 h-36 relative opacity-30">
@@ -41,12 +41,12 @@ export const KnowledgeEmptyState = React.memo(function KnowledgeEmptyState({
             <circle cx="40" cy="80" r="8" fill="#d97706" opacity="0.6" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{buildingTitle}</h1>
+        <h1 className="text-[28px] font-bold text-gray-900 dark:text-gray-100 mb-3">{buildingTitle}</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">{buildingDesc}</p>
         <div className="bg-surface-0 rounded-xl border border-surface-3 p-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
               <span>{tipHighlight}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -61,7 +61,7 @@ export const KnowledgeEmptyState = React.memo(function KnowledgeEmptyState({
         </div>
         <button type="button"
           onClick={() => router.push('/library')}
-          className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
+          className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1"
         >
           {startReadingLabel}
         </button>

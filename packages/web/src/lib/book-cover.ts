@@ -1,10 +1,12 @@
+// UI-R-08: warm 5-step ramp + sage/pine only (design review 阶段1: no
+// rose/sky/violet/cyan — cold covers broke the "warm study" world).
 const COVER_PALETTES = [
-  ['from-rose-400 to-pink-600', 'text-rose-100'],
-  ['from-amber-400 to-orange-600', 'text-amber-100'],
-  ['from-emerald-400 to-teal-600', 'text-emerald-100'],
-  ['from-sky-400 to-blue-600', 'text-sky-100'],
-  ['from-violet-400 to-purple-600', 'text-violet-100'],
-  ['from-cyan-400 to-indigo-600', 'text-cyan-100'],
+  ['from-amber-400 to-orange-600', 'text-amber-50'],
+  ['from-yellow-500 to-amber-700', 'text-amber-50'],
+  ['from-orange-500 to-red-700', 'text-orange-50'],
+  ['from-stone-400 to-stone-600', 'text-stone-50'],
+  ['from-emerald-500 to-teal-700', 'text-emerald-50'],
+  ['from-lime-600 to-emerald-800', 'text-lime-50'],
 ] as const;
 
 export function getBookCoverColors(title: string): readonly [string, string] {

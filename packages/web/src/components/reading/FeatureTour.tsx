@@ -10,7 +10,6 @@ const TOUR_STEP_KEY = 'read-pal-tour-step';
 const STEP_KEYS: { targetId: string; titleKey: string; descKey: string; position: 'top' | 'bottom' | 'left' | 'right' }[] = [
  { targetId: 'tour-ai-companion', titleKey: 'tour_step1_title', descKey: 'tour_step1_desc', position: 'left' },
  { targetId: 'tour-annotations', titleKey: 'tour_step2_title', descKey: 'tour_step2_desc', position: 'bottom' },
- { targetId: 'tour-reading-book', titleKey: 'tour_step3_title', descKey: 'tour_step3_desc', position: 'bottom' },
  { targetId: 'tour-progress', titleKey: 'tour_step4_title', descKey: 'tour_step4_desc', position: 'bottom' },
 ];
 
@@ -37,7 +36,8 @@ export const FeatureTour = React.memo(function FeatureTour() {
  }
 
  // Wait for layout to settle, then start tour
- const timer = setTimeout(() => setStep(startStep), 1500);
+ // UI-R-15: 1.5s fired mid-orientation; wait 8s of idle instead
+ const timer = setTimeout(() => setStep(startStep), 8000);
  return () => clearTimeout(timer);
  }, []);
 
@@ -161,7 +161,7 @@ export const FeatureTour = React.memo(function FeatureTour() {
   {/* Spotlight overlay */}
   <div className="fixed inset-0 z-[60] pointer-events-none">
   {/* Dark overlay with cutout */}
-  <div className="absolute inset-0 bg-black/40 animate-fade-in" />
+  <div className="absolute inset-0 bg-[rgba(26,20,16,0.5)] animate-fade-in" />
   {/* Highlight ring around target */}
   <div
    className="absolute rounded-lg ring-2 ring-amber-400 ring-offset-2 ring-offset-transparent shadow-[0_0_20px_rgba(251,191,36,0.3)] transition-all duration-300"
@@ -194,7 +194,7 @@ export const FeatureTour = React.memo(function FeatureTour() {
    <div className="px-4 py-2.5 bg-surface-1 flex items-center justify-between border-t border-surface-2">
    <button type="button"
     onClick={handleSkip}
-    className="text-xs px-2 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
+    className="text-sm px-3 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
    >
     {t('tour_skip')}
    </button>

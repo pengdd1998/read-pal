@@ -4,13 +4,13 @@ export default function AuthLoading() {
   <div className="max-w-sm w-full">
   <div className="animate-pulse space-y-6">
    <div className="flex justify-center">
-   <div className="w-12 h-12 rounded-xl bg-surface-2" />
+   <div className="w-12 h-12 rounded-xl skeleton" />
    </div>
-   <div className="h-6 bg-surface-2 rounded w-3/4 mx-auto" />
+   <div className="h-6 skeleton rounded w-3/4 mx-auto" />
    <div className="space-y-4">
-   <div className="h-10 bg-surface-2 rounded" />
-   <div className="h-10 bg-surface-2 rounded" />
-   <div className="h-10 bg-surface-2 rounded" />
+   <div className="h-10 skeleton rounded" />
+   <div className="h-10 skeleton rounded" />
+   <div className="h-10 skeleton rounded" />
    </div>
   </div>
   </div>

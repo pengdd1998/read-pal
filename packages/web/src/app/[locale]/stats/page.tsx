@@ -64,7 +64,7 @@ export default function StatsPage() {
 
   {/* Header */}
   <div className="mb-8">
-  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
+  <h1 className="text-[28px] font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('subtitle')}</p>
   </div>
 

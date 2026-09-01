@@ -53,7 +53,7 @@ export const DayCell = memo(function DayCell({
  const locale = useLocale();
 
  if (!day) {
- return <div className="w-[13px] h-[13px] rounded-[3px]" />;
+ return <div className="w-[13px] h-[13px] rounded-sm" />;
  }
 
  const level = getActivityLevel(day.pages, day.minutes);
@@ -62,7 +62,7 @@ export const DayCell = memo(function DayCell({
  return (
  <div className="relative">
   <div
-  className={`w-[13px] h-[13px] rounded-[3px] transition-colors duration-100 cursor-default ${LEVEL_COLORS[level]} ${HOVER_COLORS[level]} ${todayRing}`}
+  className={`w-[13px] h-[13px] rounded-sm transition-colors duration-100 cursor-default ${LEVEL_COLORS[level]} ${HOVER_COLORS[level]} ${todayRing}`}
   onMouseEnter={() => setShowTooltip(true)}
   onMouseLeave={() => setShowTooltip(false)}
   />
@@ -87,7 +87,7 @@ export const SkeletonHeatmap = memo(function SkeletonHeatmap() {
   {Array.from({ length: 7 }).map((_, row) => (
   <div key={row} className="flex gap-[3px]">
    {Array.from({ length: 26 }).map((_, col) => (
-   <div key={col} className="w-[13px] h-[13px] rounded-[3px] bg-surface-1 animate-pulse" />
+   <div key={col} className="w-[13px] h-[13px] rounded-sm skeleton animate-pulse" />
    ))}
   </div>
   ))}

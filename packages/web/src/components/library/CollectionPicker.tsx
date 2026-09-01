@@ -163,7 +163,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
 
   {loading ? (
   <div className="p-3 space-y-2">
-   {[1, 2].map((i) => <div key={i} className="h-6 bg-surface-1 rounded animate-pulse" />)}
+   {[1, 2].map((i) => <div key={i} className="h-6 skeleton rounded animate-pulse" />)}
   </div>
   ) : loadError ? (
   <div className="px-3 py-4 text-center">

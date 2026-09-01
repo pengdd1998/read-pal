@@ -88,7 +88,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
    {t('select_book')}
    </label>
    {booksLoading ? (
-   <div className="h-10 bg-surface-1 rounded-lg animate-pulse" />
+   <div className="h-10 skeleton rounded-lg animate-pulse" />
    ) : booksError ? (
    <div role="alert" className="px-3 py-2.5 text-sm rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
     {booksError}

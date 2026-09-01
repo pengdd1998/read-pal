@@ -63,6 +63,13 @@
   .container-shell { max-width: 1600px; margin-inline: auto; }
   .container-content { max-width: 1040px; margin-inline: auto; }
 
+  /* Skeleton fill (UI-R-13): must stay visible in dark mode. --surface-2
+     dark (#2a2218 on #1a1410 ≈1.1:1) was near-invisible — text-tinted
+     translucency lands ≈1.5:1 in dark while staying subtle in light. */
+  .skeleton { background-color: rgba(48, 40, 32, 0.07); }
+  .dark .skeleton { background-color: rgba(240, 233, 224, 0.16); }
+
+
   body {
     color: rgb(var(--foreground-rgb));
     background-color: var(--surface-0);

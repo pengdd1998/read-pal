@@ -54,11 +54,11 @@ export const QuickActions = React.memo(function QuickActions() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
       {[
-        { label: t('quick_upload'), href: '/library', icon: 'upload', color: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20' },
+        { label: t('quick_upload'), href: '/library', icon: 'upload', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },
         { label: t('quick_memory_books'), href: '/memory-books', icon: 'book', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },
         { label: t('quick_flashcards'), href: '/flashcards', icon: 'cards', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },
-        { label: t('quick_stats'), href: '/stats', icon: 'chart', color: 'from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20' },
-        { label: t('quick_book_clubs'), href: '/book-clubs', icon: 'books', color: 'from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20' },
+        { label: t('quick_stats'), href: '/stats', icon: 'chart', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },
+        { label: t('quick_book_clubs'), href: '/book-clubs', icon: 'books', color: 'from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' },
       ].map((action) => (
         <Link
           key={action.label}

@@ -3,19 +3,19 @@ export default function BookClubDetailLoading() {
  <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
   {/* Back link skeleton */}
   <div className="mb-6">
-  <div className="h-4 bg-surface-2 rounded w-24 animate-pulse" />
+  <div className="h-4 skeleton rounded w-24 animate-pulse" />
   </div>
 
   {/* Club header skeleton */}
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 mb-6">
   <div className="flex items-center gap-4 mb-4">
-   <div className="w-14 h-14 rounded-xl bg-surface-2 animate-pulse" />
+   <div className="w-14 h-14 rounded-xl skeleton animate-pulse" />
    <div className="flex-1">
-   <div className="h-6 bg-surface-2 rounded w-48 mb-2 animate-pulse" />
-   <div className="h-4 bg-surface-2 rounded w-32 animate-pulse" />
+   <div className="h-6 skeleton rounded w-48 mb-2 animate-pulse" />
+   <div className="h-4 skeleton rounded w-32 animate-pulse" />
    </div>
   </div>
-  <div className="h-4 bg-surface-2 rounded w-full animate-pulse" />
+  <div className="h-4 skeleton rounded w-full animate-pulse" />
   </div>
 
   {/* Discussion skeleton */}
@@ -26,12 +26,12 @@ export default function BookClubDetailLoading() {
    className="bg-surface-0 rounded-2xl border border-surface-3 p-5"
    >
    <div className="flex items-center gap-3 mb-3">
-    <div className="w-8 h-8 rounded-full bg-surface-2 animate-pulse" />
-    <div className="h-4 bg-surface-2 rounded w-24 animate-pulse" />
+    <div className="w-8 h-8 rounded-full skeleton animate-pulse" />
+    <div className="h-4 skeleton rounded w-24 animate-pulse" />
    </div>
    <div className="space-y-2">
-    <div className="h-4 bg-surface-2 rounded w-full animate-pulse" />
-    <div className="h-4 bg-surface-2 rounded w-3/4 animate-pulse" />
+    <div className="h-4 skeleton rounded w-full animate-pulse" />
+    <div className="h-4 skeleton rounded w-3/4 animate-pulse" />
    </div>
    </div>
   ))}

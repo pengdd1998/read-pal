@@ -171,12 +171,12 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  return (
   <section className="mb-6 animate-slide-up">
   <div className="flex items-center gap-3 mb-4">
-   <div className="w-9 h-9 rounded-xl bg-surface-2 animate-pulse" />
-   <div className="h-5 bg-surface-2 rounded-lg w-40 animate-pulse" />
+   <div className="w-9 h-9 rounded-xl skeleton animate-pulse" />
+   <div className="h-5 skeleton rounded-lg w-40 animate-pulse" />
   </div>
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-4">
    {Array.from({ length: 3 }).map((_, i) => (
-   <div key={i} className="h-10 bg-surface-1 rounded-xl animate-pulse" />
+   <div key={i} className="h-10 skeleton rounded-xl animate-pulse" />
    ))}
   </div>
   </section>

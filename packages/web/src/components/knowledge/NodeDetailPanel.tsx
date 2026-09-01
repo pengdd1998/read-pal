@@ -90,7 +90,7 @@ export const NodeDetailPanel = React.memo(function NodeDetailPanel({ node, conne
    const otherNode = allNodes.find((n) => n.id === otherId);
    return (
     <div key={e.source + "-" + e.target + "-" + e.label} className="flex items-center gap-2 text-sm">
-    <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
     <span className="text-gray-600 dark:text-gray-400">{e.label}</span>
     <span className="text-gray-900 dark:text-gray-100 font-medium">{otherNode?.label || otherId}</span>
     </div>

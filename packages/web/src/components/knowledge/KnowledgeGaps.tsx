@@ -18,7 +18,7 @@ const GapItem = React.memo(function GapItem({ gap, t }: {
         <span className="font-medium">{t('gap_suggestion')}:</span> {gap.suggestion}
       </p>
       {gap.suggestedAction && (
-        <p className="text-xs text-teal-700 dark:text-teal-400 flex items-start gap-1">
+        <p className="text-xs text-amber-700 dark:text-amber-400 flex items-start gap-1">
           <span aria-hidden="true" className="shrink-0 mt-px">&#x2192;</span>
           <span>
             <span className="font-medium">{t('gap_action')}:</span> {gap.suggestedAction}

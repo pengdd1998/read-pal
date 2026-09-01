@@ -5,10 +5,10 @@ export default function KnowledgeLoading() {
   <div className="border-b border-surface-3 bg-surface-0">
   <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
    <div>
-   <div className="h-6 bg-surface-2 rounded-lg w-40 animate-pulse" />
-   <div className="h-4 bg-surface-2 rounded-lg w-56 mt-1.5 animate-pulse" />
+   <div className="h-6 skeleton rounded-lg w-40 animate-pulse" />
+   <div className="h-4 skeleton rounded-lg w-56 mt-1.5 animate-pulse" />
    </div>
-   <div className="h-4 bg-surface-2 rounded-lg w-16 animate-pulse" />
+   <div className="h-4 skeleton rounded-lg w-16 animate-pulse" />
   </div>
   </div>
 
@@ -18,8 +18,8 @@ export default function KnowledgeLoading() {
    {/* Graph visualization placeholder (spans 2 cols on lg) */}
    <div className="lg:col-span-2 bg-surface-0 rounded-xl border border-surface-3 overflow-hidden">
    <div className="p-3 border-b border-surface-2 flex items-center justify-between">
-    <div className="h-4 bg-surface-2 rounded w-24 animate-pulse" />
-    <div className="h-3 bg-surface-2 rounded w-20 animate-pulse" />
+    <div className="h-4 skeleton rounded w-24 animate-pulse" />
+    <div className="h-3 skeleton rounded w-20 animate-pulse" />
    </div>
    {/* SVG area placeholder with fake nodes */}
    <div className="h-[420px] relative bg-surface-1">
@@ -48,31 +48,31 @@ export default function KnowledgeLoading() {
    <div className="space-y-4">
    {/* Cross-book themes skeleton */}
    <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
-    <div className="h-4 bg-surface-2 rounded w-28 mb-3 animate-pulse" />
+    <div className="h-4 skeleton rounded w-28 mb-3 animate-pulse" />
     <div className="space-y-2">
-    <div className="h-3 bg-surface-2 rounded w-full animate-pulse" />
-    <div className="h-3 bg-surface-2 rounded w-4/5 animate-pulse" />
-    <div className="h-3 bg-surface-2 rounded w-3/4 animate-pulse" />
+    <div className="h-3 skeleton rounded w-full animate-pulse" />
+    <div className="h-3 skeleton rounded w-4/5 animate-pulse" />
+    <div className="h-3 skeleton rounded w-3/4 animate-pulse" />
     </div>
    </div>
 
    {/* Knowledge gaps skeleton */}
    <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
-    <div className="h-4 bg-surface-2 rounded w-32 mb-3 animate-pulse" />
+    <div className="h-4 skeleton rounded w-32 mb-3 animate-pulse" />
     <div className="space-y-2">
-    <div className="h-3 bg-surface-2 rounded w-full animate-pulse" />
-    <div className="h-3 bg-surface-2 rounded w-2/3 animate-pulse" />
+    <div className="h-3 skeleton rounded w-full animate-pulse" />
+    <div className="h-3 skeleton rounded w-2/3 animate-pulse" />
     </div>
    </div>
 
    {/* Legend skeleton */}
    <div className="bg-surface-0 rounded-xl border border-surface-3 p-4">
-    <div className="h-4 bg-surface-2 rounded w-16 mb-3 animate-pulse" />
+    <div className="h-4 skeleton rounded w-16 mb-3 animate-pulse" />
     <div className="flex flex-wrap gap-2">
-    <div className="h-6 bg-surface-2 rounded-full w-20 animate-pulse" />
-    <div className="h-6 bg-surface-2 rounded-full w-16 animate-pulse" />
-    <div className="h-6 bg-surface-2 rounded-full w-24 animate-pulse" />
-    <div className="h-6 bg-surface-2 rounded-full w-18 animate-pulse" />
+    <div className="h-6 skeleton rounded-full w-20 animate-pulse" />
+    <div className="h-6 skeleton rounded-full w-16 animate-pulse" />
+    <div className="h-6 skeleton rounded-full w-24 animate-pulse" />
+    <div className="h-6 skeleton rounded-full w-18 animate-pulse" />
     </div>
    </div>
    </div>

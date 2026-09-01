@@ -18,10 +18,10 @@ import { FlashcardReviewWidget } from '@/components/dashboard/FlashcardReviewWid
 import { ExploreMoreSection } from '@/components/dashboard/ExploreMoreSection';
 
 // Lazy-load heavy dashboard components
-const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse bg-surface-2 rounded-xl" /> });
-const ShareReadingCard = dynamic(() => import('@/components/share/ReadingShareCard').then((m) => ({ default: m.ShareReadingCard })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse bg-surface-2 rounded-xl" /> });
-const StreakCalendar = dynamic(() => import('@/components/dashboard/StreakCalendar'), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse bg-surface-2 rounded-xl" /> });
-const BookClubsWidget = dynamic(() => import('@/components/dashboard/BookClubsWidget').then((m) => ({ default: m.default })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse bg-surface-2 rounded-xl" /> });
+const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse skeleton rounded-xl" /> });
+const ShareReadingCard = dynamic(() => import('@/components/share/ReadingShareCard').then((m) => ({ default: m.ShareReadingCard })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse skeleton rounded-xl" /> });
+const StreakCalendar = dynamic(() => import('@/components/dashboard/StreakCalendar'), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse skeleton rounded-xl" /> });
+const BookClubsWidget = dynamic(() => import('@/components/dashboard/BookClubsWidget').then((m) => ({ default: m.default })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse skeleton rounded-xl" /> });
 
 const INSIGHTS_POOL_KEYS: InsightKey[] = [
   { agentKey: 'agent_companion', icon: 'book-open', key: 'insight_companion' },

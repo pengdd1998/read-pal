@@ -49,7 +49,7 @@ export default function LibraryPage() {
  <section aria-label={t('page_title')} className="container-shell px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
   <div className="flex justify-between items-center mb-6 sm:mb-8">
   <div className="animate-slide-up">
-   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('title')}</h1>
+   <h1 className="text-[28px] font-bold tracking-tight">{t('title')}</h1>
    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
    {t('subtitle')}
    </p>

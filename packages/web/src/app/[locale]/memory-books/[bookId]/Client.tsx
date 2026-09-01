@@ -192,12 +192,12 @@ export default function ReadingMirrorPage() {
   <div aria-busy="true" className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
   {/* Back link skeleton */}
   <div className="mb-8">
-   <div className="h-4 bg-surface-2 rounded-lg w-20 animate-pulse" />
+   <div className="h-4 skeleton rounded-lg w-20 animate-pulse" />
   </div>
   {/* Title skeleton */}
   <div className="mb-6">
-   <div className="h-8 bg-surface-2 rounded-lg w-3/4 animate-pulse mb-3" />
-   <div className="h-4 bg-surface-2 rounded-lg w-1/2 animate-pulse" />
+   <div className="h-8 skeleton rounded-lg w-3/4 animate-pulse mb-3" />
+   <div className="h-4 skeleton rounded-lg w-1/2 animate-pulse" />
   </div>
   {/* Section cards skeleton */}
   <div className="space-y-4">

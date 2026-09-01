@@ -242,8 +242,8 @@ export const OfflineSection = React.memo(function OfflineSection() {
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-2 py-1.5">
-                  <div className="w-4 h-4 rounded bg-surface-2 animate-pulse" />
-                  <div className="flex-1 h-4 rounded bg-surface-2 animate-pulse" />
+                  <div className="w-4 h-4 rounded skeleton animate-pulse" />
+                  <div className="flex-1 h-4 rounded skeleton animate-pulse" />
                 </div>
               ))}
             </div>

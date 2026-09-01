@@ -1,0 +1,25 @@
+# Visual regression baseline (D3, review recommendation #18)
+# Manual/nightly: capture → check against baseline. Not a merge gate yet —
+# baselines need a stable rendering environment (fonts/animation) before
+# wiring into deploy.yml per the review's phase-3 plan.
+name: visual-regression
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 1' # Mon 04:00 UTC weekly
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install deps
+        run: npx playwright install --with-deps chromium
+      - name: Start stack (placeholder — replace with compose/services when CI DB is provisioned)
+        run: echo " Requires api:8000 + web:3000; wire docker compose here "
+      - name: Capture or check baseline
+        run: node scripts/visual-baseline.mjs $( [ -d test-results/visual/baseline ] && echo --check )

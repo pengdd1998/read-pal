@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Flame } from '@/components/icons';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { DayCell, SkeletonHeatmap } from './StreakDayCell';
@@ -128,7 +129,7 @@ function StreakCalendarInner() {
   <div>
    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('streak_title')}</h3>
    {loading ? (
-   <div className="mt-1 h-4 w-40 bg-surface-1 rounded animate-pulse" />
+   <div className="mt-1 h-4 w-40 skeleton rounded animate-pulse" />
    ) : error ? (
    <p role="alert" className="text-sm text-red-500 dark:text-red-400 mt-1">{error}</p>
    ) : (
@@ -148,7 +149,7 @@ function StreakCalendarInner() {
     <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{t('streak_current')}</div>
     <div className="flex items-center justify-center gap-1">
     <span className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">{data.currentStreak}</span>
-    {data.currentStreak > 0 && <span className="text-xl" role="img" aria-label={t('fire_streak_aria')}>{'🔥'}</span>}
+    {data.currentStreak > 0 && <Flame className="w-5 h-5 text-amber-500" aria-label={t('fire_streak_aria')} />}
     </div>
    </div>
    </div>
@@ -202,11 +203,11 @@ function StreakCalendarInner() {
   {!loading && !error && (
   <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-500 dark:text-gray-400">
    <span>{t('heatmap_less')}</span>
-   <div className="w-[13px] h-[13px] rounded-[3px] bg-surface-1" />
-   <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-200 dark:bg-amber-900/50" />
-   <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-300 dark:bg-amber-700/60" />
-   <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-500 dark:bg-amber-600/80" />
-   <div className="w-[13px] h-[13px] rounded-[3px] bg-amber-700 dark:bg-amber-500" />
+   <div className="w-[13px] h-[13px] rounded-sm bg-surface-1" />
+   <div className="w-[13px] h-[13px] rounded-sm bg-amber-200 dark:bg-amber-900/50" />
+   <div className="w-[13px] h-[13px] rounded-sm bg-amber-300 dark:bg-amber-700/60" />
+   <div className="w-[13px] h-[13px] rounded-sm bg-amber-500 dark:bg-amber-600/80" />
+   <div className="w-[13px] h-[13px] rounded-sm bg-amber-700 dark:bg-amber-500" />
    <span>{t('heatmap_more')}</span>
   </div>
   )}

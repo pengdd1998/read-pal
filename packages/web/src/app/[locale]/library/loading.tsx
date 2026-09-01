@@ -4,15 +4,15 @@ export default function LibraryLoading() {
   {/* Header skeleton */}
   <div className="flex justify-between items-center mb-6 sm:mb-8">
   <div className="animate-slide-up">
-   <div className="h-8 bg-surface-2 rounded-lg w-36 animate-pulse" />
-   <div className="h-4 bg-surface-2 rounded-lg w-48 mt-1 animate-pulse" />
+   <div className="h-8 skeleton rounded-lg w-36 animate-pulse" />
+   <div className="h-4 skeleton rounded-lg w-48 mt-1 animate-pulse" />
   </div>
   <div className="flex items-center gap-2">
    {/* Search bar skeleton */}
    <div className="hidden sm:block h-10 bg-surface-0 rounded-xl border border-surface-3 w-44 animate-pulse" />
    {/* View toggle skeleton */}
-   <div className="flex items-center gap-1 bg-surface-1 rounded-xl p-1 border border-surface-3 animate-pulse">
-   <div className="w-8 h-8 rounded-lg bg-surface-2" />
+   <div className="flex items-center gap-1 skeleton rounded-xl p-1 border border-surface-3 animate-pulse">
+   <div className="w-8 h-8 rounded-lg skeleton" />
    <div className="w-8 h-8 rounded-lg" />
    </div>
   </div>
@@ -32,11 +32,11 @@ export default function LibraryLoading() {
     <div className="aspect-[3/4] rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 animate-pulse" />
     {/* Title */}
     <div className="mt-2">
-    <div className="h-3.5 bg-surface-2 rounded w-3/4 animate-pulse" />
+    <div className="h-3.5 skeleton rounded w-3/4 animate-pulse" />
     </div>
     {/* Author */}
     <div className="mt-1">
-    <div className="h-3 bg-surface-2 rounded w-1/2 animate-pulse" />
+    <div className="h-3 skeleton rounded w-1/2 animate-pulse" />
     </div>
     {/* Progress bar */}
     <div className="mt-2">

@@ -2,17 +2,17 @@ export default function MemoryBookDetailLoading() {
  return (
  <div className="px-4 sm:px-6 lg:px-8 py-12 animate-fade-in" role="status" aria-busy="true">
   <div className="mb-8">
-  <div className="h-8 bg-surface-2 rounded-lg w-64 animate-pulse" />
-  <div className="h-4 bg-surface-2 rounded-lg w-96 mt-3 animate-pulse" />
+  <div className="h-8 skeleton rounded-lg w-64 animate-pulse" />
+  <div className="h-4 skeleton rounded-lg w-96 mt-3 animate-pulse" />
   </div>
   <div className="space-y-6">
   {Array.from({ length: 4 }).map((_, i) => (
    <div key={i} className="bg-surface-0 rounded-2xl border border-surface-3 p-6">
-   <div className="h-5 bg-surface-1 rounded-lg w-48 mb-4 animate-pulse" />
+   <div className="h-5 skeleton rounded-lg w-48 mb-4 animate-pulse" />
    <div className="space-y-3">
-    <div className="h-4 bg-surface-1 rounded w-full animate-pulse" />
-    <div className="h-4 bg-surface-1 rounded w-5/6 animate-pulse" />
-    <div className="h-4 bg-surface-1 rounded w-4/6 animate-pulse" />
+    <div className="h-4 skeleton rounded w-full animate-pulse" />
+    <div className="h-4 skeleton rounded w-5/6 animate-pulse" />
+    <div className="h-4 skeleton rounded w-4/6 animate-pulse" />
    </div>
    </div>
   ))}
