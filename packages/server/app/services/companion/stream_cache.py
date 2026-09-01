@@ -124,6 +124,44 @@ def sse_metadata_event(
     return data_line
 
 
+def sse_message_id_event(
+    *,
+    message_id: str,
+    request_id: str,
+    seq: int | None = None,
+) -> str:
+    """Format the message-id SSE chunk — the assistant message's real DB id.
+
+    Emitted right after persist so the client can swap its local placeholder
+    id for this one; feedback ratings FK against chat_messages.id and would
+    otherwise 500 on every fresh reply. Must be a TOP-LEVEL typed frame (not
+    a content chunk) — wrapping it as content made the client render the raw
+    JSON as message text (found live, 2026-09-01).
+
+    D1: ``seq`` (optional) makes it replayable on reconnect.
+    """
+    payload = {'type': 'message_id', 'id': message_id, 'request_id': request_id}
+    data_line = f'data: {json.dumps(payload)}\n\n'
+    if seq is not None:
+        return f'id: {request_id}:{seq}\n{data_line}'
+    return data_line
+
+
+async def emit_message_id_frame(
+    message_id: str,
+    request_id: str,
+    seq: int | None = None,
+) -> str:
+    """Build the message-id frame and append it to the reconnect replay buffer."""
+    frame = sse_message_id_event(
+        message_id=message_id, request_id=request_id, seq=seq,
+    )
+    if seq is not None:
+        from app.services.companion.stream_replay import append_chunk
+        await append_chunk(request_id, seq, frame)
+    return frame
+
+
 async def emit_cached_response(
     db: AsyncSession,
     user_id: UUID,

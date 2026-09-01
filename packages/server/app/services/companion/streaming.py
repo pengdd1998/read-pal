@@ -208,12 +208,14 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
     else:
         # Hand the client the assistant message's real DB id — feedback
         # ratings FK against chat_messages.id, and the client's local
-        # id is a random UUID that would violate it. NOTE: _emit_with_seq
-        # RETURNS the frame — it must be yielded, or it never reaches the
-        # client (the silent loss that broke feedback on fresh replies).
-        yield await _emit_with_seq(
-            json.dumps({"type": "message_id", "id": str(assistant_db_id)}),
-            actual_request_id, seq_state,
+        # id is a random UUID that would violate it. TOP-LEVEL typed frame:
+        # passing this through _emit_with_seq wrapped it as a CONTENT chunk,
+        # so the client rendered the raw JSON as message text and the type
+        # dispatch never fired.
+        from app.services.companion.stream_cache import emit_message_id_frame
+        seq_state[0] += 1
+        yield await emit_message_id_frame(
+            str(assistant_db_id), actual_request_id, seq_state[0],
         )
 
     if not stream_failed:
