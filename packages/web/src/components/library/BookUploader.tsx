@@ -83,7 +83,10 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   uploadTimerRef.current = setTimeout(() => {
    if (!mountedRef.current) return;
    uploadTimerRef.current = null;
-   onUploadComplete(book);
+   // Dedup short-circuit (backend returned the existing book): the shelf
+   // already renders it — appending again produced duplicate React keys and
+   // a ghost second card that survived deletion (BUG-20260901-006).
+   if (!duplicate) onUploadComplete(book);
    setSuccess(false);
   }, 1500);
   if (fileInputRef.current) {
