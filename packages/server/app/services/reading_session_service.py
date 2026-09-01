@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import SessionCreate, SessionUpdate
+from app.services.stats import invalidate_user_caches
 from app.utils.db import db_error_guard
 
 # Re-export from extracted sub-modules
@@ -239,6 +240,9 @@ async def end_session(
                 await maybe_notify_daily_goal(db, user_id, today_minutes, daily_goal)
         except Exception:
             logger.warning('daily_goal notification check failed', exc_info=True)
+
+    # Ended duration/pages feed the dashboard aggregates and streak.
+    await invalidate_user_caches(user_id)
     return session
 
 

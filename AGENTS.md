@@ -78,6 +78,10 @@ See `docs/incidents/`. Specifically, read before touching:
 - **RAG search** → `docs/incidents/p3-incident-cluster.md` (P3.2)
 - **Memory-book pipeline** → `docs/incidents/p3-incident-cluster.md` (P3.3)
 - **Test fixtures / Redis mocking** → `docs/incidents/p5-test-hygiene.md` (P5.1)
+- **Derived-stats caches (dashboard / book stats)** → `docs/incidents/p6-cache-staleness.md` (P6.1) — any new
+  write path touching books, sessions, or annotations must call
+  `invalidate_user_caches(uid)`; cache-key formats live only in
+  `stats/dashboard_cache.py`.
 
 ## When prompts change
 

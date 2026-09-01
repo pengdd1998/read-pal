@@ -10,6 +10,7 @@ from app.models.annotation import Annotation
 from app.models.book import Book
 from app.schemas.annotation import AnnotationCreate, AnnotationUpdate
 from app.middleware.exception_handlers import NotFoundError
+from app.services.stats import invalidate_user_caches
 from app.utils.db import db_error_guard
 from app.utils.limits import ANNOTATION_FETCH_LIMIT
 
@@ -98,6 +99,9 @@ async def create_annotation(
         await db.flush()
         await db.refresh(annotation)
 
+    # Annotation counts and distinct tags are dashboard aggregates.
+    await invalidate_user_caches(user_id)
+
     logger.info(
         'Annotation created: %s (%s) for user %s',
         annotation.type,
@@ -125,6 +129,9 @@ async def update_annotation(
     async with db_error_guard('update_annotation', annotation_id=str(annotation_id)):
         await db.flush()
 
+    # Tag/content edits change the distinct-tag aggregate.
+    await invalidate_user_caches(user_id)
+
     logger.info('Annotation updated: %s for user %s', annotation_id, user_id)
     return annotation
 
@@ -142,6 +149,8 @@ async def delete_annotation(
     async with db_error_guard('delete_annotation', annotation_id=str(annotation_id)):
         await db.delete(annotation)
         await db.flush()
+
+    await invalidate_user_caches(user_id)
 
     logger.info('Annotation deleted: %s for user %s', annotation_id, user_id)
     return True

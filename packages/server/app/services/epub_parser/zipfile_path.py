@@ -24,6 +24,7 @@ from app.services.epub_parser.structural import (
     parse_ncx,
     parse_opf,
 )
+from app.services.epub_parser.boilerplate import coalesce_fragments_html, coalesce_fragments_text, scrub_chapter
 from app.services.epub_parser.constants import OUTER_DOC_WRAPPER
 
 logger = logging.getLogger('read-pal')
@@ -188,17 +189,28 @@ def _resolve_spine(
     return spine_hrefs
 
 
-def _is_toc_page(raw_html: str, text: str) -> bool:
+_FRONT_MATTER_TITLE_RE = re.compile(r'^(contents|目录|目錄|table of contents)$', re.IGNORECASE)
+
+
+def _is_toc_page(raw_html: str, text: str, title: str | None = None) -> bool:
     """Detect a dedicated table-of-contents page.
 
     Publishers put the TOC in the spine as its own file; parsing it as a
     "chapter" yields a dead 20-char chapter of link labels between the
-    preface and chapter 1. A TOC page is: short text, dominated by
-    internal links, and the links point at OTHER spine files (not
-    footnotes/anchors within itself).
+    preface and chapter 1. Detection is two-pronged:
+    1. Link-dominance: short text (≤2000 chars — real chapters blow past
+       this long before the link checks; Gutenberg TOC pages reach ~600
+       after boilerplate scrubbing), dominated by internal links pointing
+       at OTHER spine files (not footnotes/anchors within itself).
+    2. Title match: NCX/NAV titles the file "Contents"/"目录" — some old
+       Gutenberg files render the TOC as PLAIN TEXT with no internal
+       links, which prong 1 can never see.
+    Callers should pass boilerplate-scrubbed html/text.
     """
     stripped = text.strip()
-    if len(stripped) > 400:
+    if title and len(stripped) < 1500 and _FRONT_MATTER_TITLE_RE.match(title.strip()):
+        return True
+    if len(stripped) > 2000:
         return False
     links = re.findall(r'<a\s[^>]*href="([^"#]+#[^"]*|[^"#]+)"[^>]*>', raw_html)
     if not links:
@@ -250,15 +262,24 @@ def _build_chapters(
         enriched = _enrich_html(raw_html, resolved, image_map, css_str)
 
         text = html_to_structured_text(enriched)
-        if not text.strip() or len(text.strip()) < 20:
+        title = _resolve_title(resolved, raw_html, toc_map)
+
+        # Strip Gutenberg-style boilerplate (header + license) BEFORE the
+        # dead-chapter checks: license-only files become empty and TOC pages
+        # lose the header text that masked their link dominance.
+        text, enriched, title, keep = scrub_chapter(text, enriched, title)
+        if not keep:
             continue
-        if _is_toc_page(raw_html, text):
+        # Ingestion-side fragment coalescing (mirrors the reader's
+        # render-layer merge) so RAG chunks and word counts see whole
+        # paragraphs. No-op for CJK content.
+        text = coalesce_fragments_text(text)
+        enriched = coalesce_fragments_html(enriched)
+        if _is_toc_page(enriched, text, title):
             logger.debug('Skipping TOC page as chapter: %s', resolved)
             continue
 
         full_text_parts.append(text)
-
-        title = _resolve_title(resolved, raw_html, toc_map)
         from app.services.epub_parser.ebooklib_path import _strip_duplicate_heading
         text, enriched = _strip_duplicate_heading(title, text, enriched)
 

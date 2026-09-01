@@ -1,5 +1,7 @@
 """Business logic for book CRUD operations."""
 
+from app.services.upload_service import invalidate_cached_chapters
+
 import logging
 import uuid
 from decimal import Decimal
@@ -16,6 +18,7 @@ from app.services._session_book_progress import (
 
 from app.models.book import Book, BookFileType, BookStatus
 from app.models.collection import Collection
+from app.services.stats import book_stats_cache_key, invalidate_user_caches
 from app.utils import utcnow
 from app.utils.db import db_error_guard
 from app.utils.i18n import t
@@ -101,6 +104,9 @@ async def create_book(
         await db.flush()
         await db.refresh(book)
 
+    # Total counts and "Recently Added" ordering derive from this table.
+    await invalidate_user_caches(user_id)
+
     logger.info('Book created: %s (%s) for user %s', book.title, book.id, user_id)
     return book
 
@@ -151,6 +157,10 @@ async def update_book(
                     await notify_book_completed(db, book)
 
         await db.flush()
+
+    # Status/progress changes move the reading/completed/unread counts and
+    # recentBooks ordering/progress.
+    await invalidate_user_caches(user_id)
     return book
 
 
@@ -165,6 +175,15 @@ async def delete_book(db: AsyncSession, user_id: str, book_id: UUID) -> bool:
         await _cleanup_collection_orphans(db, book_id)
         await db.flush()
 
+    # Chapter payload is cached (immutable content); drop it so a recreated
+    # book id or orphan cache never serves stale chapters.
+    await invalidate_cached_chapters(book_id)
+    # P6.1: the dashboard caches its whole payload (recentBooks included) per
+    # user — without this the deleted book kept rendering as "current reading"
+    # for a full cache TTL. Sessions/annotations cascade at the DB level, so
+    # dropping the derived caches makes every surface consistent immediately.
+    await invalidate_user_caches(user_id)
+
     logger.info('Book deleted: %s for user %s', book_id, user_id)
     return True
 
@@ -173,7 +192,7 @@ async def get_book_stats(db: AsyncSession, user_id: str) -> dict:
     """Return aggregate book statistics for a user (cached 5 min, single query)."""
     from app.core.cache import cache_get_or_compute
 
-    cache_key = f'stats:books:{user_id}'
+    cache_key = book_stats_cache_key(user_id)
 
     async def _compute() -> dict:
         async with db_error_guard('get_book_stats', user_id=user_id):

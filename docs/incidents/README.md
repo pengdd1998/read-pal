@@ -53,3 +53,6 @@ high-level navigation map at `/home/ubuntu/projects/read-pal/AGENTS.md`.
 
 ### Test hygiene (`p5-test-hygiene.md`)
 - **P5.1** — Local tests were reading/writing the production Redis (fixed by constructor-level autouse patch)
+
+### Derived-cache staleness (`p6-cache-staleness.md`)
+- **P6.1** — Book deletion served the deleted book as "current reading" for a full dashboard-cache TTL (fixed by write-path `invalidate_user_caches`)

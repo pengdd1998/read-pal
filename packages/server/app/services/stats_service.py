@@ -5,6 +5,7 @@ This module re-exports every public function so existing imports continue to wor
 """
 
 from app.services.stats import (  # noqa: F401
+    book_stats_cache_key,
     get_dashboard_stats,
     get_flashcard_stats,
     get_reading_calendar,
@@ -12,4 +13,5 @@ from app.services.stats import (  # noqa: F401
     get_reading_speed_by_book,
     get_weekly_summary,
     invalidate_dashboard_cache,
+    invalidate_user_caches,
 )

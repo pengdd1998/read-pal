@@ -11,6 +11,10 @@ from app.services.stats.dashboard import (
     get_dashboard_stats,
     invalidate_dashboard_cache,
 )
+from app.services.stats.dashboard_cache import (
+    book_stats_cache_key,
+    invalidate_user_caches,
+)
 from app.services.stats.flashcards import get_flashcard_stats
 from app.services.stats.reading_speed import (
     get_reading_speed,
@@ -20,6 +24,8 @@ from app.services.stats.reading_speed import (
 __all__ = [
     'get_dashboard_stats',
     'invalidate_dashboard_cache',
+    'invalidate_user_caches',
+    'book_stats_cache_key',
     'get_reading_calendar',
     'get_weekly_summary',
     'get_reading_speed',

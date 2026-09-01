@@ -4,6 +4,7 @@ import json
 import logging
 from uuid import UUID
 
+from redis.exceptions import RedisError
 
 from app.config import get_settings
 from app.core.redis import get_redis
@@ -26,17 +27,43 @@ def _cache_key(uid: UUID) -> str:
     return f'stats:dashboard:{uid}'
 
 
+def book_stats_cache_key(uid: UUID | str) -> str:
+    """Return the Redis cache key for a user's library-status aggregate.
+
+    Single source of truth — ``book_service.get_book_stats`` reads through
+    this key, so invalidation and read can never drift apart.
+    """
+    return f'stats:books:{uid}'
+
+
 async def invalidate(uid: UUID) -> None:
     """Delete the cached dashboard stats for a user.
 
-    Call this when reading sessions end or annotations are created/updated
-    so the next dashboard request returns fresh data.
+    Prefer :func:`invalidate_user_caches` at write sites — it also drops the
+    library-status aggregate, which changes with the same writes.
     """
     try:
         redis = get_redis()
         await redis.delete(_cache_key(uid))
-    except redis.exceptions.RedisError as exc:
+    except RedisError as exc:
         logger.warning('Failed to invalidate dashboard cache for user %s: %s', uid, exc)
+
+
+async def invalidate_user_caches(uid: UUID | str) -> None:
+    """Invalidate every derived-stats cache a mutating write can stale.
+
+    Single entry point for write-path invalidation: books CRUD, reading
+    sessions, and annotations all funnel here, so the dashboard payload
+    (recentBooks, streak, counts) and the library-status aggregate never
+    outlive the write that changed them — book deletion used to keep
+    serving the deleted book as "current reading" for a full cache TTL.
+    """
+    await invalidate(UUID(str(uid)))
+    try:
+        redis = get_redis()
+        await redis.delete(book_stats_cache_key(uid))
+    except RedisError as exc:
+        logger.warning('Failed to invalidate book-stats cache for user %s: %s', uid, exc)
 
 
 async def read_cache(uid: UUID) -> dict | None:
@@ -46,7 +73,7 @@ async def read_cache(uid: UUID) -> dict | None:
         cached = await redis.get(_cache_key(uid))
         if cached is not None:
             return json.loads(cached)
-    except redis.exceptions.RedisError as exc:
+    except RedisError as exc:
         logger.warning('Redis read failed for dashboard cache: %s', exc)
     return None
 
@@ -58,5 +85,5 @@ async def write_cache(uid: UUID, data: dict) -> None:
         await redis.set(
             _cache_key(uid), json.dumps(data), ex=_get_cache_ttl(),
         )
-    except redis.exceptions.RedisError as exc:
+    except RedisError as exc:
         logger.warning('Failed to cache dashboard stats for user %s: %s', uid, exc)
