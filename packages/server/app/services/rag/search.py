@@ -33,13 +33,20 @@ def _build_search_params(
     book_id: UUID,
     top_k: int,
     max_chapter_index: int | None,
+    content_hash: str | None = None,
 ) -> tuple[dict[str, Any], str]:
-    """Build query params and chapter-clause for the pgVector SQL query."""
+    """Build query params and chapter-clause for the pgVector SQL query.
+
+    ``content_hash`` (design r2 step 4) extends the scope to shared chunks:
+    the OR keeps legacy book_id-keyed chunks findable while shared chunks
+    surface for every user whose book references the hash.
+    """
     params: dict[str, Any] = {
         'query_emb': emb_literal,
         'book_id': str(book_id),
         'distance_threshold': 0.7,
         'limit': top_k,
+        'content_hash': content_hash,
     }
     chapter_clause = ''
     if max_chapter_index is not None:
@@ -57,7 +64,7 @@ def _build_search_sql(chapter_clause: str) -> str:
         '1 - (bc.embedding <=> :query_emb::vector) AS similarity '
         'FROM book_chunks bc '
         'JOIN documents d ON d.id = bc.document_id '
-        'WHERE bc.book_id = :book_id '
+        'WHERE (bc.book_id = :book_id OR bc.content_hash = :content_hash) '
         'AND bc.embedding IS NOT NULL '
         'AND (bc.embedding <=> :query_emb::vector) < :distance_threshold '
         + chapter_clause + ' '
@@ -72,6 +79,7 @@ async def _semantic_chapter_search(
     query: str,
     top_k: int = 3,
     max_chapter_index: int | None = None,
+    content_hash: str | None = None,
 ) -> list[dict[str, Any]]:
     """pgVector cosine distance search over pre-computed chunk embeddings."""
     query_emb = await _get_embedding(query)
@@ -80,7 +88,7 @@ async def _semantic_chapter_search(
 
     emb_literal = _build_embedding_literal(query_emb)
     params, chapter_clause = _build_search_params(
-        emb_literal, book_id, top_k, max_chapter_index,
+        emb_literal, book_id, top_k, max_chapter_index, content_hash,
     )
 
     try:
@@ -147,15 +155,23 @@ async def _keyword_chunk_search(
     query: str,
     top_k: int = 3,
     max_chapter_index: int | None = None,
+    content_hash: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Keyword search over precomputed book_chunks (no re-chunking)."""
+    """Keyword search over precomputed book_chunks (no re-chunking).
+
+    ``content_hash`` extends the scope to shared chunks (step 4); NULL hash
+    binds to FALSE in the OR, degrading to book_id-only for legacy books.
+    """
     tokens = _tokenize_with_bigrams(query)
     if not tokens:
         return []
 
     prefilter_tokens = sorted(tokens, key=len, reverse=True)[:_PREFILTER_TOKEN_CAP]
+    scope = [BookChunk.book_id == book_id]
+    if content_hash:
+        scope.append(BookChunk.content_hash == content_hash)
     conditions = [
-        BookChunk.book_id == book_id,
+        or_(*scope),
         BookChunk.content.isnot(None),
         or_(
             *(
@@ -291,6 +307,7 @@ async def hybrid_chunk_search(
     top_k: int = 3,
     max_chapter_index: int | None = None,
     pool_size: int | None = None,
+    content_hash: str | None = None,
 ) -> list[dict[str, Any]]:
     """Hybrid search: run semantic + keyword in parallel, fuse with RRF.
 
@@ -315,9 +332,11 @@ async def hybrid_chunk_search(
     semantic, keyword = await asyncio.gather(
         _semantic_chapter_search(
             db, book_id, query, top_k=pool, max_chapter_index=max_chapter_index,
+            content_hash=content_hash,
         ),
         _keyword_chunk_search(
             db, book_id, query, top_k=pool, max_chapter_index=max_chapter_index,
+            content_hash=content_hash,
         ),
         return_exceptions=False,
     )

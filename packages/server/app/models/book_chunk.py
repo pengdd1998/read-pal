@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, Text, text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -54,6 +54,10 @@ class BookChunk(Base):
         ForeignKey('documents.id', ondelete='CASCADE'),
         nullable=False,
     )
+    # Shared content identity (design r2 step 4): chunks of the same file
+    # bytes are stored ONCE and found via content_hash; book_id still names
+    # the uploading user's copy for legacy rows and ownership joins.
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     chapter_index: Mapped[int] = mapped_column(Integer, nullable=False)
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)

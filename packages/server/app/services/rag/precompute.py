@@ -25,6 +25,24 @@ def _should_skip_precompute(chapters: list[dict], book_id: UUID) -> bool:
     return False
 
 
+async def _hash_already_embedded(content_hash: str) -> bool:
+    """True when embedded chunks already exist for this content hash."""
+    from sqlalchemy import text
+
+    from app.db import async_session
+
+    try:
+        async with async_session() as session:
+            result = await session.execute(text(
+                "SELECT 1 FROM book_chunks WHERE content_hash = :h "
+                "AND embedding IS NOT NULL LIMIT 1"
+            ), {'h': content_hash})
+            return result.first() is not None
+    except Exception:
+        logger.warning('precompute.hash_check_failed hash=%s', content_hash[:16])
+        return False
+
+
 async def _persist_chunks(book_id: UUID, chunks: list) -> None:
     """Write chunk records to the database in a new session."""
     from app.db import async_session
@@ -43,20 +61,33 @@ async def precompute_book_embeddings(
     book_id: UUID,
     document_id: UUID,
     chapters: list[dict],
+    content_hash: str | None = None,
 ) -> None:
     """Pre-compute and store chunk embeddings for a book.
 
     Called after book upload. Uses its own DB session so it doesn't
     interfere with the upload transaction.
+
+    ``content_hash`` (design r2 step 4): when provided, chunks are stamped
+    with it and shared across every user whose book references the same
+    hash. If embedded chunks already exist for the hash, the whole run is
+    skipped — the second upload of the same file pays nothing.
     """
     if _should_skip_precompute(chapters, book_id):
+        return
+
+    if content_hash and await _hash_already_embedded(content_hash):
+        logger.info(
+            'precompute.skip reason=hash_already_embedded book_id=%s hash=%s',
+            book_id, content_hash[:16],
+        )
         return
 
     if not await _preflight_check(book_id, document_id):
         return
 
     try:
-        chunks_to_insert = await _generate_chunks(book_id, document_id, chapters)
+        chunks_to_insert = await _generate_chunks(book_id, document_id, chapters, content_hash)
     except (ValueError, KeyError, RuntimeError) as exc:
         logger.error('precompute.generation_failed book_id=%s: %s', str(book_id), str(exc))
         return
@@ -204,6 +235,7 @@ async def _generate_chunks(
     book_id: UUID,
     document_id: UUID,
     chapters: list[dict],
+    content_hash: str | None = None,
 ) -> list:
     """Generate BookChunk objects with embeddings for all chapters."""
     settings = get_settings()
@@ -220,6 +252,9 @@ async def _generate_chunks(
         )
 
     results = await _embed_with_semaphore(chunks_to_embed)
+    if content_hash:
+        for chunk in results:
+            chunk.content_hash = content_hash
 
     embedding_failures = sum(1 for r in results if r is None)
     if embedding_failures > 0:

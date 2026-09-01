@@ -79,6 +79,7 @@ async def _search_relevant_chunks(
     query: str,
     top_k: int,
     max_chapter_index: int | None,
+    content_hash: str | None = None,
 ) -> list[dict]:
     """Search for relevant chunks using hybrid search + chapter-level fallback.
 
@@ -87,9 +88,14 @@ async def _search_relevant_chunks(
     aren't buried by mediocre semantic hits. Falls back to legacy
     keyword-chapter search only when the book has no usable chunks
     (e.g. older uploads without precomputed embeddings).
+
+    ``content_hash`` (step 4) extends the scope to shared chunks: the
+    caller's book lookup already gates ownership, so shared chunks of the
+    same bytes are safe to serve to every user referencing the hash.
     """
     chunks = await hybrid_chunk_search(
         db, book_id, query, top_k=top_k, max_chapter_index=max_chapter_index,
+        content_hash=content_hash,
     )
     if chunks:
         return chunks
@@ -158,6 +164,7 @@ async def get_book_context(
 
     relevant_chunks = await _search_relevant_chunks(
         db, book_id, query, top_k, max_chapter_index,
+        content_hash=book.content_hash,
     )
 
     context_parts = _format_chunks_as_context(relevant_chunks, max_chars)

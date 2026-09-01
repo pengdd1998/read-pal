@@ -211,13 +211,16 @@ async def _vector_matched_book_ids(
         return set()
 
     emb_str = '[' + ','.join(f'{x:.6f}' for x in query_emb) + ']'
+    # Chunks are content-addressed (step 4): a shared chunk matches EVERY
+    # user's book referencing the same hash, while legacy book_id-keyed
+    # chunks keep working through the OR join.
     sql = text(
-        'SELECT bc.book_id, MIN(1 - (bc.embedding <=> CAST(:emb AS vector))) AS best_sim '
+        'SELECT b.id AS book_id, MAX(1 - (bc.embedding <=> CAST(:emb AS vector))) AS best_sim '
         'FROM book_chunks bc '
-        'JOIN books b ON b.id = bc.book_id '
+        'JOIN books b ON (b.id = bc.book_id OR b.content_hash = bc.content_hash) '
         'WHERE b.user_id = :uid AND bc.embedding IS NOT NULL '
-        'GROUP BY bc.book_id '
-        'HAVING MIN(1 - (bc.embedding <=> CAST(:emb AS vector))) > 0.25 '
+        'GROUP BY b.id '
+        'HAVING MAX(1 - (bc.embedding <=> CAST(:emb AS vector))) > 0.25 '
         'ORDER BY best_sim DESC '
         'LIMIT :k'
     )
