@@ -183,10 +183,6 @@ jobs:
     name: Python Tests (PostgreSQL)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Ratchet: first iterations run non-blocking while PG-only failures
-    # are triaged; flip to a hard gate once green (tracked in the plan doc).
-    continue-on-error: true
-
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -251,6 +247,10 @@ jobs:
 
       - name: Run test suite against PostgreSQL
         working-directory: packages/server
+        # Ratchet: non-blocking while the surfaced PG-only failures are
+        # triaged (FK enforcement, tz-aware datetimes, loop binding) —
+        # flip to a hard gate once green. Tracked in the weekly plan.
+        continue-on-error: true
         run: uv run pytest tests -q --tb=line
 
   migrations:
