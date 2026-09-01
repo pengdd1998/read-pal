@@ -83,10 +83,13 @@ export function createMark(
     try {
       range.surroundContents(mark);
     } catch {
-      // Expected when range crosses element boundaries; fallback below
-      const fragment = range.extractContents();
-      mark.appendChild(fragment);
-      range.insertNode(mark);
+      // Range crosses inline element boundaries. extractContents() here used
+      // to TEAR PARAGRAPHS IN HALF at the highlight edges — the stored
+      // document was clean but the DOM rendered "…and giga</p></mark><p>ntic…"
+      // (words cut mid-syllable). Wrap text-node-by-text-node instead: the
+      // paragraph structure survives, one annotation just gets several
+      // adjacent <mark> elements sharing the same data-annotation-id.
+      wrapRangeWithMarks(range, mark);
     }
 
     marksMap.set(annotation.id, { element: mark, annotation });
@@ -94,6 +97,55 @@ export function createMark(
   } catch (err) {
     warn('createMark: failed for annotation', annotation.id, err);
     return null;
+  }
+}
+
+/** Unwrap every <mark> carrying the annotation id (one annotation may own
+ * several marks when its range crossed inline elements). */
+export function unwrapAnnotationMarks(container: HTMLElement, annotationId: string): void {
+  const selector = `[${DATA_ATTR}="${annotationId.replace(/"/g, '\\"')}"]`;
+  container.querySelectorAll(selector).forEach((el) => {
+    const parent = el.parentNode;
+    if (!parent) return;
+    while (el.firstChild) parent.insertBefore(el.firstChild, el);
+    parent.removeChild(el);
+    parent.normalize();
+  });
+}
+
+function wrapRangeWithMarks(range: Range, template: HTMLElement): void {
+  // Split boundary text nodes (end first — splitting start first can detach
+  // the end container when both fall in the same node) so the range edges
+  // land on node boundaries. Every remaining intersecting text node is then
+  // fully inside the range and can be wrapped atomically.
+  if (range.endContainer.nodeType === Node.TEXT_NODE) {
+    const t = range.endContainer as Text;
+    if (range.endOffset > 0 && range.endOffset < t.length) {
+      t.splitText(range.endOffset);
+      range.setEnd(t, t.length);
+    }
+  }
+  if (range.startContainer.nodeType === Node.TEXT_NODE) {
+    const t = range.startContainer as Text;
+    if (range.startOffset > 0 && range.startOffset < t.length) {
+      range.setStart(t.splitText(range.startOffset), 0);
+    }
+  }
+
+  const root = range.commonAncestorContainer;
+  const walkRoot =
+    root.nodeType === Node.TEXT_NODE ? (root.parentNode as Node) : root;
+  const walker = document.createTreeWalker(walkRoot, NodeFilter.SHOW_TEXT);
+
+  const targets: Text[] = [];
+  let node: Text | null;
+  while ((node = walker.nextNode() as Text | null)) {
+    if (node.textContent && range.intersectsNode(node)) targets.push(node);
+  }
+  for (const t of targets) {
+    const m = template.cloneNode(false) as HTMLElement;
+    t.replaceWith(m);
+    m.appendChild(t);
   }
 }
 

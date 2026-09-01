@@ -68,7 +68,9 @@ describe('splitChapterIntoPages', () => {
   });
 
   it('keeps charOffset consistent with concatenated page lengths', () => {
-    const paras = Array.from({ length: 25 }, (_, i) => `<p>para ${i} text</p>`);
+    // Paragraphs end with terminal punctuation (realistic prose) so the
+    // fragment-coalescing pre-pass leaves them as independent blocks.
+    const paras = Array.from({ length: 25 }, (_, i) => `<p>para ${i} text.</p>`);
     const pages = splitChapterIntoPages(paras.join('\n'), 150);
     expect(pages.length).toBeGreaterThan(1);
     let expected = 0;

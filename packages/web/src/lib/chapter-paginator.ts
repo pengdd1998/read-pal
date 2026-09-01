@@ -2,6 +2,7 @@
  * Chapter paginator — splits chapter HTML content into page segments
  * at block-level boundaries without breaking mid-tag.
  */
+import { coalesceHtml } from './coalesce-paragraphs';
 
 export interface PageSegment {
   html: string;
@@ -135,6 +136,11 @@ export function splitChapterIntoPages(
   if (!html || !html.trim()) {
     return [{ html: '', charOffset: 0 }];
   }
+
+  // Merge upstream paragraph fragments ("giga" | "ntic…") BEFORE any
+  // length-based branching so short chapters get coalesced too, and merged
+  // paragraphs never straddle a page boundary.
+  html = coalesceHtml(html);
 
   // Short content fits in one page
   if (html.length <= maxChars) {

@@ -97,7 +97,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
 
   <BookmarkToggle isBookmarked={isBookmarked} onToggle={onToggleBookmark} />
 
-  <button type="button" onClick={onToggleSidebar} className={`${sidebarOpen ? ActiveIconStyle(theme) : ICON_IDLE} relative`} aria-label={t('annotations_label')}>
+  <button type="button" id="tour-annotations" onClick={onToggleSidebar} className={`${sidebarOpen ? ActiveIconStyle(theme) : ICON_IDLE} relative`} aria-label={t('annotations_label')}>
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
    </svg>
@@ -139,7 +139,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
 
     {/* Synthesis */}
     <button type="button" onClick={() => { onToggleSynthesis(); setMoreOpen(false); }} aria-label={t('synthesize_label')} className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 min-h-[44px] ${
-     synthesisOpen ? 'text-teal-700 dark:text-teal-300 bg-teal-50/50 dark:bg-teal-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
+     synthesisOpen ? 'text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-1'
     }`}>
      <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
      <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />

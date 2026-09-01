@@ -25,7 +25,7 @@ export const ChapterProgressBar = React.memo(function ChapterProgressBar({
   theme,
 }: ChapterProgressBarProps) {
   return (
-    <div className={`h-[3px] shrink-0 ${progressBg[theme]} rounded-none overflow-hidden`}>
+    <div id="tour-progress" className={`h-[3px] shrink-0 ${progressBg[theme]} rounded-none overflow-hidden`}>
       <div
         className={`h-full w-full ${progressFill[theme]} transition-transform duration-500 ease-out rounded-r-full origin-left`}
         style={{ transform: `scaleX(${scrollProgress})`, willChange: 'transform' }}

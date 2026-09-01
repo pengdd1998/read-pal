@@ -6,6 +6,7 @@ import {
   MARK_CLASS,
   batchCreateMarks,
   hexToRgba,
+  unwrapAnnotationMarks,
 } from '@/lib/annotation-marks';
 import type { MarkEntry, ApplyStyleFn } from '@/lib/annotation-marks';
 
@@ -56,9 +57,18 @@ export function useAnnotationHighlights(
         color,
         currentTheme === 'dark' ? 0.35 : 0.45,
       );
+      // Non-color semantics (UI-R-10): highlights must stay perceivable
+      // without relying on hue — notes get a colored underline, and
+      // prefers-contrast: more adds an underline to every highlight.
       mark.style.borderBottom = annotation.note
         ? `2px solid ${color}`
         : 'none';
+      if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-contrast: more)').matches) {
+        mark.style.textDecoration = 'underline';
+        mark.style.textDecorationThickness = '2px';
+        mark.style.textUnderlineOffset = '3px';
+        mark.style.textDecorationColor = color;
+      }
     },
     [],
   );
@@ -119,17 +129,12 @@ export function useAnnotationHighlights(
       return;
     }
 
-    // Remove marks for deleted annotations
+    // Remove marks for deleted annotations (one annotation may own several
+    // <mark> elements when its range crossed inline elements).
     for (const [id, entry] of marksMapRef.current) {
       if (!pageAnnotationIds.has(id)) {
-        const parent = entry.element.parentNode;
-        if (parent) {
-          while (entry.element.firstChild) {
-            parent.insertBefore(entry.element.firstChild, entry.element);
-          }
-          parent.removeChild(entry.element);
-          parent.normalize();
-        }
+        unwrapAnnotationMarks(container, id);
+        void entry;
         marksMapRef.current.delete(id);
       }
     }
