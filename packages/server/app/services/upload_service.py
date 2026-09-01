@@ -18,7 +18,14 @@ from app.services.pdf_parser import process_pdf
 from app.services.text_helpers import (
     text_to_html_paragraphs as _text_to_html_paragraphs,
 )
-from app.core.cache import cache_delete, cache_get, cache_set
+from app.services.upload_content_store import (
+    _get_cached_chapters,
+    _put_cached_chapters,
+)
+from app.services.upload_content_store import (  # noqa: F401 — re-exported
+    invalidate_cached_chapters,
+    upsert_book_content,
+)
 from app.services.upload_stream import (  # noqa: F401 — re-exported API
     find_existing_book_by_hash,
     get_file_type,
@@ -178,48 +185,6 @@ async def _persist_book_and_document(
     return book, document.id
 
 
-async def upsert_book_content(
-    db: AsyncSession,
-    *,
-    content_hash: str,
-    file_size: int,
-    file_type: str,
-    title: str,
-    author: str,
-    chapters: list | None,
-    raw_chapters: list | None,
-    total_pages: int,
-    meta: dict | None,
-    cover_url: str | None,
-    created_by: UUID,
-) -> None:
-    """Idempotently record the shared, content-addressed parse payload.
-
-    INSERT ... ON CONFLICT DO NOTHING: the first uploader's parse is the
-    canonical copy; identical later uploads do not touch it (r2: content
-    is kept long-term — no update, no expiry).
-    """
-    from app.models.book_content import BookContent
-    from sqlalchemy.dialects.postgresql import insert as pg_insert
-
-    async with db_error_guard('upload_service.upsert_book_content'):
-        stmt = pg_insert(BookContent).values(
-            content_hash=content_hash,
-            file_size=file_size,
-            file_type=file_type,
-            title=title,
-            author=author,
-            chapters=chapters,
-            raw_chapters=raw_chapters,
-            total_pages=total_pages or 0,
-            metadata_=meta or None,
-            cover_object_key=cover_url,
-            created_by=created_by,
-        )
-        stmt = stmt.on_conflict_do_nothing(index_elements=['content_hash'])
-        await db.execute(stmt)
-
-
 async def create_book_with_content(
     db: AsyncSession,
     user_id: UUID,
@@ -283,28 +248,6 @@ async def create_book_with_content(
         _safe_precompute(book.id, document_id, result['chapters'])
     )
     return book
-
-
-async def _get_cached_chapters(book_id: UUID) -> list[dict] | None:
-    """Return the cached assembled chapters for a book, if any.
-
-    Chapter content is immutable after upload (the Document row is written
-    once), so the assembled chapters array is safe to cache long. Cache
-    helpers are best-effort: any Redis failure is a miss (P-style — the
-    cache must never turn into an outage).
-    """
-    return await cache_get(f'book-content:{book_id}')
-
-
-async def _put_cached_chapters(book_id: UUID, chapters: list[dict]) -> None:
-    if not chapters:
-        return
-    await cache_set(f'book-content:{book_id}', chapters, ttl=7 * 24 * 3600)
-
-
-async def invalidate_cached_chapters(book_id: UUID) -> None:
-    """Drop the cached chapter payload (call on book delete)."""
-    await cache_delete(f'book-content:{book_id}')
 
 
 async def get_book_content(
