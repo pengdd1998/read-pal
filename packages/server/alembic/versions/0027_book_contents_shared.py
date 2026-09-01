@@ -30,7 +30,7 @@ def upgrade() -> None:
         sa.Column('chapters', JSONB, nullable=True),
         sa.Column('raw_chapters', JSONB, nullable=True),
         sa.Column('total_pages', sa.Integer, nullable=False, server_default='0'),
-        sa.Column('metadata_', JSONB, name='metadata', nullable=True),
+        sa.Column('metadata', JSONB, nullable=True),
         # Shared object-storage key — per-content cover (step 3 uses this).
         sa.Column('cover_object_key', sa.Text, nullable=True),
         sa.Column('created_by', PG_UUID(as_uuid=True), nullable=True),
