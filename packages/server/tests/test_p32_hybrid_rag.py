@@ -289,10 +289,10 @@ async def _seed_chunks(session, book_id: UUID, filler_count: int, needle_at: int
     from app.models.book_chunk import BookChunk
 
     session.add(Book(
-        id=book_id, user_id=uuid4(), title='T', author='A',
+        id=book_id, user_id=(uid := uuid4()), title='T', author='A',
         file_type=BookFileType.epub, file_size=1, total_pages=1,
     ))
-    session.add(Document(id=(doc_id := uuid4()), book_id=book_id, user_id=uuid4(),
+    session.add(Document(id=(doc_id := uuid4()), book_id=book_id, user_id=uid,
                          content='x', chapters=[]))
     await session.flush()
 

@@ -208,9 +208,13 @@ async def _setup_db() -> AsyncGenerator[None, None]:
     yield
     await _truncate_all_pg_tables()
     # pytest-asyncio gives each test a fresh event loop; asyncpg connections
-    # are loop-bound, so the pool must be released every test or the next
-    # one dies with "attached to a different loop".
+    # are loop-bound, so both engines must be released every test or the
+    # next one dies with "attached to a different loop". _engine is the
+    # test engine; app.db.engine is the application engine the lifespan
+    # may have pooled during requests.
+    from app.db import engine as _app_engine
     await _engine.dispose()
+    await _app_engine.dispose()
 
 
 @pytest.fixture(autouse=True)
