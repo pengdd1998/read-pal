@@ -56,19 +56,29 @@ def _build_search_params(
 
 
 def _build_search_sql(chapter_clause: str) -> str:
-    """Assemble the pgVector cosine-distance SQL query."""
+    """Assemble the pgVector cosine-distance SQL query.
+
+    P3.6: the cast MUST be ``CAST(:query_emb AS vector)`` — never
+    ``:query_emb::vector``. SQLAlchemy's text() bind regex skips a
+    ``:name`` directly followed by ``:`` (the ``::`` escaped-colon rule),
+    so the PG cast shorthand left ``:query_emb`` as a literal colon-word
+    in the shipped SQL. asyncpg then raised PostgresSyntaxError on every
+    semantic search — caught and logged at the call site, so production
+    silently degraded to keyword-only RAG, and the failed statement
+    aborted the surrounding transaction for whatever ran next.
+    """
     return (
         'SELECT bc.chapter_index AS chapter_index, '
         'bc.content AS content, '
         'd.chapters AS chapters, '
-        '1 - (bc.embedding <=> :query_emb::vector) AS similarity '
+        '1 - (bc.embedding <=> CAST(:query_emb AS vector)) AS similarity '
         'FROM book_chunks bc '
         'JOIN documents d ON d.id = bc.document_id '
         'WHERE (bc.book_id = :book_id OR bc.content_hash = :content_hash) '
         'AND bc.embedding IS NOT NULL '
-        'AND (bc.embedding <=> :query_emb::vector) < :distance_threshold '
+        'AND (bc.embedding <=> CAST(:query_emb AS vector)) < :distance_threshold '
         + chapter_clause + ' '
-        'ORDER BY bc.embedding <=> :query_emb::vector '
+        'ORDER BY bc.embedding <=> CAST(:query_emb AS vector) '
         'LIMIT :limit'
     )
 

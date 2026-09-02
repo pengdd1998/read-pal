@@ -174,3 +174,44 @@ completed book whose needle chapter sat past ``current_segment``.
   services tree when touching status logic).
 - Tests that seed status but never exercise a code path where the enum
   value matters past the SQL layer.
+
+---
+
+## P3.6 — pgVector semantic SQL never bound :query_emb (silent keyword-only RAG on PG)
+
+**Locations**
+- `packages/server/app/services/rag/search.py` `_build_search_sql` (fixed)
+- Surfaced by `tests/test_shared_content_gating.py` on the CI PostgreSQL job
+
+**What went wrong**
+The semantic-search SQL used the PostgreSQL cast shorthand
+``:query_emb::vector`` inside a SQLAlchemy ``text()`` clause. ``text()``
+treats a ``:`` directly after a param name as the escaped-colon rule, so
+the bind regex skipped ``:query_emb`` — it shipped as a **literal
+colon-word** in the final SQL while the other four params compiled to
+``$1..$4``. asyncpg raised ``PostgresSyntaxError`` on every semantic
+search; the call site caught it (``search.py:99`` warning) and returned
+[], so hybrid RAF silently degraded to **keyword-only retrieval in
+production**. Worse, the failed statement aborted the surrounding
+transaction — whatever ran next on that session failed with
+``InFailedSQLTransactionError``.
+
+Never caught locally because the SQLite suite has no pgVector (embedding
+fetch returns None → semantic path skipped); the CI PG job never reached
+a green run after the gating test started exercising the patched-
+embedding path.
+
+**Why the fix works**
+- ``CAST(:query_emb AS vector)`` keeps the param a real bind (renders as
+  a param marker; verified by compiling against the postgresql dialect).
+- Pinned by ``tests/test_p32_hybrid_rag.py::
+  TestSemanticSqlBindsQueryEmbedding`` — asserts the cast form, the
+  bind-marker rendering, and that no literal ``:query_emb`` survives.
+
+**Regression red-flag**
+- Any ``text()`` clause mixing a named param with ``::cast`` shorthand —
+  use ``CAST(:param AS type)``.
+- Swallowed DBAPIError inside a shared session without rollback — the
+  poisoned transaction breaks unrelated later statements.
+- Embedding-dependent paths tested only on SQLite (where the semantic
+  branch never runs).

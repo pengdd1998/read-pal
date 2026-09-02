@@ -24,6 +24,7 @@ from sqlalchemy import text
 
 from app.services.rag.search import (
     RRF_K,
+    _build_search_sql,
     _keyword_chunk_search,
     reciprocal_rank_fuse,
 )
@@ -32,6 +33,41 @@ from app.services.rag.search import (
 def _chunk(title: str, content: str) -> dict:
     """Build a minimal chunk dict matching the search.py shape."""
     return {'title': title, 'content': content, 'similarity': 0.9}
+
+
+# ---------------------------------------------------------------------------
+# P3.6: semantic SQL must keep :query_emb a real bind param
+# ---------------------------------------------------------------------------
+
+
+class TestSemanticSqlBindsQueryEmbedding:
+    """P3.6 regression: ``:query_emb::vector`` was never bound.
+
+    SQLAlchemy's text() bind regex skips ``:name`` followed directly by
+    ``:`` (the escaped-colon rule), so the PG cast shorthand shipped the
+    literal ``:query_emb`` in the SQL → PostgresSyntaxError on every
+    semantic search → silent keyword-only RAG, plus an aborted
+    transaction poisoning whatever ran next on the session.
+    """
+
+    def test_cast_form_used_instead_of_shorthand(self):
+        sql = _build_search_sql('')
+        assert ':query_emb::vector' not in sql
+        assert sql.count('CAST(:query_emb AS vector)') == 3
+
+    def test_sqlalchemy_recognizes_query_emb_as_bind(self):
+        from sqlalchemy import text
+        from sqlalchemy.dialects import postgresql
+
+        compiled = text(_build_search_sql('')).compile(
+            dialect=postgresql.dialect(),
+        )
+        # Under any dialect, a recognized bind renders as a param marker
+        # (pyformat here). The old ':query_emb::vector' form skipped the
+        # bind entirely, shipping the literal ':query_emb' to asyncpg →
+        # PostgresSyntaxError on every semantic search.
+        assert '%(query_emb)s' in compiled.string
+        assert ':query_emb' not in compiled.string
 
 
 # ---------------------------------------------------------------------------
