@@ -43,6 +43,10 @@ async def test_shared_chunks_serve_both_users_and_gate_stays_upstream():
         ), {'i': book_a, 'u': user_a, 'j': uuid4(), 'u2': user_b, 'h': shared_hash})
         # One shared chunk (uploaded by A, keyed by hash)
         await db.execute(text(
+            "INSERT INTO documents (id, book_id, user_id, content, chapters) VALUES "
+            "(:dk, :ba, :ua, 'shared passage', '[]')"
+        ), {'ba': book_a, 'ua': user_a, 'dk': __import__('uuid').uuid4()})
+        await db.execute(text(
             "INSERT INTO book_chunks (id, book_id, document_id, chapter_index, "
             "chunk_index, content, content_hash, created_at) VALUES "
             "(:ck, :ba, :dk, 0, 0, 'shared passage', :h, CURRENT_TIMESTAMP)"
