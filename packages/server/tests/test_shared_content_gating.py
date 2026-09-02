@@ -41,10 +41,12 @@ async def test_shared_chunks_serve_both_users_and_gate_stays_upstream():
             "(:i, :u, 'Shared Book', 'A', 'epub', 1, 1, 0, 'unread', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :h), "
             "(:j, :u2, 'Shared Book', 'A', 'epub', 1, 1, 0, 'unread', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :h)"
         ), {'i': book_a, 'u': user_a, 'j': uuid4(), 'u2': user_b, 'h': shared_hash})
-        # One shared chunk (uploaded by A, keyed by hash)
+        # One shared chunk (uploaded by A, keyed by hash). Timestamps are
+        # explicit: SQLite test schema strips server_defaults (ORM-only
+        # fallbacks), so raw SQL must not rely on them.
         await db.execute(text(
-            "INSERT INTO documents (id, book_id, user_id, content, chapters) VALUES "
-            "(:dk, :ba, :ua, 'shared passage', '[]')"
+            "INSERT INTO documents (id, book_id, user_id, content, chapters, created_at, updated_at) VALUES "
+            "(:dk, :ba, :ua, 'shared passage', '[]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
         ), {'ba': book_a, 'ua': user_a, 'dk': __import__('uuid').uuid4()})
         await db.execute(text(
             "INSERT INTO book_chunks (id, book_id, document_id, chapter_index, "
