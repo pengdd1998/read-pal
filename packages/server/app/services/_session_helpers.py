@@ -4,7 +4,7 @@ Pure functions extracted from reading_session_service to keep the main
 module focused on orchestration logic.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import HeartbeatRequest, SessionUpdate
@@ -56,6 +56,15 @@ def finalize_session_duration(session: ReadingSession, now: datetime) -> None:
     wall-clock time. This mirrors the logic in `_close_stale_sessions`.
     """
     if not session.duration and session.started_at:
+        # SQLite (test DB) returns naive datetimes from TIMESTAMP columns;
+        # comparing those against the aware `now` raises TypeError. Treat
+        # naive values as UTC before any arithmetic.
+        for dt_attr in ('started_at', 'updated_at'):
+            val = getattr(session, dt_attr)
+            if val is not None and val.tzinfo is None:
+                setattr(session, dt_attr, val.replace(tzinfo=UTC))
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=UTC)
         last_activity = session.updated_at or session.started_at
         effective_end = min(
             now,
@@ -78,6 +87,13 @@ def clamp_client_duration(
     """
     if not session.started_at:
         return min(int(reported_duration or 0), MAX_SESSION_SECONDS)
+    # Normalize naive datetimes (SQLite reads) to aware-UTC before arithmetic.
+    for dt_attr in ('started_at', 'updated_at'):
+        val = getattr(session, dt_attr)
+        if val is not None and val.tzinfo is None:
+            setattr(session, dt_attr, val.replace(tzinfo=UTC))
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=UTC)
     last_activity = session.updated_at or session.started_at
     effective_end = min(
         now,

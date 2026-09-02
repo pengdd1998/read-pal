@@ -60,7 +60,7 @@ Highlights, notes, and bookmarks with AI-powered connections. Your annotations f
 SM-2 algorithm (Anki-style) generates flashcards from your reading. Review at optimal intervals to retain what you've learned.
 
 ### Memory Books
-Beautiful 6-chapter compilations of your reading journey — highlights, notes, AI conversations, and insights woven into a personal document.
+Beautiful 10-section compilations of your reading journey — highlights, notes, AI conversations, and insights woven into a personal document.
 
 ### Reading Streaks & Stats
 Track your daily reading habit with streaks, activity heatmaps, reading speed analytics, and time tracking.
