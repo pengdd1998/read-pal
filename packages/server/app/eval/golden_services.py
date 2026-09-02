@@ -239,3 +239,127 @@ RESEARCH_BRIEF: dict[str, Any] = {
         },
     },
 }
+
+# ---------------------------------------------------------------------------
+# Coach agent (Phase 2 multi-agent)
+# ---------------------------------------------------------------------------
+
+COACH_ASSESS: dict[str, Any] = {
+    'service': 'coach_agent',
+    'action': 'assess',
+    'input': {
+        'book_title': 'The Great Gatsby',
+        'author': 'F. Scott Fitzgerald',
+        'progress': '42% — at chapter index 5',
+        'signals': (
+            'sessions: 6\n'
+            'total minutes: 180\n'
+            'pages read: 74\n'
+            'avg minutes/session: 30\n'
+            'last read: 2026-09-01T22:15:00+00:00'
+        ),
+        'recent_content': (
+            '[1] Chapter: Chapter 4\n'
+            'Gatsby tells Nick about his past, and Nick is skeptical of every detail.'
+        ),
+    },
+    'expected_output': {
+        'type': 'dict',
+        'required_keys': ['session_summary', 'focus_areas'],
+        'key_types': {
+            'session_summary': 'str',
+            'focus_areas': 'list',
+        },
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Multi-mode synthesis (Phase 2 multi-agent)
+# ---------------------------------------------------------------------------
+
+SYNTHESIS_CROSS_REFERENCE: dict[str, Any] = {
+    'service': 'synthesis',
+    'action': 'cross_reference',
+    'input': {
+        'concept': 'the American Dream',
+        'source_title': 'The Great Gatsby',
+        'source_author': 'F. Scott Fitzgerald',
+        'analysis_type': 'all',
+        'sources': (
+            '[1] The Great Gatsby — F. Scott Fitzgerald — Chapter: Chapter 9\n'
+            '"So we beat on, boats against the current..."\n\n'
+            '[2] Death of a Salesman — Arthur Miller — Chapter: Requiem\n'
+            '"He had the wrong dreams. All, all, wrong."'
+        ),
+    },
+    'expected_output': {
+        'type': 'dict',
+        'required_keys': ['references'],
+        'key_types': {
+            'references': 'list',
+        },
+    },
+}
+
+SYNTHESIS_CONCEPT_MAP: dict[str, Any] = {
+    'service': 'synthesis',
+    'action': 'concept_map',
+    'input': {
+        'topic': 'ambition',
+        'max_nodes': 20,
+        'sources': (
+            '[1] Macbeth — William Shakespeare — Chapter: Act 1\n'
+            'Lady Macbeth spurs Macbeth to seize the crown by any means.'
+        ),
+    },
+    'expected_output': {
+        'type': 'dict',
+        'required_keys': ['nodes'],
+        'key_types': {
+            'nodes': 'list',
+        },
+    },
+}
+
+SYNTHESIS_CONTRADICTIONS: dict[str, Any] = {
+    'service': 'synthesis',
+    'action': 'contradictions',
+    'input': {
+        'min_severity': 'medium',
+        'topic_clause': ' around the topic "free will"',
+        'sources': (
+            '[1] Sapiens — Yuval Noah Harari — Chapter: 3\n'
+            'Harari argues that free will is a fictional story biology disproves.\n\n'
+            '[2] Man\'s Search for Meaning — Viktor Frankl — Chapter: 1\n'
+            'Frankl insists the last human freedom — choosing one\'s attitude — cannot be taken away.'
+        ),
+    },
+    'expected_output': {
+        'type': 'dict',
+        'required_keys': ['contradictions'],
+        'key_types': {
+            'contradictions': 'list',
+        },
+    },
+}
+
+SYNTHESIS_SUMMARY_REPORT: dict[str, Any] = {
+    'service': 'synthesis',
+    'action': 'summary_report',
+    'input': {
+        'report_format': 'structured',
+        'focus_clause': '',
+        'data': (
+            '[{"book": {"title": "1984", "author": "George Orwell"}, '
+            '"highlights": ["Big Brother is watching you"], "notes": [], '
+            '"sessions": 8}]'
+        ),
+    },
+    'expected_output': {
+        'type': 'dict',
+        'required_keys': ['report'],
+        'key_types': {
+            'report': 'str',
+        },
+    },
+}

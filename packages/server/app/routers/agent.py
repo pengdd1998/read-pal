@@ -31,10 +31,12 @@ from app.schemas.agent import (
     ReadingPlanResponse,
     RegenerateRequest,
     ResearchRequest,
+    CoachRequest,
     SummarizeRequest,
 )
 from app.schemas.common import GenericResponse
 from app.services import companion_service
+from app.services.agent.coach import run_coach_report
 from app.services.agent.research import run_research
 from app.services.agent_service import (
     new_request_id,
@@ -51,7 +53,7 @@ from app.services.mood_service import generate_mood_scene
 from app.services.llm import safe_llm_invoke
 from app.services.reading_plan_service import advance_plan, generate_plan, get_active_plan
 from app.utils.sanitizer import sanitize_book_field
-from app.utils.i18n import t
+from app.utils.i18n import not_found_error, t
 from app.middleware.rate_limiter import api_limiter
 from datetime import UTC
 
@@ -533,6 +535,40 @@ async def research(
     # LLM fallback (result.success=False) still carries partial data —
     # return success=True with embedded data.error so the frontend can
     # render the warning, same contract as the synthesis routes.
+    payload = {'success': True, 'data': result['data']}
+    await store_idempotency_response(request, payload)
+    return payload
+
+
+@router.post('/coach', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
+async def coach(
+    request: Request,  # populated by idempotent dependency
+    body: CoachRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Phase 2 Coach agent: comprehension monitoring for one book."""
+    from app.middleware.idempotency import check_idempotency_cache, store_idempotency_response
+    cached = await check_idempotency_cache(request)
+    if cached is not None:
+        return cached
+
+    try:
+        result = await run_coach_report(
+            db, UUID(current_user['id']), body.book_id,
+        )
+    except ValueError as exc:
+        raise not_found_error(t('errors.book_not_found')) from exc
+    except Exception as exc:
+        logger.warning(
+            'coach failed user=%s book=%s', current_user['id'], body.book_id,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
+        ) from exc
+
     payload = {'success': True, 'data': result['data']}
     await store_idempotency_response(request, payload)
     return payload

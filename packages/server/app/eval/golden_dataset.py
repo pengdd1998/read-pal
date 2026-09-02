@@ -16,6 +16,7 @@ from app.eval.golden_companion import (
     FRIEND_CHAT_INJECTION,
 )
 from app.eval.golden_services import (
+    COACH_ASSESS,
     CONVERSATION_SUMMARY,
     CONVERSATION_SUMMARY_WITH_PRIOR,
     CROSS_BOOK_SYNTHESIS,
@@ -27,6 +28,10 @@ from app.eval.golden_services import (
     SINGLE_BOOK_SYNTHESIS,
     STUDY_CONCEPT_CHECKS,
     STUDY_OBJECTIVES,
+    SYNTHESIS_CONCEPT_MAP,
+    SYNTHESIS_CONTRADICTIONS,
+    SYNTHESIS_CROSS_REFERENCE,
+    SYNTHESIS_SUMMARY_REPORT,
 )
 
 # ---------------------------------------------------------------------------
@@ -51,4 +56,9 @@ ALL_GOLDEN: list[dict[str, Any]] = [
     CONVERSATION_SUMMARY,
     CONVERSATION_SUMMARY_WITH_PRIOR,
     RESEARCH_BRIEF,
+    COACH_ASSESS,
+    SYNTHESIS_CROSS_REFERENCE,
+    SYNTHESIS_CONCEPT_MAP,
+    SYNTHESIS_CONTRADICTIONS,
+    SYNTHESIS_SUMMARY_REPORT,
 ]

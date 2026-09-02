@@ -358,3 +358,94 @@ class ResearchBrief(BaseModel):
     summary: str = Field('', max_length=2000)
     findings: list[ResearchFinding] = Field(default_factory=list, max_length=10)
     follow_ups: list[str] = Field(default_factory=list, max_length=5)
+
+
+# ---------------------------------------------------------------------------
+# Coach agent (Phase 2 multi-agent)
+# ---------------------------------------------------------------------------
+
+class CoachFocusArea(BaseModel):
+    area: str = Field('', max_length=300)
+    reason: str = Field('', max_length=1000)
+    priority: str = Field('medium', max_length=10)
+
+
+class CoachProbe(BaseModel):
+    question: str = Field('', max_length=500)
+    hint: str = Field('', max_length=300)
+    answer: str = Field('', max_length=1000)
+    chapter_title: str = Field('', max_length=300)
+
+
+class CoachReport(BaseModel):
+    session_summary: str = Field('', max_length=2000)
+    focus_areas: list[CoachFocusArea] = Field(default_factory=list, max_length=5)
+    probes: list[CoachProbe] = Field(default_factory=list, max_length=5)
+    study_tips: list[str] = Field(default_factory=list, max_length=3)
+
+
+# ---------------------------------------------------------------------------
+# Multi-mode synthesis (Phase 2 multi-agent)
+# ---------------------------------------------------------------------------
+
+class BookRef(BaseModel):
+    """Nested {title, author} — matches the frontend AnalysisResult shape
+    (references[].book, contradictions[].position1.book) which is cast
+    raw without key mapping."""
+
+    title: str = Field('', max_length=300)
+    author: str = Field('', max_length=300)
+
+
+class CrossReferenceEntry(BaseModel):
+    book: BookRef = Field(default_factory=BookRef)
+    type: str = Field('', max_length=20)
+    explanation: str = Field('', max_length=1000)
+
+
+class CrossReferenceResult(BaseModel):
+    concept: str = Field('', max_length=300)
+    source: BookRef = Field(default_factory=BookRef)
+    analysis: str = Field('', max_length=2000)
+    references: list[CrossReferenceEntry] = Field(default_factory=list, max_length=15)
+
+
+class ConceptMapNode(BaseModel):
+    id: str = Field('', max_length=64)
+    label: str = Field('', max_length=200)
+    type: str = Field('concept', max_length=10)
+    weight: float = Field(0.5, ge=0.0, le=1.0)
+
+
+class ConceptMapEdge(BaseModel):
+    source: str = Field('', max_length=64)
+    target: str = Field('', max_length=64)
+    label: str = Field('', max_length=200)
+    strength: float = Field(0.5, ge=0.0, le=1.0)
+
+
+class ConceptMapResult(BaseModel):
+    nodes: list[ConceptMapNode] = Field(default_factory=list, max_length=50)
+    edges: list[ConceptMapEdge] = Field(default_factory=list, max_length=100)
+
+
+class ContradictionPosition(BaseModel):
+    book: BookRef = Field(default_factory=BookRef)
+    claim: str = Field('', max_length=1000)
+
+
+class ContradictionEntry(BaseModel):
+    topic: str = Field('', max_length=300)
+    position1: ContradictionPosition = Field(default_factory=ContradictionPosition)
+    position2: ContradictionPosition = Field(default_factory=ContradictionPosition)
+    severity: str = Field('medium', max_length=10)
+    analysis: str = Field('', max_length=1500)
+
+
+class ContradictionList(BaseModel):
+    contradictions: list[ContradictionEntry] = Field(default_factory=list, max_length=10)
+
+
+class SummaryReportResult(BaseModel):
+    report: str = Field('', max_length=8000)
+    insights: list[str] = Field(default_factory=list, max_length=5)

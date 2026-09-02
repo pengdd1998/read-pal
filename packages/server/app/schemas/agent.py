@@ -141,6 +141,14 @@ class ResearchRequest(BaseModel):
     book_ids: list[UUID] | None = Field(default=None, max_length=50)
 
 
+class CoachRequest(BaseModel):
+    """Request body for the Phase 2 Coach agent (comprehension monitoring)."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    book_id: UUID
+
+
 class CancelStreamRequest(BaseModel):
     """Request body for cancelling an in-flight companion stream."""
 

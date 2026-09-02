@@ -120,23 +120,23 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
  }, [isOpen, onClose]);
 
  const buildInput = useCallback((): { input: Record<string, unknown> } | { error: string } => {
- switch (activeTab) {
+  switch (activeTab) {
   case 'cross_reference':
   if (!concept.trim()) return { error: tRef.current('synthesis_enter_concept') };
-  return { input: { concept: concept.trim(), sourceBookId: bookId, analysisType } };
+  return { input: { mode: 'cross_reference', concept: concept.trim(), sourceBookId: bookId, analysisType } };
   case 'concept_map':
   if (!topic.trim()) return { error: tRef.current('synthesis_enter_topic_map') };
-  return { input: { topic: topic.trim(), maxNodes: 20 } };
+  return { input: { mode: 'concept_map', topic: topic.trim(), maxNodes: 20 } };
   case 'find_contradictions':
-  return { input: { ...(topic.trim() ? { topic: topic.trim() } : {}), minSeverity, bookIds: [bookId] } };
+  return { input: { mode: 'find_contradictions', ...(topic.trim() ? { topic: topic.trim() } : {}), minSeverity, bookIds: [bookId] } };
   case 'summary_report':
-  return { input: { bookIds: [bookId], ...(focus.trim() ? { focus: focus.trim() } : {}), format: reportFormat } };
+  return { input: { mode: 'summary_report', bookIds: [bookId], ...(focus.trim() ? { focus: focus.trim() } : {}), format: reportFormat } };
   case 'synthesize':
   if (!query.trim()) return { error: tRef.current('synthesis_enter_query') };
   return { input: { query: query.trim(), bookIds: [bookId], depth } };
   default:
   return { error: tRef.current('synthesis_analysis_failed') };
- }
+  }
  }, [activeTab, bookId, concept, topic, query, focus, depth, analysisType, minSeverity, reportFormat]);
 
  const handleAnalyze = useCallback(async () => {

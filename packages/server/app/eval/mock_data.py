@@ -5,14 +5,19 @@ from __future__ import annotations
 import json
 
 from app.schemas.llm_outputs import (
+    CoachReport,
     ConceptCheckList,
     ConceptList,
+    ConceptMapResult,
+    ContradictionList,
     ConversationSummaryData,
     CoverData,
     CrossBookComparison,
+    CrossReferenceResult,
     ReadingJourneyData,
     ResearchBrief,
     StudyObjectiveList,
+    SummaryReportResult,
     SynthesisResult,
 )
 
@@ -31,6 +36,10 @@ SCHEMA_MAP: dict[str, dict[str, type]] = {
     'synthesis': {
         'synthesize': SynthesisResult,
         'cross_book': CrossBookComparison,
+        'cross_reference': CrossReferenceResult,
+        'concept_map': ConceptMapResult,
+        'contradictions': ContradictionList,
+        'summary_report': SummaryReportResult,
     },
     'memory_book': {
         'chapter_1_cover': CoverData,
@@ -41,6 +50,9 @@ SCHEMA_MAP: dict[str, dict[str, type]] = {
     },
     'research_agent': {
         'synthesize': ResearchBrief,
+    },
+    'coach_agent': {
+        'assess': CoachReport,
     },
 }
 
@@ -111,6 +123,54 @@ MOCK_RESPONSES: dict[str, dict[str, str]] = {
             'common_themes': [{'name': 'Common theme', 'description': 'Shared', 'confidence': 0.7}],
             'unique_perspectives': [{'title': 'Book A', 'key_takeaway': 'Takeaway A'}],
             'recommended_connections': ['Related themes'],
+        }),
+        # last-verified: 2026-09-02 — matches CrossReferenceResult schema.
+        'cross_reference': json.dumps({
+            'concept': 'the American Dream',
+            'source': {'title': 'The Great Gatsby', 'author': 'F. Scott Fitzgerald'},
+            'analysis': 'One book mourns the dream, the other indicts it.',
+            'references': [
+                {
+                    'book': {'title': 'Death of a Salesman', 'author': 'Arthur Miller'},
+                    'type': 'contradicting',
+                    'explanation': 'Frames the dream as inherited delusion.',
+                },
+            ],
+        }),
+        # last-verified: 2026-09-02 — matches ConceptMapResult schema.
+        'concept_map': json.dumps({
+            'nodes': [
+                {'id': 'ambition', 'label': 'Ambition', 'type': 'concept', 'weight': 0.9},
+                {'id': 'macbeth', 'label': 'Macbeth', 'type': 'book', 'weight': 0.8},
+                {'id': 'crown', 'label': 'The Crown', 'type': 'theme', 'weight': 0.6},
+            ],
+            'edges': [
+                {'source': 'macbeth', 'target': 'ambition', 'label': 'driven by', 'strength': 0.8},
+                {'source': 'ambition', 'target': 'crown', 'label': 'seeks', 'strength': 0.7},
+            ],
+        }),
+        # last-verified: 2026-09-02 — matches ContradictionList schema.
+        'contradictions': json.dumps({
+            'contradictions': [
+                {
+                    'topic': 'free will',
+                    'position1': {
+                        'book': {'title': 'Sapiens', 'author': 'Yuval Noah Harari'},
+                        'claim': 'Free will is a fictional story biology disproves.',
+                    },
+                    'position2': {
+                        'book': {'title': "Man's Search for Meaning", 'author': 'Viktor Frankl'},
+                        'claim': 'Choosing one\'s attitude is a freedom that cannot be taken away.',
+                    },
+                    'severity': 'high',
+                    'analysis': 'Determinism versus existential freedom.',
+                },
+            ],
+        }),
+        # last-verified: 2026-09-02 — matches SummaryReportResult schema.
+        'summary_report': json.dumps({
+            'report': '# Reading Report\n\n## 1984\nSurveillance themes dominate the highlights.',
+            'insights': ['Surveillance is the recurring lens across sessions.'],
         }),
     },
     'memory_book': {
@@ -185,6 +245,31 @@ MOCK_RESPONSES: dict[str, dict[str, str]] = {
             'follow_ups': [
                 'How do the two authors connect the Dream to family obligations?',
             ],
+        }),
+    },
+    'coach_agent': {
+        # last-verified: 2026-09-02 — matches CoachReport schema.
+        'assess': json.dumps({
+            'session_summary': (
+                'Six focused 30-minute sessions show steady engagement; the '
+                'reader reached chapter 4 with consistent pace.'
+            ),
+            'focus_areas': [
+                {
+                    'area': 'Reliability of Gatsby\'s autobiography',
+                    'reason': 'The excerpt shows Nick doubting every detail — worth probing.',
+                    'priority': 'medium',
+                },
+            ],
+            'probes': [
+                {
+                    'question': 'Why is Nick skeptical of Gatsby\'s story about his past?',
+                    'hint': 'Look at how the details are delivered.',
+                    'answer': 'The details arrive all at once, too polished to be true.',
+                    'chapter_title': 'Chapter 4',
+                },
+            ],
+            'study_tips': ['Re-read the last two pages of your latest session aloud.'],
         }),
     },
 }

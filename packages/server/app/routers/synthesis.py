@@ -15,6 +15,10 @@ from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
 from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.common import GenericResponse
 from app.schemas.synthesis import CompareRequest, SynthesisRequest
+from app.services.agent.synthesis_modes import (
+    resolve_synthesis_mode,
+    run_synthesis_mode,
+)
 from app.services.cross_book_synthesis_service import (
     compare_books,
     cross_book_synthesize,
@@ -42,6 +46,35 @@ async def run_synthesis(
     cached = await check_idempotency_cache(request)
     if cached is not None:
         return cached
+
+    # Phase 2 multi-mode dispatch: panel tabs carry mode fields; route
+    # them to the synthesis agent, everything else stays on the legacy
+    # single-book path (query-focused when a query is present).
+    mode = resolve_synthesis_mode(body)
+    if mode:
+        try:
+            response = await run_synthesis_mode(
+                db, UUID(current_user['id']), mode, body, book_id,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={'code': 'VALIDATION_ERROR', 'message': str(exc)},
+            ) from exc
+        except Exception as exc:
+            logger.warning(
+                'mode synthesis failed user=%s book=%s mode=%s',
+                current_user['id'], book_id, mode, exc_info=True,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
+            ) from exc
+        if not response['success'] and response.get('error') == 'Book not found':
+            raise not_found_error(t('errors.book_not_found'))
+        payload = {'success': True, 'data': response['data']}
+        await store_idempotency_response(request, payload)
+        return payload
 
     include_highlights = body.include_highlights if body else True
     include_notes = body.include_notes if body else True
