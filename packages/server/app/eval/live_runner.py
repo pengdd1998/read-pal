@@ -41,6 +41,8 @@ from app.prompts import (
     CROSS_BOOK_SYNTHESIS_SYSTEM,
     READING_PLAN_HUMAN,
     READING_PLAN_SYSTEM,
+    RESEARCH_HUMAN,
+    RESEARCH_SYSTEM,
     STUDY_CONCEPT_CHECKS_HUMAN,
     STUDY_CONCEPT_CHECKS_SYSTEM,
     STUDY_OBJECTIVES_HUMAN,
@@ -52,6 +54,7 @@ from app.schemas.llm_outputs import (
     ConceptCheckList,
     ConversationSummaryData,
     CrossBookComparison,
+    ResearchBrief,
     StudyObjectiveList,
 )
 from app.services.llm import safe_llm_call, safe_llm_invoke
@@ -311,6 +314,37 @@ async def _reading_plan(input_data: dict[str, Any]) -> tuple[Any, int]:
     return result, READING_PLAN_SYSTEM.version
 
 
+async def _research_agent(input_data: dict[str, Any]) -> tuple[Any, int]:
+    """Build + call the Research agent prompt with golden-provided sources.
+
+    Mirrors ``app.services.agent.research.run_research``'s synthesis step
+    (sanitize → numbered sources → cited JSON brief). The retrieval step
+    is DB-bound and out of scope here; the golden provides the sources a
+    real cross-book search would have produced.
+    """
+    question = sanitize_user_input(
+        input_data.get('question', ''), max_length=2000, context='research_question',
+    )
+    sources = sanitize_user_input(
+        input_data.get('sources', ''), max_length=4000, context='research_sources',
+    )
+
+    system_text = RESEARCH_SYSTEM.template
+    human_text = RESEARCH_HUMAN.template.format(question=question, sources=sources)
+    messages = [SystemMessage(content=system_text), HumanMessage(content=human_text)]
+    result = await safe_llm_invoke(
+        messages,
+        fallback=ResearchBrief().model_dump(),
+        log_label='live-eval/research-agent',
+        schema_class=ResearchBrief,
+        user_id=LIVE_EVAL_USER_ID,
+        book_id=None,
+        template=RESEARCH_SYSTEM,
+        use_cache=False,
+    )
+    return result, RESEARCH_SYSTEM.version
+
+
 _LIVE_HANDLERS: dict[tuple[str, str], Any] = {
     ('study_mode', 'generate_objectives'): _study_objectives,
     ('study_mode', 'generate_concept_checks'): _study_concept_checks,
@@ -319,6 +353,7 @@ _LIVE_HANDLERS: dict[tuple[str, str], Any] = {
     ('conversation_memory', 'summarize'): _conversation_summary,
     ('conversation_memory', 'summarize_with_prior'): _conversation_summary_with_prior,
     ('reading_plan', 'generate'): _reading_plan,
+    ('research_agent', 'synthesize'): _research_agent,
 }
 
 

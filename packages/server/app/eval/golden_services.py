@@ -212,3 +212,30 @@ CONVERSATION_SUMMARY_WITH_PRIOR: dict[str, Any] = {
         },
     },
 }
+
+# ---------------------------------------------------------------------------
+# Research agent (Phase 2 multi-agent)
+# ---------------------------------------------------------------------------
+
+RESEARCH_BRIEF: dict[str, Any] = {
+    'service': 'research_agent',
+    'action': 'synthesize',
+    'input': {
+        'question': 'How do these books portray the American Dream?',
+        'sources': (
+            '[1] The Great Gatsby — F. Scott Fitzgerald — Chapter: Chapter 9\n'
+            '"So we beat on, boats against the current, borne back ceaselessly '
+            'into the past."\n\n'
+            '[2] Death of a Salesman — Arthur Miller — Chapter: Requiem\n'
+            '"He had the wrong dreams. All, all, wrong."'
+        ),
+    },
+    'expected_output': {
+        'type': 'dict',
+        'required_keys': ['summary', 'findings'],
+        'key_types': {
+            'summary': 'str',
+            'findings': 'list',
+        },
+    },
+}

@@ -340,3 +340,21 @@ class BreakthroughMoment(BaseModel):
 class MirrorConversationsData(BaseModel):
     breakthroughs: list[BreakthroughMoment] = Field(default_factory=list, max_length=10)
     summary: str = Field('', max_length=2000)
+
+
+# ---------------------------------------------------------------------------
+# Research agent (Phase 2 multi-agent)
+# ---------------------------------------------------------------------------
+
+class ResearchFinding(BaseModel):
+    claim: str = Field('', max_length=500)
+    evidence: str = Field('', max_length=1500)
+    source_id: int = Field(0, ge=0, le=50)
+    book_title: str = Field('', max_length=300)
+    chapter_title: str = Field('', max_length=300)
+
+
+class ResearchBrief(BaseModel):
+    summary: str = Field('', max_length=2000)
+    findings: list[ResearchFinding] = Field(default_factory=list, max_length=10)
+    follow_ups: list[str] = Field(default_factory=list, max_length=5)

@@ -21,6 +21,10 @@ from app.prompts.mirror_prompts import (
     MIRROR_SYSTEM,
 )
 from app.prompts.mood_prompts import MOOD_SCENE_SYSTEM
+from app.prompts.research_prompts import (
+    RESEARCH_HUMAN,
+    RESEARCH_SYSTEM,
+)
 from app.prompts.study_prompts import (
     FLASHCARD_GENERATION_HUMAN,
     FLASHCARD_GENERATION_SYSTEM,
@@ -66,6 +70,8 @@ __all__ = [
     'MOOD_SCENE_SYSTEM',
     'READING_PLAN_HUMAN',
     'READING_PLAN_SYSTEM',
+    'RESEARCH_HUMAN',
+    'RESEARCH_SYSTEM',
     'STUDY_CONCEPT_CHECKS_HUMAN',
     'STUDY_CONCEPT_CHECKS_SYSTEM',
     'STUDY_OBJECTIVES_HUMAN',
@@ -113,6 +119,8 @@ def _build_registry() -> None:
         BOOK_COMPARE_HUMAN,
         READING_PLAN_SYSTEM,
         READING_PLAN_HUMAN,
+        RESEARCH_SYSTEM,
+        RESEARCH_HUMAN,
         CONVERSATION_SUMMARY_SYSTEM,
         CONVERSATION_SUMMARY_HUMAN,
     ]

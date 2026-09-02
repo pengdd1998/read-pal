@@ -11,6 +11,7 @@ from app.schemas.llm_outputs import (
     CoverData,
     CrossBookComparison,
     ReadingJourneyData,
+    ResearchBrief,
     StudyObjectiveList,
     SynthesisResult,
 )
@@ -37,6 +38,9 @@ SCHEMA_MAP: dict[str, dict[str, type]] = {
     },
     'conversation_memory': {
         'summarize': ConversationSummaryData,
+    },
+    'research_agent': {
+        'synthesize': ResearchBrief,
     },
 }
 
@@ -152,6 +156,34 @@ MOCK_RESPONSES: dict[str, dict[str, str]] = {
             ],
             'unresolved_questions': [
                 'How does Fitzgerald connect the symbols to character fates?',
+            ],
+        }),
+    },
+    'research_agent': {
+        # last-verified: 2026-09-02 — matches ResearchBrief schema.
+        'synthesize': json.dumps({
+            'summary': (
+                'Both books present the American Dream as self-delusion: '
+                'Gatsby chases a receding past while Loman chases the wrong dreams.'
+            ),
+            'findings': [
+                {
+                    'claim': 'Gatsby embodies the Dream as a doomed, backwards-facing pursuit.',
+                    'evidence': '"So we beat on, boats against the current, borne back ceaselessly into the past."',
+                    'source_id': 1,
+                    'book_title': 'The Great Gatsby',
+                    'chapter_title': 'Chapter 9',
+                },
+                {
+                    'claim': 'Miller frames the Dream as inherited delusion.',
+                    'evidence': '"He had the wrong dreams. All, all, wrong."',
+                    'source_id': 2,
+                    'book_title': 'Death of a Salesman',
+                    'chapter_title': 'Requiem',
+                },
+            ],
+            'follow_ups': [
+                'How do the two authors connect the Dream to family obligations?',
             ],
         }),
     },

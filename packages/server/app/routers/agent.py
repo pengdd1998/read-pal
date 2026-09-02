@@ -30,10 +30,12 @@ from app.schemas.agent import (
     ReadingPlanRequest,
     ReadingPlanResponse,
     RegenerateRequest,
+    ResearchRequest,
     SummarizeRequest,
 )
 from app.schemas.common import GenericResponse
 from app.services import companion_service
+from app.services.agent.research import run_research
 from app.services.agent_service import (
     new_request_id,
     raise_not_found,
@@ -497,3 +499,40 @@ async def advance_reading_plan(
     if not result:
         return {'success': True, 'data': None, 'message': t('errors.no_active_plan', lang)}
     return {'success': True, 'data': result}
+
+
+@router.post('/research', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
+async def research(
+    request: Request,  # populated by idempotent dependency
+    body: ResearchRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Phase 2 Research agent: cross-library Q&A grounded in cited excerpts."""
+    from app.middleware.idempotency import check_idempotency_cache, store_idempotency_response
+    cached = await check_idempotency_cache(request)
+    if cached is not None:
+        return cached
+
+    try:
+        result = await run_research(
+            db,
+            UUID(current_user['id']),
+            body.question,
+            book_ids=body.book_ids,
+        )
+    except Exception as exc:
+        logger.warning(
+            'research failed user=%s', current_user['id'], exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={'code': 'AI_UNAVAILABLE', 'message': t('errors.ai_service_unavailable')},
+        ) from exc
+
+    # LLM fallback (result.success=False) still carries partial data —
+    # return success=True with embedded data.error so the frontend can
+    # render the warning, same contract as the synthesis routes.
+    payload = {'success': True, 'data': result['data']}
+    await store_idempotency_response(request, payload)
+    return payload

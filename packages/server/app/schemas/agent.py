@@ -130,6 +130,17 @@ class AdvancePlanRequest(BaseModel):
     book_id: UUID
 
 
+class ResearchRequest(BaseModel):
+    """Request body for the Phase 2 Research agent."""
+
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+    question: str = Field(min_length=1, max_length=2000)
+    # Narrows the search scope to the caller's own books with these ids;
+    # foreign ids are dropped server-side, never widening the scope.
+    book_ids: list[UUID] | None = Field(default=None, max_length=50)
+
+
 class CancelStreamRequest(BaseModel):
     """Request body for cancelling an in-flight companion stream."""
 
