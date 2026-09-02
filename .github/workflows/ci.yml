@@ -249,7 +249,7 @@ jobs:
         working-directory: packages/server
         # Promoted to a HARD gate (2026-09-02): the ratchet went green after
         # FK seeds, tz normalization, and the NullPool loop-binding fix.
-        run: uv run pytest tests -q --tb=line
+        run: uv run pytest tests -q --tb=short
 
   migrations:
     name: Alembic Upgrade/Downgrade
