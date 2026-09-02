@@ -20,6 +20,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import text
 
 from app.services.rag.search import (
     RRF_K,
@@ -288,8 +289,13 @@ async def _seed_chunks(session, book_id: UUID, filler_count: int, needle_at: int
     from app.models.document import Document
     from app.models.book_chunk import BookChunk
 
+    # PG enforces FK on books.user_id too — insert the owner row first.
+    await session.execute(text(
+        "INSERT INTO users (id, email, password_hash, name, created_at, updated_at) "
+        "VALUES (:u, 'p32seed@x', 'h', 'S', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+    ), {'u': (uid := uuid4())})
     session.add(Book(
-        id=book_id, user_id=(uid := uuid4()), title='T', author='A',
+        id=book_id, user_id=uid, title='T', author='A',
         file_type=BookFileType.epub, file_size=1, total_pages=1,
     ))
     session.add(Document(id=(doc_id := uuid4()), book_id=book_id, user_id=uid,
