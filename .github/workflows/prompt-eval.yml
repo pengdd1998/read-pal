@@ -90,14 +90,39 @@ jobs:
       - name: Eval infrastructure (mocked)
         working-directory: packages/server
         run: uv run python -m app.eval.eval_runner
+        # Full Settings env (same block as the rendering step): the eval
+        # runner imports app.config.Settings, whose required fields grew
+        # over time — the old 7-var block left 21 fields missing and the
+        # step has been failing on ValidationError since 2026-08-28.
         env:
           APP_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: readpal_test
+          DB_USER: test
+          DB_PASSWORD: test
+          REDIS_URL: redis://localhost:6379
           GLM_API_KEY: test-glm-key
           GLM_BASE_URL: https://test.example.com
           DEFAULT_MODEL: glm-4-flash
           FALLBACK_MODEL: glm-4-flash
+          LLM_TIMEOUT_SECONDS: 30
+          LLM_MAX_RETRIES: 2
+          CIRCUIT_FAILURE_THRESHOLD: 5
+          CIRCUIT_RESET_TIMEOUT_SECONDS: 60
+          MAX_EMBEDDING_CALLS: 100
           JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
+          JWT_EXPIRES_IN: 7d
+          JWT_ACCESS_WEB: 15m
+          JWT_ACCESS_MOBILE: 30m
+          JWT_REFRESH_WEB: 7d
+          JWT_REFRESH_MOBILE: 30d
+          FRONTEND_URL: http://localhost:3000
+          CORS_ORIGINS: http://localhost:3000
           LOG_LEVEL: WARNING
+          LOG_JSON: false
+          LLM_LOG_ENABLED: true
+          LLM_LOG_RETENTION_DAYS: 7
 
       - name: AST check — no raw book.title in services
         # Phase 3.2: replaces the brittle grep (which had a `grep -v` bypass
