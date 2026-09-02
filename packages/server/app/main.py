@@ -136,7 +136,11 @@ app.add_middleware(
     allow_origins=_cors_origins,
     allow_credentials=False,
     allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allow_headers=['Authorization', 'Content-Type'],
+    # Idempotency-Key: the web client auto-attaches it on every mutation
+    # (api/interceptors.ts) — same-origin deployments never notice, but any
+    # cross-origin client (dev direct-URL, Capacitor) fails its preflight
+    # with 400 without this entry.
+    allow_headers=['Authorization', 'Content-Type', 'Idempotency-Key'],
 )
 
 # GZip for large responses — book content endpoints ship MB-scale Chinese
