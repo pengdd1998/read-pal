@@ -35,14 +35,14 @@ _FILLER = "第{i}段与问题无关的正文内容"
 def _no_embeddings(monkeypatch):
     """Keep retrieval tests hermetic: no embedding API, keyword path only.
 
-    ``_get_embedding`` would otherwise hit the real GLM endpoint (dev
+    ``get_embeddings`` would otherwise hit the real GLM endpoint (dev
     .env has a live key) and burn ~2s per call in 429 retries; the
     semantic path is irrelevant to these assertions — it degrades to []
     and RRF falls back to keyword order.
     """
     monkeypatch.setattr(
-        "app.services.rag.search._get_embedding",
-        AsyncMock(return_value=None),
+        "app.services.rag.search.get_embeddings",
+        AsyncMock(return_value=[None]),
     )
 
 

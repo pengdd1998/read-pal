@@ -73,8 +73,8 @@ async def test_shared_chunks_serve_both_users_and_gate_stays_upstream():
         assert found_a is None, "B must not resolve A's book row"
 
         # RAG: B's search (book_id=B's copy, hash=shared) surfaces the shared chunk
-        with patch.object(rag_search, '_get_embedding',
-                          new=AsyncMock(return_value=[0.1] * 4)):
+        with patch.object(rag_search, 'get_embeddings',
+                          new=AsyncMock(return_value=[[0.1] * 4])):
             got_b = await _search_relevant_chunks(
                 db, book_b_id, 'shared passage', 3, None, content_hash=shared_hash,
             )
