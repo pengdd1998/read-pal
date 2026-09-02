@@ -132,8 +132,8 @@ class TestModeOrchestration:
             invoke = AsyncMock(return_value=_xr_result())
             search = AsyncMock(return_value=_search_hit("Library Book"))
             with (
-                patch("app.services.agent.synthesis_modes.safe_llm_invoke", invoke),
-                patch("app.services.agent.synthesis_modes.cross_book_search", search),
+                patch("app.services.agent.synthesis_modes._shared.safe_llm_invoke", invoke),
+                patch("app.services.agent.synthesis_modes.content_modes.cross_book_search", search),
             ):
                 result = await run_cross_reference(
                     session,
@@ -175,8 +175,8 @@ class TestModeOrchestration:
             )
             search = AsyncMock(return_value=_search_hit("Any"))
             with (
-                patch("app.services.agent.synthesis_modes.safe_llm_invoke", invoke),
-                patch("app.services.agent.synthesis_modes.cross_book_search", search),
+                patch("app.services.agent.synthesis_modes._shared.safe_llm_invoke", invoke),
+                patch("app.services.agent.synthesis_modes.content_modes.cross_book_search", search),
             ):
                 result = await run_concept_map(
                     session,
@@ -202,9 +202,9 @@ class TestModeOrchestration:
             )
             invoke = AsyncMock(return_value=_ctr_result())
             with (
-                patch("app.services.agent.synthesis_modes.safe_llm_invoke", invoke),
+                patch("app.services.agent.synthesis_modes._shared.safe_llm_invoke", invoke),
                 patch(
-                    "app.services.agent.synthesis_modes.cross_book_search",
+                    "app.services.agent.synthesis_modes.content_modes.cross_book_search",
                     AsyncMock(return_value=_search_hit("B")),
                 ),
             ):
@@ -231,9 +231,9 @@ class TestModeOrchestration:
             )
             invoke = AsyncMock(return_value=ContradictionList().model_dump())
             with (
-                patch("app.services.agent.synthesis_modes.safe_llm_invoke", invoke),
+                patch("app.services.agent.synthesis_modes._shared.safe_llm_invoke", invoke),
                 patch(
-                    "app.services.agent.synthesis_modes.cross_book_search",
+                    "app.services.agent.synthesis_modes.content_modes.cross_book_search",
                     AsyncMock(return_value=_search_hit("B")),
                 ),
             ):
@@ -265,9 +265,10 @@ class TestModeOrchestration:
                 return data_map
 
             with (
-                patch("app.services.agent.synthesis_modes.safe_llm_invoke", invoke),
+                patch("app.services.agent.synthesis_modes._shared.safe_llm_invoke", invoke),
                 patch(
-                    "app.services.agent.synthesis_modes.batch_collect_reading_data", fake_collect
+                    "app.services.agent.synthesis_modes.report_mode.batch_collect_reading_data",
+                    fake_collect,
                 ),
             ):
                 result = await run_summary_report(
