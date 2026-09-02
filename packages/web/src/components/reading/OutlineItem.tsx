@@ -11,7 +11,7 @@ const TYPE_ICONS: Record<string, string> = {
 };
 
 const TAG_COLORS: Record<string, string> = {
- discuss: 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300',
+ discuss: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
  important: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
  question: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
  key_idea: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',

@@ -25,7 +25,7 @@ export const ChatPanelHeader = React.memo(function ChatPanelHeader({
  <>
  <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/50 dark:border-amber-900/30">
   <div className="flex items-center gap-2.5">
-  <div className="relative w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-teal-500 text-sm shrink-0">
+  <div className="relative w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-400 to-amber-400 text-sm shrink-0">
    {friendEmoji}
    {aiHealthy === false && (
    <span role="status" aria-label={t('companion_ai_slow')} className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-white" />

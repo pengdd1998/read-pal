@@ -159,7 +159,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   onDragLeave={() => setDragOver(false)}
   className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
   success
-   ? 'border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/20'
+   ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20'
    : uploading
    ? 'border-amber-400 dark:border-amber-600 bg-amber-50/30 dark:bg-amber-900/10'
    : dragOver
@@ -184,13 +184,13 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   {/* Success state */}
   {success ? (
   <div className="animate-scale-in">
-   <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/40 dark:to-emerald-900/40 flex items-center justify-center">
-   <svg aria-hidden="true" className="w-8 h-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+   <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 flex items-center justify-center">
+   <svg aria-hidden="true" className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12" />
    </svg>
    </div>
-   <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-300">{t('upload_success')}</h3>
-   <p className="text-teal-600 dark:text-teal-400 text-sm mt-1">
+   <h3 className="text-lg font-semibold text-amber-700 dark:text-amber-300">{t('upload_success')}</h3>
+   <p className="text-amber-600 dark:text-amber-400 text-sm mt-1">
    {duplicate ? t('upload_duplicate') : t('upload_adding')}
    </p>
   </div>
@@ -219,7 +219,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
    <div className="mt-4">
     <div className="w-full bg-surface-2 rounded-full h-2 overflow-hidden">
     <div
-     className="bg-gradient-to-r from-amber-500 to-teal-500 h-2 rounded-full transition-all duration-300 ease-out"
+     className="bg-gradient-to-r from-amber-500 to-amber-400 h-2 rounded-full transition-all duration-300 ease-out"
      style={{ width: `${uploadProgress}%` }}
     />
     </div>

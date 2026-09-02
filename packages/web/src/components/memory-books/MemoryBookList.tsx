@@ -47,7 +47,7 @@ export const EmptyState = React.memo(function EmptyState({ title, description, c
 }) {
   return (
     <div className="text-center py-16">
-      <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center">
+      <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center">
         <span className="text-3xl">{'📕'}</span>
       </div>
       <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{title}</h2>

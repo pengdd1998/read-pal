@@ -49,7 +49,7 @@ const ICON_IDLE = `${ICON_BASE} text-gray-500 dark:text-gray-400 hover:text-gray
 function ActiveIconStyle(theme: string, color: 'amber' | 'teal' | 'purple' = 'amber') {
  const colors = {
  amber: { light: 'bg-amber-50 text-amber-700', dark: 'dark:bg-amber-900/30 dark:text-amber-300', sepia: 'bg-amber-100/60 text-amber-800' },
- teal: { light: 'bg-teal-50 text-teal-700', dark: 'dark:bg-teal-900/30 dark:text-teal-300', sepia: 'bg-teal-50/60 text-teal-700' },
+ teal: { light: 'bg-amber-50 text-amber-700', dark: 'dark:bg-amber-900/30 dark:text-amber-300', sepia: 'bg-amber-50/60 text-amber-700' },
  purple: { light: 'bg-violet-50 text-violet-700', dark: 'dark:bg-violet-900/30 dark:text-violet-300', sepia: 'bg-violet-50/60 text-violet-700' },
  };
  const c = colors[color][theme as keyof typeof colors.amber] || colors.amber.light;
@@ -81,7 +81,7 @@ export const ReaderHeader = React.memo(function ReaderHeader(props: ReaderHeader
    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate leading-tight mt-px">
    {author && <span>{author} · </span>}
    {t('chapter_abbr')} {currentChapter + 1}/{totalChapters}
-   {readingPph && <span className="ml-1 text-teal-500/80 dark:text-teal-400/70">· {readingPph} {t('pages_hour')}</span>}
+   {readingPph && <span className="ml-1 text-amber-600/80 dark:text-amber-400/70">· {readingPph} {t('pages_hour')}</span>}
    {isPaused && <span className="ml-1 text-amber-500/70">· {t('paused')}</span>}
    </p>
   </div>

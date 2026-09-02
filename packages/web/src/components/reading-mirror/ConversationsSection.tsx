@@ -39,9 +39,9 @@ const BreakthroughCard = React.memo(function BreakthroughCard({ bt }: Breakthrou
       )}
 
       {bt.insight && (
-        <div className="flex items-start gap-2 bg-teal-50 dark:bg-teal-900/20 rounded-lg px-3 py-2">
-          <span className="text-teal-600 dark:text-teal-400 text-xs font-semibold mt-0.5 shrink-0">{'✦'}</span>
-          <p className="text-sm text-teal-900 dark:text-teal-200 m-0">
+        <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
+          <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold mt-0.5 shrink-0">{'✦'}</span>
+          <p className="text-sm text-amber-900 dark:text-amber-200 m-0">
             {bt.insight}
           </p>
         </div>

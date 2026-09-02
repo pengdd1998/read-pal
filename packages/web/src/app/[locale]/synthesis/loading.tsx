@@ -8,13 +8,13 @@ export default function SynthesisLoading() {
   </div>
 
   {/* Cross-book analysis banner skeleton */}
-  <div className="mb-6 p-4 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/20">
+  <div className="mb-6 p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
   <div className="flex items-center justify-between">
    <div className="flex-1">
-   <div className="h-4 bg-teal-200/60 dark:bg-teal-700/40 rounded w-32 mb-1.5 animate-pulse" />
-   <div className="h-3 bg-teal-200/60 dark:bg-teal-700/40 rounded w-52 animate-pulse" />
+   <div className="h-4 bg-amber-200/60 dark:bg-amber-700/40 rounded w-32 mb-1.5 animate-pulse" />
+   <div className="h-3 bg-amber-200/60 dark:bg-amber-700/40 rounded w-52 animate-pulse" />
    </div>
-   <div className="h-9 bg-teal-200/60 dark:bg-teal-700/40 rounded-xl w-28 animate-pulse" />
+   <div className="h-9 bg-amber-200/60 dark:bg-amber-700/40 rounded-xl w-28 animate-pulse" />
   </div>
   </div>
 

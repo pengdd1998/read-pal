@@ -69,7 +69,7 @@ export default React.memo(function WhatStuckSection({ data }: WhatStuckSectionPr
 
       {/* Top insight callout */}
       {topInsight && (
-        <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 border border-teal-200 dark:border-teal-800/50 rounded-xl p-4">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4">
           <div className="flex items-start gap-3">
             <span className="text-lg shrink-0">💡</span>
             <p className="text-gray-800 dark:text-gray-200 m-0 text-sm leading-relaxed font-medium">

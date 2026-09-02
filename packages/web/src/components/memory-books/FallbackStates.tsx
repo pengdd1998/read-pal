@@ -36,7 +36,7 @@ export const EmptyCta = React.memo(function EmptyCta({ onGenerate }: EmptyCtaPro
 
  return (
  <div className="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
-  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 flex items-center justify-center">
+  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center">
   <span className="text-4xl">{'\u{1FA9E}'}</span>
   </div>
   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('yourPersonalBook')}</h2>

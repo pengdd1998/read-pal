@@ -61,7 +61,7 @@ export const PlanProgressView = React.memo(function PlanProgressView({
           type="button"
           onClick={onAdvance}
           disabled={advancing}
-          className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-teal-500 text-white hover:bg-teal-600 transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2.5 text-sm font-medium rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -71,7 +71,7 @@ export const PlanProgressView = React.memo(function PlanProgressView({
       )}
 
       {plan.currentDay >= plan.totalDays && (
-        <div className="text-center py-2 text-sm text-teal-600 dark:text-teal-400">
+        <div className="text-center py-2 text-sm text-amber-600 dark:text-amber-400">
           {t('reading_plan_completed')}
         </div>
       )}

@@ -23,8 +23,8 @@ interface ReviewStats {
 const RATINGS: { value: number; labelKey: string; hint: string; color: string; focusRing: string }[] = [
  { value: 0, labelKey: 'rating_again', hint: '1', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', focusRing: 'focus-visible:ring-red-400' },
  { value: 3, labelKey: 'rating_hard', hint: '2', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', focusRing: 'focus-visible:ring-amber-400' },
- { value: 4, labelKey: 'rating_good', hint: '3', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', focusRing: 'focus-visible:ring-teal-400' },
- { value: 5, labelKey: 'rating_easy', hint: '4', color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300', focusRing: 'focus-visible:ring-green-400' },
+ { value: 4, labelKey: 'rating_good', hint: '3', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', focusRing: 'focus-visible:ring-amber-400' },
+ { value: 5, labelKey: 'rating_easy', hint: '4', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300', focusRing: 'focus-visible:ring-amber-400' },
 ];
 
 interface FlashcardStudyProps {
@@ -102,7 +102,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    aria-label={t('progress_label')}
   >
   <div
-   className="bg-gradient-to-r from-amber-400 to-teal-500 h-1.5 rounded-full transition-all duration-500"
+   className="bg-gradient-to-r from-amber-400 to-amber-400 h-1.5 rounded-full transition-all duration-500"
    style={{ width: `${(currentIndex / cards.length) * 100}%` }}
   />
   </div>
@@ -119,7 +119,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
 
    <button type="button"
 	   className={`card min-h-[240px] flex flex-col justify-center cursor-pointer transition-all duration-300 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none ${
-	    showAnswer ? 'ring-2 ring-teal-300 dark:ring-teal-700' : ''
+	    showAnswer ? 'ring-2 ring-amber-300 dark:ring-amber-700' : ''
 	   }`}
 	   onClick={() => onShowAnswer(!showAnswer)}
 	   onTouchStart={handleTouchStart}
@@ -178,7 +178,7 @@ export const FlashcardStudy = React.memo(function FlashcardStudy({
    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('due_label')}</div>
    </div>
    <div>
-   <div className="text-lg font-bold text-teal-600 dark:text-teal-400">{stats.reviewed}</div>
+   <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{stats.reviewed}</div>
    <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('reviewed_label')}</div>
    </div>
    <div>

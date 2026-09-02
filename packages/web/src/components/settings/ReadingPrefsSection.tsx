@@ -15,7 +15,7 @@ const PERSONAS = [
  { id: 'sage', name: 'Sage', emoji: '🧙', color: 'from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30', accent: 'text-violet-600 dark:text-violet-400' },
  { id: 'penny', name: 'Penny', emoji: '✨', color: 'from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30', accent: 'text-amber-600 dark:text-amber-400' },
  { id: 'alex', name: 'Alex', emoji: '🎯', color: 'from-red-100 to-orange-100 dark:from-red-900/30 dark:to-orange-900/30', accent: 'text-red-600 dark:text-red-400' },
- { id: 'quinn', name: 'Quinn', emoji: '🍃', color: 'from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30', accent: 'text-emerald-600 dark:text-emerald-400' },
+ { id: 'quinn', name: 'Quinn', emoji: '🍃', color: 'from-emerald-100 to-orange-100 dark:from-emerald-900/30 dark:to-orange-900/30', accent: 'text-emerald-600 dark:text-emerald-400' },
  { id: 'sam', name: 'Sam', emoji: '📚', color: 'from-blue-100 to-sky-100 dark:from-blue-900/30 dark:to-sky-900/30', accent: 'text-blue-600 dark:text-blue-400' },
 ] as const;
 
@@ -108,7 +108,7 @@ const ReadingGoalsCard = React.memo(function ReadingGoalsCard({ settings, saving
     onClick={() => onSave({ readingGoal: n })}
     disabled={saving}
     aria-pressed={settings.readingGoal === n}
-    className="min-h-[44px] min-w-[44px] rounded-xl text-sm font-medium transition-all duration-200 active:scale-[0.98] border focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+    className="min-h-[44px] min-w-[44px] rounded-xl text-sm font-medium transition-all duration-200 active:scale-[0.98] border focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
     style={{
     backgroundColor: settings.readingGoal === n ? undefined : '',
     borderColor: 'var(--surface-3)',
@@ -125,7 +125,7 @@ const ReadingGoalsCard = React.memo(function ReadingGoalsCard({ settings, saving
   <div className="pt-4 border-t border-surface-2">
   <div className="flex items-center justify-between mb-2">
    <label htmlFor="daily-minutes-slider" className="text-sm font-medium">{t('daily_reading_time')}</label>
-   <span className="text-xs px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 font-medium">
+   <span className="text-xs px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 font-medium">
    {settings.dailyReadingMinutes || 30}{t('min_suffix')}
    </span>
   </div>
@@ -137,7 +137,7 @@ const ReadingGoalsCard = React.memo(function ReadingGoalsCard({ settings, saving
    step="5"
    value={settings.dailyReadingMinutes || 30}
    onChange={(e) => onSave({ dailyReadingMinutes: parseInt(e.target.value) })}
-   className="w-full accent-teal-500"
+   className="w-full accent-amber-500"
    disabled={saving}
    aria-label={t('daily_reading_time')}
   />
@@ -240,8 +240,8 @@ export const ReadingPrefsSection = React.memo(function ReadingPrefsSection({ set
   {/* Reading Goals Section */}
   <section className="mb-6 animate-slide-up stagger-2">
   <div className="flex items-center gap-3 mb-4">
-   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/40 dark:to-emerald-900/40 flex items-center justify-center">
-   <svg aria-hidden="true" className="w-[1.125rem] h-[1.125rem] text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 flex items-center justify-center">
+   <svg aria-hidden="true" className="w-[1.125rem] h-[1.125rem] text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
    </svg>
    </div>
@@ -253,7 +253,7 @@ export const ReadingPrefsSection = React.memo(function ReadingPrefsSection({ set
   {/* Reading Friend Section */}
   <section className="mb-6 animate-slide-up stagger-3">
   <div className="flex items-center gap-3 mb-4">
-   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/40 dark:to-teal-900/40 flex items-center justify-center">
+   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 flex items-center justify-center">
    <span className="text-lg">{'✨'}</span>
    </div>
    <h2 className="text-lg font-semibold">{t('reading_friend_title')}</h2>

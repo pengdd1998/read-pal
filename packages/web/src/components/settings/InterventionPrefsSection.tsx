@@ -186,7 +186,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
  return (
  <section className="mb-6 animate-slide-up">
   <div className="flex items-center gap-3 mb-4">
-  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/40 dark:to-teal-900/40 flex items-center justify-center">
+  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-100 to-orange-100 dark:from-emerald-900/40 dark:to-orange-900/40 flex items-center justify-center">
    <svg aria-hidden="true" className="w-[1.125rem] h-[1.125rem] text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
    </svg>
@@ -201,7 +201,7 @@ export const InterventionPrefsSection = React.memo(function InterventionPrefsSec
 
   <div className="bg-surface-0 rounded-2xl border border-surface-3 p-6 space-y-4">
   {saved && (
-   <div role="status" aria-live="polite" className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+   <div role="status" aria-live="polite" className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <polyline points="20 6 9 17 4 12" />
    </svg>

@@ -35,7 +35,7 @@ export const TagFilterChips = React.memo(function TagFilterChips({
    className={`inline-flex items-center px-2.5 py-1.5 rounded-full text-[10px] min-h-[44px] font-medium transition-all duration-150 active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-400 ${
     selectedTags.includes(tag)
     ? tag === 'discuss'
-     ? 'bg-teal-500 text-white'
+     ? 'bg-amber-500 text-white'
      : tag === 'important'
      ? 'bg-red-500 text-white'
      : tag === 'question'

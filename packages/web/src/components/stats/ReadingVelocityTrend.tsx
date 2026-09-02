@@ -82,7 +82,7 @@ export const ReadingVelocityTrend = React.memo(function ReadingVelocityTrend({ s
    <span className="text-gray-500 dark:text-gray-400">{t('legend_pages')}</span>
   </div>
   <div className="flex items-center gap-1.5">
-   <div className="w-3 h-0.5 border-t border-dashed border-teal-500" />
+   <div className="w-3 h-0.5 border-t border-dashed border-amber-500" />
    <span className="text-gray-500 dark:text-gray-400">{t('legend_duration')}</span>
   </div>
   </div>

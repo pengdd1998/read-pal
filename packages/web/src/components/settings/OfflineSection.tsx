@@ -64,7 +64,7 @@ const BookCheckboxRow = React.memo(function BookCheckboxRow({ book, isSelected, 
         type="checkbox"
         checked={isSelected}
         onChange={(e) => onToggle(book.id, e.target.checked)}
-        className="rounded border-surface-3 text-teal-600 focus:ring-teal-500"
+        className="rounded border-surface-3 text-amber-600 focus:ring-amber-500"
       />
       <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{book.title}</span>
       {isDisplayableAuthor(book.author) && <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{book.author}</span>}
@@ -277,7 +277,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
               <button type="button"
                 onClick={handleCacheSelected}
                 disabled={caching}
-                className="mt-3 min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+                className="mt-3 min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
               >
                 {caching ? t('offline_caching') : t('offline_cache_button', { count: selectedBooks.size })}
               </button>

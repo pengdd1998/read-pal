@@ -24,8 +24,8 @@ export const WelcomeIntro = React.memo(function WelcomeIntro({
     <div className="transition-all duration-700 opacity-100 translate-y-0">
       {/* Persona avatar */}
       <div className="w-24 h-24 mx-auto mb-6 relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-200 to-teal-200 dark:from-amber-800/40 dark:to-teal-800/40 rounded-3xl rotate-6 scale-95" />
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/30 dark:to-teal-900/30 rounded-3xl flex items-center justify-center shadow-sm">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-200 to-orange-200 dark:from-amber-800/40 dark:to-orange-800/40 rounded-3xl rotate-6 scale-95" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-3xl flex items-center justify-center shadow-sm">
           <span className="text-4xl">{personaEmoji}</span>
         </div>
       </div>

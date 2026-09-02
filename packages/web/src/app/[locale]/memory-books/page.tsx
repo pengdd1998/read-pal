@@ -81,7 +81,7 @@ const MemoryBookCard = React.memo(function MemoryBookCard({ mb, dateLabel, chapt
           {mb.stats && (
             <div className="flex gap-3 mt-2">
               <span className="text-xs text-amber-600 dark:text-amber-400">{highlightsLabel}</span>
-              <span className="text-xs text-teal-600 dark:text-teal-400">{notesLabel}</span>
+              <span className="text-xs text-amber-600 dark:text-amber-400">{notesLabel}</span>
               {durationStr && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">{durationStr}</span>
               )}

@@ -65,7 +65,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
   <button type="button"
    onClick={handleGenerate}
    disabled={generating}
-   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-teal-500 hover:bg-teal-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
   >
    {generating ? (
    <>
@@ -111,7 +111,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
   </button>
   <Link
    href="/flashcards"
-   className="inline-flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400 hover:underline"
+   className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline"
   >
    {t('reviewDueCards')}
    <svg aria-hidden="true"

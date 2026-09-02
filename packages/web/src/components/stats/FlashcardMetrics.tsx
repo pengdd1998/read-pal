@@ -31,7 +31,7 @@ export const FlashcardMetrics = React.memo(function FlashcardMetrics({ flashcard
 
   const metrics = [
     { label: t('flashcards_total_cards'), value: flashcardStats.totalCards, sub: `${flashcardStats.reviewedCards} ${t('flashcards_reviewed')}`, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10' },
-    { label: t('flashcards_due_today'), value: flashcardStats.dueToday, sub: null, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/10' },
+    { label: t('flashcards_due_today'), value: flashcardStats.dueToday, sub: null, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10' },
     { label: t('flashcards_accuracy'), value: `${flashcardStats.accuracy}%`, sub: null, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/10' },
   ];
 
@@ -57,7 +57,7 @@ export const FlashcardMetrics = React.memo(function FlashcardMetrics({ flashcard
         </div>
         <div className="h-2.5 bg-surface-1 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-amber-400 to-teal-500 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-amber-400 to-amber-400 rounded-full transition-all duration-500"
             style={{ width: `${Math.min(100, flashcardStats.retentionRate)}%` }}
           />
         </div>

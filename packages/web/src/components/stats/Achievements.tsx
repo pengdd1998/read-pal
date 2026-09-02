@@ -13,7 +13,7 @@ const BadgeCard = React.memo(function BadgeCard({ badge }: BadgeCardProps) {
  <div
   className={`rounded-xl p-3 text-center transition-all ${
    badge.unlocked
-   ? 'bg-gradient-to-br from-amber-50 to-teal-50 dark:from-amber-900/10 dark:to-teal-900/10 border border-amber-200 dark:border-amber-800'
+   ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800'
    : 'bg-surface-1 opacity-50'
   }`}
  >

@@ -57,7 +57,7 @@ export const DayCell = memo(function DayCell({
  }
 
  const level = getActivityLevel(day.pages, day.minutes);
- const todayRing = isToday ? 'ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-gray-900' : '';
+ const todayRing = isToday ? 'ring-2 ring-amber-500 ring-offset-1 dark:ring-offset-gray-900' : '';
 
  return (
  <div className="relative">

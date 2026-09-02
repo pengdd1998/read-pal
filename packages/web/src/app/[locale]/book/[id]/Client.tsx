@@ -144,7 +144,7 @@ export default function BookDetailPage() {
 
       <StatsGrid items={[
         { label: t('highlights'), value: annotationStats.highlights, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10' },
-        { label: t('notes'), value: annotationStats.notes, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/10' },
+        { label: t('notes'), value: annotationStats.notes, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10' },
         { label: t('bookmarks'), value: annotationStats.bookmarks, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/10' },
       ]} />
 

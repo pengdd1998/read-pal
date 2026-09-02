@@ -62,7 +62,7 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
  return (
  <Link
   href="/flashcards"
-  className="block card group hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200"
+  className="block card group hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-200"
  >
   <div className="flex items-center gap-4">
   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 flex items-center justify-center flex-shrink-0">
@@ -84,7 +84,7 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
    </div>
   </div>
   {stats.due > 0 && (
-   <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+   <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
    {t('review_button')}
    <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

@@ -179,7 +179,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
    <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" /> {t('timeline_highlights')}
    </span>
    <span className="flex items-center gap-1">
-   <span className="w-2 h-2 rounded-full bg-teal-400" aria-hidden="true" /> {t('timeline_notes')}
+   <span className="w-2 h-2 rounded-full bg-amber-400" aria-hidden="true" /> {t('timeline_notes')}
    </span>
    <span className="flex items-center gap-1">
    <span className="w-2 h-2 rounded-full bg-violet-400" aria-hidden="true" /> {t('timeline_bookmarks')}

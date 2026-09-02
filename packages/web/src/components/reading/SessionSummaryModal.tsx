@@ -85,8 +85,8 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
     </div>
     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('session_time_spent')}</div>
    </div>
-   <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-3">
-    <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+   <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3">
+    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
     {chaptersRead}/{totalChapters}
     </div>
     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('session_chapters_read')}</div>

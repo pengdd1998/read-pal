@@ -155,7 +155,7 @@ export const DesktopSelectionToolbar = memo(function DesktopSelectionToolbar({
     onAskAI(text);
     onDismiss();
    }}
-   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 transition-colors active:scale-95 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+   className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-400 text-white hover:from-amber-600 hover:to-amber-300 transition-colors active:scale-95 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    aria-label={t('toolbar_ask_ai_about')}
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

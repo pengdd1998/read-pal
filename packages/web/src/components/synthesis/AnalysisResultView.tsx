@@ -23,7 +23,7 @@ const ThemeChip = React.memo(function ThemeChip({ name, strength }: { name: stri
 
 const InsightItem = React.memo(function InsightItem({ insight }: { insight: string }) {
   return (
-    <li className="text-xs text-gray-700 dark:text-gray-300 pl-3 border-l-2 border-teal-400">
+    <li className="text-xs text-gray-700 dark:text-gray-300 pl-3 border-l-2 border-amber-400">
       {insight}
     </li>
   );

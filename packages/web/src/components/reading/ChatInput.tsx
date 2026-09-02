@@ -48,7 +48,7 @@ export const ChatInput = React.memo(function ChatInput({
    onClick={onSend}
    disabled={!input.trim()}
    aria-label={t('companion_aria_send')}
-   className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-teal-500 text-white hover:from-amber-600 hover:to-teal-600 shadow-soft disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+   className="btn self-end shrink-0 bg-gradient-to-r from-amber-500 to-amber-400 text-white hover:from-amber-600 hover:to-amber-300 shadow-soft disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
    >
    <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

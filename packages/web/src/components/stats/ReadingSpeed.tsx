@@ -23,12 +23,12 @@ export const ReadingSpeed = React.memo(function ReadingSpeed({ speedData, bookSp
   {/* Average pages-per-hour metric */}
   {speedData && (
   <div className="flex items-center gap-4 mb-5">
-   <div className="bg-teal-50 dark:bg-teal-900/10 rounded-xl p-4 text-center min-w-[120px]">
-   <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
+   <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-4 text-center min-w-[120px]">
+   <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
     {speedData.averagePagesPerHour.toFixed(1)}
    </div>
    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('speed_average_pph')}</div>
-   <div className="text-[10px] text-teal-500 dark:text-teal-400 mt-0.5">{t('speed_pph_unit')}</div>
+   <div className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">{t('speed_pph_unit')}</div>
    </div>
   </div>
   )}
@@ -127,11 +127,11 @@ const BookSpeedBar = React.memo(function BookSpeedBar({ book, maxPph, t }: BookS
   </span>
   <div className="flex-1 h-3 bg-surface-1 rounded-full overflow-hidden">
   <div
-   className="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full transition-all duration-500"
+   className="h-full bg-gradient-to-r from-amber-400 to-amber-400 rounded-full transition-all duration-500"
    style={{ width: `${pct}%` }}
   />
   </div>
-  <span className="text-xs font-semibold text-teal-600 dark:text-teal-400 w-16 text-right">
+  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 w-16 text-right">
   {pph.toFixed(1)} {t('speed_pph_unit')}
   </span>
  </div>

@@ -26,7 +26,7 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
  <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
   <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
   msg.role === 'user'
-   ? 'bg-teal-600 text-white rounded-br-md'
+   ? 'bg-amber-600 text-white rounded-br-md'
    : 'bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100 border border-amber-200/50 dark:border-amber-800/30 rounded-bl-md'
   }`}>
   {msg.role === 'assistant' ? (

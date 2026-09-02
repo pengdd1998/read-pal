@@ -41,12 +41,12 @@ const DeckCard = React.memo(function DeckCard({
    aria-label={reviewDeckAria}
    className={`w-full card text-left group transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-400 ${
     deck.due > 0
-    ? 'hover:border-teal-200 dark:hover:border-teal-800 hover:shadow-sm cursor-pointer'
+    ? 'hover:border-amber-200 dark:hover:border-amber-800 hover:shadow-sm cursor-pointer'
     : 'opacity-70'
    }`}
    >
    <div className="flex items-center gap-3">
-    <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-100 to-teal-100 dark:from-amber-900/20 dark:to-teal-900/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+    <div className="w-10 h-14 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
     {deck.coverUrl ? (
      <Image src={deck.coverUrl} alt={coverAlt} width={40} height={56} className="w-full h-full object-cover rounded-lg" />
     ) : (
@@ -54,14 +54,14 @@ const DeckCard = React.memo(function DeckCard({
     )}
     </div>
     <div className="flex-1 min-w-0">
-    <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+    <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
      {deck.bookTitle}
     </h2>
     {isDisplayableAuthor(deck.author) && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{deck.author}</p>}
     <div className="flex items-center gap-3 mt-1.5">
      <span className="text-xs text-gray-500 dark:text-gray-400">{cardsCount}</span>
      {deck.due > 0 ? (
-     <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{dueCount}</span>
+     <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{dueCount}</span>
      ) : (
      <span className="text-xs text-emerald-500 flex items-center gap-0.5">
       <svg aria-hidden="true" className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -73,7 +73,7 @@ const DeckCard = React.memo(function DeckCard({
     </div>
     </div>
     {deck.due > 0 && (
-    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-500 text-white text-xs font-semibold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
      {reviewButton}
      <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -122,7 +122,7 @@ export const FlashcardDeck = React.memo(function FlashcardDeck({ decks, totalCar
     <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('due_label')}</div>
     </div>
     <div>
-    <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{totalReviewed}</div>
+    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{totalReviewed}</div>
     <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('reviewed_label')}</div>
     </div>
     <div>

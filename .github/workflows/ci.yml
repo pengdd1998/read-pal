@@ -247,10 +247,8 @@ jobs:
 
       - name: Run test suite against PostgreSQL
         working-directory: packages/server
-        # Ratchet: non-blocking while the surfaced PG-only failures are
-        # triaged (FK enforcement, tz-aware datetimes, loop binding) —
-        # flip to a hard gate once green. Tracked in the weekly plan.
-        continue-on-error: true
+        # Promoted to a HARD gate (2026-09-02): the ratchet went green after
+        # FK seeds, tz normalization, and the NullPool loop-binding fix.
         run: uv run pytest tests -q --tb=line
 
   migrations:

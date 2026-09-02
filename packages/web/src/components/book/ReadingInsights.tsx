@@ -138,7 +138,7 @@ const SessionEntryItem = React.memo(function SessionEntryItem({
   <span className="text-amber-500">{entry.highlights} {t('unit_hl')}</span>
   )}
   {entry.notes > 0 && (
-  <span className="text-teal-500">{entry.notes} {t('unit_nt')}</span>
+  <span className="text-amber-600">{entry.notes} {t('unit_nt')}</span>
   )}
   </div>
   {entry.summary && (

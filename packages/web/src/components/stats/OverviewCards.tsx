@@ -18,7 +18,7 @@ export const OverviewCards = React.memo(function OverviewCards({ stats, sessions
  const totalPages = sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
  const cards = [
  { label: t('label_books'), value: stats?.booksRead || 0, icon: '📚', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10' },
- { label: t('label_pages'), value: stats?.pagesRead || totalPages || 0, icon: '📄', color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/10' },
+ { label: t('label_pages'), value: stats?.pagesRead || totalPages || 0, icon: '📄', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/10' },
  { label: t('label_streak'), value: t('streak_days', { count: stats?.readingStreak || 0 }), icon: '🔥', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/10' },
  { label: t('label_time'), value: stats?.totalTime || formatTime(totalMinutes, t), icon: '⏱️', color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/10' },
  ];
