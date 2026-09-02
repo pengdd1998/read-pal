@@ -56,7 +56,10 @@ async def test_delete_book_invalidates_derived_caches(client):
 
     assert resp.status_code == 204
     uid = reg['user']['id']
-    redis_mock.delete.assert_any_call(f'stats:dashboard:{uid}')
+    # SWR: invalidation must clear BOTH the fresh and the stale tier in one DEL
+    redis_mock.delete.assert_any_call(
+        f'stats:dashboard:{uid}', f'stats:dashboard:{uid}:stale',
+    )
     redis_mock.delete.assert_any_call(f'stats:books:{uid}')
 
 
@@ -74,7 +77,10 @@ async def test_update_book_status_invalidates_derived_caches(client):
 
     assert resp.status_code == 200
     uid = reg['user']['id']
-    redis_mock.delete.assert_any_call(f'stats:dashboard:{uid}')
+    # SWR: invalidation must clear BOTH the fresh and the stale tier in one DEL
+    redis_mock.delete.assert_any_call(
+        f'stats:dashboard:{uid}', f'stats:dashboard:{uid}:stale',
+    )
     redis_mock.delete.assert_any_call(f'stats:books:{uid}')
 
 
@@ -86,7 +92,10 @@ async def test_create_book_invalidates_derived_caches(client):
     await _create_book(client, reg['token'])
 
     uid = reg['user']['id']
-    redis_mock.delete.assert_any_call(f'stats:dashboard:{uid}')
+    # SWR: invalidation must clear BOTH the fresh and the stale tier in one DEL
+    redis_mock.delete.assert_any_call(
+        f'stats:dashboard:{uid}', f'stats:dashboard:{uid}:stale',
+    )
     redis_mock.delete.assert_any_call(f'stats:books:{uid}')
 
 
@@ -109,5 +118,8 @@ async def test_create_annotation_invalidates_derived_caches(client):
 
     assert resp.status_code == 201, resp.text
     uid = reg['user']['id']
-    redis_mock.delete.assert_any_call(f'stats:dashboard:{uid}')
+    # SWR: invalidation must clear BOTH the fresh and the stale tier in one DEL
+    redis_mock.delete.assert_any_call(
+        f'stats:dashboard:{uid}', f'stats:dashboard:{uid}:stale',
+    )
     redis_mock.delete.assert_any_call(f'stats:books:{uid}')

@@ -43,8 +43,11 @@ async def invalidate(uid: UUID) -> None:
     library-status aggregate, which changes with the same writes.
     """
     try:
+        # Both tiers must go (24h-review risk 3): a surviving stale copy
+        # would serve deleted books as 'current reading' for up to 7 days —
+        # the exact P6.1 bug class SWR reintroduced if forgotten here.
         redis = get_redis()
-        await redis.delete(_cache_key(uid))
+        await redis.delete(_cache_key(uid), _stale_key(uid))
     except RedisError as exc:
         logger.warning('Failed to invalidate dashboard cache for user %s: %s', uid, exc)
 
@@ -87,3 +90,59 @@ async def write_cache(uid: UUID, data: dict) -> None:
         )
     except RedisError as exc:
         logger.warning('Failed to cache dashboard stats for user %s: %s', uid, exc)
+
+
+# --- Stale-while-revalidate support (dashboard cold path was 7-9s on a
+# remote DB; the fix is serve-stale + single-flight background refresh) ---
+
+_STALE_SUFFIX = ':stale'
+_REFRESH_LOCK_SUFFIX = ':refreshing'
+_REFRESH_LOCK_TTL = 120  # seconds — one in-flight refresh per user
+
+
+def _stale_key(uid: UUID) -> str:
+    """Long-retention copy served instantly while a refresh recomputes."""
+    return f'{_cache_key(uid)}{_STALE_SUFFIX}'
+
+
+def _refresh_lock_key(uid: UUID) -> str:
+    return f'{_cache_key(uid)}{_REFRESH_LOCK_SUFFIX}'
+
+
+async def read_stale(uid: UUID) -> dict | None:
+    """Return the stale (expired-TTL) dashboard payload, if retained."""
+    try:
+        redis = get_redis()
+        cached = await redis.get(_stale_key(uid))
+        if cached is not None:
+            return json.loads(cached)
+    except RedisError as exc:
+        logger.warning('Redis stale read failed for dashboard cache: %s', exc)
+    return None
+
+
+async def write_stale(uid: UUID, data: dict) -> None:
+    """Retain a stale copy for SWR (long TTL — cheap insurance)."""
+    try:
+        redis = get_redis()
+        await redis.set(_stale_key(uid), json.dumps(data), ex=7 * 24 * 3600)
+    except RedisError as exc:
+        logger.warning('Redis stale write failed for dashboard cache: %s', exc)
+
+
+async def try_acquire_refresh_lock(uid: UUID) -> bool:
+    """Single-flight guard for background refreshes (SET NX + TTL)."""
+    try:
+        redis = get_redis()
+        return bool(await redis.set(
+            _refresh_lock_key(uid), '1', nx=True, ex=_REFRESH_LOCK_TTL,
+        ))
+    except RedisError:
+        return False
+
+
+async def release_refresh_lock(uid: UUID) -> None:
+    try:
+        await get_redis().delete(_refresh_lock_key(uid))
+    except RedisError:
+        pass

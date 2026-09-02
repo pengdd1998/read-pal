@@ -211,6 +211,7 @@ def _build_chunk_objects(
     chunks_to_embed: list[tuple[int, int, str]],
     results: list[list[float] | None],
     chunks_no_embed: list[tuple[int, int, str]],
+    content_hash: str | None = None,
 ) -> list:
     """Build BookChunk ORM objects from embedded and non-embedded chunks."""
     from app.models.book_chunk import BookChunk
@@ -221,12 +222,14 @@ def _build_chunk_objects(
             book_id=book_id, document_id=document_id,
             chapter_index=ch_idx, chunk_index=ck_idx,
             content=text, embedding=results[i],
+            content_hash=content_hash,
         ))
     for ch_idx, ck_idx, text in chunks_no_embed:
         chunks_to_insert.append(BookChunk(
             book_id=book_id, document_id=document_id,
             chapter_index=ch_idx, chunk_index=ck_idx,
             content=text, embedding=None,
+            content_hash=content_hash,
         ))
     return chunks_to_insert
 
@@ -252,9 +255,6 @@ async def _generate_chunks(
         )
 
     results = await _embed_with_semaphore(chunks_to_embed)
-    if content_hash:
-        for chunk in results:
-            chunk.content_hash = content_hash
 
     embedding_failures = sum(1 for r in results if r is None)
     if embedding_failures > 0:
@@ -263,4 +263,4 @@ async def _generate_chunks(
             book_id, embedding_failures, len(all_chunks),
         )
 
-    return _build_chunk_objects(book_id, document_id, chunks_to_embed, results, chunks_no_embed)
+    return _build_chunk_objects(book_id, document_id, chunks_to_embed, results, chunks_no_embed, content_hash)

@@ -32,8 +32,10 @@ async def main(content_hash: str) -> None:
         res = await s.execute(text(
             "DELETE FROM book_contents WHERE content_hash = :h"
         ), {'h': content_hash})
-
-    await s.commit()
+        # Commit INSIDE the session block — committing after the block exits
+        # rolls the DELETE back and opens a fresh empty transaction, so the
+        # script printed success while deleting nothing (24h-review risk 2).
+        await s.commit()
     print(f"purged {content_hash[:16]}… (chunks removed: {chunk_count}, rows: {res.rowcount})")
 
 

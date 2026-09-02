@@ -11,8 +11,15 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.stats.dashboard_cache import invalidate as _cache_invalidate
-from app.services.stats.dashboard_cache import read_cache, write_cache
+from app.services.stats.dashboard_cache import (
+    invalidate as _cache_invalidate,
+    read_cache,
+    read_stale,
+    release_refresh_lock,
+    try_acquire_refresh_lock,
+    write_cache,
+    write_stale,
+)
 from app.services.stats.dashboard_queries import (
     get_annotation_counts,
     get_book_status_counts,
@@ -127,14 +134,48 @@ async def get_dashboard_stats(db: AsyncSession, uid: UUID) -> dict:
 
     Response shape: ``{stats, recentBooks, weeklyActivity, booksByStatus}``
 
-    Results are cached in Redis. Use ``invalidate_dashboard_cache``
-    to force a refresh when underlying data changes.
+    Stale-while-revalidate: on TTL miss with a retained stale copy, the
+    stale payload returns IMMEDIATELY (the cold aggregation measured 7-9s
+    against a remote DB) and a single-flight background task recomputes.
+    Use ``invalidate_dashboard_cache`` to force a refresh when underlying
+    data changes.
     """
     cached = await read_cache(uid)
     if cached is not None:
         return cached
 
+    stale = await read_stale(uid)
+    if stale is not None and await try_acquire_refresh_lock(uid):
+        # Hold the reference — an unreferenced task can be GC'd mid-flight
+        # (24h-review risk 3b); discarded on completion to avoid buildup.
+        task = asyncio.create_task(_refresh_dashboard(uid))
+        _background_refreshes.add(task)
+        task.add_done_callback(_background_refreshes.discard)
+
+    if stale is not None:
+        return stale
+
     raw = await _gather_raw_data(db, uid)
     result = _build_response(raw)
     await write_cache(uid, result)
+    await write_stale(uid, result)
     return result
+
+
+_background_refreshes: set[asyncio.Task] = set()
+
+
+async def _refresh_dashboard(uid: UUID) -> None:
+    """Recompute the dashboard off-request and repopulate both cache tiers."""
+    from app.db import async_session
+
+    try:
+        async with async_session() as session:
+            raw = await _gather_raw_data(session, uid)
+        result = _build_response(raw)
+        await write_cache(uid, result)
+        await write_stale(uid, result)
+    except Exception:  # noqa: BLE001 — refresh is best-effort; stale remains
+        logger.warning('dashboard background refresh failed uid=%s', uid, exc_info=True)
+    finally:
+        await release_refresh_lock(uid)

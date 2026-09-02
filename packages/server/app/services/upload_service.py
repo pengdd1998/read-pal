@@ -242,6 +242,11 @@ async def create_book_with_content(
         sum(ch.get('images', 0) for ch in result.get('chapters', [])),
     )
 
+    # P6.2 (24h-review risk 4): uploads change recentBooks/streak/counts —
+    # this was the one major book-write path missing dashboard invalidation.
+    from app.services.stats.dashboard_cache import invalidate_user_caches
+    await invalidate_user_caches(user_id)
+
     asyncio.create_task(
         _safe_precompute(book.id, document_id, result['chapters'], content_hash)
     )
