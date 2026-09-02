@@ -283,7 +283,10 @@ class TestPrecomputeBookEmbeddings:
 
         with (
             patch('app.services.rag.precompute.get_settings') as mock_settings,
-            patch('app.services.rag.precompute._get_embedding', return_value=embedding),
+            patch(
+                'app.services.rag.precompute.get_embeddings',
+                AsyncMock(return_value=[embedding]),
+            ),
             patch('app.db.async_session', mock_factory),
         ):
             mock_settings.return_value.glm_api_key = 'test-key'
@@ -311,7 +314,7 @@ class TestSemanticSearch:
     async def test_no_query_embedding(self):
         mock_db = AsyncMock()
         mock_db.add = MagicMock()
-        with patch('app.services.rag.search._get_embedding', return_value=None):
+        with patch('app.services.rag.search.get_embeddings', return_value=[None]):
             results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
             assert results == []
 
@@ -321,7 +324,7 @@ class TestSemanticSearch:
         mock_db.add = MagicMock()
         mock_db.execute = AsyncMock(side_effect=DBAPIError('stmt', {}, Exception('DB error')))
 
-        with patch('app.services.rag.search._get_embedding', return_value=[0.1] * 2048):
+        with patch('app.services.rag.search.get_embeddings', return_value=[[0.1] * 2048]):
             results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
             assert results == []
 

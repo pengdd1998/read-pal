@@ -1,11 +1,12 @@
 """Pre-compute and store chunk embeddings for a book (called at upload time)."""
 
+import asyncio
 from uuid import UUID
 
 from app.config import get_settings
 from app.services.rag._constants import logger
 from app.services.rag.chunking import _chunk_text
-from app.services.rag.embedding import _get_embedding
+from app.services.rag.embedding import get_embeddings
 from app.utils.db import db_error_guard
 
 
@@ -176,33 +177,30 @@ def _split_chapters(chapters: list[dict]) -> list[tuple[int, int, str]]:
     return all_chunks
 
 
-async def _embed_chunk(
-    chunk: str,
-    chunk_index: int,
-) -> list[float] | None:
-    """Get embedding for a single chunk, returning None on failure."""
-    try:
-        return await _get_embedding(chunk)
-    except (ValueError, RuntimeError, ConnectionError) as exc:
-        logger.warning('precompute.embedding_failed chunk_index=%s: %s', chunk_index, str(exc))
-        return None
-
-
 async def _embed_with_semaphore(
     chunks_to_embed: list[tuple[int, int, str]],
 ) -> list[list[float] | None]:
-    """Embed chunks concurrently with bounded parallelism."""
-    import asyncio
+    """Embed chunks in sequential API batches (order-preserving).
 
-    semaphore = asyncio.Semaphore(5)
+    The old 5-way-concurrency per-chunk loop fired ~243 single-text
+    requests per 81-chunk book and ate a 429 storm on the shared GLM
+    account (13/13 uploads ended embedded=0). Batching cuts that to
+    ceil(n/16) sequential requests; per-index results map back 1:1.
+    """
+    from app.services.rag.embedding import BATCH_SIZE, PAUSE_BETWEEN_BATCHES_S
 
-    async def _embed_one(ch_idx: int, ck_idx: int, text: str):
-        async with semaphore:
-            return await _embed_chunk(text, ck_idx)
-
-    return await asyncio.gather(
-        *[_embed_one(ch_idx, ck_idx, text) for ch_idx, ck_idx, text in chunks_to_embed],
-    )
+    texts = [text for _ch, _ck, text in chunks_to_embed]
+    results: list[list[float] | None] = []
+    for start in range(0, len(texts), BATCH_SIZE):
+        batch = texts[start:start + BATCH_SIZE]
+        try:
+            results.extend(await get_embeddings(batch))
+        except (ValueError, RuntimeError, ConnectionError) as exc:
+            logger.warning('precompute.batch_failed offset=%d: %s', start, str(exc))
+            results.extend([None] * len(batch))
+        if start + BATCH_SIZE < len(texts):
+            await asyncio.sleep(PAUSE_BETWEEN_BATCHES_S)
+    return results
 
 
 def _build_chunk_objects(

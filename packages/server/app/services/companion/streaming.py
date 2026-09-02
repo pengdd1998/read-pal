@@ -83,6 +83,10 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
     )
 
     collected_parts: list[str] = []
+    # D1: mutable counter for SSE id-tagged chunks. Shared across primary
+    # + fallback so a reconnect (Last-Event-ID) can resume at the right
+    # offset regardless of which provider emitted the chunk.
+    seq_state: list[int] = [0]
     actual_request_id = request_id or uuid.uuid4().hex[:12]
     start_time = time.monotonic()
     registry = get_registry()
@@ -101,6 +105,9 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
         yield 'data: [DONE]\n\n'
         return
 
+    # Crisis input gate (BND-R03/R04 hardening): handled in stream_chat,
+    # before context enrichment, so a throttled RAG/summary path can never
+    # delay the canned reply.
     provider_info = _get_stream_provider(registry, actual_request_id)
     if provider_info is None:
         yield sse_chunk(t('companion.fallback_error', lang))
@@ -148,10 +155,6 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
 
     stream_failed = False
     billing_state: dict = {'partial_chars': 0}
-    # D1: mutable counter for SSE id-tagged chunks. Shared across primary
-    # + fallback so a reconnect (Last-Event-ID) can resume at the right
-    # offset regardless of which provider emitted the chunk.
-    seq_state: list[int] = [0]
     try:
         async for chunk in _stream_from_provider(
             state, provider_name, model_used, messages,
@@ -237,6 +240,36 @@ async def stream_chat(
     request: Any = None,
 ) -> AsyncGenerator[str, None]:
     """Stream companion chat as SSE chunks with per-provider circuit breaker."""
+    # Crisis input gate — MUST sit before _prepare_context: enrichment
+    # (RAG query embedding, summary regeneration) can burn 10s+ on a
+    # throttled account before any provider-path gate would fire, and a
+    # person in distress should never wait behind that. The canned reply
+    # flows through the normal persist + message_id pipeline so history
+    # and feedback keep working (BND-R03/R04 hardening).
+    from app.services.companion.safety import crisis_response, detect_crisis
+    if detect_crisis(message):
+        actual_request_id = request_id or uuid.uuid4().hex[:12]
+        logger.warning(
+            'companion.stream.crisis_response_served',
+            request_id=actual_request_id,
+            user_id=str(user_id),
+            book_id=str(book_id),
+        )
+        yield f'data: {json.dumps({"request_id": actual_request_id})}\n\n'
+        canned = crisis_response(lang)
+        yield sse_chunk(canned)
+        assistant_db_id = await _persist_with_retry(
+            db, user_id, book_id, message, [], [canned],
+            actual_request_id, lang=lang,
+        )
+        if assistant_db_id is not None:
+            from app.services.companion.stream_cache import emit_message_id_frame
+            yield await emit_message_id_frame(
+                str(assistant_db_id), actual_request_id, 1,
+            )
+        yield 'data: [DONE]\n\n'
+        return
+
     _, history, system_text, budget = await _prepare_context(
         db, user_id, book_id, message, context, companion_mode,
         persona=persona, genre=genre, lang=lang,

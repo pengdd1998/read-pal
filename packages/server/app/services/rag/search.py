@@ -9,7 +9,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.rag._constants import logger, _tokenize_with_bigrams
-from app.services.rag.embedding import _get_embedding
+from app.services.rag.embedding import get_embeddings
 from app.models.book_chunk import BookChunk
 
 # P3.2: Reciprocal Rank Fusion constant. Standard value from the original
@@ -92,7 +92,10 @@ async def _semantic_chapter_search(
     content_hash: str | None = None,
 ) -> list[dict[str, Any]]:
     """pgVector cosine distance search over pre-computed chunk embeddings."""
-    query_emb = await _get_embedding(query)
+    # Interactive path: one quick retry max — a throttled embedding
+    # account must not add patient backoff to every question's TTFT; the
+    # keyword fallback takes over immediately.
+    query_emb = (await get_embeddings([query], retry_delays=(1.0,)) or [None])[0]
     if query_emb is None:
         return []
 
