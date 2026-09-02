@@ -83,7 +83,14 @@ if IS_SQLITE_TEST_DB:
         connect_args={'check_same_thread': False},
     )
 else:
-    _engine = create_async_engine(TEST_DATABASE_URL, echo=False, pool_pre_ping=True)
+    # NullPool: no pooled connections to outlive a test's event loop. Every
+    # checkout creates a fresh connection on the CURRENT loop, which kills
+    # the "attached to a different loop" class at the pool level (slower
+    # per test, but correctness first — this is the PG verification job).
+    from sqlalchemy.pool import NullPool
+    _engine = create_async_engine(
+        TEST_DATABASE_URL, echo=False, poolclass=NullPool, pool_pre_ping=True,
+    )
 _TestSession = async_sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
 
 
