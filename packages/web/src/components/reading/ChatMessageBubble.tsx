@@ -4,7 +4,7 @@ import { memo, useState } from 'react';
 import type { SanitizedMessage } from './ChatMessageList';
 
 interface ChatMessageBubbleProps {
- msg: SanitizedMessage;
+ msg: SanitizedMessage & { myRating?: boolean | null };
  t: (key: string, params?: Record<string, unknown>) => string;
  submitFeedback: (messageId: string, rating: boolean | null, onFail?: () => void) => void;
  onRegenerate: () => void;
@@ -15,7 +15,8 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
  // Optimistic rating state: the clicked thumb FILLS and plays its gesture
  // (raise for 👍, jab for 👎); clicking it AGAIN cancels (toggle); rolls
  // back if the request fails. null = not rated.
- const [myRating, setMyRating] = useState<boolean | null>(null);
+ // History echo: messages restored from the DB carry the user's prior rating.
+ const [myRating, setMyRating] = useState<boolean | null>(msg.myRating ?? null);
  const rate = (rating: boolean) => {
   const next = myRating === rating ? null : rating; // toggle-off on re-click
   setMyRating(next);

@@ -20,6 +20,8 @@ export interface Message {
    * this response. Additive quality flag (mirrors persistFailed) so the UI
    * can badge the message — never mutates content. */
   fallbackUsed?: boolean;
+  /** The user's thumbs state for this assistant message (history echo). */
+  myRating?: boolean | null;
 }
 
 /** Custom event dispatched when an optimistic turn is rolled back (stream

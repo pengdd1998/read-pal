@@ -243,7 +243,7 @@ async def create_book_with_content(
     )
 
     asyncio.create_task(
-        _safe_precompute(book.id, document_id, result['chapters'])
+        _safe_precompute(book.id, document_id, result['chapters'], content_hash)
     )
     return book
 
@@ -352,6 +352,7 @@ async def _safe_precompute(
     book_id: UUID,
     document_id: UUID,
     chapters: list[dict],
+    content_hash: str | None = None,
 ) -> None:
     """Fire-and-forget embedding pre-computation with retry."""
     from app.services.rag import precompute_book_embeddings
@@ -359,7 +360,7 @@ async def _safe_precompute(
     max_retries = 2
     for attempt in range(max_retries + 1):
         try:
-            await precompute_book_embeddings(book_id, document_id, chapters)
+            await precompute_book_embeddings(book_id, document_id, chapters, content_hash)
             return
         except Exception as exc:
             retriable = isinstance(exc, (ConnectionError, TimeoutError, ValueError))

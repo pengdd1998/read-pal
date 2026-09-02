@@ -25,6 +25,7 @@ interface RawHistoryItem {
   content: string;
   timestamp?: number;
   createdAt?: string;
+  myRating?: boolean | null;
 }
 
 interface CursorPage {
@@ -59,6 +60,7 @@ function toMessages(raw: RawHistoryItem[]): Message[] {
       id: m.id || generateId(),
       role: m.role,
       content: m.content,
+      myRating: m.myRating ?? null,
       timestamp: parseTimestamp(m),
     }))
     .reverse()

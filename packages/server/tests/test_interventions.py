@@ -87,11 +87,22 @@ async def test_feedback_accepts_book_id(client):
     reg = await register_user(client)
     headers = auth_headers(reg['token'])
 
+    # PG enforces the book_id FK — create a real book first (SQLite doesn't,
+    # which is why this only failed on the postgres-tests job).
+    book_resp = await client.post(
+        '/api/v1/books',
+        headers=headers,
+        json={'title': 'Feedback Book', 'author': 'A', 'file_type': 'epub',
+              'file_size': 1, 'total_pages': 1},
+    )
+    assert book_resp.status_code == 201, book_resp.text
+    book_id = book_resp.json()['data']['id']
+
     resp = await client.post(
         '/api/v1/interventions/feedback',
         headers=headers,
         json={
-            'bookId': '00000000-0000-0000-0000-000000000001',
+            'bookId': book_id,
             'type': 'long_session',
             'helpful': False,
             'dismissed': True,

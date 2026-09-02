@@ -85,9 +85,29 @@ async def get_chat_history(
     """Return chat messages for a user, optionally filtered by book.
 
     Backwards-compatible flat list (no cursor). Filters out soft-deleted rows.
+    Assistant messages carry ``myRating`` (True/False/None) so the UI can
+    re-render the user's previous thumbs state after a reload.
     """
     rows = await load_history_messages(db, user_id, book_id, limit=limit)
-    return [_serialize_message(m) for m in rows]
+    serialized = [_serialize_message(m) for m in rows]
+
+    from sqlalchemy import select
+
+    from app.models.ai_feedback import AIFeedback
+
+    assistant_ids = [m['id'] for m in serialized if m['role'] == 'assistant']
+    if assistant_ids:
+        rating_rows = (await db.execute(
+            select(AIFeedback.message_id, AIFeedback.rating).where(
+                AIFeedback.user_id == user_id,
+                AIFeedback.message_id.in_(assistant_ids),
+            )
+        )).all()
+        by_message = {str(mid): rating for mid, rating in rating_rows}
+        for m in serialized:
+            if m['role'] == 'assistant':
+                m['myRating'] = by_message.get(m['id'])
+    return serialized
 
 
 async def get_chat_history_page(

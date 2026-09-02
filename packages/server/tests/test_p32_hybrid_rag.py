@@ -283,12 +283,23 @@ _FILLER_TEXT = '第{i}段普通正文内容样例'
 
 
 async def _seed_chunks(session, book_id: UUID, filler_count: int, needle_at: int):
+    # PG enforces FKs (SQLite doesn't): seed the parent Book + Document rows.
+    from app.models.book import Book, BookFileType
+    from app.models.document import Document
     from app.models.book_chunk import BookChunk
+
+    session.add(Book(
+        id=book_id, user_id=uuid4(), title='T', author='A',
+        file_type=BookFileType.epub, file_size=1, total_pages=1,
+    ))
+    session.add(Document(id=(doc_id := uuid4()), book_id=book_id, user_id=uuid4(),
+                         content='x', chapters=[]))
+    await session.flush()
 
     chunks = [
         BookChunk(
             book_id=book_id,
-            document_id=uuid4(),
+            document_id=doc_id,
             chapter_index=i,
             chunk_index=0,
             content=_FILLER_TEXT.format(i=i),
@@ -298,7 +309,7 @@ async def _seed_chunks(session, book_id: UUID, filler_count: int, needle_at: int
     chunks.append(
         BookChunk(
             book_id=book_id,
-            document_id=uuid4(),
+            document_id=doc_id,
             chapter_index=needle_at,
             chunk_index=0,
             content=f'这里是{_NEEDLE_QUERY}出现的段落',
