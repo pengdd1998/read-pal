@@ -283,7 +283,11 @@ class TestCloseStaleSessions:
         # duration = 5min = 300s
         assert stale_session.is_active is False
         assert stale_session.duration == 300
-        assert stale_session.ended_at == datetime(2026, 1, 1, 10, 5, 0)
+        # _close_stale_sessions normalizes naive inputs to aware UTC
+        # (timestamptz columns load aware on PG).
+        assert stale_session.ended_at == datetime(
+            2026, 1, 1, 10, 5, 0, tzinfo=timezone.utc,
+        )
 
     @pytest.mark.asyncio
     async def test_idle_session_with_inflated_duration_gets_clamped(self):

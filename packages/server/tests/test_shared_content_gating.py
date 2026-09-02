@@ -5,8 +5,7 @@ book_contents). A's RAG search must surface shared chunks, B's must too,
 and NEITHER may see content scoped to the other's shelf beyond the shared
 hash. Ownership gate stays upstream (Book lookup by user); this pins it.
 """
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -43,17 +42,19 @@ async def test_shared_chunks_serve_both_users_and_gate_stays_upstream():
         ), {'i': book_a, 'u': user_a, 'j': uuid4(), 'u2': user_b, 'h': shared_hash})
         # One shared chunk (uploaded by A, keyed by hash). Timestamps are
         # explicit: SQLite test schema strips server_defaults (ORM-only
-        # fallbacks), so raw SQL must not rely on them.
+        # fallbacks), so raw SQL must not rely on them. The chunk must
+        # reference the SAME document id — PG enforces the FK, SQLite
+        # silently accepted the mismatched random uuid.
+        doc_id = uuid4()
         await db.execute(text(
             "INSERT INTO documents (id, book_id, user_id, content, chapters, created_at, updated_at) VALUES "
             "(:dk, :ba, :ua, 'shared passage', '[]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
-        ), {'ba': book_a, 'ua': user_a, 'dk': __import__('uuid').uuid4()})
+        ), {'ba': book_a, 'ua': user_a, 'dk': doc_id})
         await db.execute(text(
             "INSERT INTO book_chunks (id, book_id, document_id, chapter_index, "
             "chunk_index, content, content_hash, created_at) VALUES "
             "(:ck, :ba, :dk, 0, 0, 'shared passage', :h, CURRENT_TIMESTAMP)"
-        ), {'ba': book_a, 'h': shared_hash,
-            'ck': __import__('uuid').uuid4(), 'dk': __import__('uuid').uuid4()})
+        ), {'ba': book_a, 'h': shared_hash, 'ck': uuid4(), 'dk': doc_id})
         await db.commit()
 
         # B's ownership lookup: B's own book resolves with the shared hash

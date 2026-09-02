@@ -347,7 +347,7 @@ async def test_stale_session_duration_capped_to_last_heartbeat(client):
     closed stale — its duration must reflect ~1 minute of activity, not the
     5-hour wall-clock window.
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import UTC, datetime, timedelta
 
     from app.models.book import Book
     from app.models.reading_session import ReadingSession
@@ -379,9 +379,9 @@ async def test_stale_session_duration_capped_to_last_heartbeat(client):
         await db.flush()
 
         # Session: started 5h ago, last heartbeat 4h59m ago (1 min of reading).
-        # Match production datetimes: naive UTC (PostgreSQL TIMESTAMP WITHOUT
-        # TIME ZONE columns return naive values; utcnow() is naive too).
-        started = (datetime.now(timezone.utc) - timedelta(hours=5)).replace(tzinfo=None)
+        # Aware UTC throughout — reading_sessions columns are timestamptz
+        # (PG loads aware); the service normalizes naive inputs to aware.
+        started = datetime.now(UTC) - timedelta(hours=5)
         last_heartbeat = started + timedelta(seconds=60)
         stale = ReadingSession(
             user_id=user.id,
@@ -393,7 +393,7 @@ async def test_stale_session_duration_capped_to_last_heartbeat(client):
         db.add(stale)
         await db.flush()
 
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = datetime.now(UTC)
         # Pre-fetch the stale row so we can read mutations after close.
         pre_close = (
             await db.execute(

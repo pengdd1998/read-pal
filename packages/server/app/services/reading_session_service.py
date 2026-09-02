@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from app.schemas.reading_session import HeartbeatRequest
 
 import logging
-from datetime import timedelta
+from datetime import timedelta, UTC
 from uuid import UUID
 
 from app.utils import utcnow
@@ -109,6 +109,15 @@ async def _close_stale_sessions(
         old.is_active = False
         # updated_at tracks the last heartbeat. If the user closed the tab
         # hours ago, ended_at should reflect that, not the current time.
+        # Mixed tz-awareness breaks min() on PG: timestamptz columns load
+        # as aware datetimes while utcnow() is naive. Normalize both sides
+        # to aware-UTC first — same idiom as _session_helpers.
+        for dt_attr in ('started_at', 'updated_at'):
+            val = getattr(old, dt_attr)
+            if val is not None and val.tzinfo is None:
+                setattr(old, dt_attr, val.replace(tzinfo=UTC))
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=UTC)
         last_activity = old.updated_at or old.started_at or now
         effective_end = min(
             now,
