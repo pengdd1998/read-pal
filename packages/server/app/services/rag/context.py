@@ -6,7 +6,7 @@ import redis.exceptions
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.book import Book
+from app.models.book import Book, BookStatus
 from app.utils.annotation_format import format_annotation_entry
 from app.utils.sanitizer import sanitize_user_input
 from app.core.redis import get_redis
@@ -44,7 +44,10 @@ async def _fetch_book_and_spoiler_limit(
         return None, None
 
     # Use current_segment (chapter-level progress) not current_page.
-    is_completed = book.status == 'completed'
+    # P3.5: Book.status loads as a BookStatus member — a 'completed'
+    # string comparison is always False, silently spoiler-limiting
+    # completed books to current_segment forever.
+    is_completed = book.status == BookStatus.completed
     max_chapter_index = book.current_segment if not is_completed else None
     return book, max_chapter_index
 

@@ -138,3 +138,39 @@ entirely instead of being trimmed.
 - Letting any optional section grow without a per-section cap.
 - Dropping the base system prompt when budget is tight (ship a stub
   persona instead).
+
+---
+
+## P3.5 — Enum-vs-string status comparison silently disabled the completed-book RAG unfilter
+
+**Locations**
+- `packages/server/app/services/rag/context.py:47` (fixed)
+- `packages/server/app/services/rag/cross_book.py:38` (caught pre-ship during Phase 2 Research-agent work)
+
+**What went wrong**
+``Book.status`` is declared as ``Enum(BookStatus, values_callable=...)``;
+rows loaded through the ORM come back as **enum members**, not strings.
+The spoiler gate compared ``book.status == 'completed'`` — in Python,
+``BookStatus.completed == 'completed'`` is ``False``, so the check could
+never fire. Every "completed" book stayed spoiler-capped at
+``current_segment`` forever, contradicting the documented contract
+("Completed books have no filter"). Discovered when the Phase 2
+Research agent's cross-book search returned empty for a seeded
+completed book whose needle chapter sat past ``current_segment``.
+
+**Why the fix works**
+- Python-side comparisons use the enum member:
+  ``book.status == BookStatus.completed`` (the pattern
+  ``_session_book_progress.py:34`` already used).
+- SQL-side ``.where(Book.status == 'completed')`` is NOT affected — the
+  Enum type's bind processor converts value strings, so those keep
+  working.
+- Regression test pins both layers: a completed book with a needle
+  chunk at chapter 9 and ``current_segment=1`` must be retrievable
+  (``tests/test_research_agent.py::test_completed_book_has_no_chapter_filter``).
+
+**Regression red-flag**
+- Any Python-side ``book.status == '<string>'`` comparison (grep the
+  services tree when touching status logic).
+- Tests that seed status but never exercise a code path where the enum
+  value matters past the SQL layer.
