@@ -39,6 +39,11 @@ services:
       GLM_BASE_URL: ${GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-glm-4.7-flash}
       FALLBACK_MODEL: ${FALLBACK_MODEL:-glm-4-flash}
+      # Multi-provider routing (JSON array in .env). Without this passthrough
+      # the container only ever sees the legacy single-glm fallback — the
+      # mimo fallback defined in .env never reached production (found
+      # 2026-09-02 while syncing provider priority).
+      LLM_PROVIDERS: ${LLM_PROVIDERS:-}
       LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-15}
       LLM_MAX_RETRIES: ${LLM_MAX_RETRIES:-3}
       CIRCUIT_FAILURE_THRESHOLD: ${CIRCUIT_FAILURE_THRESHOLD:-5}
