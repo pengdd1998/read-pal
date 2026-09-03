@@ -131,6 +131,35 @@ def _populated_brief() -> dict:
 
 
 # ---------------------------------------------------------------------------
+class TestCrossBookEmbedding:
+    @pytest.mark.asyncio
+    async def test_cross_book_embeds_query_once(self, monkeypatch):
+        """24h-review follow-up: the query is embedded exactly once per
+        research question and shared across every book (the per-book path
+        re-embedded the identical query up to max_books times)."""
+        async with _TestSession() as session:
+            uid = await _seed_user(session)
+            await _seed_book(
+                session, uid, title="A", chunks=[(0, f"{_NEEDLE} in A")],
+            )
+            await _seed_book(
+                session, uid, title="B", chunks=[(0, f"{_NEEDLE} in B")],
+            )
+            await _seed_book(
+                session, uid, title="C", chunks=[(0, f"{_NEEDLE} in C")],
+            )
+            calls = []
+            embed = AsyncMock(
+                side_effect=lambda texts, **kw: calls.append(texts) or [[0.1] * 4],
+            )
+            # cross_book imports get_embeddings lazily inside the function;
+            # search.py holds a module-level binding — patch both.
+            monkeypatch.setattr("app.services.rag.embedding.get_embeddings", embed)
+            monkeypatch.setattr("app.services.rag.search.get_embeddings", embed)
+            await cross_book_search(session, uid, "shared query")
+        assert len(calls) == 1, f"expected one embedding call, got {len(calls)}"
+
+
 # cross_book_search — gating, spoilers, attribution
 # ---------------------------------------------------------------------------
 

@@ -53,40 +53,34 @@ def _safe_default(exc: Exception, fallback: object = 0) -> object:
 
 
 async def _gather_raw_data(db: AsyncSession, uid: UUID) -> dict:
-    """Collect all raw data from DB helpers in parallel.
+    """Collect all raw data from DB helpers.
 
-    Uses return_exceptions=True so a single query failure doesn't break
-    the entire dashboard -- failed sections fall back to safe defaults.
+    SEQUENTIAL by design: AsyncSession forbids concurrent operations, and
+    the previous asyncio.gather over these ten helpers raced the session's
+    first connection checkout — "concurrent operations are not permitted"
+    (27× observed in local logs) with return_exceptions swallowing the
+    failures into safe defaults, so a cold-cache dashboard could aggregate
+    zeros AND cache that degraded payload via SWR. Each helper is a
+    millisecond-scale query; the parallelism wasn't buying anything.
+    Per-item failures still degrade individually.
     """
-    results = await asyncio.gather(
-        get_book_status_counts(db, uid),
-        get_pages_read(db, uid),
-        get_reading_minutes(db, uid),
-        compute_current_streak(db, uid),
-        get_annotation_counts(db, uid),
-        get_recent_books(db, uid),
-        get_weekly_activity(db, uid),
-        get_chat_count(db, uid),
-        get_memory_book_count(db, uid),
-        get_distinct_tag_count(db, uid),
-        return_exceptions=True,
-    )
+    async def _safe(coro_factory, default: object = 0) -> object:
+        try:
+            return await coro_factory()
+        except Exception as exc:  # noqa: BLE001 — one section must not sink the rest
+            return _safe_default(exc, default)
 
-    def _val(idx: int, default: object = 0) -> object:
-        r = results[idx]
-        return _safe_default(r, default) if isinstance(r, Exception) else r
-
-    status_counts = _val(0, {'total': 0, 'reading': 0, 'completed': 0, 'unread': 0})
-    pages_read = int(_val(1))
-    total_minutes = int(_val(2))
-    streak = int(_val(3))
-    annotation_pair = _val(4, (0, 0))
+    status_counts = await _safe(lambda: get_book_status_counts(db, uid), {'total': 0, 'reading': 0, 'completed': 0, 'unread': 0})
+    pages_read = int(await _safe(lambda: get_pages_read(db, uid)))
+    total_minutes = int(await _safe(lambda: get_reading_minutes(db, uid)))
+    streak = int(await _safe(lambda: compute_current_streak(db, uid)))
+    annotation_pair = await _safe(lambda: get_annotation_counts(db, uid), (0, 0))
     highlights, notes = annotation_pair if isinstance(annotation_pair, tuple) else (0, 0)
-    recent_books = _val(5, [])
-    weekly_activity = _val(6, [])
-    chat_count = int(_val(7))
-    memory_count = int(_val(8))
-    distinct_tags = int(_val(9))
+    recent_books = await _safe(lambda: get_recent_books(db, uid), [])
+    weekly_activity = await _safe(lambda: get_weekly_activity(db, uid), [])
+    chat_count = int(await _safe(lambda: get_chat_count(db, uid)))
+    memory_count = int(await _safe(lambda: get_memory_book_count(db, uid)))
+    distinct_tags = int(await _safe(lambda: get_distinct_tag_count(db, uid)))
 
     return {
         'status_counts': status_counts,

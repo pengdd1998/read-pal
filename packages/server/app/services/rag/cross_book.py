@@ -11,7 +11,6 @@ contract as single-book RAG — see ``rag/context.py`` and
 
 from __future__ import annotations
 
-import asyncio
 from uuid import UUID
 
 from sqlalchemy import select
@@ -86,38 +85,42 @@ async def cross_book_search(
     if not books:
         return []
 
-    async def _search_one(book: Book) -> list[dict]:
-        chunks = await hybrid_chunk_search(
-            db,
-            book.id,
-            query,
-            top_k=per_book_k,
-            max_chapter_index=_spoiler_limit(book),
-            content_hash=book.content_hash,
-        )
+    # Embed the query ONCE and share it across every book — the previous
+    # per-book path re-embedded the identical query for each of up to 8
+    # books (8 embedding API calls per research question).
+    from app.services.rag.embedding import get_embeddings
+    query_emb = (await get_embeddings([query], retry_delays=(1.0,)) or [None])[0]
+
+    # SEQUENTIAL fan-out: AsyncSession forbids concurrent operations, and
+    # the previous asyncio.gather raced up to 16 concurrent executes on
+    # this one session (per-book × hybrid's internal pair). With the
+    # shared embedding each iteration is two millisecond-scale queries.
+    # Per-book isolation is preserved via try/except: one book's index
+    # being broken must not sink the whole research pass.
+    usable: list[list[dict]] = []
+    for book in books:
+        try:
+            chunks = await hybrid_chunk_search(
+                db,
+                book.id,
+                query,
+                top_k=per_book_k,
+                max_chapter_index=_spoiler_limit(book),
+                content_hash=book.content_hash,
+                query_emb=query_emb,
+            )
+        except Exception as exc:  # noqa: BLE001 — one book must not sink the pass
+            logger.warning(
+                "Cross-book search failed for book %s: %s",
+                book.id,
+                exc,
+            )
+            continue
         for chunk in chunks:
             chunk["book_id"] = str(book.id)
             chunk["book_title"] = book.title
             chunk["author"] = book.author
-        return chunks
-
-    ranked_lists = await asyncio.gather(
-        *[_search_one(book) for book in books],
-        return_exceptions=True,
-    )
-
-    usable: list[list[dict]] = []
-    for book, ranked in zip(books, ranked_lists, strict=True):
-        if isinstance(ranked, BaseException):
-            # One book's index being broken must not sink the whole
-            # research pass — log and continue with the rest.
-            logger.warning(
-                "Cross-book search failed for book %s: %s",
-                book.id,
-                ranked,
-            )
-            continue
-        if ranked:
-            usable.append(ranked)
+        if chunks:
+            usable.append(chunks)
 
     return reciprocal_rank_fuse(usable, top_k=total_k)

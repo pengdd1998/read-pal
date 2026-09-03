@@ -1,6 +1,5 @@
 """Search strategies: semantic (pgVector) and keyword-based fallback."""
 
-import asyncio
 from typing import Any
 from uuid import UUID
 
@@ -90,12 +89,18 @@ async def _semantic_chapter_search(
     top_k: int = 3,
     max_chapter_index: int | None = None,
     content_hash: str | None = None,
+    query_emb: list[float] | None = None,
 ) -> list[dict[str, Any]]:
-    """pgVector cosine distance search over pre-computed chunk embeddings."""
-    # Interactive path: one quick retry max — a throttled embedding
-    # account must not add patient backoff to every question's TTFT; the
-    # keyword fallback takes over immediately.
-    query_emb = (await get_embeddings([query], retry_delays=(1.0,)) or [None])[0]
+    """pgVector cosine distance search over pre-computed chunk embeddings.
+
+    ``query_emb`` lets multi-book callers embed the query once and reuse
+    it for every book instead of re-calling the embedding API per book.
+    """
+    if query_emb is None:
+        # Interactive path: one quick retry max — a throttled embedding
+        # account must not add patient backoff to every question's TTFT; the
+        # keyword fallback takes over immediately.
+        query_emb = (await get_embeddings([query], retry_delays=(1.0,)) or [None])[0]
     if query_emb is None:
         return []
 
@@ -321,8 +326,9 @@ async def hybrid_chunk_search(
     max_chapter_index: int | None = None,
     pool_size: int | None = None,
     content_hash: str | None = None,
+    query_emb: list[float] | None = None,
 ) -> list[dict[str, Any]]:
-    """Hybrid search: run semantic + keyword in parallel, fuse with RRF.
+    """Hybrid search: run semantic + keyword, fuse with RRF.
 
     P3.2 replaces the previous "cascading fallback" strategy. Cascading
     fallback had a known weakness: if semantic returned anything at all,
@@ -334,6 +340,12 @@ async def hybrid_chunk_search(
     top_k by default) gives RRF enough candidates to fuse meaningfully
     without over-fetching.
 
+    The two paths run SEQUENTIALLY: AsyncSession forbids concurrent
+    operations, and the previous asyncio.gather raced the connection
+    checkout on fresh sessions (same class as the dashboard partials
+    bug). Both are millisecond-scale queries — the parallelism bought
+    nothing. ``query_emb`` lets multi-book callers embed once and reuse.
+
     Falls back to legacy keyword chapter search only when both paths
     return empty (e.g. book has chunks disabled or out of range).
     """
@@ -342,16 +354,13 @@ async def hybrid_chunk_search(
     # 6 candidates and rarely changes order vs. just picking semantic.
     pool = max(pool_size or 2 * top_k, top_k)
 
-    semantic, keyword = await asyncio.gather(
-        _semantic_chapter_search(
-            db, book_id, query, top_k=pool, max_chapter_index=max_chapter_index,
-            content_hash=content_hash,
-        ),
-        _keyword_chunk_search(
-            db, book_id, query, top_k=pool, max_chapter_index=max_chapter_index,
-            content_hash=content_hash,
-        ),
-        return_exceptions=False,
+    semantic = await _semantic_chapter_search(
+        db, book_id, query, top_k=pool, max_chapter_index=max_chapter_index,
+        content_hash=content_hash, query_emb=query_emb,
+    )
+    keyword = await _keyword_chunk_search(
+        db, book_id, query, top_k=pool, max_chapter_index=max_chapter_index,
+        content_hash=content_hash,
     )
 
     # Either path empty is fine — RRF over a single list degenerates to
