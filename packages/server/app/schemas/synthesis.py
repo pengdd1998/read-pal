@@ -33,10 +33,11 @@ class SynthesisRequest(BaseModel):
     # on answering it (instead of a generic whole-book analysis).
     query: str | None = None
 
-    mode: Literal[
-        'cross_reference', 'concept_map', 'find_contradictions',
-        'contradictions', 'summary_report', 'summary', 'synthesize',
-    ] | None = None
+    # ``mode`` is deliberately a plain string, not a Literal: unknown values
+    # from not-yet-mapped clients degrade to the legacy generic analysis via
+    # the alias table (resolve_synthesis_mode → None) instead of failing
+    # validation with 422 (24h-review R2 mitigation).
+    mode: str | None = Field(None, max_length=40)
     # cross_reference tab
     concept: str | None = Field(None, max_length=300)
     source_book_id: UUID | None = None  # path book_id is the source; accepted for contract fidelity

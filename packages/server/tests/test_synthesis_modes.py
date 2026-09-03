@@ -101,6 +101,28 @@ class TestResolveSynthesisMode:
         assert resolve_synthesis_mode(_body(query="q")) is None
         assert resolve_synthesis_mode(_body()) is None
 
+    def test_unknown_mode_degrades_to_legacy_not_422(self):
+        # 24h-review R2: mode is a plain string now — an unrecognized value
+        # from an old client must fall through to the legacy generic
+        # analysis, never hard-fail validation.
+        for legacy_value in ("report", "highlights", "some_future_mode", "MODE"):
+            assert resolve_synthesis_mode(_body(mode=legacy_value)) is None, legacy_value
+
+    @pytest.mark.parametrize("mode", ["cross_reference", "concept_map", "contradictions", "summary_report"])
+    @pytest.mark.asyncio
+    async def test_dispatch_calls_every_handler_with_uniform_contract(self, mode):
+        """R1 regression: run_concept_map had 3 params while the dispatcher
+        passes 4 — every concept_map request died TypeError→503. Pin the
+        uniform (db, user_id, body, book_id) call shape for ALL modes so a
+        future signature drift fails here instead of in production."""
+        import app.services.agent.synthesis_modes as dispatch_module
+
+        handler = AsyncMock(return_value={"success": True, "data": {}})
+        with patch.dict(dispatch_module.__dict__, {f"run_{ {'cross_reference': 'cross_reference', 'concept_map': 'concept_map', 'contradictions': 'contradictions', 'summary_report': 'summary_report'}[mode] }": handler}):
+            db, uid, body, bid = object(), uuid4(), SynthesisRequest(), uuid4()
+            await dispatch_module.run_synthesis_mode(db, uid, mode, body, bid)
+        handler.assert_awaited_once_with(db, uid, body, bid)
+
     def test_field_inference_when_mode_absent(self):
         # The panel didn't send mode before the upgrade — the distinctive
         # fields must still route to the right backend.
@@ -182,6 +204,7 @@ class TestModeOrchestration:
                     session,
                     uid,
                     _body(topic="t", max_nodes=10),
+                    uuid4(),  # book_id — uniform 4-arg dispatch contract
                 )
         assert result["success"] is True
         assert result["data"]["nodes"][0]["id"] == "n1"
@@ -381,14 +404,16 @@ class TestSynthesisRouterModes:
         agent.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_unknown_mode_rejected_by_schema(self, client):
+    async def test_unknown_mode_degrades_to_legacy_over_http(self, client):
+        # 24h-review R2: unknown mode values no longer 422 — they degrade to
+        # the legacy generic analysis so unmapped old clients keep working.
         reg = await register_user(client)
         resp = await client.post(
             f"/api/v1/synthesis/{uuid4()}",
             json={"mode": "does_not_exist"},
             headers=auth_headers(reg["token"]),
         )
-        assert resp.status_code == 422
+        assert resp.status_code != 422
 
 
 class TestSynthesisModeWiring:

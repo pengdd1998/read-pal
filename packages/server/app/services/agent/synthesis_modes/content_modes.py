@@ -99,8 +99,16 @@ async def run_concept_map(
     db: AsyncSession,
     user_id: UUID,
     body: SynthesisRequest,
+    book_id: UUID,
 ) -> dict[str, Any]:
-    """Topic → nodes/edges graph over library excerpts."""
+    """Topic → nodes/edges graph over library excerpts.
+
+    ``book_id`` is not part of the search (the map spans the user's whole
+    library), but the dispatcher calls every mode handler with the same
+    4-arg contract — a 3-arg signature here made every concept_map request
+    die with TypeError → 503 (24h-review R1, regressed since b2f65da1).
+    It lands in the completion log for observability instead.
+    """
     t0 = time.monotonic()
     topic = sanitize_user_input(body.topic or "", max_length=300, context="cm_topic")
     max_nodes = body.max_nodes or 20
@@ -132,6 +140,7 @@ async def run_concept_map(
         "concept_map",
         user_id,
         t0,
+        book_id=str(book_id),
         nodes_count=len(data.get("nodes", [])),
         edges_count=len(data.get("edges", [])),
     )
