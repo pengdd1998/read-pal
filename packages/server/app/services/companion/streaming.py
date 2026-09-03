@@ -13,6 +13,7 @@ The helpers below are re-exported so historical import paths
 
 import asyncio
 import json
+import re
 import time
 import uuid
 from collections.abc import AsyncGenerator
@@ -52,6 +53,9 @@ logger = structlog.get_logger('read-pal.companion')
 # conservative estimate based on observed companion response lengths.
 # Must stay <= _STREAM_MAX_OUTPUT_TOKENS (stream_provider.py).
 _STREAM_RESERVED_OUTPUT_TOKENS = 800
+
+# CJK detection for canned replies — see _canned_reply_stream.
+_CJK_RE = re.compile(r'[\u4e00-\u9fff]')
 
 
 async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
@@ -225,6 +229,37 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
         yield 'data: [DONE]\n\n'
 
 
+def _effective_reply_lang(message: str, lang: str) -> str:
+    """Canned replies bypass the LLM (which mirrors message language), so
+    a CJK message forces zh regardless of the account-level setting — a
+    Chinese question must never get an English canned refusal."""
+    return 'zh' if _CJK_RE.search(message) else lang
+
+
+async def _canned_reply_stream(
+    db: AsyncSession,
+    user_id: UUID,
+    book_id: UUID,
+    message: str,
+    canned: str,
+    request_id: str,
+    lang: str,
+) -> AsyncGenerator[str, None]:
+    """Emit a fixed response through the normal pipeline (persist + ids)."""
+    yield f'data: {json.dumps({"request_id": request_id})}\n\n'
+    yield sse_chunk(canned)
+    assistant_db_id = await _persist_with_retry(
+        db, user_id, book_id, message, [], [canned],
+        request_id, lang=lang,
+    )
+    if assistant_db_id is not None:
+        from app.services.companion.stream_cache import emit_message_id_frame
+        yield await emit_message_id_frame(
+            str(assistant_db_id), request_id, 1,
+        )
+    yield 'data: [DONE]\n\n'
+
+
 async def stream_chat(
     db: AsyncSession,
     user_id: UUID,
@@ -240,34 +275,47 @@ async def stream_chat(
     request: Any = None,
 ) -> AsyncGenerator[str, None]:
     """Stream companion chat as SSE chunks with per-provider circuit breaker."""
-    # Crisis input gate — MUST sit before _prepare_context: enrichment
-    # (RAG query embedding, summary regeneration) can burn 10s+ on a
-    # throttled account before any provider-path gate would fire, and a
-    # person in distress should never wait behind that. The canned reply
-    # flows through the normal persist + message_id pipeline so history
-    # and feedback keep working (BND-R03/R04 hardening).
+    actual_request_id = request_id or uuid.uuid4().hex[:12]
+
+    # Input-side gates — MUST sit before _prepare_context: enrichment (RAG
+    # query embedding, summary regeneration) can burn 10s+ on a throttled
+    # account, and neither a person in distress nor a boundary request
+    # should wait behind that. Canned replies flow through the normal
+    # persist + message_id pipeline so history and feedback keep working.
     from app.services.companion.safety import crisis_response, detect_crisis
     if detect_crisis(message):
-        actual_request_id = request_id or uuid.uuid4().hex[:12]
         logger.warning(
             'companion.stream.crisis_response_served',
-            request_id=actual_request_id,
-            user_id=str(user_id),
-            book_id=str(book_id),
+            request_id=actual_request_id, user_id=str(user_id), book_id=str(book_id),
         )
-        yield f'data: {json.dumps({"request_id": actual_request_id})}\n\n'
-        canned = crisis_response(lang)
-        yield sse_chunk(canned)
-        assistant_db_id = await _persist_with_retry(
-            db, user_id, book_id, message, [], [canned],
-            actual_request_id, lang=lang,
+        reply_lang = _effective_reply_lang(message, lang)
+        async for chunk in _canned_reply_stream(
+            db, user_id, book_id, message, crisis_response(reply_lang),
+            actual_request_id, reply_lang,
+        ):
+            yield chunk
+        return
+
+    # Fixed boundary responses (adjudication feedback #2): explicit
+    # out-of-bounds REQUESTS get stable intent-typed canned replies instead
+    # of per-turn LLM improvisation. Book title (client hint) only shapes
+    # the reply's wording — never its logic.
+    from app.services.companion.boundary_gate import boundary_response, detect_boundary_intent
+    intent = detect_boundary_intent(message)
+    if intent:
+        logger.warning(
+            'companion.stream.boundary_response_served',
+            intent=intent, request_id=actual_request_id,
+            user_id=str(user_id), book_id=str(book_id),
         )
-        if assistant_db_id is not None:
-            from app.services.companion.stream_cache import emit_message_id_frame
-            yield await emit_message_id_frame(
-                str(assistant_db_id), actual_request_id, 1,
-            )
-        yield 'data: [DONE]\n\n'
+        reply_lang = _effective_reply_lang(message, lang)
+        title_hint = str((context or {}).get('bookTitle') or '')[:120]
+        async for chunk in _canned_reply_stream(
+            db, user_id, book_id, message,
+            boundary_response(intent, reply_lang, title_hint),
+            actual_request_id, reply_lang,
+        ):
+            yield chunk
         return
 
     _, history, system_text, budget = await _prepare_context(

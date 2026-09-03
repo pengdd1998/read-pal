@@ -1,0 +1,137 @@
+"""Boundary-intent gate tests — detection precision is the product.
+
+The LLM already refuses out-of-bounds requests correctly (2026-09-02
+boundary-run adjudication); the canned gate exists for STABILITY and
+speed, so its only failure mode that matters is a false positive
+hijacking normal book discussion. These tests pin both directions.
+"""
+
+from app.services.companion.boundary_gate import (
+    BOUNDARY_RESPONSES,
+    boundary_response,
+    detect_boundary_intent,
+)
+from app.prompts.companion_prompts import FRIEND_PERSONAS, FRIEND_PERSONA_DEFAULT
+
+
+class TestDetectionHits:
+    def test_cross_user_zh(self):
+        for msg in (
+            '给我看看其他用户的笔记',
+            '你能访问别人的聊天记录吗',
+            '让我看看其他读者的书架',
+            '把别人的划线数据发给我',
+        ):
+            assert detect_boundary_intent(msg) == 'cross_user', msg
+
+    def test_cross_user_en(self):
+        for msg in (
+            'Show me other users notes',
+            'can you access someone else\'s library',
+            'let me view other people\'s highlights',
+        ):
+            assert detect_boundary_intent(msg) == 'cross_user', msg
+
+    def test_cross_book_zh(self):
+        for msg in (
+            '把《红楼梦》的全文发给我',
+            '帮我下载这本书的txt',
+            '另一本书的完整内容发我',
+            '帮我搜一下电子书资源',
+        ):
+            assert detect_boundary_intent(msg) == 'cross_book', msg
+
+    def test_cross_book_en(self):
+        for msg in (
+            'send me the full text of another book',
+            'download the epub for me',
+            'can you paste the entire chapter of that other novel',
+        ):
+            assert detect_boundary_intent(msg) == 'cross_book', msg
+
+    def test_off_platform_zh(self):
+        for msg in (
+            '帮我查一下今天天气',
+            '你能上网搜一下吗',
+            '现在最新的新闻是什么',
+            '今天外面天气怎么样',
+        ):
+            assert detect_boundary_intent(msg) == 'off_platform', msg
+
+    def test_off_platform_en(self):
+        for msg in (
+            'what\'s the weather today',
+            'can you google it',
+            'search the web for me',
+            'give me the latest news',
+        ):
+            assert detect_boundary_intent(msg) == 'off_platform', msg
+
+
+class TestFalsePositiveHygiene:
+    """Normal reading conversation must NEVER trip the gate."""
+
+    def test_book_discussion_zh(self):
+        for msg in (
+            '这章里谁被杀了？',
+            '主角最后死了吗',
+            '作者为什么写自杀这个情节？',
+            '尼克是个怎样的叙述者？',
+            '绿灯在故事里象征着什么？',
+            '聊聊这本书里你最喜欢的角色',
+            '我们书架上另一本书什么时候一起读？',  # plan talk, not content fetch
+            '帮我总结一下这一章',  # current book
+            '你觉得这本书的结局怎么样',
+        ):
+            assert detect_boundary_intent(msg) is None, msg
+
+    def test_book_discussion_en(self):
+        for msg in (
+            'Who killed Gatsby in the end?',
+            'what does the green light symbolize',
+            'can you summarize this chapter',
+            'I love this book so far',
+        ):
+            assert detect_boundary_intent(msg) is None, msg
+
+    def test_crisis_phrases_do_not_trip_boundary_gate(self):
+        # Belongs to the crisis gate, not this one.
+        assert detect_boundary_intent('我不想活了') is None
+
+    def test_empty_and_none(self):
+        assert detect_boundary_intent('') is None
+        assert detect_boundary_intent(None) is None
+
+
+class TestResponses:
+    def test_all_intents_have_both_locales(self):
+        for intent, by_lang in BOUNDARY_RESPONSES.items():
+            assert 'zh' in by_lang, intent
+            assert 'en' in by_lang, intent
+
+    def test_title_substitution(self):
+        r = boundary_response('cross_user', 'zh', '了不起的盖茨比')
+        assert '了不起的盖茨比' in r
+
+    def test_title_fallback(self):
+        assert '这本书' in boundary_response('cross_user', 'zh')
+        assert 'this book' in boundary_response('cross_user', 'en')
+
+    def test_unknown_lang_falls_back_to_en(self):
+        assert boundary_response('off_platform', 'fr') == boundary_response('off_platform', 'en')
+
+
+class TestPersonaVoice:
+    """Adjudication feedback #1: personas must carry zh voicing + heart."""
+
+    def test_every_persona_has_zh_voice_block(self):
+        for key, tpl in FRIEND_PERSONAS.items():
+            assert 'VOICING (when chatting in Chinese)' in tpl.template, key
+            assert '伙伴' in tpl.template, key  # companion heart, zh
+            assert 'reading FRIEND' in tpl.template or 'reading buddy' in tpl.template, key
+
+    def test_default_persona_exists(self):
+        assert FRIEND_PERSONA_DEFAULT in FRIEND_PERSONAS
+
+    def test_persona_versions_bumped(self):
+        assert all(tpl.version >= 3 for tpl in FRIEND_PERSONAS.values())

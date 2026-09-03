@@ -89,9 +89,10 @@ def test_tight_budget_keeps_high_priority_section_when_low_priority_drops():
     huge_extra = 'x' * 50_000  # ~12K tokens of chapter content
     long_memory = 'Reader cares about character development and pacing.'
 
-    # Tight budget: only enough for system_prompt base + one short section.
-    # Reserve must leave room for memory but not for huge_extra.
-    budget = TokenBudget(model='glm-4.7-flash', response_reserve=127_500)
+    # Tight budget: enough for system_prompt base + the always-on persona
+    # block (default companion since 2026-09-03) + one short section — but
+    # nowhere near the ~12K tokens of huge_extra.
+    budget = TokenBudget(model='glm-4.7-flash', response_reserve=126_000)
 
     prompt = build_system_prompt(
         book=book,

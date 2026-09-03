@@ -4,6 +4,7 @@ import structlog
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.models.book import Book
+from app.prompts.companion_prompts import FRIEND_PERSONA_DEFAULT
 from app.prompts.templates import FRIEND_PERSONAS
 from app.utils.i18n import DEFAULT_LANGUAGE, t
 from app.utils.sanitizer import (
@@ -324,11 +325,12 @@ def build_system_prompt(  # noqa: C901 — branch structure is the domain (class
     # length (prompt + persona) stays within the model's context window —
     # previously the persona was appended AFTER budget truncation, which
     # could in principle overflow on smaller fallback models.
-    persona_text = (
-        FRIEND_PERSONAS[persona].template
-        if persona and persona in FRIEND_PERSONAS
-        else ''
-    )
+    # 2026-09-03: an empty/unknown persona now falls back to
+    # FRIEND_PERSONA_DEFAULT (the UI's default companion) — persona=None
+    # used to mean NO voice at all, which read as robotic in every
+    # boundary-test answer (adjudication feedback #1).
+    persona_key = persona if persona in FRIEND_PERSONAS else FRIEND_PERSONA_DEFAULT
+    persona_text = FRIEND_PERSONAS[persona_key].template
     if budget and persona_text:
         budget.add(persona_text, 'persona_reserved')
 
