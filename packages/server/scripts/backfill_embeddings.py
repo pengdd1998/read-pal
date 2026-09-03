@@ -69,15 +69,20 @@ async def backfill() -> tuple[int, int]:
             if not rows:
                 break
             vectors = await get_embeddings([r.content for r in rows])
+            updates = []
             for row, vec in zip(rows, vectors):
                 last_id = row.id
                 if vec is None:
                     failed += 1
                     continue
+                updates.append({'v': str(vec), 'i': row.id})
+                ok += 1
+            # executemany: ONE WAN round-trip per batch instead of one per
+            # row (16 x ~200ms RTT was the bottleneck, not the model).
+            if updates:
                 await s.execute(text(
                     'UPDATE book_chunks SET embedding = :v WHERE id = :i'
-                ), {'v': str(vec), 'i': row.id})
-                ok += 1
+                ), updates)
             await s.commit()
         batch_no += 1
         if batch_no % BATCHES_PER_LOG == 0:
@@ -89,9 +94,46 @@ async def backfill() -> tuple[int, int]:
     return ok, failed
 
 
+async def backfill_books() -> tuple[int, int]:
+    """Chunk + embed books that predate book_chunks entirely (no rows).
+
+    Runs the standard precompute pipeline per book (chunk gen → batch
+    embed → persist), so results match uploads exactly. 286 of 372
+    books were uploaded before the chunking feature existed.
+    """
+    from app.services.rag.precompute import precompute_book_embeddings
+
+    done = failed = 0
+    while True:
+        async with async_session() as s:
+            rows = (await s.execute(text("""
+                SELECT d.book_id, d.id, d.chapters FROM documents d
+                WHERE d.chapters IS NOT NULL AND jsonb_array_length(d.chapters) > 0
+                  AND NOT EXISTS (SELECT 1 FROM book_chunks bc WHERE bc.book_id = d.book_id)
+                ORDER BY d.book_id LIMIT 10
+            """))).all()
+        if not rows:
+            break
+        for book_id, doc_id, chapters in rows:
+            try:
+                await precompute_book_embeddings(book_id, doc_id, chapters)
+                done += 1
+            except Exception as exc:  # noqa: BLE001 — one book must not stop the sweep
+                print(f'  book {book_id} failed: {str(exc)[:120]}', flush=True)
+                failed += 1
+        print(f'  books processed: {done + failed} (ok={done} failed={failed})', flush=True)
+    return done, failed
+
+
 async def main() -> None:
     wipe_requested = '--wipe' in sys.argv
     confirmed = '--yes' in sys.argv
+    books_mode = '--books' in sys.argv
+
+    if books_mode:
+        ok, failed = await backfill_books()
+        print(f'DONE books: ok={ok} failed={failed}')
+        return
 
     if wipe_requested:
         if not confirmed:
