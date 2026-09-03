@@ -136,6 +136,8 @@ export default function MemoryBooksPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pollAfterFailure, setPollAfterFailure] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
   const mountedRef = useRef(true);
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
@@ -169,12 +171,47 @@ export default function MemoryBooksPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Refetch on tab focus
+  // Refetch when the tab becomes visible again. `focus` alone misses real
+  // cases: headless browsers never fire it, and SPA back-navigation doesn't
+  // either — after an interrupted generate POST (server keeps running via
+  // checkpoints), the finished card would never appear on the list.
   useEffect(() => {
-    const onFocus = () => { if (!generating) fetchData(); };
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
+    const onVisible = () => { if (document.visibilityState === 'visible' && !generating) fetchData(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
   }, [fetchData, generating]);
+
+  // Bounded catch-up poll after a FAILED generate POST: the request dying
+  // client-side (navigation, timeout, network) does not stop the server,
+  // which finishes via checkpoints. Poll until the card shows up, for at
+  // most ~3 minutes.
+  const startCatchUpPoll = useCallback((bookId: string) => {
+    if (pollRef.current) return;
+    let attempts = 0;
+    pollRef.current = setInterval(() => {
+      attempts++;
+      api.get<MemoryBook[]>('/api/v1/reading-book').then((res) => {
+        if (!mountedRef.current || !pollRef.current) return;
+        if (res.success && Array.isArray(res.data) && res.data.some((mb) => mb.bookId === bookId)) {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setPollAfterFailure(false);
+          fetchData();
+        }
+      }).catch(() => { /* transient — keep polling */ });
+      if (attempts >= 18 && pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+        setPollAfterFailure(false);
+      }
+    }, 10_000);
+    setPollAfterFailure(true);
+  }, [fetchData]);
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const handleGenerate = useCallback(async (bookId: string) => {
     setGenerating(bookId);
@@ -189,15 +226,19 @@ export default function MemoryBooksPage() {
         router.push(`/memory-books/${bookId}`);
       } else {
         setError(tRef.current('failedToGenerate'));
+        // The server may still be mid-generation (client saw an error the
+        // backend didn't) — watch for the finished card.
+        startCatchUpPoll(bookId);
       }
     } catch (err) {
       warn('MemoryBooks: generate failed', err);
       if (!mountedRef.current) return;
       setError(tRef.current('failedToGenerate'));
+      startCatchUpPoll(bookId);
     } finally {
       if (mountedRef.current) setGenerating(null);
     }
-  }, [router]);
+  }, [router, startCatchUpPoll]);
 
   const eligibleBooks = useMemo(() => {
     const existingBookIds = new Set(memoryBooks.map((mb) => mb.bookId));

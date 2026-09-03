@@ -99,12 +99,48 @@ export default function ReadingMirrorPage() {
 
  useEffect(() => { return fetchData(); }, [fetchData]);
 
- // Refetch on tab focus
+ // Refetch when the tab becomes visible again. `focus` alone misses
+ // headless browsers and SPA back-navigation — after an interrupted
+ // generate, the finished mirror would never render without this.
  useEffect(() => {
- const onFocus = () => { if (!generating) fetchData(); };
- window.addEventListener('focus', onFocus);
- return () => window.removeEventListener('focus', onFocus);
+ const onVisible = () => { if (document.visibilityState === 'visible' && !generating) fetchData(); };
+ document.addEventListener('visibilitychange', onVisible);
+ window.addEventListener('focus', onVisible);
+ return () => {
+ document.removeEventListener('visibilitychange', onVisible);
+ window.removeEventListener('focus', onVisible);
+ };
  }, [fetchData, generating]);
+
+ // Empty-state catch-up: landing here while the server is still generating
+ // (e.g. the list-page POST was interrupted client-side; the backend keeps
+ // going via checkpoints) shows the EmptyCta. Poll quietly until the mirror
+ // lands, for at most ~5 minutes, so the page completes by itself.
+ const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+ useEffect(() => () => { if (pollTimerRef.current) clearInterval(pollTimerRef.current); }, []);
+ useEffect(() => {
+ if (loading || error || mirror || generating) {
+ if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
+ return;
+ }
+ if (pollTimerRef.current) return;
+ let attempts = 0;
+ pollTimerRef.current = setInterval(() => {
+ attempts++;
+ api.get<ReadingMirror>(`/api/v1/reading-book/${bookId}`).then((res) => {
+ if (!mountedRef.current || !pollTimerRef.current) return;
+ if (res.success && res.data) {
+ clearInterval(pollTimerRef.current!);
+ pollTimerRef.current = null;
+ setMirror(res.data);
+ }
+ }).catch(() => { /* transient — keep polling */ });
+ if (attempts >= 30 && pollTimerRef.current) {
+ clearInterval(pollTimerRef.current);
+ pollTimerRef.current = null;
+ }
+ }, 10_000);
+ }, [loading, error, mirror, generating, bookId]);
 
  // Generate reading mirror
  const handleGenerate = useCallback(async () => {
