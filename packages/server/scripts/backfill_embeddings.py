@@ -38,6 +38,8 @@ from app.services.rag.embedding import (  # noqa: E402
 )
 
 BATCHES_PER_LOG = 25
+# --book-limit N: pilot scale before committing to the full 286-book sweep.
+BOOK_LIMIT = None
 
 
 async def wipe() -> int:
@@ -104,6 +106,7 @@ async def backfill_books() -> tuple[int, int]:
     from app.services.rag.precompute import precompute_book_embeddings
 
     done = failed = 0
+    limit = BOOK_LIMIT
     while True:
         async with async_session() as s:
             rows = (await s.execute(text("""
@@ -112,6 +115,10 @@ async def backfill_books() -> tuple[int, int]:
                   AND NOT EXISTS (SELECT 1 FROM book_chunks bc WHERE bc.book_id = d.book_id)
                 ORDER BY d.book_id LIMIT 10
             """))).all()
+        if limit is not None:
+            rows = rows[:max(limit - done - failed, 0)]
+            if not rows:
+                break
         if not rows:
             break
         for book_id, doc_id, chapters in rows:
@@ -129,6 +136,9 @@ async def main() -> None:
     wipe_requested = '--wipe' in sys.argv
     confirmed = '--yes' in sys.argv
     books_mode = '--books' in sys.argv
+    global BOOK_LIMIT
+    if '--book-limit' in sys.argv:
+        BOOK_LIMIT = int(sys.argv[sys.argv.index('--book-limit') + 1])
 
     if books_mode:
         ok, failed = await backfill_books()
