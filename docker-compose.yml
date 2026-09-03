@@ -44,6 +44,12 @@ services:
       # mimo fallback defined in .env never reached production (found
       # 2026-09-02 while syncing provider priority).
       LLM_PROVIDERS: ${LLM_PROVIDERS:-}
+      # Embedding provider (any OpenAI-compatible /embeddings endpoint).
+      # Empty values fall back to GLM embedding-3; point at an Ollama
+      # instance with EMBEDDING_BASE_URL/EMBEDDING_MODEL when configured.
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-embedding-3}
       LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-15}
       LLM_MAX_RETRIES: ${LLM_MAX_RETRIES:-3}
       CIRCUIT_FAILURE_THRESHOLD: ${CIRCUIT_FAILURE_THRESHOLD:-5}

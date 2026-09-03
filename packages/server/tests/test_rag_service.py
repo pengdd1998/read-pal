@@ -224,6 +224,9 @@ class TestGetEmbedding:
     async def test_no_api_key(self):
         with patch('app.services.rag.embedding.get_settings') as mock_settings:
             mock_settings.return_value.glm_api_key = 'dev-key'
+            mock_settings.return_value.embedding_base_url = ''
+            mock_settings.return_value.embedding_api_key = ''
+            mock_settings.return_value.glm_base_url = 'https://open.bigmodel.cn/api/paas/v4'
             result = await _get_embedding('hello world')
             assert result is None
 

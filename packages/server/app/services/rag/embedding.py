@@ -1,9 +1,13 @@
-"""Embedding generation via GLM API (OpenAI-compatible /embeddings).
+"""Embedding generation via any OpenAI-compatible /embeddings endpoint.
 
-Batch-first: GLM's /embeddings accepts an array of texts and returns one
+Default provider: GLM (embedding-3). Point EMBEDDING_BASE_URL /
+EMBEDDING_MODEL at a local Ollama (e.g. bge-m3) or any other
+OpenAI-compatible vendor via settings — the payload shape is identical.
+
+Batch-first: the endpoint accepts an array of texts and returns one
 vector per index. Upload-time precompute used to fire ONE request per
 chunk (81 chunks × 5-way concurrency × 3 retries ≈ 243 requests) which
-the account-level rate limiter answers with a 429 storm — 13/13 observed
+the account-level rate limiter answered with a 429 storm — 13/13 observed
 uploads ended with embedded=0 (2026-09-02 log evidence) and the burst
 starved the chat models on the same account. Batching cuts that to ~6
 sequential requests per book.
@@ -25,12 +29,33 @@ RETRY_DELAYS = (2.0, 6.0)
 # cheap (one failed batch strands at most 16 chunks).
 BATCH_SIZE = 16
 PAUSE_BETWEEN_BATCHES_S = 0.3
+# Above this, truncation distorts vectors — matches the historical GLM path.
+MAX_INPUT_CHARS = 2000
 
 
-def _request_payload(texts: list[str]) -> dict:
+def _resolve_provider() -> tuple[str, str, str]:
+    """(base_url, api_key, model) with GLM as the legacy fallback."""
+    s = get_settings()
+    base = (s.embedding_base_url or s.glm_base_url).rstrip('/')
+    key = s.embedding_api_key or s.glm_api_key
+    return base, key, s.embedding_model
+
+
+def _provider_unusable(base: str, key: str) -> bool:
+    """No key, or a placeholder key aimed at a real (remote) vendor.
+
+    A localhost provider (Ollama) needs no key, so the placeholder guard
+    only applies to remote endpoints.
+    """
+    if not key or key == 'dev-key':
+        return 'localhost' not in base and '127.0.0.1' not in base
+    return False
+
+
+def _request_payload(texts: list[str], model: str) -> dict:
     return {
-        'model': 'embedding-3',
-        'input': [t[:2000] for t in texts],
+        'model': model,
+        'input': [t[:MAX_INPUT_CHARS] for t in texts],
         'dimensions': 1024,
     }
 
@@ -71,13 +96,15 @@ async def get_embeddings(
     callers (search query embedding) should pass a short schedule — a
     throttled account turns patient retries into TTFT.
     """
-    settings = get_settings()
-    if not settings.embedding_enabled:
-        return [None] * len(texts)
-    if not settings.glm_api_key or settings.glm_api_key == 'dev-key':
+    base_url, api_key, model = _resolve_provider()
+    if not get_settings().embedding_enabled:
         return [None] * len(texts)
     if not texts:
         return []
+    if _provider_unusable(base_url, api_key):
+        return [None] * len(texts)
+
+    headers = {'Authorization': f'Bearer {api_key}'} if api_key else {}
 
     t0 = time.monotonic()
     last_exc: Exception | None = None
@@ -85,17 +112,17 @@ async def get_embeddings(
         try:
             client = _get_http_client()
             resp = await client.post(
-                f'{settings.glm_base_url}/embeddings',
-                headers={'Authorization': f'Bearer {settings.glm_api_key}'},
-                json=_request_payload(texts),
+                f'{base_url}/embeddings',
+                headers=headers,
+                json=_request_payload(texts, model),
             )
             resp.raise_for_status()
             vectors = _parse_vectors(resp.json(), len(texts))
             latency_ms = (time.monotonic() - t0) * 1000
             ok = sum(1 for v in vectors if v is not None)
             logger.info(
-                'Embedding batch success: model=embedding-3 batch=%d ok=%d dims=1024 latency=%.0fms',
-                len(texts), ok, latency_ms,
+                'Embedding batch success: model=%s base=%s batch=%d ok=%d dims=1024 latency=%.0fms',
+                model, base_url, len(texts), ok, latency_ms,
             )
             if ok == 0:
                 logger.warning(

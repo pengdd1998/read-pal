@@ -126,6 +126,13 @@ class Settings(BaseSettings):
     circuit_reset_timeout_seconds: int
     max_embedding_calls: int
     embedding_enabled: bool = True
+    # Embedding provider (any OpenAI-compatible /embeddings). Empty fields
+    # fall back to the legacy GLM values so existing deploys are unchanged.
+    # Local Ollama example: EMBEDDING_BASE_URL=http://localhost:11434/v1,
+    # EMBEDDING_MODEL=bge-m3, EMBEDDING_API_KEY= (no auth sent is fine).
+    embedding_base_url: str = ''
+    embedding_api_key: str = ''
+    embedding_model: str = 'embedding-3'
 
     # Multi-provider LLM routing
     llm_providers: str = ''  # JSON array of ProviderConfig dicts
