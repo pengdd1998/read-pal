@@ -17,7 +17,13 @@ import structlog
 logger = structlog.get_logger('read-pal.companion')
 
 # Intent types (extensible registry — keep each entry's patterns tight).
-BOUNDARY_INTENTS: tuple[str, ...] = ('cross_user', 'cross_book', 'off_platform')
+BOUNDARY_INTENTS: tuple[str, ...] = (
+    'cross_user', 'cross_book', 'full_reproduction', 'off_platform',
+)
+
+# English possessive after user-words: straight ' or curly ’ (probe
+# keyboards produce U+2019 — a straight-quote-only pattern missed it).
+_EN_POSSESSIVE = r"(['\u2019]?s)?"
 
 _PATTERNS: dict[str, list[re.Pattern[str]]] = {
     # Asking to SEE another user's private data. Patterns cover both word
@@ -34,12 +40,15 @@ _PATTERNS: dict[str, list[re.Pattern[str]]] = {
             r'(的)?(书架|图书馆|书单|笔记|划线|标注|批注|读书笔记|聊天记录|会话|数据|账号)'
             r'.{0,12}(给我看?|让我看?|能看|能访问|能查|显示|获取|拿到|发我|打开|导出)'),
         re.compile(
-            r'(show|view|access|reveal|open|export|give me|let me (see|view)|can you (see|access|view))'
-            r'.{0,25}(other (users?|people|readers?)|someone else)(\'s)? '
-            r'(books?|notes?|annotations?|highlights?|chats?|conversations?|data|shelf|library|account)', re.I),
+            r'(show|view|access|reveal|open|export|give me|let me (see|view)|'
+            r'help me (see|view|access|get|find)|can you (see|access|view))'
+            r'.{0,25}(other (users?|people|readers?)|another (user|reader|person|member)|someone else)'
+            + _EN_POSSESSIVE +
+            r' ?(books?|notes?|annotations?|highlights?|chats?|conversations?|data|shelf|library|account)', re.I),
         re.compile(
-            r"(other (users?|people|readers?)|someone else)['s]? "
-            r'(books?|notes?|annotations?|highlights?|chats?|conversations?|data|shelf|library|account)'
+            r'(other (users?|people|readers?)|another (user|reader|person|member)|someone else)'
+            + _EN_POSSESSIVE +
+            r' ?(books?|notes?|annotations?|highlights?|chats?|conversations?|data|shelf|library|account)'
             r'.{0,20}(show|let me (see|view)|give me|access|reveal|open|export)', re.I),
     ],
     # Reproducing/downloading whole content of a book the user isn't
@@ -61,15 +70,41 @@ _PATTERNS: dict[str, list[re.Pattern[str]]] = {
             r'.{0,20}(send|give|paste|copy|share it)', re.I),
         re.compile(r'(download|find|get).{0,12}(ebook|epub|pdf|txt|pirated|free copy)', re.I),
     ],
+    # Whole-book reproduction requests — REGARDLESS of which book (the one
+    # being read included): a verbatim full-copy ask is copyright-sensitive
+    # and pointless (the reader already renders the text), and the LLM
+    # refused it on copyright grounds every time — exactly the stable-
+    # answer case the gate exists for. Section-level asks (「总结这一章」
+    # 「复述这一段」) never match: the whole-book qualifier is required.
+    'full_reproduction': [
+        re.compile(
+            r'(整本书|整本|全书|全本|一字不漏|一字不改|原封不动|从头到尾)'
+            r'.{0,12}(复述|抄|默写|打出来|发给我|给我|念给我|输出|重复一遍)'),
+        re.compile(
+            r'(复述|抄写?|默写).{0,8}(整本书|整本|全书|全本)'),
+        re.compile(r'(我想要|我要|给我)(全书|整本)(的)?(全文|内容|文本)'),
+        re.compile(
+            r'(entire book|whole book|complete book|entire text|word.?for.?word|verbatim'
+            r'|from beginning to end)'
+            r'.{0,25}(recite|reproduce|copy|type out|write out|send|give|paste)', re.I),
+        re.compile(
+            r'(recite|reproduce|copy|type out|write out).{0,15}'
+            r'(entire book|whole book|complete book|entire text|word.?for.?word|verbatim)', re.I),
+    ],
     # Requests needing live internet/platform capabilities we don't have.
     'off_platform': [
         re.compile(
             r'(上网|联网|浏览网页|打开网站|访问网页|搜索网络|网上搜|帮我(在网上)?搜'
-            r'|查一下天气|今天.{0,4}天气|天气预报|实时.{0,4}(新闻|股价|汇率|比赛)'
+            r'|(查一下|查查|查个|帮我查|告诉我).{0,6}天气'
+            r'|(今天|明天|后天|大后天|周末|下周).{0,4}天气'
+            r'|天气(预报|怎么样|如何)'
+            r'|实时.{0,4}(新闻|股价|汇率|比赛)'
             r'|最新.{0,2}(新闻|消息|资讯)|现在几点|今天的日期)'),
         re.compile(
             r'(browse|internet|web ?search|google it|search the web|look ?it ?up online'
-            r'|weather (today|now|forecast|outside)|latest news|real.?time'
+            r'|((check|tell me|know|look up|what.?s|how.?s).{0,15}weather'
+            r'|weather (today|tomorrow|now|forecast|outside|like))'
+            r'|latest news|real.?time'
             r'|current (stock|news|score)|what time is it)', re.I),
     ],
 }
@@ -103,6 +138,21 @@ BOUNDARY_RESPONSES: dict[str, dict[str, str]] = {
             'full text out of thin air.\n\n'
             'If you want to read it alongside "{title}", just upload it to '
             'your shelf. Or tell me what drew you to it and we\'ll talk!'
+        ),
+    },
+    'full_reproduction': {
+        'zh': (
+            '整本书一字不漏地复述这个我可做不了——一是版权上不合适，'
+            '二是书就在你手上，逐字听我背一遍也太累啦～\n\n'
+            '不过换个方式陪你读全书我最在行：想让我总结《{title}》到目前'
+            '的脉络，还是聊聊你最印象深刻的段落？'
+        ),
+        'en': (
+            'Reciting the whole book word for word isn\'t something I can do '
+            '— copyright aside, you already have the text in your hands, and '
+            'listening to me recite all of it would be exhausting anyway!\n\n'
+            'But I\'d love to read it WITH you: want a recap of "{title}" so '
+            'far, or a deep dive into the passage that struck you most?'
         ),
     },
     'off_platform': {
