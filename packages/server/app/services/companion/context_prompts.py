@@ -247,6 +247,7 @@ def build_system_prompt(  # noqa: C901 — branch structure is the domain (class
     genre: str | None = None,
     lang: str = DEFAULT_LANGUAGE,
     budget: TokenBudget | None = None,
+    interaction: str | None = None,
 ) -> str:
     """Build the system prompt from all available context with token budgeting."""
     prompt_key = (
@@ -272,6 +273,12 @@ def build_system_prompt(  # noqa: C901 — branch structure is the domain (class
     # Apply genre-specific focus modifier
     if genre and genre in GENRE_MODIFIERS:
         prompt += GENRE_MODIFIERS[genre]
+
+    # Interaction frequency (settings 互动频率) shapes HOW proactive the
+    # companion is — the setting was stored-but-dead until this consumer
+    # existed. None (unset/invalid) keeps the default voice.
+    if interaction in ('minimal', 'normal', 'frequent'):
+        prompt += '\n\n' + t(f'companion.interaction_{interaction}', lang)
 
     # P3.4: rank optional context sections by signal density and apply the
     # budget per-section in priority order. Previously these were all

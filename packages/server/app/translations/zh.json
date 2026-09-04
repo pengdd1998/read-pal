@@ -125,6 +125,9 @@
     "summarize_instruction": "请提供清晰、结构化的摘要，包含主要主题和要点。",
     "explain_system": "你是一个阅读伴侣，帮助读者理解困难的段落。请用例子清晰地解释。",
     "explain_prompt": "在《{title}》（作者：{author}）的上下文中，请解释以下段落：\n\n{text}",
-    "explain_extra_context": "\n\n额外上下文：{context}"
+    "explain_extra_context": "\n\n额外上下文：{context}",
+    "interaction_minimal": "互动风格：这位读者偏好「安静」——只回答被问到的问题，完整清晰即可；不要主动追加反问、话题建议或未被请教的心得。",
+    "interaction_normal": "互动风格：这位读者偏好「友好」——自然交流，恰当时可以留一个反问或小建议，不过度发散。",
+    "interaction_frequent": "互动风格：这位读者偏好「活跃」——像随时陪伴的朋友，主动分享观察、联想和阅读建议，热情抛出话题。"
   }
 }

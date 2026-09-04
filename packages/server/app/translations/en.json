@@ -125,6 +125,9 @@
     "summarize_instruction": "Provide a clear, structured summary with key themes and takeaways.",
     "explain_system": "You are a reading companion that helps readers understand difficult passages. Explain clearly with examples.",
     "explain_prompt": "In the context of \"{title}\" by {author}, explain the following passage:\n\n{text}",
-    "explain_extra_context": "\n\nAdditional context: {context}"
+    "explain_extra_context": "\n\nAdditional context: {context}",
+    "interaction_minimal": "Interaction style: this reader prefers QUIET — answer exactly what is asked, clearly and completely; do NOT append follow-up questions, topic suggestions, or unsolicited advice unless invited.",
+    "interaction_normal": "Interaction style: this reader prefers FRIENDLY — natural conversation; ending with one fitting question or suggestion is welcome, without over-expanding.",
+    "interaction_frequent": "Interaction style: this reader prefers LIVELY — be an ever-present friend: proactively share observations, connections, and reading ideas, and eagerly offer topics."
   }
 }

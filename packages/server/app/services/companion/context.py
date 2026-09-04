@@ -4,7 +4,6 @@ This module re-exports helpers from sub-modules for backward compatibility
 and provides the main ``_prepare_context`` orchestration function.
 """
 
-import asyncio
 from uuid import UUID
 
 import structlog
@@ -27,7 +26,7 @@ from app.services.companion.context_prompts import (
     build_system_prompt as _build_system_prompt,
 )
 from app.services.companion.query_classifier import classify_query
-from app.utils.i18n import DEFAULT_LANGUAGE
+from app.utils.i18n import DEFAULT_LANGUAGE, get_user_interaction_style
 from app.utils.token_budget import TokenBudget
 
 logger = structlog.get_logger('read-pal.companion')
@@ -44,20 +43,27 @@ async def _prepare_context(
     genre: str | None = None,
     lang: str = DEFAULT_LANGUAGE,
 ) -> tuple[Book, list[HumanMessage | AIMessage], str, TokenBudget]:
-    """Load all chat context in parallel, returning (book, history, system_text, budget)."""
-    book, annotations_ctx, history = await asyncio.gather(
-        _load_book(db, user_id, book_id),
-        _load_annotations_context(db, user_id, book_id),
-        _load_history(db, user_id, book_id),
-    )
+    """Load chat context, returning (book, history, system_text, budget).
+
+    Loads are SEQUENTIAL: the previous asyncio.gather pairs raced the
+    shared AsyncSession's connection checkout (same class as the dashboard
+    partials bug fixed 2026-09-04) on every single chat message. Phase
+    order is preserved — classify needs history; rag/memory need the
+    classification.
+    """
+    book = await _load_book(db, user_id, book_id)
+    annotations_ctx = await _load_annotations_context(db, user_id, book_id)
+    history = await _load_history(db, user_id, book_id)
 
     history_texts = [m.content for m in history[-6:]]
     classification = classify_query(message, history_texts)
 
-    rag_ctx, memory_summary = await asyncio.gather(
-        _fetch_rag(db, user_id, book_id, message, history_texts, classification),
-        _fetch_memory(db, user_id, book_id),
-    )
+    rag_ctx = await _fetch_rag(db, user_id, book_id, message, history_texts, classification)
+    memory_summary = await _fetch_memory(db, user_id, book_id)
+
+    # Interaction frequency (settings 互动频率) — stored-but-dead until
+    # this consumer existed (2026-09-04).
+    interaction = await get_user_interaction_style(db, user_id)
 
     budget = TokenBudget()
 
@@ -76,6 +82,6 @@ async def _prepare_context(
     system_text = _build_system_prompt(
         book, annotations_ctx, rag_ctx, memory_summary,
         companion_mode=companion_mode, context=context, persona=persona,
-        genre=genre, lang=lang, budget=budget,
+        genre=genre, lang=lang, budget=budget, interaction=interaction,
     )
     return book, history, system_text, budget

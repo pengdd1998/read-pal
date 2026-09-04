@@ -121,17 +121,27 @@ export function useChatHistory({
             const lastMsg = history[history.length - 1];
             const isReturning = lastMsg && (Date.now() - lastMsg.timestamp > 30 * 60 * 1000);
             if (isReturning && lastMsg?.role === 'user') {
-              const greeting = genreTemplate.returnGreeting(t, friendName);
-              greetTimer = setTimeout(() => {
-                if (!cancelled) {
-                  setMessages((prev) => [...prev, {
-                    id: generateId(),
-                    role: 'assistant' as const,
-                    content: greeting,
-                    timestamp: Date.now(),
-                  }]);
-                }
-              }, 800);
+              // 互动频率=安静 (minimal) suppresses the unprompted return
+              // greeting — the only proactive companion message today; the
+              // setting was stored-but-dead until this gate (2026-09-04).
+              let quiet = false;
+              try {
+                const prefs = await api.get<{ friendFrequency?: string }>('/api/settings');
+                quiet = prefs.success && prefs.data?.friendFrequency === 'minimal';
+              } catch { /* settings fetch failure must not break history */ }
+              if (!cancelled && !quiet) {
+                const greeting = genreTemplate.returnGreeting(t, friendName);
+                greetTimer = setTimeout(() => {
+                  if (!cancelled) {
+                    setMessages((prev) => [...prev, {
+                      id: generateId(),
+                      role: 'assistant' as const,
+                      content: greeting,
+                      timestamp: Date.now(),
+                    }]);
+                  }
+                }, 800);
+              }
             }
           }
         }

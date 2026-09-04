@@ -103,3 +103,27 @@ async def _get_user_lang(db: 'AsyncSession', user_id: 'UUID') -> str:
         lang = settings.get('language', DEFAULT_LANGUAGE)
         return lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
     return DEFAULT_LANGUAGE
+
+
+# Valid companion interaction frequencies (settings page 互动频率).
+INTERACTION_STYLES = ('minimal', 'normal', 'frequent')
+
+
+async def get_user_interaction_style(db: 'AsyncSession', user_id: 'UUID') -> str | None:
+    """Get the companion interaction frequency from user settings, if set.
+
+    ``friendFrequency`` was stored-but-dead until 2026-09-04: the settings
+    UI wrote it, nothing consumed it. Returns None for unset/invalid —
+    callers treat that as the default (normal) and skip the directive.
+    """
+    from sqlalchemy import select
+    from app.models.user import User
+
+    result = await db.execute(
+        select(User.settings).where(User.id == user_id)
+    )
+    settings = result.scalar_one_or_none()
+    if settings and isinstance(settings, dict):
+        style = settings.get('friendFrequency')
+        return style if style in INTERACTION_STYLES else None
+    return None

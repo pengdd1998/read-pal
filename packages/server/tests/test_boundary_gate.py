@@ -6,6 +6,8 @@ speed, so its only failure mode that matters is a false positive
 hijacking normal book discussion. These tests pin both directions.
 """
 
+import pytest
+
 from app.services.companion.boundary_gate import (
     BOUNDARY_RESPONSES,
     boundary_response,
@@ -167,3 +169,30 @@ class TestPersonaVoice:
 
     def test_persona_versions_bumped(self):
         assert all(tpl.version >= 3 for tpl in FRIEND_PERSONAS.values())
+
+
+class TestInteractionStylePrompt:
+    """互动频率 was stored-but-dead until 2026-09-04 — pin the consumer."""
+
+    @pytest.mark.asyncio
+    async def test_minimal_style_appends_directive(self):
+        from app.services.companion.context_prompts import build_system_prompt
+        from tests.test_p34_token_budget_ranking import FakeBook
+
+        prompt = build_system_prompt(FakeBook(), '', interaction='minimal', lang='zh')
+        assert '安静' in prompt and '不要主动追加' in prompt
+
+    @pytest.mark.asyncio
+    async def test_normal_and_frequent_and_none(self):
+        from app.services.companion.context_prompts import build_system_prompt
+        from tests.test_p34_token_budget_ranking import FakeBook
+
+        assert '友好' in build_system_prompt(FakeBook(), '', interaction='normal', lang='zh')
+        assert '活跃' in build_system_prompt(FakeBook(), '', interaction='frequent', lang='zh')
+        assert 'interaction_' not in build_system_prompt(FakeBook(), '', interaction=None, lang='zh')
+        # invalid value falls through silently
+        assert 'interaction_' not in build_system_prompt(FakeBook(), '', interaction='daily', lang='zh')
+
+    def test_style_reader_validates(self):
+        from app.utils.i18n import INTERACTION_STYLES
+        assert INTERACTION_STYLES == ('minimal', 'normal', 'frequent')

@@ -98,6 +98,14 @@ class TestTotalPromptBounded:
             'app.services.companion.context._fetch_memory', fake_fetch_memory,
         )
 
+        async def fake_interaction(db, uid):
+            return None
+
+        monkeypatch.setattr(
+            'app.services.companion.context.get_user_interaction_style',
+            fake_interaction,
+        )
+
         budget = TokenBudget()
         original_max = budget._budget  # 124_000 for glm-4.7-flash
 
@@ -168,6 +176,14 @@ class TestTotalPromptBounded:
         )
         monkeypatch.setattr(
             'app.services.companion.context._fetch_memory', fake_fetch_memory,
+        )
+
+        async def fake_interaction(db, uid):
+            return None
+
+        monkeypatch.setattr(
+            'app.services.companion.context.get_user_interaction_style',
+            fake_interaction,
         )
 
         _, _, system_text, budget = await _prepare_context(
