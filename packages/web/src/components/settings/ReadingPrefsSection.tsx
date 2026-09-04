@@ -165,6 +165,8 @@ const ReadingFriendCard = React.memo(function ReadingFriendCard({ settings, savi
     onClick={() => onSave({ friendPersona: p.id })}
     disabled={saving}
     aria-pressed={settings.friendPersona === p.id}
+    aria-label={`persona-${p.id}`}
+    data-testid="persona-option"
     className={`flex items-center gap-3 p-3 min-h-[44px] rounded-xl border-2 transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
     settings.friendPersona === p.id
      ? 'border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/10'
