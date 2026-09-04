@@ -135,7 +135,10 @@ export default function SettingsPage() {
 
   function handleLanguageChange(newLocale: 'en' | 'zh') {
     handleSettingsUpdate({ language: newLocale });
-    router.replace('/settings');
+    // The i18n router keeps the ACTIVE locale unless the target is passed
+    // explicitly — without { locale } the URL stayed /en/settings and the
+    // page language never changed (LanguageSwitcher uses the same idiom).
+    router.replace('/settings', { locale: newLocale });
   }
 
   if (loading) {
