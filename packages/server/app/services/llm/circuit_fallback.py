@@ -238,6 +238,14 @@ async def _invoke_with_circuit(  # noqa: C901, PLR0915 — fallback-chain orches
             start=start, response=response, user_id=user_id, book_id=book_id,
             prompt_version=prompt_version, lang=lang,
             provider_attempt_id=primary_attempt_id,
+            params=pool_kwargs or None,
+        )
+        from app.services.llm.observability import capture_llm_content
+        capture_llm_content(
+            request_id=request_id, label=log_label, model=model_used,
+            prompt_version=prompt_version, messages=messages,
+            output_text=getattr(response, 'content', '') or '',
+            user_id=user_id, book_id=book_id,
         )
         # Settle token budget with actual usage.
         if token_limit > 0 and user_id and pre_charge > 0:

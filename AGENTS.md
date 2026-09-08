@@ -2,7 +2,9 @@
 
 > Source-of-truth navigation for AI assistants (Claude Code, Cursor, Copilot)
 > and human contributors. Map, not super-prompt — progressive disclosure.
-> Keep under 150 lines. Update inline P-tag references via
+> Keep under 250 lines (grew past the old 150 target as gates
+> multiplied; prune by sinking handbook-style sections before adding new
+> ones). Update inline P-tag references via
 > `docs/incidents/` first, then reflect here.
 
 ## What this is
@@ -32,8 +34,9 @@ store.
 
 **Prompts + eval**:
 - `packages/server/app/prompts/base.py:27` — `PromptTemplate` dataclass
-- `packages/server/app/eval/eval_runner.py:1` — golden dataset runner
+- `packages/server/app/eval/eval_runner.py:1` — golden dataset runner (mock + live)
 - `packages/server/app/eval/regression_baseline.py:1` — PASS/FAIL/REGRESSION diff
+- `packages/server/app/eval/judges.py:1` — L2 LLM-as-judge rubric (anti-sycophancy; explicit `--judge` only, never in CI)
 
 **Memory + context**:
 - `packages/server/app/services/conversation_memory.py:53` — staleness check (P3.1)
@@ -45,15 +48,28 @@ store.
 - `packages/server/app/middleware/idempotency.py:1` — idempotency gate (P0.1, P0.6)
 - `packages/server/app/middleware/daily_llm_budget.py:1` — token-aware daily cap (P3.2)
 
+**Observability + metrics** (engineering-upgrade 2026-09-05):
+- `packages/server/app/services/llm/observability.py:1` — `_log_call` sole
+  structured-log exit + JSONL sink (`LLM_TRACE_JSONL_PATH`) + opt-in content
+  capture (`LLM_TRACE_CAPTURE_CONTENT`, file-only, never DB)
+- `packages/server/app/services/llm/metrics.py:1` — five minimal indicators
+  (success rate / p95 / token cost / error classes / guardrail hits) via
+  `GET /api/v1/stats/llm`; guardrail counters in `app/utils/output_filter.py`
+- `ops/observability/` — metrics handbook, badcase four-factor triage
+  runbook (回灌 golden set), L3 manual-review SOP
+- `docs/engineering-upgrade/` — audit report + per-stage execution record
+
 ## Never rules (every one mechanically enforced — see CI gates below)
 
 1. **Never use raw `book.title` / `book.author` in services.** Route through
-   `sanitize_book_field`. Enforced: `.github/workflows/prompt-eval.yml` (Phase 3
-   will replace the grep with an AST check at `scripts/check_no_raw_book_fields.py`).
+   `sanitize_book_field`. Enforced: AST check `scripts/check_no_raw_book_fields.py`
+   in both `ci.yml` (on `app/services/`) and `prompt-eval.yml` (Phase 3.2
+   replaced the old grep, which had a `grep -v` bypass).
 2. **Never put business logic in `routers/`.** Routers validate input → call
-   service → return response. Enforced: `scripts/check_router_thin.py` (Phase 3).
+   service → return response. Enforced: `scripts/check_router_thin.py` in `ci.yml`.
 3. **Never construct `TokenBudget()` without `model=` kwarg.** Silent
-   wrong-window estimate on non-GLM providers. Enforced: ruff rule (Phase 4A).
+   wrong-window estimate on non-GLM providers. Not yet mechanically enforced
+   (planned Phase 4A ruff rule) — check manually in review.
 4. **Never add a `PromptTemplate` without declaring `variables=`.** Placeholder
    drift slips to runtime. Enforced: `PromptTemplate.__post_init__`
    at `app/prompts/base.py:42`.
@@ -86,10 +102,19 @@ See `docs/incidents/`. Specifically, read before touching:
 ## When prompts change
 
 1. Bump `version=` on the `PromptTemplate` at `app/prompts/*.py`.
+   i18n-hosted prompts (companion system/socratic in `app/translations/`)
+   are gated by content pins in `tests/test_translation_prompt_pins.py` —
+   bump the pin hash in the same PR.
 2. Run mock eval locally: `cd packages/server && uv run python -m app.eval.eval_runner`.
-3. (Phase 2) Run live eval before merging prompt-content changes:
-   `uv run python -m app.eval.eval_runner --live` (requires `PROMPT_EVAL_API_KEY`).
-4. Open PR. CI runs `prompt-eval.yml` automatically.
+3. Run live eval before merging prompt-content changes:
+   `uv run python -m app.eval.eval_runner --live` (requires `PROMPT_EVAL_API_KEY`;
+   CI's `prompt-eval-live` job runs it only when the secret is set).
+4. Intentional eval-outcome change (new golden entry, deliberate behavior
+   shift)? Re-record the regression baseline in the same PR:
+   `uv run python -m app.eval.eval_runner --update-baseline --baseline-note "<why>"`.
+   Without this, `regression_baseline.json` diffs fail CI — that gate is
+   load-bearing (REGRESSION = was passing, now failing).
+5. Open PR. CI runs `prompt-eval.yml` automatically.
 
 ## When adding a new LLM call site
 
@@ -99,6 +124,14 @@ See `docs/incidents/`. Specifically, read before touching:
 3. Route user-controlled text through `sanitize_book_field` / `sanitize_user_input`.
 4. Build prompts via `PromptTemplate`, declare `variables=`.
 5. Estimate tokens via `TokenBudget(model=<active_model>)` — never the default.
+
+## When a live badcase appears
+
+Follow `ops/observability/badcase-triage-runbook.md`: rebuild the chain
+(chat via `chat_messages` + `ai_feedback`; non-chat via `llm_call_traces` /
+JSONL sink), attribute to one of prompt/检索/工具/模型 with span evidence,
+then backfill the sanitized case into `app/eval/golden_*.py` with a `guards`
+annotation — the fix PR is done when that entry turns green.
 
 ## When adding a new endpoint
 
@@ -111,9 +144,12 @@ See `docs/incidents/`. Specifically, read before touching:
 
 | Workflow | Purpose | Trigger |
 | --- | --- | --- |
-| `ci.yml` | Typecheck + build + backend pytest + (Phase 3) ruff AST checks | All PRs |
-| `prompt-eval.yml` | Prompt rendering + sanitizer + schema + mock eval + `book.title` grep; (Phase 2) live eval | `app/prompts/**` / `app/eval/**` / sanitizer |
+| `ci.yml` | Typecheck (web + mobile) + builds + ruff + custom AST checks + backend pytest (SQLite and PostgreSQL jobs) + alembic upgrade/downgrade + web vitest | All PRs |
+| `prompt-eval.yml` | Prompt rendering + sanitizer + schema + mock eval + no-raw-book-fields AST check + optional live eval | `app/prompts/**` / `app/eval/**` / sanitizer |
+| `mobile.yml` | Expo mobile build + optional GitHub Release | `packages/mobile/**` PRs, `V*` tags, manual dispatch |
+| `visual-regression.yml` | Screenshot diff | Weekly Mon 04:00 UTC |
 | `security-review.yml` | Claude security review | All PRs (requires `ANTHROPIC_API_KEY`) |
+| `secret-scan.yml` | gitleaks rule-based secret detection — no secrets required to run, any hit blocks (backstop when `security-review.yml` silently skips) | All PRs + push to `main` |
 | `deploy.yml` | Build + ship to VPS; (Phase 5) browser E2E gate | Push to `main` |
 | (Phase 5) `drift-scan.yml` | Mock-vs-live drift + freshness scan | Weekly Mon 04:17 UTC |
 
@@ -158,6 +194,16 @@ cd packages/server && uv sync && uvicorn app.main:app --reload --port 8000
 
 # Frontend
 pnpm install && pnpm --filter @read-pal/web dev
+
+# Lint + AST checks (mirror of ci.yml)
+cd packages/server && uv run ruff check app/
+cd packages/server && uv run python scripts/check_router_thin.py app/routers/
+cd packages/server && uv run python scripts/check_no_raw_book_fields.py app/services/
+
+# Tests
+cd packages/server && uv run pytest      # backend
+pnpm --filter @read-pal/web test         # vitest
+pnpm typecheck                           # web; mobile: pnpm --filter @read-pal/mobile typecheck
 
 # Mock eval (CI-safe)
 cd packages/server && uv run python -m app.eval.eval_runner

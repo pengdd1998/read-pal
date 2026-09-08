@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import json
+import time
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -195,6 +199,23 @@ def _estimate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> fl
     )
 
 
+def _current_http_request_id() -> str | None:
+    """Best-effort read of the HTTP request id bound by request_log middleware.
+
+    0018 added an ``http_request_id`` column for HTTP-LLM correlation but no
+    writer ever filled it. The middleware binds ``request_id`` into structlog
+    contextvars at the start of every HTTP request
+    (``app/middleware/request_log.py``), so reading it here correlates each
+    LLM call to its access-log entry without threading the id through every
+    call site. Returns None for non-HTTP contexts (eval runs, background
+    tasks) — the column is nullable for exactly that reason.
+    """
+    try:
+        return structlog.contextvars.get_contextvars().get('request_id')
+    except Exception:  # noqa: BLE001 — correlation is best-effort
+        return None
+
+
 def _build_trace_dict(
     *,
     request_id: str,
@@ -214,6 +235,9 @@ def _build_trace_dict(
     provider_attempt_id: str | None = None,
     error_type: str | None = None,
     cache_hit: bool = False,
+    user_id: str | None = None,
+    book_id: str | None = None,
+    http_request_id: str | None = None,
 ) -> dict[str, Any]:
     """Build the shared trace dict used for both logging and DB persistence.
 
@@ -226,6 +250,11 @@ def _build_trace_dict(
     migration 0022). ``error_type`` is the categorical classifier output
     of ``_classify_error``; ``cache_hit`` distinguishes cache-served
     responses from fresh LLM calls in cost/latency analytics.
+
+    Engineering-upgrade follow-up (2026-09-05, migration 0029):
+    ``user_id`` / ``book_id`` are persisted too — they previously reached
+    only stdout logs, leaving badcase triage unable to query calls by user.
+    ``http_request_id`` (column existed since 0018) is now actually filled.
     """
     return {
         'request_id': request_id,
@@ -246,6 +275,9 @@ def _build_trace_dict(
         'lang': lang,
         'cache_hit': cache_hit,
         'error_type': error_type,
+        'user_id': user_id,
+        'book_id': book_id,
+        'http_request_id': http_request_id,
     }
 
 
@@ -270,6 +302,7 @@ def _log_call(
     lang: str | None = None,
     provider_attempt_id: str | None = None,
     cache_hit: bool = False,
+    params: dict[str, Any] | None = None,
 ) -> None:
     """Structured log for every LLM call — console + DB persistence.
 
@@ -312,16 +345,25 @@ def _log_call(
         lang=lang,
         error_type=error_type,
         cache_hit=cache_hit,
+        user_id=user_id,
+        book_id=book_id,
+        http_request_id=_current_http_request_id(),
     )
     logger.info(
         'llm_call',
-        **trace,
+        **trace,  # user_id/book_id/http_request_id ride along in the dict now
         estimated_cost=round(cost, 6),
         fallback=fallback_used,
-        user_id=user_id,
-        book_id=book_id,
         provider_attempt_id=provider_attempt_id,
+        params=params,
     )
+    # Engineering-upgrade follow-up: ``params`` (temperature/max_tokens) has no
+    # DB column — it reaches the JSONL channel only, closing the schema gap
+    # against the workflow's stage-1 log contract without a migration.
+    jsonl_record = dict(trace)
+    if params:
+        jsonl_record['params'] = params
+    _jsonl_sink.write(jsonl_record)
     _trace_writer.add(trace)
 
 
@@ -364,16 +406,131 @@ def _log_cache_hit(
         lang=lang,
         error_type=None,
         cache_hit=True,
+        user_id=user_id,
+        book_id=book_id,
+        http_request_id=_current_http_request_id(),
     )
     logger.info(
         'llm_cache_hit',
-        **trace,
+        **trace,  # user_id/book_id/http_request_id ride along in the dict now
         estimated_cost=0.0,
         fallback=False,
-        user_id=user_id,
-        book_id=book_id,
     )
+    _jsonl_sink.write(dict(trace))
     _trace_writer.add(trace)
+
+
+# ---------------------------------------------------------------------------
+# JSONL sink — append-only local trace channel (engineering-upgrade B1)
+# ---------------------------------------------------------------------------
+
+
+class _JSONLSink:
+    """Append-only JSONL sink for LLM call traces.
+
+    Gated by ``Settings.llm_trace_jsonl_path`` (empty = off). Independent of
+    ``llm_log_enabled`` so ops can run the file channel even when DB
+    persistence is disabled (e.g. on a machine without the trace table).
+
+    24h-review R4: records buffer in memory and flush in ONE open/append/
+    close per batch (the old per-call sync open ran on the event loop for
+    every LLM call), with size-based rotation at ROTATE_BYTES so the file
+    can't grow unbounded. Failures log a warning and never propagate:
+    observability must not take down the call path.
+    """
+
+    ROTATE_BYTES = 50 * 1024 * 1024  # 50MB → .1 suffix, previous copy dropped
+    FLUSH_EVERY = 64  # records per batched write
+
+    def __init__(self) -> None:
+        self._buf: list[str] = []
+
+    def write(self, record: dict[str, Any]) -> None:
+        try:
+            path = get_settings().llm_trace_jsonl_path
+        except Exception:  # noqa: BLE001 — settings read must never raise here
+            return
+        if not path:
+            return
+        record = dict(record)
+        record.setdefault('ts', datetime.now(UTC).isoformat())
+        self._buf.append(json.dumps(record, ensure_ascii=False, default=str))
+        if len(self._buf) >= self.FLUSH_EVERY:
+            self.flush(path)
+
+    def flush(self, path: str | None = None) -> int:
+        """Write buffered records; returns how many were written."""
+        if not self._buf:
+            return 0
+        try:
+            path = path or get_settings().llm_trace_jsonl_path
+        except Exception:  # noqa: BLE001
+            return 0
+        if not path:
+            self._buf.clear()  # sink disabled mid-flight: drop quietly
+            return 0
+        batch, self._buf = self._buf, []
+        try:
+            self._rotate_if_large(path)
+            with open(path, 'a', encoding='utf-8') as fh:
+                fh.write('\n'.join(batch) + '\n')
+            return len(batch)
+        except OSError:
+            logger.warning('llm_trace_jsonl_write_failed', path=path, records=len(batch))
+            return 0
+
+    def _rotate_if_large(self, path: str) -> None:
+        try:
+            if os.path.exists(path) and os.path.getsize(path) >= self.ROTATE_BYTES:
+                os.replace(path, f'{path}.1')  # keep exactly one prior generation
+        except OSError:
+            pass  # rotation is best-effort; the append still runs
+
+
+_jsonl_sink = _JSONLSink()
+
+
+def capture_llm_content(
+    *,
+    request_id: str,
+    label: str,
+    model: str,
+    prompt_version: str | None,
+    messages: list[Any],
+    output_text: str,
+    user_id: str | None = None,
+    book_id: str | None = None,
+) -> None:
+    """Opt-in prompt/output preview capture for badcase replay (B4).
+
+    Writes an ``event='llm_content'`` record to the JSONL sink ONLY — never
+    to the DB, never to structlog (content must not land in log streams).
+    Gated by ``Settings.llm_trace_capture_content`` (default False) because
+    previews can contain user-authored text; truncation is enforced by
+    ``llm_trace_capture_chars``.
+    """
+    try:
+        settings = get_settings()
+    except Exception:  # noqa: BLE001 — settings read must never raise here
+        return
+    if not settings.llm_trace_capture_content:
+        return
+    cap = max(int(settings.llm_trace_capture_chars), 0)
+    prompt_preview = '\n'.join(
+        f'[{getattr(m, "type", "?")}] {getattr(m, "content", "")}'
+        for m in messages
+    )[:cap]
+    _jsonl_sink.write({
+        'event': 'llm_content',
+        'request_id': request_id,
+        'label': label,
+        'model': model,
+        'prompt_version': prompt_version,
+        'user_id': user_id,
+        'book_id': book_id,
+        'prompt_preview': prompt_preview,
+        'output_preview': (output_text or '')[:cap],
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -386,11 +543,21 @@ class _TraceWriter:
 
     MAX_BUFFER = 50
     FLUSH_INTERVAL = 5.0
+    # Engineering-upgrade follow-up: retention prune check cadence. Actual
+    # deletion boundary is LLM_LOG_RETENTION_DAYS; checking every 6h (and
+    # once immediately at startup, via _last_prune_monotonic starting at 0)
+    # keeps the table bounded without a separate cron/worker mechanism.
+    PRUNE_CHECK_INTERVAL = 6 * 3600.0
 
     def __init__(self) -> None:
         self._buf: list[dict[str, Any]] = []
         self._task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
+        # Init at startup, NOT 0: 0 made the first flush tick (~5s after
+        # boot) immediately DELETE every row past retention — a surprise
+        # bulk delete before ops could confirm the (previously dead)
+        # LLM_LOG_RETENTION_DAYS knob. One full interval of grace instead.
+        self._last_prune_monotonic: float = time.monotonic()
 
     def start(self) -> None:
         if self._task is None or self._task.done():
@@ -442,6 +609,73 @@ class _TraceWriter:
             await asyncio.sleep(self.FLUSH_INTERVAL)
             if self._buf:
                 await self.flush()
+            await self._maybe_prune()
+
+    async def _maybe_prune(
+        self, session_factory: Any | None = None,
+    ) -> int:
+        """Delete trace rows older than ``llm_log_retention_days``.
+
+        Previously ``LLM_LOG_RETENTION_DAYS`` had a config knob but no
+        consumer — the table grew unboundedly (engineering-upgrade leftover
+        #3). Runs inside the writer's flush loop: first pass fires right
+        after startup, then at most every PRUNE_CHECK_INTERVAL. Retention
+        <= 0 disables pruning entirely (keep-forever semantics).
+
+        ``session_factory`` is injectable for tests (hermetic DB); defaults
+        to the app sessionmaker.
+        """
+        now = time.monotonic()
+        if now - self._last_prune_monotonic < self.PRUNE_CHECK_INTERVAL:
+            return 0
+        self._last_prune_monotonic = now
+
+        settings = get_settings()
+        # Respect the master switch: a deployment that opted out of trace
+        # logging must not have its (historical) rows deleted either.
+        if not settings.llm_log_enabled:
+            return 0
+        retention_days = settings.llm_log_retention_days
+        if retention_days <= 0:
+            return 0
+        cutoff = datetime.now(UTC) - timedelta(days=retention_days)
+
+        try:
+            from sqlalchemy import delete, select
+
+            from app.db import async_session
+            from app.models.llm_trace import LLMCallTrace
+
+            factory = session_factory or async_session
+            # Batched DELETE: the table grew unboundedly while the knob was
+            # dead — an unbatched first sweep would hold one long transaction
+            # (locks + WAL bloat). 5k rows per statement keeps each cheap.
+            batch_limit = 5000
+            total_deleted = 0
+            while True:
+                async with db_error_guard('observability.trace_prune'):
+                    async with factory() as session:
+                        stale_ids = (await session.execute(
+                            select(LLMCallTrace.id)
+                            .where(LLMCallTrace.created_at < cutoff)
+                            .order_by(LLMCallTrace.created_at)
+                            .limit(batch_limit),
+                        )).scalars().all()
+                        if not stale_ids:
+                            break
+                        result = await session.execute(
+                            delete(LLMCallTrace).where(LLMCallTrace.id.in_(stale_ids)),
+                        )
+                        await session.commit()
+                        total_deleted += result.rowcount or 0
+                if len(stale_ids) < batch_limit:
+                    break
+            if total_deleted:
+                logger.info('Trace prune: deleted %d rows older than %dd', total_deleted, retention_days)
+            return total_deleted
+        except Exception:
+            logger.warning('Trace prune failed', exc_info=True)
+            return 0
 
 
 _trace_writer = _TraceWriter()

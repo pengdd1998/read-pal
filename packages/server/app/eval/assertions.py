@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -50,6 +51,20 @@ def validate_output_shape(  # noqa: C901 — branch structure is the domain (cla
         min_len = expected.get('min_length', 0)
         if min_len and len(output) < min_len:
             result.fail(f'Output too short: {len(output)} < {min_len}')
+
+        # Engineering-upgrade B3: exact-match assertion. Strongest L1 form —
+        # use for deterministic transforms (sanitizer round-trips, templated
+        # prefixes) where any character drift is a regression.
+        expected_exact = expected.get('equals')
+        if expected_exact is not None and output != expected_exact:
+            result.fail(f'Output != expected exact value: {expected_exact!r:.80}')
+
+        # Engineering-upgrade B3: regex assertions. Preferred over substring
+        # contains when the expected surface has variable parts (IDs, counts,
+        # quoted titles) — anchors the shape without over-pinning wording.
+        for pattern in expected.get('regex', []):
+            if not re.search(pattern, output):
+                result.fail(f'Output missing expected pattern: {pattern!r}')
 
         for substr in expected.get('contains', []):
             if substr not in output:

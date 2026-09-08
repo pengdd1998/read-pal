@@ -154,8 +154,24 @@ class Settings(BaseSettings):
     # Logging
     log_level: str
     log_json: bool
-    llm_log_enabled: bool
+    # Engineering-upgrade (2026-09-05): default True — an observability
+    # surface that is off unless someone remembers to enable it is
+    # indistinguishable from one that doesn't exist. Explicit
+    # LLM_LOG_ENABLED=false still opts out (e.g. load tests).
+    llm_log_enabled: bool = True
     llm_log_retention_days: int
+
+    # LLM trace JSONL sink (engineering-upgrade B1). When set, every
+    # structured llm_call / llm_cache_hit record is appended to this file
+    # as one JSON object per line — a local replay/audit channel that
+    # needs no external platform. Empty (default) = off.
+    llm_trace_jsonl_path: str = ''
+    # Opt-in prompt/output content capture for badcase replay. Previews go
+    # ONLY to the JSONL sink (never the DB), truncated to
+    # llm_trace_capture_chars. Default False: previews may contain user
+    # text — enable temporarily while triaging, then turn off.
+    llm_trace_capture_content: bool = False
+    llm_trace_capture_chars: int = 800
 
     # Cache TTL (duration strings — parsed to seconds)
     cache_llm_ttl: str = '30m'

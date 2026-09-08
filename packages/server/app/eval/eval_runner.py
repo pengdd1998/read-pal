@@ -37,6 +37,7 @@ from app.eval.assertions import EvalResult, validate_output_shape
 from app.eval.golden_dataset import ALL_GOLDEN
 from app.eval.mock_data import MOCK_RESPONSES, SCHEMA_MAP
 from app.eval.regression import run_sanitizer_regression, run_token_budget_regression
+from app.eval.regression_baseline import compare_to_baseline, update_baseline
 from app.utils.output_filter import filter_output, validate_schema
 from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
@@ -204,15 +205,35 @@ def print_report(results: list[EvalResult]) -> bool:
     return failed == 0
 
 
-def run_all() -> bool:
-    """Run all eval suites. Returns True if all passed."""
+def run_all(*, check_baseline: bool = True) -> bool:
+    """Run all eval suites. Returns True if all passed and nothing regressed.
+
+    Engineering-upgrade B3: the run is now diffed against
+    ``regression_baseline.json``. REGRESSION (was passing, now failing)
+    fails the run even when every current result passes — this is the
+    merge gate the baseline module always intended but was never wired in.
+    Pass ``check_baseline=False`` for a raw pass/fail without the diff.
+    """
     all_results: list[EvalResult] = []
 
     all_results.extend(run_unit_eval())
     all_results.extend(run_token_budget_regression())
     all_results.extend(run_sanitizer_regression())
 
-    return print_report(all_results)
+    all_passed = print_report(all_results)
+
+    if check_baseline:
+        report = compare_to_baseline(all_results)
+        print()
+        print(report.summary())
+        if report.has_regressions:
+            print(
+                '\nBASELINE REGRESSIONS DETECTED — fix before merging, or '
+                're-baseline via `--update-baseline` ONLY for intentional changes.',
+            )
+        return all_passed and not report.has_regressions
+
+    return all_passed
 
 
 def _parse_args() -> argparse.Namespace:
@@ -237,6 +258,28 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help='Token-cost cap for live mode (default: 50000, env: MAX_LIVE_EVAL_TOKENS).',
     )
+    parser.add_argument(
+        '--judge',
+        action='store_true',
+        help=(
+            'Live mode only: add the L2 LLM-as-judge pass (~1K extra tokens '
+            'per scored entry). See app/eval/judges.py.'
+        ),
+    )
+    parser.add_argument(
+        '--update-baseline',
+        action='store_true',
+        help=(
+            'Re-record regression_baseline.json from this mock run. Use ONLY '
+            'after an intentional change (prompt bump, schema extension) — '
+            'never to make a failing run green.'
+        ),
+    )
+    parser.add_argument(
+        '--baseline-note',
+        default='manual update',
+        help='Reason recorded in baseline metadata alongside --update-baseline.',
+    )
     return parser.parse_args()
 
 
@@ -250,7 +293,27 @@ if __name__ == '__main__':
         sys.exit(live_main(
             label_filter=args.label_filter,
             max_tokens=args.max_tokens,
+            judge=args.judge,
         ))
+
+    results = (
+        run_unit_eval()
+        + run_token_budget_regression()
+        + run_sanitizer_regression()
+    )
+
+    if args.update_baseline:
+        from datetime import UTC, datetime
+
+        update_baseline(
+            results,
+            metadata={
+                'updated_at': datetime.now(UTC).isoformat(timespec='seconds'),
+                'note': args.baseline_note,
+            },
+        )
+        print(f'Baseline re-recorded ({len(results)} entries): {args.baseline_note}')
+        sys.exit(0)
 
     success = run_all()
     sys.exit(0 if success else 1)

@@ -119,6 +119,10 @@ class LiveEvalReport:
     # LA-3: stable error category (matches production _classify_error values)
     # so dashboards can correlate live-eval failures with production incidents.
     error_type: str | None = None
+    # Engineering-upgrade B3: truncated output capture so the L2 judge
+    # (``--judge`` → app.eval.judges) can score usefulness/factuality —
+    # dimensions the L0/L1 shape checks can't see.
+    output_text: str = ''
 
     def fail(self, msg: str) -> None:
         self.passed = False
@@ -635,6 +639,10 @@ async def run_live_eval(  # noqa: PLR0915 — single orchestration flow; decompo
         if result is None:
             report.fail('Handler returned None (LLM call failed without raising)')
         else:
+            report.output_text = (
+                result if isinstance(result, str)
+                else json.dumps(result, ensure_ascii=False, default=str)
+            )[:2000]
             eval_result = EvalResult(name, service, action)
             validate_output_shape(result, golden['expected_output'], eval_result)
             if not eval_result.passed:
@@ -725,8 +733,15 @@ def write_live_baseline(
 def main(
     label_filter: str | None = None,
     max_tokens: int | None = None,
+    judge: bool = False,
 ) -> int:
-    """Entry point. Returns exit code (0 = pass, 1 = any failure)."""
+    """Entry point. Returns exit code (0 = pass, 1 = any failure).
+
+    ``judge=True`` adds the L2 LLM-as-judge pass (engineering-upgrade B3):
+    each non-skipped entry's captured output is scored 1-5 against its
+    golden expectation via ``app.eval.judges``. Adds ~1K real tokens per
+    scored entry on top of the handler calls.
+    """
     cap = max_tokens if max_tokens is not None else int(
         os.environ.get('MAX_LIVE_EVAL_TOKENS', DEFAULT_MAX_LIVE_TOKENS)
     )
@@ -741,6 +756,11 @@ def main(
         write_live_baseline(reports)
     except Exception as exc:  # noqa: BLE001 — baseline write is best-effort
         logger.warning('live_eval.baseline_write_failed', error=str(exc)[:200])
+    if judge:
+        from app.eval.judges import print_judge_report, score_live_reports
+
+        scored = asyncio.run(score_live_reports(reports))
+        print_judge_report(scored)
     return 0 if success else 1
 
 

@@ -17,6 +17,8 @@ class LLMCallTrace(Base):
         Index('ix_llm_traces_created', 'created_at'),
         Index('ix_llm_traces_model_created', 'model', 'created_at'),
         Index('ix_llm_traces_label_created', 'label', 'created_at'),
+        Index('ix_llm_traces_http_request_id', 'http_request_id'),
+        Index('ix_llm_traces_user_created', 'user_id', 'created_at'),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -54,6 +56,15 @@ class LLMCallTrace(Base):
     # 'auth', 'server_error', 'cancelled', 'unknown'). NULL on success.
     # Lets dashboards group failures without regex on error_message.
     error_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # Added in migration 0018 (model declaration landed 2026-09-05, engineering
+    # upgrade follow-up): HTTP request-log id bound by request_log middleware,
+    # correlates LLM traces to HTTP access logs.
+    http_request_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Added in migration 0029 (engineering-upgrade follow-up): per-user /
+    # per-book attribution. Previously user_id/book_id only reached stdout
+    # logs, so badcase triage couldn't query "all LLM calls for this user".
+    user_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    book_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=text('now()'),

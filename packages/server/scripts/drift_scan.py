@@ -29,10 +29,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import re
 import sys
-from datetime import datetime, timezone
+from typing import Any
+from datetime import UTC, datetime
 from pathlib import Path
 
 STALE_THRESHOLD_DAYS = 90
@@ -55,7 +55,7 @@ def check_mock_freshness() -> int:
         return 2
 
     source = mock_path.read_text(encoding='utf-8')
-    today = datetime.now(tz=timezone.utc).date()
+    today = datetime.now(tz=UTC).date()
     stale: list[tuple[int, str, int]] = []  # (lineno, date_str, days_old)
 
     for match in _LAST_VERIFIED_RE.finditer(source):
@@ -149,9 +149,17 @@ def check_template_consistency() -> int:
 # ---------------------------------------------------------------------------
 
 async def check_live_drift() -> int:
-    """Run live eval and report any REGRESSION classifications."""
+    """Run live eval and report any REGRESSION classifications.
+
+    Engineering-upgrade B5: this mode now actually diffs against
+    ``app/eval/regression_baseline.json`` (the module docstring always
+    claimed it did; the implementation previously only counted current
+    failures). Baseline REGRESSION (entry passing at baseline-recording
+    time, failing live now) is the sharpest drift signal — it survived the
+    mock gate but broke against the real provider.
+    """
     try:
-        from app.eval.live_runner import run_live_eval, print_live_report
+        from app.eval.live_runner import print_live_report, run_live_eval
     except ImportError as exc:
         print(f'ERROR: live_runner import failed: {exc}')
         return 2
@@ -171,11 +179,31 @@ async def check_live_drift() -> int:
         print(f'\nLIVE DRIFT: {len(failures)} failing golden entries.')
         for r in failures:
             print(f'  FAIL {r.service}/{r.action}: {r.errors}')
-        return 1
 
+    # Baseline diff — REGRESSION = passing at baseline time, failing now.
+    from app.eval.regression_baseline import compare_to_baseline
+
+    ran = [_to_eval_result(r) for r in reports if not r.skipped]
+    report = compare_to_baseline(ran)
+    print()
+    print(report.summary())
+
+    if failures or report.has_regressions:
+        return 1
     if success:
-        print('OK: live eval matches expectations.')
+        print('OK: live eval matches expectations and baseline.')
     return 0 if success else 1
+
+
+def _to_eval_result(report: Any) -> Any:
+    """Adapt a LiveEvalReport to the EvalResult compare surface."""
+    from app.eval.assertions import EvalResult
+
+    result = EvalResult(report.name, report.service, report.action)
+    if not report.passed:
+        for err in report.errors:
+            result.fail(err)
+    return result
 
 
 # ---------------------------------------------------------------------------

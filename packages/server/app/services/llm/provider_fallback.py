@@ -75,6 +75,7 @@ async def _record_success(
     prompt_version: str | None = None,
     lang: str | None = None,
     provider_attempt_id: str | None = None,
+    params: dict[str, Any] | None = None,
 ) -> None:
     """Record a successful LLM invocation: metrics + observability log."""
     from app.services.llm.observability import (
@@ -110,6 +111,7 @@ async def _record_success(
         lang=lang,
         provider_attempt_id=provider_attempt_id,
         finish_reason=finish_reason,
+        params=params,
     )
 
 
@@ -128,6 +130,7 @@ async def _record_failure(
     prompt_version: str | None = None,
     lang: str | None = None,
     provider_attempt_id: str | None = None,
+    params: dict[str, Any] | None = None,
 ) -> None:
     """Record a failed LLM invocation: circuit breaker + metrics + log."""
     from app.services.llm.observability import _log_call
@@ -158,6 +161,7 @@ async def _record_failure(
         prompt_version=prompt_version,
         lang=lang,
         provider_attempt_id=provider_attempt_id,
+        params=params,
     )
 
 
@@ -183,6 +187,7 @@ async def _invoke_and_record_fallback(
     provider_attempt_id: str | None = None,
     pre_charge: int = 0,
     token_limit: int = 0,
+    params: dict[str, Any] | None = None,
 ) -> Any:
     """Try LLM invoke with retry, record success/failure metrics. Returns response or None.
 
@@ -218,6 +223,14 @@ async def _invoke_and_record_fallback(
             prompt_version=prompt_version, lang=lang,
             provider_attempt_id=provider_attempt_id,
             finish_reason=finish_reason,
+            params=params,
+        )
+        from app.services.llm.observability import capture_llm_content
+        capture_llm_content(
+            request_id=request_id, label=log_label, model=model_used,
+            prompt_version=prompt_version, messages=messages,
+            output_text=getattr(response, 'content', '') or '',
+            user_id=user_id, book_id=book_id,
         )
         await _settle_attempt_tokens(
             user_id=user_id, pre_charge=pre_charge,
@@ -245,6 +258,7 @@ async def _invoke_and_record_fallback(
             user_id=user_id, book_id=book_id,
             prompt_version=prompt_version, lang=lang,
             provider_attempt_id=provider_attempt_id,
+            params=params,
         )
         # Settlement is the caller's responsibility on failure (so the chain
         # can refund only when ALL attempts have failed).
@@ -330,6 +344,7 @@ async def _try_next_provider(
         prompt_version=prompt_version, lang=lang,
         provider_attempt_id=attempt_id,
         pre_charge=pre_charge, token_limit=token_limit,
+        params=pool_kwargs or None,
     )
 
 
@@ -373,4 +388,5 @@ async def _try_same_provider_fallback(
         prompt_version=prompt_version, lang=lang,
         provider_attempt_id=attempt_id,
         pre_charge=pre_charge, token_limit=token_limit,
+        params=pool_kwargs or None,
     )

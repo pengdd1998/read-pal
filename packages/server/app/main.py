@@ -100,6 +100,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from app.services.llm import _trace_writer
     _trace_writer.start()
     logger.info('LLM trace writer started')
+    # Engineering-upgrade follow-up: surface the disabled-persistence case at
+    # startup instead of discovering it via an empty metrics endpoint.
+    if not settings.llm_log_enabled:
+        logger.warning(
+            'LLM_LOG_ENABLED=false — llm_call_traces will stay EMPTY and '
+            'GET /api/v1/stats/llm will return empty windows. Set '
+            'LLM_LOG_ENABLED=true to enable trace persistence.',
+        )
 
     yield
 
@@ -256,10 +264,10 @@ async def health_check() -> dict[str, object]:
 from app.routers import (  # noqa: E402
     account, agent, annotations, auth, book_clubs, books,
     challenges, collections, discovery, export, flashcards, friend,
-    interventions, knowledge, llm_providers, logs, notifications,
-    password_reset, reading_book, reading_sessions, recommendations,
-    settings as settings_router, share, stats, study_mode, synthesis,
-    upload, webhooks,
+    interventions, knowledge, llm_metrics, llm_providers, logs,
+    notifications, password_reset, reading_book, reading_sessions,
+    recommendations, settings as settings_router, share, stats, study_mode,
+    synthesis, upload, webhooks,
 )
 
 for r in [
@@ -271,7 +279,7 @@ for r in [
     notifications.router, share.router, webhooks.router, upload.router,
     stats.router, discovery.router, challenges.router,
     recommendations.router, interventions.router, study_mode.router,
-    llm_providers.router,
+    llm_providers.router, llm_metrics.router,
 ]:
     app.include_router(r)
 
