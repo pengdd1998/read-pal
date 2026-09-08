@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import json
 
+import time
+
 import pytest
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -131,7 +133,7 @@ class TestRetentionPrune:
             await session.commit()
 
         writer = _TraceWriter()
-        writer._last_prune_monotonic = 0.0  # simulate interval elapsed
+        writer._last_prune_monotonic = time.monotonic() - writer.PRUNE_CHECK_INTERVAL - 1  # interval elapsed (portable across monotonic origins)
         with patch(
             'app.services.llm.observability.get_settings',
             return_value=_settings(retention=90, enabled=True),
@@ -153,7 +155,7 @@ class TestRetentionPrune:
             await session.commit()
 
         writer = _TraceWriter()
-        writer._last_prune_monotonic = 0.0
+        writer._last_prune_monotonic = time.monotonic() - writer.PRUNE_CHECK_INTERVAL - 1
         with patch(
             'app.services.llm.observability.get_settings',
             return_value=_settings(retention=0, enabled=True),
@@ -175,7 +177,7 @@ class TestRetentionPrune:
             await session.commit()
 
         writer = _TraceWriter()
-        writer._last_prune_monotonic = 0.0
+        writer._last_prune_monotonic = time.monotonic() - writer.PRUNE_CHECK_INTERVAL - 1
         with patch(
             'app.services.llm.observability.get_settings',
             return_value=_settings(retention=90, enabled=False),
@@ -188,7 +190,7 @@ class TestRetentionPrune:
 
     async def test_interval_gates_repeated_calls(self):
         writer = _TraceWriter()
-        writer._last_prune_monotonic = 0.0
+        writer._last_prune_monotonic = time.monotonic() - writer.PRUNE_CHECK_INTERVAL - 1
         with patch(
             'app.services.llm.observability.get_settings',
             return_value=_settings(retention=90, enabled=True),
