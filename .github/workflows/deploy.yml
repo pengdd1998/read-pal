@@ -142,7 +142,24 @@ jobs:
             # -------------------------------------------------------
             # 2. Detect which services need rebuild
             # -------------------------------------------------------
-            CHANGED=$(git diff --name-only HEAD~1 HEAD)
+            # Diff against the LAST SUCCESSFULLY DEPLOYED sha, not HEAD~1:
+            # a cancelled deploy still advances the checkout (git reset runs
+            # before build), so HEAD~1-based detection missed the entire
+            # skipped range and stale images kept running (2026-09-08: the
+            # observability batch never shipped because its deploy was
+            # cancelled and the follow-up commit touched only tests).
+            # Marker file is written after health checks pass; missing marker
+            # => first deploy with this scheme => rebuild everything.
+            DEPLOY_MARKER=.last-deployed-sha
+            if [ -f "$DEPLOY_MARKER" ] && git rev-parse -q --verify "$(cat $DEPLOY_MARKER)" >/dev/null 2>&1; then
+              DEPLOY_BASE=$(cat "$DEPLOY_MARKER")
+              CHANGED=$(git diff --name-only "$DEPLOY_BASE" HEAD)
+            else
+              DEPLOY_BASE="none"
+              CHANGED="packages/server/app packages/web/src"
+              echo ">>> No valid deploy marker - full rebuild."
+            fi
+            echo ">>> Deploy base: ${DEPLOY_BASE} HEAD: $(git rev-parse HEAD)"
 
             REBUILD_API=false
             REBUILD_WEB=false
@@ -258,4 +275,7 @@ jobs:
             docker builder prune -f --filter "until=24h" 2>/dev/null || true
 
             DISK_USAGE=$(df -h . | tail -1 | awk '{print $5}')
+            # Record the deployed sha ONLY after the health checks above
+            # passed - a cancelled/failed deploy must not advance the marker.
+            git rev-parse HEAD > "$DEPLOY_MARKER"
             echo "✅ Deploy complete — Disk usage: $DISK_USAGE"
