@@ -155,9 +155,11 @@ class TestMetricsEndpoint:
         data = body['data']
         assert data['total_calls'] == 2
         assert data['error_breakdown'] == {'timeout': 1}
-        for key in ('success_rate', 'latency_ms', 'tokens',
-                    'guardrail_hits_today'):
+        for key in ('success_rate', 'latency_ms', 'tokens'):
             assert key in data
+        # F2: guardrail counters are platform-wide with no user dimension —
+        # a user-scoped response must not carry the platform totals.
+        assert not data.get('guardrail_hits_today')
 
     async def test_global_scope_env_flag(self, client, monkeypatch):
         """LLM_METRICS_SCOPE=global turns the endpoint into an ops console
@@ -178,6 +180,8 @@ class TestMetricsEndpoint:
         resp = await client.get('/api/v1/stats/llm?hours=24', headers=headers)
         assert resp.status_code == 200
         assert resp.json()['data']['total_calls'] == 2
+        # global (ops) scope DOES carry the platform-wide guardrail totals.
+        assert 'guardrail_hits_today' in resp.json()['data']
 
 
 class TestGuardrailNoDoubleCount:

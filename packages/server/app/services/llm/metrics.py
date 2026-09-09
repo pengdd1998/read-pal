@@ -72,6 +72,12 @@ async def compute_llm_metrics(
         os.environ.get('LLM_METRICS_SCOPE', '').strip().lower() == 'global'
     )
 
+    # F3 (24h-review follow-up): hard cap on rows pulled for in-memory
+    # percentiles — global scope over a long retention window is bounded
+    # by this, not by the table size. Percentiles become an approximation
+    # of the most recent MAX_METRICS_ROWS calls, documented via the flag.
+    MAX_METRICS_ROWS = 100_000
+
     def _query():
         q = select(
             LLMCallTrace.label,
@@ -86,7 +92,7 @@ async def compute_llm_metrics(
         ).where(LLMCallTrace.created_at >= since)
         if not global_scope:
             q = q.where(LLMCallTrace.user_id == user_id)
-        return q
+        return q.order_by(LLMCallTrace.created_at.desc()).limit(MAX_METRICS_ROWS)
 
     if session is not None:
         rows = (await session.execute(_query())).all()
@@ -131,9 +137,14 @@ async def compute_llm_metrics(
         )[:MAX_LABEL_BREAKDOWN]
     ]
 
-    from app.utils.output_filter import read_guardrail_hits
-
-    guardrails = await read_guardrail_hits(days=1)
+    # F2 (24h-review follow-up): the guardrail counters are platform-wide
+    # (Redis day-keys + process memory, no user dimension), so they are
+    # only surfaced in the ops/global scope — a user-scoped response must
+    # not leak the platform's daily PII/harmful block totals.
+    guardrails: dict[str, int] = {}
+    if global_scope:
+        from app.utils.output_filter import read_guardrail_hits
+        guardrails = await read_guardrail_hits(days=1)
 
     return {
         'window_hours': hours,

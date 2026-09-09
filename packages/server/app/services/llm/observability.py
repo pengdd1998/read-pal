@@ -609,7 +609,22 @@ class _TraceWriter:
             await asyncio.sleep(self.FLUSH_INTERVAL)
             if self._buf:
                 await self.flush()
+            self._flush_jsonl_sink()
             await self._maybe_prune()
+
+    def _flush_jsonl_sink(self) -> None:
+        """Drain the JSONL sink's buffer every flush tick.
+
+        F1 (24h-review follow-up): the sink only auto-flushed at 64
+        buffered records — a low-traffic deployment (or the forensic
+        LLM_TRACE_CAPTURE_CONTENT channel) could sit under the threshold
+        forever and lose up to 63 records on exit. Also called from the
+        app shutdown path (main.py lifespan).
+        """
+        try:
+            _jsonl_sink.flush()
+        except Exception:  # noqa: BLE001 — never break the flush loop
+            logger.warning('llm_trace_jsonl_periodic_flush_failed')
 
     async def _maybe_prune(
         self, session_factory: Any | None = None,

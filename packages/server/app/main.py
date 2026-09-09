@@ -118,6 +118,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         flushed = await _trace_writer.flush()
         logger.info('LLM trace writer flushed %d records on shutdown', flushed)
+        # F1 (24h-review follow-up): the JSONL sink buffers up to 63
+        # records below its size threshold — drain it on shutdown too or
+        # those traces only ever existed in memory.
+        _trace_writer._flush_jsonl_sink()
     except Exception as exc:  # noqa: BLE001 — best-effort flush
         logger.warning('LLM trace writer flush failed on shutdown: %s', str(exc)[:200])
     await shutdown_llm()

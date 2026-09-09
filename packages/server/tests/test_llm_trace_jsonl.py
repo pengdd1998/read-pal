@@ -160,3 +160,20 @@ class TestJSONLRotation:
         assert (tmp_path / 'traces.jsonl.1').exists()
         assert 'r1' in (tmp_path / 'traces.jsonl.1').read_text()
         assert 'r2' in target.read_text()
+
+
+class TestJSONLPeriodicFlush:
+    async def test_flush_loop_drains_sink(self, tmp_path):
+        """F1: records below the 64-record threshold must reach the file via
+        the flush-loop tick (or shutdown), not only via the size trigger."""
+        from app.services.llm.observability import _trace_writer
+
+        target = tmp_path / 'traces.jsonl'
+        with patch(
+            'app.services.llm.observability.get_settings',
+            return_value=_settings_mock(jsonl_path=str(target)),
+        ):
+            _jsonl_sink.write({'request_id': 'lonely'})
+            assert not target.exists()  # buffered, under threshold
+            _trace_writer._flush_jsonl_sink()
+        assert 'lonely' in target.read_text(encoding='utf-8')
