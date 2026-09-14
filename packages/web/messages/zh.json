@@ -1021,7 +1021,13 @@
     "next_chapter_label": "下一章",
     "next_chapter_cta": "继续阅读下一章：{title}",
     "companion_tool_searching": "正在查阅资料…",
-    "companion_tool_trace": "查阅了 {count} 处资料"
+    "companion_tool_trace": "查阅了 {count} 处资料",
+    "proposal_note_title": "保存这条笔记？",
+    "proposal_card_title": "创建这张闪卡？",
+    "proposal_save": "保存",
+    "proposal_saving": "保存中…",
+    "proposal_saved": "已保存",
+    "proposal_failed": "保存失败，请重试"
   },
   "stats": {
     "title": "阅读统计",

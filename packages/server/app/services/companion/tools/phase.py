@@ -38,8 +38,8 @@ async def run_tool_phase(
     book: Book,
     system_text: str,
     budget: TokenBudget,
-) -> tuple[str, list[dict[str, Any]]]:
-    """Return ``(amended system_text, tool_results)``.
+) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
+    """Return ``(amended system_text, tool_results, proposals)``.
 
     ``tool_results`` is empty when the phase is disabled, classified out,
     planned empty, or failed anywhere — in all those cases system_text is
@@ -48,12 +48,12 @@ async def run_tool_phase(
     from app.config import get_settings
 
     if not get_settings().companion_tools_enabled:
-        return system_text, []
+        return system_text, [], []
 
     # Fast-path gate: only book-content questions pay the planning hop;
     # skip/general turns keep today's zero-added-latency behavior.
     if classify_query(message, history_texts) != 'content':
-        return system_text, []
+        return system_text, [], []
 
     from app.services.companion.tools.planner import plan_tool_calls
 
@@ -85,14 +85,46 @@ async def run_tool_phase(
             'deadline_s=%s user=%s book=%s',
             PLAN_DEADLINE_S, str(user_id), str(book_id),
         )
-        return system_text, []
+        return system_text, [], []
     if not plan:
-        return system_text, []
+        return system_text, [], []
 
-    from app.services.companion.tools.registry import execute_tool, render_tool_results
+    from app.services.companion.tools.registry import (
+        TOOL_SPECS, execute_tool, render_tool_results,
+    )
+
+    # v2 routing: reads execute and inject; proposals validate + frame.
+    proposals: list[dict[str, Any]] = []
+    hint_parts: list[str] = []
+    from app.config import get_settings as _gs
+    proposals_enabled = _gs().companion_tool_proposals_enabled
 
     results: list[dict[str, Any]] = []
     for call in plan:
+        spec = TOOL_SPECS[call['name']]
+        if spec.kind == 'proposal':
+            if not proposals_enabled:
+                continue
+            try:
+                parsed = spec.args_model.model_validate(call['args'])
+            except Exception:  # noqa: BLE001 — bad proposal args degrade silently
+                logger.info(
+                    'companion.tool_proposal_args_invalid tool=%s', call['name'],
+                )
+                continue
+            proposals.append({
+                'id': f'{call["name"]}-{int(t0 * 1000) % 100000}',
+                'tool': call['name'],
+                'args': parsed.model_dump(),
+                'preview': parsed.model_dump().get('preview', ''),
+            })
+            hint_parts.append(
+                f'A {call["name"]} proposal card has been shown to the '
+                'reader — they will confirm or dismiss it. Reference it '
+                'naturally ("我把它放在卡片里了，确认就能保存"), never claim '
+                'it is already saved.'
+            )
+            continue
         results.append(await execute_tool(
             db, call['name'], call['args'], user_id=user_id, book_id=book_id,
         ))
@@ -101,17 +133,18 @@ async def run_tool_phase(
     if rendered:
         # Own budget slot: bounded, truncatable, never crowds out
         # reserved history/user-message slots.
-        amended = system_text + '\n\n' + (
+        system_text = system_text + '\n\n' + (
             budget.add(rendered, 'tool_results') or ''
         )
-    else:
-        amended = system_text
+    if hint_parts:
+        system_text += '\n\n[v2_proposal_notice]\n' + '\n'.join(hint_parts) + '\n[/v2_proposal_notice]'
 
     logger.info(
         'companion.tool_phase_completed',
         tools=[r['tool'] for r in results],
         ok_count=sum(1 for r in results if r.get('ok')),
+        proposals=[p['tool'] for p in proposals],
         latency_ms=int((time.monotonic() - t0) * 1000),
         user_id=str(user_id), book_id=str(book_id),
     )
-    return amended, results
+    return system_text, results, proposals

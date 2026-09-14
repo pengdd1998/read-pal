@@ -23,6 +23,7 @@ interface ChatOpenPanelProps {
  sanitizedMessages: SanitizedMessage[];
  suggestedPrompts: string[];
  bookTitle?: string;
+ bookId: string;
  input: string;
  onInputChange: (value: string) => void;
  onKeyDown: (e: React.KeyboardEvent) => void;
@@ -49,6 +50,7 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
  sanitizedMessages,
  suggestedPrompts,
  bookTitle,
+ bookId,
  input,
  onInputChange,
  onKeyDown,
@@ -115,6 +117,7 @@ export const ChatOpenPanel = React.memo(function ChatOpenPanel({
    friendEmoji={friendEmoji}
    friendName={friendName}
    bookTitle={bookTitle}
+   bookId={bookId}
    suggestedPrompts={suggestedPrompts}
    messagesEndRef={messagesEndRef}
    chatContainerRef={chatContainerRef}

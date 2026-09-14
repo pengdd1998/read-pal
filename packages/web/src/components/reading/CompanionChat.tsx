@@ -273,6 +273,7 @@ const CompanionChatInner = forwardRef<CompanionChatHandle, CompanionChatProps>(f
    onLoadMoreHistory={loadMore}
    submitFeedback={submitFeedback}
    t={t as (key: string, params?: Record<string, unknown>) => string}
+   bookId={bookId}
   />
   )}
  </>

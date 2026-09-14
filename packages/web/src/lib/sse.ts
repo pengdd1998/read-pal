@@ -34,10 +34,18 @@ import { warn } from './logger';
  */
 export type SSEToolResult = { tool?: string; ok?: boolean; latency_ms?: number };
 
+export type SSEProposal = {
+  id?: string;
+  tool?: string;
+  args?: Record<string, unknown>;
+  preview?: string;
+};
+
 export type SSEMeta = {
   request_id?: string;
-  type?: 'metadata' | 'message_id' | 'tool_status';
+  type?: 'metadata' | 'message_id' | 'tool_status' | 'tool_proposals';
   results?: SSEToolResult[];
+  proposals?: SSEProposal[];
   message_id?: string;
   model?: string;
   fallback_used?: boolean;
@@ -114,6 +122,7 @@ export function consumeSSEStream(
           request_id?: string;
           id?: string;
           results?: SSEToolResult[];
+          proposals?: SSEProposal[];
           type?: string;
           model?: string;
           fallback_used?: boolean;
@@ -132,6 +141,10 @@ export function consumeSSEStream(
         // Tool-phase footprint (ephemeral hint; no replay id by design).
         if (parsed.type === 'tool_status' && onMeta) {
           onMeta({ type: 'tool_status', results: parsed.results || [] });
+        }
+        // v2 action proposals: user-confirmed writes (ephemeral by design).
+        if (parsed.type === 'tool_proposals' && onMeta) {
+          onMeta({ type: 'tool_proposals', proposals: parsed.proposals || [] });
         }
         if (parsed.type === 'metadata' && onMeta) {
           onMeta({

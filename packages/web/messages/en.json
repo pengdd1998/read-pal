@@ -1021,7 +1021,13 @@
     "next_chapter_label": "NEXT CHAPTER",
     "next_chapter_cta": "Continue to next chapter: {title}",
     "companion_tool_searching": "Looking things up…",
-    "companion_tool_trace": "Checked {count} source(s)"
+    "companion_tool_trace": "Checked {count} source(s)",
+    "proposal_note_title": "Save this note?",
+    "proposal_card_title": "Create this flashcard?",
+    "proposal_save": "Save",
+    "proposal_saving": "Saving…",
+    "proposal_saved": "Saved",
+    "proposal_failed": "Save failed, please retry"
   },
   "stats": {
     "title": "Reading Stats",

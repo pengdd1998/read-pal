@@ -327,7 +327,7 @@ async def stream_chat(
     # May only amend the turn — disabled/classified-out/planned-empty/
     # failed all leave system_text untouched (see tools/phase.py).
     from app.services.companion.tools.phase import run_tool_phase
-    system_text, tool_results = await run_tool_phase(
+    system_text, tool_results, proposals = await run_tool_phase(
         db=db, user_id=user_id, book_id=book_id, message=message,
         history_texts=[str(m.content) for m in history[-6:]],
         book=book, system_text=system_text, budget=budget,
@@ -335,6 +335,9 @@ async def stream_chat(
     if tool_results:
         from app.services.companion.stream_cache import emit_tool_status_frame
         yield emit_tool_status_frame(tool_results, actual_request_id)
+    if proposals:
+        from app.services.companion.stream_cache import emit_tool_proposals_frame
+        yield emit_tool_proposals_frame(proposals, actual_request_id)
 
     messages = _build_messages(system_text, history, message, budget)
 

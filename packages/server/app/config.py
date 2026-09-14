@@ -138,6 +138,11 @@ class Settings(BaseSettings):
     # for rollout; the phase also self-degrades on every failure.
     companion_tools_enabled: bool = True
 
+    # v2 proposal tools (save_note / create_flashcard): framed for user
+    # confirmation, never executed in-turn. Independent kill switch so the
+    # proposal surface can be disabled without touching read-only tools.
+    companion_tool_proposals_enabled: bool = True
+
     # Multi-provider LLM routing
     llm_providers: str = ''  # JSON array of ProviderConfig dicts
     llm_feature_routing: str = '{}'  # JSON dict: feature -> strategy

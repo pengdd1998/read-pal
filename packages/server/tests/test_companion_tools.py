@@ -21,12 +21,16 @@ from tests.test_research_agent import _NEEDLE, _seed_book, _seed_user
 
 
 class TestRegistry:
-    def test_seven_specs_registered(self):
+    def test_nine_specs_registered_with_kinds(self):
         assert sorted(TOOL_SPECS) == [
-            'get_annotations', 'get_chapter', 'get_flashcards',
-            'get_knowledge_graph', 'get_memory_book',
-            'get_reading_progress', 'search_book',
+            'create_flashcard', 'get_annotations', 'get_chapter',
+            'get_flashcards', 'get_knowledge_graph', 'get_memory_book',
+            'get_reading_progress', 'save_note', 'search_book',
         ]
+        kinds = {n: s.kind for n, s in TOOL_SPECS.items()}
+        assert kinds['save_note'] == 'proposal'
+        assert kinds['create_flashcard'] == 'proposal'
+        assert all(v == 'read' for k, v in kinds.items() if k not in ('save_note', 'create_flashcard'))
 
     @pytest.mark.asyncio
     async def test_invalid_args_never_raise(self):
@@ -190,7 +194,7 @@ class TestProtocol:
     def test_valid_and_fenced(self):
         assert parse_tool_plan(
             '{"tools":[{"name":"search_book","args":{"query":"g"}}]}',
-        ) == [{'name': 'search_book', 'args': {'query': 'g'}}]
+        ) == [{'name': 'search_book', 'args': {'query': 'g'}, 'kind': 'read'}]
         assert parse_tool_plan(
             'plan:\n```json\n{"tools":[{"name":"get_chapter","args":{"index":3}}]}\n```',
         )[0]['args'] == {'index': 3}
@@ -233,7 +237,7 @@ class TestPlanner:
                 book_title='Gatsby', book_author='Fitz', progress=10,
                 status='reading', has_rag=True, has_annotations=False,
             )
-        assert plan == [{'name': 'search_book', 'args': {'query': 'green light'}}]
+        assert plan == [{'name': 'search_book', 'args': {'query': 'green light'}, 'kind': 'read'}]
 
     @pytest.mark.asyncio
     async def test_fallback_value_means_no_tools(self):
@@ -271,11 +275,12 @@ class TestPlanner:
         from app.prompts import ALL_TEMPLATES
         sys_t = ALL_TEMPLATES['companion.tool_plan']
         human = ALL_TEMPLATES['companion.tool_plan.human']
-        assert sys_t.version == 1 and sys_t.max_tokens == 200
+        assert sys_t.version == 2 and sys_t.max_tokens == 200
         # All seven tools documented in the system prompt.
         for name in ('search_book', 'get_annotations', 'get_chapter',
                      'get_reading_progress', 'get_knowledge_graph',
-                     'get_memory_book', 'get_flashcards'):
+                     'get_memory_book', 'get_flashcards',
+                     'save_note', 'create_flashcard'):
             assert name in sys_t.template, name
         # Variables declared (Never-rule 4) and renderable.
         human.template.format(title='t', author='a', progress=1,
@@ -297,7 +302,7 @@ class TestToolPhase:
                                      'status': type('S', (), {'value': 'reading'})()})(),
                 system_text='BASE', budget=_FakeBudget(),
             )
-        assert out == ('BASE', [])
+        assert out == ('BASE', [], [])
 
     @pytest.mark.asyncio
     async def test_non_content_classification_skips_planner(self):
@@ -313,7 +318,7 @@ class TestToolPhase:
                 book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
             )
         planner.assert_not_awaited()
-        assert out == ('BASE', [])
+        assert out == ('BASE', [], [])
 
     @pytest.mark.asyncio
     async def test_full_path_amends_and_reports(self):
@@ -327,7 +332,7 @@ class TestToolPhase:
                                         'latency_ms': 5, 'data': {'due_count': 2}}),
         ):
             ms.return_value.companion_tools_enabled = True
-            amended, results = await run_tool_phase(
+            amended, results, proposals = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
                 message='第3章的角色关系是什么？', history_texts=[],
                 book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
@@ -348,7 +353,7 @@ class TestToolPhase:
                 message='书里那个比喻的原文是什么', history_texts=[],
                 book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
             )
-        assert out == ('BASE', [])
+        assert out == ('BASE', [], [])
 
 
 class TestToolStatusFrame:
@@ -401,5 +406,101 @@ class TestPlannerDeadline:
                 book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
             )
         elapsed = __import__('time').monotonic() - t0
-        assert out == ('BASE', [])
+        assert out == ('BASE', [], [])
         assert elapsed < phase_mod.PLAN_DEADLINE_S + 2, f'phase took {elapsed:.1f}s'
+
+
+class TestProposalTools:
+    """v2 M1: proposals are framed, never executed; capped at one/turn."""
+
+    @pytest.mark.asyncio
+    async def test_execute_tool_rejects_proposals(self):
+        result = await execute_tool(
+            None, 'save_note', {'content': 'x' * 10, 'preview': 'p'},
+            user_id=uuid4(), book_id=uuid4(),
+        )
+        assert result['ok'] is False
+        assert 'not executable' in result['error']
+
+    def test_proposal_capped_at_one_per_turn(self):
+        plan = parse_tool_plan(
+            '{"tools":[{"name":"save_note","args":{"content":"aaaa"}},'
+            '{"name":"create_flashcard","args":{"question":"q?","answer":"a"}},'
+            '{"name":"search_book","args":{"query":"g"}}]}',
+        )
+        names = [c['name'] for c in plan]
+        assert names.count('save_note') + names.count('create_flashcard') == 1
+        assert 'search_book' in names  # read not crowded out
+
+    def test_proposal_args_validated(self):
+        plan = parse_tool_plan(
+            '{"tools":[{"name":"save_note","args":{"content":"x"}}]}',  # too short
+        )
+        assert [c['name'] for c in plan] == ['save_note']  # parse keeps it…
+        from app.services.companion.tools.registry import TOOL_SPECS
+        try:
+            TOOL_SPECS['save_note'].args_model.model_validate(plan[0]['args'])
+            assert False, 'should reject short content'
+        except Exception:
+            pass  # …validation happens downstream (phase renders only valid)
+
+
+class TestProposalRouting:
+    """v2 M2: proposals validate+frame, never execute; flag gates them."""
+
+    @pytest.mark.asyncio
+    async def test_proposal_framed_not_executed(self):
+        from app.services.companion.tools.phase import run_tool_phase
+        with patch('app.config.get_settings') as ms, patch(
+            'app.services.companion.tools.planner.plan_tool_calls',
+            new=AsyncMock(return_value=[
+                {'name': 'save_note', 'kind': 'proposal',
+                 'args': {'content': '绿光象征美国梦', 'preview': '绿光', 'tags': ['象征']}},
+                {'name': 'search_book', 'kind': 'read',
+                 'args': {'query': 'green light'}},
+            ]),
+        ), patch(
+            'app.services.companion.tools.registry.execute_tool',
+            new=AsyncMock(return_value={'ok': True, 'tool': 'search_book',
+                                        'latency_ms': 5, 'data': {'hits': []}}),
+        ) as exec_mock:
+            ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_proposals_enabled = True
+            amended, results, proposals = await run_tool_phase(
+                db=None, user_id=uuid4(), book_id=uuid4(),
+                message='帮我找绿光的原文并记一下它的象征', history_texts=[],
+                book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
+            )
+        exec_mock.assert_awaited_once()  # only the read executed
+        assert results[0]['tool'] == 'search_book'
+        assert len(proposals) == 1 and proposals[0]['tool'] == 'save_note'
+        assert proposals[0]['args']['content'] == '绿光象征美国梦'
+        assert 'v2_proposal_notice' in amended and 'never claim' in amended
+
+    @pytest.mark.asyncio
+    async def test_proposal_flag_off_drops_proposals(self):
+        from app.services.companion.tools.phase import run_tool_phase
+        with patch('app.config.get_settings') as ms, patch(
+            'app.services.companion.tools.planner.plan_tool_calls',
+            new=AsyncMock(return_value=[
+                {'name': 'save_note', 'kind': 'proposal',
+                 'args': {'content': 'x' * 10, 'preview': 'p'}},
+            ]),
+        ):
+            ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_proposals_enabled = False
+            amended, results, proposals = await run_tool_phase(
+                db=None, user_id=uuid4(), book_id=uuid4(),
+                message='帮我记一下这段', history_texts=[],
+                book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
+            )
+        assert proposals == [] and 'v2_proposal_notice' not in amended
+
+    def test_proposals_frame_shape(self):
+        from app.services.companion.stream_cache import emit_tool_proposals_frame
+        frame = emit_tool_proposals_frame(
+            [{'id': 'p1', 'tool': 'save_note', 'args': {'content': 'x'}, 'preview': '绿光'}],
+            'req9',
+        )
+        assert '"type": "tool_proposals"' in frame and 'save_note' in frame
+        assert '\nid: ' not in frame  # ephemeral, no replay

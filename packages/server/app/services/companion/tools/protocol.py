@@ -53,7 +53,10 @@ def parse_tool_plan(raw: str | None, max_tools: int = 2) -> list[dict[str, Any]]
 
     from app.services.companion.tools.registry import TOOL_SPECS
 
+    # Separate caps by kind (v2): reads stay at max_tools (2); proposals
+    # are capped at one per turn and never crowd out reads.
     out: list[dict[str, Any]] = []
+    proposal_count = 0
     for call in calls:
         if not isinstance(call, dict):
             continue
@@ -61,10 +64,15 @@ def parse_tool_plan(raw: str | None, max_tools: int = 2) -> list[dict[str, Any]]
         if not isinstance(name, str) or name not in TOOL_SPECS:
             logger.info('companion.tool_plan_unknown_tool name=%s', name)
             continue
+        spec = TOOL_SPECS[name]
+        if spec.kind == 'proposal':
+            if proposal_count >= 1:
+                continue
+            proposal_count += 1
         args = call.get('args')
         if not isinstance(args, dict):
             args = {}
-        out.append({'name': name, 'args': args})
-        if len(out) >= max_tools:
+        out.append({'name': name, 'args': args, 'kind': spec.kind})
+        if len(out) >= max_tools + proposal_count:
             break
     return out

@@ -2,9 +2,11 @@
 
 import { memo, useState } from 'react';
 import type { SanitizedMessage } from './ChatMessageList';
+import { ProposalCard } from './ProposalCard';
 
 interface ChatMessageBubbleProps {
- msg: SanitizedMessage & { myRating?: boolean | null; toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }> };
+ msg: SanitizedMessage & { myRating?: boolean | null; toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>; proposals?: Array<{ id?: string; tool?: string; args?: Record<string, unknown>; preview?: string }> };
+ bookId: string;
  t: (key: string, params?: Record<string, unknown>) => string;
  submitFeedback: (messageId: string, rating: boolean | null, onFail?: () => void) => void;
  onRegenerate: () => void;
@@ -49,7 +51,7 @@ function ToolTrace({ trace, searching, t }: {
   );
 }
 
-export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submitFeedback, onRegenerate, showRegenerate }: ChatMessageBubbleProps) {
+export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, bookId, t, submitFeedback, onRegenerate, showRegenerate }: ChatMessageBubbleProps) {
  // Optimistic rating state: the clicked thumb FILLS and plays its gesture
  // (raise for 👍, jab for 👎); clicking it AGAIN cancels (toggle); rolls
  // back if the request fails. null = not rated.
@@ -72,6 +74,9 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
    {msg.toolTrace && msg.toolTrace.length > 0 && (
    <ToolTrace trace={msg.toolTrace ?? []} searching={!msg.content && !!msg.streaming} t={t} />
    )}
+   {msg.proposals?.map((pr, i) => (
+   <ProposalCard key={pr.id || i} proposal={pr} bookId={bookId} t={t} />
+   ))}
    <div className="text-sm prose-sm prose-p:my-1 prose-pre:my-1">
     <div
     dangerouslySetInnerHTML={{ __html: msg.sanitized }}

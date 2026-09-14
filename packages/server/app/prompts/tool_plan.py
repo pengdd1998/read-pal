@@ -29,7 +29,7 @@ class ToolPlanResult(BaseModel):
 
 TOOL_PLAN_SYSTEM = PromptTemplate(
     key='companion.tool_plan',
-    version=1,
+    version=2,
     template=(
         'You are the tool planner for a reading companion. Given the '
         'reader\'s message, decide which tools (if any) the companion '
@@ -54,7 +54,16 @@ TOOL_PLAN_SYSTEM = PromptTemplate(
         '6. get_memory_book() — whether a reading mirror exists + its '
         'section titles and stats.\n'
         '7. get_flashcards(filter?: "due"|"all") — card questions and '
-        'due counts.\n\n'
+        'due counts.\n'
+        '8. save_note(content, tags?, preview) — PROPOSAL: save a note. '
+        'Only when the reader asks to keep/record something; they must '
+        'confirm on a card.\n'
+        '9. create_flashcard(question, answer, preview) — PROPOSAL: make '
+        'a flashcard. Only when the reader asks to memorize/record a '
+        'concept; they must confirm.\n\n'
+        'Proposal rules: at most ONE proposal per turn; never propose '
+        'unless the reader asked to save/record/memorize; preview is a '
+        'short card label.\n\n'
         'Output ONLY a JSON object: '
         '{"tools": [{"name": "...", "args": {...}}]}\n\n'
         'Examples:\n'
@@ -67,6 +76,12 @@ TOOL_PLAN_SYSTEM = PromptTemplate(
         'Output: {"tools": [{"name": "get_knowledge_graph", "args": {}}]}\n'
         'Message: "帮我看看我标过的那段话在第几章？"\n'
         'Output: {"tools": [{"name": "get_annotations", "args": {}}]}\n'
+        'Message: "这段关于绿光的象征帮我记一下"\n'
+        'Output: {"tools": [{"name": "save_note", "args": {"content": '
+        '"绿光象征……", "preview": "绿光的象征", "tags": ["象征"]}}]}\n'
+        'Message: "这个对比太妙了"\n'
+        'Output: {"tools": []}  // appreciation, NOT a save request — no '
+        'proposal\n'
     ),
     description='Decides tool calls for the companion tool phase',
     variables=[],

@@ -53,14 +53,33 @@ class GetFlashcardsArgs(BaseModel):
     filter: Literal['due', 'all'] = 'due'
 
 
-class _ToolSpec:
-    __slots__ = ('name', 'description', 'args_model', 'fn')
+# --- v2 proposal tools (model PROPOSES; the user confirms via the action
+# card; execution goes through existing REST endpoints, never via LLM) ---
 
-    def __init__(self, name: str, description: str, args_model: type[BaseModel], fn) -> None:
+class SaveNoteArgs(BaseModel):
+    content: str = Field(min_length=4, max_length=2000)
+    tags: list[str] = Field(default_factory=list, max_length=3)
+    preview: str = Field(default='', max_length=120)
+
+
+class CreateFlashcardArgs(BaseModel):
+    question: str = Field(min_length=4, max_length=500)
+    answer: str = Field(min_length=1, max_length=500)
+    preview: str = Field(default='', max_length=120)
+
+
+class _ToolSpec:
+    __slots__ = ('name', 'description', 'args_model', 'fn', 'kind')
+
+    def __init__(
+        self, name: str, description: str, args_model: type[BaseModel], fn,
+        kind: str = 'read',
+    ) -> None:
         self.name = name
         self.description = description
         self.args_model = args_model
         self.fn = fn
+        self.kind = kind  # 'read' executes server-side; 'proposal' only frames
 
 
 def _build_specs() -> dict[str, _ToolSpec]:
@@ -110,6 +129,19 @@ def _build_specs() -> dict[str, _ToolSpec]:
             'to suggest or tailor a review.',
             GetFlashcardsArgs, impl.get_flashcards,
         ),
+        # v2 proposals: no fn — validated and framed, never executed here.
+        'save_note': _ToolSpec(
+            'save_note',
+            'PROPOSE saving a note. Only when the reader asks to keep/'
+            'record something from the conversation. They must confirm.',
+            SaveNoteArgs, None, kind='proposal',
+        ),
+        'create_flashcard': _ToolSpec(
+            'create_flashcard',
+            'PROPOSE a flashcard (question+answer). Only when the reader '
+            'asks to memorize/record a concept. They must confirm.',
+            CreateFlashcardArgs, None, kind='proposal',
+        ),
     }
 
 
@@ -134,6 +166,11 @@ async def execute_tool(
     t0 = time.monotonic()
     if spec is None:
         return {'ok': False, 'tool': name, 'error': 'unknown tool', 'latency_ms': 0}
+    if spec.kind == 'proposal':
+        # Defense in depth: proposals are framed for user confirmation,
+        # never executed in the LLM turn (v2 plan §0).
+        return {'ok': False, 'tool': name, 'error': 'proposal tools are not executable',
+                'latency_ms': 0}
     try:
         parsed = spec.args_model.model_validate(args or {})
     except Exception as exc:  # noqa: BLE001 — bad model args degrade, never raise

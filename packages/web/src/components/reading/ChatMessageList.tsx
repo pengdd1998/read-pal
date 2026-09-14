@@ -27,6 +27,8 @@ export interface SanitizedMessage {
  streaming?: boolean;
  /** Tool-phase footprint (2026-09-14), additive. */
  toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>;
+ /** v2 action proposals (ephemeral). */
+ proposals?: Array<{ id?: string; tool?: string; args?: Record<string, unknown>; preview?: string }>;
 }
 
 interface ChatMessageListProps {
@@ -37,6 +39,7 @@ interface ChatMessageListProps {
  friendEmoji: string;
  friendName: string;
  bookTitle?: string;
+ bookId: string;
  suggestedPrompts: string[];
  messagesEndRef: React.Ref<HTMLDivElement>;
  chatContainerRef: React.Ref<HTMLDivElement>;
@@ -58,6 +61,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
  friendEmoji,
  friendName,
  bookTitle,
+ bookId,
  suggestedPrompts,
  messagesEndRef,
  chatContainerRef,
@@ -141,6 +145,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
    <ChatMessageBubble
    key={msg.id}
    msg={msg}
+   bookId={bookId}
    t={t}
    submitFeedback={submitFeedback}
    onRegenerate={onRegenerate}

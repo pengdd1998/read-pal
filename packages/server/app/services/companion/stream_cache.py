@@ -169,6 +169,29 @@ def emit_tool_status_frame(results: list[dict], request_id: str) -> str:
     return f'data: {json.dumps(payload, ensure_ascii=False)}\n\n'
 
 
+def emit_tool_proposals_frame(proposals: list[dict], request_id: str) -> str:
+    """Build the v2 action-proposal frame (user-confirmed writes).
+
+    Like tool_status: ephemeral (no replay id) — a reconnect loses the
+    card, which is correct: an unconfirmed proposal should not resurface
+    after the user has moved on.
+    """
+    payload = {
+        'type': 'tool_proposals',
+        'request_id': request_id,
+        'proposals': [
+            {
+                'id': pr.get('id'),
+                'tool': pr.get('tool'),
+                'args': pr.get('args'),
+                'preview': pr.get('preview', ''),
+            }
+            for pr in proposals
+        ],
+    }
+    return f'data: {json.dumps(payload, ensure_ascii=False)}\n\n'
+
+
 async def emit_message_id_frame(
     message_id: str,
     request_id: str,

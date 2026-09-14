@@ -26,6 +26,9 @@ export interface Message {
    * before answering. Set from the tool_status SSE frame; additive,
    * never affects content. */
   toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>;
+  /** v2 action proposals (user-confirmed writes). Ephemeral: not
+   * persisted, gone on reload by design. */
+  proposals?: Array<{ id?: string; tool?: string; args?: Record<string, unknown>; preview?: string }>;
 }
 
 /** Custom event dispatched when an optimistic turn is rolled back (stream
@@ -355,6 +358,14 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             // id — swap it into the local placeholder so feedback ratings
             // reference an id that actually exists in chat_messages (the
             // local generateId() would violate the FK and 500).
+            if (meta.type === 'tool_proposals' && meta.proposals?.length) {
+              onMessagesUpdate((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId ? { ...m, proposals: meta.proposals } : m,
+                ),
+              );
+              return;
+            }
             if (meta.type === 'tool_status' && meta.results?.length) {
               onMessagesUpdate((prev) =>
                 prev.map((m) =>
