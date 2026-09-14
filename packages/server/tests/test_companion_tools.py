@@ -375,3 +375,31 @@ class _FakeBudget:
 
     def add(self, text, label):
         return text
+
+
+class TestPlannerDeadline:
+    """TL test round (2026-09-14): a throttled-glm planner ladder burned
+    ~70s of dead air before the first token. The phase must cut it off."""
+
+    @pytest.mark.asyncio
+    async def test_hanging_planner_is_cut_at_deadline(self):
+        import asyncio
+        from app.services.companion.tools import phase as phase_mod
+
+        async def hang(**kw):
+            await asyncio.sleep(60)
+
+        t0 = __import__('time').monotonic()
+        with patch('app.config.get_settings') as ms, patch(
+            'app.services.companion.tools.planner.plan_tool_calls',
+            new=AsyncMock(side_effect=hang),
+        ):
+            ms.return_value.companion_tools_enabled = True
+            out = await phase_mod.run_tool_phase(
+                db=None, user_id=uuid4(), book_id=uuid4(),
+                message='第3章讲了什么', history_texts=[],
+                book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
+            )
+        elapsed = __import__('time').monotonic() - t0
+        assert out == ('BASE', [])
+        assert elapsed < phase_mod.PLAN_DEADLINE_S + 2, f'phase took {elapsed:.1f}s'
