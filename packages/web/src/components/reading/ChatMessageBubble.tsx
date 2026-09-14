@@ -4,11 +4,49 @@ import { memo, useState } from 'react';
 import type { SanitizedMessage } from './ChatMessageList';
 
 interface ChatMessageBubbleProps {
- msg: SanitizedMessage & { myRating?: boolean | null };
+ msg: SanitizedMessage & { myRating?: boolean | null; toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }> };
  t: (key: string, params?: Record<string, unknown>) => string;
  submitFeedback: (messageId: string, rating: boolean | null, onFail?: () => void) => void;
  onRegenerate: () => void;
  showRegenerate: boolean;
+}
+
+const TOOL_LABELS: Record<string, string> = {
+  search_book: '📖',
+  get_annotations: '✏️',
+  get_chapter: '📑',
+  get_reading_progress: '📈',
+  get_knowledge_graph: '🕸️',
+  get_memory_book: '📕',
+  get_flashcards: '🎴',
+};
+
+function ToolTrace({ trace, searching, t }: {
+  trace: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>;
+  searching: boolean;
+  t: (key: string, params?: Record<string, unknown>) => string;
+}) {
+  const okTools = trace.filter((r) => r.ok && r.tool);
+  if (searching) {
+    return (
+      <div className="flex items-center gap-1.5 mb-1.5 text-xs text-amber-600/80 dark:text-amber-300/80" role="status">
+        <span className="inline-block w-3 h-3 border-2 border-amber-400/60 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+        {t('companion_tool_searching')}
+      </div>
+    );
+  }
+  if (!okTools.length) return null;
+  return (
+    <div className="flex items-center flex-wrap gap-1 mb-1.5 text-[11px] text-amber-600/60 dark:text-amber-300/60">
+      <span aria-hidden="true">🔍</span>
+      <span>{t('companion_tool_trace', { count: okTools.length })}</span>
+      <span className="flex gap-1" aria-hidden="true">
+        {okTools.map((r, i) => (
+          <span key={i} title={r.tool}>{TOOL_LABELS[r.tool as string] || '🔧'}</span>
+        ))}
+      </span>
+    </div>
+  );
 }
 
 export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submitFeedback, onRegenerate, showRegenerate }: ChatMessageBubbleProps) {
@@ -31,6 +69,9 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, t, submi
   }`}>
   {msg.role === 'assistant' ? (
    <>
+   {msg.toolTrace && msg.toolTrace.length > 0 && (
+   <ToolTrace trace={msg.toolTrace ?? []} searching={!msg.content && !!msg.streaming} t={t} />
+   )}
    <div className="text-sm prose-sm prose-p:my-1 prose-pre:my-1">
     <div
     dangerouslySetInnerHTML={{ __html: msg.sanitized }}

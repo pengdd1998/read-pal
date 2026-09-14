@@ -318,10 +318,24 @@ async def stream_chat(
             yield chunk
         return
 
-    _, history, system_text, budget = await _prepare_context(
+    book, history, system_text, budget = await _prepare_context(
         db, user_id, book_id, message, context, companion_mode,
         persona=persona, genre=genre, lang=lang,
     )
+
+    # Tool phase (2026-09-14 v1): plan-then-answer for content questions.
+    # May only amend the turn — disabled/classified-out/planned-empty/
+    # failed all leave system_text untouched (see tools/phase.py).
+    from app.services.companion.tools.phase import run_tool_phase
+    system_text, tool_results = await run_tool_phase(
+        db=db, user_id=user_id, book_id=book_id, message=message,
+        history_texts=[str(m.content) for m in history[-6:]],
+        book=book, system_text=system_text, budget=budget,
+    )
+    if tool_results:
+        from app.services.companion.stream_cache import emit_tool_status_frame
+        yield emit_tool_status_frame(tool_results, actual_request_id)
+
     messages = _build_messages(system_text, history, message, budget)
 
     if budget.truncations:

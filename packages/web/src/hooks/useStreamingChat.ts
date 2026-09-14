@@ -22,6 +22,10 @@ export interface Message {
   fallbackUsed?: boolean;
   /** The user's thumbs state for this assistant message (history echo). */
   myRating?: boolean | null;
+  /** Tool-phase footprint (2026-09-14): which tools the companion ran
+   * before answering. Set from the tool_status SSE frame; additive,
+   * never affects content. */
+  toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>;
 }
 
 /** Custom event dispatched when an optimistic turn is rolled back (stream
@@ -351,6 +355,14 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
             // id — swap it into the local placeholder so feedback ratings
             // reference an id that actually exists in chat_messages (the
             // local generateId() would violate the FK and 500).
+            if (meta.type === 'tool_status' && meta.results?.length) {
+              onMessagesUpdate((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId ? { ...m, toolTrace: meta.results } : m,
+                ),
+              );
+              return;
+            }
             if (meta.type === 'message_id' && meta.message_id) {
               const realId = meta.message_id;
               onMessagesUpdate((prev) =>

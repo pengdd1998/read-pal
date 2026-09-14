@@ -25,6 +25,7 @@ from app.prompts.coach_prompts import (
     COACH_ASSESSMENT_SYSTEM,
 )
 from app.prompts.mood_prompts import MOOD_SCENE_SYSTEM
+from app.prompts.tool_plan import TOOL_PLAN_HUMAN, TOOL_PLAN_SYSTEM
 from app.prompts.research_prompts import (
     RESEARCH_HUMAN,
     RESEARCH_SYSTEM,
@@ -157,6 +158,8 @@ def _build_registry() -> None:
         SUMMARY_REPORT_HUMAN,
         CONVERSATION_SUMMARY_SYSTEM,
         CONVERSATION_SUMMARY_HUMAN,
+        TOOL_PLAN_SYSTEM,
+        TOOL_PLAN_HUMAN,
     ]
 
     for coll in collections:

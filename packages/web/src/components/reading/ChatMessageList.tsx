@@ -25,6 +25,8 @@ export interface SanitizedMessage {
  content: string;
  sanitized: string;
  streaming?: boolean;
+ /** Tool-phase footprint (2026-09-14), additive. */
+ toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>;
 }
 
 interface ChatMessageListProps {

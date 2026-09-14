@@ -1019,7 +1019,9 @@
     "width_comfortable": "舒适",
     "width_wide": "加宽",
     "next_chapter_label": "下一章",
-    "next_chapter_cta": "继续阅读下一章：{title}"
+    "next_chapter_cta": "继续阅读下一章：{title}",
+    "companion_tool_searching": "正在查阅资料…",
+    "companion_tool_trace": "查阅了 {count} 处资料"
   },
   "stats": {
     "title": "阅读统计",

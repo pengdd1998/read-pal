@@ -134,6 +134,10 @@ class Settings(BaseSettings):
     embedding_api_key: str = ''
     embedding_model: str = 'embedding-3'
 
+    # Companion tool phase (2026-09-14 v1: 7 read-only tools). Kill switch
+    # for rollout; the phase also self-degrades on every failure.
+    companion_tools_enabled: bool = True
+
     # Multi-provider LLM routing
     llm_providers: str = ''  # JSON array of ProviderConfig dicts
     llm_feature_routing: str = '{}'  # JSON dict: feature -> strategy

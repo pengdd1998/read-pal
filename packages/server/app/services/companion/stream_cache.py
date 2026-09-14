@@ -147,6 +147,28 @@ def sse_message_id_event(
     return data_line
 
 
+def emit_tool_status_frame(results: list[dict], request_id: str) -> str:
+    """Build the tool-phase status frame (ephemeral UI hint).
+
+    Deliberately NOT id-tagged: the reconnect replay buffer only carries
+    id-tagged content chunks (D4). Losing the tool hint on a reconnect is
+    fine — the answer itself replays intact.
+    """
+    payload = {
+        'type': 'tool_status',
+        'request_id': request_id,
+        'results': [
+            {
+                'tool': r.get('tool'),
+                'ok': bool(r.get('ok')),
+                'latency_ms': r.get('latency_ms'),
+            }
+            for r in results
+        ],
+    }
+    return f'data: {json.dumps(payload, ensure_ascii=False)}\n\n'
+
+
 async def emit_message_id_frame(
     message_id: str,
     request_id: str,
