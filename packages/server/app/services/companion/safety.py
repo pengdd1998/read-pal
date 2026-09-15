@@ -41,6 +41,23 @@ def persist_stream_log(
             book_id=str(book_id) if book_id else None,
             extra=extra or None,
         )
+        # LLM monitoring close-out (2026-09-15): the streaming path is the
+        # BULK of LLM traffic but never reached llm_call_traces — the
+        # five-indicator metrics (/stats/llm) were blind to it. Mirror the
+        # completion event into the trace writer so p50-p99/success-rate/
+        # by-label cover companion streaming too.
+        from app.services.llm.observability import _trace_writer
+        _trace_writer.add({
+            'request_id': request_id[:12],
+            'model': model,
+            'label': 'companion.stream',
+            'latency_ms': latency_ms,
+            'success': success,
+            'error_message': error_message,
+            'ttft_ms': ttft_ms,
+            'user_id': str(user_id) if user_id else None,
+            'book_id': str(book_id) if book_id else None,
+        })
     except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('companion.safety.observability_log_failed', error=str(exc)[:200])
 

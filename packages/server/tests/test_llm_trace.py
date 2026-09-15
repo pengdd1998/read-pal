@@ -1,10 +1,9 @@
 """Tests for LLM call trace persistence."""
 
-import asyncio
-from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from uuid import uuid4
 from sqlalchemy.exc import DBAPIError
 
 from app.services.llm import _TraceWriter, _log_call, _trace_writer
@@ -157,3 +156,28 @@ class TestLogCallIntegration:
             trace = mock_add.call_args[0][0]
             assert trace['success'] is False
             assert trace['error_message'] == 'Connection timeout'
+
+
+class TestStreamingTraceMirror:
+    """2026-09-15 monitoring close-out: streaming completions must reach
+    llm_call_traces (they're the bulk of LLM traffic; metrics were blind)."""
+
+    @pytest.mark.asyncio
+    async def test_persist_stream_log_writes_trace(self):
+        from unittest.mock import patch
+        from app.services.companion.safety import persist_stream_log
+        from app.services.llm.observability import _trace_writer
+
+        _trace_writer._buf.clear()
+        with patch('app.services.llm.observability.get_settings') as ms:
+            ms.return_value.llm_log_enabled = True
+            persist_stream_log(
+                request_id='req123456789',
+                model='mimo-v2.5', latency_ms=12345, success=True,
+                ttft_ms=5432, user_id=uuid4(), book_id=uuid4(),
+            )
+        assert len(_trace_writer._buf) == 1
+        rec = _trace_writer._buf[0]
+        assert rec['label'] == 'companion.stream'
+        assert rec['ttft_ms'] == 5432 and rec['latency_ms'] == 12345
+        _trace_writer._buf.clear()

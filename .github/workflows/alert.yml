@@ -1,0 +1,57 @@
+name: Alert
+
+on:
+  schedule:
+    # Every 30 minutes (checks) + daily 01:00 UTC = 09:00 Beijing (digest)
+    - cron: '*/30 * * * *'
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+    inputs:
+      digest:
+        description: 'Run in digest mode'
+        default: 'false'
+  workflow_run:
+    workflows: ['Deploy']
+    types: [completed]
+
+concurrency:
+  group: alert
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run alert checks
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+          EXTERNAL_URL: ${{ secrets.ALERT_EXTERNAL_URL }}
+          DIGEST: ${{ (github.event.schedule == '0 1 * * *' || inputs.digest == 'true') && '1' || '' }}
+        run: |
+          install -m 600 -t /tmp key <<< "${{ secrets.VPS_SSH_KEY }}"
+          export VPS_SSH_KEY=/tmp/key
+          python ops/alerting/check.py
+
+  deploy-failure:
+    # Immediate alert on deploy failure — no 30-min wait. A cancelled
+    # deploy is normal (concurrency yield to a newer push); failure is not.
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Notify
+        env:
+          SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+        run: |
+          curl -s -X POST "https://sctapi.ftqq.com/${SERVERCHAN_SENDKEY}.send" \
+            --data-urlencode "title=🚨 read-pal P0 告警: 部署失败" \
+            --data-urlencode "desp=Deploy workflow 失败，可能需要人工介入。\n\nrun: ${{ github.event.workflow_run.html_url }}" \
+            >/dev/null || true
