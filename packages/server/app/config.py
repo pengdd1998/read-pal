@@ -143,6 +143,12 @@ class Settings(BaseSettings):
     # proposal surface can be disabled without touching read-only tools.
     companion_tool_proposals_enabled: bool = True
 
+    # Planner wall-clock deadline (ms). Default 9s caps pre-first-token
+    # dead air; slow environments (remote DB + cold provider, planner
+    # observed at 23-44s) raise this to keep the tool phase reachable
+    # — the tradeoff is slower first token while the planner runs.
+    companion_tool_plan_timeout_ms: int = 9000
+
     # Multi-provider LLM routing
     llm_providers: str = ''  # JSON array of ProviderConfig dicts
     llm_feature_routing: str = '{}'  # JSON dict: feature -> strategy

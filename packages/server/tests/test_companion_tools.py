@@ -312,6 +312,7 @@ class TestToolPhase:
             new=AsyncMock(),
         ) as planner:
             ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 9000
             out = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
                 message='哈哈谢谢', history_texts=[],
@@ -325,13 +326,15 @@ class TestToolPhase:
         from app.services.companion.tools.phase import run_tool_phase
         with patch('app.config.get_settings') as ms, patch(
             'app.services.companion.tools.planner.plan_tool_calls',
-            new=AsyncMock(return_value=[{'name': 'get_flashcards', 'args': {}}]),
+            new=AsyncMock(return_value=[{'name': 'get_flashcards', 'kind': 'read', 'args': {}}]),
         ), patch(
             'app.services.companion.tools.registry.execute_tool',
             new=AsyncMock(return_value={'ok': True, 'tool': 'get_flashcards',
                                         'latency_ms': 5, 'data': {'due_count': 2}}),
         ):
             ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_proposals_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 9000
             amended, results, proposals = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
                 message='第3章的角色关系是什么？', history_texts=[],
@@ -348,6 +351,8 @@ class TestToolPhase:
             new=AsyncMock(return_value=[]),
         ):
             ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_proposals_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 9000
             out = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
                 message='书里那个比喻的原文是什么', history_texts=[],
@@ -400,6 +405,7 @@ class TestPlannerDeadline:
             new=AsyncMock(side_effect=hang),
         ):
             ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 500  # fast deadline
             out = await phase_mod.run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
                 message='第3章讲了什么', history_texts=[],
@@ -407,7 +413,39 @@ class TestPlannerDeadline:
             )
         elapsed = __import__('time').monotonic() - t0
         assert out == ('BASE', [], [])
-        assert elapsed < phase_mod.PLAN_DEADLINE_S + 2, f'phase took {elapsed:.1f}s'
+        assert elapsed < 2.0, f'phase took {elapsed:.1f}s'
+
+    @pytest.mark.asyncio
+    async def test_deadline_is_configurable(self):
+        """WT round follow-up: slow environments raise the deadline via
+        COMPANION_TOOL_PLAN_TIMEOUT_MS and the phase honors it."""
+        import asyncio
+        from app.services.companion.tools import phase as phase_mod
+
+        started = asyncio.Event()
+
+        async def slow_but_finishes(**kw):
+            started.set()
+            await asyncio.sleep(1.2)  # > old 9s? no — proves non-default path
+            return [{'name': 'get_flashcards', 'kind': 'read', 'args': {}}]
+
+        with patch('app.config.get_settings') as ms, patch(
+            'app.services.companion.tools.planner.plan_tool_calls',
+            new=AsyncMock(side_effect=slow_but_finishes),
+        ), patch(
+            'app.services.companion.tools.registry.execute_tool',
+            new=AsyncMock(return_value={'ok': True, 'tool': 'get_flashcards',
+                                        'latency_ms': 1, 'data': {}}),
+        ):
+            ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_proposals_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 4000
+            amended, results, proposals = await phase_mod.run_tool_phase(
+                db=None, user_id=uuid4(), book_id=uuid4(),
+                message='第3章讲了什么', history_texts=[],
+                book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
+            )
+        assert results and results[0]['tool'] == 'get_flashcards'
 
 
 class TestProposalTools:
@@ -466,6 +504,7 @@ class TestProposalRouting:
         ) as exec_mock:
             ms.return_value.companion_tools_enabled = True
             ms.return_value.companion_tool_proposals_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 9000
             amended, results, proposals = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
                 message='帮我找绿光的原文并记一下它的象征', history_texts=[],
@@ -488,6 +527,7 @@ class TestProposalRouting:
             ]),
         ):
             ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 9000
             ms.return_value.companion_tool_proposals_enabled = False
             amended, results, proposals = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),

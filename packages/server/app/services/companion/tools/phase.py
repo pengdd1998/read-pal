@@ -23,9 +23,16 @@ logger = structlog.get_logger('read-pal.companion')
 
 # Budget slot cap for rendered tool results (plan §3).
 _TOOL_RESULTS_TOKENS = 1500
-# Planner wall-clock deadline: healthy plan calls land in 2-5s; 9s leaves
-# margin while capping pre-first-token dead air (see run_tool_phase).
+# Planner wall-clock deadline: healthy plan calls land in 2-5s; the 9s
+# default caps pre-first-token dead air (see run_tool_phase). Configurable
+# via COMPANION_TOOL_PLAN_TIMEOUT_MS for slow environments (WT round
+# 2026-09-15: planner at 23.4s was silently degraded — tools unreachable).
 PLAN_DEADLINE_S = 9.0
+
+
+def _plan_deadline_s() -> float:
+    from app.config import get_settings
+    return get_settings().companion_tool_plan_timeout_ms / 1000.0
 
 
 async def run_tool_phase(
@@ -67,6 +74,7 @@ async def run_tool_phase(
     import asyncio as _asyncio
 
     t0 = time.monotonic()
+    deadline_s = _plan_deadline_s()
     try:
         plan = await _asyncio.wait_for(
             plan_tool_calls(
@@ -77,13 +85,13 @@ async def run_tool_phase(
                 has_rag=True,  # content-classified turns always ran RAG
                 has_annotations=any(t for t in history_texts),
             ),
-            timeout=PLAN_DEADLINE_S,
+            timeout=deadline_s,
         )
     except TimeoutError:
         logger.warning(
             'companion.tool_phase_skipped reason=planner_deadline '
             'deadline_s=%s user=%s book=%s',
-            PLAN_DEADLINE_S, str(user_id), str(book_id),
+            deadline_s, str(user_id), str(book_id),
         )
         return system_text, [], []
     if not plan:
