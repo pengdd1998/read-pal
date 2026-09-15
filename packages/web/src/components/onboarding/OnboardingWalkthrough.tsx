@@ -159,7 +159,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out ${
+      className={`fixed inset-0 z-50 overflow-y-auto transition-all duration-300 ease-out ${
         overlayVisible ? 'opacity-100' : 'opacity-0'
       }`}
       role="dialog"
@@ -176,11 +176,13 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
         onKeyDown={(e) => { if (e.key === 'Escape') complete(); }}
      />
 
-      {/* Card */}
+      {/* Card — wrapper keeps vertical centering on tall viewports while
+          allowing the container to scroll on short ones (was: clipped) */}
+      <div className="min-h-full flex items-center justify-center py-6">
       <div
         ref={cardRef}
         tabIndex={-1}
-        className={`relative w-full max-w-lg mx-4 bg-surface-0 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ease-out ${
+        className={`relative w-full max-w-lg mx-4 max-h-[calc(100vh-3rem)] overflow-y-auto bg-surface-0 rounded-2xl shadow-2xl transition-all duration-300 ease-out ${
           overlayVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -220,6 +222,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
         </div>
 
         <StepIndicator steps={STEPS} currentStep={step} />
+      </div>
       </div>
     </div>
   );
