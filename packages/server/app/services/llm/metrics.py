@@ -48,6 +48,7 @@ async def compute_llm_metrics(
     hours: int = 24,
     session: AsyncSession | None = None,
     user_id: str | None = None,
+    force_global: bool = False,
 ) -> dict[str, Any]:
     """Aggregate the five minimal indicators over the last ``hours``.
 
@@ -68,7 +69,7 @@ async def compute_llm_metrics(
     # Unset user_id => global scope is only honored for ops-configured
     # deployments; otherwise an anonymous scope falls back to user filter
     # with no rows (safe default: show nothing rather than everything).
-    global_scope = (
+    global_scope = force_global or (
         os.environ.get('LLM_METRICS_SCOPE', '').strip().lower() == 'global'
     )
 

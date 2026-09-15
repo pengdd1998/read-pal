@@ -239,3 +239,43 @@ class TestGuardrailNoDoubleCount:
             await asyncio.sleep(0)
         hits = await of.read_guardrail_hits(days=1)
         assert hits['pii'] == 1, 'memory fallback lost the hit'
+
+
+class TestOpsKeyGlobalScope:
+    """Ops page path key: valid key → platform-wide view; without it the
+    response stays user-scoped (R2 invariant unchanged)."""
+
+    @pytest.mark.asyncio
+    async def test_ops_key_unlocks_global(self, client, monkeypatch):
+        monkeypatch.setenv('OPS_KEY', 'secret-ops-key')
+        user = await register_user(client)
+        stranger = await register_user(client, email='stranger2@example.com')
+        async with _TestSession() as session:
+            session.add_all([
+                _trace(label='l', user_id=str(user['user']['id'])),
+                _trace(label='l', user_id=str(stranger['user']['id'])),
+            ])
+            await session.commit()
+        resp = await client.get(
+            '/api/v1/stats/llm?hours=24&ops_key=secret-ops-key',
+            headers=auth_headers(user['token']),
+        )
+        assert resp.status_code == 200
+        assert resp.json()['data']['total_calls'] == 2  # platform-wide
+
+    @pytest.mark.asyncio
+    async def test_wrong_key_stays_user_scoped(self, client, monkeypatch):
+        monkeypatch.setenv('OPS_KEY', 'secret-ops-key')
+        user = await register_user(client)
+        stranger = await register_user(client, email='stranger3@example.com')
+        async with _TestSession() as session:
+            session.add_all([
+                _trace(label='l', user_id=str(user['user']['id'])),
+                _trace(label='l', user_id=str(stranger['user']['id'])),
+            ])
+            await session.commit()
+        resp = await client.get(
+            '/api/v1/stats/llm?hours=24&ops_key=wrong',
+            headers=auth_headers(user['token']),
+        )
+        assert resp.json()['data']['total_calls'] == 1

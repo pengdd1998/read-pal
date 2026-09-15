@@ -44,6 +44,9 @@ services:
       # mimo fallback defined in .env never reached production (found
       # 2026-09-02 while syncing provider priority).
       LLM_PROVIDERS: ${LLM_PROVIDERS:-}
+      # Ops page path key — unlocks the platform-wide /ops/llm metrics
+      # view. Empty (default) disables the ops page entirely.
+      OPS_KEY: ${OPS_KEY:-}
       # Embedding provider (any OpenAI-compatible /embeddings endpoint).
       # Empty values fall back to GLM embedding-3; point at an Ollama
       # instance with EMBEDDING_BASE_URL/EMBEDDING_MODEL when configured.

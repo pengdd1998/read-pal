@@ -149,6 +149,10 @@ class Settings(BaseSettings):
     # — the tradeoff is slower first token while the planner runs.
     companion_tool_plan_timeout_ms: int = 9000
 
+    # Ops page path key (/ops/llm?key=...): unlocks the platform-wide
+    # LLM metrics view. Empty = ops page disabled entirely.
+    ops_key: str = ''
+
     # Multi-provider LLM routing
     llm_providers: str = ''  # JSON array of ProviderConfig dicts
     llm_feature_routing: str = '{}'  # JSON dict: feature -> strategy

@@ -2300,5 +2300,27 @@
   },
   "readingPlan": {
     "retry": "Retry"
+  },
+  "opsLlm": {
+    "title": "LLM Ops Monitor",
+    "locked_title": "Ops key required",
+    "locked_desc": "This page is protected by a path key. Visit /ops/llm?key=… or enter it here.",
+    "key_placeholder": "Ops key",
+    "unlock": "Unlock",
+    "w_1h": "1h",
+    "w_24h": "24h",
+    "w_7d": "7d",
+    "calls": "Calls",
+    "success_rate": "Success rate",
+    "p95": "p95 latency",
+    "tokens": "Tokens",
+    "guardrails": "Guardrails",
+    "by_label": "By label",
+    "label": "Label",
+    "t_calls": "Calls",
+    "t_success": "Success",
+    "t_tokens": "Total tokens",
+    "empty": "No calls in window",
+    "loading": "Loading…"
   }
 }
