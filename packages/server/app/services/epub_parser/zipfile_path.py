@@ -74,7 +74,8 @@ async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]
             except (KeyError, zipfile.BadZipFile, ValueError) as exc:
                 logger.warning('epub_parser.cover_image_extraction_failed: %s', str(exc)[:200])
 
-    _store_metadata(metadata, cover_uri)
+    from app.services.epub_parser.metadata_store import store_metadata
+    store_metadata(metadata, cover_uri)
     return chapters, full_text_parts, max(1, len(chapters))
 
 
@@ -300,7 +301,8 @@ def _build_chapters(
         order += 1
 
     if footnote_defs:
-        _store_footnote_definitions(footnote_defs)
+        from app.services.epub_parser.metadata_store import store_footnote_definitions
+        store_footnote_definitions(footnote_defs)
     return chapters, full_text_parts
 
 
@@ -387,15 +389,4 @@ def _resolve_title(
     )
 
 
-def _store_metadata(metadata: dict, cover_uri: str | None) -> None:
-    """Store metadata via context-local variable for orchestrator."""
-    import app.services.epub_parser as pkg
 
-    pkg._set_metadata({**metadata, 'cover_data_uri': cover_uri})
-
-
-def _store_footnote_definitions(defs: dict[str, str]) -> None:
-    """Store the footnote definition map via context-local variable."""
-    import app.services.epub_parser as pkg
-
-    pkg._set_metadata({'footnote_definitions': defs})
