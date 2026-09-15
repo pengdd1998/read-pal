@@ -36,7 +36,8 @@ jobs:
           EXTERNAL_URL: ${{ secrets.ALERT_EXTERNAL_URL }}
           DIGEST: ${{ (github.event.schedule == '0 1 * * *' || inputs.digest == 'true') && '1' || '' }}
         run: |
-          install -m 600 -t /tmp key <<< "${{ secrets.VPS_SSH_KEY }}"
+          printf '%s' "${{ secrets.VPS_SSH_KEY }}" > /tmp/key
+          chmod 600 /tmp/key
           export VPS_SSH_KEY=/tmp/key
           python ops/alerting/check.py
 
