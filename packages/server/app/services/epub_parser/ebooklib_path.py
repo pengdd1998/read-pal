@@ -11,6 +11,7 @@ from typing import Any
 
 from app.services.epub_parser.constants import IMAGE_MIME_MAP, MAX_IMAGE_SIZE, NS_DC, OUTER_DOC_WRAPPER
 from app.services.epub_parser.css import sanitize_epub_css
+from app.services.epub_parser.footnote_defs import extract_footnote_definitions
 from app.services.epub_parser.footnotes import annotate_footnotes
 from app.services.epub_parser.html_helpers import (
     count_images, extract_html_heading, extract_html_title,
@@ -45,7 +46,11 @@ def process_epub_ebooklib(file_path: str) -> dict | None:
         'total_pages': max(1, len(chapters)),
         'chapters': chapters,
         'content': '\n\n'.join(full_text_parts),
-        'metadata': {**metadata, 'cover_data_uri': cover_uri},
+        'metadata': {
+            **metadata,
+            'cover_data_uri': cover_uri,
+            **({'footnote_definitions': _last_footnote_defs[0]} if _last_footnote_defs[0] else {}),
+        },
     }
 
 
@@ -148,11 +153,8 @@ def _process_chapter_item(
     image_map: dict[str, str],
     css_str: str,
     order: int,
-) -> tuple[dict | None, str | None]:
-    """Process a single document item into a chapter dict + text.
-
-    Returns (chapter_dict, text) or (None, None) if empty.
-    """
+) -> tuple[dict | None, str | None, str | None]:
+    """Process a single document item into (chapter, text, raw_html)."""
     from app.services.text_helpers import html_to_structured_text
 
     content_bytes = item.get_content()
@@ -162,13 +164,13 @@ def _process_chapter_item(
     enriched_html = _enrich_html(raw_html, item_name, image_map, css_str)
     text = html_to_structured_text(enriched_html)
     if not text.strip():
-        return None, None
+        return None, None, None
     # Skip dedicated TOC pages — they parse as dead 20-char "chapters"
     # of link labels between the preface and chapter 1.
     from app.services.epub_parser.zipfile_path import _is_toc_page
     if _is_toc_page(raw_html, text):
         logger.debug('Skipping TOC page as chapter: %s', item_name)
-        return None, None
+        return None, None, None
 
     title = _resolve_chapter_title(item_name, raw_html, toc_map)
     text, enriched_html = _strip_duplicate_heading(title, text, enriched_html)
@@ -183,7 +185,7 @@ def _process_chapter_item(
         'images': count_images(enriched_html),
         'wordCount': len(text.split()),
     }
-    return chapter, text
+    return chapter, text, raw_html
 
 
 def _strip_duplicate_heading(
@@ -218,6 +220,17 @@ def _strip_duplicate_heading(
     return text, enriched_html
 
 
+_last_footnote_defs: list[dict[str, str]] = [{}]
+
+
+def _store_footnote_definitions(defs: dict[str, str]) -> None:
+    """Store the footnote definition map via context-local variable
+    (same channel as cover_data_uri in the zipfile fallback path)."""
+    import app.services.epub_parser as pkg
+
+    pkg._set_metadata({**pkg._epub_metadata_var.get({}), 'footnote_definitions': defs})
+
+
 def _build_chapters(
     book: Any,
     toc_map: dict[str, tuple[str, int]],
@@ -230,15 +243,21 @@ def _build_chapters(
     chapters: list[dict] = []
     full_text_parts: list[str] = []
     order = 0
+    footnote_defs: dict[str, str] = {}
 
     for item in ordered_items:
-        chapter, text = _process_chapter_item(item, toc_map, image_map, css_str, order)
+        chapter, text, raw_html = _process_chapter_item(item, toc_map, image_map, css_str, order)
         if chapter is None:
             continue
         chapters.append(chapter)
         full_text_parts.append(text)
+        if raw_html:
+            footnote_defs.update(extract_footnote_definitions(raw_html, item.get_name()))
         order += 1
 
+    if footnote_defs:
+        _store_footnote_definitions(footnote_defs)
+        _last_footnote_defs[0] = footnote_defs
     return chapters, full_text_parts
 
 

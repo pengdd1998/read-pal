@@ -11,6 +11,7 @@ from xml.etree.ElementTree import ParseError as XMLParseError
 
 from app.services.epub_parser.css import extract_epub_css
 from app.services.epub_parser.footnotes import annotate_footnotes
+from app.services.epub_parser.footnote_defs import extract_footnote_definitions
 from app.services.epub_parser.html_helpers import (
     count_images,
     extract_html_heading,
@@ -250,6 +251,7 @@ def _build_chapters(
     chapters: list[dict] = []
     full_text_parts: list[str] = []
     order = 0
+    footnote_defs: dict[str, str] = {}
 
     for item_id, href in spine_hrefs:
         resolved = resolve_epub_path(opf_path, href)
@@ -260,6 +262,7 @@ def _build_chapters(
             continue
 
         enriched = _enrich_html(raw_html, resolved, image_map, css_str)
+        footnote_defs.update(extract_footnote_definitions(raw_html, resolved))
 
         text = html_to_structured_text(enriched)
         title = _resolve_title(resolved, raw_html, toc_map)
@@ -296,6 +299,8 @@ def _build_chapters(
         })
         order += 1
 
+    if footnote_defs:
+        _store_footnote_definitions(footnote_defs)
     return chapters, full_text_parts
 
 
@@ -387,3 +392,10 @@ def _store_metadata(metadata: dict, cover_uri: str | None) -> None:
     import app.services.epub_parser as pkg
 
     pkg._set_metadata({**metadata, 'cover_data_uri': cover_uri})
+
+
+def _store_footnote_definitions(defs: dict[str, str]) -> None:
+    """Store the footnote definition map via context-local variable."""
+    import app.services.epub_parser as pkg
+
+    pkg._set_metadata({'footnote_definitions': defs})
