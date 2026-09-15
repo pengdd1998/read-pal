@@ -6,6 +6,7 @@ from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic import model_validator
 from pydantic.alias_generators import to_camel
 
 
@@ -40,6 +41,23 @@ class BookResponse(BaseModel):
         populate_by_name=True,
         alias_generator=to_camel,
     )
+
+    @model_validator(mode='after')
+    def _rewrite_cover_to_same_origin(self) -> 'BookResponse':
+        """Serve covers same-origin (/covers/...) regardless of entry.
+
+        The stored URL points at the OSS public base (http://IP:9000/
+        covers/...). An HTTPS page cannot load http: images (mixed
+        content — hard browser rule, no CSP can allowlist it), so the
+        API rewrites it to the nginx /covers/ proxy route, which works
+        over every entry (IP:8090, IP HTTPS, domain).
+        """
+        u = self.cover_url
+        if u and '://' in u:
+            pos = u.find('/covers/')
+            if pos != -1:
+                self.cover_url = u[pos:]
+        return self
 
     id: UUID
     user_id: UUID
