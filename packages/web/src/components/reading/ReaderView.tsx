@@ -3,6 +3,7 @@
 import React, { useEffect, type RefObject } from 'react';
 import { useTranslations } from 'next-intl';
 import { themeClasses, type ReaderTheme } from '@/lib/reader-theme';
+import { FootnotePopover } from './FootnotePopover';
 import { ChapterDropdown } from '@/components/reading/ChapterDropdown';
 import { ReaderFooter } from '@/components/reading/ReaderFooter';
 import {
@@ -86,6 +87,8 @@ export const ReaderView = React.memo(function ReaderView({
     goPrevPage,
     overallProgress,
     chapterMinutesLeft,
+    footnotePopover,
+    setFootnotePopover,
   } = useReaderViewLogic({
     bookId,
     chapterContent,
@@ -145,6 +148,10 @@ export const ReaderView = React.memo(function ReaderView({
         >
           {chapterTitle && currentSegment === 0 && (
             <ChapterHeader chapterTitle={chapterTitle} />
+          )}
+
+          {footnotePopover && (
+            <FootnotePopover data={footnotePopover} onClose={() => setFootnotePopover(null)} />
           )}
 
           {!chapterContent?.trim() ? (

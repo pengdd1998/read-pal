@@ -1027,7 +1027,8 @@
     "proposal_save": "保存",
     "proposal_saving": "保存中…",
     "proposal_saved": "已保存",
-    "proposal_failed": "保存失败，请重试"
+    "proposal_failed": "保存失败，请重试",
+    "footnote_popover_label": "脚注 {marker}"
   },
   "stats": {
     "title": "阅读统计",

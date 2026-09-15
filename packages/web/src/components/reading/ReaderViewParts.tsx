@@ -201,6 +201,42 @@ export function useReaderViewLogic({
     lastWrittenHtmlRef.current = sanitizedContent;
   }, [sanitizedContent]);
 
+  // Footnote reference clicks: the stored EPUB content keeps the original
+  // anchors (href="#note_3" etc.). Without interception the click leaves
+  // the SPA and errors. Show a popover with the footnote body from the
+  // same chapter's document (id = href target, e.g. note_3).
+  const [footnotePopover, setFootnotePopover] = useState<{
+    marker: string;
+    html: string;
+    anchorEl: HTMLElement;
+  } | null>(null);
+  useEffect(() => {
+    const el = contentDivRef.current;
+    if (!el) return;
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest<HTMLElement>('a.rp-footnote-ref');
+      if (!anchor) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const marker = (anchor.textContent || '').trim();
+      const href = anchor.getAttribute('href') || '';
+      const anchorId = href.split('#')[1] || '';
+      const bodyEl: HTMLElement | null = anchorId ? (document.getElementById(anchorId) as HTMLElement | null) : null;
+      let html = '';
+      if (bodyEl) {
+        html = bodyEl.innerHTML;
+      } else {
+        // Definition may be in another chapter's raw content — fall back
+        // to a note that the body lives elsewhere.
+        html = `<em>${marker} — see the notes section at the end of the book.</em>`;
+      }
+      setFootnotePopover({ marker, html, anchorEl: anchor });
+    };
+    el.addEventListener('click', onClick);
+    return () => el.removeEventListener('click', onClick);
+  }, []);
+
   const articleStyle = useMemo(() => ({
     fontSize: `${fontSize}px`,
     ...(fontFamily ? { fontFamily } : {}),
@@ -297,5 +333,7 @@ export function useReaderViewLogic({
     goPrevPage,
     overallProgress,
     chapterMinutesLeft,
+    footnotePopover,
+    setFootnotePopover,
   };
 }

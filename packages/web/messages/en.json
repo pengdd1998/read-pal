@@ -1027,7 +1027,8 @@
     "proposal_save": "Save",
     "proposal_saving": "Saving…",
     "proposal_saved": "Saved",
-    "proposal_failed": "Save failed, please retry"
+    "proposal_failed": "Save failed, please retry",
+    "footnote_popover_label": "Footnote {marker}"
   },
   "stats": {
     "title": "Reading Stats",
