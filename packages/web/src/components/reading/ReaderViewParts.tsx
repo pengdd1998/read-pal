@@ -10,6 +10,7 @@ import { useScrollPersistence } from '@/hooks/useScrollPersistence';
 import { useChapterTimeLeft } from '@/hooks/useChapterTimeLeft';
 import { useReaderKeyboardNav } from '@/hooks/useReaderKeyboardNav';
 import { useReaderSwipeNav } from '@/hooks/useReaderSwipeNav';
+import { api } from '@/lib/api';
 import { warn } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
@@ -214,6 +215,10 @@ export function useReaderViewLogic({
     html: string;
     anchorEl: HTMLElement;
   } | null>(null);
+  // Lazily-fetched parse-time definition map: definitions may live in a
+  // different chapter than the marker (InDesign EPUBs split them), so the
+  // same-DOM lookup alone cannot resolve every marker.
+  const footnoteDefsRef = useRef<Record<string, string> | null>(null);
   useEffect(() => {
     const el = contentDivRef.current;
     if (!el) return;
@@ -221,6 +226,23 @@ export function useReaderViewLogic({
     // for the reference side. Both name markers, not definitions.
     const isDefinitionFragment = (frag: string) =>
       /^(?:note(?!back)|fn(?!ref)|footnote|endnote)[\w.-]*$/i.test(frag);
+    const escapeHtml = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const resolveRemoteDefinition = async (
+      marker: string,
+      anchorId: string,
+    ): Promise<string> => {
+      if (footnoteDefsRef.current === null) {
+        const resp = await api.get<{ definitions?: Record<string, string> }>(
+          `/api/v1/books/${bookId}/footnotes`,
+        );
+        footnoteDefsRef.current = resp.data?.definitions ?? {};
+      }
+      const text = footnoteDefsRef.current[anchorId];
+      return text
+        ? `<p>${escapeHtml(text)}</p>`
+        : `<em>${escapeHtml(marker)} — see the notes section at the end of the book.</em>`;
+    };
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const anchor = target.closest<HTMLElement>('a');
@@ -243,7 +265,6 @@ export function useReaderViewLogic({
         // lives in its wrapper (<p class="notecontent">…</p>).
         bodyEl = bodyEl.parentElement;
       }
-      let html = '';
       if (bodyEl) {
         // Neutralize backlink anchors inside the definition so no click in
         // the popover can navigate out of the SPA.
@@ -253,17 +274,22 @@ export function useReaderViewLogic({
           span.innerHTML = a.innerHTML;
           a.replaceWith(span);
         });
-        html = clone.innerHTML;
+        setFootnotePopover({
+          marker,
+          html: clone.innerHTML,
+          anchorEl: anchor,
+        });
       } else {
-        // Definition may be in another chapter's raw content — fall back
-        // to a note that the body lives elsewhere.
-        html = `<em>${marker} — see the notes section at the end of the book.</em>`;
+        // Definition may be in another chapter's raw content — resolve it
+        // from the book's parse-time definition map.
+        void resolveRemoteDefinition(marker, anchorId).then((html) => {
+          setFootnotePopover({ marker, html, anchorEl: anchor });
+        });
       }
-      setFootnotePopover({ marker, html, anchorEl: anchor });
     };
     el.addEventListener('click', onClick);
     return () => el.removeEventListener('click', onClick);
-  }, []);
+  }, [bookId]);
 
   const articleStyle = useMemo(() => ({
     fontSize: `${fontSize}px`,

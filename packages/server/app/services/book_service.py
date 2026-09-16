@@ -80,6 +80,21 @@ async def get_book(db: AsyncSession, user_id: str, book_id: UUID) -> Book | None
     return result.scalar_one_or_none()
 
 
+async def get_footnote_definitions(
+    db: AsyncSession, user_id: str, book_id: UUID,
+) -> dict[str, str]:
+    """Return the parse-time footnote definition map (definition id -> text).
+
+    Lets the reader resolve markers whose definition lives in another
+    chapter (same-DOM lookup only covers same-chapter notes).
+    """
+    book = await get_book(db, user_id, book_id)
+    if not book or not isinstance(book.metadata_, dict):
+        return {}
+    defs = book.metadata_.get('footnote_definitions')
+    return defs if isinstance(defs, dict) else {}
+
+
 async def create_book(
     db: AsyncSession,
     user_id: str,

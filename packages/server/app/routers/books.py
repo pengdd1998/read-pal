@@ -82,6 +82,19 @@ async def get_book(
     return {'success': True, 'data': BookResponse.model_validate(book).model_dump(by_alias=True, mode='json')}
 
 
+@router.get('/{book_id}/footnotes', response_model=GenericResponse)
+async def get_book_footnotes(
+    book_id: UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Footnote definition map extracted at parse time (definition id -> text)."""
+    definitions = await book_service.get_footnote_definitions(
+        db, UUID(current_user['id']), book_id,
+    )
+    return {'success': True, 'data': {'definitions': definitions}}
+
+
 @router.get('/{book_id}/chapters', response_model=GenericResponse)
 async def get_book_chapters(
     book_id: UUID,
