@@ -323,8 +323,8 @@ async def get_book_content(
     return {
         'book': {
             'id': str(book.id),
-            'title': book.title,
-            'author': book.author,
+            'title': book.title,  # rawfield: API response serialization, never enters a prompt
+            'author': book.author,  # rawfield: API response serialization, never enters a prompt
             'fileType': book.file_type.value if hasattr(book.file_type, 'value') else book.file_type,
             'fileSize': book.file_size,
             'totalPages': book.total_pages,

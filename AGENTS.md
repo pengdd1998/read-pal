@@ -61,10 +61,12 @@ store.
 
 ## Never rules (every one mechanically enforced — see CI gates below)
 
-1. **Never use raw `book.title` / `book.author` in services.** Route through
-   `sanitize_book_field`. Enforced: AST check `scripts/check_no_raw_book_fields.py`
-   in both `ci.yml` (on `app/services/`) and `prompt-eval.yml` (Phase 3.2
-   replaced the old grep, which had a `grep -v` bypass).
+1. **Never use raw `book.title` / `book.author` in services — kwargs AND
+   dict values.** Route through `sanitize_book_field`. Dicts reach prompts
+   via `json.dumps` blobs. Enforced: AST check
+   `scripts/check_no_raw_book_fields.py` (kwarg form: zero exemptions; dict
+   form: exempt only with an inline `# rawfield: <reason>` — audit with
+   `grep -rn '# rawfield:' app/`) in both `ci.yml` and `prompt-eval.yml`.
 2. **Never put business logic in `routers/`.** Routers validate input → call
    service → return response. Enforced: `scripts/check_router_thin.py` in `ci.yml`.
 3. **Never construct `TokenBudget()` without `model=` kwarg.** Silent

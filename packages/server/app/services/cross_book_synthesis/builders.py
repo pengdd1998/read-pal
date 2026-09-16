@@ -9,14 +9,14 @@ from app.models.annotation import Annotation, AnnotationType
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.reading_session import ReadingSession
-from app.utils.sanitizer import sanitize_annotations, sanitize_chat_message
+from app.utils.sanitizer import sanitize_annotations, sanitize_book_field, sanitize_chat_message
 
 
 def build_book_meta(book: Book) -> dict[str, Any]:
   """Extract display metadata from a Book ORM object."""
   return {
-    'title': book.title,
-    'author': book.author,
+    'title': sanitize_book_field(book.title, field='title'),
+    'author': sanitize_book_field(book.author, field='author'),
     'progress': float(book.progress),
     'status': book.status,
   }

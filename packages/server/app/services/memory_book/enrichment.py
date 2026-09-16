@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book
 from app.utils.db import db_error_guard
+from app.utils.sanitizer import sanitize_book_field
 
 logger = structlog.get_logger('read-pal.memory_book')
 
@@ -126,9 +127,15 @@ async def fetch_other_books(
                 .limit(20),
             )
             other_books = rows.all()
-            result['existing_books'] = [r[1] for r in other_books]
+            result['existing_books'] = [
+                sanitize_book_field(r[1], field='title') for r in other_books
+            ]
             result['other_books'] = [
-                {'id': str(r[0]), 'title': r[1], 'author': r[2] or 'Unknown'}
+                {
+                    'id': str(r[0]),
+                    'title': sanitize_book_field(r[1], field='title'),
+                    'author': sanitize_book_field(r[2], field='author') or 'Unknown',
+                }
                 for r in other_books
             ]
     except (DBAPIError, OSError):

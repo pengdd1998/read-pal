@@ -46,8 +46,8 @@ def export_json(
     """Machine-readable JSON export of book + annotations."""
     payload = {
         'book': {
-            'title': book.title,
-            'author': book.author,
+            'title': book.title,  # rawfield: file export payload, never enters a prompt
+            'author': book.author,  # rawfield: file export payload, never enters a prompt
             'progress': float(book.progress),
         },
         'annotations': [_ann_dict(a) for a in annotations],

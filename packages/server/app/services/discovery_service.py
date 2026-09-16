@@ -34,8 +34,8 @@ def _book_to_dict(book: Book) -> dict:
     """Serialize a Book ORM instance to a response dict."""
     return {
         'id': str(book.id),
-        'title': book.title,
-        'author': book.author,
+        'title': book.title,  # rawfield: API response serialization, never enters a prompt
+        'author': book.author,  # rawfield: API response serialization, never enters a prompt
         'coverUrl': book.cover_url,
         'fileType': book.file_type,
         'totalPages': book.total_pages,

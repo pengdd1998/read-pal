@@ -23,7 +23,7 @@ from app.utils.limits import (
     DATA_COLLECTION_FLASHCARD_LIMIT,
     DATA_COLLECTION_SESSION_LIMIT,
 )
-from app.utils.sanitizer import sanitize_user_input
+from app.utils.sanitizer import sanitize_book_field, sanitize_user_input
 
 logger = structlog.get_logger('read-pal.memory_book')
 
@@ -43,7 +43,9 @@ async def _fetch_book_meta(
             if book is None:
                 return None
             return {
-                'id': str(book.id), 'title': book.title, 'author': book.author,
+                'id': str(book.id),
+                'title': sanitize_book_field(book.title, field='title'),
+                'author': sanitize_book_field(book.author, field='author'),
                 'cover_url': book.cover_url, 'progress': float(book.progress),
                 'status': book.status,
                 'started_at': book.started_at.isoformat() if book.started_at else None,

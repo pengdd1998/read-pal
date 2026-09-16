@@ -72,8 +72,8 @@ async def export(
         return None
 
     book_info = {
-        'title': book.title,
-        'author': book.author,
+        'title': book.title,  # rawfield: file export payload, never enters a prompt
+        'author': book.author,  # rawfield: file export payload, never enters a prompt
         'progress': float(book.progress),
     }
 
