@@ -14,8 +14,9 @@ from pathlib import Path
 
 import pytest
 
+import app
 VERSIONS_DIR = (
-    Path(__file__).resolve().parent.parent / 'alembic' / 'versions'
+    Path(app.__file__).resolve().parent.parent / 'alembic' / 'versions'
 )
 
 # Alembic sentinel values that mean "no parent" (root of the chain).

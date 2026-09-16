@@ -25,9 +25,9 @@ on:
       - 'packages/server/app/utils/sanitizer.py'
       - 'packages/server/app/services/llm/safe_invoke.py'
       - 'packages/server/app/eval/**'
-      - 'packages/server/tests/test_prompt_rendering.py'
-      - 'packages/server/tests/test_book_field_sanitization.py'
-      - 'packages/server/tests/test_llm_output_schemas.py'
+      - 'packages/server/tests/eval/test_prompt_rendering.py'
+      - 'packages/server/tests/eval/test_book_field_sanitization.py'
+      - 'packages/server/tests/eval/test_llm_output_schemas.py'
       - '.github/workflows/prompt-eval.yml'
   push:
     branches: [main]

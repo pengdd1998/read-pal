@@ -91,7 +91,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--ignore=tests/test_full_paths.py"
+addopts = "--ignore=tests/services/test_full_paths.py"
 # Phase 5.3 (M7): registered custom marks. ``smoke`` runs only when
 # SMOKE_TARGET env var is set — used for pre-deploy validation.
 markers = [
