@@ -134,7 +134,7 @@ async def score_live_reports(reports: list[Any]) -> list[tuple[str, JudgeScore |
     """Score every non-skipped live-eval report with the judge.
 
     ``reports`` items need ``name``, ``passed``, ``skipped`` and (ideally)
-    ``output_text`` attributes — ``app.eval.live_runner.LiveEvalReport``
+    ``output_text`` attributes — ``app.eval.live.LiveEvalReport``
     satisfies this. Entries without captured output are scored None.
     """
     from app.eval.golden_dataset import ALL_GOLDEN

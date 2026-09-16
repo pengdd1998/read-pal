@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
     if args.live:
         # Lazy import so mock-only CI doesn't pay the live-runner import cost.
-        from app.eval.live_runner import main as live_main
+        from app.eval.live import main as live_main
         sys.exit(live_main(
             label_filter=args.label_filter,
             max_tokens=args.max_tokens,

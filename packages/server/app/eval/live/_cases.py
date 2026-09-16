@@ -21,19 +21,12 @@ without a running DB and are out of scope for prompt-quality regression.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
-import os
-import time
-import uuid
-from dataclasses import dataclass, field
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from app.eval.assertions import EvalResult, validate_output_shape
-from app.eval.golden_dataset import ALL_GOLDEN
 from app.prompts import (
     COACH_ASSESSMENT_HUMAN,
     COACH_ASSESSMENT_SYSTEM,
@@ -75,7 +68,8 @@ from app.schemas.llm_outputs import (
 from app.services.llm import safe_llm_call, safe_llm_invoke
 from app.utils.sanitizer import sanitize_book_field, sanitize_user_input
 from app.config import get_settings
-from app.utils.token_budget import TokenBudget, estimate_tokens
+from app.utils.token_budget import TokenBudget
+
 
 logger = logging.getLogger('read-pal.eval.live')
 
@@ -100,34 +94,6 @@ LIVE_SKIP: set[tuple[str, str]] = {
     ('memory_book', 'chapter_1_cover'),
     ('memory_book', 'chapter_2_journey'),
 }
-
-
-@dataclass
-class LiveEvalReport:
-    """One golden entry's live-eval outcome."""
-
-    name: str
-    service: str
-    action: str
-    passed: bool = True
-    errors: list[str] = field(default_factory=list)
-    skipped: bool = False
-    skip_reason: str = ''
-    latency_ms: int = 0
-    prompt_version: int | None = None
-    model_used: str | None = None
-    tokens_estimated: int = 0
-    # LA-3: stable error category (matches production _classify_error values)
-    # so dashboards can correlate live-eval failures with production incidents.
-    error_type: str | None = None
-    # Engineering-upgrade B3: truncated output capture so the L2 judge
-    # (``--judge`` → app.eval.judges) can score usefulness/factuality —
-    # dimensions the L0/L1 shape checks can't see.
-    output_text: str = ''
-
-    def fail(self, msg: str) -> None:
-        self.passed = False
-        self.errors.append(msg)
 
 
 # ---------------------------------------------------------------------------
@@ -521,251 +487,3 @@ _LIVE_HANDLERS: dict[tuple[str, str], Any] = {
     ('research_agent', 'synthesize'): _research_agent,
     ('coach_agent', 'assess'): _coach_agent,
 }
-
-
-# ---------------------------------------------------------------------------
-# Pre-estimate tokens for cost-cap enforcement
-# ---------------------------------------------------------------------------
-
-def _estimate_call_tokens(golden: dict[str, Any]) -> int:
-    """Rough estimate of tokens this golden entry will consume.
-
-    Doubles the JSON-serialized input size to account for system prompt +
-    output budget. Used only for the cumulative cost cap; actual usage is
-    settled by ``safe_llm_invoke``'s observability layer.
-    """
-    input_json = json.dumps(golden.get('input', {}), default=str)
-    return estimate_tokens(input_json) * 2 + 2000  # +2K for system prompt reserve
-
-
-# ---------------------------------------------------------------------------
-# Main runner
-# ---------------------------------------------------------------------------
-
-async def run_live_eval(  # noqa: PLR0915 — single orchestration flow; decomposition tracked as follow-up
-    label_filter: str | None = None,
-    max_tokens: int = DEFAULT_MAX_LIVE_TOKENS,
-) -> list[LiveEvalReport]:
-    """Run live eval against all golden entries (or those matching ``label_filter``).
-
-    For each entry:
-    1. Skip if (service, action) is in ``LIVE_SKIP``.
-    2. Skip if ``label_filter`` is set and doesn't match service/action.
-    3. Pre-estimate tokens; abort early if cumulative > ``max_tokens``.
-    4. Dispatch to handler; enforce per-call timeout.
-    5. Validate output shape against ``expected_output``.
-    6. Record latency, prompt_version, model_used, tokens_estimated.
-    """
-    reports: list[LiveEvalReport] = []
-    cumulative_tokens = 0
-    request_id = uuid.uuid4().hex[:12]
-
-    for golden in ALL_GOLDEN:
-        service = golden['service']
-        action = golden['action']
-        name = f'{service}/{action}'
-        report = LiveEvalReport(name=name, service=service, action=action)
-
-        # Apply label filter (substring match on service or action)
-        if label_filter and label_filter.lower() not in name.lower():
-            report.skipped = True
-            report.skip_reason = f'does not match filter {label_filter!r}'
-            reports.append(report)
-            continue
-
-        # Skip DB-dependent services
-        if (service, action) in LIVE_SKIP:
-            report.skipped = True
-            report.skip_reason = 'requires DB session (out of live-eval scope)'
-            reports.append(report)
-            continue
-
-        handler = _LIVE_HANDLERS.get((service, action))
-        if handler is None:
-            report.skipped = True
-            report.skip_reason = 'no live handler registered'
-            reports.append(report)
-            continue
-
-        # Cost cap
-        est = _estimate_call_tokens(golden)
-        if cumulative_tokens + est > max_tokens:
-            report.skipped = True
-            report.skip_reason = (
-                f'would exceed token cap ({cumulative_tokens + est} > {max_tokens})'
-            )
-            reports.append(report)
-            logger.warning(
-                'live_eval.token_cap_exceeded',
-                request_id=request_id,
-                name=name,
-                cumulative=cumulative_tokens,
-                estimated=est,
-                cap=max_tokens,
-            )
-            continue
-        cumulative_tokens += est
-        report.tokens_estimated = est
-
-        # Dispatch + timeout
-        t0 = time.monotonic()
-        try:
-            async with asyncio.timeout(PER_CALL_TIMEOUT_SECONDS):
-                result, prompt_version = await handler(golden['input'])
-            report.latency_ms = int((time.monotonic() - t0) * 1000)
-            report.prompt_version = prompt_version
-            report.model_used = _resolve_model_name()
-        except TimeoutError:
-            report.fail(f'Call exceeded {PER_CALL_TIMEOUT_SECONDS}s timeout')
-            report.latency_ms = int((time.monotonic() - t0) * 1000)
-            report.error_type = 'timeout'
-            reports.append(report)
-            continue
-        except Exception as exc:  # noqa: BLE001 — eval must surface any failure
-            # LA-3 (post-rollout review): classify via the production
-            # ``_classify_error`` so live-eval failures correlate with
-            # production error categories in dashboards.
-            from app.services.llm.observability import _classify_error
-            error_type = _classify_error(exc, str(exc)) or 'unknown'
-            report.fail(
-                f'[{error_type}] Handler raised: '
-                f'{type(exc).__name__}: {str(exc)[:200]}'
-            )
-            report.latency_ms = int((time.monotonic() - t0) * 1000)
-            report.error_type = error_type
-            reports.append(report)
-            continue
-
-        # Validate output shape
-        if result is None:
-            report.fail('Handler returned None (LLM call failed without raising)')
-        else:
-            report.output_text = (
-                result if isinstance(result, str)
-                else json.dumps(result, ensure_ascii=False, default=str)
-            )[:2000]
-            eval_result = EvalResult(name, service, action)
-            validate_output_shape(result, golden['expected_output'], eval_result)
-            if not eval_result.passed:
-                for err in eval_result.errors:
-                    report.fail(err)
-
-        reports.append(report)
-
-    return reports
-
-
-def _resolve_model_name() -> str | None:
-    """Best-effort model attribution for the report."""
-    try:
-        from app.config import get_settings
-        return get_settings().default_model
-    except Exception:  # noqa: BLE001 — attribution only
-        return None
-
-
-def print_live_report(reports: list[LiveEvalReport]) -> bool:
-    """Print live eval report. Returns True if all non-skipped entries passed."""
-    ran = [r for r in reports if not r.skipped]
-    skipped = [r for r in reports if r.skipped]
-    passed = sum(1 for r in ran if r.passed)
-    failed = sum(1 for r in ran if not r.passed)
-
-    print(f'\n{"=" * 60}')
-    print(f'LIVE EVAL RESULTS: {passed}/{len(ran)} passed, {failed} failed, '
-          f'{len(skipped)} skipped')
-    print(f'{"=" * 60}')
-
-    for r in reports:
-        if r.skipped:
-            icon = 'SKIP'
-            print(f'  {icon} {r.service}/{r.action} — {r.skip_reason}')
-        elif r.passed:
-            icon = 'PASS'
-            print(f'  {icon} {r.service}/{r.action} — {r.latency_ms}ms, '
-                  f'v{r.prompt_version}, ~{r.tokens_estimated} tokens')
-        else:
-            icon = 'FAIL'
-            type_tag = f' [{r.error_type}]' if r.error_type else ''
-            print(f'  {icon} {r.service}/{r.action} — {r.latency_ms}ms{type_tag}')
-            for err in r.errors:
-                print(f'    -> {err}')
-
-    return failed == 0
-
-
-def write_live_baseline(
-    reports: list[LiveEvalReport],
-    path: str = 'app/eval/live_baseline.json',
-) -> None:
-    """Persist live eval results as a JSON baseline.
-
-    Used by Phase 5 drift scanner to detect prompt-quality regressions
-    over time. Gitignored — regenerated per run.
-    """
-    serializable = [
-        {
-            'name': r.name,
-            'service': r.service,
-            'action': r.action,
-            'passed': r.passed,
-            'skipped': r.skipped,
-            'errors': r.errors,
-            'latency_ms': r.latency_ms,
-            'prompt_version': r.prompt_version,
-            'model_used': r.model_used,
-            'tokens_estimated': r.tokens_estimated,
-            'error_type': r.error_type,
-        }
-        for r in reports
-    ]
-    with open(path, 'w') as f:
-        json.dump(
-            {
-                'generated_at': time.time(),
-                'reports': serializable,
-            },
-            f,
-            indent=2,
-        )
-    logger.info('live_eval.baseline_written', path=path, count=len(serializable))
-
-
-def main(
-    label_filter: str | None = None,
-    max_tokens: int | None = None,
-    judge: bool = False,
-) -> int:
-    """Entry point. Returns exit code (0 = pass, 1 = any failure).
-
-    ``judge=True`` adds the L2 LLM-as-judge pass (engineering-upgrade B3):
-    each non-skipped entry's captured output is scored 1-5 against its
-    golden expectation via ``app.eval.judges``. Adds ~1K real tokens per
-    scored entry on top of the handler calls.
-    """
-    cap = max_tokens if max_tokens is not None else int(
-        os.environ.get('MAX_LIVE_EVAL_TOKENS', DEFAULT_MAX_LIVE_TOKENS)
-    )
-
-    if not os.environ.get('PROMPT_EVAL_API_KEY') and not os.environ.get('GLM_API_KEY'):
-        print('ERROR: PROMPT_EVAL_API_KEY (or GLM_API_KEY) not set')
-        return 2
-
-    reports = asyncio.run(run_live_eval(label_filter=label_filter, max_tokens=cap))
-    success = print_live_report(reports)
-    try:
-        write_live_baseline(reports)
-    except Exception as exc:  # noqa: BLE001 — baseline write is best-effort
-        logger.warning('live_eval.baseline_write_failed', error=str(exc)[:200])
-    if judge:
-        from app.eval.judges import print_judge_report, score_live_reports
-
-        scored = asyncio.run(score_live_reports(reports))
-        print_judge_report(scored)
-    return 0 if success else 1
-
-
-if __name__ == '__main__':
-    import sys
-    logging.basicConfig(level=logging.INFO)
-    sys.exit(main())
