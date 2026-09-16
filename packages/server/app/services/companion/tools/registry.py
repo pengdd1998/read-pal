@@ -186,13 +186,32 @@ async def execute_tool(
         logger.info('companion.tool_executed tool=%s latency_ms=%d ok=True', name, latency_ms)
         return {'ok': True, 'tool': name, 'latency_ms': latency_ms, 'data': data}
     except TimeoutError:
+        # wait_for cancellation can land mid-DB-operation, leaving the shared
+        # session with an invalidated transaction — the next execute (another
+        # tool, or save_message on the cache-hit path) would raise
+        # PendingRollbackError and sink the turn's persistence.
+        await _heal_shared_session(db)
         logger.warning('companion.tool_timeout tool=%s', name)
         return {'ok': False, 'tool': name, 'error': 'timeout',
                 'latency_ms': int((time.monotonic() - t0) * 1000)}
     except Exception:  # noqa: BLE001 — one tool must never sink the turn
+        # A failed execute poisons the session the same way a timeout does.
+        await _heal_shared_session(db)
         logger.warning('companion.tool_failed tool=%s', name, exc_info=True)
         return {'ok': False, 'tool': name, 'error': 'execution failed',
                 'latency_ms': int((time.monotonic() - t0) * 1000)}
+
+
+async def _heal_shared_session(db: AsyncSession) -> None:
+    """Roll back the shared request session after a tool blew up mid-query.
+
+    Best-effort: if even the rollback fails the session stays poisoned, but
+    the main path's release_db still self-heals on commit failure.
+    """
+    try:
+        await db.rollback()
+    except Exception:  # noqa: BLE001
+        logger.warning('companion.tool_session_rollback_failed', exc_info=True)
 
 
 def render_tool_results(results: list[dict[str, Any]]) -> str:

@@ -5,10 +5,12 @@ validation, never-raise execution) and the render caps that keep tool
 results prompt-sized.
 """
 
+import asyncio
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import text
 
 from app.services.companion.tools import (
     TOOL_SPECS,
@@ -80,6 +82,62 @@ class TestRegistry:
                 None, 'get_flashcards', {}, user_id=uuid4(), book_id=uuid4(),
             )
         assert result['ok'] is False and result['error'] == 'execution failed'
+
+
+class TestToolTimeoutSessionHeal:
+    """wait_for cancellation can land mid-DB-operation and leave the shared
+    request session with an invalidated transaction — the next operation on
+    it (another tool, or save_message on the cache-hit path) would raise
+    PendingRollbackError and sink the turn's persistence (24h-review
+    finding, sess_cdbcdba6). execute_tool must hand the session back clean."""
+
+    @pytest.mark.asyncio
+    async def test_timeout_rolls_back_shared_session(self, monkeypatch):
+        monkeypatch.setattr(
+            'app.services.companion.tools.registry.TOOL_TIMEOUT_S', 0.05,
+        )
+
+        async def slow_tool(db, user_id, book_id, args):
+            await db.execute(text('SELECT 1'))  # opens a transaction
+            await asyncio.sleep(5)              # timeout lands here
+
+        spec = TOOL_SPECS['search_book']
+        with patch.dict(
+            'app.services.companion.tools.registry.TOOL_SPECS',
+            {'search_book': type(spec)('search_book', '', spec.args_model, slow_tool)},
+        ):
+            async with _TestSession() as db:
+                result = await execute_tool(
+                    db, 'search_book', {'query': 'xy', 'scope': 'current'},
+                    user_id=uuid4(), book_id=uuid4(),
+                )
+                assert result['ok'] is False and result['error'] == 'timeout'
+                # Heal: the transaction the tool opened is rolled back and
+                # the session is immediately reusable.
+                assert db.in_transaction() is False
+                await db.execute(text('SELECT 1'))
+
+    @pytest.mark.asyncio
+    async def test_execution_failure_rolls_back_shared_session(self):
+        from sqlalchemy.exc import DBAPIError
+
+        async def failing_tool(db, user_id, book_id, args):
+            await db.execute(text('SELECT 1'))  # opens a transaction
+            raise DBAPIError('stmt', {}, Exception('db on fire'))
+
+        spec = TOOL_SPECS['search_book']
+        with patch.dict(
+            'app.services.companion.tools.registry.TOOL_SPECS',
+            {'search_book': type(spec)('search_book', '', spec.args_model, failing_tool)},
+        ):
+            async with _TestSession() as db:
+                result = await execute_tool(
+                    db, 'search_book', {'query': 'xy', 'scope': 'current'},
+                    user_id=uuid4(), book_id=uuid4(),
+                )
+                assert result['ok'] is False and result['error'] == 'execution failed'
+                assert db.in_transaction() is False
+                await db.execute(text('SELECT 1'))
 
 
 class TestSearchBook:
