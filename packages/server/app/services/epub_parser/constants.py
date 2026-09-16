@@ -61,7 +61,10 @@ FOOTNOTE_ATTRS = re.compile(
     re.IGNORECASE,
 )
 FOOTNOTE_REF_RE = re.compile(
-    r'(<a\s[^>]*href\s*=\s*["\']#(?:fn|footnote|note|endnote)[^"\']*["\'])',
+    # Full opening tag of a marker anchor: same-document ("#note_1") or
+    # cross-file ("part0001.html#note_1", InDesign-style). noteBack_/fnref_
+    # prefixes name the marker side of backlink pairs — not definitions.
+    r'<a\s[^>]*href\s*=\s*["\'][^"\']*#(?:note(?!back)|fn(?!ref)|footnote|endnote)[^"\']*["\'][^>]*>',
     re.IGNORECASE,
 )
 

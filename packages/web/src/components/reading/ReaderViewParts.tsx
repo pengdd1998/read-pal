@@ -202,9 +202,13 @@ export function useReaderViewLogic({
   }, [sanitizedContent]);
 
   // Footnote reference clicks: the stored EPUB content keeps the original
-  // anchors (href="#note_3" etc.). Without interception the click leaves
-  // the SPA and errors. Show a popover with the footnote body from the
-  // same chapter's document (id = href target, e.g. note_3).
+  // anchors, and many EPUBs (e.g. InDesign exports) write markers as
+  // cross-file links (href="part0001.html#note_1") WITHOUT the
+  // rp-footnote-ref class. Without interception the click leaves the SPA
+  // and errors. Intercept any anchor whose href fragment names a footnote
+  // definition (note_N / fn_N / footnote_N / endnote_N, excluding noteBack
+  // backlink markers), then show a popover with the definition from the
+  // same chapter's DOM (id = href target).
   const [footnotePopover, setFootnotePopover] = useState<{
     marker: string;
     html: string;
@@ -213,19 +217,43 @@ export function useReaderViewLogic({
   useEffect(() => {
     const el = contentDivRef.current;
     if (!el) return;
+    // noteBack_* is this book family's marker id; fnref_* is EPUB convention
+    // for the reference side. Both name markers, not definitions.
+    const isDefinitionFragment = (frag: string) =>
+      /^(?:note(?!back)|fn(?!ref)|footnote|endnote)[\w.-]*$/i.test(frag);
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const anchor = target.closest<HTMLElement>('a.rp-footnote-ref');
+      const anchor = target.closest<HTMLElement>('a');
       if (!anchor) return;
+      if (!anchor.classList.contains('rp-footnote-ref')) {
+        const href = anchor.getAttribute('href') || '';
+        const frag = href.includes('#') ? (href.split('#')[1] || '') : '';
+        if (!isDefinitionFragment(frag)) return;
+      }
       e.preventDefault();
       e.stopPropagation();
       const marker = (anchor.textContent || '').trim();
       const href = anchor.getAttribute('href') || '';
       const anchorId = href.split('#')[1] || '';
-      const bodyEl: HTMLElement | null = anchorId ? (document.getElementById(anchorId) as HTMLElement | null) : null;
+      let bodyEl: HTMLElement | null = anchorId
+        ? document.getElementById(anchorId)
+        : null;
+      if (bodyEl && /^[\[\]0-9\s]+$/.test((bodyEl.textContent || '').trim())) {
+        // Definition anchor holds only the bracket number — the note text
+        // lives in its wrapper (<p class="notecontent">…</p>).
+        bodyEl = bodyEl.parentElement;
+      }
       let html = '';
       if (bodyEl) {
-        html = bodyEl.innerHTML;
+        // Neutralize backlink anchors inside the definition so no click in
+        // the popover can navigate out of the SPA.
+        const clone = bodyEl.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll('a').forEach((a) => {
+          const span = el.ownerDocument.createElement('span');
+          span.innerHTML = a.innerHTML;
+          a.replaceWith(span);
+        });
+        html = clone.innerHTML;
       } else {
         // Definition may be in another chapter's raw content — fall back
         // to a note that the body lives elsewhere.
