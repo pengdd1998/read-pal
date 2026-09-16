@@ -62,15 +62,18 @@ const nextConfig = {
             // Differences, both deliberate for non-docker self-hosting:
             // - connect-src allows any http(s)/ws origin: NEXT_PUBLIC_API_URL
             //   may point at a remote backend (nginx path is same-origin).
-            // - img-src allows http: — covers can come from a LAN MinIO.
-            // 'unsafe-inline'/'unsafe-eval' are required by Next.js's
+            // img-src allows no http: — covers are rewritten to the
+            // same-origin /covers/ proxy (schemas/book.py model_validator)
+            // and EPUB content images are data URIs; plaintext image
+            // sources are pure tracking-pixel surface (24h-review finding
+            // 5). 'unsafe-inline'/'unsafe-eval' are required by Next.js's
             // hydration bootstrap and dev-mode React Refresh.
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https: http:",
+              "img-src 'self' data: blob: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https: http: ws: wss:",
               "object-src 'none'",
