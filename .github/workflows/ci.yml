@@ -182,7 +182,10 @@ jobs:
   postgres-tests:
     name: Python Tests (PostgreSQL)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # PG suite baseline crept to 11-15 min; a slow runner hit the old 30-min
+    # ceiling at 90% and got killed mid-run (run 35057858680). 60 min gives
+    # 4x headroom over the baseline.
+    timeout-minutes: 60
     services:
       postgres:
         image: pgvector/pgvector:pg16
