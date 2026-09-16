@@ -2,12 +2,12 @@
 into chapter building. Was: license tail riding the last chapter, fake
 first chapter = title/credits page, NCX titles like
 "THE FULL PROJECT GUTENBERG™ LICENSE"."""
-from app.services.epub_parser.boilerplate import (
+from app.services.parsers.epub.boilerplate import (
     scrub_chapter,
     scrub_html,
     scrub_text,
 )
-from app.services.epub_parser.zipfile_path import _is_toc_page
+from app.services.parsers.epub.zipfile_path import _is_toc_page
 
 HEADER = 'The Project Gutenberg eBook of Test Book\n\nThis eBook is for the use of anyone anywhere'
 START = '*** START OF THE PROJECT GUTENBERG EBOOK TEST BOOK ***'
@@ -111,7 +111,7 @@ class TestCoalesceFragments:
     """摄入侧断段合并（与阅读器渲染层 coalesce-paragraphs 同规则）。"""
 
     def test_giga_ntic_merged_html(self):
-        from app.services.epub_parser.boilerplate import coalesce_fragments_html
+        from app.services.parsers.epub.boilerplate import coalesce_fragments_html
         html = ('<p>the eyes of Doctor T.J. Eckleburg are blue and giga</p>'
                 '<p>ntic — their retinas are one yard high.</p>')
         out = coalesce_fragments_html(html)
@@ -119,30 +119,30 @@ class TestCoalesceFragments:
         assert 'giga ntic' in out
 
     def test_giga_ntic_merged_text(self):
-        from app.services.epub_parser.boilerplate import coalesce_fragments_text
+        from app.services.parsers.epub.boilerplate import coalesce_fragments_text
         text = 'the eyes of Doctor T.J. Eckleburg are blue and giga\n\nntic — their retinas are one yard high.'
         out = coalesce_fragments_text(text)
         assert '\n\n' not in out
         assert 'giga ntic' in out
 
     def test_terminal_punctuation_blocks_merge(self):
-        from app.services.epub_parser.boilerplate import coalesce_fragments_html
+        from app.services.parsers.epub.boilerplate import coalesce_fragments_html
         html = '<p>She sighed. It was over.</p><p>but not for me.</p>'
         assert coalesce_fragments_html(html).count('<p') == 2
 
     def test_chinese_never_merged(self):
-        from app.services.epub_parser.boilerplate import coalesce_fragments_html
+        from app.services.parsers.epub.boilerplate import coalesce_fragments_html
         html = '<p>黄昏时分，码头上的灯火次第亮</p><p>起，渔船随潮水轻轻摇晃。</p>'
         assert coalesce_fragments_html(html).count('<p') == 2
 
     def test_heading_between_blocks_merge(self):
-        from app.services.epub_parser.boilerplate import coalesce_fragments_html
+        from app.services.parsers.epub.boilerplate import coalesce_fragments_html
         html = '<p>end of scene tw</p><h2>Chapter 3</h2><p>o separate blocks.</p>'
         out = coalesce_fragments_html(html)
         assert out.count('<p') == 2 and '<h2>' in out
 
     def test_inline_markup_preserved(self):
-        from app.services.epub_parser.boilerplate import coalesce_fragments_html
+        from app.services.parsers.epub.boilerplate import coalesce_fragments_html
         html = '<p class="x">the <em>eyes</em> of Doc</p><p>tor Eckleburg kept vigil.</p>'
         out = coalesce_fragments_html(html)
         assert '<em>eyes</em>' in out and out.startswith('<p class="x">')

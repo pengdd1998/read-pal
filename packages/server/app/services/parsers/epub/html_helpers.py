@@ -4,7 +4,7 @@ import html as html_module
 import posixpath
 import re
 
-from app.services.epub_parser.constants import HEADING_RE, IMG_COUNT_RE, TITLE_RE
+from app.services.parsers.epub.constants import HEADING_RE, IMG_COUNT_RE, TITLE_RE
 
 
 def resolve_epub_path(base: str, href: str) -> str:

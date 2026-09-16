@@ -1,6 +1,6 @@
 """Encapsulation assertion for ``_INFLIGHT_STREAMS`` (m5, Phase 3.3).
 
-The dict at ``app/services/agent_service.py:_INFLIGHT_STREAMS`` MUST be
+The dict at ``app/services/agent/gateway.py:_INFLIGHT_STREAMS`` MUST be
 mutated only through ``register_stream`` (line ~197) and ``release_stream``
 (line ~205). Rogue inline mutations would break the cleanup contract
 documented in the dict's docstring ("Entries MUST be removed in a finally
@@ -14,7 +14,7 @@ verifying the enclosing function is one of the two allowed handlers.
 Usage::
 
     uv run python scripts/check_inflight_streams_encapsulation.py \
-        app/services/agent_service.py
+        app/services/agent/gateway.py
 
 Exits 1 on any rogue mutation.
 """
@@ -112,7 +112,7 @@ def _check_file(path: Path) -> list[tuple[int, str]]:
     return violations
 
 
-def main(target: str = 'app/services/agent_service.py') -> int:
+def main(target: str = 'app/services/agent/gateway.py') -> int:
     """Check the target file. Returns 0 on success, 1 on violation."""
     path = Path(target)
     if not path.exists():
@@ -136,5 +136,5 @@ def main(target: str = 'app/services/agent_service.py') -> int:
 
 
 if __name__ == '__main__':
-    target = sys.argv[1] if len(sys.argv) > 1 else 'app/services/agent_service.py'
+    target = sys.argv[1] if len(sys.argv) > 1 else 'app/services/agent/gateway.py'
     sys.exit(main(target))

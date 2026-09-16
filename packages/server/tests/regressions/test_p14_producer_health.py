@@ -14,7 +14,7 @@ import logging
 
 import pytest
 
-from app.services.agent_service import (
+from app.services.agent import (
     _KEEPALIVE_FRAME,
     _PRODUCER_STALL_WARN_SECONDS,
     _SENTINEL,
@@ -60,7 +60,7 @@ async def test_stall_warns_once_when_only_keepalives(monkeypatch):
     """Only-keepalives for > threshold triggers exactly one warning."""
     # Speed up the test by lowering the threshold.
     monkeypatch.setattr(
-        'app.services.agent_service._PRODUCER_STALL_WARN_SECONDS', 0.05,
+        'app.services.agent.gateway._PRODUCER_STALL_WARN_SECONDS', 0.05,
     )
 
     queue: asyncio.Queue[bytes | None] = asyncio.Queue()
@@ -102,7 +102,7 @@ async def test_stall_warns_once_when_only_keepalives(monkeypatch):
 async def test_stall_warning_resets_after_real_chunk(monkeypatch):
     """Stall warning fires again after recovery + re-stall."""
     monkeypatch.setattr(
-        'app.services.agent_service._PRODUCER_STALL_WARN_SECONDS', 0.05,
+        'app.services.agent.gateway._PRODUCER_STALL_WARN_SECONDS', 0.05,
     )
 
     queue: asyncio.Queue[bytes | None] = asyncio.Queue()

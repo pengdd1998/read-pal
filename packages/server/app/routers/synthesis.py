@@ -24,7 +24,7 @@ from app.services.cross_book_synthesis import (
     cross_book_synthesize,
     get_user_book_ids,
 )
-from app.services.synthesis_service import synthesize
+from app.services.synthesis import synthesize
 from app.utils.i18n import not_found_error, t
 from app.middleware.rate_limiter import api_limiter
 

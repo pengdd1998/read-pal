@@ -69,6 +69,11 @@ store.
    `grep -rn '# rawfield:' app/`) in both `ci.yml` and `prompt-eval.yml`.
 2. **Never put business logic in `routers/`.** Routers validate input → call
    service → return response. Enforced: `scripts/check_router_thin.py` in `ci.yml`.
+3b. **Never add a new flat feature module in `app/services/`.** New
+   features are sub-packages with `__init__.py` as the single public API.
+   Enforced: `scripts/check_services_flat_freeze.py` baseline ratchet in
+   `ci.yml` — graduating a flat module into a package means deleting its
+   baseline entry in the same PR.
 3. **Never construct `TokenBudget()` without `model=` kwarg.** Silent
    wrong-window estimate on non-GLM providers. Enforced: AST check
    `scripts/check_token_budget_model.py` (on `app/services/` + `app/eval/`)

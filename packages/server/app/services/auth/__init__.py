@@ -4,7 +4,7 @@ Handles user lookup, password verification, token management,
 and user registration. All database and crypto operations live here.
 
 This package re-exports all public functions so that existing imports
-like ``from app.services.auth_service import authenticate_user`` keep
+like ``from app.services.auth import authenticate_user`` keep
 working.
 """
 
@@ -31,3 +31,5 @@ __all__ = [
     'revoke_access_token',
     'revoke_refresh_token',
 ]
+
+from app.services.auth._user import DEFAULT_USER_SETTINGS  # noqa: F401,E402

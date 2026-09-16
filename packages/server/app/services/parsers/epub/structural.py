@@ -14,7 +14,7 @@ from xml.etree.ElementTree import ParseError as ETParseError
 
 from defusedxml import ElementTree as DefusedET
 
-from app.services.epub_parser.constants import NS_DC, NS_EPUB, NS_NCX
+from app.services.parsers.epub.constants import NS_DC, NS_EPUB, NS_NCX
 
 logger = logging.getLogger('read-pal')
 

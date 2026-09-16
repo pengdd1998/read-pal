@@ -1,6 +1,6 @@
 """TOC-page detection: dedicated table-of-contents spine items must not
 become chapters (was: dead 21-char '目录' chapter between 序 and 1)."""
-from app.services.epub_parser.zipfile_path import _is_toc_page
+from app.services.parsers.epub.zipfile_path import _is_toc_page
 
 
 def _toc_html() -> str:
@@ -36,18 +36,18 @@ class TestStripDuplicateHeading:
     """Chapter heading text must not repeat inside the content body."""
 
     def test_leading_title_removed(self):
-        from app.services.epub_parser.ebooklib_path import _strip_duplicate_heading
+        from app.services.parsers.epub._html_clean import _strip_duplicate_heading
         text, html = _strip_duplicate_heading('序', '序\n\n厄休拉·勒古恩\n\n正文…', '<h1>序</h1><p>正文</p>')
         assert text.startswith('厄休拉·勒古恩'), text[:20]
         assert '序' not in html.split('</h1>')[0] or '<h1>序</h1>' not in html
 
     def test_prose_starting_with_same_chars_kept(self):
-        from app.services.epub_parser.ebooklib_path import _strip_duplicate_heading
+        from app.services.parsers.epub._html_clean import _strip_duplicate_heading
         # "1" is the title but prose starts with "1984年…" — guard rejects
         text, html = _strip_duplicate_heading('1', '1984年，天气炎热', '<p>1984年</p>')
         assert text == '1984年，天气炎热'
 
     def test_no_title_noop(self):
-        from app.services.epub_parser.ebooklib_path import _strip_duplicate_heading
+        from app.services.parsers.epub._html_clean import _strip_duplicate_heading
         text, html = _strip_duplicate_heading('', '正文', '<p>正文</p>')
         assert text == '正文' and html == '<p>正文</p>'

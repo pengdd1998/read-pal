@@ -9,8 +9,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.services import flashcard_service
-from app.services.flashcard_service import DEFAULT_EASE_FACTOR, MIN_EASE_FACTOR
+from app.services import flashcard
+from app.services.flashcard import DEFAULT_EASE_FACTOR, MIN_EASE_FACTOR
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ async def test_create_flashcard_sets_sm2_defaults():
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    result = await flashcard_service.create_flashcard(db, user_id, data)
+    result = await flashcard.create_flashcard(db, user_id, data)
 
     assert len(added_cards) == 1
     card = added_cards[0]
@@ -111,7 +111,7 @@ async def test_create_flashcard_without_annotation():
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    await flashcard_service.create_flashcard(db, user_id, data)
+    await flashcard.create_flashcard(db, user_id, data)
 
     assert added_cards[0].annotation_id is None
 
@@ -142,7 +142,7 @@ async def test_review_flashcard_first_good_rating():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    result = await flashcard_service.review_flashcard(db, user_id, card_id, rating=4)
+    result = await flashcard.review_flashcard(db, user_id, card_id, rating=4)
 
     assert card.repetition_count == 1
     assert card.interval == 1
@@ -171,7 +171,7 @@ async def test_review_flashcard_second_good_rating():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=4)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=4)
 
     assert card.repetition_count == 2
     assert card.interval == 6
@@ -198,7 +198,7 @@ async def test_review_flashcard_third_good_rating_uses_ease_factor():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=4)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=4)
 
     assert card.repetition_count == 3
     assert card.interval == round(6 * 2.5)  # 15
@@ -225,7 +225,7 @@ async def test_review_flashcard_failed_rating_resets():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=1)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=1)
 
     assert card.repetition_count == 0
     assert card.interval == 1
@@ -246,7 +246,7 @@ async def test_review_flashcard_not_found_raises():
     # instead of the old conflated 400.
     from app.middleware.exception_handlers import NotFoundError
     with pytest.raises(NotFoundError, match='Flashcard not found'):
-        await flashcard_service.review_flashcard(db, user_id, card_id, rating=3)
+        await flashcard.review_flashcard(db, user_id, card_id, rating=3)
 
 
 @pytest.mark.asyncio
@@ -271,7 +271,7 @@ async def test_review_flashcard_ease_factor_minimum():
     db.refresh = AsyncMock(return_value=card)
 
     # Rating 0 — worst possible, should try to lower ease factor
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=0)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=0)
 
     assert card.ease_factor >= MIN_EASE_FACTOR
 
@@ -298,7 +298,7 @@ async def test_review_flashcard_rating_5_max_ease():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=5)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=5)
 
     # With rating 5: delta = 0.1 - (5-5)*(0.08 + (5-5)*0.02) = 0.1
     assert card.ease_factor == initial_ef + 0.1
@@ -326,7 +326,7 @@ async def test_review_flashcard_rating_3_decreases_ease():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=3)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=3)
 
     # Rating 3: delta = 0.1 - (5-3)*(0.08 + (5-3)*0.02) = 0.1 - 2*0.12 = -0.14
     expected_ef = max(MIN_EASE_FACTOR, initial_ef + (0.1 - 2 * (0.08 + 2 * 0.02)))
@@ -354,7 +354,7 @@ async def test_review_flashcard_sets_next_review_at():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=4)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=4)
 
     # After review: interval=1, so next_review_at = now + 1 day
     assert card.next_review_at is not None
@@ -382,7 +382,7 @@ async def test_review_flashcard_boundary_rating_3_passes():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=3)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=3)
 
     # Rating 3 >= 3, so it's a pass
     assert card.repetition_count == 1
@@ -410,7 +410,7 @@ async def test_review_flashcard_boundary_rating_2_fails():
     db.flush = AsyncMock()
     db.refresh = AsyncMock(return_value=card)
 
-    await flashcard_service.review_flashcard(db, user_id, card_id, rating=2)
+    await flashcard.review_flashcard(db, user_id, card_id, rating=2)
 
     assert card.repetition_count == 0
     assert card.interval == 1
@@ -433,7 +433,7 @@ async def test_get_due_cards_returns_due():
     result_mock.scalars.return_value = scalars_mock
     db.execute = AsyncMock(return_value=result_mock)
 
-    result = await flashcard_service.get_due_cards(db, user_id)
+    result = await flashcard.get_due_cards(db, user_id)
 
     assert len(result) == 3
 
@@ -448,7 +448,7 @@ async def test_get_due_cards_with_book_filter():
     result_mock.scalars.return_value.all.return_value = []
     db.execute = AsyncMock(return_value=result_mock)
 
-    result = await flashcard_service.get_due_cards(db, user_id, book_id=book_id)
+    result = await flashcard.get_due_cards(db, user_id, book_id=book_id)
 
     assert result == []
 
@@ -462,7 +462,7 @@ async def test_get_due_cards_respects_limit():
     result_mock.scalars.return_value.all.return_value = [_make_flashcard()]
     db.execute = AsyncMock(return_value=result_mock)
 
-    result = await flashcard_service.get_due_cards(db, user_id, limit=5)
+    result = await flashcard.get_due_cards(db, user_id, limit=5)
 
     assert len(result) == 1
 
@@ -476,7 +476,7 @@ async def test_get_due_cards_empty():
     result_mock.scalars.return_value.all.return_value = []
     db.execute = AsyncMock(return_value=result_mock)
 
-    result = await flashcard_service.get_due_cards(db, user_id)
+    result = await flashcard.get_due_cards(db, user_id)
 
     assert result == []
 
@@ -501,7 +501,7 @@ async def test_list_flashcards_paginated():
 
     db.execute = AsyncMock(side_effect=[count_result, data_result])
 
-    cards, total = await flashcard_service.list_flashcards(db, user_id, page=2, per_page=10)
+    cards, total = await flashcard.list_flashcards(db, user_id, page=2, per_page=10)
 
     assert total == 25
     assert len(cards) == 10
@@ -521,7 +521,7 @@ async def test_list_flashcards_with_book_filter():
 
     db.execute = AsyncMock(side_effect=[count_result, data_result])
 
-    cards, total = await flashcard_service.list_flashcards(db, user_id, book_id=book_id)
+    cards, total = await flashcard.list_flashcards(db, user_id, book_id=book_id)
 
     assert total == 3
     assert len(cards) == 3
@@ -540,7 +540,7 @@ async def test_list_flashcards_empty():
 
     db.execute = AsyncMock(side_effect=[count_result, data_result])
 
-    cards, total = await flashcard_service.list_flashcards(db, user_id)
+    cards, total = await flashcard.list_flashcards(db, user_id)
 
     assert total == 0
     assert cards == []
@@ -569,7 +569,7 @@ async def test_list_decks_groups_by_book():
     result_mock.all.return_value = [row]
     db.execute = AsyncMock(return_value=result_mock)
 
-    result = await flashcard_service.list_decks(db, user_id)
+    result = await flashcard.list_decks(db, user_id)
 
     assert result['totalCards'] == 5
     assert result['totalDue'] == 5
@@ -590,7 +590,7 @@ async def test_list_decks_empty():
     result_mock.all.return_value = []
     db.execute = AsyncMock(return_value=result_mock)
 
-    result = await flashcard_service.list_decks(db, user_id)
+    result = await flashcard.list_decks(db, user_id)
 
     assert result['totalCards'] == 0
     assert result['totalDue'] == 0
@@ -620,7 +620,7 @@ async def test_list_decks_multiple_books():
     result_mock.all.return_value = [row1, row2]
     db.execute = AsyncMock(return_value=result_mock)
 
-    result = await flashcard_service.list_decks(db, user_id)
+    result = await flashcard.list_decks(db, user_id)
 
     assert result['totalCards'] == 10
     assert len(result['decks']) == 2
@@ -685,7 +685,7 @@ async def test_generate_flashcards_success(mock_llm):
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    cards = await flashcard_service.generate_flashcards(db, user_id, book_id, count=2)
+    cards = await flashcard.generate_flashcards(db, user_id, book_id, count=2)
 
     assert len(cards) == 2
     assert cards[0].question == 'What is X?'
@@ -705,7 +705,7 @@ async def test_generate_flashcards_book_not_found():
     db.execute = AsyncMock(return_value=book_result)
 
     with pytest.raises(ValueError, match='Book .* not found'):
-        await flashcard_service.generate_flashcards(db, user_id, book_id)
+        await flashcard.generate_flashcards(db, user_id, book_id)
 
 
 @pytest.mark.asyncio
@@ -727,7 +727,7 @@ async def test_generate_flashcards_no_annotations():
     db.execute = AsyncMock(side_effect=[MagicMock(), _no_existing_cards_result(), book_result, ann_result])
 
     with pytest.raises(ValueError, match='No highlights or notes found'):
-        await flashcard_service.generate_flashcards(db, user_id, book_id)
+        await flashcard.generate_flashcards(db, user_id, book_id)
 
 
 @pytest.mark.asyncio
@@ -759,7 +759,7 @@ async def test_generate_flashcards_llm_returns_invalid_json(mock_llm):
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    cards = await flashcard_service.generate_flashcards(db, user_id, book_id)
+    cards = await flashcard.generate_flashcards(db, user_id, book_id)
 
     assert cards == []
 
@@ -798,7 +798,7 @@ async def test_generate_flashcards_skips_empty_qa(mock_llm):
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    cards = await flashcard_service.generate_flashcards(db, user_id, book_id, count=5)
+    cards = await flashcard.generate_flashcards(db, user_id, book_id, count=5)
 
     assert len(cards) == 1
     assert cards[0].question == 'Valid Q?'
@@ -832,7 +832,7 @@ async def test_generate_flashcards_count_clamped_to_max_10(mock_llm):
     db.refresh = AsyncMock()
 
     # Request 100 cards — should be clamped to 10
-    await flashcard_service.generate_flashcards(db, user_id, book_id, count=100)
+    await flashcard.generate_flashcards(db, user_id, book_id, count=100)
 
     # Verify the system prompt mentions exactly 10
     call_args = mock_llm.call_args
@@ -869,7 +869,7 @@ async def test_generate_flashcards_count_clamped_to_min_1(mock_llm):
     db.refresh = AsyncMock()
 
     # Request 0 cards — should be clamped to 1
-    await flashcard_service.generate_flashcards(db, user_id, book_id, count=0)
+    await flashcard.generate_flashcards(db, user_id, book_id, count=0)
 
     call_args = mock_llm.call_args
     messages = call_args[0][0]
@@ -909,7 +909,7 @@ async def test_generate_flashcards_truncates_long_qa(mock_llm):
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    cards = await flashcard_service.generate_flashcards(db, user_id, book_id)
+    cards = await flashcard.generate_flashcards(db, user_id, book_id)
 
     assert len(cards) == 1
     assert len(cards[0].question) == 2000  # truncated
@@ -945,7 +945,7 @@ async def test_generate_flashcards_llm_returns_none(mock_llm):
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    cards = await flashcard_service.generate_flashcards(db, user_id, book_id)
+    cards = await flashcard.generate_flashcards(db, user_id, book_id)
 
     assert cards == []
 
@@ -979,7 +979,7 @@ async def test_generate_flashcards_llm_returns_non_list(mock_llm):
     db.flush = AsyncMock()
     db.refresh = AsyncMock()
 
-    cards = await flashcard_service.generate_flashcards(db, user_id, book_id)
+    cards = await flashcard.generate_flashcards(db, user_id, book_id)
 
     assert cards == []
 

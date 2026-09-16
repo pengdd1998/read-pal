@@ -9,7 +9,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.services.reading_plan_service import (
+from app.services.reading_plan import (
     advance_plan,
     generate_plan,
     get_active_plan,

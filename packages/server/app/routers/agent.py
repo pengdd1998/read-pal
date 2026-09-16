@@ -38,7 +38,7 @@ from app.schemas.common import GenericResponse
 from app.services import companion
 from app.services.agent.coach import run_coach_report
 from app.services.agent.research import run_research
-from app.services.agent_service import (
+from app.services.agent import (
     new_request_id,
     raise_not_found,
     resolve_lang,
@@ -51,7 +51,7 @@ from app.services.feedback_service import (
 )
 from app.services.mood_service import generate_mood_scene
 from app.services.llm import safe_llm_invoke
-from app.services.reading_plan_service import advance_plan, generate_plan, get_active_plan
+from app.services.reading_plan import advance_plan, generate_plan, get_active_plan
 from app.utils.sanitizer import sanitize_book_field
 from app.utils.i18n import not_found_error, t
 from app.middleware.rate_limiter import api_limiter
@@ -187,7 +187,7 @@ async def cancel_chat_stream(
 
     Returns 200 with ``cancelled: false`` if the stream is unknown or done.
     """
-    from app.services.agent_service import cancel_stream_cross_worker
+    from app.services.agent import cancel_stream_cross_worker
     result = await cancel_stream_cross_worker(body.request_id)
     return {'success': True, 'data': result}
 

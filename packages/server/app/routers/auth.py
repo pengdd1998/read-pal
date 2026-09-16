@@ -1,4 +1,4 @@
-"""Auth routes — thin HTTP handlers that delegate to auth_service.
+"""Auth routes — thin HTTP handlers that delegate to auth.
 
 All responses follow the shape: ``{"success": true, "data": {...}}``
 or raise ``HTTPException`` with matching error codes.
@@ -30,7 +30,7 @@ from app.schemas.auth import (
     RegisterRequest,
 )
 from app.schemas.common import GenericResponse
-from app.services.auth_service import (
+from app.services.auth import (
     authenticate_user,
     change_user_password,
     check_google_oauth_configured,

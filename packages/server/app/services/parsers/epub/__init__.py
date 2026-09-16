@@ -9,15 +9,13 @@ Decomposed into focused sub-modules:
 - images: image extraction and source rewriting
 - css: CSS extraction and sanitization
 - footnotes: footnote annotation
-- ebooklib_path: primary processing via ebooklib
 - zipfile_path: fallback processing via zipfile
 """
 
 import logging
 from contextvars import ContextVar
 
-from app.services.epub_parser.ebooklib_path import process_epub_ebooklib
-from app.services.epub_parser.zipfile_path import epub_zip_fallback
+from app.services.parsers.epub.zipfile_path import epub_zip_fallback
 
 logger = logging.getLogger('read-pal')
 
@@ -38,16 +36,10 @@ async def process_epub(file_path: str) -> dict:
     """
     import zipfile as _zipfile
 
-    try:
-        # Try ebooklib first
-        result = process_epub_ebooklib(file_path)
-    except (_zipfile.BadZipFile, KeyError, OSError, ValueError):
-        raise ValueError('The file is not a valid EPUB (unreadable archive)') from None
-    if result is not None:
-        return result
-
-    # Fallback to zipfile
-    logger.warning('ebooklib not available, using ZIP fallback for EPUB')
+    # Single parse path: zipfile (M3.4). The ebooklib variant was retired —
+    # ebooklib is blocked on Python 3.13 (lxml) and the prod image never
+    # installed it, so the "primary" path was dead code with its own bug
+    # class (the module-level footnote global fixed 2026-09-16).
     _epub_metadata_var.set({})
     try:
         chapters, full_text_parts, total_pages = await epub_zip_fallback(file_path)

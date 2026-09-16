@@ -21,7 +21,7 @@ from app.utils.db import db_error_guard
 logger = logging.getLogger(__name__)
 
 
-# Shared caps (must stay in sync with synthesis_service.py)
+# Shared caps (must stay in sync with synthesis.py)
 MAX_ANNOTATIONS = 50
 MAX_CHAT_MESSAGES = 20
 MAX_READING_SESSIONS = 50

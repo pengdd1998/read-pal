@@ -11,7 +11,7 @@ from uuid import uuid4
 import pytest
 from jose import jwt as jose_jwt
 
-from app.services import auth_service
+from app.services import auth
 
 
 # ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ def _make_user(
     user.name = name
     user.password_hash = password_hash
     user.avatar = avatar
-    user.settings = settings or auth_service.DEFAULT_USER_SETTINGS.copy()
+    user.settings = settings or auth.DEFAULT_USER_SETTINGS.copy()
     user.created_at = created_at or datetime.now(tz=UTC)
     return user
 
@@ -47,7 +47,7 @@ def _make_db_session():
 
 
 def _encode_jwt(payload: dict, secret: str = 'test-secret') -> str:
-    """Helper to encode a JWT using the same library as auth_service."""
+    """Helper to encode a JWT using the same library as auth."""
     return jose_jwt.encode(payload, secret, algorithm='HS256')
 
 
@@ -125,7 +125,7 @@ async def test_authenticate_user_success(mock_create_tokens, mock_verify, mock_g
     db.execute = AsyncMock(return_value=result_mock)
 
     with patch('app.services.auth._login._get_user_lang', return_value='en'):
-        result = await auth_service.authenticate_user(db, 'user@example.com', 'password123', 'web')
+        result = await auth.authenticate_user(db, 'user@example.com', 'password123', 'web')
 
     assert result['token'] == 'access_tok'
     assert result['refreshToken'] == 'refresh_tok'
@@ -145,7 +145,7 @@ async def test_authenticate_user_account_locked(mock_get_lockout):
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.authenticate_user(db, 'locked@example.com', 'pass', 'web')
+        await auth.authenticate_user(db, 'locked@example.com', 'pass', 'web')
 
     assert exc_info.value.status_code == 429
     assert exc_info.value.detail['code'] == 'ACCOUNT_LOCKED'
@@ -167,7 +167,7 @@ async def test_authenticate_user_user_not_found(mock_get_lockout):
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.authenticate_user(db, 'nobody@example.com', 'pass', 'web')
+        await auth.authenticate_user(db, 'nobody@example.com', 'pass', 'web')
 
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail['code'] == 'INVALID_CREDENTIALS'
@@ -193,7 +193,7 @@ async def test_authenticate_user_wrong_password(mock_verify, mock_get_lockout):
 
     with patch('app.services.auth._login._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
-            await auth_service.authenticate_user(db, 'user@example.com', 'wrongpass', 'web')
+            await auth.authenticate_user(db, 'user@example.com', 'wrongpass', 'web')
 
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail['code'] == 'INVALID_CREDENTIALS'
@@ -218,7 +218,7 @@ async def test_authenticate_user_null_password_hash(mock_get_lockout):
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.authenticate_user(db, 'oauth@example.com', 'pass', 'web')
+        await auth.authenticate_user(db, 'oauth@example.com', 'pass', 'web')
 
     assert exc_info.value.status_code == 401
 
@@ -241,7 +241,7 @@ async def test_authenticate_user_passes_platform_to_token(mock_create_tokens, mo
     db.execute = AsyncMock(return_value=result_mock)
 
     with patch('app.services.auth._login._get_user_lang', return_value='en'):
-        await auth_service.authenticate_user(db, 'user@example.com', 'pass', 'mobile')
+        await auth.authenticate_user(db, 'user@example.com', 'pass', 'mobile')
 
     mock_create_tokens.assert_called_once_with(str(user.id), 'mobile')
 
@@ -270,7 +270,7 @@ async def test_register_user_success(mock_seed, mock_create_tokens, mock_hash):
 
     db.refresh = AsyncMock(side_effect=_refresh)
 
-    result = await auth_service.register_user(db, 'new@example.com', 'New User', 'Password123!', 'web')
+    result = await auth.register_user(db, 'new@example.com', 'New User', 'Password123!', 'web')
 
     assert result['token'] == 'access_tok'
     assert result['refreshToken'] == 'refresh_tok'
@@ -291,7 +291,7 @@ async def test_register_user_duplicate_email():
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.register_user(db, 'dup@example.com', 'Dup', 'Password123!', 'web')
+        await auth.register_user(db, 'dup@example.com', 'Dup', 'Password123!', 'web')
 
     assert exc_info.value.status_code == 409
     assert exc_info.value.detail['code'] == 'USER_EXISTS'
@@ -318,14 +318,14 @@ async def test_register_user_sets_default_settings(mock_seed, mock_create_tokens
 
     db.refresh = AsyncMock(side_effect=_refresh)
 
-    await auth_service.register_user(db, 'new@example.com', 'New User', 'Password123!', 'web')
+    await auth.register_user(db, 'new@example.com', 'New User', 'Password123!', 'web')
 
     assert len(added_users) == 1
     new_user = added_users[0]
     assert new_user.email == 'new@example.com'
     assert new_user.name == 'New User'
     assert new_user.password_hash == '$2b$12$newhash'
-    assert new_user.settings == auth_service.DEFAULT_USER_SETTINGS
+    assert new_user.settings == auth.DEFAULT_USER_SETTINGS
 
 
 @pytest.mark.asyncio
@@ -347,7 +347,7 @@ async def test_register_user_passes_platform_to_token(mock_seed, mock_create_tok
 
     db.refresh = AsyncMock(side_effect=_refresh)
 
-    await auth_service.register_user(db, 'new@example.com', 'New User', 'Password123!', 'mobile')
+    await auth.register_user(db, 'new@example.com', 'New User', 'Password123!', 'mobile')
 
     mock_create_tokens.assert_called_once()
 
@@ -367,7 +367,7 @@ async def test_get_user_profile_found():
     db.execute = AsyncMock(return_value=result_mock)
 
     with patch('app.services.auth._user._get_user_lang', return_value='en'):
-        profile = await auth_service.get_user_profile(db, str(user.id))
+        profile = await auth.get_user_profile(db, str(user.id))
 
     assert profile['email'] == user.email
     assert profile['name'] == user.name
@@ -387,7 +387,7 @@ async def test_get_user_profile_not_found():
 
     with patch('app.services.auth._user._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
-            await auth_service.get_user_profile(db, str(uuid4()))
+            await auth.get_user_profile(db, str(uuid4()))
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail['code'] == 'NOT_FOUND'
@@ -403,7 +403,7 @@ async def test_get_user_profile_with_avatar():
     db.execute = AsyncMock(return_value=result_mock)
 
     with patch('app.services.auth._user._get_user_lang', return_value='en'):
-        profile = await auth_service.get_user_profile(db, str(user.id))
+        profile = await auth.get_user_profile(db, str(user.id))
 
     assert profile['avatar'] == 'https://example.com/avatar.png'
 
@@ -426,7 +426,7 @@ async def test_change_user_password_success(mock_hash, mock_verify):
     db.flush = AsyncMock()
 
     with patch('app.services.auth._user._get_user_lang', return_value='en'):
-        result = await auth_service.change_user_password(
+        result = await auth.change_user_password(
             db, str(user.id), 'OldPass123!', 'NewPass456!',
         )
 
@@ -449,7 +449,7 @@ async def test_change_user_password_wrong_old_password(mock_verify):
 
     with patch('app.services.auth._user._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
-            await auth_service.change_user_password(
+            await auth.change_user_password(
                 db, str(user.id), 'WrongOldPass!', 'NewPass456!',
             )
 
@@ -469,7 +469,7 @@ async def test_change_user_password_user_not_found():
 
     with patch('app.services.auth._user._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
-            await auth_service.change_user_password(
+            await auth.change_user_password(
                 db, str(uuid4()), 'OldPass!', 'NewPass!',
             )
 
@@ -489,7 +489,7 @@ async def test_change_user_password_null_password_hash():
 
     with patch('app.services.auth._user._get_user_lang', return_value='en'):
         with pytest.raises(HTTPException) as exc_info:
-            await auth_service.change_user_password(
+            await auth.change_user_password(
                 db, str(user.id), 'OldPass!', 'NewPass!',
             )
 
@@ -526,7 +526,7 @@ async def test_refresh_tokens_success(mock_settings, mock_create_tokens, mock_re
         'sub': str(user.id),
     })
 
-    result = await auth_service.refresh_tokens(db, refresh_token)
+    result = await auth.refresh_tokens(db, refresh_token)
 
     assert result['token'] == 'new_access'
     assert result['refreshToken'] == 'new_refresh'
@@ -545,7 +545,7 @@ async def test_refresh_tokens_invalid_jwt(mock_settings):
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.refresh_tokens(db, 'not-a-valid-jwt')
+        await auth.refresh_tokens(db, 'not-a-valid-jwt')
 
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail['code'] == 'INVALID_TOKEN'
@@ -569,7 +569,7 @@ async def test_refresh_tokens_wrong_token_type(mock_settings):
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.refresh_tokens(db, token)
+        await auth.refresh_tokens(db, token)
 
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail['code'] == 'INVALID_TOKEN'
@@ -595,7 +595,7 @@ async def test_refresh_tokens_revoked_token(mock_settings, mock_is_revoked):
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.refresh_tokens(db, token)
+        await auth.refresh_tokens(db, token)
 
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail['code'] == 'TOKEN_REVOKED'
@@ -626,7 +626,7 @@ async def test_refresh_tokens_user_deleted(mock_settings, mock_revoke, mock_is_r
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.refresh_tokens(db, token)
+        await auth.refresh_tokens(db, token)
 
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail['code'] == 'USER_NOT_FOUND'
@@ -651,7 +651,7 @@ async def test_revoke_access_token_success(mock_settings, mock_revoke):
         'type': 'access',
     })
 
-    await auth_service.revoke_access_token(token)
+    await auth.revoke_access_token(token)
 
     mock_revoke.assert_awaited_once_with('access-jti', 9999999999)
 
@@ -664,7 +664,7 @@ async def test_revoke_access_token_invalid_jwt(mock_settings):
     mock_settings.return_value = settings
 
     # Should not raise, just log warning (best-effort)
-    await auth_service.revoke_access_token('invalid-token')
+    await auth.revoke_access_token('invalid-token')
 
 
 @pytest.mark.asyncio
@@ -681,7 +681,7 @@ async def test_revoke_refresh_token_success(mock_settings, mock_revoke):
         'type': 'refresh',
     })
 
-    await auth_service.revoke_refresh_token(token)
+    await auth.revoke_refresh_token(token)
 
     mock_revoke.assert_awaited_once_with('refresh-jti', 9999999999)
 
@@ -694,7 +694,7 @@ async def test_revoke_refresh_token_invalid_jwt_no_error(mock_settings):
     mock_settings.return_value = settings
 
     # Should not raise, just log warning (best-effort)
-    await auth_service.revoke_refresh_token('garbage-token')
+    await auth.revoke_refresh_token('garbage-token')
 
 
 # ---------------------------------------------------------------------------
@@ -709,7 +709,7 @@ async def test_check_google_oauth_configured_true(mock_settings):
     settings.google_client_id = 'some-client-id'
     mock_settings.return_value = settings
 
-    result = await auth_service.check_google_oauth_configured()
+    result = await auth.check_google_oauth_configured()
 
     assert result is True
 
@@ -721,7 +721,7 @@ async def test_check_google_oauth_configured_false(mock_settings):
     settings.google_client_id = None
     mock_settings.return_value = settings
 
-    result = await auth_service.check_google_oauth_configured()
+    result = await auth.check_google_oauth_configured()
 
     assert result is False
 
@@ -732,7 +732,7 @@ async def test_check_google_oauth_configured_false(mock_settings):
 
 
 def test_default_user_settings_has_expected_keys():
-    defaults = auth_service.DEFAULT_USER_SETTINGS
+    defaults = auth.DEFAULT_USER_SETTINGS
     assert 'theme' in defaults
     assert 'fontSize' in defaults
     assert 'fontFamily' in defaults
@@ -742,7 +742,7 @@ def test_default_user_settings_has_expected_keys():
 
 
 def test_default_user_settings_values():
-    defaults = auth_service.DEFAULT_USER_SETTINGS
+    defaults = auth.DEFAULT_USER_SETTINGS
     assert defaults['theme'] == 'system'
     assert defaults['fontSize'] == 16
     assert defaults['readingGoal'] == 2

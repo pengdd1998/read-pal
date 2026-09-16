@@ -7,12 +7,12 @@ import re
 import zipfile
 from pathlib import Path
 
-from app.services.epub_parser.constants import (
+from app.services.parsers.epub.constants import (
     IMAGE_MIME_MAP,
     IMG_SRC_RE,
     MAX_IMAGE_SIZE,
 )
-from app.services.epub_parser.html_helpers import resolve_epub_path
+from app.services.parsers.epub.html_helpers import resolve_epub_path
 
 logger = logging.getLogger('read-pal')
 

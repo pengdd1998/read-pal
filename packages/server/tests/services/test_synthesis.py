@@ -190,7 +190,7 @@ async def test_synthesis_llm_failure_returns_fallback(client):
 
 def test_synthesis_prompt_includes_query_when_provided():
     """_build_synthesis_prompt appends a focus directive when query is set."""
-    from app.services.synthesis_service import _build_synthesis_prompt
+    from app.services.synthesis import _build_synthesis_prompt
 
     data = {'book': {'title': 'Demo', 'author': 'A'}, 'highlights': []}
     without_query = _build_synthesis_prompt(data)
@@ -210,7 +210,7 @@ def test_synthesis_prompt_includes_query_when_provided():
 
 def test_synthesis_prompt_omits_directive_without_query():
     """An empty/None query must not append the focus directive."""
-    from app.services.synthesis_service import _build_synthesis_prompt
+    from app.services.synthesis import _build_synthesis_prompt
 
     data = {'book': {'title': 'Demo', 'author': 'A'}, 'highlights': []}
     for q in (None, '', '   '):

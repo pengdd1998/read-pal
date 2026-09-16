@@ -1,6 +1,7 @@
-"""EPUB processing via zipfile (fallback path when ebooklib is unavailable).
+"""EPUB processing via the stdlib zipfile path (the only production path).
 
-Uses only stdlib — no ebooklib dependency.
+Retired the ebooklib sibling (M3.4): ebooklib is blocked on Python 3.13
+(lxml), so the ebooklib-first branch never ran in prod or CI.
 """
 
 import logging
@@ -9,27 +10,28 @@ import zipfile
 from pathlib import Path
 from xml.etree.ElementTree import ParseError as XMLParseError
 
-from app.services.epub_parser.css import extract_epub_css
-from app.services.epub_parser.footnotes import annotate_footnotes
-from app.services.epub_parser.footnote_defs import (
+from app.services.parsers.epub.css import extract_epub_css
+from app.services.parsers.epub._html_clean import _strip_dangerous_html, _strip_duplicate_heading
+from app.services.parsers.epub.footnotes import annotate_footnotes
+from app.services.parsers.epub.footnote_defs import (
     MAX_FOOTNOTE_DEFS,
     extract_footnote_definitions,
 )
-from app.services.epub_parser.html_helpers import (
+from app.services.parsers.epub.html_helpers import (
     count_images,
     extract_html_heading,
     extract_html_title,
     resolve_epub_path,
 )
-from app.services.epub_parser.images import extract_cover, extract_images, rewrite_image_sources
-from app.services.epub_parser.structural import (
+from app.services.parsers.epub.images import extract_cover, extract_images, rewrite_image_sources
+from app.services.parsers.epub.structural import (
     parse_epub_container,
     parse_nav,
     parse_ncx,
     parse_opf,
 )
-from app.services.epub_parser.boilerplate import coalesce_fragments_html, coalesce_fragments_text, scrub_chapter
-from app.services.epub_parser.constants import OUTER_DOC_WRAPPER
+from app.services.parsers.epub.boilerplate import coalesce_fragments_html, coalesce_fragments_text, scrub_chapter
+from app.services.parsers.epub.constants import OUTER_DOC_WRAPPER
 
 logger = logging.getLogger('read-pal')
 
@@ -81,7 +83,7 @@ async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]
     # _build_chapters) keeps store_metadata from clobbering the context var.
     if footnote_defs:
         metadata = {**metadata, 'footnote_definitions': footnote_defs}
-    from app.services.epub_parser.metadata_store import store_metadata
+    from app.services.parsers.epub.metadata_store import store_metadata
     store_metadata(metadata, cover_uri)
     return chapters, full_text_parts, max(1, len(chapters))
 
@@ -292,7 +294,6 @@ def _build_chapters(
             continue
 
         full_text_parts.append(text)
-        from app.services.epub_parser.ebooklib_path import _strip_duplicate_heading
         text, enriched = _strip_duplicate_heading(title, text, enriched)
 
         chapters.append({
@@ -311,39 +312,6 @@ def _build_chapters(
     return chapters, full_text_parts, footnote_defs
 
 
-_DANGEROUS_TAG_RE = re.compile(
-    r'<\s*/?\s*(script|iframe|object|embed|applet|form|input|button|textarea|select|option|meta|link|base|svg|math|noscript|template)\b[^>]*>',
-    re.IGNORECASE,
-)
-_EVENT_HANDLER_RE = re.compile(
-    r'\bon\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)',
-    re.IGNORECASE,
-)
-_SCRIPT_URL_RE = re.compile(
-    r'(href|src|xlink:href)\s*=\s*["\']?\s*(?:javascript|vbscript)\s*:[^"\'">\s]*',
-    re.IGNORECASE,
-)
-# Block `data:` URIs EXCEPT `data:image/...`. Embedded illustrations are stored
-# as base64 data URIs and are legitimate; the frontend DOMPurify pass
-# re-sanitizes them. Other data schemes (e.g. data:text/html) stay blocked.
-_DATA_URL_RE = re.compile(
-    r'(href|src|xlink:href)\s*=\s*["\']?\s*data:(?!image/)[^"\'">\s]*',
-    re.IGNORECASE,
-)
-
-
-def _strip_dangerous_html(html: str) -> str:
-    """Remove script tags, event handlers, and dangerous URLs from HTML."""
-    # Strip NULL bytes and other control chars that browsers ignore when
-    # resolving URL schemes. Without this, `java\x00script:alert(1)` bypasses
-    # the URL regexes because they don't see `javascript:` contiguously.
-    # Keep tab/newline/CR (\x09, \x0A, \x0D) since they're structural in HTML.
-    html = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', html)
-    html = _DANGEROUS_TAG_RE.sub('', html)
-    html = _EVENT_HANDLER_RE.sub('', html)
-    html = _SCRIPT_URL_RE.sub(r'\1=""', html)
-    html = _DATA_URL_RE.sub(r'\1=""', html)
-    return html
 
 
 def _enrich_html(

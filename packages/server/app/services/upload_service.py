@@ -12,9 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookFileType
 from app.models.document import Document
-from app.services.epub_parser import process_epub
+from app.services.parsers.epub import process_epub
 from app.services.object_storage import upload_cover
-from app.services.pdf_parser import process_pdf
+from app.services.parsers.pdf import process_pdf
 from app.services.upload_content_store import (
     _build_chapters,  # noqa: F401 — re-exported (Document chapter shaping)
     _chapters_from_shared,

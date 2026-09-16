@@ -3,7 +3,7 @@
 import logging
 import re
 
-from app.services.epub_parser.constants import FOOTNOTE_REF_RE
+from app.services.parsers.epub.constants import FOOTNOTE_REF_RE
 
 logger = logging.getLogger('read-pal')
 

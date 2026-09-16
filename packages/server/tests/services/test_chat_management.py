@@ -293,7 +293,7 @@ def test_ai_feedback_message_id_is_uuid_type():
 
 
 def test_new_request_id_is_unique_hex():
-    from app.services.agent_service import new_request_id
+    from app.services.agent import new_request_id
     a = new_request_id()
     b = new_request_id()
     assert a != b
@@ -303,7 +303,7 @@ def test_new_request_id_is_unique_hex():
 
 
 def test_cancel_stream_unknown_returns_false():
-    from app.services.agent_service import cancel_stream
+    from app.services.agent import cancel_stream
     assert cancel_stream('unknown-request-id-zzz') is False
 
 

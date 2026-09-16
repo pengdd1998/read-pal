@@ -18,7 +18,7 @@ from app.schemas.study_mode import (
     SaveChecksRequest,
     StudyObjectivesRequest,
 )
-from app.services.study_mode_service import (
+from app.services.study_mode import (
     generate_concept_checks as svc_generate_checks,
     generate_objectives as svc_generate_objectives,
     get_mastery as svc_get_mastery,

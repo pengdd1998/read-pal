@@ -27,7 +27,7 @@ async def _enrich_mastery_step(
 ) -> dict[str, Any]:
     """Fetch mastery data with graceful fallback."""
     try:
-        from app.services.study_mode_service import get_mastery
+        from app.services.study_mode import get_mastery
         return {'mastery': await get_mastery(db, user_id, book_id)}
     except (ValueError, RuntimeError):
         logger.warning('Mastery enrichment skipped for book %s', book_id, exc_info=True)

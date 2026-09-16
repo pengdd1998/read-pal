@@ -5,13 +5,13 @@ import zipfile
 
 logger = logging.getLogger('read-pal')
 
-from app.services.epub_parser.constants import (
+from app.services.parsers.epub.constants import (
     CSS_DANGEROUS,
     CSS_FONT_FACE,
     CSS_POSITION_BAD,
     CSS_URL,
 )
-from app.services.epub_parser.html_helpers import resolve_epub_path
+from app.services.parsers.epub.html_helpers import resolve_epub_path
 
 
 def extract_epub_css(

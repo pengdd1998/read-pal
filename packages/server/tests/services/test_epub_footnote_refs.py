@@ -3,7 +3,7 @@ verification found cross-file markers, e.g. InDesign exports writing
 ``href="part0001.html#note_1"``, got no class and the reader click
 interceptor never fired)."""
 
-from app.services.epub_parser.footnotes import annotate_footnotes
+from app.services.parsers.epub.footnotes import annotate_footnotes
 
 
 def test_same_document_marker_gets_class():

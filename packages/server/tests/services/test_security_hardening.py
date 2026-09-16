@@ -19,8 +19,8 @@ from app.config import _is_low_entropy_secret, _shannon_entropy
 from app.middleware.auth import mark_refresh_used
 from app.middleware.daily_llm_budget import DailyLLMBudget
 from app.middleware.login_lockout import LoginLockout
-from app.services.epub_parser.ebooklib_path import _strip_dangerous_html
-from app.services.epub_parser.zipfile_path import _strip_dangerous_html as _strip_dangerous_html_v2
+from app.services.parsers.epub._html_clean import _strip_dangerous_html
+from app.services.parsers.epub.zipfile_path import _strip_dangerous_html as _strip_dangerous_html_v2
 from app.services.webhook_service import _ip_blocked, _redact_url
 
 
@@ -102,7 +102,7 @@ class TestNullByteBypass:
         assert 'alert(1)' not in sanitized or 'javascript' not in sanitized.lower()
 
     def test_both_sanitizer_versions_consistent(self):
-        # Both ebooklib_path.py and zipfile_path.py use the same logic — verify parity
+        # Single shared implementation (M3.4); these pin its contract
         html = '<a href="java\x00script:alert(1)">x</a>'
         assert _strip_dangerous_html(html) == _strip_dangerous_html_v2(html)
 
@@ -141,7 +141,7 @@ class TestNullByteBypass:
         assert 'data:image/png;base64,iVBORw0KGgo=' in sanitized
 
     def test_both_versions_preserve_data_image_uris(self):
-        # ebooklib_path.py and zipfile_path.py must keep parity on images.
+        # Image data URIs stay allowed (single implementation).
         html = '<img src="data:image/png;base64,iVBORw0KGgo=" alt="f">'
         assert _strip_dangerous_html(html) == _strip_dangerous_html_v2(html)
         assert 'data:image/png;base64,iVBORw0KGgo=' in _strip_dangerous_html(html)
@@ -360,7 +360,7 @@ class TestDailyLLMBudget:
 
 class TestZipBombCap:
     def test_cap_constant_exists(self):
-        from app.services.epub_parser.zipfile_path import _MAX_UNCOMPRESSED_BYTES
+        from app.services.parsers.epub.zipfile_path import _MAX_UNCOMPRESSED_BYTES
         assert _MAX_UNCOMPRESSED_BYTES == 200 * 1024 * 1024
 
 
@@ -372,7 +372,7 @@ class TestDefusedXml:
     def test_structural_parser_uses_defusedxml(self):
         """The four parse entry-points should use DefusedET, not stdlib ET.fromstring."""
         import inspect
-        from app.services.epub_parser import structural
+        from app.services.parsers.epub import structural
 
         source = inspect.getsource(structural)
         # fromstring calls should be DefusedET.fromstring, not ET.fromstring
@@ -383,7 +383,7 @@ class TestDefusedXml:
     def test_quadratic_blowup_does_not_hang(self):
         """Billion-laughs style entity expansion should fail or return quickly,
         not consume gigabytes of memory. defusedxml blocks this by default."""
-        from app.services.epub_parser.structural import parse_opf
+        from app.services.parsers.epub.structural import parse_opf
 
         # XML with nested entity expansion — would blow up stdlib ET
         malicious_xml = """<?xml version="1.0"?>

@@ -14,7 +14,7 @@ from app.middleware.rate_limiter import ai_heavy_limiter, write_limiter
 from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.flashcard import FlashcardCreate, FlashcardGenerateRequest, FlashcardResponse, FlashcardReview
 from app.schemas.common import GenericResponse
-from app.services import flashcard_service
+from app.services import flashcard
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.utils.sanitizer import sanitize_string_fields
 from app.middleware.rate_limiter import api_limiter
@@ -42,7 +42,7 @@ async def list_flashcards(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """List flashcards with optional book filter."""
-    cards, total = await flashcard_service.list_flashcards(
+    cards, total = await flashcard.list_flashcards(
         db, UUID(user['id']), book_id, page, per_page,
     )
     return {
@@ -64,7 +64,7 @@ async def get_due_cards(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Get flashcards due for review."""
-    cards = await flashcard_service.get_due_cards(
+    cards = await flashcard.get_due_cards(
         db, UUID(user['id']), book_id, limit=limit,
     )
     return {
@@ -87,7 +87,7 @@ async def create_flashcard(
     body_dict = body.model_dump()
     sanitize_string_fields(body_dict, ['question', 'answer'])
     body = FlashcardCreate(**body_dict)
-    card = await flashcard_service.create_flashcard(db, UUID(user['id']), body)
+    card = await flashcard.create_flashcard(db, UUID(user['id']), body)
     return {'success': True, 'data': _serialize_card(card)}
 
 
@@ -101,7 +101,7 @@ async def review_flashcard(
     """Review a flashcard using SM-2 algorithm."""
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
-        card = await flashcard_service.review_flashcard(
+        card = await flashcard.review_flashcard(
             db, UUID(user['id']), flashcard_id, body.rating,
         )
     except NotFoundError as exc:
@@ -119,7 +119,7 @@ async def list_decks(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """List flashcard decks grouped by book."""
-    data = await flashcard_service.list_decks(db, UUID(user['id']))
+    data = await flashcard.list_decks(db, UUID(user['id']))
     return {'success': True, 'data': data}
 
 
@@ -131,7 +131,7 @@ async def review_alias(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Alias for /due — get cards due for review."""
-    cards = await flashcard_service.get_due_cards(
+    cards = await flashcard.get_due_cards(
         db, UUID(user['id']), book_id, limit=limit,
     )
     return {
@@ -139,9 +139,9 @@ async def review_alias(
         'data': {
             'flashcards': [_serialize_card(c) for c in cards],
             'stats': {
-                'total': await flashcard_service.count_total(db, UUID(user['id'])),
+                'total': await flashcard.count_total(db, UUID(user['id'])),
                 'due': len(cards),
-                'reviewed': await flashcard_service.count_reviewed(db, UUID(user['id'])),
+                'reviewed': await flashcard.count_reviewed(db, UUID(user['id'])),
             },
         },
     }
@@ -164,7 +164,7 @@ async def generate_flashcards(
     try:
         # book_id is already a UUID (Pydantic coerced it) — passing it through
         # UUID() again raises "'UUID' object has no attribute 'replace'".
-        cards = await flashcard_service.generate_flashcards(
+        cards = await flashcard.generate_flashcards(
             db, UUID(user['id']), book_id,
         )
     except NotFoundError as exc:

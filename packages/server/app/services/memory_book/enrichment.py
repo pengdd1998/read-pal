@@ -55,7 +55,7 @@ async def enrich_with_synthesis_themes(
 ) -> list[str]:
     """Extract theme names from synthesis results."""
     try:
-        from app.services.synthesis_service import synthesize
+        from app.services.synthesis import synthesize
         synthesis = await synthesize(db, user_id, book_id)
         syn_data = (
             getattr(synthesis, 'data', None)

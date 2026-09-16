@@ -19,7 +19,7 @@ from app.schemas.book_club import (
     DiscussionResponse,
 )
 from app.schemas.common import GenericResponse
-from app.services import book_club_service
+from app.services import book_club
 from app.utils.i18n import _get_user_lang, not_found_error, t, translate_error
 from app.utils.sanitizer import sanitize_string_fields, strip_html
 from app.middleware.rate_limiter import api_limiter
@@ -41,7 +41,7 @@ async def create_club(
     body_dict = body.model_dump()
     sanitize_string_fields(body_dict, ['name', 'description', 'cover_image'])
     body = BookClubCreate(**body_dict)
-    club = await book_club_service.create_club(db, UUID(user['id']), body)
+    club = await book_club.create_club(db, UUID(user['id']), body)
     return {
         'success': True,
         'data': {
@@ -60,7 +60,7 @@ async def discover_clubs(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Discover public book clubs."""
-    items, total = await book_club_service.discover_clubs(db, page, per_page)
+    items, total = await book_club.discover_clubs(db, page, per_page)
     return {
         'success': True,
         'data': {
@@ -80,7 +80,7 @@ async def list_clubs(
     user: dict = Depends(get_current_user),
 ) -> dict:
     """List clubs the authenticated user belongs to."""
-    items, total = await book_club_service.list_clubs(
+    items, total = await book_club.list_clubs(
         db, UUID(user['id']), page, per_page,
     )
     return {
@@ -102,10 +102,10 @@ async def get_club(
 ) -> dict:
     """Get club details. Public clubs visible to all; private only to members."""
     uid = UUID(user['id'])
-    club = await book_club_service.get_club(db, club_id, uid)
+    club = await book_club.get_club(db, club_id, uid)
     if club is None:
         raise not_found_error(t('errors.club_not_found'))
-    if club.get('isPrivate') and not await book_club_service.is_member(db, uid, club_id):
+    if club.get('isPrivate') and not await book_club.is_member(db, uid, club_id):
         raise not_found_error(t('errors.club_not_found'))
     return {'success': True, 'data': club}
 
@@ -124,7 +124,7 @@ async def update_club(
     sanitize_string_fields(body_dict, ['name', 'description', 'cover_image'])
     body = BookClubUpdate(**body_dict)
     try:
-        club = await book_club_service.update_club(
+        club = await book_club.update_club(
             db, UUID(user['id']), club_id, body,
         )
     except PermissionError as exc:
@@ -157,7 +157,7 @@ async def delete_club(
     """Delete a club. Admin only."""
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
-        await book_club_service.delete_club(db, UUID(user['id']), club_id)
+        await book_club.delete_club(db, UUID(user['id']), club_id)
     except PermissionError as exc:
         logger.debug('permission error in book_clubs')
         raise HTTPException(
@@ -179,7 +179,7 @@ async def join_club(
     """Join a club by invite code."""
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
-        club = await book_club_service.join_club(
+        club = await book_club.join_club(
             db, UUID(user['id']), body.invite_code,
         )
     except NotFoundError as exc:
@@ -211,7 +211,7 @@ async def join_club_by_id(
     """Join a public club by ID."""
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
-        club = await book_club_service.join_club_by_id(
+        club = await book_club.join_club_by_id(
             db, UUID(user['id']), club_id,
         )
     except ValueError as exc:
@@ -237,7 +237,7 @@ async def leave_club(
     """Leave a club."""
     lang = await _get_user_lang(db, UUID(user['id']))
     try:
-        await book_club_service.leave_club(db, UUID(user['id']), club_id)
+        await book_club.leave_club(db, UUID(user['id']), club_id)
     except NotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -260,9 +260,9 @@ async def get_members(
 ) -> dict:
     """List club members. Only visible to members."""
     uid = UUID(user['id'])
-    if not await book_club_service.is_member(db, uid, club_id):
+    if not await book_club.is_member(db, uid, club_id):
         raise not_found_error(t('errors.club_not_found'))
-    members = await book_club_service.get_members(db, club_id)
+    members = await book_club.get_members(db, club_id)
     return {'success': True, 'data': members}
 
 
@@ -274,13 +274,13 @@ async def get_club_progress(
 ) -> dict:
     """Get club reading progress. Only visible to members."""
     uid = UUID(user['id'])
-    if not await book_club_service.is_member(db, uid, club_id):
+    if not await book_club.is_member(db, uid, club_id):
         raise not_found_error(t('errors.club_not_found'))
-    club = await book_club_service.get_club(db, club_id, uid)
+    club = await book_club.get_club(db, club_id, uid)
     if club is None:
         raise not_found_error(t('errors.club_not_found'))
 
-    progress = await book_club_service.get_club_progress(db, club_id)
+    progress = await book_club.get_club_progress(db, club_id)
 
     return {
         'success': True,
@@ -302,9 +302,9 @@ async def get_discussions(
 ) -> dict:
     """List discussions for a club. Only visible to members."""
     uid = UUID(user['id'])
-    if not await book_club_service.is_member(db, uid, club_id):
+    if not await book_club.is_member(db, uid, club_id):
         raise not_found_error(t('errors.club_not_found'))
-    discussions, total = await book_club_service.get_discussions(
+    discussions, total = await book_club.get_discussions(
         db, club_id, page, per_page,
     )
     items = [
@@ -334,7 +334,7 @@ async def add_discussion(
     # XSS prevention: discussion posts are user-to-user content shown to every member.
     content = strip_html(body.content)
     try:
-        discussion = await book_club_service.add_discussion(
+        discussion = await book_club.add_discussion(
             db, UUID(user['id']), club_id, content,
         )
     except ValueError as exc:
