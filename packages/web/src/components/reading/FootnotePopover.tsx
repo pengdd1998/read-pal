@@ -104,7 +104,7 @@ export function FootnotePopover({ data, onClose }: {
         ref={ref}
         role="dialog"
         aria-label={t('footnote_popover_label', { marker: data.marker })}
-        className="fixed inset-x-0 bottom-0 z-[60] rounded-t-2xl border-t border-amber-300/60 dark:border-amber-800/50 bg-amber-50/95 dark:bg-amber-950/85 shadow-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-sm"
+        className="footnote-popover fixed inset-x-0 bottom-0 z-[60] rounded-t-2xl border-t border-amber-300/60 dark:border-amber-800/50 bg-amber-50/95 dark:bg-amber-950/85 shadow-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-sm"
       >
         {content}
       </div>,
@@ -122,7 +122,7 @@ export function FootnotePopover({ data, onClose }: {
           ? { position: 'fixed', top: pos.top, left: pos.left, width: 'min(420px, 90vw)' }
           : { display: 'none' }
       }
-      className="z-[60] rounded-xl border border-amber-300/60 dark:border-amber-800/50 bg-amber-50/95 dark:bg-amber-950/80 shadow-xl p-4 text-sm"
+      className="footnote-popover z-[60] rounded-xl border border-amber-300/60 dark:border-amber-800/50 bg-amber-50/95 dark:bg-amber-950/80 shadow-xl p-4 text-sm"
     >
       {content}
     </div>,

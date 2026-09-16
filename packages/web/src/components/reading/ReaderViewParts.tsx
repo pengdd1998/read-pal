@@ -289,7 +289,10 @@ export function useReaderViewLogic({
     };
     el.addEventListener('click', onClick);
     return () => el.removeEventListener('click', onClick);
-  }, [bookId]);
+    // Re-bind when chapter content arrives: the content div is rendered
+    // conditionally, so on a cold load it does not exist at first effect
+    // run and the listener must attach once it mounts (FN1/FN2 miss).
+  }, [bookId, sanitizedContent]);
 
   const articleStyle = useMemo(() => ({
     fontSize: `${fontSize}px`,
