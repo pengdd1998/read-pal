@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import { palette } from '@read-pal/shared/src/design-tokens';
 
 const config: Config = {
   content: [
@@ -27,54 +28,19 @@ const config: Config = {
           900: 'var(--gray-900)',
           950: 'var(--gray-950)',
         },
-        primary: {
-          50: '#fefdfb',
-          100: '#f9f5f0',
-          200: '#f0e9e0',
-          300: '#d4b896',
-          400: '#b8916a',
-          500: '#d97706',
-          600: '#b45309',
-          700: '#92400e',
-          800: '#78350f',
-          900: '#451a03',
-          950: '#2a1002',
-        },
-        accent: {
-          50: '#faf5f0',
-          100: '#f0e6d6',
-          200: '#d4b896',
-          300: '#c8956c',
-          400: '#a65d57',
-          500: '#d97706',
-          600: '#2d5a4a',
-        },
+        primary: palette.primary,
+        accent: palette.accent,
         surface: {
           0: 'var(--surface-0)',
           1: 'var(--surface-1)',
           2: 'var(--surface-2)',
           3: 'var(--surface-3)',
         },
-        reading: {
-          light: '#fefdfb',
-          dark: '#0f1419',
-          sepia: '#f8f4ec',
-        },
-        navy: {
-          50: '#f0f2f5',
-          100: '#d8dde5',
-          200: '#b1bbc9',
-          300: '#8a99ae',
-          400: '#637793',
-          500: '#3d5578',
-          600: '#2d4060',
-          700: '#1e2a38',
-          800: '#151d28',
-          900: '#0d1219',
-        },
-        sage: '#7a9e7e',
-        russet: '#a65d57',
-        forest: '#2d5a4a',
+        reading: palette.reading,
+        navy: palette.navy,
+        sage: palette.sage,
+        russet: palette.russet,
+        forest: palette.forest,
       },
       fontFamily: {
         // next/font exposes hashed family names via these CSS variables —

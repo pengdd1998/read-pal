@@ -1,21 +1,11 @@
-/**
- * Retry utilities for API requests.
- *
- * Exponential backoff with jitter for network / 5xx / 429 errors.
- */
+/** Forwarding module — retry primitives live in @read-pal/shared
+ * (M4c-1) so any future client (mobile) shares the exact same policy. */
 
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1_000;
-
-export { MAX_RETRIES, BASE_DELAY_MS };
-
-export const RETRYABLE_METHODS = new Set(['get', 'head', 'options']);
-
-export function isRetryableStatus(status?: number): boolean {
-  if (!status) return false;
-  return status === 429 || (status >= 500 && status < 600);
-}
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+export {
+  MAX_RETRIES,
+  BASE_DELAY_MS,
+  RETRYABLE_METHODS,
+  backoffDelayMs,
+  isRetryableStatus,
+  sleep,
+} from '@read-pal/shared/src/api-primitives';

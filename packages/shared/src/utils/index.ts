@@ -37,9 +37,3 @@ const ENTITY_MAP: Record<string, string> = {
  *
  * Uses a single-pass regex to avoid double-escaping issues.
  */
-export function decodeHTMLEntities(text: string): string {
-  return text
-    .replace(/&(?:amp|lt|gt|quot|apos|nbsp);/g, (m) => ENTITY_MAP[m] ?? m)
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-}

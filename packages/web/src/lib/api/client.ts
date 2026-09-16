@@ -21,6 +21,7 @@ import {
   RETRYABLE_METHODS,
   isRetryableStatus,
   sleep,
+  backoffDelayMs,
 } from './retry';
 
 import {
@@ -106,9 +107,7 @@ export class ApiClient {
         }
 
         warn(`API client: retry ${attempt}/${attempts}`, status ?? 'network error');
-        const baseDelay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
-        const jitter = Math.random() * baseDelay * 0.3;
-        await sleep(baseDelay + jitter);
+        await sleep(backoffDelayMs(attempt));
       }
     }
 
