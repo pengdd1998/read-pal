@@ -3,6 +3,12 @@ name: Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: fetch/reset/diff on the VPS but touch no containers (no build, no migration, no nginx restart, no marker write)'
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -12,6 +18,7 @@ jobs:
   # Check if deploy is needed based on changed files
   check-changes:
     name: Check Changes
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       should-deploy: ${{ steps.filter.outputs.api == 'true' || steps.filter.outputs.web == 'true' || steps.filter.outputs.deploy == 'true' }}
@@ -36,7 +43,7 @@ jobs:
   ci-gate:
     name: Wait for CI
     needs: check-changes
-    if: needs.check-changes.outputs.should-deploy == 'true'
+    if: github.event_name == 'push' && needs.check-changes.outputs.should-deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -84,18 +91,28 @@ jobs:
   deploy:
     name: Deploy to VPS
     needs: [check-changes, ci-gate]
-    if: needs.check-changes.outputs.should-deploy == 'true'
+    # Manual dispatch bypasses the paths-filter/CI gates: paths-filter cannot
+    # diff on a dispatch event, and a dry-run must be launchable from any
+    # branch for rehearsal without waiting for CI of that branch.
+    if: >-
+      always() &&
+      (github.event_name == 'workflow_dispatch' ||
+       (needs.check-changes.outputs.should-deploy == 'true' && needs.ci-gate.result == 'success'))
     runs-on: ubuntu-latest
     timeout-minutes: 100
 
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == true }}
+          TARGET_REF: ${{ github.ref_name }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           command_timeout: 95m
+          envs: DRY_RUN,TARGET_REF
           script: |
             set -euo pipefail
 
@@ -136,8 +153,10 @@ jobs:
             echo ">>> Pulling latest code..."
             PREV_SHA=$(git rev-parse HEAD)
             echo ">>> Previous commit (rollback target): ${PREV_SHA}"
-            git fetch origin main
-            git reset --hard origin/main
+            # Push always targets main; a workflow_dispatch rehearsal may
+            # target a branch, so follow the triggering ref.
+            git fetch origin "${TARGET_REF}"
+            git reset --hard "origin/${TARGET_REF}"
 
             # -------------------------------------------------------
             # 2. Detect which services need rebuild
@@ -169,6 +188,23 @@ jobs:
 
             # Also rebuild if deploy config changed
             echo "$CHANGED" | grep -qE '^\.github/workflows/deploy\.yml$' && REBUILD_API=true && REBUILD_WEB=true
+
+            # -------------------------------------------------------
+            # 2.5 Dry-run stop: everything above is reversible (checkout
+            #     advance without a marker write is exactly the case the
+            #     marker design covers — the next deploy re-diffs from the
+            #     marker and catches this range). Nothing below here runs.
+            # -------------------------------------------------------
+            if [ "${DRY_RUN:-false}" = "true" ]; then
+              echo ""
+              echo "=== DRY RUN — stopping before any container change ==="
+              echo "Would rebuild API: $REBUILD_API"
+              echo "Would rebuild WEB: $REBUILD_WEB"
+              echo "Changed files since deploy marker (${DEPLOY_BASE}):"
+              echo "$CHANGED" | head -40
+              echo "Touched: git fetch/reset only. NOT touched: builds, migrations, containers, nginx, marker."
+              exit 0
+            fi
 
             # -------------------------------------------------------
             # 3. Rebuild only changed containers
