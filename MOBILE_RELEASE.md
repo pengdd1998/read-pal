@@ -1,3 +1,12 @@
+## 构建前置（2026-09-16 起）
+
+`pnpm --filter @read-pal/web build:mobile` 不再内嵌 API 地址（M0.4 参数化）。
+构建前必须导出：
+
+    export NEXT_PUBLIC_API_URL=https://<api-origin>   # 例：https://175.178.66.207
+
+未设置时命令会直接报错退出（fail-fast），不再静默使用旧硬编码地址。
+
 # Mobile Release Process
 
 本文档说明 read-pal 移动端应用的发布流程。

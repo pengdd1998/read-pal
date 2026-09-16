@@ -24,13 +24,13 @@ import sys
 import time
 import urllib.request
 
-VPS_HOST = os.environ.get('VPS_HOST', '175.178.66.207')
+# No IP/host defaults: a missing env must fail loudly, not silently
+# check some default target (empty-env silent-OK trap).
+VPS_HOST = os.environ['VPS_HOST']
 VPS_USER = os.environ.get('VPS_USER', 'ubuntu')
 SSH_KEY = os.environ['VPS_SSH_KEY']
 SENDKEY = os.environ.get('SERVERCHAN_SENDKEY', '')
-EXTERNAL_URL = os.environ.get(
-    'EXTERNAL_URL', 'http://175.178.66.207:8090/api/v1/health',
-)
+EXTERNAL_URL = os.environ['EXTERNAL_URL']
 STATE_PATH = '/var/lib/readpal-alert/state.json'
 CONSECUTIVE_TO_ALERT = 2
 COOLDOWN_S = 2 * 3600
