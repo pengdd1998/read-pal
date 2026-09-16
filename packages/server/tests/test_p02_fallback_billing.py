@@ -13,9 +13,7 @@ idempotency token awareness. Specifically:
    attempt's actual usage; refunds only when every attempt fails.
 """
 
-import asyncio
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest

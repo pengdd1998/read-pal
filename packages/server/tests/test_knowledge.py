@@ -1,6 +1,5 @@
 """Tests for knowledge graph endpoints — graph, concepts, search, themes."""
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

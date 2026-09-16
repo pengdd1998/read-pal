@@ -10,7 +10,7 @@ Verifies that:
   issued before are rejected.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -266,7 +266,7 @@ class TestWasPasswordReset:
         assert args[0] == 'pwd-reset:u1'
         marker = args[1]
         assert marker.isdigit(), 'marker must be epoch seconds, not a uuid'
-        assert abs(int(marker) - datetime.now(timezone.utc).timestamp()) < 60
+        assert abs(int(marker) - datetime.now(UTC).timestamp()) < 60
         assert kwargs.get('ex') == 86400 * 30
 
 
@@ -434,7 +434,7 @@ class TestLimiterNamespaceSeparation:
     def test_dependency_namespaces_key(self):
         """The inner dependency must prefix the key with the limiter name."""
         import app.middleware.rate_limiter as rl
-        from unittest.mock import AsyncMock, patch
+        from unittest.mock import patch
 
         # Build two dependencies with the same key_builder and different names
         mk = rl._make_rate_limit_dependency

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -38,7 +38,7 @@ def _make_chat_message(
     msg.id = msg_id or uuid4()
     msg.role = role
     msg.content = content
-    msg.created_at = created_at or datetime.now(timezone.utc)
+    msg.created_at = created_at or datetime.now(UTC)
     return msg
 
 
@@ -59,12 +59,12 @@ def _make_conversation_summary(
     cs = MagicMock()
     cs.summary = summary
     cs.message_count = message_count
-    cs.updated_at = datetime.now(timezone.utc)
+    cs.updated_at = datetime.now(UTC)
     cs.metadata_ = metadata if metadata is not None else {
         'prompt_version': CONVERSATION_SUMMARY_SYSTEM.version,
         'schema_version': MEMORY_SCHEMA_VERSION,
         'model': 'test-model',
-        'generated_at': datetime.now(tz=timezone.utc).isoformat(),
+        'generated_at': datetime.now(tz=UTC).isoformat(),
     }
     return cs
 

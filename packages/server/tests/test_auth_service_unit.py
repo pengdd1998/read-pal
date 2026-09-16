@@ -4,7 +4,7 @@ Tests each public function directly with mocked DB session,
 password hashing, JWT creation, and lockout mechanism.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -37,7 +37,7 @@ def _make_user(
     user.password_hash = password_hash
     user.avatar = avatar
     user.settings = settings or auth_service.DEFAULT_USER_SETTINGS.copy()
-    user.created_at = created_at or datetime.now(tz=timezone.utc)
+    user.created_at = created_at or datetime.now(tz=UTC)
     return user
 
 

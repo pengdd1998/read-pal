@@ -17,19 +17,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
-import pytest
 
 from app.eval.assertions import EvalResult
 from app.eval.regression_baseline import (
-    DEFAULT_BASELINE_PATH,
     BaselineEntry,
-    RegressionReport,
     _entry_key,
     compare_to_baseline,
     load_baseline,
-    results_to_entries,
     update_baseline,
 )
 

@@ -9,7 +9,6 @@ from uuid import uuid4
 import pytest
 
 from app.services.upload_service import (
-    ALLOWED_EXTENSIONS,
     MAX_FILE_SIZE,
     _build_chapters,
     _extract_content,
@@ -510,7 +509,6 @@ class TestParseFileContent:
         """Corrupt .epub (zip magic + garbage) must surface as ValueError so
         the router's 422 PARSE_ERROR branch handles it — BadZipFile previously
         escaped as a bare 500."""
-        import asyncio
         import zipfile as zf
 
         from app.services.upload_service import _parse_file_content

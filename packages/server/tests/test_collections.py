@@ -14,7 +14,6 @@ async def _create_book_for_user(reg: dict, book_id: str, title: str = 'Test Book
     from uuid import UUID
 
     from app.models.book import Book
-    from sqlalchemy import select
     from tests.conftest import _TestSession
 
     async with _TestSession() as db:

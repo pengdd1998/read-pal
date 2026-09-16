@@ -1,6 +1,6 @@
 """Tests for reading-book endpoints — generate, get, and list reading mirrors."""
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -20,7 +20,7 @@ def _make_mock_result(book_id: str) -> MagicMock:
         'sections': [{'id': 'section-1', 'type': 'encounter', 'data': {}}],
         'stats': {},
         'html_content': None,
-        'generated_at': datetime.now(timezone.utc).isoformat(),
+        'generated_at': datetime.now(UTC).isoformat(),
     }
     return mock_result
 

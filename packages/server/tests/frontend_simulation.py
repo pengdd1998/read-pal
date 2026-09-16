@@ -8,9 +8,7 @@ Verifies:
 5. Critical user paths work end-to-end
 """
 import asyncio
-import json
 import re
-import sys
 
 import httpx
 
@@ -81,10 +79,10 @@ async def auth_setup():
         })
         token = r.json().get('data', {}).get('token')
         if not token:
-            print(f'  FAIL: No auth token')
+            print('  FAIL: No auth token')
             return False
         HEADERS['Authorization'] = f'Bearer {token}'
-        print(f'  OK: Authenticated')
+        print('  OK: Authenticated')
         return True
 
 
@@ -287,7 +285,7 @@ async def test_api_frontend_integration():
             if missing:
                 print(f'    WARN: Dashboard missing: {missing}')
             else:
-                print(f'    OK: Dashboard shape correct')
+                print('    OK: Dashboard shape correct')
             results['Dashboard shape'] = len(missing) == 0
         else:
             results['Dashboard shape'] = False

@@ -5,11 +5,10 @@ isolating service logic from HTTP layer and real database.
 """
 
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
-from sqlalchemy import Select
 
 from app.services import annotation_service
 
@@ -43,7 +42,7 @@ def _make_annotation(
     ann.location = location or {'chapter': 'Chapter 1', 'page': 1}
     ann.tags = tags or []
     ann.color = color
-    ann.created_at = created_at or datetime.now(tz=timezone.utc)
+    ann.created_at = created_at or datetime.now(tz=UTC)
     return ann
 
 

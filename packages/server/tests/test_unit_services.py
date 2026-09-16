@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from unittest.mock import MagicMock, patch
-from uuid import uuid4
 
 import pytest
 
-from app.models.annotation import Annotation, AnnotationType
+from app.models.annotation import AnnotationType
 from app.services.exporters.citation_exporter import (
     _annotation_lines,
     _get_publisher,
@@ -59,7 +57,7 @@ def _make_annotation(
     ann.color = color
     ann.tags = tags or []
     ann.location = location or {}
-    ann.created_at = created_at or datetime.now(timezone.utc)
+    ann.created_at = created_at or datetime.now(UTC)
     return ann
 
 

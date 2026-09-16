@@ -1,6 +1,5 @@
 """Tests for Reading Mirror (Memory Book) endpoints — generate, get, and list."""
 
-import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -166,7 +165,7 @@ async def test_regenerate_reuses_successful_sections():
     sections are retried. This keeps regeneration monotonic under rate-limiting
     — a re-run can't lose a section that previously succeeded."""
     from unittest.mock import MagicMock
-    from app.services.memory_book.pipeline import SECTION_TYPES, _generate_all_sections
+    from app.services.memory_book.pipeline import _generate_all_sections
 
     # Prior run: 'encounter' succeeded (real content), 'recommendations' errored.
     # Both are ungated LLM sections, so the errored one will be retried via the LLM.

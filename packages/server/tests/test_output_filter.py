@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-import pytest
 
 from app.utils.output_filter import (
     SAFETY_FALLBACK,

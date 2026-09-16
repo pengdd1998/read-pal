@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -25,7 +24,7 @@ from app.services.agent_service import (
 
 def _chunk(payload: str = 'hello') -> bytes:
     """A non-keepalive chunk that should reset the stall timer."""
-    return f'data: {payload}\n\n'.encode('utf-8')
+    return f'data: {payload}\n\n'.encode()
 
 
 @pytest.mark.asyncio

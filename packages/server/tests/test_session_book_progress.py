@@ -1,7 +1,6 @@
 """Tests for app/services/_session_book_progress.py helpers."""
 
-import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
@@ -71,7 +70,7 @@ def test_cap_progress_above_100_clamped():
 
 def test_update_book_completion_marks_completed_at_last_page():
     book = _make_book(total_pages=100, current_page=100, status=BookStatus.reading)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     update_book_completion(book, now)
     assert book.status == BookStatus.completed
     assert book.progress == Decimal('100')
@@ -80,15 +79,15 @@ def test_update_book_completion_marks_completed_at_last_page():
 
 def test_update_book_completion_skips_already_completed():
     """No-op when already completed — completed_at should not move."""
-    original_completed = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    original_completed = datetime(2026, 1, 1, tzinfo=UTC)
     book = _make_book(total_pages=100, current_page=100, status=BookStatus.completed, completed_at=original_completed)
-    update_book_completion(book, datetime.now(tz=timezone.utc))
+    update_book_completion(book, datetime.now(tz=UTC))
     assert book.completed_at == original_completed  # unchanged
 
 
 def test_update_book_completion_skips_when_not_at_last_page():
     book = _make_book(total_pages=100, current_page=50, status=BookStatus.reading)
-    update_book_completion(book, datetime.now(tz=timezone.utc))
+    update_book_completion(book, datetime.now(tz=UTC))
     assert book.status == BookStatus.reading
 
 
@@ -101,7 +100,7 @@ def test_update_book_completion_skips_when_not_at_last_page():
 async def test_update_book_with_page_advances_progress():
     book = _make_book(total_pages=100, current_page=20, progress=Decimal('20'))
     db = _mock_db_with_book(book)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     await update_book_with_page(db, book.id, book.user_id, now, current_page=50,
                                  scroll_progress=0.5, current_segment=3)
@@ -121,10 +120,10 @@ async def test_update_book_with_page_does_not_rewind_completed_book():
         current_page=100,
         progress=Decimal('100'),
         status=BookStatus.completed,
-        completed_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        completed_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
     db = _mock_db_with_book(book)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     await update_book_with_page(db, book.id, book.user_id, now, current_page=1,
                                  scroll_progress=0.0, current_segment=0)
@@ -143,7 +142,7 @@ async def test_update_book_with_page_same_page_does_not_rewind():
     """Receiving the same page (e.g. re-opened at last position) is fine."""
     book = _make_book(total_pages=100, current_page=50, progress=Decimal('50'))
     db = _mock_db_with_book(book)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     await update_book_with_page(db, book.id, book.user_id, now, current_page=50,
                                  scroll_progress=None, current_segment=None)
@@ -160,7 +159,7 @@ async def test_update_book_with_page_skips_when_book_not_found():
     db.execute = AsyncMock(return_value=result)
 
     # Should not raise
-    await update_book_with_page(db, uuid4(), 'user', datetime.now(tz=timezone.utc),
+    await update_book_with_page(db, uuid4(), 'user', datetime.now(tz=UTC),
                                  current_page=10, scroll_progress=None, current_segment=None)
 
 
@@ -169,7 +168,7 @@ async def test_update_book_with_page_clamps_oversized_page():
     book = _make_book(total_pages=100, current_page=50, progress=Decimal('50'))
     db = _mock_db_with_book(book)
 
-    await update_book_with_page(db, book.id, book.user_id, datetime.now(tz=timezone.utc),
+    await update_book_with_page(db, book.id, book.user_id, datetime.now(tz=UTC),
                                  current_page=999, scroll_progress=None, current_segment=None)
 
     assert book.current_page == 100
@@ -187,7 +186,7 @@ async def test_update_book_scroll_only_does_not_touch_page():
     book = _make_book(total_pages=100, current_page=30, progress=Decimal('30'))
     db = _mock_db_with_book(book)
 
-    await update_book_scroll_only(db, book.id, book.user_id, datetime.now(tz=timezone.utc),
+    await update_book_scroll_only(db, book.id, book.user_id, datetime.now(tz=UTC),
                                    scroll_progress=0.7, current_segment=5)
 
     assert book.current_page == 30  # unchanged

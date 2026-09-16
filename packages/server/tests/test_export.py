@@ -136,7 +136,6 @@ async def test_export_extra_formats(client, fmt):
 
 def test_extra_exporters_handle_empty_annotations():
     """Renderers must not crash on a book with no annotations."""
-    from app.models.annotation import Annotation, AnnotationType
     from app.models.book import Book
     from app.services.exporters.extra_exporters import (
         export_annotated_bibliography,

@@ -5,7 +5,7 @@ The first implementation stamped the EMBEDDING VECTOR list
 that killed precompute after embeddings were already paid for, losing
 every chunk (found by the 24h-change review, 2026-09-02).
 """
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest

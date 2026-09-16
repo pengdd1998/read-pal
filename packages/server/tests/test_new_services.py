@@ -1,6 +1,5 @@
 """Tests for newly extracted service modules: chat, mood, feedback, intervention."""
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 

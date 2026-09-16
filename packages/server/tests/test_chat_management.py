@@ -6,7 +6,7 @@
 - AIFeedback CASCADE delete when ChatMessage is hard-deleted
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
 import hashlib
@@ -51,7 +51,7 @@ async def _seed_message(
             content=content,
             content_hash=hashlib.md5(content[:500].encode('utf-8')).hexdigest(),
             deleted_at=deleted_at,
-            created_at=created_at or datetime.now(timezone.utc),
+            created_at=created_at or datetime.now(UTC),
         )
         db.add(m)
         await db.commit()
@@ -131,7 +131,7 @@ async def test_history_returns_paginated_shape_with_before(client):
     book_id = UUID((await _create_book(client, reg['token']))['id'])
 
     # Insert 3 messages directly via the ORM with explicit timestamps.
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     msgs = []
     for i in range(3):
         m = await _seed_message(
@@ -163,7 +163,7 @@ async def test_history_pagination_returns_items_and_cursor(client):
     user_id = UUID(reg['user']['id'])
     book_id = UUID((await _create_book(client, reg['token']))['id'])
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     msgs = []
     for i in range(5):
         m = await _seed_message(
@@ -257,7 +257,6 @@ def test_ai_feedback_fk_is_cascade():
     Runtime cascade behaviour is enforced by PostgreSQL in production; in
     SQLite tests with FK pragmas off, we verify the schema contract here.
     """
-    from app.models.ai_feedback import AIFeedback
 
     col = AIFeedback.__table__.columns.get('message_id')
     assert col is not None, 'AIFeedback must have message_id column'
@@ -275,7 +274,6 @@ def test_ai_feedback_fk_is_cascade():
 
 def test_ai_feedback_message_id_is_uuid_type():
     """The AIFeedback.message_id column must be UUID (was TEXT pre-migration 0013)."""
-    from app.models.ai_feedback import AIFeedback
 
     col = AIFeedback.__table__.columns.get('message_id')
     assert col is not None
@@ -321,7 +319,7 @@ async def test_history_excludes_soft_deleted_messages(client):
     user_id = UUID(reg['user']['id'])
     book_id = UUID((await _create_book(client, reg['token']))['id'])
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     await _seed_message(user_id, book_id, 'user', 'active', created_at=now)
     await _seed_message(
         user_id, book_id, 'assistant', 'deleted',

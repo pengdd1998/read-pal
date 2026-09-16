@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
@@ -54,7 +54,7 @@ def _make_reading_plan(
     plan.total_days = total_days
     plan.current_day = current_day
     plan.is_active = is_active
-    plan.created_at = datetime.now(timezone.utc)
+    plan.created_at = datetime.now(UTC)
     return plan
 
 

@@ -171,7 +171,7 @@ class TestBuildDateRangeMonthRollback:
         from app.services.stats.calendar import _build_date_range
         from app.services.stats import calendar as cal
 
-        fake_now = dt.datetime(2026, 5, 31, 12, 0, tzinfo=dt.timezone.utc)
+        fake_now = dt.datetime(2026, 5, 31, 12, 0, tzinfo=dt.UTC)
         with patch.object(cal, 'utcnow_aware', return_value=fake_now):
             start, _ = _build_date_range(3, None, None)
         assert (start.year, start.month, start.day) == (2026, 2, 1)
@@ -182,7 +182,7 @@ class TestBuildDateRangeMonthRollback:
         from app.services.stats.calendar import _build_date_range
         from app.services.stats import calendar as cal
 
-        fake_now = dt.datetime(2026, 5, 31, 12, 0, tzinfo=dt.timezone.utc)
+        fake_now = dt.datetime(2026, 5, 31, 12, 0, tzinfo=dt.UTC)
         with patch.object(cal, 'utcnow_aware', return_value=fake_now):
             start, _ = _build_date_range(1, None, None)
         assert (start.year, start.month, start.day) == (2026, 4, 1)

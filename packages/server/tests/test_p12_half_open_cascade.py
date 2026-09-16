@@ -8,7 +8,6 @@ Validates that:
 3. The is_probe_in_flight property correctly identifies the state.
 """
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

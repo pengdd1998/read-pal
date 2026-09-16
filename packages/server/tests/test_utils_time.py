@@ -8,7 +8,7 @@ silently shifting the bound filter by the local UTC offset.
 The fix is to pass tz-aware UTC datetimes. These tests assert that contract.
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import timedelta
 
 from app.utils.time import (
     utcnow_aware,

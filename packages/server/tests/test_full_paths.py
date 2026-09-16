@@ -9,7 +9,6 @@ import pytest
 
 pytest.skip(allow_module_level=True, reason='Standalone script — requires live server')
 
-import json
 import sys
 import time
 

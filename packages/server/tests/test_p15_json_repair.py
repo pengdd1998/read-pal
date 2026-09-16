@@ -15,7 +15,6 @@ import pytest
 from app.services.llm.text import (
     _extract_balanced_json,
     _repair_json,
-    _strip_markdown_fences,
 )
 
 

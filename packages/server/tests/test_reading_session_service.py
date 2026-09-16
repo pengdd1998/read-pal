@@ -5,7 +5,7 @@ isolating service logic from HTTP layer and real database.
 """
 
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, UTC
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
@@ -41,7 +41,7 @@ def _make_session(
     sess.id = session_id or uuid4()
     sess.user_id = user_id or str(uuid4())
     sess.book_id = book_id or uuid4()
-    sess.started_at = started_at or datetime.now(tz=timezone.utc).replace(tzinfo=None)
+    sess.started_at = started_at or datetime.now(tz=UTC).replace(tzinfo=None)
     sess.ended_at = ended_at
     sess.duration = duration
     sess.pages_read = pages_read
@@ -286,7 +286,7 @@ class TestCloseStaleSessions:
         # _close_stale_sessions normalizes naive inputs to aware UTC
         # (timestamptz columns load aware on PG).
         assert stale_session.ended_at == datetime(
-            2026, 1, 1, 10, 5, 0, tzinfo=timezone.utc,
+            2026, 1, 1, 10, 5, 0, tzinfo=UTC,
         )
 
     @pytest.mark.asyncio

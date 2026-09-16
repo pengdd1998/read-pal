@@ -5,7 +5,7 @@ isolating service logic from HTTP layer and real database.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 from app.services import collection_service

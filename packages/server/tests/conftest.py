@@ -28,6 +28,7 @@ from sqlalchemy.ext.asyncio import (
 from app.db import Base, get_db
 from app.main import app
 from app.utils.i18n import load_translations
+from datetime import UTC
 
 # Load translations once for all tests so t() returns actual strings
 load_translations()
@@ -146,13 +147,13 @@ def _patch_metadata_for_sqlite():
                 elif 'now(' in clause or 'CURRENT_TIMESTAMP' in clause:
                     # func.now() / CURRENT_TIMESTAMP — strip for SQLite, add Python-side fallback
                     column.server_default = None
-                    from datetime import datetime, timezone
+                    from datetime import datetime
 
                     from sqlalchemy import ColumnDefault
 
                     if column.default is None:
                         column.default = ColumnDefault(
-                            lambda ctx: datetime.now(tz=timezone.utc),
+                            lambda ctx: datetime.now(tz=UTC),
                         )
                 elif '::' in clause:
                     clean = re.sub(r'::[\w]+\b', '', clause)

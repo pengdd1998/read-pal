@@ -17,7 +17,7 @@ memory integration suite.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -84,7 +84,7 @@ def test_metadata_generated_at_is_iso8601_utc():
     """generated_at must parse as an ISO 8601 string with tzinfo=UTC."""
     meta = _build_summary_metadata(model_name='glm-4.7-flash')
     ts = datetime.fromisoformat(meta['generated_at'])
-    assert ts.tzinfo == timezone.utc
+    assert ts.tzinfo == UTC
 
 
 # ---------------------------------------------------------------------------

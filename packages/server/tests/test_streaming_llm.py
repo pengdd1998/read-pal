@@ -1,7 +1,6 @@
 """Tests for streaming SSE output, LLM output handling, and edge cases."""
 
 import json
-from collections.abc import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 

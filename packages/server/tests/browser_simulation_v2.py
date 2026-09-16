@@ -4,8 +4,6 @@ Tests all endpoints the frontend actually calls, with correct paths.
 Verifies response shapes match what components expect.
 """
 import asyncio
-import json
-import sys
 
 import httpx
 
@@ -54,10 +52,10 @@ async def register_and_login():
         inner = data.get('data', data)
         token = inner.get('token')
         if not token:
-            print(f'  [FAIL] Login: no token')
+            print('  [FAIL] Login: no token')
             return False
         HEADERS['Authorization'] = f'Bearer {token}'
-        print(f'  [OK] Login (token received)')
+        print('  [OK] Login (token received)')
 
         # Extract book_id from user data
         user = inner.get('user', {})

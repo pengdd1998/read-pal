@@ -58,7 +58,6 @@ class TestStreamHash:
                     return b'hello world'
                 return b''
 
-        import os
         import app.services.upload_stream as upload_stream
         with patch.object(upload_stream, 'tempfile') as tf:
             f = tmp_path / 'x.epub'

@@ -99,7 +99,7 @@ def test_classify_cancelled_error():
 def test_classify_generic_timeout():
     """stdlib TimeoutError / asyncio.TimeoutError → 'timeout'."""
     assert _classify_error(TimeoutError('timed out'), None) == 'timeout'
-    assert _classify_error(asyncio.TimeoutError(), None) == 'timeout'
+    assert _classify_error(TimeoutError(), None) == 'timeout'
 
 
 def test_classify_generic_connection_error():

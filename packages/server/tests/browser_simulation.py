@@ -7,8 +7,6 @@ Tests all critical user flows by:
 4. Testing cross-endpoint workflows (read → annotate → export)
 """
 import asyncio
-import json
-import re
 import sys
 from httpx import AsyncClient, ASGITransport
 
@@ -49,7 +47,7 @@ async def register_and_login(client: AsyncClient):
         print(f'  FAIL login: no token in response keys: {list(inner.keys())}')
         return False
     HEADERS['Authorization'] = f'Bearer {token}'
-    print(f'  OK login (token received)')
+    print('  OK login (token received)')
     return True
 
 

@@ -4,7 +4,6 @@ Tests each public function directly with mocked DB session,
 isolating the SM-2 spaced repetition math and business logic.
 """
 
-from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
