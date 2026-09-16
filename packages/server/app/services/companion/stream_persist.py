@@ -14,7 +14,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.companion.stream_cache import persist_stream_result
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = structlog.get_logger('read-pal.companion')
 

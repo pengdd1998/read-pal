@@ -17,7 +17,7 @@ from app.services.text_helpers import (
     text_to_html_paragraphs as _text_to_html_paragraphs,
 )
 from app.core.cache import cache_delete, cache_get, cache_set
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.i18n import t
 
 

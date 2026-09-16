@@ -19,7 +19,7 @@ from app.models.book import Book
 from app.models.document import Document
 from app.models.flashcard import Flashcard
 from app.utils import utcnow
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.time import utcnow_aware
 
 logger = structlog.get_logger('read-pal.study_mode')

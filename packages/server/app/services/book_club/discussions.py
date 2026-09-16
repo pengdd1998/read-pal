@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book_club import BookClubMember, ClubDiscussion
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = logging.getLogger('read-pal.book_clubs')
 

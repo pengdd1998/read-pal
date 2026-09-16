@@ -7,7 +7,7 @@ from app.config import get_settings
 from app.services.rag._constants import logger
 from app.services.rag.chunking import _chunk_text
 from app.services.rag.embedding import get_embeddings
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 
 def _should_skip_precompute(chapters: list[dict], book_id: UUID) -> bool:

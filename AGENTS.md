@@ -59,6 +59,13 @@ store.
   runbook (回灌 golden set), L3 manual-review SOP
 - `docs/engineering-upgrade/` — audit report + per-stage execution record
 
+## Layout criterion (M2.3)
+
+`app/core/` = process-level infrastructure clients (redis, cache,
+logging, context, background tasks). `app/utils/` = pure functions only
+— no domain-model imports; domain helpers live in their feature package
+under `app/services/` (e.g. `services/annotations/`).
+
 ## Never rules (every one mechanically enforced — see CI gates below)
 
 1. **Never use raw `book.title` / `book.author` in services — kwargs AND

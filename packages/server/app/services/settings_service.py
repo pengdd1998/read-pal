@@ -7,7 +7,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.i18n import DEFAULT_LANGUAGE
 from app.utils.time import utc_start_of_day, utc_start_of_week
 

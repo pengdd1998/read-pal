@@ -7,7 +7,7 @@ from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.flashcard import Flashcard
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = logging.getLogger('read-pal.stats.flashcards')
 

@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.book import Book
 from app.models.collection import Collection
 from app.schemas.collection import CollectionCreate, CollectionUpdate
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.collections')

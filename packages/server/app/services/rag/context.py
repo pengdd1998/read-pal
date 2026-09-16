@@ -7,10 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookStatus
-from app.utils.annotation_format import format_annotation_entry
+from app.services.annotations import format_annotation_entry
 from app.utils.sanitizer import sanitize_user_input
 from app.core.redis import get_redis
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 from app.services.rag._constants import (
     RAG_CACHE_PREFIX,

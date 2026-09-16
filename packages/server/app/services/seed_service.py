@@ -14,7 +14,7 @@ from app.models.annotation import Annotation, AnnotationType
 from app.models.book import Book, BookFileType, BookStatus
 from app.models.document import Document
 from app.models.reading_session import ReadingSession
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 from app.services._seed_data import GATSBY_CHAPTERS, _ANNOTATION_TEMPLATES
 

@@ -29,7 +29,7 @@ from app.services.upload_stream import (  # noqa: F401 — re-exported API
     get_file_type,
     stream_upload_to_tempfile,
 )
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.i18n import t, DEFAULT_LANGUAGE
 from app.utils.sanitizer import sanitize_book_field
 

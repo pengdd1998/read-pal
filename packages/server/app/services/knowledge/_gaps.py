@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.annotation import Annotation
 from app.schemas.knowledge import KnowledgeGap
 from app.services.knowledge._cache import _content_hash, _load_cached_graph
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = structlog.get_logger('read-pal.knowledge')
 

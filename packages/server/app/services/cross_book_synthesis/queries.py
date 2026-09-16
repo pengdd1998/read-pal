@@ -16,7 +16,7 @@ from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.reading_session import ReadingSession
 from app.services.cross_book_synthesis.builders import assemble_book_data
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = logging.getLogger(__name__)
 

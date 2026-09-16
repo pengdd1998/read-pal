@@ -11,7 +11,7 @@ from app.middleware.exception_handlers import NotFoundError
 from app.models.book_club import BookClub, BookClubMember
 from app.models.user import User
 from app.schemas.book_club import BookClubCreate, BookClubUpdate
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = logging.getLogger('read-pal.book_clubs')
 

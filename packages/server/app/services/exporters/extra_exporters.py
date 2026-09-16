@@ -13,7 +13,7 @@ import json
 
 from app.models.annotation import Annotation
 from app.models.book import Book
-from app.utils.annotations import annotation_type_value
+from app.services.annotations import annotation_type_value
 
 
 def _meta(book: Book) -> dict:

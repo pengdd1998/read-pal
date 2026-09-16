@@ -18,7 +18,7 @@ from app.models.reading_session import ReadingSession
 
 logger = logging.getLogger('read-pal.challenges')
 from app.utils import utcnow
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.time import utcnow_aware
 from app.utils.limits import CHALLENGE_MIN_DUE
 

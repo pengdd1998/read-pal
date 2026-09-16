@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
 from app.models.book import Book
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = logging.getLogger('read-pal.upload')
 

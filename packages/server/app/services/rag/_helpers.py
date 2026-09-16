@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.annotation import Annotation
 from app.models.document import Document
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 from app.services.rag._constants import _tokenize_query
 

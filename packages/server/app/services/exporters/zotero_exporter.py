@@ -12,7 +12,7 @@ from typing import Any
 from xml.sax.saxutils import escape
 
 from app.models.annotation import Annotation
-from app.utils.annotations import annotation_type_value
+from app.services.annotations import annotation_type_value
 
 
 def _build_book_xml(book_info: dict[str, Any]) -> str:

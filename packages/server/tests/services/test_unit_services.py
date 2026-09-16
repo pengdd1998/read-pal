@@ -19,7 +19,7 @@ from app.services.exporters.citation_exporter import (
 from app.services.exporters.csv_exporter import export_csv
 from app.services.exporters.html_exporter import export_html
 from app.services.llm import CircuitBreaker, CircuitState
-from app.utils.annotations import annotation_type_value, match_annotation_type
+from app.services.annotations import annotation_type_value, match_annotation_type
 
 
 # ---------------------------------------------------------------------------

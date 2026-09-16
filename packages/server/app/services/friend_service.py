@@ -19,7 +19,7 @@ from app.prompts import FRIEND_BOOK_CONTEXT, FRIEND_PERSONAS
 from app.services.friend_persona import recommend_persona
 from app.db import release_db
 from app.services.llm import safe_llm_call
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.sanitizer import sanitize_book_field, sanitize_chat_message
 from app.utils.token_budget import TokenBudget
 from app.config import get_settings

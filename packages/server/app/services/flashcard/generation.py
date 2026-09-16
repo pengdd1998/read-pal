@@ -18,7 +18,7 @@ from app.schemas.llm_outputs import FlashcardList
 from app.db import release_db
 from app.services.llm import safe_llm_invoke
 from app.utils import utcnow
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.i18n import t
 from app.utils.sanitizer import sanitize_book_field
 

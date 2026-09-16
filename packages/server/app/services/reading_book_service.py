@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.memory_book import MemoryBook
 from app.schemas.memory_book import MemoryBookResponse
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.limits import READING_BOOK_FETCH_LIMIT
 
 logger = logging.getLogger('read-pal.reading_book')

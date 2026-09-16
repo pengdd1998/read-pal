@@ -9,7 +9,7 @@ from app.middleware.auth import create_token_pair, verify_password
 from app.middleware.login_lockout import get_login_lockout
 from app.models.user import User
 from app.schemas.auth import UserResponse
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.i18n import _get_user_lang, t
 
 logger = logging.getLogger('read-pal.auth')

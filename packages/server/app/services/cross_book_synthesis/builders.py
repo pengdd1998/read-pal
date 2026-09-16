@@ -26,7 +26,7 @@ def build_highlights(
   annotations: list[Annotation],
 ) -> list[dict[str, Any]]:
   """Filter highlight-type annotations and sanitize."""
-  from app.utils.annotations import match_annotation_type
+  from app.services.annotations import match_annotation_type
 
   return [
     {
@@ -43,7 +43,7 @@ def build_notes(
   annotations: list[Annotation],
 ) -> list[dict[str, Any]]:
   """Filter note-type annotations and sanitize."""
-  from app.utils.annotations import match_annotation_type
+  from app.services.annotations import match_annotation_type
 
   return [
     {

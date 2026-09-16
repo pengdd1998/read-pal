@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.models.annotation import Annotation, AnnotationType
-from app.utils.annotations import match_annotation_type
+from app.services.annotations import match_annotation_type
 from app.utils.i18n import DEFAULT_LANGUAGE
 
 

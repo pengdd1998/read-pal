@@ -20,7 +20,7 @@ from app.models.book import Book, BookFileType, BookStatus
 from app.models.collection import Collection
 from app.services.stats import book_stats_cache_key, invalidate_user_caches
 from app.utils import utcnow
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.i18n import t
 from app.schemas.book import BookCreate, BookUpdate
 

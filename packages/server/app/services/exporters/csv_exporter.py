@@ -6,7 +6,7 @@ import csv
 import io
 
 from app.models.annotation import Annotation
-from app.utils.annotations import annotation_type_value
+from app.services.annotations import annotation_type_value
 
 
 def export_csv(annotations: list[Annotation]) -> str:

@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.book import Book, BookStatus
 from app.utils import utcnow
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 
 def cap_progress(progress: Decimal) -> Decimal:

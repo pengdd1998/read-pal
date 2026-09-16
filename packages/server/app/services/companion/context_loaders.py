@@ -13,10 +13,10 @@ from app.models.annotation import Annotation
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.services.companion.constants import ANNOTATION_LIMIT, HISTORY_LIMIT
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.i18n import t
 from app.utils.sanitizer import sanitize_chat_message
-from app.utils.annotation_format import format_annotation_entry
+from app.services.annotations import format_annotation_entry
 
 logger = structlog.get_logger('read-pal.companion')
 

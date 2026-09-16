@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat_message import ChatMessage
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.limits import CHAT_HISTORY_DEFAULT_LIMIT
 
 logger = logging.getLogger('read-pal.chat')

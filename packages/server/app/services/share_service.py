@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.shared_export import SharedExport
 from app.schemas.share import ShareCreate
 from app.services.export_service import export
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.middleware.exception_handlers import NotFoundError
 from app.utils.limits import SHARE_QUERY_LIMIT
 

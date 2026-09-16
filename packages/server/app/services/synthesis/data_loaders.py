@@ -14,7 +14,7 @@ from app.models.annotation import Annotation, AnnotationType
 from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.reading_session import ReadingSession
-from app.utils.annotations import match_annotation_type
+from app.services.annotations import match_annotation_type
 from app.utils.sanitizer import sanitize_annotations, sanitize_book_field, sanitize_chat_message
 
 logger = structlog.get_logger('read-pal.synthesis')

@@ -19,7 +19,7 @@ from app.prompts import CONVERSATION_SUMMARY_HUMAN, CONVERSATION_SUMMARY_SYSTEM
 from app.schemas.llm_outputs import ConversationSummaryData
 from app.db import release_db
 from app.services.llm import safe_llm_invoke
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
 from app.utils.limits import CONVERSATION_MEMORY_LIMIT

@@ -12,7 +12,7 @@ import logging
 
 from app.services.stats.streaks import compute_streaks
 from app.services.stats import STATS_LOOKBACK_DELTA
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.time import utcnow_aware
 
 logger = logging.getLogger('read-pal.stats.calendar')

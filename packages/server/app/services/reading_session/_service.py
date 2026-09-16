@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import SessionCreate, SessionUpdate
 from app.services.stats import invalidate_user_caches
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 # Re-export from extracted sub-modules
 from app.services.reading_session._book_progress import (  # noqa: F401

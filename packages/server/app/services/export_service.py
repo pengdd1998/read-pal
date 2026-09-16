@@ -25,7 +25,7 @@ from app.services.exporters import (
     export_study_guide,
     export_zotero_rdf,
 )
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = logging.getLogger('read-pal.export')
 

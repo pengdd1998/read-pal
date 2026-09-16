@@ -11,7 +11,7 @@ from app.models.book import Book
 from app.schemas.annotation import AnnotationCreate, AnnotationUpdate
 from app.middleware.exception_handlers import NotFoundError
 from app.services.stats import invalidate_user_caches
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.limits import ANNOTATION_FETCH_LIMIT
 
 logger = logging.getLogger('read-pal.annotations')

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.book import Book
 from app.models.reading_plan import ReadingPlan
 from app.services.reading_plan.plan_generation import generate_plan_text as _generate_plan_text
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.i18n import t
 
 logger = structlog.get_logger('read-pal.reading_plan')

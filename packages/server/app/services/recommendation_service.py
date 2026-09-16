@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.models.book import Book
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.utils.limits import RECOMMENDATION_FETCH_LIMIT
 
 logger = logging.getLogger('read-pal.recommendations')

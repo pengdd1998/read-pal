@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.middleware.auth import verify_password
 from app.models.user import User
 from app.services.auth._token import revoke_access_token, revoke_refresh_token
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = logging.getLogger('read-pal.account')
 

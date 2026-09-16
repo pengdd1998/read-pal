@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.webhook import Webhook, WebhookDeliveryLog
 from app.schemas.webhook import WebhookCreate, WebhookUpdate
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = logging.getLogger('read-pal.webhooks')
 

@@ -12,7 +12,7 @@ from typing import Any
 import structlog
 
 from app.config import get_settings
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 
 logger = structlog.get_logger('read-pal.llm')
 

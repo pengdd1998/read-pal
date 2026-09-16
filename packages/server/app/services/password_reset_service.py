@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.redis import get_redis
 from app.middleware.auth import hash_password
 from app.models.user import User
-from app.utils.db import db_error_guard
+from app.utils.db_guard import db_error_guard
 from app.middleware.exception_handlers import NotFoundError
 
 logger = logging.getLogger('read-pal.password_reset')

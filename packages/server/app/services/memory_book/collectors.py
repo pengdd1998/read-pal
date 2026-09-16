@@ -15,8 +15,8 @@ from app.models.book import Book
 from app.models.chat_message import ChatMessage
 from app.models.flashcard import Flashcard
 from app.models.reading_session import ReadingSession
-from app.utils.annotations import match_annotation_type
-from app.utils.db import db_error_guard
+from app.services.annotations import match_annotation_type
+from app.utils.db_guard import db_error_guard
 from app.utils.limits import (
     DATA_COLLECTION_ANNOTATION_LIMIT,
     DATA_COLLECTION_CHAT_LIMIT,
