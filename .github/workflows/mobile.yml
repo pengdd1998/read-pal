@@ -29,38 +29,14 @@ env:
 
 jobs:
   # -------------------------------------------------------------------
-  # Typecheck and verify
-  # -------------------------------------------------------------------
-  verify:
-    name: Verify
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared package
-        run: pnpm --filter @read-pal/shared build
-
-      - name: Typecheck mobile
-        run: pnpm --filter @read-pal/mobile typecheck
-
-  # -------------------------------------------------------------------
   # Android APK (prebuild + Gradle)
+  # (The old `verify` gate job duplicated ci.yml's Typecheck — which runs
+  # on every PR with no path filter — and the build jobs below redo the
+  # install + shared build anyway. Removed in M0.2; tag builds rely on the
+  # tagged commit having passed CI, and D1 freezes mobile releases.)
   # -------------------------------------------------------------------
   build-android:
     name: Android APK
-    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

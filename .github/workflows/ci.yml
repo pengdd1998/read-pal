@@ -84,13 +84,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+      - uses: ./.github/actions/setup-server
 
-      - run: pip install uv
-
-      - run: cd packages/server && uv sync --all-groups --all-extras
+      - uses: ./.github/actions/server-test-env
 
       # -----------------------------------------------------------------
       # Phase 3: AST-level enforcement of AGENTS.md Never rules
@@ -109,40 +105,6 @@ jobs:
           uv run python scripts/check_inflight_streams_encapsulation.py app/services/agent_service.py
 
       - run: cd packages/server && uv run pytest --tb=short -v --durations=10
-        env:
-          APP_ENV: test
-          # Database (not used in unit tests — SQLite in-memory)
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: readpal_test
-          DB_USER: test
-          DB_PASSWORD: test
-          REDIS_URL: redis://localhost:6379
-          # GLM AI (mocked in tests — real key not needed)
-          GLM_API_KEY: test-glm-key
-          GLM_BASE_URL: https://test.example.com
-          DEFAULT_MODEL: glm-4-flash
-          FALLBACK_MODEL: glm-4-flash
-          LLM_TIMEOUT_SECONDS: 30
-          LLM_MAX_RETRIES: 2
-          CIRCUIT_FAILURE_THRESHOLD: 5
-          CIRCUIT_RESET_TIMEOUT_SECONDS: 60
-          MAX_EMBEDDING_CALLS: 100
-          # JWT
-          JWT_SECRET: test-jwt-secret-for-ci-min-32-chars-long
-          JWT_EXPIRES_IN: 7d
-          JWT_ACCESS_WEB: 15m
-          JWT_ACCESS_MOBILE: 30m
-          JWT_REFRESH_WEB: 7d
-          JWT_REFRESH_MOBILE: 30d
-          # App
-          FRONTEND_URL: http://localhost:3000
-          CORS_ORIGINS: http://localhost:3000
-          # Logging
-          LOG_LEVEL: WARNING
-          LOG_JSON: false
-          LLM_LOG_ENABLED: true
-          LLM_LOG_RETENTION_DAYS: 7
 
   # -------------------------------------------------------------------
   # Frontend tests (Vitest)
@@ -236,14 +198,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-server
         with:
-          python-version: '3.12'
-
-      - run: pip install uv
-
-      - name: Install dependencies
-        run: cd packages/server && uv sync --frozen
+          sync-args: --frozen
 
       - name: Enable pgvector extension
         run: |
@@ -310,14 +267,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-server
         with:
-          python-version: '3.12'
-
-      - run: pip install uv
-
-      - name: Install dependencies
-        run: cd packages/server && uv sync --frozen
+          sync-args: --frozen
 
       - name: Upgrade from empty database to head
         run: cd packages/server && uv run alembic upgrade head
@@ -339,13 +291,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - run: pip install uv
-
-      - run: cd packages/server && uv sync --all-groups --all-extras
+      - uses: ./.github/actions/setup-server
 
       - name: Run integration tests
         run: |

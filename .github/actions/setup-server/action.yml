@@ -1,0 +1,24 @@
+name: 'Setup Python server env'
+description: |
+  Shared setup for every job that runs backend Python: python 3.12 +
+  uv + dependency sync. Replaces the checkout-less setup boilerplate
+  that was copy-pasted across ci.yml / prompt-eval.yml / drift-scan.yml
+  (M0.2).
+inputs:
+  sync-args:
+    description: 'Arguments passed to `uv sync` (run in packages/server).'
+    required: false
+    default: '--all-groups --all-extras'
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - run: pip install uv
+      shell: bash
+
+    - name: Install dependencies
+      run: cd packages/server && uv sync ${{ inputs.sync-args }}
+      shell: bash
