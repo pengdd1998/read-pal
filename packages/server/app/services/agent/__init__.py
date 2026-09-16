@@ -7,6 +7,7 @@ from app.services.agent.synthesis_modes import (  # noqa: F401 — re-exported
     run_synthesis_mode,
 )
 
+from app.services.agent.regenerate import pop_last_exchange_for_regeneration  # noqa: F401,E402
 from app.services.agent.gateway import (  # noqa: F401,E402
     _KEEPALIVE_FRAME,
     _PRODUCER_STALL_WARN_SECONDS,

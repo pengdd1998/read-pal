@@ -39,6 +39,7 @@ from app.services import companion
 from app.services.agent.coach import run_coach_report
 from app.services.agent.research import run_research
 from app.services.agent import (
+    pop_last_exchange_for_regeneration,
     new_request_id,
     raise_not_found,
     resolve_lang,
@@ -55,7 +56,6 @@ from app.services.reading_plan import advance_plan, generate_plan, get_active_pl
 from app.utils.sanitizer import sanitize_book_field
 from app.utils.i18n import not_found_error, t
 from app.middleware.rate_limiter import api_limiter
-from datetime import UTC
 
 logger = logging.getLogger('read-pal.agent')
 
@@ -205,51 +205,11 @@ async def regenerate(
     response is marked ``deleted_at=NOW()`` (preserved for audit) so the new
     stream sees a clean history. Streams the new response like /chat/stream.
     """
-    from datetime import datetime
-    from sqlalchemy import select, update
-    from app.models.chat_message import ChatMessage
-
     uid = UUID(current_user['id'])
     lang = await resolve_lang(db, uid)
     book_id = body.book_id
 
-    # Find the most recent user message and the assistant message right
-    # after it (if any). Both must belong to this user+book and not be
-    # already soft-deleted.
-    result = await db.execute(
-        select(ChatMessage)
-        .where(
-            ChatMessage.user_id == uid,
-            ChatMessage.book_id == book_id,
-            ChatMessage.deleted_at.is_(None),
-        )
-        .order_by(ChatMessage.created_at.desc())
-        .limit(2)
-    )
-    last_two = list(result.scalars().all())  # newest first
-    if not last_two:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NO_HISTORY', 'message': 'No user message to regenerate from.'},
-        )
-
-    last_msg = last_two[0]
-    if last_msg.role == 'assistant':
-        # Soft-delete the last assistant message; the user message is now last_two[1]
-        await db.execute(
-            update(ChatMessage)
-            .where(ChatMessage.id == last_msg.id)
-            .values(deleted_at=datetime.now(UTC))
-        )
-        user_msg = last_two[1] if len(last_two) > 1 else None
-    else:
-        user_msg = last_msg
-
-    if user_msg is None or user_msg.role != 'user':
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={'code': 'NO_USER_MESSAGE', 'message': 'No user message to regenerate from.'},
-        )
+    user_msg = await pop_last_exchange_for_regeneration(db, uid, book_id)
 
     companion_mode = (body.context or {}).get('companionMode', 'casual')
     persona = (body.context or {}).get('persona') or body.persona

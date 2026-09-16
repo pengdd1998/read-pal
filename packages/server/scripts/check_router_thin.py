@@ -46,8 +46,9 @@ SERVICE_INDICATORS: tuple[str, ...] = ('_service', 'service', 'Service')
 # Phase 3 catches NEW violations; existing files are scheduled for incremental
 # refactor. Do not add new files here without a documented reason.
 EXEMPT: set[str] = {
-    'app/routers/agent.py',  # SSE plumbing with inline stream-state queries;
-                             # planned for service extraction in a follow-up PR.
+    # Empty since M3.1: agent.py's inline regenerate queries moved to
+    # services/agent/regenerate.py. Keep the mechanism — any future
+    # exemption needs a documented reason.
 }
 
 
