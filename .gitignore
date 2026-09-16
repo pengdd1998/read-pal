@@ -204,4 +204,6 @@ packages/web/ios/Pods/
 packages/web/ios/build/
 packages/web/www/
 dark-audit/
+.pytest_cache/
+.impeccable/
 .serena/
