@@ -182,6 +182,7 @@ docs/*
 !docs/screenshots/
 !docs/launch/
 !docs/incidents/
+!docs/engineering-upgrade/
 
 # Debug screenshots and test artifacts
 .pal-test/
