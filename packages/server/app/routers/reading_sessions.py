@@ -22,7 +22,7 @@ from app.schemas.reading_session import (
     SessionUpdate,
 )
 from app.schemas.common import GenericResponse
-from app.services import reading_session_service
+from app.services import reading_session
 from app.utils.i18n import not_found_error, t
 from app.middleware.rate_limiter import api_limiter
 
@@ -38,7 +38,7 @@ async def list_sessions(
     db: AsyncSession = Depends(get_db),
 ) -> SessionListResponse:
     """List reading sessions with optional book filter."""
-    sessions, total = await reading_session_service.get_sessions(
+    sessions, total = await reading_session.get_sessions(
         db, UUID(current_user['id']), book_id=book_id, page=page, per_page=per_page,
     )
     return SessionListResponse(
@@ -55,7 +55,7 @@ async def get_active_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return the active reading session for a book, if any."""
-    session = await reading_session_service.get_active_session(
+    session = await reading_session.get_active_session(
         db, UUID(current_user['id']), book_id,
     )
     if session is None:
@@ -72,7 +72,7 @@ async def get_session_stats(
     db: AsyncSession = Depends(get_db),
 ) -> SessionStatsResponse:
     """Return aggregate reading session statistics."""
-    stats = await reading_session_service.get_session_stats(db, UUID(current_user['id']))
+    stats = await reading_session.get_session_stats(db, UUID(current_user['id']))
     return SessionStatsResponse(data=stats)
 
 
@@ -86,7 +86,7 @@ async def get_book_session_log(
 ) -> dict:
     """Get sessions for a specific book with pagination."""
     uid = UUID(current_user['id'])
-    sessions, total = await reading_session_service.get_book_session_log(
+    sessions, total = await reading_session.get_book_session_log(
         db, uid, book_id, page=page, per_page=per_page,
     )
     offset = (page - 1) * per_page
@@ -110,7 +110,7 @@ async def get_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return a single reading session by ID."""
-    session = await reading_session_service.get_session(
+    session = await reading_session.get_session(
         db, UUID(current_user['id']), session_id,
     )
     if session is None:
@@ -128,7 +128,7 @@ async def create_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Create a new reading session and auto-start it."""
-    session = await reading_session_service.create_session(
+    session = await reading_session.create_session(
         db, UUID(current_user['id']), body,
     )
     return {
@@ -145,7 +145,7 @@ async def end_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """End an active reading session and update book progress."""
-    session = await reading_session_service.end_session(
+    session = await reading_session.end_session(
         db, UUID(current_user['id']), session_id, data=body,
     )
     if session is None:
@@ -163,7 +163,7 @@ async def start_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Alias for POST / — create a new reading session."""
-    session = await reading_session_service.create_session(
+    session = await reading_session.create_session(
         db, UUID(current_user['id']), SessionCreate(book_id=body.book_id),
     )
     return {
@@ -181,7 +181,7 @@ async def heartbeat_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Update session activity timestamp (heartbeat)."""
-    session = await reading_session_service.heartbeat_session(
+    session = await reading_session.heartbeat_session(
         db, UUID(current_user['id']), session_id, body,
     )
     if session is None:
@@ -196,10 +196,10 @@ async def summarize_session(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Generate a brief AI summary of the reading session."""
-    session = await reading_session_service.get_session(
+    session = await reading_session.get_session(
         db, UUID(current_user['id']), session_id,
     )
     if session is None:
         raise not_found_error(t('errors.session_not_found'))
-    summary = reading_session_service.build_session_summary(session)
+    summary = reading_session.build_session_summary(session)
     return {'success': True, 'data': {'summary': summary}}

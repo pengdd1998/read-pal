@@ -50,20 +50,20 @@ class TestSSEFormat:
 
 class TestQuickSafetyCheck:
     def test_empty_text_returns_false(self):
-        from app.services.companion_service import _quick_safety_check
+        from app.services.companion.safety import quick_safety_check as _quick_safety_check
         assert _quick_safety_check('') is False
 
     def test_safe_text_returns_true(self):
-        from app.services.companion_service import _quick_safety_check
+        from app.services.companion.safety import quick_safety_check as _quick_safety_check
         assert _quick_safety_check('The quick brown fox') is True
 
     def test_harmful_keyword_still_passes_but_logs(self):
-        from app.services.companion_service import _quick_safety_check
+        from app.services.companion.safety import quick_safety_check as _quick_safety_check
         # Safety check logs but doesn't block — returns True for observability
         assert _quick_safety_check('suicide is a topic') is True
 
     def test_none_returns_false(self):
-        from app.services.companion_service import _quick_safety_check
+        from app.services.companion.safety import quick_safety_check as _quick_safety_check
         assert _quick_safety_check(None) is False
 
 
@@ -187,7 +187,7 @@ class TestStreamingErrors:
     @pytest.mark.asyncio
     async def test_circuit_breaker_blocks_stream(self):
         """When circuit breaker is open, stream should yield fallback."""
-        from app.services.companion_service import stream_chat
+        from app.services.companion.streaming import stream_chat
 
         mock_db = AsyncMock()
         mock_db.add = MagicMock()
@@ -235,7 +235,7 @@ class TestStreamingErrors:
     @pytest.mark.asyncio
     async def test_stream_produces_done_signal(self):
         """Stream must always end with [DONE] signal."""
-        from app.services.companion_service import stream_chat
+        from app.services.companion.streaming import stream_chat
 
         mock_db = AsyncMock()
         mock_db.add = MagicMock()
@@ -298,7 +298,7 @@ class TestStreamingErrors:
         fallback response and persisted as the assistant message — yielding
         broken text like 'Once upon a time...<error>I understand you're...'.
         """
-        from app.services.companion_service import stream_chat
+        from app.services.companion.streaming import stream_chat
 
         mock_db = AsyncMock()
         mock_db.add = MagicMock()
@@ -391,7 +391,7 @@ class TestStreamingErrors:
     @pytest.mark.asyncio
     async def test_empty_stream_skips_save(self):
         """When stream produces no content, neither user nor assistant message is saved."""
-        from app.services.companion_service import stream_chat
+        from app.services.companion.streaming import stream_chat
 
         mock_db = AsyncMock()
         mock_db.add = MagicMock()

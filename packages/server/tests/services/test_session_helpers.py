@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, UTC
 
 from app.models.reading_session import ReadingSession
 from app.schemas.reading_session import HeartbeatRequest, SessionUpdate
-from app.services._session_helpers import (
+from app.services.reading_session._helpers import (
     MAX_SESSION_SECONDS,
     STALE_IDLE_GRACE_SECONDS,
     apply_update_fields,

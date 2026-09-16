@@ -15,7 +15,7 @@ from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.common import GenericResponse
 from app.schemas.memory_book import MemoryBookGenerateRequest
 from app.services import reading_book_service
-from app.services.memory_book_service import generate
+from app.services.memory_book import generate
 from app.utils.i18n import not_found_error, translate_error, t
 from app.middleware.rate_limiter import api_limiter
 

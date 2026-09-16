@@ -19,7 +19,7 @@ from app.services.agent.synthesis_modes import (
     resolve_synthesis_mode,
     run_synthesis_mode,
 )
-from app.services.cross_book_synthesis_service import (
+from app.services.cross_book_synthesis import (
     compare_books,
     cross_book_synthesize,
     get_user_book_ids,

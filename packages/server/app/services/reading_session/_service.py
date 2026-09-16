@@ -1,7 +1,7 @@
-"""Business logic for reading session operations.
+"""Reading-session business logic (package facade).
 
-Public API is re-exported from sub-modules so existing imports
-(`from app.services import reading_session_service`) continue to work.
+The public API surface lives in ``app.services.reading_session``
+(see ``__init__.py``); this module wires the sub-modules together.
 """
 
 from __future__ import annotations
@@ -26,14 +26,14 @@ from app.services.stats import invalidate_user_caches
 from app.utils.db import db_error_guard
 
 # Re-export from extracted sub-modules
-from app.services._session_book_progress import (  # noqa: F401
+from app.services.reading_session._book_progress import (  # noqa: F401
     cap_progress as _cap_progress,
     update_book_completion as _update_book_completion,
     update_book_heartbeat as _update_book_heartbeat,
     update_book_scroll_only as _update_book_scroll_only,
     update_book_with_page as _update_book_with_page,
 )
-from app.services._session_helpers import (
+from app.services.reading_session._helpers import (
     MAX_SESSION_SECONDS as _MAX_SESSION_SECONDS,
     STALE_IDLE_GRACE_SECONDS as _STALE_IDLE_GRACE_SECONDS,
     apply_update_fields as _apply_update_fields,
@@ -42,14 +42,14 @@ from app.services._session_helpers import (
     finalize_session_duration as _finalize_session_duration,
     resolve_heartbeat_pages as _resolve_heartbeat_pages,
 )
-from app.services._session_queries import (  # noqa: F401
+from app.services.reading_session._queries import (  # noqa: F401
     get_active_session,
     get_book_session_log,
     get_session,
     get_sessions,
 )
-from app.services._session_stats import get_session_stats  # noqa: F401
-from app.services._session_summary import build_session_summary  # noqa: F401
+from app.services.reading_session._stats import get_session_stats  # noqa: F401
+from app.services.reading_session._summary import build_session_summary  # noqa: F401
 
 logger = logging.getLogger('read-pal.sessions')
 

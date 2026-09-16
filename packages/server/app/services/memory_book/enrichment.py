@@ -29,7 +29,7 @@ async def enrich_with_knowledge_graph(
         'concept_edges': [],
     }
     try:
-        from app.services.knowledge_service import build_graph
+        from app.services.knowledge import build_graph
         graph = await build_graph(db, user_id, book_id)
         result['concepts'] = [n.label for n in graph.nodes if n.label]
         result['concept_nodes'] = [

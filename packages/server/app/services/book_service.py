@@ -10,7 +10,7 @@ from uuid import UUID
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services._session_book_progress import (
+from app.services.reading_session import (
     cap_progress,
     notify_book_completed,
     update_book_completion,

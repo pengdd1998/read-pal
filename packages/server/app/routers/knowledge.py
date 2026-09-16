@@ -13,7 +13,7 @@ from app.middleware.auth import get_current_user
 from app.middleware.rate_limiter import ai_heavy_limiter, api_limiter
 from app.middleware.daily_llm_budget import daily_ai_budget
 from app.schemas.common import GenericResponse
-from app.services.knowledge_service import (
+from app.services.knowledge import (
     build_graph,
     detect_gaps,
     get_all_cached_graphs,

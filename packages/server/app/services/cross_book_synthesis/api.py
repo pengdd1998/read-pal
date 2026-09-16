@@ -1,10 +1,8 @@
-"""Cross-book synthesis service — multi-book analysis and comparison.
+"""Cross-book synthesis entry points — multi-book analysis and comparison.
 
 Extracted from synthesis_service.py so that single-book synthesis stays
-focused while cross-book operations live separately.
-
-Implementation lives in the ``cross_book_synthesis`` sub-package; this
-module re-exports the public API for backward compatibility.
+focused while cross-book operations live separately. Router-facing
+``cross_book_synthesize`` / ``compare_books`` live here.
 """
 
 from __future__ import annotations
@@ -17,7 +15,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.synthesis import SynthesisResponse
-from app.services.cross_book_synthesis import (  # noqa: F401
+from app.services.cross_book_synthesis import (  # noqa: F401 — package re-exports
   batch_collect_reading_data,
   condense_book_data,
   get_user_book_ids,

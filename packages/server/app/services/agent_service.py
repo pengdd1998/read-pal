@@ -22,7 +22,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services import companion_service
+from app.services import companion
 from app.services.agent.stream_registry import (  # noqa: F401 — re-exported API
     WORKER_ID,
     cancel_stream,
@@ -80,7 +80,7 @@ async def _start_llm_producer(
     """Create and return a task that reads LLM chunks into *queue*."""
     async def _produce() -> None:
         try:
-            async for chunk in companion_service.stream_chat(
+            async for chunk in companion.stream_chat(
                 db, user_id, book_id, message, context=context,
                 companion_mode=companion_mode, persona=persona,
                 genre=genre, lang=lang,
@@ -180,7 +180,7 @@ async def sse_bytes_stream(
     request_id: str | None = None,
     request: Any = None,
 ) -> AsyncGenerator[bytes, None]:
-    """Wrap companion_service.stream_chat as a bytes SSE generator.
+    """Wrap companion.stream_chat as a bytes SSE generator.
 
     Handles ValueError and unexpected exceptions, yielding SSE-formatted
     error frames so the client always gets a clean stream termination.

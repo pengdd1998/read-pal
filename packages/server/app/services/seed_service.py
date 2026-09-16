@@ -172,7 +172,7 @@ async def _seed_graph_cache(user_id: UUID, book_id: UUID) -> None:
     """Write pre-built Gatsby graph data into Redis so the knowledge page renders immediately."""
     try:
         from app.core.redis import get_redis
-        from app.services.knowledge_service import GRAPH_KEY_PREFIX as GRAPH_CACHE_PREFIX, _knowledge_cache_ttl
+        from app.services.knowledge import GRAPH_KEY_PREFIX as GRAPH_CACHE_PREFIX, _knowledge_cache_ttl
 
         nodes: list[dict] = []
         edges: list[dict] = []

@@ -221,8 +221,8 @@ class TestSeedGraphCache:
 
         with (
             patch('app.core.redis.get_redis', return_value=mock_redis),
-            patch('app.services.knowledge_service._knowledge_cache_ttl', return_value=3600),
-            patch('app.services.knowledge_service.GRAPH_KEY_PREFIX', 'kg:'),
+            patch('app.services.knowledge._knowledge_cache_ttl', return_value=3600),
+            patch('app.services.knowledge.GRAPH_KEY_PREFIX', 'kg:'),
         ):
             await _seed_graph_cache(user_id, book_id)
 
@@ -248,8 +248,8 @@ class TestSeedGraphCache:
 
         with (
             patch('app.core.redis.get_redis', return_value=mock_redis),
-            patch('app.services.knowledge_service._knowledge_cache_ttl', return_value=3600),
-            patch('app.services.knowledge_service.GRAPH_KEY_PREFIX', 'kg:'),
+            patch('app.services.knowledge._knowledge_cache_ttl', return_value=3600),
+            patch('app.services.knowledge.GRAPH_KEY_PREFIX', 'kg:'),
         ):
             await _seed_graph_cache(user_id, book_id)
 

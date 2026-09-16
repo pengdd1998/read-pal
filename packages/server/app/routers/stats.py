@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.common import GenericResponse
-from app.services import stats_service
+from app.services import stats
 from app.middleware.rate_limiter import api_limiter
 
 router = APIRouter(prefix='/api/v1/stats', tags=['stats'], dependencies=[api_limiter])
@@ -26,7 +26,7 @@ async def get_dashboard(
 ) -> dict:
     """Return dashboard data matching the nested shape the frontend expects."""
     uid = _user_id(current_user)
-    data = await stats_service.get_dashboard_stats(db, uid)
+    data = await stats.get_dashboard_stats(db, uid)
     return {'success': True, 'data': data}
 
 
@@ -37,7 +37,7 @@ async def get_weekly_summary(
 ) -> dict:
     """Return weekly reading summary (Mon-Sun of the current week)."""
     uid = _user_id(current_user)
-    data = await stats_service.get_weekly_summary(db, uid)
+    data = await stats.get_weekly_summary(db, uid)
     return {'success': True, 'data': data}
 
 
@@ -51,7 +51,7 @@ async def get_reading_calendar(
 ) -> dict:
     """Return calendar data: days with reading activity."""
     uid = _user_id(current_user)
-    data = await stats_service.get_reading_calendar(db, uid, months, year, month)
+    data = await stats.get_reading_calendar(db, uid, months, year, month)
     return {'success': True, 'data': data}
 
 
@@ -62,7 +62,7 @@ async def get_reading_speed(
 ) -> dict:
     """Return reading speed stats aggregated from sessions."""
     uid = _user_id(current_user)
-    data = await stats_service.get_reading_speed(db, uid)
+    data = await stats.get_reading_speed(db, uid)
     return {'success': True, 'data': data}
 
 
@@ -73,7 +73,7 @@ async def get_reading_speed_by_book(
 ) -> dict:
     """Return reading speed stats grouped by book."""
     uid = _user_id(current_user)
-    data = await stats_service.get_reading_speed_by_book(db, uid)
+    data = await stats.get_reading_speed_by_book(db, uid)
     return {'success': True, 'data': data}
 
 
@@ -84,5 +84,5 @@ async def get_flashcard_stats(
 ) -> dict:
     """Return flashcard retention metrics for the current user."""
     uid = _user_id(current_user)
-    data = await stats_service.get_flashcard_stats(db, uid)
+    data = await stats.get_flashcard_stats(db, uid)
     return {'success': True, 'data': data}

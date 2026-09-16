@@ -352,7 +352,7 @@ async def test_stale_session_duration_capped_to_last_heartbeat(client):
     from app.models.book import Book
     from app.models.reading_session import ReadingSession
     from app.models.user import User
-    from app.services.reading_session_service import (
+    from app.services.reading_session import (
         STALE_IDLE_GRACE_SECONDS,
         _close_stale_sessions,
     )

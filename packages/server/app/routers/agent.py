@@ -35,7 +35,7 @@ from app.schemas.agent import (
     SummarizeRequest,
 )
 from app.schemas.common import GenericResponse
-from app.services import companion_service
+from app.services import companion
 from app.services.agent.coach import run_coach_report
 from app.services.agent.research import run_research
 from app.services.agent_service import (
@@ -96,7 +96,7 @@ async def chat(
     uid = UUID(current_user['id'])
     lang = await resolve_lang(db, uid)
     try:
-        result = await companion_service.chat(
+        result = await companion.chat(
             db=db, user_id=uid, book_id=body.book_id,
             message=body.message, context=body.context,
             persona=body.persona, genre=body.genre, lang=lang,
@@ -281,7 +281,7 @@ async def summarize(
     uid = UUID(current_user['id'])
     lang = await resolve_lang(db, uid)
     try:
-        result = await companion_service.summarize(
+        result = await companion.summarize(
             db=db, user_id=uid, book_id=body.book_id,
             chapter_ids=body.chapter_ids, lang=lang,
         )
@@ -301,7 +301,7 @@ async def explain(
     uid = UUID(current_user['id'])
     lang = await resolve_lang(db, uid)
     try:
-        result = await companion_service.explain(
+        result = await companion.explain(
             db=db, user_id=uid, book_id=body.book_id,
             text=body.text, context=body.context, lang=lang,
         )

@@ -134,7 +134,7 @@ async def test_generate_reading_mirror(client):
 async def test_generate_memory_book_not_found(client):
     reg = await register_user(client)
 
-    with patch('app.services.memory_book_service.safe_llm_invoke', new_callable=AsyncMock):
+    with patch('app.services.memory_book.section_generation.safe_llm_invoke', new_callable=AsyncMock):
         resp = await client.post(
             '/api/v1/reading-book/generate',
             json={'book_id': '00000000-0000-0000-0000-000000000000'},

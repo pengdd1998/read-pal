@@ -1,6 +1,6 @@
 """Unit tests for reading_session_service — pure business logic with mocked DB.
 
-Tests each public function in reading_session_service.py directly,
+Tests each public function in reading_session.py directly,
 isolating service logic from HTTP layer and real database.
 """
 
@@ -13,7 +13,7 @@ from uuid import uuid4
 import pytest
 import redis.exceptions
 
-from app.services import reading_session_service
+from app.services import reading_session
 from app.models.book import BookStatus
 
 
@@ -142,9 +142,9 @@ class TestCreateSession:
 
         _mock_execute_return(db, book)
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 1, 1, 12, 0, 0)
-            result = await reading_session_service.create_session(db, user_id, data)
+            result = await reading_session.create_session(db, user_id, data)
 
         assert len(added) == 1
         assert added[0].user_id == user_id
@@ -168,7 +168,7 @@ class TestCreateSession:
 
         _mock_execute_return(db, book)
 
-        result = await reading_session_service.create_session(db, user_id, data)
+        result = await reading_session.create_session(db, user_id, data)
 
         assert added[0].started_at == explicit_time
 
@@ -190,9 +190,9 @@ class TestCreateSession:
         book_result.scalar_one_or_none.return_value = book
         db.execute = AsyncMock(return_value=book_result)
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 1, 1, 12, 0, 0)
-            result = await reading_session_service.create_session(db, user_id, data)
+            result = await reading_session.create_session(db, user_id, data)
 
         assert book.status == BookStatus.reading
         assert book.started_at is not None
@@ -218,7 +218,7 @@ class TestCreateSession:
         book_result.scalar_one_or_none.return_value = book
         db.execute = AsyncMock(return_value=book_result)
 
-        await reading_session_service.create_session(db, user_id, data)
+        await reading_session.create_session(db, user_id, data)
 
         # started_at should not change since it was already set
         assert book.started_at == original_started_at
@@ -237,7 +237,7 @@ class TestCreateSession:
         db.execute = AsyncMock(return_value=book_result)
 
         with pytest.raises(HTTPException) as exc_info:
-            await reading_session_service.create_session(db, user_id, data)
+            await reading_session.create_session(db, user_id, data)
         assert exc_info.value.status_code == 404
 
 
@@ -252,7 +252,7 @@ class TestCloseStaleSessions:
     @pytest.mark.asyncio
     async def test_idle_session_with_no_duration_gets_grace_only(self):
         """No prior duration, no heartbeats → duration = grace window."""
-        from app.services.reading_session_service import _close_stale_sessions
+        from app.services.reading_session import _close_stale_sessions
 
         db = _make_db_session()
         user_id = str(uuid4())
@@ -292,7 +292,7 @@ class TestCloseStaleSessions:
     @pytest.mark.asyncio
     async def test_idle_session_with_inflated_duration_gets_clamped(self):
         """Pre-existing duration from a stale client report must also be clamped."""
-        from app.services.reading_session_service import _close_stale_sessions
+        from app.services.reading_session import _close_stale_sessions
 
         db = _make_db_session()
         user_id = str(uuid4())
@@ -346,9 +346,9 @@ class TestEndSession:
         _mock_execute_return(db, session)
         db.flush = AsyncMock()
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 1, 1, 11, 0, 0)
-            result = await reading_session_service.end_session(db, user_id, session_id)
+            result = await reading_session.end_session(db, user_id, session_id)
 
         assert result is session
         assert result.is_active is False
@@ -376,10 +376,10 @@ class TestEndSession:
         _mock_execute_return(db, session)
         db.flush = AsyncMock()
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             # User comes back 4 hours later to close the tab
             mock_now.return_value = datetime(2026, 1, 1, 15, 0, 0)
-            result = await reading_session_service.end_session(db, user_id, session_id)
+            result = await reading_session.end_session(db, user_id, session_id)
 
         # Pre-fix: duration would be 5h (18000s), or capped at MAX (7200s).
         # Post-fix: capped to last_heartbeat + grace = 11:00+5min - 10:00 = 3900s
@@ -390,7 +390,7 @@ class TestEndSession:
         db = _make_db_session()
         _mock_execute_return(db, None)
 
-        result = await reading_session_service.end_session(db, str(uuid4()), uuid4())
+        result = await reading_session.end_session(db, str(uuid4()), uuid4())
 
         assert result is None
 
@@ -407,9 +407,9 @@ class TestEndSession:
         _mock_execute_return(db, session)
         db.flush = AsyncMock()
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 6, 1, 12, 0, 0)
-            result = await reading_session_service.end_session(db, user_id, session_id)
+            result = await reading_session.end_session(db, user_id, session_id)
 
         # Duration was already set, should not be recomputed
         assert result.duration == 1800
@@ -439,9 +439,9 @@ class TestEndSession:
 
         data = _make_session_update(current_page=50, total_pages=100)
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 6, 1, 12, 0, 0)
-            result = await reading_session_service.end_session(db, user_id, session_id, data)
+            result = await reading_session.end_session(db, user_id, session_id, data)
 
         assert book.current_page == 50
         assert book.progress == Decimal('50.00')
@@ -471,9 +471,9 @@ class TestEndSession:
 
         data = _make_session_update(current_page=100, total_pages=100)
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 6, 1, 12, 0, 0)
-            result = await reading_session_service.end_session(db, user_id, session_id, data)
+            result = await reading_session.end_session(db, user_id, session_id, data)
 
         assert book.status == BookStatus.completed
         assert book.completed_at is not None
@@ -495,9 +495,9 @@ class TestEndSession:
         _mock_execute_return(db, session)
         db.flush = AsyncMock()
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 1, 1, 10, 30, 0)
-            result = await reading_session_service.end_session(
+            result = await reading_session.end_session(
                 db, user_id, session_id, data=None,
             )
 
@@ -529,9 +529,9 @@ class TestEndSession:
             scroll_progress=0.75, current_segment=42,
         )
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 6, 1, 12, 0, 0)
-            result = await reading_session_service.end_session(db, user_id, session_id, data)
+            result = await reading_session.end_session(db, user_id, session_id, data)
 
         assert book.scroll_progress == Decimal('0.750')
         assert book.current_segment == 42
@@ -554,9 +554,9 @@ class TestEndSession:
         # Client claims 7200 seconds (impossible — only 60s wall-clock)
         data = _make_session_update(duration=7200)
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 1, 1, 10, 1, 0)
-            result = await reading_session_service.end_session(db, user_id, session_id, data)
+            result = await reading_session.end_session(db, user_id, session_id, data)
 
         # Must be clamped to wall-clock (60 sec), not 7200
         assert result.duration == 60
@@ -577,9 +577,9 @@ class TestEndSession:
         # 30 seconds active reading within a 60-second wall-clock window
         data = _make_session_update(duration=30)
 
-        with patch('app.services.reading_session_service.utcnow') as mock_now:
+        with patch('app.services.reading_session._service.utcnow') as mock_now:
             mock_now.return_value = datetime(2026, 1, 1, 10, 1, 0)
-            result = await reading_session_service.end_session(db, user_id, session_id, data)
+            result = await reading_session.end_session(db, user_id, session_id, data)
 
         assert result.duration == 30
 
@@ -598,7 +598,7 @@ class TestGetActiveSession:
 
         _mock_execute_return(db, session)
 
-        result = await reading_session_service.get_active_session(db, user_id)
+        result = await reading_session.get_active_session(db, user_id)
 
         assert result is session
 
@@ -607,7 +607,7 @@ class TestGetActiveSession:
         db = _make_db_session()
         _mock_execute_return(db, None)
 
-        result = await reading_session_service.get_active_session(db, str(uuid4()))
+        result = await reading_session.get_active_session(db, str(uuid4()))
 
         assert result is None
 
@@ -620,7 +620,7 @@ class TestGetActiveSession:
 
         _mock_execute_return(db, session)
 
-        result = await reading_session_service.get_active_session(db, user_id, book_id=book_id)
+        result = await reading_session.get_active_session(db, user_id, book_id=book_id)
 
         assert result is session
         assert result.book_id == book_id
@@ -645,7 +645,7 @@ class TestGetSessions:
         data_result.scalars.return_value.all.return_value = sessions
         db.execute = AsyncMock(side_effect=[count_result, data_result])
 
-        result, total = await reading_session_service.get_sessions(db, user_id)
+        result, total = await reading_session.get_sessions(db, user_id)
 
         assert total == 3
         assert len(result) == 3
@@ -661,7 +661,7 @@ class TestGetSessions:
         data_result.scalars.return_value.all.return_value = []
         db.execute = AsyncMock(side_effect=[count_result, data_result])
 
-        result, total = await reading_session_service.get_sessions(db, user_id)
+        result, total = await reading_session.get_sessions(db, user_id)
 
         assert total == 0
         assert result == []
@@ -677,7 +677,7 @@ class TestGetSessions:
         data_result.scalars.return_value.all.return_value = []
         db.execute = AsyncMock(side_effect=[count_result, data_result])
 
-        result, total = await reading_session_service.get_sessions(db, user_id)
+        result, total = await reading_session.get_sessions(db, user_id)
 
         assert total == 0
 
@@ -695,7 +695,7 @@ class TestGetSessions:
         ]
         db.execute = AsyncMock(side_effect=[count_result, data_result])
 
-        result, total = await reading_session_service.get_sessions(
+        result, total = await reading_session.get_sessions(
             db, user_id, book_id=book_id,
         )
 
@@ -713,7 +713,7 @@ class TestGetSessions:
         data_result.scalars.return_value.all.return_value = [_make_session()]
         db.execute = AsyncMock(side_effect=[count_result, data_result])
 
-        result, total = await reading_session_service.get_sessions(
+        result, total = await reading_session.get_sessions(
             db, user_id, page=2, per_page=10,
         )
 
@@ -736,7 +736,7 @@ class TestGetSession:
 
         _mock_execute_return(db, session)
 
-        result = await reading_session_service.get_session(db, user_id, session_id)
+        result = await reading_session.get_session(db, user_id, session_id)
 
         assert result is session
 
@@ -745,7 +745,7 @@ class TestGetSession:
         db = _make_db_session()
         _mock_execute_return(db, None)
 
-        result = await reading_session_service.get_session(db, str(uuid4()), uuid4())
+        result = await reading_session.get_session(db, str(uuid4()), uuid4())
 
         assert result is None
 
@@ -777,7 +777,7 @@ class TestGetSessionStats:
             mock_redis.get.return_value = None  # cache miss
             mock_redis_fn.return_value = mock_redis
 
-            stats = await reading_session_service.get_session_stats(db, user_id)
+            stats = await reading_session.get_session_stats(db, user_id)
 
         assert stats['totalSessions'] == 10
         assert stats['totalDuration'] == 36000
@@ -803,7 +803,7 @@ class TestGetSessionStats:
             mock_redis.get.return_value = json.dumps(cached_data)
             mock_redis_fn.return_value = mock_redis
 
-            stats = await reading_session_service.get_session_stats(db, user_id)
+            stats = await reading_session.get_session_stats(db, user_id)
 
         assert stats == cached_data
         # DB should NOT be queried when cache hits
@@ -828,7 +828,7 @@ class TestGetSessionStats:
         with patch('app.core.cache.get_redis') as mock_redis_fn:
             mock_redis_fn.side_effect = redis.exceptions.ConnectionError('Redis connection refused')
 
-            stats = await reading_session_service.get_session_stats(db, user_id)
+            stats = await reading_session.get_session_stats(db, user_id)
 
         # Should still return stats from DB
         assert stats['totalSessions'] == 0
@@ -855,7 +855,7 @@ class TestGetSessionStats:
             mock_redis.get.return_value = None  # cache miss
             mock_redis_fn.return_value = mock_redis
 
-            stats = await reading_session_service.get_session_stats(db, user_id)
+            stats = await reading_session.get_session_stats(db, user_id)
 
         # Verify cache was written
         mock_redis.setex.assert_awaited_once()
@@ -873,7 +873,7 @@ class TestBuildSessionSummary:
     def test_full_summary(self):
         session = _make_session(duration=600, pages_read=20, highlights=3, notes=1)
 
-        summary = reading_session_service.build_session_summary(session)
+        summary = reading_session.build_session_summary(session)
 
         assert '10 minutes' in summary
         assert '20 pages' in summary
@@ -883,7 +883,7 @@ class TestBuildSessionSummary:
     def test_singular_forms(self):
         session = _make_session(duration=60, pages_read=1, highlights=1, notes=1)
 
-        summary = reading_session_service.build_session_summary(session)
+        summary = reading_session.build_session_summary(session)
 
         assert '1 minute' in summary
         assert '1 page' in summary
@@ -893,14 +893,14 @@ class TestBuildSessionSummary:
     def test_empty_session(self):
         session = _make_session(duration=0, pages_read=0, highlights=0, notes=0)
 
-        summary = reading_session_service.build_session_summary(session)
+        summary = reading_session.build_session_summary(session)
 
         assert summary == 'Session recorded successfully.'
 
     def test_partial_session_only_duration(self):
         session = _make_session(duration=120, pages_read=0, highlights=0, notes=0)
 
-        summary = reading_session_service.build_session_summary(session)
+        summary = reading_session.build_session_summary(session)
 
         assert '2 minutes' in summary
         assert 'page' not in summary.lower()
@@ -912,7 +912,7 @@ class TestBuildSessionSummary:
         session.highlights = None
         session.notes = None
 
-        summary = reading_session_service.build_session_summary(session)
+        summary = reading_session.build_session_summary(session)
 
         assert summary == 'Session recorded successfully.'
 
@@ -935,7 +935,7 @@ class TestGetBookSessionLog:
         data_result.scalars.return_value.all.return_value = sessions
         db.execute = AsyncMock(return_value=data_result)
 
-        result, total = await reading_session_service.get_book_session_log(
+        result, total = await reading_session.get_book_session_log(
             db, user_id, book_id,
         )
 
@@ -953,7 +953,7 @@ class TestGetBookSessionLog:
         data_result.scalars.return_value.all.return_value = []
         db.execute = AsyncMock(return_value=data_result)
 
-        result, total = await reading_session_service.get_book_session_log(
+        result, total = await reading_session.get_book_session_log(
             db, user_id, book_id,
         )
 
@@ -971,7 +971,7 @@ class TestGetBookSessionLog:
         data_result.scalars.return_value.all.return_value = []
         db.execute = AsyncMock(return_value=data_result)
 
-        result, total = await reading_session_service.get_book_session_log(
+        result, total = await reading_session.get_book_session_log(
             db, user_id, book_id,
         )
 

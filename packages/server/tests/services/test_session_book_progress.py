@@ -8,7 +8,7 @@ from uuid import uuid4
 import pytest
 
 from app.models.book import BookStatus
-from app.services._session_book_progress import (
+from app.services.reading_session._book_progress import (
     cap_progress,
     update_book_completion,
     update_book_heartbeat,

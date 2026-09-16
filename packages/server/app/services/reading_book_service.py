@@ -1,6 +1,6 @@
 """Business logic for reading book (memory book) retrieval.
 
-Generation is delegated to memory_book_service.generate(); this module
+Generation is delegated to memory_book.generate(); this module
 handles the DB lookups for existing memory books.
 """
 

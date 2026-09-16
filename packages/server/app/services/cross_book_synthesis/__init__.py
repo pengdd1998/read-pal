@@ -36,3 +36,8 @@ __all__ = [
   'run_comparison_llm',
   'run_synthesis_llm',
 ]
+
+from app.services.cross_book_synthesis.api import (  # noqa: F401,E402
+    compare_books,
+    cross_book_synthesize,
+)
