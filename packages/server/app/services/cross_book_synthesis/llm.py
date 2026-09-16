@@ -20,6 +20,7 @@ from app.services.llm import safe_llm_invoke
 from app.services.cross_book_synthesis.builders import condense_book
 from app.utils.sanitizer import sanitize_book_field
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.synthesis')
 
@@ -29,7 +30,7 @@ async def run_synthesis_llm(
   user_id: UUID,
 ) -> dict[str, Any]:
   """Call LLM for cross-book synthesis with token budgeting."""
-  budget = TokenBudget()
+  budget = TokenBudget(model=get_settings().default_model)
   budgeted = budget.add(json.dumps(condensed, default=str), 'cross_book_data')
   if budget.truncations:
     logger.warning(
@@ -59,7 +60,7 @@ async def run_comparison_llm(
   user_id: UUID,
 ) -> dict[str, Any]:
   """Call LLM for book comparison with token budgeting."""
-  budget = TokenBudget()
+  budget = TokenBudget(model=get_settings().default_model)
   condensed_1 = budget.add(
     json.dumps(condense_book(data_1), default=str), 'book_1_data',
   )

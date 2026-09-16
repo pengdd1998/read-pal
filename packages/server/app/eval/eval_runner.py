@@ -41,6 +41,7 @@ from app.eval.regression_baseline import compare_to_baseline, update_baseline
 from app.utils.output_filter import filter_output, validate_schema
 from app.utils.sanitizer import sanitize_chat_message
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = logging.getLogger('read-pal.eval')
 
@@ -95,7 +96,7 @@ def _test_token_budget(
     result: EvalResult,
 ) -> str:
     """Validate token budgeting. Returns the mock response for reuse."""
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     mock_response = MOCK_RESPONSES.get(service, {}).get(action, '')
     budget.add(mock_response, label=f'{service}_{action}')
     if budget.remaining <= 0:

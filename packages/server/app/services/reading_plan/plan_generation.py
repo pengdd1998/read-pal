@@ -10,6 +10,7 @@ from app.prompts import READING_PLAN_HUMAN, READING_PLAN_SYSTEM
 from app.services.llm import safe_llm_call
 from app.utils.sanitizer import sanitize_book_field
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.reading_plan')
 
@@ -41,7 +42,7 @@ def build_plan_prompts(
         progress=book.progress or 0,
     )
 
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     budget.add(system_prompt, label='reading_plan_system')
     budget.add(human_prompt, label='reading_plan_human')
 

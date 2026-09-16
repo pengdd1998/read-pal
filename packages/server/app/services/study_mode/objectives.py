@@ -20,6 +20,7 @@ from app.services.llm import safe_llm_invoke
 from app.services.study_mode.helpers import _extract_items, _generic_checks, _generic_objectives
 from app.utils.sanitizer import sanitize_user_input
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.study_mode')
 
@@ -34,7 +35,7 @@ def _build_objectives_messages(
         chapter_title, max_length=500, context='chapter_title',
     )
 
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
 
     system_text = STUDY_OBJECTIVES_SYSTEM.template
     budget.add(system_text, label='study-objectives-system')
@@ -137,7 +138,7 @@ def _build_checks_messages(
         context='chapter_content',
     )
 
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
 
     content_hint = ''
     if safe_content:

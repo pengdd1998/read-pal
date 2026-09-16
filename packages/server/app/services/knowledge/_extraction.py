@@ -14,6 +14,7 @@ from app.schemas.llm_outputs import ConceptList
 from app.services.llm import safe_llm_invoke
 from app.utils.sanitizer import sanitize_annotations
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.knowledge')
 
@@ -36,7 +37,7 @@ async def _extract_concepts_via_llm(
     combined = sanitize_annotations(combined)
 
     # Enforce token budget to avoid context window overflow
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     combined = budget.add(combined, 'annotations')
 
     system_prompt = KNOWLEDGE_EXTRACTION_SYSTEM.template

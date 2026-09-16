@@ -28,6 +28,7 @@ from app.services.companion.context_prompts import (
 from app.services.companion.query_classifier import classify_query
 from app.utils.i18n import DEFAULT_LANGUAGE, get_user_interaction_style
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.companion')
 
@@ -65,7 +66,7 @@ async def _prepare_context(
     # this consumer existed (2026-09-04).
     interaction = await get_user_interaction_style(db, user_id)
 
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
 
     # P1.6: reserve slots for must-include content (history + user message)
     # BEFORE the system prompt is built. Without this, system_prompt+persona

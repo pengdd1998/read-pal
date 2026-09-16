@@ -5,6 +5,7 @@ from __future__ import annotations
 from app.eval.assertions import EvalResult
 from app.utils.sanitizer import sanitize_user_input
 from app.utils.token_budget import TokenBudget, estimate_tokens
+from app.config import get_settings
 
 
 def _check_cjk_estimation() -> EvalResult:
@@ -28,7 +29,7 @@ def _check_latin_estimation() -> EvalResult:
 def _check_budget_accounting() -> EvalResult:
     """Verify budget remaining decreases and used increases after add()."""
     r = EvalResult('token_budget/accounting', 'token_budget', 'accounting')
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     initial_remaining = budget.remaining
     budget.add('Hello world ' * 50, label='test')
     if budget.remaining >= initial_remaining:
@@ -41,7 +42,7 @@ def _check_budget_accounting() -> EvalResult:
 def _check_budget_overflow() -> EvalResult:
     """Verify oversized input is truncated and recorded."""
     r = EvalResult('token_budget/overflow', 'token_budget', 'overflow')
-    budget = TokenBudget(response_reserve=100)
+    budget = TokenBudget(model=get_settings().default_model, response_reserve=100)
     large_text = 'x' * 1_000_000
     result_text = budget.add(large_text, label='overflow_test')
     if not budget.truncations:
@@ -54,7 +55,7 @@ def _check_budget_overflow() -> EvalResult:
 def _check_empty_string() -> EvalResult:
     """Verify empty string passes through unchanged."""
     r = EvalResult('token_budget/empty', 'token_budget', 'empty')
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     result_text = budget.add('', label='empty')
     if result_text != '':
         r.fail('Empty string was modified')

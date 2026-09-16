@@ -25,6 +25,7 @@ from app.db import release_db
 from app.services.llm import safe_llm_invoke
 from app.services.synthesis.data_loaders import collect_reading_data
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.synthesis')
 
@@ -39,7 +40,7 @@ def _build_synthesis_prompt(
   answers the reader's specific question rather than producing a generic
   whole-book analysis.
   """
-  budget = TokenBudget()
+  budget = TokenBudget(model=get_settings().default_model)
   serialized_data = json.dumps(reading_data, default=str)
   budgeted_data = budget.add(serialized_data, 'reading_data')
   if budget.truncations:

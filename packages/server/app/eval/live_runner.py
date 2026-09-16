@@ -74,6 +74,7 @@ from app.schemas.llm_outputs import (
 )
 from app.services.llm import safe_llm_call, safe_llm_invoke
 from app.utils.sanitizer import sanitize_book_field, sanitize_user_input
+from app.config import get_settings
 from app.utils.token_budget import TokenBudget, estimate_tokens
 
 logger = logging.getLogger('read-pal.eval.live')
@@ -203,7 +204,7 @@ async def _synthesis_single(input_data: dict[str, Any]) -> tuple[Any, int]:
 async def _synthesis_cross_book(input_data: dict[str, Any]) -> tuple[Any, int]:
     """Build + call cross-book synthesis prompt with golden-provided data."""
     books = input_data.get('books', [])
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     budgeted = budget.add(json.dumps(books, default=str), 'cross_book_data')
     system_text = CROSS_BOOK_SYNTHESIS_SYSTEM.template
     human_text = CROSS_BOOK_SYNTHESIS_HUMAN.template.format(data=budgeted)

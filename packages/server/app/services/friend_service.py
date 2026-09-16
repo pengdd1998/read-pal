@@ -22,6 +22,7 @@ from app.services.llm import safe_llm_call
 from app.utils.db import db_error_guard
 from app.utils.sanitizer import sanitize_book_field, sanitize_chat_message
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.friend')
 
@@ -151,7 +152,7 @@ def _apply_token_budget(
     user_id: UUID,
 ) -> None:
     """Enforce token budget on the message list, logging any truncations."""
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     budget.add(system_msg.content, label='system')
     for i, msg in enumerate(history):
         budget.add(msg.content, label=f'history[{i}]')

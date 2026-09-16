@@ -19,6 +19,7 @@ from app.services.llm import safe_llm_call
 from app.utils.i18n import DEFAULT_LANGUAGE, t
 from app.utils.sanitizer import sanitize_user_input
 from app.utils.token_budget import TokenBudget
+from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.companion')
 
@@ -94,7 +95,7 @@ def _build_summarize_messages(
         )
     prompt_parts.append(t('companion.summarize_instruction', lang))
 
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     system_msg = budget.add(t('companion.summarize_system', lang), 'summarize_system')
     human_msg = budget.add(' '.join(prompt_parts), 'summarize_human')
 
@@ -190,7 +191,7 @@ async def explain(
 
     prompt = _build_explain_prompt(book.title, book.author, text, context, lang)
 
-    budget = TokenBudget()
+    budget = TokenBudget(model=get_settings().default_model)
     system_msg = budget.add(t('companion.explain_system', lang), 'explain_system')
     messages = [
         SystemMessage(content=system_msg),

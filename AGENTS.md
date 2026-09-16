@@ -70,8 +70,9 @@ store.
 2. **Never put business logic in `routers/`.** Routers validate input → call
    service → return response. Enforced: `scripts/check_router_thin.py` in `ci.yml`.
 3. **Never construct `TokenBudget()` without `model=` kwarg.** Silent
-   wrong-window estimate on non-GLM providers. Not yet mechanically enforced
-   (planned Phase 4A ruff rule) — check manually in review.
+   wrong-window estimate on non-GLM providers. Enforced: AST check
+   `scripts/check_token_budget_model.py` (on `app/services/` + `app/eval/`)
+   in `ci.yml`.
 4. **Never add a `PromptTemplate` without declaring `variables=`.** Placeholder
    drift slips to runtime. Enforced: `PromptTemplate.__post_init__`
    at `app/prompts/base.py:42`.
